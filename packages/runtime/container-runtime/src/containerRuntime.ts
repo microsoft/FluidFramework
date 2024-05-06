@@ -28,11 +28,12 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -1250,13 +1251,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
-	/**
-	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
-	 * summaries will be accepted once uploaded, so they should be validated before upload. However, this can
-	 * currently be controlled via a feature flag as its a new functionality.
-	 */
-	private readonly validateSummaryBeforeUpload: boolean;
-
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
@@ -1401,6 +1395,7 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.mc = createChildMonitoringContext({
@@ -1657,8 +1652,19 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
+		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
+			baseSnapshot,
+			metadata,
+		);
+		if (snapshot !== undefined && snapshotWithContents !== undefined) {
+			snapshot = {
+				...snapshotWithContents,
+				snapshotTree: snapshot,
+			};
+		}
+
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			snapshot,
 			parentContext,
 			this.mc.logger,
 			(props) => this.garbageCollector.nodeUpdated(props),
@@ -1766,9 +1772,6 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
-		this.validateSummaryBeforeUpload =
-			this.mc.config.getBoolean("Fluid.Summarizer.ValidateSummaryBeforeUpload") ?? false;
-
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
@@ -1890,6 +1893,7 @@ export class ContainerRuntime
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
@@ -2398,8 +2402,6 @@ export class ContainerRuntime
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
-			case ContainerMessageType.ChunkedOp:
-				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
@@ -2412,7 +2414,7 @@ export class ContainerRuntime
 				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
-						"Stashed runtime message of unknown type",
+						"Stashed runtime message of unexpected type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
@@ -3442,10 +3444,14 @@ export class ContainerRuntime
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
+		let summaryRefSeqNum: number | undefined;
 		const summaryNumberLogger = createChildLogger({
 			logger: summaryLogger,
 			properties: {
-				all: { summaryNumber },
+				all: {
+					summaryNumber,
+					referenceSequenceNumber: () => summaryRefSeqNum,
+				},
 			},
 		});
 
@@ -3464,7 +3470,7 @@ export class ContainerRuntime
 		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
 		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
 		// saved within the timeout, check if it should be failed or can continue.
-		if (this.validateSummaryBeforeUpload && this.isDirty) {
+		if (this.isDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
@@ -3513,8 +3519,6 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
 			) === true;
-
-		let summaryRefSeqNum: number | undefined;
 
 		try {
 			await this.deltaManager.inbound.pause();
@@ -3635,35 +3639,34 @@ export class ContainerRuntime
 				};
 			}
 
-			// If validateSummaryBeforeUpload is true, validate that the summary generated is correct before uploading.
-			if (this.validateSummaryBeforeUpload) {
-				// Validate that the summaries generated by summarize nodes is correct.
-				const validateResult = this.summarizerNode.validateSummary();
-				if (!validateResult.success) {
-					const { success, ...loggingProps } = validateResult;
-					const error = new RetriableSummaryError(
-						validateResult.reason,
-						validateResult.retryAfterSeconds,
-						{ ...loggingProps },
-					);
-					return {
-						stage: "base",
-						referenceSequenceNumber: summaryRefSeqNum,
-						minimumSequenceNumber,
-						error,
-					};
-				}
-
-				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
-					summaryNumberLogger,
-					summaryRefSeqNum,
-					minimumSequenceNumber,
-					finalAttempt,
-					false /* beforeSummaryGeneration */,
+			// Validate that the summary generated by summarizer nodes is correct before uploading.
+			const validateResult = this.summarizerNode.validateSummary();
+			if (!validateResult.success) {
+				const { success, ...loggingProps } = validateResult;
+				const error = new RetriableSummaryError(
+					validateResult.reason,
+					validateResult.retryAfterSeconds,
+					{ ...loggingProps },
 				);
-				if (pendingMessagesFailResult !== undefined) {
-					return pendingMessagesFailResult;
-				}
+				return {
+					stage: "base",
+					referenceSequenceNumber: summaryRefSeqNum,
+					minimumSequenceNumber,
+					error,
+				};
+			}
+
+			// If there are pending unacked ops, this summary attempt may fail as the uploaded
+			// summary would be eventually inconsistent.
+			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+				summaryNumberLogger,
+				summaryRefSeqNum,
+				minimumSequenceNumber,
+				finalAttempt,
+				false /* beforeSummaryGeneration */,
+			);
+			if (pendingMessagesFailResult !== undefined) {
+				return pendingMessagesFailResult;
 			}
 
 			const { summary: summaryTree, stats: partialStats } = summarizeResult;
@@ -3780,11 +3783,7 @@ export class ContainerRuntime
 			} as const;
 
 			try {
-				// If validateSummaryBeforeUpload is false, the summary should be validated in this step.
-				this.summarizerNode.completeSummary(
-					handle,
-					!this.validateSummaryBeforeUpload /* validate */,
-				);
+				this.summarizerNode.completeSummary(handle);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -3917,7 +3916,7 @@ export class ContainerRuntime
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
 	}
@@ -4143,8 +4142,6 @@ export class ContainerRuntime
 				this.submit(message, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.ChunkedOp:
-				throw new Error(`chunkedOp not expected here`);
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.reSubmit(opMetadata);
 				break;
@@ -4171,7 +4168,7 @@ export class ContainerRuntime
 					});
 				} else {
 					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unknown type",
+						"Resubmitting runtime message of unexpected type",
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
 						{

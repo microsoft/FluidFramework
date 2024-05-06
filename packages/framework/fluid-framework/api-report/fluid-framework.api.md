@@ -6,7 +6,7 @@
 
 import { Client } from '@fluidframework/merge-tree/internal';
 import { Deferred } from '@fluidframework/core-utils/internal';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -337,7 +337,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 // @public
 export interface IMember {
     readonly connections: IConnection[];
-    readonly userId: string;
+    readonly id: string;
 }
 
 // @public
@@ -389,6 +389,10 @@ export interface InteriorSequencePlace {
     pos: number;
     // (undocumented)
     side: Side;
+}
+
+// @public
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
 // @alpha
@@ -672,7 +676,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -885,9 +889,9 @@ export const TreeArrayNode: {
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -947,6 +951,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 // @public
 export abstract class TreeNode implements WithType {
     abstract get [type](): string;
+    protected constructor();
 }
 
 // @public
@@ -972,7 +977,7 @@ export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind =
 // @public
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
-    new (data: TInsertable): Unhydrated<TNode>;
+    new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 // @public

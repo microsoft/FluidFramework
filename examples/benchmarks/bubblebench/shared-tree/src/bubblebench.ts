@@ -5,16 +5,13 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree/internal";
+import { ISharedTree, SharedTree, type TreeView, fail } from "@fluidframework/tree/internal";
 import { AppState } from "./appState.js";
 import { type App, appTreeConfiguration } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
 
-/**
- * @internal
- */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-simpletree";
 
@@ -24,7 +21,7 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = this.runtime.createChannel(
 			/* id: */ undefined,
-			new SharedTreeFactory().type,
+			SharedTree.getFactory().type,
 		) as ISharedTree;
 
 		this.initializeTree(tree);
@@ -97,6 +94,6 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,
 	Bubblebench,
-	[new SharedTreeFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
+	[SharedTree.getFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
 	{},
 );

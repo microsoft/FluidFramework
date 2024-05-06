@@ -8,6 +8,7 @@ import { Args } from "@oclif/core";
 import execa from "execa";
 
 import { PackageCommand } from "../BasePackageCommand";
+import type { PackageSelectionDefault } from "../flags";
 
 export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 	static readonly description =
@@ -19,6 +20,8 @@ export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 			required: true,
 		}),
 	} as const;
+
+	protected defaultSelection = "all" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// TODO: The shell option should not need to be true. AB#4067

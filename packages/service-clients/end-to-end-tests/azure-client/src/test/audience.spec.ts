@@ -107,8 +107,8 @@ describe("Fluid audience", () => {
 		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		assert.notStrictEqual(
-			partner?.userId,
-			originalSelf?.userId,
+			partner?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 	});
@@ -240,13 +240,13 @@ describe("Fluid audience", () => {
 		);
 
 		assert.notStrictEqual(
-			partnerSelf?.userId,
-			originalSelf?.userId,
+			partnerSelf?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 		assert.strictEqual(
-			partnerSelf?.userId,
-			partnerSelfSeenByOriginal?.userId,
+			partnerSelf?.id,
+			partnerSelfSeenByOriginal?.id,
 			"Partner and partner-as-seen-by-original should have same IDs",
 		);
 	});
@@ -271,7 +271,7 @@ describe("Fluid audience", () => {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
+				errorMsg: "client1 container connect() timeout",
 			});
 		}
 
@@ -288,7 +288,7 @@ describe("Fluid audience", () => {
 		if (partnerContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
+				errorMsg: "client2 container connect() timeout",
 			});
 		}
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
@@ -329,10 +329,13 @@ describe("Fluid audience", () => {
 			await partnerClient2.getContainer(containerId, schema);
 
 		if (partnerContainer2.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => partnerContainer2.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "client3 container connect() timeout",
+				},
+			);
 		}
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */

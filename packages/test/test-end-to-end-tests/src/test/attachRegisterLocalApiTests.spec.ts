@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -25,6 +25,7 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states
@@ -212,7 +213,7 @@ describeCompat(
 			);
 			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-			channel.handle.attachGraph();
+			toFluidHandleInternal(channel.handle).attachGraph();
 
 			// Channel should get attached as it was registered to its dataStore
 			assert.strictEqual(
@@ -434,7 +435,7 @@ describeCompat(
 			testChannel1OfDataStore2.set("test2handle", channel2.handle);
 			testChannel2OfDataStore2.set("test1handle", channel1.handle);
 
-			channel1.handle.attachGraph();
+			toFluidHandleInternal(channel1.handle).attachGraph();
 			assert.strictEqual(
 				testChannel1OfDataStore2.isAttached(),
 				true,
@@ -500,7 +501,7 @@ describeCompat(
 				testChannelOfDataStore3.set("channel2handle", channel2.handle);
 
 				// Currently it will go in infinite loop.
-				channel2.handle.attachGraph();
+				toFluidHandleInternal(channel2.handle).attachGraph();
 				assert.strictEqual(
 					testChannelOfDataStore2.isAttached(),
 					true,
@@ -566,12 +567,20 @@ describeCompat(
 				channel3.set("channel2handle", channel2.handle);
 				channel2.set("dataStore3", dataStore3.handle);
 				channel3.set("dataStore2", dataStore2.handle);
-				dataStore2.handle.bind(dataStore3.handle);
-				dataStore2.handle.bind(channel3.handle);
-				dataStore3.handle.bind(dataStore2.handle);
-				dataStore3.handle.bind(channel2.handle);
+				toFluidHandleInternal(dataStore2.handle).bind(
+					toFluidHandleInternal(dataStore3.handle),
+				);
+				toFluidHandleInternal(dataStore2.handle).bind(
+					toFluidHandleInternal(channel3.handle),
+				);
+				toFluidHandleInternal(dataStore3.handle).bind(
+					toFluidHandleInternal(dataStore2.handle),
+				);
+				toFluidHandleInternal(dataStore3.handle).bind(
+					toFluidHandleInternal(channel2.handle),
+				);
 
-				dataStore2.handle.attachGraph();
+				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(
 					channel2.isAttached(),
 					true,
@@ -669,7 +678,9 @@ describeCompat(
 
 				channel2OfDataStore2.set("componet3Handle", dataStore3.handle);
 				channel1OfDataStore3.set("channel23handle", channel2OfDataStore3.handle);
-				dataStore3.handle.bind(dataStore4.handle);
+				toFluidHandleInternal(dataStore3.handle).bind(
+					toFluidHandleInternal(dataStore4.handle),
+				);
 
 				// Channel 1 of dataStore 2 points to its parent dataStore 2.
 				// Channel 2 of dataStore 2 points to its parent dataStore 2 and also to dataStore 3.
@@ -677,7 +688,7 @@ describeCompat(
 				// Channel 2 of dataStore 3 points to its parent dataStore 3.
 				// Channel 1 of dataStore 4 points to its parent dataStore 4.
 				// DataStore 3 points to dataStore 4.
-				channel1OfDataStore2.handle.attachGraph();
+				toFluidHandleInternal(channel1OfDataStore2.handle).attachGraph();
 
 				// Everything should be attached except channel 1 of dataStore 4
 				assert.strictEqual(
