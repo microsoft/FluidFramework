@@ -79,7 +79,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 				logger,
 				{ eventName: "load" },
 				async () => {
-					return ac.getContainer(runConfig.docId, schema);
+					return ac.getContainer(runConfig.docId, schema, "2");
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));

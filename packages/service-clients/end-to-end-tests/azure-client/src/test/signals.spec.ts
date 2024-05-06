@@ -88,11 +88,11 @@ describe("Fluid Signals", () => {
 		let services: AzureContainerServices;
 		let containerId: string;
 		if (id === undefined) {
-			({ container, services } = await client.createContainer(schema));
+			({ container, services } = await client.createContainer(schema, "2"));
 			containerId = await container.attach();
 		} else {
 			containerId = id;
-			({ container, services } = await client.getContainer(containerId, schema));
+			({ container, services } = await client.getContainer(containerId, schema, "2"));
 		}
 
 		if (container.connectionState !== ConnectionState.Connected) {

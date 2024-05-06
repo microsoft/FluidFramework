@@ -42,7 +42,7 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("Created container is detached", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Detached,
@@ -61,7 +61,7 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can attach a container", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -86,7 +86,7 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("cannot attach a container twice", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -112,7 +112,7 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-		const { container: newContainer } = await client.createContainer(schema);
+		const { container: newContainer } = await client.createContainer(schema, "2");
 		const containerId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
@@ -122,7 +122,7 @@ describe("Container create scenarios", () => {
 			});
 		}
 
-		const resources = client.getContainer(containerId, schema);
+		const resources = client.getContainer(containerId, schema, "2");
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -140,7 +140,7 @@ describe("Container create scenarios", () => {
 	it.skip("cannot load improperly created container (cannot load a non-existent container)", async () => {
 		const consoleErrorFn = console.error;
 		console.error = (): void => {};
-		const containerAndServicesP = client.getContainer("containerConfig", schema);
+		const containerAndServicesP = client.getContainer("containerConfig", schema, "2");
 
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
@@ -182,7 +182,7 @@ describe("Container create with feature flags", () => {
 	 * Expected behavior: An error should not be thrown and the logger should have logged the enabled feature gates.
 	 */
 	it("can create containers with feature gates", async () => {
-		await client.createContainer(schema);
+		await client.createContainer(schema, "2");
 		const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 		assert(event !== undefined, "ContainerLoadStats event should exist");
 		const featureGates = event.featureGates as string;

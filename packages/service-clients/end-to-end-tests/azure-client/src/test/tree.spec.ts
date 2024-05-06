@@ -66,7 +66,7 @@ describe("SharedTree with AzureClient", () => {
 	 * be returned.
 	 */
 	it("can create a container with SharedTree and do basic ops", async () => {
-		const { container: container1 } = await client.createContainer(schema);
+		const { container: container1 } = await client.createContainer(schema, "2");
 		const treeData = container1.initialObjects.tree1.schematize(
 			treeConfiguration, // This is defined in schema.ts
 		);
@@ -101,7 +101,7 @@ describe("SharedTree with AzureClient", () => {
 	 * be returned.
 	 */
 	it("can create/load a container with SharedTree collaborate with basic ops", async () => {
-		const { container: container1 } = await client.createContainer(schema);
+		const { container: container1 } = await client.createContainer(schema, "2");
 		const treeData1 = container1.initialObjects.tree1.schematize(treeConfiguration);
 		const containerId = await container1.attach();
 
@@ -114,7 +114,7 @@ describe("SharedTree with AzureClient", () => {
 
 		treeData1.root.insertNew("test string 1");
 
-		const resources = client.getContainer(containerId, schema);
+		const resources = client.getContainer(containerId, schema, "2");
 		await assert.doesNotReject(
 			resources,
 			() => true,

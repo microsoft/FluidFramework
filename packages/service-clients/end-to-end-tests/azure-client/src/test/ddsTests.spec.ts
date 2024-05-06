@@ -37,7 +37,7 @@ describe("Fluid data updates", () => {
 	 * be returned.
 	 */
 	it("can set DDSes as initial objects for a container", async () => {
-		const { container: newContainer } = await client.createContainer(schema);
+		const { container: newContainer } = await client.createContainer(schema, "2");
 		const containerId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
@@ -47,7 +47,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const resources = client.getContainer(containerId, schema);
+		const resources = client.getContainer(containerId, schema, "2");
 		await assert.doesNotReject(
 			resources,
 			() => true,
@@ -68,7 +68,7 @@ describe("Fluid data updates", () => {
 	 * each other after value is changed.
 	 */
 	it("can change DDSes within initialObjects value", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -83,7 +83,7 @@ describe("Fluid data updates", () => {
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
-		const { container: containerGet } = await client.getContainer(containerId, schema);
+		const { container: containerGet } = await client.getContainer(containerId, schema, "2");
 		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
@@ -101,7 +101,7 @@ describe("Fluid data updates", () => {
 				mdo2: CounterTestDataObject,
 			},
 		};
-		const { container } = await client.createContainer(doSchema);
+		const { container } = await client.createContainer(doSchema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -121,7 +121,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo2",
 		);
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(containerId, doSchema, "2");
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -148,7 +148,7 @@ describe("Fluid data updates", () => {
 				mdo3: CounterTestDataObject,
 			},
 		};
-		const { container } = await client.createContainer(doSchema);
+		const { container } = await client.createContainer(doSchema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -172,7 +172,7 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo3",
 		);
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(containerId, doSchema, "2");
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -200,7 +200,7 @@ describe("Fluid data updates", () => {
 				mdo2: CounterTestDataObject,
 			},
 		};
-		const { container } = await client.createContainer(doSchema);
+		const { container } = await client.createContainer(doSchema, "2");
 		const initialObjectsCreate = container.initialObjects;
 		const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
 		mdo2.increment();
@@ -218,7 +218,7 @@ describe("Fluid data updates", () => {
 			});
 		}
 
-		const { container: containerGet } = await client.getContainer(containerId, doSchema);
+		const { container: containerGet } = await client.getContainer(containerId, doSchema, "2");
 		const initialObjectsGet = containerGet.initialObjects;
 		const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
 
@@ -245,7 +245,7 @@ describe("Fluid data updates", () => {
 			dynamicObjectTypes: [TestDataObject],
 		};
 
-		const { container } = await client.createContainer(dynamicSchema);
+		const { container } = await client.createContainer(dynamicSchema, "2");
 		await container.attach();
 
 		const newDo = await container.create(TestDataObject);

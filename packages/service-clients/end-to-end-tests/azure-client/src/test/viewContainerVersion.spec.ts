@@ -39,7 +39,7 @@ describe("viewContainerVersion scenarios", () => {
 	 * be returned. Upon creation, we should recieve back 1 version of the container.
 	 */
 	it("can get versions of current document", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -89,7 +89,7 @@ describe("viewContainerVersion scenarios", () => {
 	 * be returned.
 	 */
 	it("can view container version successfully", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -104,6 +104,7 @@ describe("viewContainerVersion scenarios", () => {
 			containerId,
 			schema,
 			versions[0],
+			"2",
 		);
 		await assert.doesNotReject(viewContainerVersionAttempt);
 		const { container: containerView } = await viewContainerVersionAttempt;
@@ -118,7 +119,7 @@ describe("viewContainerVersion scenarios", () => {
 	it("has correct DDS values when viewing container version", async () => {
 		const testKey = "new-key";
 		const expectedValue = "expected-value";
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		container.initialObjects.map1.set(testKey, expectedValue);
 		const valueAtCreate: string | undefined = container.initialObjects.map1.get(testKey);
 		assert.strictEqual(valueAtCreate, expectedValue);
@@ -141,6 +142,7 @@ describe("viewContainerVersion scenarios", () => {
 			containerId,
 			schema,
 			versions[versions.length - 1],
+			"2",
 		);
 		await assert.doesNotReject(viewContainerVersionAttempt);
 		const { container: containerView } = await viewContainerVersionAttempt;
@@ -153,9 +155,14 @@ describe("viewContainerVersion scenarios", () => {
 	 * Expected behavior: client should throw an error.
 	 */
 	it("can handle non-existing container", async () => {
-		const resources = client.viewContainerVersion("badidonviewversion", schema, {
-			id: "whatever",
-		});
+		const resources = client.viewContainerVersion(
+			"badidonviewversion",
+			schema,
+			{
+				id: "whatever",
+			},
+			"2",
+		);
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 			assert.strictEqual(

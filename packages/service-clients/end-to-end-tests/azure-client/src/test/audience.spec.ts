@@ -36,7 +36,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: container should have a single member upon creation.
 	 */
 	it("can find original member", async () => {
-		const { container, services } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -68,7 +68,7 @@ describe("Fluid audience", () => {
 	 * to resolve original member.
 	 */
 	it("can find partner member", async () => {
-		const { container, services } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -97,7 +97,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(containerId, schema);
+		const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
@@ -120,7 +120,7 @@ describe("Fluid audience", () => {
 	 * memberRemoved event and have correct partner count.
 	 */
 	it("can observe member leaving", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -138,7 +138,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(containerId, schema);
+		const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
@@ -172,7 +172,7 @@ describe("Fluid audience", () => {
 			this.skip();
 		}
 
-		const { container, services } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -201,7 +201,7 @@ describe("Fluid audience", () => {
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer, services: partnerServices } =
-			await partnerClient.getContainer(containerId, schema);
+			await partnerClient.getContainer(containerId, schema, "2");
 
 		if (partnerContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
@@ -265,7 +265,7 @@ describe("Fluid audience", () => {
 			this.skip();
 		}
 
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -283,7 +283,7 @@ describe("Fluid audience", () => {
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer, services: partnerServices } =
-			await partnerClient.getContainer(containerId, schema);
+			await partnerClient.getContainer(containerId, schema, "2");
 
 		if (partnerContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
@@ -326,7 +326,7 @@ describe("Fluid audience", () => {
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer2, services: partnerServices2 } =
-			await partnerClient2.getContainer(containerId, schema);
+			await partnerClient2.getContainer(containerId, schema, "2");
 
 		if (partnerContainer2.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise(
