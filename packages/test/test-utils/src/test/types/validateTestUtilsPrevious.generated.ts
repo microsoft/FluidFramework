@@ -202,6 +202,7 @@ declare function get_old_InterfaceDeclaration_IProvideTestFluidObject():
 declare function use_current_InterfaceDeclaration_IProvideTestFluidObject(
     use: TypeOnly<current.IProvideTestFluidObject>): void;
 use_current_InterfaceDeclaration_IProvideTestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideTestFluidObject());
 
 /*
@@ -216,6 +217,7 @@ declare function get_current_InterfaceDeclaration_IProvideTestFluidObject():
 declare function use_old_InterfaceDeclaration_IProvideTestFluidObject(
     use: TypeOnly<old.IProvideTestFluidObject>): void;
 use_old_InterfaceDeclaration_IProvideTestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideTestFluidObject());
 
 /*
@@ -286,6 +288,7 @@ declare function get_old_InterfaceDeclaration_ITestFluidObject():
 declare function use_current_InterfaceDeclaration_ITestFluidObject(
     use: TypeOnly<current.ITestFluidObject>): void;
 use_current_InterfaceDeclaration_ITestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestFluidObject());
 
 /*
@@ -300,6 +303,7 @@ declare function get_current_InterfaceDeclaration_ITestFluidObject():
 declare function use_old_InterfaceDeclaration_ITestFluidObject(
     use: TypeOnly<old.ITestFluidObject>): void;
 use_old_InterfaceDeclaration_ITestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestFluidObject());
 
 /*

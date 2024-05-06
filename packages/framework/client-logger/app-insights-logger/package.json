@@ -106,7 +106,7 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
 		"tslib": "^1.10.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"fluid": {
 		"browser": {
