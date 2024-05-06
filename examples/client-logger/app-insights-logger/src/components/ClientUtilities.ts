@@ -75,7 +75,7 @@ export async function createFluidContainer(
 	console.log("Creating new container...");
 	let createContainerResult: ContainerLoadResult;
 	try {
-		createContainerResult = await client.createContainer(containerSchema);
+		createContainerResult = await client.createContainer(containerSchema, "2");
 	} catch (error) {
 		console.error(`Encountered error creating Fluid container: "${error}".`);
 		throw error;
@@ -126,7 +126,7 @@ export async function loadExistingFluidContainer(
 	console.log("Loading existing container...");
 	let loadContainerResult: ContainerLoadResult;
 	try {
-		loadContainerResult = await client.getContainer(containerId, containerSchema);
+		loadContainerResult = await client.getContainer(containerId, containerSchema, "2");
 	} catch (error) {
 		console.error(`Encountered error loading Fluid container: "${error}".`);
 		throw error;
