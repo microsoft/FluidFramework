@@ -482,7 +482,10 @@ export class SharedMatrix<T = any>
 		} finally {
 			this.reentrantCount--;
 		}
-		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
+		assert(
+			this.reentrantCount === 0,
+			0x85e /* indicates a problem with the reentrancy tracking code. */,
+		);
 	}
 
 	private submitVectorMessage(
