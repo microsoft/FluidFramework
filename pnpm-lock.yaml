@@ -1402,7 +1402,7 @@ importers:
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_4fnl6fxs65yjb57cbmzmmxikci
-      webpack-dev-middleware: 7.1.1_webpack@5.89.0
+      webpack-dev-middleware: 7.2.1_webpack@5.89.0
       webpack-hot-middleware: 2.25.4
       webpack-merge: 5.10.0
 
@@ -43596,8 +43596,8 @@ packages:
       schema-utils: 4.2.0
       webpack: 5.89.0_webpack-cli@4.10.0
 
-  /webpack-dev-middleware/7.1.1_webpack@5.89.0:
-    resolution: {integrity: sha512-NmRVq4AvRQs66dFWyDR4GsFDJggtSi2Yn38MXLk0nffgF9n/AIP4TFBg2TQKYaRAN4sHuKOTiz9BnNCENDLEVA==}
+  /webpack-dev-middleware/7.2.1_webpack@5.89.0:
+    resolution: {integrity: sha512-hRLz+jPQXo999Nx9fXVdKlg/aehsw1ajA9skAneGmT03xwmyuhvF93p6HUKKbWhXdcERtGTzUCtIQr+2IQegrA==}
     engines: {node: '>= 18.12.0'}
     peerDependencies:
       webpack: ^5.0.0 || ^5.82.0
