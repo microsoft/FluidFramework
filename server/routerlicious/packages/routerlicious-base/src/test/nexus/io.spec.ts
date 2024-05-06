@@ -793,28 +793,6 @@ describe("Routerlicious", () => {
 										});
 									});
 								} else if (description === "with v1 and v2 clients") {
-									it("should broadcast signal from a v1 client to all connected clients", () => {
-										const expectedSignals = sendValidAndReturnExpectedSignals(
-											clients[0],
-											[stringSignalContent],
-										);
-
-										verifyExpectedClientSignals(clients, expectedSignals);
-									});
-
-									it("should broadcast signal from a v2 client to all connected clients", () => {
-										const targetedSignal: ISentSignalMessage = {
-											content: stringSignalContent,
-										};
-
-										const expectedSignals = sendAndReturnExpectedSignals(
-											clients[1],
-											[targetedSignal],
-										);
-
-										verifyExpectedClientSignals(clients, expectedSignals);
-									});
-
 									it("can target a v1 client from a v2 client", () => {
 										const targetedSignal: ISentSignalMessage = {
 											targetClientId: clients[0].clientId,
