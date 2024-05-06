@@ -38,5 +38,13 @@ module.exports = {
 				"unicorn/prevent-abbreviations": "off",
 			},
 		},
+		{
+			// Overrides for tests
+			files: ["src/test/*.spec.ts"],
+			rules: {
+				// https://mochajs.org/#arrow-functions
+				"prefer-arrow-callback": "off",
+			}
+		},
 	],
 };

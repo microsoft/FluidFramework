@@ -49,12 +49,12 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
 	(container as any).container.connectionMode as ConnectionMode;
 
 for (const compatMode of ["1", "2"] as const) {
-	describe(`AzureClient (compatMode: ${compatMode})`, () => {
+	describe(`AzureClient (compatMode: ${compatMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
 		let schema: ContainerSchema;
 
-		beforeEach("createAzureClient", () => {
+		beforeEach("createAzureClient", function () {
 			client = createAzureClient();
 			schema = {
 				initialObjects: {
@@ -70,7 +70,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can create new Azure Fluid Relay container successfully", async () => {
+		it("can create new Azure Fluid Relay container successfully", async function () {
 			const resourcesP = client.createContainer(schema, compatMode);
 
 			await assert.doesNotReject(
@@ -87,7 +87,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("created container is detached", async () => {
+		it("created container is detached", async function () {
 			const { container } = await client.createContainer(schema, compatMode);
 			assert.strictEqual(
 				container.attachState,
@@ -102,7 +102,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can attach a container", async () => {
+		it("can attach a container", async function () {
 			const { container } = await client.createContainer(schema, compatMode);
 			const containerId = await container.attach();
 
@@ -127,7 +127,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("cannot attach a container twice", async () => {
+		it("cannot attach a container twice", async function () {
 			const { container } = await client.createContainer(schema, compatMode);
 			const containerId = await container.attach();
 
@@ -157,7 +157,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it("can retrieve existing Azure Fluid Relay container successfully", async () => {
+		it("can retrieve existing Azure Fluid Relay container successfully", async function () {
 			const { container: newContainer } = await client.createContainer(schema, compatMode);
 			const containerId = await newContainer.attach();
 
@@ -181,7 +181,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 		 */
-		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
+		it("cannot load improperly created container (cannot load a non-existent container)", async function () {
 			const consoleErrorFunction = console.error;
 			console.error = (): void => {};
 			const containerAndServicesP = client.getContainer(
@@ -211,7 +211,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
 		 */
-		it("can create a container with only read permission in read mode", async () => {
+		it("can create a container with only read permission in read mode", async function () {
 			const readOnlyAzureClient = createAzureClient({ scopes: [ScopeType.DocRead] });
 
 			const { container } = await readOnlyAzureClient.createContainer(schema, compatMode);
@@ -246,7 +246,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 *
 		 * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
 		 */
-		it("can create a container with read and write permissions in write mode", async () => {
+		it("can create a container with read and write permissions in write mode", async function () {
 			const readWriteAzureClient = createAzureClient({
 				scopes: [ScopeType.DocRead, ScopeType.DocWrite],
 			});
@@ -276,7 +276,7 @@ for (const compatMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("GC is disabled by default, but can be enabled", async () => {
+		it("GC is disabled by default, but can be enabled", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,
 				compatMode,
@@ -312,8 +312,8 @@ for (const compatMode of ["1", "2"] as const) {
 		 * Scenario: Ensure that the types of 'initialObjects' are preserved when the container
 		 * schema type is statically known.
 		 */
-		describe("'initialObjects'", () => {
-			it("preserves 'SharedMap' type", async () => {
+		describe("'initialObjects'", function () {
+			it("preserves 'SharedMap' type", async function () {
 				const { container } = await client.createContainer(
 					{
 						initialObjects: {
@@ -327,7 +327,11 @@ for (const compatMode of ["1", "2"] as const) {
 				assert.equal(container.initialObjects.map.get("nonexistent"), undefined);
 			});
 
-			it("preserves 'SharedTree' type", async () => {
+			it("preserves 'SharedTree' type", async function () {
+				// SharedTree is not supported in compatMode "1", because it requires idCompressor to be enabled.
+				if (compatMode === "1") {
+					this.skip();
+				}
 				const { container } = await client.createContainer(
 					{
 						initialObjects: {
