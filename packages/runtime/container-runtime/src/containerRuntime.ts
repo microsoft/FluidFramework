@@ -2612,9 +2612,9 @@ export class ContainerRuntime
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		assert(
-			messageWithContext.message.minimumSequenceNumber <=
+			messageWithContext.message.minimumSequenceNumber >=
 				this.deltaManager.minimumSequenceNumber,
-			"minimumSequenceNumber should be less than or equal to the delta manager's minimum sequence number",
+			"The delta manager's minimum sequence number can only potentially be less than the message's minimum sequence number",
 		);
 		messageWithContext.message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 

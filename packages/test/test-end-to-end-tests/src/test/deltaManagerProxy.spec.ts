@@ -60,9 +60,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// C-AB
 		// D-C-AB
-		// E-HIJ-FG-D-C-AB
+		// E-HIJ-FG-D-C-ABj
 		//   ^----------^
 		sharedString3.insertText(0, "AB");
+		await provider.ensureSynchronized(container3);
 		sharedString1.insertText(0, "C");
 		await provider.ensureSynchronized();
 		assertConsistent(sharedString1, sharedString2, sharedString3);
@@ -71,6 +72,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized(container1, container3);
 		assertConsistent(sharedString1, sharedString3);
 		sharedString3.insertText(0, "E");
+		await provider.ensureSynchronized(container3, container1);
 		sharedString2.insertText(0, "FG");
 		sharedString2.insertText(0, "HIJ");
 		container1.disconnect();
