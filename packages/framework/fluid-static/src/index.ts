@@ -18,6 +18,7 @@ export {
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export type {
+	CompatMode,
 	ContainerSchema,
 	ContainerAttachProps,
 	DataObjectClass,
@@ -32,5 +33,4 @@ export type {
 	LoadableObjectRecord,
 	MemberChangedListener,
 	Myself,
-	CompatMode,
 } from "./types.js";

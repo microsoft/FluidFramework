@@ -4,6 +4,7 @@
 
 ```ts
 
+import { CompatMode } from '@fluidframework/fluid-static/internal';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
@@ -21,16 +22,16 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatMode?: CompatMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatMode?: CompatMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion): Promise<{
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, compatMode?: CompatMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
     }>;
 }
@@ -67,7 +68,7 @@ export interface AzureContainerVersion {
 
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "name" | "id" | "additionalDetails"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "id" | "name" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)

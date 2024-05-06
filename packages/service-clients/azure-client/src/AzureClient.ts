@@ -23,6 +23,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	type CompatMode,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
@@ -126,11 +127,13 @@ export class AzureClient {
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		// TODO: Make non-optional for creation?
+		compatMode: CompatMode = "1.x",
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatMode);
 
 		const container = await loader.createDetachedContainer({
 			package: "no-dynamic-package",
@@ -156,11 +159,12 @@ export class AzureClient {
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		compatMode: CompatMode = "1.x",
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatMode);
 		const url = new URL(this.properties.connection.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
 		url.searchParams.append(
@@ -191,10 +195,11 @@ export class AzureClient {
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
+		compatMode: CompatMode = "1.x",
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatMode);
 		const url = new URL(this.properties.connection.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
 		url.searchParams.append(
@@ -259,10 +264,10 @@ export class AzureClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
+	private createLoader(schema: ContainerSchema, compatMode: CompatMode): Loader {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatMode: "1.x",
+			compatMode,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

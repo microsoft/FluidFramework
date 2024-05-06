@@ -15,7 +15,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
-// @internal
+// @public
 export type CompatMode = "1.x" | "2.x";
 
 // @public
