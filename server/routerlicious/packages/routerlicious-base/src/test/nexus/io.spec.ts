@@ -597,12 +597,12 @@ describe("Routerlicious", () => {
 										verifyExpectedClientSignals(clients, expectedSignal);
 									});
 									it(`${fromClient} should broadcast batched signals to all connected clients`, () => {
-										const expectedSignal = sendValidAndReturnExpectedSignal(
+										const expectedSignals = sendValidAndReturnExpectedSignal(
 											clients[clientIndex],
 											["first signal", "second signal", "third signal"],
 										);
 
-										verifyExpectedClientSignals(clients, expectedSignal);
+										verifyExpectedClientSignals(clients, expectedSignals);
 									});
 									it(`${fromClient} does not broadcast to disconnected client`, () => {
 										clients[clientIndex ^ 1].socket.disconnect();
