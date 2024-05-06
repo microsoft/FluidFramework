@@ -27,8 +27,13 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
-export type { IProvideFluidHandleContext, IProvideFluidHandle } from "./handles.js";
-export { IFluidHandleContext, IFluidHandle } from "./handles.js";
+export type {
+	IProvideFluidHandleContext,
+	IProvideFluidHandle,
+	IFluidHandleInternal,
+	IFluidHandleErased,
+} from "./handles.js";
+export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
 export type {
 	ILoggingError,

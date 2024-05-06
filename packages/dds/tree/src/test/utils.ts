@@ -137,7 +137,8 @@ import {
 	disposeSymbol,
 	nestedMapFromFlatList,
 } from "../util/index.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
 
 // Testing utilities
 
@@ -549,6 +550,17 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 	);
 }
 
+export function validateFuzzTreeConsistency(
+	treeA: Client<SharedTreeFactory>,
+	treeB: Client<SharedTreeFactory>,
+): void {
+	validateSnapshotConsistency(
+		treeA.channel.contentSnapshot(),
+		treeB.channel.contentSnapshot(),
+		`id: ${treeA.channel.id} vs id: ${treeB.channel.id}`,
+	);
+}
+
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
 	return jsonableTreeFromFieldCursor(
 		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
@@ -641,7 +653,9 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 			fields[key] = prepareTreeForCompare(children);
 		}
 		const inputValue = node.value;
-		const value = isFluidHandle(inputValue) ? { Handle: inputValue.absolutePath } : inputValue;
+		const value = isFluidHandle(inputValue)
+			? { Handle: toFluidHandleInternal(inputValue).absolutePath }
+			: inputValue;
 
 		const output: Record<string, any> = { ...node, value, fields };
 
@@ -1167,7 +1181,7 @@ export function treeTestFactory(
 			}),
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix ?? "SharedTree",
+		options.telemetryContextPrefix,
 	);
 }
 
