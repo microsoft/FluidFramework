@@ -21,7 +21,7 @@ import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframe
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
-import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -114,7 +114,7 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
-			new SharedStringFactory(),
+			SharedString.getFactory(),
 			(dds) => {
 				dds.insertMarker(0, ReferenceType.Simple, { marker: handle });
 			},

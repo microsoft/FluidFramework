@@ -234,7 +234,6 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 		}
 
 		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
-		configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", true);
 		configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
 	});
 
@@ -243,7 +242,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 	});
 
 	itExpects(
-		"ValidateSummaryBeforeUpload = true. Summary should fail before generate stage when data store is created during summarize",
+		"Summary should fail before generate stage when data store is created during summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -290,62 +289,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 	);
 
 	itExpects(
-		"ValidateSummaryBeforeUpload = false. Summary should fail after upload when data store is created during summarize",
-		[
-			{
-				eventName: "fluid:telemetry:SummarizerNode:NodeDidNotRunGC",
-				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
-			},
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
-				clientType: "noninteractive/summarizer",
-				error: "NodeDidNotRunGC",
-			},
-		],
-		async () => {
-			configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", false);
-			const container = await createContainer(provider);
-			await waitForContainerConnection(container);
-			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
-			const dataObject = await dataStoreFactory1.createInstance(
-				rootDataObject.containerRuntime,
-			);
-			rootDataObject._root.set("dataStore2", dataObject.handle);
-			const { summarizer } = await createSummarizerFromFactory(
-				provider,
-				container,
-				rootDataObjectFactory,
-				undefined /* summaryVersion */,
-				undefined /* containerRuntimeFactoryType */,
-				registryStoreEntries,
-				undefined /* logger */,
-				configProvider,
-			);
-			await provider.ensureSynchronized();
-
-			// Summarization should fail because of a data store created during summarization which does not run GC.
-			await assert.rejects(
-				async () => {
-					await summarizeNow(summarizer);
-				},
-				(error: any) => {
-					// The summary should have failed because of "NodeDidNotRunGC" error after it was uploaded,
-					// i.e., "upload" stage.
-					return error.message === "NodeDidNotRunGC" && error.data.stage === "upload";
-				},
-				"expected NodeDidNotRunGC",
-			);
-		},
-	);
-
-	itExpects(
-		"ValidateSummaryBeforeUpload = true. Summary should fail if ops are sent before summarize",
+		"Summary should fail if ops are sent before summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -417,7 +361,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 	);
 
 	itExpects(
-		"ValidateSummaryBeforeUpload = true. Summary should fail if ops are sent during summarize",
+		"Summary should fail if ops are sent during summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -477,7 +421,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 	const dynamicSummarizationRetries = [true, false];
 	for (const tryDynamicRetry of dynamicSummarizationRetries) {
 		itExpects(
-			`ValidateSummaryBeforeUpload = true. TryDynamicRetires = ${tryDynamicRetry}. ` +
+			`TryDynamicRetires = ${tryDynamicRetry}. ` +
 				`Heuristic based summaries should pass on retry when NodeDidNotRunGC is hit`,
 			[
 				{

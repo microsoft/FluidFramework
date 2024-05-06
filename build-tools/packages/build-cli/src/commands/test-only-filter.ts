@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../BasePackageCommand";
 import { PackageWithKind } from "../filter";
+import type { PackageSelectionDefault } from "../flags";
 
 interface FilterCommandResult {
 	selected: Pick<Package, "name" | "directory">[];
@@ -40,13 +41,15 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 	static readonly hidden = true;
 
 	static readonly enableJsonFlag = true;
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// do nothing
 	}
 
-	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
+	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
 		// do nothing
+		return [];
 	}
 
 	public async run(): Promise<FilterCommandResult> {

@@ -273,6 +273,36 @@ async function checkToken(
 	}
 }
 
+async function checkClusterDraining(
+	{ clusterDrainingChecker }: INexusLambdaDependencies,
+	message: IConnect,
+	properties: Record<string, any>,
+) {
+	if (!clusterDrainingChecker) {
+		return;
+	}
+	let clusterInDraining = false;
+	try {
+		clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+	} catch (error) {
+		Lumberjack.error(
+			"Failed to get cluster draining status. Will allow requests to proceed.",
+			properties,
+			error,
+		);
+		clusterInDraining = false;
+	}
+
+	if (clusterInDraining) {
+		// TODO: add a new error class
+		Lumberjack.info("Reject connect document request because cluster is draining.", {
+			...properties,
+			tenantId: message.tenantId,
+		});
+		throw new NetworkError(503, "Cluster is not available. Please retry later.");
+	}
+}
+
 async function joinRoomAndSubscribeToChannel(
 	socket: IWebSocket,
 	tenantId: string,
@@ -427,16 +457,16 @@ function setUpSignalListenerForRoomBroadcasting(
 				try {
 					const runtimeMessage = createRuntimeMessage(signalContent);
 
-					socket
-						.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
-						.catch((error: any) => {
-							const errorMsg = `Failed to broadcast signal from external API.`;
-							Lumberjack.error(
-								errorMsg,
-								getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-								error,
-							);
-						});
+					try {
+						socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
+					} catch (error) {
+						const errorMsg = `Failed to broadcast signal from external API.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
+							error,
+						);
+					}
 				} catch (error) {
 					const errorMsg = `broadcast-signal content body is malformed`;
 					throw handleServerErrorAndConvertToNetworkError(
@@ -486,6 +516,8 @@ export async function connectDocument(
 		tenantId = claims.tenantId;
 		documentId = claims.documentId;
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
+
+		await checkClusterDraining(lambdaDependencies, message, properties);
 
 		const [clientId, room] = await joinRoomAndSubscribeToChannel(
 			socket,

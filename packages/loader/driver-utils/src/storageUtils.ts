@@ -16,3 +16,11 @@ export function isInstanceOfISnapshot(
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
 }
+
+/**
+ * Utility API to return ISnapshotTree either from ISnapshot or ISnapshotTree itself.
+ * @internal
+ */
+export function getSnapshotTree(tree: ISnapshotTree | ISnapshot): ISnapshotTree {
+	return isInstanceOfISnapshot(tree) ? tree.snapshotTree : tree;
+}

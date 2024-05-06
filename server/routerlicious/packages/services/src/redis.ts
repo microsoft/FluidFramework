@@ -29,9 +29,10 @@ export class RedisCache implements ICache {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (err) => {
-			Lumberjack.error("Error with Redis", undefined, err);
-		});
+		redisClientConnectionManager.addErrorHandler(
+			undefined, // lumber properties
+			"Error with Redis", // error message
+		);
 	}
 	public async delete(key: string): Promise<boolean> {
 		try {

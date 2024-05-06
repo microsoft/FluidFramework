@@ -1,9 +1,0 @@
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: unmanaged-premium
-provisioner: kubernetes.io/azure-disk
-parameters:
-  skuName: Premium_LRS
-  location: westus2
-  storageAccount: pvc2335720863001

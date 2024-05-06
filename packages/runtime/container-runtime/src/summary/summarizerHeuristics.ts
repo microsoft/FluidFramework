@@ -4,7 +4,7 @@
  */
 
 import { Timer } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
