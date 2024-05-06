@@ -4,11 +4,10 @@
  */
 
 import assert from "assert";
-import { SharedTree } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import type { IHostLoader } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -18,37 +17,49 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedMap, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
-import type {
-	IIntervalCollection,
-	SequenceInterval,
-	SharedString,
-} from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
-	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
 	DataObjectFactoryType,
-	type ITestObjectProvider,
+	ITestObjectProvider,
 	createAndAttachContainer,
-	type ITestFluidObject,
+	ITestFluidObject,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import type { ISharedMatrix } from "@fluidframework/matrix/internal";
+import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
+
 const mapId = "map";
-const stringId = "sharedStringKey";
-const cellId = "cellKey";
-const counterId = "counterKey";
-const directoryId = "directoryKey";
-const collectionId = "collectionKey";
-const treeId = "treeKey";
+const stringId = "sharedString";
+const cellId = "cell";
+const counterId = "counter";
+const directoryId = "directory";
+const treeId = "tree";
+const matrixId = "matrix";
+const legacyTreeId = "legacyTree";
+const registerId = "registerCollection";
+const queueId = "consensusQueue";
+const migrationShimId = "migrationShim";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
+describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
+	const {
+		SharedMap,
+		SharedDirectory,
+		SharedCounter,
+		SharedString,
+		SharedCell,
+		SharedMatrix,
+		ConsensusRegisterCollection,
+		ConsensusQueue,
+	} = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
@@ -56,7 +67,21 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[cellId, SharedCell.getFactory()],
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
-		[treeId, SharedTree.getFactory()],
+		// [treeId, SharedTree.getFactory()],
+		[matrixId, SharedMatrix.getFactory()],
+		// [legacyTreeId, LegacySharedTree.getFactory()],
+		[registerId, ConsensusRegisterCollection.getFactory()],
+		[queueId, ConsensusQueue.getFactory()],
+		// [
+		// 	migrationShimId,
+		// 	new MigrationShimFactory(
+		// 		LegacySharedTree.getFactory(),
+		// 		SharedTree.getFactory(),
+		// 		(legacyTree, newTree) => {
+		// 			throw new Error("unreachable");
+		// 		},
+		// 	),
+		// ],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -95,9 +120,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let map1: ISharedMap;
 	let string1: SharedString;
 	let cell1: ISharedCell;
-	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
-	let collection1: IIntervalCollection<SequenceInterval>;
+	// let tree1: ISharedTree;
+	let matrix1: ISharedMatrix;
+	// let legacyTree1: LegacySharedTree;
+	let register1: IConsensusRegisterCollection;
+	let queue1: IConsensusOrderedCollection;
+	// let migrationShim1: MigrationShim;
+
 	let waitForSummary: () => Promise<void>;
 
 	beforeEach("setup", async () => {
@@ -113,10 +143,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
-		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
+		// tree1 = await dataStore1.getSharedObject<ISharedTree>(treeId);
+		matrix1 = await dataStore1.getSharedObject<ISharedMatrix>(matrixId);
+		// legacyTree1 = await dataStore1.getSharedObject<LegacySharedTree>(legacyTreeId);
+		register1 = await dataStore1.getSharedObject<IConsensusRegisterCollection>(registerId);
+		queue1 = await dataStore1.getSharedObject<IConsensusOrderedCollection>(queueId);
+		// migrationShim1 = await dataStore1.getSharedObject<MigrationShim>(migrationShimId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
-		collection1 = string1.getIntervalCollection(collectionId);
 		string1.insertText(0, "hello");
 
 		waitForSummary = async () => {
@@ -203,4 +237,159 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const stringObjectB3 = await stringHandleB.get();
 		assert(stringObjectB3.context.id === idB);
 	});
+
+	const handleFns = [
+		{
+			type: mapId,
+			fn: async (defaultDataStore, handle) => {
+				const mapRoot = await defaultDataStore.getSharedObject(mapId);
+				mapRoot.set("B", handle);
+			},
+		},
+		{
+			type: cellId,
+			fn: async (defaultDataStore, handle) => {
+				const cellRoot = await defaultDataStore.getSharedObject(cellId);
+				cellRoot.set(handle);
+			},
+		},
+		{
+			type: directoryId,
+			fn: async (defaultDataStore, handle) => {
+				const dirRoot = await defaultDataStore.getSharedObject(directoryId);
+				dirRoot.set("B", handle);
+			},
+		},
+		{
+			type: stringId,
+			fn: async (defaultDataStore, handle) => {
+				const stringRoot = await defaultDataStore.getSharedObject(stringId);
+				stringRoot.annotateRange(0, 1, { B: handle });
+			},
+		},
+		{
+			type: matrixId,
+			fn: async (defaultDataStore, handle) => {
+				const matrixRoot = await defaultDataStore.getSharedObject(matrixId);
+				matrixRoot.insertRows(0, 1);
+				matrixRoot.insertCols(0, 1);
+				matrixRoot.setCell(0, 0, handle);
+			},
+		},
+		// {
+		// 	type: treeId,
+		// 	fn: async (defaultDataStore, handle) => {
+		// 		const treeRoot = await defaultDataStore.getSharedObject(treeId);
+
+		// 		const builder = new SchemaFactory("test");
+		// 		class Bar extends builder.object("bar", {
+		// 			h: builder.optional(builder.handle),
+		// 		}) {}
+
+		// 		const config = new TreeConfiguration(Bar, () => ({
+		// 			h: undefined,
+		// 		}));
+
+		// 		const treeView = treeRoot.schematize(config);
+		// 		treeView.root.h = handle;
+		// 	},
+		// },
+		// {
+		// 	type: legacyTreeId,
+		// 	fn: async (defaultDataStore, handle) => {
+		// 		const treeRoot = await defaultDataStore.getSharedObject(legacyTreeId);
+		// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+		// 		const handleNode: BuildNode = {
+		// 			definition: legacyNodeId,
+		// 			traits: {
+		// 				handle,
+		// 			},
+		// 		};
+		// 		treeRoot.applyEdit(
+		// 			Change.insertTree(
+		// 				handleNode,
+		// 				StablePlace.atStartOf({
+		// 					parent: treeRoot.currentView.root,
+		// 					label: legacyNodeId,
+		// 				}),
+		// 			),
+		// 		);
+
+		// 		const rootNode = treeRoot.currentView.getViewNode(treeRoot.currentView.root);
+		// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// 		const nodeId = rootNode.traits.get(legacyNodeId)![0];
+		// 		const change: Change = Change.setPayload(nodeId, handle);
+		// 		treeRoot.applyEdit(change);
+		// 	},
+		// },
+		{
+			type: registerId,
+			fn: async (defaultDataStore, handle) => {
+				const registerRoot = await defaultDataStore.getSharedObject(registerId);
+				registerRoot.write("B", handle);
+			},
+		},
+		{
+			type: queueId,
+			fn: async (defaultDataStore, handle) => {
+				const queueRoot = await defaultDataStore.getSharedObject(queueId);
+				queueRoot.add(handle);
+			},
+		},
+		// {
+		// 	type: migrationShimId,
+		// 	fn: async (defaultDataStore, handle) => {
+		// 		const migrationShimRoot = await defaultDataStore.getSharedObject(migrationShimId);
+		// 		const tree = migrationShimRoot.currentTree as LegacySharedTree;
+		// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+		// 		const handleNode: BuildNode = {
+		// 			definition: legacyNodeId,
+		// 			traits: {
+		// 				handle,
+		// 			},
+		// 		};
+		// 		tree.applyEdit(
+		// 			Change.insertTree(
+		// 				handleNode,
+		// 				StablePlace.atStartOf({
+		// 					parent: tree.currentView.root,
+		// 					label: legacyNodeId,
+		// 				}),
+		// 			),
+		// 		);
+
+		// 		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+		// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// 		const nodeId = rootNode.traits.get(legacyNodeId)![0];
+		// 		const change = Change.setPayload(nodeId, handle);
+		// 		tree.applyEdit(change);
+		// 	},
+		// },
+	];
+
+	for (const storeHandle of handleFns) {
+		it(`store handle in dds: ${storeHandle.type}`, async () => {
+			const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+			const runtime = defaultDataStore.context.containerRuntime;
+
+			const dataStoreB = await runtime.createDataStore(["default"]);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			const idB = dataObjectB.context.id;
+
+			await storeHandle.fn(defaultDataStore, dataObjectB.handle);
+
+			await provider.ensureSynchronized();
+			const container2: IContainerExperimental =
+				await provider.loadTestContainer(testContainerConfig);
+			await waitForContainerConnection(container2);
+			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const dds2 = await default2.getSharedObject(storeHandle.type);
+
+			const handleB = dds2.get() as IFluidHandle<ITestFluidObject>;
+			const dataObjectB2 = await handleB.get();
+			assert(dataObjectB2.context.id === idB);
+		});
+	}
 });
