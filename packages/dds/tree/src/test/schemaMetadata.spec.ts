@@ -14,6 +14,7 @@ import { isTreeValue } from "../feature-libraries/index.js";
 import { isTreeNode } from "../simple-tree/proxies.js";
 
 describe.only("Schema Metadata example patterns", () => {
+	// TODO: docs
 	describe("AI Summary example", () => {
 		it("Status Quo - suggested patterns only", () => {
 			const schemaFactory = new SchemaFactory("CanvasApp");
@@ -188,6 +189,7 @@ describe.only("Schema Metadata example patterns", () => {
 		});
 	});
 
+	// TODO: docs
 	it("Search example", () => {
 		const schemaFactory = new SchemaFactory("CanvasApp");
 
@@ -279,7 +281,8 @@ describe.only("Schema Metadata example patterns", () => {
 		);
 	});
 
-	it("Search example", () => {
+	// TODO: docs
+	it("Type-narrowing example", () => {
 		const schemaFactory = new SchemaFactory("CanvasApp");
 
 		enum NumberType {
