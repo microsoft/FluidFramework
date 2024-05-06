@@ -91,7 +91,7 @@
 	},
 	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
 	"engines": {
-		"node": ">=18.18.0"
+		"node": ">=18.17.1"
 	},
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
