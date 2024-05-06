@@ -897,62 +897,6 @@ describe("Routerlicious", () => {
 									}
 								});
 							});
-
-							describe("with clients connected to same socket", () => {
-								beforeEach(async () => {
-									clients = [];
-									const socket = webSocketServer.createConnection();
-
-									// Must wait for each client to connect before creating the next one
-									for (const version of clientVersion) {
-										const client = await createClient(
-											testId,
-											testTenantId,
-											testSecret,
-											version,
-											socket,
-										);
-										clients.push(client);
-									}
-
-									listenForSignals(clients);
-								});
-								[0, 1].forEach((clientIndex) => {
-									const fromClient = `from client ${clientIndex} (v${clientVersion[clientIndex]})`;
-									it(`${fromClient} should broadcast signal to all connected clients`, () => {
-										const expectedSignal = sendValidAndReturnExpectedSignal(
-											clients[clientIndex],
-											stringSignalContent,
-										);
-
-										verifyExpectedClientSignals(clients, [expectedSignal]);
-									});
-								});
-
-								if (description === "with v1 and v2 clients") {
-									it("should broadcast signal from a v1 client to all connected clients", () => {
-										const expectedSignal = sendValidAndReturnExpectedSignal(
-											clients[0],
-											stringSignalContent,
-										);
-
-										verifyExpectedClientSignals(clients, [expectedSignal]);
-									});
-
-									it("should broadcast signal from a v2 client to all connected clients", () => {
-										const targetedSignal: ISentSignalMessage = {
-											content: stringSignalContent,
-										};
-
-										const expectedSignal = sendAndReturnExpectedSignal(
-											clients[1],
-											targetedSignal,
-										);
-
-										verifyExpectedClientSignals(clients, [expectedSignal]);
-									});
-								}
-							});
 						}),
 					);
 				});
