@@ -12,13 +12,13 @@ const OperationError = require("@fluid-experimental/property-common").OperationE
 const HTTPStatus = require("http-status");
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
 
-const ALTERNATIVES_FOR_MOST_CLAUSES = Joi.alternatives().try([
+const ALTERNATIVES_FOR_MOST_CLAUSES = Joi.alternatives().try(
 	Joi.string(),
 	Joi.number(),
 	Joi.array() // For Int64, Uint64
 		.items(Joi.number().integer())
 		.length(2),
-]);
+);
 
 const WHERE_CLAUSE_SCHEMA = Joi.object({
 	eq: Joi.object().pattern(Joi.string(), ALTERNATIVES_FOR_MOST_CLAUSES),
@@ -28,9 +28,9 @@ const WHERE_CLAUSE_SCHEMA = Joi.object({
 	gte: Joi.object().pattern(Joi.string(), ALTERNATIVES_FOR_MOST_CLAUSES),
 	lte: Joi.object().pattern(Joi.string(), ALTERNATIVES_FOR_MOST_CLAUSES),
 	match: Joi.object().pattern(Joi.string(), Joi.string()),
-	or: Joi.array().items(Joi.lazy(() => WHERE_CLAUSE_SCHEMA)),
-	not: Joi.lazy(() => WHERE_CLAUSE_SCHEMA),
-});
+	or: Joi.array().items(Joi.link("#WHERE_CLAUSE_SCHEMA")),
+	not: Joi.link("#WHERE_CLAUSE_SCHEMA"),
+}).id("WHERE_CLAUSE_SCHEMA");
 
 const QUERY_SCHEMA = Joi.object({
 	from: Joi.array()
@@ -49,13 +49,13 @@ const QUERY_SCHEMA = Joi.object({
 		order: Joi.array().items(
 			Joi.object({
 				by: Joi.string().optional(),
-				direction: Joi.string().any().valid(["ASC", "DESC"]).default("ASC"),
+				direction: Joi.string().valid("ASC", "DESC").default("ASC"),
 			}),
 		),
 		limit: Joi.number().integer().min(0).required(),
 		offset: Joi.number().integer().min(0).default(0),
 	}).optional(),
-	queryLanguage: Joi.string().any().valid("queryV1").required(),
+	queryLanguage: Joi.string().valid("queryV1").required(),
 });
 
 /**

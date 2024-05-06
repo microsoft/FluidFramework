@@ -17,7 +17,7 @@ const QUERY_VERSIONS = {
 
 const QUERY_SCHEMA = Joi.array().items(
 	Joi.object({
-		queryLanguage: Joi.string().any().valid(Object.values(QUERY_VERSIONS)),
+		queryLanguage: Joi.string().valid(...Object.values(QUERY_VERSIONS)),
 	}),
 );
 
