@@ -1,4 +1,13 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-lint.esm.primary.json"
+	"extends": "../../../common/build/build-common/api-extractor-lint.esm.primary.json",
+	"messages": {
+		"extractorMessageReporting": {
+			// Validate forgotten exports across package boundaries.
+			// This is an explicit policy choice for this package.
+			"ae-forgotten-export": {
+				"logLevel": "error"
+			}
+		}
+	}
 }

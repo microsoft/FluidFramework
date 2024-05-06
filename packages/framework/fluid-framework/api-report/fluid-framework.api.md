@@ -4,51 +4,10 @@
 
 ```ts
 
-import { Client } from '@fluidframework/merge-tree/internal';
-import { Deferred } from '@fluidframework/core-utils/internal';
-import { ErasedType } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions';
-import type { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IRelativePosition } from '@fluidframework/merge-tree/internal';
-import { ISegment } from '@fluidframework/merge-tree/internal';
-import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
-import { Marker } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
-import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
-import { PropertiesManager } from '@fluidframework/merge-tree/internal';
-import { PropertySet } from '@fluidframework/merge-tree/internal';
-import { ReferencePosition } from '@fluidframework/merge-tree/internal';
-import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
-import { SlidingPreference } from '@fluidframework/merge-tree/internal';
-import { TextSegment } from '@fluidframework/merge-tree/internal';
+import { EventEmitterEventType } from '@fluid-internal/client-utils';
+import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { TypedEventTransform } from '@fluid-internal/client-utils';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -63,6 +22,194 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @alpha
+export interface AttributionInfo {
+    timestamp: number;
+    user: IUser;
+}
+
+// @alpha
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
+
+// @alpha @sealed
+export interface AttributionPolicy {
+    attach: (client: Client) => void;
+    detach: () => void;
+    // (undocumented)
+    isAttached: boolean;
+    serializer: IAttributionCollectionSerializer;
+}
+
+// @alpha (undocumented)
+export abstract class BaseSegment implements ISegment {
+    // (undocumented)
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    // (undocumented)
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+    // (undocumented)
+    protected addSerializedProps(jseg: IJSONSegment): void;
+    // (undocumented)
+    append(other: ISegment): void;
+    // (undocumented)
+    attribution?: IAttributionCollection<AttributionKey>;
+    // (undocumented)
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    abstract clone(): ISegment;
+    // (undocumented)
+    protected cloneInto(b: ISegment): void;
+    // (undocumented)
+    protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
+    // (undocumented)
+    hasProperty(key: string): boolean;
+    // (undocumented)
+    index: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    // (undocumented)
+    localMovedSeq?: number;
+    // (undocumented)
+    localRefs?: LocalReferenceCollection;
+    // (undocumented)
+    localRemovedSeq?: number;
+    // (undocumented)
+    localSeq?: number;
+    // (undocumented)
+    movedClientIds?: number[];
+    // (undocumented)
+    movedSeq?: number;
+    // (undocumented)
+    movedSeqs?: number[];
+    // (undocumented)
+    ordinal: string;
+    // (undocumented)
+    properties?: PropertySet;
+    // (undocumented)
+    propertyManager?: PropertiesManager;
+    // (undocumented)
+    removedClientIds?: number[];
+    // (undocumented)
+    removedSeq?: number;
+    // (undocumented)
+    readonly segmentGroups: SegmentGroupCollection;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    abstract toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    abstract readonly type: string;
+    // (undocumented)
+    wasMovedOnInsert?: boolean | undefined;
+}
+
+// @alpha @deprecated (undocumented)
+export class Client extends TypedEventEmitter<IClientEvents> {
+    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet, getMinInFlightRefSeq?: () => number | undefined);
+    // (undocumented)
+    addLongClientId(longClientId: string): void;
+    annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
+    annotateRangeLocal(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
+    // (undocumented)
+    applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeOp): void;
+    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    // (undocumented)
+    createTextHelper(): IMergeTreeTextHelper;
+    findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    // (undocumented)
+    getClientId(): number;
+    // (undocumented)
+    getCollabWindow(): CollaborationWindow;
+    // (undocumented)
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
+        segment: T | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getCurrentSeq(): number;
+    // (undocumented)
+    getLength(): number;
+    // (undocumented)
+    getLongClientId(shortClientId: number): string;
+    // (undocumented)
+    getMarkerFromId(id: string): ISegment | undefined;
+    // (undocumented)
+    getOrAddShortClientId(longClientId: string): number;
+    getPosition(segment: ISegment | undefined, localSeq?: number): number;
+    // (undocumented)
+    getPropertiesAtPosition(pos: number): PropertySet | undefined;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number | undefined;
+        posAfterEnd: number | undefined;
+    };
+    // (undocumented)
+    protected getShortClientId(longClientId: string): number;
+    // (undocumented)
+    insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
+    // (undocumented)
+    insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
+        catchupOpsP: Promise<ISequencedDocumentMessage[]>;
+    }>;
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    // (undocumented)
+    localTransaction(groupOp: IMergeTreeGroupMsg): void;
+    // (undocumented)
+    readonly logger: ITelemetryLoggerExt;
+    // (undocumented)
+    longClientId: string | undefined;
+    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
+    peekPendingSegmentGroups(): SegmentGroup | undefined;
+    // (undocumented)
+    peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+    regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    rollback?(op: any, localOpMetadata: unknown): void;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
+    serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
+    // (undocumented)
+    readonly specToSegment: (spec: IJSONSegment) => ISegment;
+    // (undocumented)
+    startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
+    // (undocumented)
+    summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ISummaryTreeWithStats;
+    // (undocumented)
+    updateMinSeq(minSeq: number): void;
+    // (undocumented)
+    protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
+    // (undocumented)
+    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
+    // (undocumented)
+    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+}
+
+// @alpha @deprecated (undocumented)
+export class CollaborationWindow {
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    collaborating: boolean;
+    currentSeq: number;
+    // (undocumented)
+    loadFrom(a: CollaborationWindow): void;
+    localSeq: number;
+    minSeq: number;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -75,6 +222,9 @@ export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
 }
+
+// @public
+export type ConnectionMode = "write" | "read";
 
 // @public
 export enum ConnectionState {
@@ -124,8 +274,24 @@ export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     };
 } & (new (...args: any[]) => T);
 
+// @alpha
+export class Deferred<T> {
+    constructor();
+    get isCompleted(): boolean;
+    get promise(): Promise<T>;
+    reject(error: any): void;
+    resolve(value: T | PromiseLike<T>): void;
+}
+
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
+
+// @alpha
+export interface DetachedAttributionKey {
+    id: 0;
+    // (undocumented)
+    type: "detached";
+}
 
 // @alpha @sealed
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
@@ -164,6 +330,21 @@ export const DriverErrorTypes: {
 
 // @public
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
+
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
+export { EventEmitterEventType }
+
+// @alpha
+export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
+    constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
+    // (undocumented)
+    emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
+}
 
 // @public
 export type Events<E> = {
@@ -208,13 +389,276 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
+export const fluidHandleSymbol: unique symbol;
+
+// @public
+export type FluidObject<T = unknown> = {
+    [P in FluidObjectProviderKeys<T>]?: T[P];
+};
+
+// @public
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
+}
+
+// @alpha (undocumented)
+export interface IAttributionCollection<T> {
+    // (undocumented)
+    append(other: IAttributionCollection<T>): void;
+    // (undocumented)
+    readonly channelNames: Iterable<string>;
+    // (undocumented)
+    clone(): IAttributionCollection<T>;
+    getAll(): IAttributionCollectionSpec<T>;
+    getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
+    readonly length: number;
+    // (undocumented)
+    splitAt(pos: number): IAttributionCollection<T>;
+    update(name: string | undefined, channel: IAttributionCollection<T>): void;
+}
+
+// @alpha @sealed (undocumented)
+export interface IAttributionCollectionSerializer {
+    populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
+    // (undocumented)
+    serializeAttributionCollections(segments: Iterable<{
+        attribution?: IAttributionCollection<AttributionKey>;
+        cachedLength: number;
+    }>): SerializedAttributionCollection;
+}
+
+// @alpha (undocumented)
+export interface IAttributionCollectionSpec<T> {
+    // (undocumented)
+    channels?: {
+        [name: string]: Iterable<{
+            offset: number;
+            key: T | null;
+        }>;
+    };
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    root: Iterable<{
+        offset: number;
+        key: T | null;
+    }>;
+}
+
+// @public
+export interface IAudience extends IEventProvider<IAudienceEvents> {
+    getMember(clientId: string): IClient | undefined;
+    getMembers(): Map<string, IClient>;
+    getSelf: () => ISelf | undefined;
+}
+
+// @public
+export interface IAudienceEvents extends IEvent {
+    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
+}
+
+// @public
+export interface IBranchOrigin {
+    id: string;
+    minimumSequenceNumber: number;
+    sequenceNumber: number;
+}
+
+// @public
+export interface ICapabilities {
+    interactive: boolean;
+}
+
+// @public (undocumented)
+export interface IChannel extends IFluidLoadable {
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    connect(services: IChannelServices): void;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly id: string;
+    isAttached(): boolean;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+}
+
+// @public
+export interface IChannelAttributes {
+    readonly packageVersion?: string;
+    readonly snapshotFormatVersion: string;
+    readonly type: string;
+}
+
+// @public
+export interface IChannelFactory<out TChannel = unknown> {
+    readonly attributes: IChannelAttributes;
+    create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
+    readonly type: string;
+}
+
+// @public
+export interface IChannelServices {
+    // (undocumented)
+    deltaConnection: IDeltaConnection;
+    // (undocumented)
+    objectStorage: IChannelStorageService;
+}
+
+// @public
+export interface IChannelStorageService {
+    contains(path: string): Promise<boolean>;
+    list(path: string): Promise<string[]>;
+    readBlob(path: string): Promise<ArrayBufferLike>;
+}
+
+// @public
+export interface IClient {
+    details: IClientDetails;
+    mode: ConnectionMode;
+    // (undocumented)
+    permission: string[];
+    scopes: string[];
+    timestamp?: number;
+    user: IUser;
+}
+
+// @public
+export interface IClientConfiguration {
+    blockSize: number;
+    maxMessageSize: number;
+    noopCountFrequency?: number;
+    noopTimeFrequency?: number;
+}
+
+// @public
+export interface IClientDetails {
+    capabilities: ICapabilities;
+    // (undocumented)
+    device?: string;
+    // (undocumented)
+    environment?: string;
+    type?: string;
+}
+
+// @alpha
+export interface IClientEvents {
+    // (undocumented)
+    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
+    // (undocumented)
+    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): void;
+    // (undocumented)
+    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
+}
+
+// @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
 }
 
 // @public
+export interface IConnectionDetails {
+    checkpointSequenceNumber: number | undefined;
+    // (undocumented)
+    claims: ITokenClaims;
+    clientId: string;
+    // (undocumented)
+    serviceConfiguration: IClientConfiguration;
+}
+
+// @public
 export type ICriticalContainerError = IErrorBase;
+
+// @public
+export interface IDeltaConnection {
+    // @deprecated (undocumented)
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    attach(handler: IDeltaHandler): void;
+    // (undocumented)
+    connected: boolean;
+    dirty(): void;
+    submit(messageContent: any, localOpMetadata: unknown): void;
+}
+
+// @public
+export interface IDeltaHandler {
+    applyStashedOp(message: any): void;
+    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
+    reSubmit(message: any, localOpMetadata: unknown): void;
+    rollback?(message: any, localOpMetadata: unknown): void;
+    setConnectionState(connected: boolean): void;
+}
+
+// @public @sealed
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
+    readonly active: boolean;
+    readonly clientDetails: IClientDetails;
+    readonly hasCheckpointSequenceNumber: boolean;
+    // @deprecated
+    readonly inbound: IDeltaQueue<T>;
+    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
+    readonly initialSequenceNumber: number;
+    readonly lastKnownSeqNumber: number;
+    readonly lastMessage: ISequencedDocumentMessage | undefined;
+    readonly lastSequenceNumber: number;
+    readonly maxMessageSize: number;
+    readonly minimumSequenceNumber: number;
+    // @deprecated
+    readonly outbound: IDeltaQueue<U[]>;
+    // (undocumented)
+    readonly readOnlyInfo: ReadOnlyInfo;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
+    submitSignal(content: any, targetClientId?: string): void;
+    readonly version: string;
+}
+
+// @public @sealed
+export interface IDeltaManagerEvents extends IEvent {
+    // @deprecated (undocumented)
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
+    // @deprecated (undocumented)
+    (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
+    (event: "pong", listener: (latency: number) => void): any;
+    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
+    (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
+        reason: string;
+        error?: IErrorBase;
+    }) => void): any;
+}
+
+// @public @sealed
+export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable_2 {
+    idle: boolean;
+    length: number;
+    pause(): Promise<void>;
+    paused: boolean;
+    peek(): T | undefined;
+    resume(): void;
+    toArray(): T[];
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
+}
+
+// @public @sealed
+export interface IDeltaQueueEvents<T> extends IErrorEvent {
+    (event: "push", listener: (task: T) => void): any;
+    (event: "op", listener: (task: T) => void): any;
+    (event: "idle", listener: (count: number, duration: number) => void): any;
+}
+
+// @public @sealed
+export interface IDeltaSender {
+    flush(): void;
+}
 
 // @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
@@ -249,6 +693,226 @@ export interface IDisposable {
     [disposeSymbol](): void;
 }
 
+// @public
+export interface IDisposable_2 {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
+
+// @public
+export interface IDocumentMessage {
+    clientSequenceNumber: number;
+    compression?: string;
+    contents: unknown;
+    metadata?: unknown;
+    referenceSequenceNumber: number;
+    serverMetadata?: unknown;
+    traces?: ITrace[];
+    type: string;
+}
+
+// @public
+export interface IDriverErrorBase {
+    canRetry: boolean;
+    endpointReached?: boolean;
+    readonly errorType: DriverErrorTypes;
+    readonly message: string;
+    online?: string;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
+
+// @public
+export interface IErrorEvent extends IEvent {
+    // @eventProperty
+    (event: "error", listener: (message: any) => void): any;
+}
+
+// @public
+export interface IEvent {
+    // @eventProperty
+    (event: string, listener: (...args: any[]) => void): any;
+}
+
+// @public
+export interface IEventProvider<TEvent extends IEvent> {
+    readonly off: IEventTransformer<this, TEvent>;
+    readonly on: IEventTransformer<this, TEvent>;
+    readonly once: IEventTransformer<this, TEvent>;
+}
+
+// @public
+export type IEventThisPlaceHolder = {
+    thisPlaceHolder: "thisPlaceHolder";
+};
+
+// @public
+export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: infer E14, listener: (...args: infer A14) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
+
+// @public
+export interface IExperimentalIncrementalSummaryContext {
+    latestSummarySequenceNumber: number;
+    summaryPath: string;
+    summarySequenceNumber: number;
+}
+
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(props?: ContainerAttachProps): Promise<string>;
@@ -270,6 +934,131 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
+
+// @public
+export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable_2 {
+    addChannel(channel: IChannel): void;
+    readonly attachState: AttachState;
+    bindChannel(channel: IChannel): void;
+    // (undocumented)
+    readonly channelsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly clientId: string | undefined;
+    // (undocumented)
+    readonly connected: boolean;
+    createChannel(id: string | undefined, type: string): IChannel;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
+    getAudience(): IAudience;
+    getChannel(id: string): Promise<IChannel>;
+    getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+    // (undocumented)
+    readonly logger: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly objectsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly options: Record<string | number, any>;
+    // (undocumented)
+    readonly rootRoutingContext: IFluidHandleContext;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    waitAttached(): Promise<void>;
+}
+
+// @public
+export interface IFluidDataStoreRuntimeEvents extends IEvent {
+    // (undocumented)
+    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    // (undocumented)
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "connected", listener: (clientId: string) => void): any;
+}
+
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
+
+// @public
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
+    get(): Promise<T>;
+    readonly isAttached: boolean;
+}
+
+// @public (undocumented)
+export const IFluidHandleContext: keyof IProvideFluidHandleContext;
+
+// @public
+export interface IFluidHandleContext extends IProvideFluidHandleContext {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    readonly isAttached: boolean;
+    // (undocumented)
+    resolveHandle(request: IRequest): Promise<IResponse>;
+    readonly routeContext?: IFluidHandleContext;
+}
+
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
+
+// @alpha
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    bind(handle: IFluidHandleInternal): void;
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    // (undocumented)
+    handle: IFluidHandle;
+}
+
+// @public (undocumented)
+export interface IFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
+}
+
+// @public
+export interface IGarbageCollectionData {
+    gcNodes: {
+        [id: string]: string[];
+    };
+}
+
+// @public
+export interface IIdCompressor {
+    decompress(id: SessionSpaceCompressedId): StableId;
+    generateCompressedId(): SessionSpaceCompressedId;
+    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
+    localSessionId: SessionId;
+    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    recompress(uncompressed: StableId): SessionSpaceCompressedId;
+    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
+}
+
+// @public
+export interface IInboundSignalMessage extends ISignalMessage {
+    // (undocumented)
+    type: string;
 }
 
 // @alpha
@@ -334,10 +1123,176 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
+// @alpha (undocumented)
+export interface IJSONMarkerSegment extends IJSONSegment {
+    // (undocumented)
+    marker: IMarkerDef;
+}
+
+// @alpha (undocumented)
+export interface IJSONSegment {
+    // (undocumented)
+    props?: Record<string, any>;
+}
+
+// @alpha (undocumented)
+export interface IJSONTextSegment extends IJSONSegment {
+    // (undocumented)
+    text: string;
+}
+
+// @alpha (undocumented)
+export interface IMarkerDef {
+    // (undocumented)
+    refType?: ReferenceType;
+}
+
 // @public
 export interface IMember {
     readonly connections: IConnection[];
     readonly id: string;
+}
+
+// @alpha
+export interface IMergeNodeCommon {
+    index: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    ordinal: string;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props: Record<string, any>;
+    // (undocumented)
+    relativePos1?: IRelativePosition;
+    // (undocumented)
+    relativePos2?: IRelativePosition;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeAttributionOptions {
+    policyFactory?: () => AttributionPolicy;
+    track?: boolean;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeDelta {
+    type: MergeTreeDeltaType;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
+    readonly deltaSegments: IMergeTreeSegmentDelta[];
+    readonly operation: TOperationType;
+}
+
+// @alpha (undocumented)
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg;
+
+// @alpha (undocumented)
+export interface IMergeTreeDeltaOpArgs {
+    readonly groupOp?: IMergeTreeGroupMsg;
+    readonly op: IMergeTreeOp;
+    readonly sequencedMessage?: ISequencedDocumentMessage;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
+    // (undocumented)
+    ops: IMergeTreeDeltaOp[];
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.GROUP;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    relativePos1?: IRelativePosition;
+    // (undocumented)
+    relativePos2?: IRelativePosition;
+    // (undocumented)
+    seg?: any;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.INSERT;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {
+}
+
+// @alpha @deprecated (undocumented)
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    relativePos1?: never;
+    relativePos2?: never;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.OBLITERATE;
+}
+
+// @alpha (undocumented)
+export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
+
+// @alpha (undocumented)
+export interface IMergeTreeOptions {
+    attribution?: IMergeTreeAttributionOptions;
+    // (undocumented)
+    catchUpBlobName?: string;
+    mergeTreeEnableObliterate?: boolean;
+    mergeTreeReferencesCanSlideToEndpoint?: boolean;
+    // (undocumented)
+    mergeTreeSnapshotChunkSize?: number;
+    newMergeTreeSnapshotFormat?: boolean;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    relativePos1?: IRelativePosition;
+    // (undocumented)
+    relativePos2?: IRelativePosition;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.REMOVE;
+}
+
+// @alpha (undocumented)
+export interface IMergeTreeSegmentDelta {
+    propertyDeltas?: PropertySet;
+    segment: ISegment;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IMergeTreeTextHelper {
+    // (undocumented)
+    getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
+}
+
+// @alpha
+export interface IMoveInfo {
+    localMovedSeq?: number;
+    movedClientIds: number[];
+    movedSeq: number;
+    movedSeqs: number[];
+    moveDst?: ReferencePosition;
+    wasMovedOnInsert: boolean;
 }
 
 // @public
@@ -420,6 +1375,163 @@ export enum IntervalType {
     // @internal
     Transient = 4
 }
+
+// @alpha @deprecated (undocumented)
+export interface IProvideFluidHandle {
+    // @deprecated (undocumented)
+    readonly [IFluidHandle]: IFluidHandleInternal;
+}
+
+// @public (undocumented)
+export interface IProvideFluidHandleContext {
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+}
+
+// @public (undocumented)
+export interface IProvideFluidLoadable {
+    // (undocumented)
+    readonly IFluidLoadable: IFluidLoadable;
+}
+
+// @public
+export interface IQuorumClients {
+    // (undocumented)
+    getMember(clientId: string): ISequencedClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, ISequencedClient>;
+    // (undocumented)
+    off: IQuorumClients["on"];
+    // (undocumented)
+    on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    on(event: "removeMember", listener: (clientId: string) => void): any;
+    // (undocumented)
+    on(event: "error", listener: (message: any) => void): any;
+    // (undocumented)
+    once: IQuorumClients["on"];
+}
+
+// @alpha
+export interface IRelativePosition {
+    before?: boolean;
+    id?: string;
+    offset?: number;
+}
+
+// @alpha
+export interface IRemovalInfo {
+    localRemovedSeq?: number;
+    removedClientIds: number[];
+    removedSeq: number;
+}
+
+// @public (undocumented)
+export interface IRequest {
+    // (undocumented)
+    headers?: IRequestHeader;
+    // (undocumented)
+    url: string;
+}
+
+// @public (undocumented)
+export interface IResponse {
+    // (undocumented)
+    headers?: {
+        [key: string]: any;
+    };
+    // (undocumented)
+    mimeType: string;
+    // (undocumented)
+    stack?: string;
+    // (undocumented)
+    status: number;
+    // (undocumented)
+    value: any;
+}
+
+// @alpha
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+    // (undocumented)
+    append(segment: ISegment): void;
+    attribution?: IAttributionCollection<AttributionKey>;
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    clientId: number;
+    // (undocumented)
+    clone(): ISegment;
+    readonly endpointType?: "start" | "end";
+    localRefs?: LocalReferenceCollection;
+    localRemovedSeq?: number;
+    localSeq?: number;
+    properties?: PropertySet;
+    propertyManager?: PropertiesManager;
+    // (undocumented)
+    readonly segmentGroups: SegmentGroupCollection;
+    seq?: number;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    readonly type: string;
+}
+
+// @alpha (undocumented)
+export interface ISegmentAction<TClientData> {
+    // (undocumented)
+    (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum: TClientData): boolean;
+}
+
+// @public
+export interface ISelf {
+    client?: IClient;
+    clientId: string;
+}
+
+// @public
+export interface ISequencedClient {
+    client: IClient;
+    sequenceNumber: number;
+}
+
+// @internal (undocumented)
+export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    additionalContent: string;
+}
+
+// @public
+export interface ISequencedDocumentMessage {
+    clientId: string | null;
+    clientSequenceNumber: number;
+    // @deprecated
+    compression?: string;
+    contents: unknown;
+    data?: string;
+    // @deprecated
+    expHash1?: string;
+    metadata?: unknown;
+    minimumSequenceNumber: number;
+    origin?: IBranchOrigin;
+    referenceSequenceNumber: number;
+    sequenceNumber: number;
+    serverMetadata?: unknown;
+    timestamp: number;
+    traces?: ITrace[];
+    type: string;
+}
+
+// @internal
+export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessage, "expHash1" | "compression"> & {
+    expHash1?: string;
+    compression?: string;
+};
 
 // @alpha
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
@@ -508,6 +1620,26 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
+// @public
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
+    bindToContext(): void;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+}
+
+// @public
+export interface ISharedObjectEvents extends IErrorEvent {
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export interface ISharedObjectKind<TSharedObject> {
+    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+    getFactory(): IChannelFactory<TSharedObject>;
+}
+
 // @alpha
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
@@ -536,8 +1668,142 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 // @public
+export interface ISignalMessage extends ISignalMessageBase {
+    clientId: string | null;
+}
+
+// @public
+export interface ISignalMessageBase {
+    clientConnectionNumber?: number;
+    content: unknown;
+    referenceSequenceNumber?: number;
+    targetClientId?: string;
+    type?: string;
+}
+
+// @public
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @public
+export interface ISummaryAttachment {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    type: SummaryType.Attachment;
+}
+
+// @public
+export interface ISummaryBlob {
+    // (undocumented)
+    content: string | Uint8Array;
+    // (undocumented)
+    type: SummaryType.Blob;
+}
+
+// @public
+export interface ISummaryHandle {
+    handle: string;
+    handleType: SummaryTypeNoHandle;
+    // (undocumented)
+    type: SummaryType.Handle;
+}
+
+// @public
+export interface ISummaryStats {
+    // (undocumented)
+    blobNodeCount: number;
+    // (undocumented)
+    handleNodeCount: number;
+    // (undocumented)
+    totalBlobSize: number;
+    // (undocumented)
+    treeNodeCount: number;
+    // (undocumented)
+    unreferencedBlobSize: number;
+}
+
+// @public
+export interface ISummaryTree {
+    groupId?: string;
+    // (undocumented)
+    tree: {
+        [path: string]: SummaryObject;
+    };
+    // (undocumented)
+    type: SummaryType.Tree;
+    unreferenced?: true;
+}
+
+// @public
+export interface ISummaryTreeWithStats {
+    stats: ISummaryStats;
+    summary: ISummaryTree;
+}
+
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    // (undocumented)
+    minLogLevel?: LogLevel;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
+
+// @public
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
+}
+
+// @public
+export interface ITelemetryContext {
+    // @deprecated
+    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
+    // @deprecated
+    serialize(): string;
+    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
+}
+
+// @alpha
+export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    eventName: string;
+}
+
+// @alpha
+export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category?: TelemetryEventCategory;
+    // (undocumented)
+    eventName: string;
+}
+
+// @alpha
+export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+    sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+}
+
+// @alpha
+export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
+    // (undocumented)
+    duration?: number;
+}
+
+// @alpha
+export interface ITelemetryPropertiesExt {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 // @public
@@ -546,8 +1812,46 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public
+export interface ITokenClaims {
+    documentId: string;
+    exp: number;
+    iat: number;
+    jti?: string;
+    scopes: string[];
+    tenantId: string;
+    user: IUser;
+    ver: string;
+}
+
+// @public
+export interface ITrace {
+    action: string;
+    service: string;
+    timestamp: number;
+}
+
+// @alpha (undocumented)
+export interface ITrackingGroup {
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    tracked: readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
+
+// @public
 export interface ITree extends IChannel {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+}
+
+// @public
+export interface IUser {
+    id: string;
 }
 
 // @alpha @sealed
@@ -565,6 +1869,63 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISh
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
+// @alpha
+export interface LocalAttributionKey {
+    // (undocumented)
+    type: "local";
+}
+
+// @alpha @sealed
+export class LocalReferenceCollection {
+    // (undocumented)
+    [Symbol.iterator](): {
+        next(): IteratorResult<LocalReferencePosition>;
+        [Symbol.iterator](): any;
+    };
+    // (undocumented)
+    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
+    // (undocumented)
+    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
+    // (undocumented)
+    addLocalRef(lref: LocalReferencePosition, offset: number): void;
+    // (undocumented)
+    static append(seg1: ISegment, seg2: ISegment): void;
+    append(other: LocalReferenceCollection): void;
+    // (undocumented)
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    // (undocumented)
+    get empty(): boolean;
+    has(lref: ReferencePosition): boolean;
+    // (undocumented)
+    isAfterTombstone(lref: LocalReferencePosition): boolean;
+    // (undocumented)
+    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    static setOrGet(segment: ISegment): LocalReferenceCollection;
+    split(offset: number, splitSeg: ISegment): void;
+    // (undocumented)
+    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
+}
+
+// @alpha @sealed (undocumented)
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
+    readonly canSlideToEndpoint?: boolean;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+}
+
+// @public
+export const LogLevel: {
+    readonly verbose: 10;
+    readonly default: 20;
+    readonly error: 30;
+};
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
 // @public
 export interface MakeNominal {
 }
@@ -579,8 +1940,90 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
     get type(): string;
 }
 
+// @alpha
+export interface MapLike<T> {
+    // (undocumented)
+    [index: string]: T;
+}
+
+// @alpha
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
+    constructor(refType: ReferenceType);
+    // (undocumented)
+    append(): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(): Marker;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): undefined;
+    // (undocumented)
+    static fromJSONObject(spec: any): Marker | undefined;
+    // (undocumented)
+    getId(): string | undefined;
+    // (undocumented)
+    getOffset(): number;
+    // (undocumented)
+    getProperties(): PropertySet | undefined;
+    // (undocumented)
+    getSegment(): this;
+    // (undocumented)
+    static is(segment: ISegment): segment is Marker;
+    // (undocumented)
+    static make(refType: ReferenceType, props?: PropertySet): Marker;
+    // (undocumented)
+    refType: ReferenceType;
+    // (undocumented)
+    toJSONObject(): IJSONMarkerSegment;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "Marker";
+    // (undocumented)
+    readonly type = "Marker";
+}
+
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+// @alpha (undocumented)
+export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE | typeof MergeTreeDeltaType.OBLITERATE;
+
+// @alpha (undocumented)
+export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
+
+// @alpha (undocumented)
+export const MergeTreeDeltaType: {
+    readonly INSERT: 0;
+    readonly REMOVE: 1;
+    readonly ANNOTATE: 2;
+    readonly GROUP: 3;
+    readonly OBLITERATE: 4;
+};
+
+// @alpha (undocumented)
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
+
+// @alpha
+export const MergeTreeMaintenanceType: {
+    readonly APPEND: -1;
+    readonly SPLIT: -2;
+    readonly UNLINK: -3;
+    readonly ACKNOWLEDGED: -4;
+};
+
+// @alpha (undocumented)
+export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
+
+// @alpha (undocumented)
+export interface MergeTreeRevertibleDriver {
+    // (undocumented)
+    annotateRange(start: number, end: number, props: PropertySet): void;
+    // (undocumented)
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
+    // (undocumented)
+    removeRange(start: number, end: number): void;
+}
 
 // @public
 export type Myself<M extends IMember = IMember> = M & {
@@ -624,6 +2067,82 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @alpha
+export interface OpAttributionKey {
+    seq: number;
+    type: "op";
+}
+
+// @public
+export type OpSpaceCompressedId = number & {
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
+
+// @alpha (undocumented)
+export class PropertiesManager {
+    // (undocumented)
+    ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
+    // (undocumented)
+    addProperties(oldProps: PropertySet, newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+    // (undocumented)
+    copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
+    // (undocumented)
+    hasPendingProperties(props: PropertySet): boolean;
+    // (undocumented)
+    hasPendingProperty(key: string): boolean;
+}
+
+// @alpha (undocumented)
+export enum PropertiesRollback {
+    None = 0,
+    Rollback = 1
+}
+
+// @alpha
+export type PropertySet = MapLike<any>;
+
+// @public (undocumented)
+export type ReadOnlyInfo = {
+    readonly readonly: false | undefined;
+} | {
+    readonly readonly: true;
+    readonly forced: boolean;
+    readonly permissions: boolean | undefined;
+    readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
+};
+
+// @alpha
+export interface ReferencePosition {
+    // (undocumented)
+    addProperties(newProps: PropertySet): void;
+    getOffset(): number;
+    getSegment(): ISegment | undefined;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    properties?: PropertySet;
+    // (undocumented)
+    refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
+}
+
+// @alpha
+export enum ReferenceType {
+    RangeBegin = 16,
+    RangeEnd = 32,
+    // (undocumented)
+    Simple = 0,
+    SlideOnRemove = 64,
+    StayOnRemove = 128,
+    Tile = 1,
+    Transient = 256
+}
+
+// @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -676,7 +2195,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<unknown>, IFluidHandle_2<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -706,6 +2225,37 @@ export interface SchemaIncompatible {
 
 // @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+
+// @alpha @deprecated (undocumented)
+export interface SegmentGroup {
+    // (undocumented)
+    localSeq?: number;
+    // (undocumented)
+    previousProps?: PropertySet[];
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    segments: ISegment[];
+}
+
+// @alpha (undocumented)
+export class SegmentGroupCollection {
+    constructor(segment: ISegment);
+    // (undocumented)
+    copyTo(segment: ISegment): void;
+    // (undocumented)
+    dequeue(): SegmentGroup | undefined;
+    // (undocumented)
+    get empty(): boolean;
+    // (undocumented)
+    enqueue(segmentGroup: SegmentGroup): void;
+    // (undocumented)
+    pop?(): SegmentGroup | undefined;
+    // (undocumented)
+    remove?(segmentGroup: SegmentGroup): boolean;
+    // (undocumented)
+    get size(): number;
+}
 
 // @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
@@ -773,8 +2323,35 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
+// @alpha (undocumented)
+export interface SequenceOffsets {
+    // (undocumented)
+    posBreakpoints: number[];
+    seqs: (number | AttributionKey | null)[];
+}
+
 // @alpha
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+
+// @alpha (undocumented)
+export interface SerializedAttributionCollection extends SequenceOffsets {
+    // (undocumented)
+    channels?: {
+        [name: string]: SequenceOffsets;
+    };
+    // (undocumented)
+    length: number;
+}
+
+// @public
+export type SessionId = StableId & {
+    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
+
+// @public
+export type SessionSpaceCompressedId = number & {
+    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+};
 
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
@@ -787,6 +2364,57 @@ export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @alpha
 export type SharedMap = ISharedMap;
+
+// @alpha
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
+    // (undocumented)
+    protected get serializer(): IFluidSerializer;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
+}
+
+// @alpha
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    protected abstract applyStashedOp(content: any): void;
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    bindToContext(): void;
+    connect(services: IChannelServices): void;
+    get connected(): boolean;
+    protected didAttach(): void;
+    protected dirty(): void;
+    emit(event: EventEmitterEventType, ...args: any[]): boolean;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly handle: IFluidHandleInternal;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    get IFluidLoadable(): this;
+    initializeLocal(): void;
+    protected initializeLocalCore(): void;
+    isAttached(): boolean;
+    load(services: IChannelServices): Promise<void>;
+    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
+    protected readonly logger: ITelemetryLoggerExt;
+    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    protected onConnect(): void;
+    protected abstract onDisconnect(): any;
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected runtime: IFluidDataStoreRuntime;
+    protected abstract get serializer(): IFluidSerializer;
+    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+}
 
 // @alpha (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
@@ -866,8 +2494,134 @@ export enum Side {
     Before = 0
 }
 
+// @alpha
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @alpha
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
+
+// @public
+export type StableId = string & {
+    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+};
+
+// @public
+export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
+
+// @public
+export namespace SummaryType {
+    // @internal (undocumented)
+    export type Attachment = 4;
+    // @internal (undocumented)
+    export type Blob = 2;
+    // @internal (undocumented)
+    export type Handle = 3;
+    // @internal (undocumented)
+    export type Tree = 1;
+    const Tree: Tree;
+    const Blob: Blob;
+    const Handle: Handle;
+    const Attachment: Attachment;
+}
+
+// @public
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
+
+// @public
+export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
+
+// @public
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @alpha
+export type TelemetryEventCategory = "generic" | "error" | "performance";
+
+// @alpha
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
+    [key: string]: // Flat objects can have the same properties as the event itself
+    string | number | boolean | undefined | (string | number | boolean)[];
+};
+
+// @alpha (undocumented)
+export class TextSegment extends BaseSegment {
+    constructor(text: string);
+    // (undocumented)
+    append(segment: ISegment): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(start?: number, end?: number): TextSegment;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): TextSegment | undefined;
+    // (undocumented)
+    static fromJSONObject(spec: any): TextSegment | undefined;
+    // (undocumented)
+    static is(segment: ISegment): segment is TextSegment;
+    // (undocumented)
+    static make(text: string, props?: PropertySet): TextSegment;
+    // (undocumented)
+    text: string;
+    // (undocumented)
+    toJSONObject(): IJSONTextSegment | string;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "TextSegment";
+    // (undocumented)
+    readonly type = "TextSegment";
+}
+
+// @alpha (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @alpha (undocumented)
+export class TrackingGroup implements ITrackingGroup {
+    constructor();
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
+
+// @alpha
+export class TrackingGroupCollection {
+    constructor(trackable: Trackable);
+    // (undocumented)
+    copyTo(trackable: Trackable): void;
+    // (undocumented)
+    get empty(): boolean;
+    // (undocumented)
+    link(trackingGroup: ITrackingGroup): void;
+    // (undocumented)
+    matches(trackingCollection: TrackingGroupCollection): boolean;
+    // (undocumented)
+    get trackingGroups(): Set<TrackingGroup>;
+    // (undocumented)
+    unlink(trackingGroup: ITrackingGroup): boolean;
+}
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @public
+export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;
@@ -1027,6 +2781,10 @@ export interface TreeViewEvents {
 
 // @public
 export const type: unique symbol;
+
+export { TypedEventEmitter }
+
+export { TypedEventTransform }
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
