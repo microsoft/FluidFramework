@@ -26,7 +26,10 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import {
+	toDeltaManagerInternal,
+	type Jsonable,
+} from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,
@@ -632,7 +635,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManagerErased),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -651,7 +654,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManagerErased),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -670,7 +673,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManagerErased),
 										runtime.getQuorum(),
 										entries,
 									),

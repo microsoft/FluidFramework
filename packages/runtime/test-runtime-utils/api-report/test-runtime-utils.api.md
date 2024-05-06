@@ -4,14 +4,16 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from '@fluidframework/container-definitions/internal';
+import { AttachState as AttachState_2 } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
 import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
-import { IAudience } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/container-definitions/internal';
+import { IAudience as IAudience_2 } from '@fluidframework/container-definitions';
 import { IAudienceEvents } from '@fluidframework/container-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -26,9 +28,10 @@ import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-
 import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
-import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
+import { IDeltaManagerErased } from '@fluidframework/datastore-definitions';
+import { IDeltaManagerEvents } from '@fluidframework/container-definitions/internal';
+import { IDeltaQueue } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
@@ -60,7 +63,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
-import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ReadOnlyInfo } from '@fluidframework/container-definitions/internal';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
@@ -451,7 +454,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         id?: string;
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
-        attachState?: AttachState;
+        attachState?: AttachState_2;
         registry?: readonly IChannelFactory[];
     });
     // (undocumented)
@@ -465,7 +468,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     attachGraph(): void;
     // (undocumented)
-    get attachState(): AttachState;
+    get attachState(): AttachState_2;
     // (undocumented)
     bind(handle: IFluidHandle): void;
     // (undocumented)
@@ -487,6 +490,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
+    deltaManagerErased: IDeltaManagerErased;
+    // (undocumented)
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
@@ -501,7 +506,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getAttachSummary(): ISummaryTreeWithStats;
     // (undocumented)
-    getAudience(): IAudience;
+    getAudience(): IAudience_2;
     // (undocumented)
     getBlob(blobId: string): Promise<any>;
     // (undocumented)
@@ -554,7 +559,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     save(message: string): void;
     // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: AttachState_2.Attaching | AttachState_2.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)

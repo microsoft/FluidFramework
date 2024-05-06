@@ -11,6 +11,8 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -113,6 +115,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     bindToContext(): void;
     connect(services: IChannelServices): void;
     get connected(): boolean;
+    // (undocumented)
+    protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     protected didAttach(): void;
     protected dirty(): void;
     emit(event: EventEmitterEventType, ...args: any[]): boolean;

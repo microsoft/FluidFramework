@@ -21,6 +21,7 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
+import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
@@ -77,7 +78,6 @@ import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper } from "./textSegment.js";
-
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
 
@@ -1083,7 +1083,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		serializer: IFluidSerializer,
 		catchUpMsgs: ISequencedDocumentMessage[],
 	): ISummaryTreeWithStats {
-		const deltaManager = runtime.deltaManager;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManagerErased);
 		const minSeq = deltaManager.minimumSequenceNumber;
 
 		// Catch up to latest MSN, if we have not had a chance to do it.

@@ -5,9 +5,10 @@
 ```ts
 
 import type { AttachState } from '@fluidframework/container-definitions';
+import type { ErasedType } from '@fluidframework/core-interfaces';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IEvent } from '@fluidframework/core-interfaces';
@@ -88,6 +89,9 @@ export interface IDeltaHandler {
 }
 
 // @public
+export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+// @public @sealed
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
     addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
@@ -100,7 +104,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly connected: boolean;
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManagerErased: IDeltaManagerErased;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
@@ -152,5 +156,11 @@ export type JsonableTypeWith<T> = undefined | null | boolean | number | string |
 
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
+
+// @internal
+export function toDeltaManagerErased(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>): IDeltaManagerErased;
+
+// @alpha
+export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 ```

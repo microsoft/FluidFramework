@@ -4,7 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -24,6 +25,7 @@ import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
@@ -81,6 +83,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+import { toDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
@@ -330,6 +333,10 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+	}
+
+	get deltaManagerErased(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManager);
 	}
 
 	public dispose(): void {

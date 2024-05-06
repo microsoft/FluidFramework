@@ -141,7 +141,8 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IDataObjectProps": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"ClassDeclaration_DataObject": {
 				"forwardCompat": false

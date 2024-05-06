@@ -8,7 +8,7 @@ import {
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,

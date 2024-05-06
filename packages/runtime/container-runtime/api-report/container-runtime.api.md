@@ -21,7 +21,7 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/inter
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions/internal';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions/internal';
-import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';

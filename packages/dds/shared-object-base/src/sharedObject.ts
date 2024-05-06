@@ -18,7 +18,10 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	type IDocumentMessage,
+} from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -40,6 +43,8 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
@@ -131,6 +136,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.mc = loggerToMonitoringContext(this.logger);
 
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+	}
+
+	protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+		return toDeltaManagerInternal(this.runtime.deltaManagerErased);
 	}
 
 	/**

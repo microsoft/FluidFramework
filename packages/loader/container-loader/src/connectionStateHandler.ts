@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";

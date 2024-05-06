@@ -4,7 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,

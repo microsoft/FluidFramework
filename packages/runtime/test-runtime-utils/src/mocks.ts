@@ -56,6 +56,7 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+import { toDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
@@ -822,6 +823,7 @@ export class MockFluidDataStoreRuntime
 	public readonly path = "";
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
+	public deltaManagerErased = toDeltaManagerErased(this.deltaManager);
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
