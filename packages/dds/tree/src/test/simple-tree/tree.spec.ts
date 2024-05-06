@@ -102,4 +102,21 @@ describe("class-tree tree", () => {
 		const child2 = child[0];
 		assert.equal(child2, "a");
 	});
+
+	it("summaries use compressed identifiers when a proper ", () => {
+		const schemaWithIdentifier = schema.object("parent", {
+			identifier: schema.identifier,
+		});
+		const idCompressor = createIdCompressor();
+		const id = idCompressor.decompress(idCompressor.generateCompressedId())
+		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+			identifier: id,
+		}));
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor }),
+			"tree",
+		);
+		const view = tree.schematize(config);
+		const summary = tree.getAttachSummary()
+	});
 });

@@ -74,6 +74,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -101,6 +102,7 @@ describe("schemaBasedEncoding", () => {
 				() => anyNodeShape,
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -124,6 +126,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -155,6 +158,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const shape = treeShaper(
 				storedLibrary,
@@ -171,6 +175,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -207,6 +212,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -235,7 +241,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	it("recursiveType", () => {
-		const cache = buildCache(storedLibrary, defaultSchemaPolicy);
+		const cache = buildCache(storedLibrary, defaultSchemaPolicy, testIdCompressor);
 		const shape = cache.shapeFromTree(recursiveType.name);
 		const bufferEmpty = checkNodeEncode(shape, cache, { type: recursiveType.name });
 		assert.deepEqual(bufferEmpty, [0]);
@@ -254,7 +260,7 @@ describe("schemaBasedEncoding", () => {
 				const storedSchema = intoStoredSchema(schemaData);
 				const tree = treeFactory();
 				// Check with checkFieldEncode
-				const cache = buildCache(storedSchema, defaultSchemaPolicy);
+				const cache = buildCache(storedSchema, defaultSchemaPolicy, testIdCompressor);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
 				const context: FieldBatchEncodingContext = {

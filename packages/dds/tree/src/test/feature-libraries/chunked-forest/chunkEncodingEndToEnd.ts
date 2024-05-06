@@ -45,7 +45,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { ForestType } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
+import { flexTreeViewWithContent, numberSequenceRootSchema, testIdCompressor } from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -145,7 +145,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
-			const insertedChunk = decode((content as any).fields);
+			const insertedChunk = decode((content as any).fields, testIdCompressor);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -174,7 +174,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
-			const insertedChunk = decode((content as any).fields);
+			const insertedChunk = decode((content as any).fields, testIdCompressor);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);

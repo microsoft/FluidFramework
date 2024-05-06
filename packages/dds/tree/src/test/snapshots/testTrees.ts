@@ -51,6 +51,8 @@ import {
 	schematizeFlexTree,
 	treeTestFactory,
 } from "../utils.js";
+import { createIdCompressor } from "../../../../../runtime/id-compressor/dist/idCompressor.js";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -160,7 +162,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
-				const provider = new TestTreeProviderLite(2, factory, true);
+				const idCompressor = createIdCompressor(makeRandom(0xdeadbeef).uuid4() as SessionId)
+				const provider = new TestTreeProviderLite(2, factory, true, idCompressor);
 				const tree1 = provider.trees[0].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
@@ -171,6 +174,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const nodeSchema = schemaBuilder.object("Node", {
 					foo: SchemaBuilder.sequence(leaf.string),
 					bar: SchemaBuilder.sequence(leaf.string),
+					id: SchemaBuilder.identifier(leaf.string)
 				});
 				const rootFieldSchema = SchemaBuilder.required(nodeSchema);
 				const schema = schemaBuilder.intoSchema(rootFieldSchema);
@@ -187,6 +191,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 							{ type: leaf.string.name, value: "e" },
 							{ type: leaf.string.name, value: "f" },
 						],
+						id: [{ type: leaf.string.name, value: idCompressor.decompress(idCompressor.generateCompressedId()) }]
 					},
 				};
 

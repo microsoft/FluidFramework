@@ -33,6 +33,7 @@ import {
 	EncodedValueShape,
 	version,
 } from "./format.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `FieldBatch` in into an `EncodedChunk`.
@@ -410,7 +411,12 @@ export function encodeValue(
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
 			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
-		} else {
+		} else if (typeof shape === 'number'){
+			if(shape === 0){
+				assert(value !== undefined, "required value must not be missing")
+				outputBuffer.push(value);
+			}			
+		}else {
 			// EncodedCounter case:
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");
 		}
@@ -424,9 +430,10 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		public readonly idCompressor: IIdCompressor
 	) {}
 
-	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
+	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier, isIdentifier?: boolean): NodeEncoder {
 		return getOrCreate(this.shapesFromSchema, schemaName, () =>
 			this.treeEncoder(this, schemaName),
 		);

@@ -4,18 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type TreeChangeEvents } from "../../../dist/index.js";
-import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { ForestType, typeboxValidator, type TreeChangeEvents } from "../../../dist/index.js";
+import { RevisionTagCodec, rootFieldKey } from "../../core/index.js";
+import { ForestSummarizer, TreeCompressionStrategy, TreeStatus, createMockNodeKeyManager, defaultSchemaPolicy, intoStoredSchema, makeFieldBatchCodec } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
 	TreeConfiguration,
+	toFlexConfig,
 } from "../../simple-tree/index.js";
-import { getView } from "../utils.js";
+import { checkoutWithContent, getView, testIdCompressor } from "../utils.js";
 
 import { hydrate } from "./utils.js";
+import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -137,6 +139,50 @@ describe("treeApi", () => {
 			const root = getView(config, nodeKeyManager).root;
 
 			assert.equal(Tree.shortId(root), nodeKeyManager.localizeNodeKey(id));
+		});
+		it("identifier encoded as compressed id.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			const idCompressor = testIdCompressor;
+			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId())
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: id,
+			}));
+			const flexConfig = toFlexConfig(config);
+			const checkout = checkoutWithContent(flexConfig);
+
+			const options = {
+				jsonValidator: typeboxValidator,
+				forest: ForestType.Optimized,
+				summaryEncodeType: TreeCompressionStrategy.Compressed,
+			};
+						
+			const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
+
+			const context = {
+				encodeType: options.summaryEncodeType,
+				idCompressor,
+				schema: { schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)), policy: defaultSchemaPolicy },
+			};
+			
+			const revisionTagCodec = new RevisionTagCodec(idCompressor);
+
+			const forestSummarizer = new ForestSummarizer(
+				checkout.forest ,
+				revisionTagCodec,
+				fieldBatchCodec,
+				context,
+				options,
+				idCompressor,
+			);
+
+			function stringifier(content: unknown) {
+				return JSON.stringify(content);
+			}
+			const test = forestSummarizer.getAttachSummary(stringifier);
+
+			const a = 1
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {

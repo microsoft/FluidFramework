@@ -112,6 +112,7 @@ export const EncodedCounter = Type.Object(
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
 	Type.Array(Type.Any(), { minItems: 1, maxItems: 1 }),
+	Type.Number(),
 	// TODO: support delta encoding and/or special node identifier handling
 	// EncodedCounter,
 ]);

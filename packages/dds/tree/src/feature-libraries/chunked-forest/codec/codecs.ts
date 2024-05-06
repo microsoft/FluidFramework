@@ -57,6 +57,7 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 							context.schema.schema,
 							context.schema.policy,
 							data,
+							context.idCompressor
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -71,9 +72,9 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (data: EncodedFieldBatch): FieldBatch => {
+		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data).map((chunk) => chunk.cursor());
+			return decode(data, context.idCompressor).map((chunk) => chunk.cursor());
 		},
 	});
 }

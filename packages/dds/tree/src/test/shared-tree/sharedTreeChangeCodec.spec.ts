@@ -46,7 +46,7 @@ describe("sharedTreeChangeCodec", () => {
 				return uncompressedEncode(data);
 			},
 			decode: (data: EncodedFieldBatch): FieldBatch => {
-				return decode(data).map((chunk) => chunk.cursor());
+				return decode(data, testIdCompressor).map((chunk) => chunk.cursor(), testIdCompressor);
 			},
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(

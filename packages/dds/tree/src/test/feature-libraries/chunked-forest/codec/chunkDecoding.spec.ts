@@ -42,6 +42,7 @@ import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequ
 import { TreeChunk } from "../../../../feature-libraries/index.js";
 import { ReferenceCountedBase, brand } from "../../../../util/index.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
+import { testIdCompressor } from "../../../utils.js";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
@@ -83,7 +84,7 @@ describe("chunkDecoding", () => {
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
-			});
+			}, testIdCompressor);
 			assert.deepEqual(result, [emptyChunk]);
 		});
 	});
@@ -91,25 +92,25 @@ describe("chunkDecoding", () => {
 	describe("readValue", () => {
 		it("unknown shape", () => {
 			const stream: StreamCursor = { data: [false, true, "x", true, 1], offset: 0 };
-			assert.equal(readValue(stream, undefined), undefined);
-			assert.equal(readValue(stream, undefined), "x");
-			assert.equal(readValue(stream, undefined), 1);
+			assert.equal(readValue(stream, undefined, testIdCompressor), undefined);
+			assert.equal(readValue(stream, undefined, testIdCompressor), "x");
+			assert.equal(readValue(stream, undefined, testIdCompressor), 1);
 			assert.equal(stream.offset, 5);
 		});
 
 		it("boolean shape", () => {
 			const stream: StreamCursor = { data: [1, 2, 3], offset: 0 };
-			assert.equal(readValue(stream, true), 1);
+			assert.equal(readValue(stream, true, testIdCompressor), 1);
 			assert.equal(stream.offset, 1);
-			assert.equal(readValue(stream, false), undefined);
+			assert.equal(readValue(stream, false, testIdCompressor), undefined);
 			assert.equal(stream.offset, 1);
-			assert.equal(readValue(stream, true), 2);
+			assert.equal(readValue(stream, true, testIdCompressor), 2);
 			assert.equal(stream.offset, 2);
 		});
 
 		it("constant shape", () => {
 			const stream: StreamCursor = { data: [1, 2, 3], offset: 0 };
-			assert.equal(readValue(stream, ["x"]), "x");
+			assert.equal(readValue(stream, ["x"], testIdCompressor), "x");
 			assert.equal(stream.offset, 0);
 		});
 	});
@@ -262,7 +263,7 @@ describe("chunkDecoding", () => {
 
 	describe("TreeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderContext([], []);
+			const cache = new DecoderContext([], [], testIdCompressor);
 			const decoder = new TreeDecoder(
 				{
 					value: false,
@@ -276,7 +277,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderContext([], []);
+			const cache = new DecoderContext([], [], testIdCompressor);
 			const decoder = new TreeDecoder(
 				{
 					type: "baz",
@@ -291,7 +292,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderContext(["b", "d"], []);
+			const cache = new DecoderContext(["b", "d"], [], testIdCompressor);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
@@ -331,6 +332,7 @@ describe("chunkDecoding", () => {
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
 				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
+				testIdCompressor
 			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());

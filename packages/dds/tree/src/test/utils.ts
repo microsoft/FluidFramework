@@ -16,7 +16,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { IIdCompressorCore, SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -136,6 +136,7 @@ import {
 	disposeSymbol,
 	nestedMapFromFlatList,
 } from "../util/index.js";
+import { IIdCompressor } from "../../../../runtime/id-compressor/dist/index.js";
 
 // Testing utilities
 
@@ -420,6 +421,7 @@ export class TestTreeProviderLite {
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 		useDeterministicSessionIds = true,
+		idCompressor?: IIdCompressor & IIdCompressorCore
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithConnectionStateSetter[] = [];
@@ -429,7 +431,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor: idCompressor ?? createIdCompressor(sessionId),
 			});
 			const tree = this.factory.create(
 				runtime,
@@ -764,6 +766,11 @@ export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequenc
 	libraries: [leaf.library],
 	scope: "NumberSequenceRoot",
 }).intoSchema(leaf.number);
+
+export const identifierRootSchema = new SchemaBuilderBase(FieldKinds.identifier, {
+	libraries: [leaf.library],
+	scope: "IdentifierRoot"
+}).intoSchema(leaf.string)
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,

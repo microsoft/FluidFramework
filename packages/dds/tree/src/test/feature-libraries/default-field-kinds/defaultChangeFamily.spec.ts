@@ -24,8 +24,11 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	ModularChangeset,
 	buildForest,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -37,6 +40,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { schemaCompressedEncode } from "../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
