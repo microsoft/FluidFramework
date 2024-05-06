@@ -512,7 +512,7 @@ describe("Routerlicious", () => {
 							else {
 								// Dummy signal for v2 clients
 								expectedSignalMessage = {
-									clientId: undefined,
+									clientId: "invalid client ID",
 									content: undefined,
 								};
 							}
