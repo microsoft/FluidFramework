@@ -491,38 +491,42 @@ describe("Routerlicious", () => {
 
 					function sendValidAndReturnExpectedSignal(
 						client: TestSignalClient,
-						content: unknown,
-					): ISignalMessage {
-						const signal = client.version === 2 ? { content } : content;
-						return sendAndReturnExpectedSignal(client, signal);
+						content: unknown[],
+					): ISignalMessage[] {
+						const signals = content.map((c) =>
+							client.version === 2 ? { content: c } : c,
+						);
+						return sendAndReturnExpectedSignal(client, signals);
 					}
 
 					function sendAndReturnExpectedSignal(
 						client: TestSignalClient,
-						signal: unknown,
-					): ISignalMessage {
-						client.socket.send("submitSignal", client.clientId, [signal]);
-						let expectedSignalMessage: ISignalMessage;
+						signals: unknown[],
+					): ISignalMessage[] {
+						client.socket.send("submitSignal", client.clientId, signals);
+						let expectedSignalMessages: ISignalMessage[];
 						if (client.version === 2) {
-							if (isSentSignalMessage(signal))
-								expectedSignalMessage = {
-									...signal,
-									clientId: client.clientId,
-								};
-							else {
-								// Dummy signal for v2 clients
-								expectedSignalMessage = {
-									clientId: "invalid client ID",
-									content: undefined,
-								};
-							}
+							expectedSignalMessages = signals.map((signal) => {
+								if (isSentSignalMessage(signal)) {
+									return {
+										...signal,
+										clientId: client.clientId,
+									};
+								} else {
+									// Dummy signal for v2 clients
+									return {
+										clientId: "invalid client ID",
+										content: undefined,
+									};
+								}
+							});
 						} else {
-							expectedSignalMessage = {
+							expectedSignalMessages = signals.map((signal) => ({
 								clientId: client.clientId,
 								content: signal,
-							};
+							}));
 						}
-						return expectedSignalMessage;
+						return expectedSignalMessages;
 					}
 
 					function listenForNacks(client: TestSignalClient) {
@@ -590,22 +594,30 @@ describe("Routerlicious", () => {
 										it(`${fromClient} should broadcast signal to all connected clients`, () => {
 											const expectedSignal = sendValidAndReturnExpectedSignal(
 												clients[clientIndex],
-												stringSignalContent,
+												[stringSignalContent],
 											);
 
-											verifyExpectedClientSignals(clients, [expectedSignal]);
+											verifyExpectedClientSignals(clients, expectedSignal);
+										});
+										it(`${fromClient} should broadcast batched signals to all connected clients`, () => {
+											const expectedSignal = sendValidAndReturnExpectedSignal(
+												clients[clientIndex],
+												["first signal", "second signal", "third signal"],
+											);
+
+											verifyExpectedClientSignals(clients, expectedSignal);
 										});
 										it(`${fromClient} does not broadcast to disconnected client`, () => {
 											clients[clientIndex ^ 1].socket.disconnect();
 											const expectedSignal = sendValidAndReturnExpectedSignal(
 												clients[clientIndex],
-												stringSignalContent,
+												[stringSignalContent],
 											);
 											verifyExpectedClientSignals(
 												clients.filter(
 													(_, index) => index !== (clientIndex ^ 1),
 												),
-												[expectedSignal],
+												expectedSignal,
 											);
 											verifyExpectedClientSignals(
 												[clients[clientIndex ^ 1]],
@@ -648,11 +660,12 @@ describe("Routerlicious", () => {
 												const expectedSignal =
 													sendValidAndReturnExpectedSignal(
 														clients[clientIndex],
-														signalContent,
+														[signalContent],
 													);
-												verifyExpectedClientSignals(clients, [
+												verifyExpectedClientSignals(
+													clients,
 													expectedSignal,
-												]);
+												);
 											}),
 										);
 									});
@@ -668,11 +681,11 @@ describe("Routerlicious", () => {
 
 											const expectedSignal = sendAndReturnExpectedSignal(
 												clients[1],
-												targetedSignal,
+												[targetedSignal],
 											);
 											verifyExpectedClientSignals(
 												[clients[0]],
-												[expectedSignal],
+												expectedSignal,
 											);
 											verifyExpectedClientSignals(
 												clients.filter((_, index) => index !== 0),
@@ -687,7 +700,9 @@ describe("Routerlicious", () => {
 											};
 
 											clients[1].socket.disconnect();
-											sendAndReturnExpectedSignal(clients[0], targetedSignal);
+											sendAndReturnExpectedSignal(clients[0], [
+												targetedSignal,
+											]);
 											verifyExpectedClientSignals(clients, []);
 										});
 										describe("Invalid/Malformed signals", () => {
@@ -701,10 +716,9 @@ describe("Routerlicious", () => {
 													content: stringSignalContent,
 												};
 
-												sendAndReturnExpectedSignal(
-													clients[0],
+												sendAndReturnExpectedSignal(clients[0], [
 													targetedSignal,
-												);
+												]);
 
 												verifyExpectedClientSignals(clients, []);
 											});
@@ -718,12 +732,12 @@ describe("Routerlicious", () => {
 
 												const expectedSignal = sendAndReturnExpectedSignal(
 													clients[1],
-													targetedSignal,
+													[targetedSignal],
 												);
 
 												verifyExpectedClientSignals(
 													[clients[0]],
-													[expectedSignal],
+													expectedSignal,
 												);
 												verifyExpectedClientSignals(
 													clients.filter((_, index) => index !== 0),
@@ -737,10 +751,9 @@ describe("Routerlicious", () => {
 													content: stringSignalContent,
 												};
 
-												sendAndReturnExpectedSignal(
-													clients[0],
+												sendAndReturnExpectedSignal(clients[0], [
 													targetedSignal,
-												);
+												]);
 
 												checkNack(clients[0], "Invalid signal message");
 											});
@@ -763,10 +776,9 @@ describe("Routerlicious", () => {
 													targetClientId: clients[1].clientId,
 												};
 
-												sendAndReturnExpectedSignal(
-													clients[0],
+												sendAndReturnExpectedSignal(clients[0], [
 													targetedSignal,
-												);
+												]);
 
 												checkNack(clients[0], "Invalid signal message");
 											});
@@ -779,10 +791,9 @@ describe("Routerlicious", () => {
 													referenceSequenceNumber: "invalid",
 												};
 
-												sendAndReturnExpectedSignal(
-													clients[0],
+												sendAndReturnExpectedSignal(clients[0], [
 													targetedSignal,
-												);
+												]);
 
 												checkNack(clients[0], "Invalid signal message");
 											});
@@ -805,10 +816,10 @@ describe("Routerlicious", () => {
 										it("should broadcast signal from a v1 client to all connected clients", () => {
 											const expectedSignal = sendValidAndReturnExpectedSignal(
 												clients[0],
-												stringSignalContent,
+												[stringSignalContent],
 											);
 
-											verifyExpectedClientSignals(clients, [expectedSignal]);
+											verifyExpectedClientSignals(clients, expectedSignal);
 										});
 
 										it("should broadcast signal from a v2 client to all connected clients", () => {
@@ -818,10 +829,10 @@ describe("Routerlicious", () => {
 
 											const expectedSignal = sendAndReturnExpectedSignal(
 												clients[1],
-												targetedSignal,
+												[targetedSignal],
 											);
 
-											verifyExpectedClientSignals(clients, [expectedSignal]);
+											verifyExpectedClientSignals(clients, expectedSignal);
 										});
 
 										it("can target a v1 client from a v2 client", () => {
@@ -832,12 +843,12 @@ describe("Routerlicious", () => {
 
 											const expectedSignal = sendAndReturnExpectedSignal(
 												clients[1],
-												targetedSignal,
+												[targetedSignal],
 											);
 
 											verifyExpectedClientSignals(
 												[clients[0]],
-												[expectedSignal],
+												expectedSignal,
 											);
 											verifyExpectedClientSignals(
 												clients.filter((client) => client !== clients[0]),
@@ -851,46 +862,20 @@ describe("Routerlicious", () => {
 										it("should broadcast signals sent from multiple clients to all connected clients", () => {
 											const firstSignal = sendValidAndReturnExpectedSignal(
 												clients[clientIndex],
-												"first signal",
+												["first signal"],
 											);
 											const secondSignal = sendValidAndReturnExpectedSignal(
 												clients[clientIndex ^ 1],
-												"second signal",
+												["second signal"],
 											);
 
-											verifyExpectedClientSignals(clients, [
-												firstSignal,
-												secondSignal,
-											]);
+											verifyExpectedClientSignals(
+												clients,
+												firstSignal.concat(secondSignal),
+											);
 										});
 									});
-									if (description === "with v1 clients") {
-										it(`should broadcast multiple batched signals sent from single clients to all connected clients`, () => {
-											sendAndReturnExpectedSignal(clients[0], [
-												"first signal",
-												"second signal",
-												"third signal",
-											]);
-											const firstSignal = {
-												clientId: clients[0].clientId,
-												content: "first signal",
-											};
-											const secondSignal = {
-												clientId: clients[0].clientId,
-												content: "second signal",
-											};
-											const thirdSignal = {
-												clientId: clients[0].clientId,
-												content: "third signal",
-											};
-
-											verifyExpectedClientSignals(clients, [
-												firstSignal,
-												secondSignal,
-												thirdSignal,
-											]);
-										});
-									} else if (description === "with v2 clients") {
+									if (description === "with v2 clients") {
 										it("can transmit both targeted and broadcast signals", () => {
 											const targetedSignal: ISentSignalMessage = {
 												targetClientId: clients[0].clientId,
@@ -901,23 +886,23 @@ describe("Routerlicious", () => {
 											};
 
 											const expectedTargetedSignal =
-												sendAndReturnExpectedSignal(
-													clients[1],
+												sendAndReturnExpectedSignal(clients[1], [
 													targetedSignal,
-												);
+												]);
 											const expectedBroadcastSignal =
-												sendAndReturnExpectedSignal(
-													clients[1],
+												sendAndReturnExpectedSignal(clients[1], [
 													broadcastSignal,
-												);
+												]);
 
 											verifyExpectedClientSignals(
 												[clients[0]],
-												[expectedTargetedSignal, expectedBroadcastSignal],
+												expectedTargetedSignal.concat(
+													expectedBroadcastSignal,
+												),
 											);
 											verifyExpectedClientSignals(
 												clients.filter((_, index) => index !== 0),
-												[expectedBroadcastSignal],
+												expectedBroadcastSignal,
 											);
 										});
 									}

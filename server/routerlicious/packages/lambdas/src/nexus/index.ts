@@ -503,6 +503,9 @@ export function configureWebSocketServices(
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
 							} else {
+								// If the signal is not in the expected format, nack the message.
+								// This will disconnect client from the socket.
+								// No signals sent after this message will be processed.
 								const nackMessage = createNackMessage(
 									400,
 									NackErrorType.BadRequestError,
