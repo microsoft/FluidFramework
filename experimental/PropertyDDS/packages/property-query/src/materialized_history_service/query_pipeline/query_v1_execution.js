@@ -49,13 +49,13 @@ const QUERY_SCHEMA = Joi.object({
 		order: Joi.array().items(
 			Joi.object({
 				by: Joi.string().optional(),
-				direction: Joi.string().valid(["ASC", "DESC"]).default("ASC"),
+				direction: Joi.string().any().valid(["ASC", "DESC"]).default("ASC"),
 			}),
 		),
 		limit: Joi.number().integer().min(0).required(),
 		offset: Joi.number().integer().min(0).default(0),
 	}).optional(),
-	queryLanguage: Joi.string().valid("queryV1").required(),
+	queryLanguage: Joi.string().any().valid("queryV1").required(),
 });
 
 /**
