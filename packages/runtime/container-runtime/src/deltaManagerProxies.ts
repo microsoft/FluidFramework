@@ -202,6 +202,10 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	public get minimumSequenceNumber(): number {
 		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
+		// There is a chance that minPendingSeqNum is greater than minimum sequence number.
+		// minPendingSeqNum is based on the pending ops, so it's based on ref seq number.
+		// Imagine an op has just be sent while there's another client that has been lagging behind,
+		// it will likely have a ref seq number greater than the minimum seq number.
 		if (
 			minPendingSeqNum !== undefined &&
 			minPendingSeqNum < this.deltaManager.minimumSequenceNumber

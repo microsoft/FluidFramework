@@ -1547,14 +1547,13 @@ export class ContainerRuntime
 		const useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
-		outerDeltaManager = summarizerDeltaManagerProxy;
+		outerDeltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
 		if (useDeltaManagerOpsProxy) {
 			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
-				summarizerDeltaManagerProxy,
+				outerDeltaManager,
 				this.pendingStateManager,
 			);
 			outerDeltaManager = pendingOpsDeltaManagerProxy;
@@ -2610,6 +2609,11 @@ export class ContainerRuntime
 		const { message, local } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+		assert(
+			messageWithContext.message.minimumSequenceNumber <=
+				this.deltaManager.minimumSequenceNumber,
+			"minimumSequenceNumber should be less than or equal to the delta manager's minimum sequence number",
+		);
 		messageWithContext.message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
