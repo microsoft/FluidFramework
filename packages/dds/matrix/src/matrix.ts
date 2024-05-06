@@ -476,7 +476,6 @@ export class SharedMatrix<T = any>
 			// Validate that applications don't submit edits in response to matrix change notifications. This is unsupported.
 			throw new UsageError("Reentrancy detected in SharedMatrix.");
 		}
-		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
 		this.reentrantCount++;
 		try {
 			callback();
