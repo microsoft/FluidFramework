@@ -1273,6 +1273,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					clientType: string,
 					secret: string,
 					socket: LocalWebSocket,
+					v2Signals: boolean = false,
 				): Promise<IConnected> {
 					const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 					const token = generateToken(tenantId, id, secret, scopes);
@@ -1294,6 +1295,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						tenantId,
 						token,
 						versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
+						supportedFeatures: v2Signals ? { submit_signals_v2: true } : {},
 					};
 
 					const deferred = new Deferred<IConnected>();
@@ -1373,35 +1375,40 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				});
 
 				describe("signal count", () => {
-					it("Should store the signal count when throttler is invoked", async () => {
-						const socket = webSocketServer.createConnection();
-						const connectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							"client",
-							testSecret,
-							socket,
-						);
+					[1, 2].forEach((version) => {
+						describe(`with v${version} signals`, () => {
+							it("Should store the signal count when throttler is invoked", async () => {
+								const socket = webSocketServer.createConnection();
+								const connectMessage = await connectToServer(
+									testId,
+									testTenantId,
+									"client",
+									testSecret,
+									socket,
+									version === 2,
+								);
 
-						let i = 0;
-						const signalCount = 100;
-						const message = "testSignalMessage";
-						for (; i < signalCount; i++) {
-							socket.send("submitSignal", connectMessage.clientId, [message]);
-						}
-						Sinon.clock.tick(minThrottleCheckInterval + 1);
-						socket.send("submitSignal", connectMessage.clientId, [message]);
-						// wait for throttler to be checked
-						await Sinon.clock.nextAsync();
+								let i = 0;
+								const signalCount = 100;
+								const message = "testSignalMessage";
+								for (; i < signalCount; i++) {
+									socket.send("submitSignal", connectMessage.clientId, [message]);
+								}
+								Sinon.clock.tick(minThrottleCheckInterval + 1);
+								socket.send("submitSignal", connectMessage.clientId, [message]);
+								// wait for throttler to be checked
+								await Sinon.clock.nextAsync();
 
-						const usageData =
-							await testThrottleAndUsageStorageManager.getUsageData(
-								signalUsageStorageId,
-							);
-						assert.equal(usageData.value, signalCount + 1);
-						assert.equal(usageData.clientId, connectMessage.clientId);
-						assert.equal(usageData.tenantId, testTenantId);
-						assert.equal(usageData.documentId, testId);
+								const usageData =
+									await testThrottleAndUsageStorageManager.getUsageData(
+										signalUsageStorageId,
+									);
+								assert.equal(usageData.value, signalCount + 1);
+								assert.equal(usageData.clientId, connectMessage.clientId);
+								assert.equal(usageData.tenantId, testTenantId);
+								assert.equal(usageData.documentId, testId);
+							});
+						});
 					});
 				});
 			});
