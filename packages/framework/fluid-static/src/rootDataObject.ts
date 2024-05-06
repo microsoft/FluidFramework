@@ -170,9 +170,9 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
-	compatMode: CompatMode;
+	compatMode?: CompatMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode ?? "1.x");
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode ?? "2.x");
 }
 
 const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {

@@ -172,10 +172,7 @@ export class OdspClient {
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({
-			schema,
-			compatMode: "2.x",
-		});
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },

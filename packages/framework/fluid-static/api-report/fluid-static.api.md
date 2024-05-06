@@ -30,7 +30,7 @@ export interface ContainerSchema {
 // @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
-    compatMode: CompatMode;
+    compatMode?: CompatMode;
 }): IRuntimeFactory;
 
 // @internal
