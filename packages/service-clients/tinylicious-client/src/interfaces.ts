@@ -95,7 +95,7 @@ export interface TinyliciousMember extends IMember {
 	/**
 	 * {@inheritDoc TinyliciousUser.name}
 	 */
-	userName: string;
+	name: string;
 }
 
 /**

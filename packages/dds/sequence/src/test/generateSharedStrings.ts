@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/internal/test";
 import * as mocks from "@fluidframework/test-runtime-utils/internal";
 import { MersenneTwister19937, Random } from "random-js";
 
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringClass } from "../sharedString.js";
 
 import {
 	SharedStringWithV1IntervalCollection,
@@ -42,15 +41,15 @@ function createIntervals(sharedString) {
 
 export function* generateStrings(): Generator<{
 	snapshotPath: string;
-	expected: SharedString;
+	expected: SharedStringClass;
 	snapshotIsNormalized: boolean; // false for v1, true for new formats
 }> {
 	for (const [version, options] of supportedVersions) {
 		const documentId = "fakeId";
 		const dataStoreRuntime: mocks.MockFluidDataStoreRuntime =
 			new mocks.MockFluidDataStoreRuntime();
-		const createNewSharedString = (): SharedString => {
-			const string = new SharedString(
+		const createNewSharedString = (): SharedStringClass => {
+			const string = new SharedStringClass(
 				dataStoreRuntime,
 				documentId,
 				SharedStringFactory.Attributes,

@@ -15,10 +15,16 @@ import {
 } from "@fluidframework/container-definitions";
 import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	IClient,
+} from "@fluidframework/protocol-definitions";
 
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
+import { ProtocolHandler } from "../protocol.js";
+import { Audience } from "../audience.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -101,6 +107,44 @@ describe("Container", () => {
 
 			// Should resolve immediately, otherwise test will time out
 			await waitP;
+		});
+
+		it("Audience", () => {
+			const protocolHandler = new ProtocolHandler(
+				{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
+				{ members: [], proposals: [], values: [] }, // quorumSnapshot
+				(key, value) => 0, // sendProposal
+				new Audience(),
+				(clientId: string) => false, // shouldClientHaveLeft
+			);
+
+			const client: Partial<IClient> = { mode: "write" };
+			protocolHandler.quorum.addMember("fakeClient", {
+				client: client as IClient,
+				sequenceNumber: 10,
+			});
+			const quorumSnapshot = protocolHandler.snapshot();
+
+			const protocolHandler2 = new ProtocolHandler(
+				{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
+				quorumSnapshot,
+				(key, value) => 0, // sendProposal
+				new Audience(),
+				(clientId: string) => false, // shouldClientHaveLeft
+			);
+
+			// Audience is superset of quorum!
+			assert(protocolHandler2.audience.getMembers().size === 1);
+
+			// audience and quorum should not change across serialization.
+			assert.deepEqual(
+				protocolHandler.quorum.getMembers(),
+				protocolHandler2.quorum.getMembers(),
+			);
+			assert.deepEqual(
+				protocolHandler.audience.getMembers(),
+				protocolHandler2.audience.getMembers(),
+			);
 		});
 	});
 });

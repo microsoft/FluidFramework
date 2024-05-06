@@ -4,18 +4,15 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IFluidHandle.
  * @alpha
  */
-export class MockHandle<T> implements IFluidHandle {
+export class MockHandle<T> extends FluidHandleBase<T> {
 	private graphAttachState: AttachState = AttachState.Detached;
 
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
 	public get isAttached(): boolean {
 		return this.graphAttachState === AttachState.Attached;
 	}
@@ -24,9 +21,11 @@ export class MockHandle<T> implements IFluidHandle {
 		protected readonly value: T,
 		public readonly path = `mock-handle-${Math.random().toString(36).slice(2)}`,
 		public readonly absolutePath: string = `/${path}`,
-	) {}
+	) {
+		super();
+	}
 
-	public async get(): Promise<any> {
+	public async get(): Promise<T> {
 		return this.value;
 	}
 	public attachGraph(): void {

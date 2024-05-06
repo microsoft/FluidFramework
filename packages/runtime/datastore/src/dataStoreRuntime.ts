@@ -11,7 +11,8 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -65,10 +66,11 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
@@ -119,7 +121,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
@@ -182,7 +184,7 @@ export class FluidDataStoreRuntime
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
 	// store becomes visible.
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -201,21 +203,6 @@ export class FluidDataStoreRuntime
 	 * controlled via feature flags.
 	 */
 	private localChangesTelemetryCount: number;
-
-	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 */
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		// back-compat ADO:2309
-		return this.dataStoreContext.ensureNoDataModelChanges === undefined
-			? callback()
-			: this.dataStoreContext.ensureNoDataModelChanges(callback);
-	}
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -545,7 +532,7 @@ export class FluidDataStoreRuntime
 		 * If this channel is already waiting to be made visible, do nothing. This can happen during attachGraph() when
 		 * a channel's graph is attached. It calls bindToContext on the shared object which will end up back here.
 		 */
-		if (this.pendingHandlesToMakeVisible.has(channel.handle)) {
+		if (this.pendingHandlesToMakeVisible.has(toFluidHandleInternal(channel.handle))) {
 			return;
 		}
 
@@ -594,10 +581,10 @@ export class FluidDataStoreRuntime
 	public bind(handle: IFluidHandle): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {
-			handle.attachGraph();
+			toFluidHandleInternal(handle).attachGraph();
 			return;
 		}
-		this.pendingHandlesToMakeVisible.add(handle);
+		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
@@ -830,7 +817,10 @@ export class FluidDataStoreRuntime
 		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
 		// will be the one to call addedGCOutboundReference directly.
 		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
-		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+		this.dataStoreContext.addedGCOutboundReference?.(
+			toFluidHandleInternal(srcHandle),
+			toFluidHandleInternal(outboundHandle),
+		);
 	}
 
 	/**
@@ -996,7 +986,7 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		channel.handle.attachGraph();
+		toFluidHandleInternal(channel.handle).attachGraph();
 
 		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
 		assert(

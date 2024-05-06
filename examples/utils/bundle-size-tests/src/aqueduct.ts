@@ -10,14 +10,14 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { DirectoryFactory } from "@fluidframework/map/internal";
-import { SharedStringFactory } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}
 	const defaultFactory = new DataObjectFactory(
 		"BundleTestDo",
 		BundleTestDo,
-		[new SharedStringFactory(), new DirectoryFactory()],
+		[SharedString.getFactory(), new DirectoryFactory()],
 		{},
 	);
 

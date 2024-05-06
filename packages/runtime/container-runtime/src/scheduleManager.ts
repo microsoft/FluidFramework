@@ -9,8 +9,8 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	createChildLogger,

@@ -32,9 +32,14 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 		this.redisClientConnectionManager = redisClientConnectionManager;
 		this.io = new SocketIoEmitter(redisClientConnectionManager.getRedisClient());
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			this.events.emit("error", error);
-		});
+		redisClientConnectionManager.addErrorHandler(
+			undefined, // lumber properties
+			"Error with SocketIoRedisPublisher", // error message
+			(error) => {
+				this.events.emit("error", error);
+				return false;
+			},
+		);
 	}
 
 	public on(event: string, listener: (...args: any[]) => void) {

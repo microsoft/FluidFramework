@@ -8,6 +8,7 @@ export {
 	knownApiLevels,
 	isKnownApiLevel,
 } from "./apiLevel";
+export { ApiTag } from "./apiTag";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
@@ -24,10 +25,12 @@ export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {
+	ensureDevDependencyExists,
 	filterVersionsOlderThan,
 	generateReleaseGitTagName,
 	getFluidDependencies,
 	getPreReleaseDependencies,
+	getTarballName,
 	isReleased,
 	npmCheckUpdates,
 	PackageVersionMap,
