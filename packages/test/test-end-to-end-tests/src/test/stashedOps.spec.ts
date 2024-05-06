@@ -30,6 +30,7 @@ import {
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
+	type IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
@@ -130,6 +131,75 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			}),
 		},
 	};
+
+	it("ensure single attach op sent in map", async function () {
+		let idB;
+		const cb = async (container, d?) => {
+			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const runtime = defaultDataStore.context.containerRuntime;
+
+			const dataStoreB = await runtime.createDataStore(["default"]);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			idB = dataObjectB.context.id;
+
+			defaultDataStore.root.set("B", dataObjectB.handle);
+		};
+
+		await cb(container1);
+		await provider.ensureSynchronized();
+
+		const container3: IContainerExperimental =
+			await provider.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container3);
+		const default3 = (await container3.getEntryPoint()) as ITestFluidObject;
+
+		const handleB = default3.root.get("B");
+		const dataObjectB3 = await handleB.get();
+		assert(dataObjectB3.context.id === idB);
+	});
+
+	it("ensure single attach op sent in all other ddss", async function () {
+		let idB;
+		const cb = async (container, d?) => {
+			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const runtime = defaultDataStore.context.containerRuntime;
+
+			const cellRoot = await defaultDataStore.getSharedObject<ISharedCell>(cellId);
+			const dirRoot = await defaultDataStore.getSharedObject<ISharedDirectory>(directoryId);
+			const stringRoot = await defaultDataStore.getSharedObject<SharedString>(stringId);
+
+			const dataStoreB = await runtime.createDataStore(["default"]);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			idB = dataObjectB.context.id;
+
+			cellRoot.set(dataObjectB.handle);
+			dirRoot.set("B", dataObjectB.handle);
+			stringRoot.annotateRange(0, 1, { B: dataObjectB.handle });
+		};
+
+		await cb(container1);
+		await provider.ensureSynchronized();
+
+		const container3: IContainerExperimental =
+			await provider.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container3);
+		const default3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const cell3 = await default3.getSharedObject<ISharedCell>(cellId);
+		const dir3 = await default3.getSharedObject<ISharedDirectory>(directoryId);
+		const string3 = await default3.getSharedObject<SharedString>(stringId);
+
+		const cellHandleB = cell3.get() as IFluidHandle<ITestFluidObject>;
+		const cellObjectB3 = await cellHandleB.get();
+		assert(cellObjectB3.context.id === idB);
+
+		const dirHandleB = dir3.get("B");
+		const dirObjectB3 = await dirHandleB.get();
+		assert(dirObjectB3.context.id === idB);
+
+		const stringHandleB = string3.getPropertiesAtPosition(0)?.B;
+		const stringObjectB3 = await stringHandleB.get();
+		assert(stringObjectB3.context.id === idB);
+	});
 
 	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
 	const getPendingOps = async (

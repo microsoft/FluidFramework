@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+import { ValueType } from "@fluidframework/shared-object-base/internal";
 
 import { ISharedMapEvents } from "./interfaces.js";
 import {
@@ -300,15 +300,6 @@ export class MapKernel {
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
-
-		// If we are not attached, don't submit the op.
-		if (!this.isAttached()) {
-			// this is necessary to bind the potential handles in the value
-			// to this DDS, as we do not walk the object normally unless we
-			// are attached
-			bindHandles(localValue.value, this.serializer, this.handle);
-			return;
-		}
 
 		const op: IMapSetOperation = {
 			key,
