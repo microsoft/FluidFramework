@@ -129,7 +129,7 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		createDOProviderContainerRuntimeFactory({ schema: containerConfig, compatMode: "2.x" }),
+		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
 		createNewFlag,
 	);
 
