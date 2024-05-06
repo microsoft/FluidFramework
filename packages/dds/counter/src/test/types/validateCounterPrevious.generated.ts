@@ -34,6 +34,7 @@ declare function get_old_InterfaceDeclaration_ISharedCounter():
 declare function use_current_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<current.ISharedCounter>): void;
 use_current_InterfaceDeclaration_ISharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -48,6 +49,7 @@ declare function get_current_InterfaceDeclaration_ISharedCounter():
 declare function use_old_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<old.ISharedCounter>): void;
 use_old_InterfaceDeclaration_ISharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -85,12 +87,6 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedCounter": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedCounter():
-    TypeOnly<old.SharedCounter>;
-declare function use_current_RemovedClassDeclaration_SharedCounter(
-    use: TypeOnly<current.SharedCounter>): void;
-use_current_RemovedClassDeclaration_SharedCounter(
-    get_old_ClassDeclaration_SharedCounter());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

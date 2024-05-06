@@ -398,6 +398,7 @@ declare function get_old_InterfaceDeclaration_IDataStore():
 declare function use_current_InterfaceDeclaration_IDataStore(
     use: TypeOnly<current.IDataStore>): void;
 use_current_InterfaceDeclaration_IDataStore(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataStore());
 
 /*
@@ -482,6 +483,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
