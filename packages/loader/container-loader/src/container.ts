@@ -47,6 +47,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	getSnapshotTree,
 	MessageType2,
 	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
@@ -1580,10 +1581,11 @@ export class Container
 			specifiedVersion,
 			supportGetSnapshotApi,
 		);
+		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			baseSnapshot,
+			baseSnapshotTree,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1621,7 +1623,7 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(
 			attributes,
 			this.storageAdapter,
-			baseSnapshot,
+			baseSnapshotTree,
 		);
 
 		// If we are loading from pending state, we start with old clientId.
@@ -1635,7 +1637,7 @@ export class Container
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			baseSnapshot,
+			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
