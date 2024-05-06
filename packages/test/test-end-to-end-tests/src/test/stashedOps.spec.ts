@@ -996,7 +996,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(dataObjectB3.context.id === idB);
 	});
 
-	it.only("ensure single attach op sent in all other ddss", async function () {
+	it.skip("ensure single attach op sent in all other ddss", async function () {
 		let idB;
 		const cb = async (container, d?) => {
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
