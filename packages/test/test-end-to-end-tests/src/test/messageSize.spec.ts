@@ -513,7 +513,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								this.skip();
 							}
 
-							// This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
+							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
 							if (provider.driver.type === "routerlicious") {
 								this.skip();
 							}
