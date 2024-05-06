@@ -20,7 +20,7 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Override the rule fo import of "util"
+			// Override the rule to allow import of "util"
 			files: ["src/kafkaNodeConsumer.ts", "src/kafkaNodeProducer.ts"],
 			rules: {
 				"import/no-nodejs-modules": "off",
