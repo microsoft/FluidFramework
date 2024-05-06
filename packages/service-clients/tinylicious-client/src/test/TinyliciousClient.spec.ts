@@ -75,7 +75,7 @@ describe("TinyliciousClient", () => {
 	 * be returned.
 	 */
 	it("can create instance without specifying port number", async () => {
-		const containerAndServicesP = tinyliciousClient.createContainer(schema);
+		const containerAndServicesP = tinyliciousClient.createContainer(schema, "2");
 
 		await assert.doesNotReject(
 			containerAndServicesP,
@@ -94,7 +94,7 @@ describe("TinyliciousClient", () => {
 		const clientProps = { connection: { port: 7070 } };
 		const clientWithPort = new TinyliciousClient(clientProps);
 
-		const containerAndServicesP = clientWithPort.createContainer(schema);
+		const containerAndServicesP = clientWithPort.createContainer(schema, "2");
 
 		await assert.doesNotReject(
 			containerAndServicesP,
@@ -109,7 +109,11 @@ describe("TinyliciousClient", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const containerAndServicesP = tinyliciousClient.getContainer("containerConfig", schema);
+		const containerAndServicesP = tinyliciousClient.getContainer(
+			"containerConfig",
+			schema,
+			"2",
+		);
 
 		const errorFn = (error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
@@ -131,7 +135,7 @@ describe("TinyliciousClient", () => {
 	 * be returned.
 	 */
 	it("can create a container and services successfully", async () => {
-		const containerAndServicesP = tinyliciousClient.createContainer(schema);
+		const containerAndServicesP = tinyliciousClient.createContainer(schema, "2");
 
 		await assert.doesNotReject(
 			containerAndServicesP,
@@ -141,7 +145,7 @@ describe("TinyliciousClient", () => {
 	});
 
 	it("creates a container with detached state", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+		const { container } = await tinyliciousClient.createContainer(schema, "2");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Detached,
@@ -150,7 +154,7 @@ describe("TinyliciousClient", () => {
 	});
 
 	it("creates a container that can only be attached once", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+		const { container } = await tinyliciousClient.createContainer(schema, "2");
 		const containerId = await container.attach();
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -170,7 +174,7 @@ describe("TinyliciousClient", () => {
 	 * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
 	 */
 	it("can get a container successfully", async () => {
-		const { container: containerCreate } = await tinyliciousClient.createContainer(schema);
+		const { container: containerCreate } = await tinyliciousClient.createContainer(schema, "2");
 		const containerId = await containerCreate.attach();
 		await new Promise<void>((resolve, reject) => {
 			containerCreate.on("connected", () => {
@@ -181,6 +185,7 @@ describe("TinyliciousClient", () => {
 		const { container: containerGet } = await tinyliciousClient.getContainer(
 			containerId,
 			schema,
+			"2",
 		);
 		const map1Create = containerCreate.initialObjects.map1;
 		const map1Get = containerGet.initialObjects.map1;
@@ -194,7 +199,7 @@ describe("TinyliciousClient", () => {
 	 * each other after value is changed.
 	 */
 	it("can change initialObjects value", async () => {
-		const { container: containerCreate } = await tinyliciousClient.createContainer(schema);
+		const { container: containerCreate } = await tinyliciousClient.createContainer(schema, "2");
 		const containerId = await containerCreate.attach();
 		await timeoutPromise((resolve, reject) => {
 			containerCreate.on("connected", () => {
@@ -219,6 +224,7 @@ describe("TinyliciousClient", () => {
 		const { container: containerGet } = await tinyliciousClient.getContainer(
 			containerId,
 			schema,
+			"2",
 		);
 		// Make sure the container get the changed state
 		await timeoutPromise((resolve, reject) => {
@@ -247,7 +253,7 @@ describe("TinyliciousClient", () => {
 			dynamicObjectTypes: [SharedDirectory],
 		} satisfies ContainerSchema;
 
-		const { container } = await tinyliciousClient.createContainer(dynamicSchema);
+		const { container } = await tinyliciousClient.createContainer(dynamicSchema, "2");
 		await container.attach();
 		await new Promise<void>((resolve, reject) => {
 			container.on("connected", () => {
@@ -282,8 +288,10 @@ describe("TinyliciousClient", () => {
 			dynamicObjectTypes: [TestDataObject],
 		} satisfies ContainerSchema;
 
-		const { container: createFluidContainer } =
-			await tinyliciousClient.createContainer(dynamicSchema);
+		const { container: createFluidContainer } = await tinyliciousClient.createContainer(
+			dynamicSchema,
+			"2",
+		);
 		await createFluidContainer.attach();
 		await new Promise<void>((resolve, reject) => {
 			createFluidContainer.on("connected", () => {
@@ -313,8 +321,10 @@ describe("TinyliciousClient", () => {
 			},
 		} satisfies ContainerSchema;
 
-		const { container: createFluidContainer } =
-			await tinyliciousClient.createContainer(dynamicSchema);
+		const { container: createFluidContainer } = await tinyliciousClient.createContainer(
+			dynamicSchema,
+			"2",
+		);
 		await createFluidContainer.attach();
 		await new Promise<void>((resolve, reject) => {
 			createFluidContainer.on("connected", () => {
@@ -339,13 +349,13 @@ describe("TinyliciousClient", () => {
 		const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
 		const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 		await timeoutPromise((resolve) => container.once("connected", resolve), {
 			durationMs: 1000,
 			errorMsg: "container connect() timeout",
 		});
-		const { container: containerGet } = await client.getContainer(containerId, schema);
+		const { container: containerGet } = await client.getContainer(containerId, schema, "2");
 
 		assert.strictEqual(
 			connectionModeOf(container),
@@ -374,13 +384,13 @@ describe("TinyliciousClient", () => {
 		]);
 		const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2");
 		const containerId = await container.attach();
 		await timeoutPromise((resolve) => container.once("connected", resolve), {
 			durationMs: 1000,
 			errorMsg: "container connect() timeout",
 		});
-		const { container: containerGet } = await client.getContainer(containerId, schema);
+		const { container: containerGet } = await client.getContainer(containerId, schema, "2");
 
 		assert.strictEqual(
 			connectionModeOf(container),
@@ -400,11 +410,14 @@ describe("TinyliciousClient", () => {
 	 * schema type is statically known.
 	 */
 	it("preserves types of 'initialObjects'", async () => {
-		const { container } = await tinyliciousClient.createContainer({
-			initialObjects: {
-				map1: SharedMap,
+		const { container } = await tinyliciousClient.createContainer(
+			{
+				initialObjects: {
+					map1: SharedMap,
+				},
 			},
-		});
+			"2",
+		);
 
 		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
 		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);

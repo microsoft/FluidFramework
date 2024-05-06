@@ -69,7 +69,7 @@ export class TinyliciousClient {
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 		// TODO: Make non-optional for creation?
-		compatMode: CompatMode = "1.x",
+		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
@@ -121,7 +121,7 @@ export class TinyliciousClient {
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatMode: CompatMode = "1.x",
+		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;

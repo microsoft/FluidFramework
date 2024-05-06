@@ -127,8 +127,7 @@ export class AzureClient {
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		// TODO: Make non-optional for creation?
-		compatMode: CompatMode = "1.x",
+		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -159,7 +158,7 @@ export class AzureClient {
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatMode: CompatMode = "1.x",
+		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -195,7 +194,7 @@ export class AzureClient {
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
-		compatMode: CompatMode = "1.x",
+		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {

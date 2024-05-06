@@ -24,11 +24,11 @@ export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 // @internal
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatMode?: CompatMode): Promise<{
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatMode: CompatMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatMode?: CompatMode): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatMode: CompatMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;

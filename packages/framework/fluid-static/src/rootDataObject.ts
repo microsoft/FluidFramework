@@ -170,13 +170,13 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
-	compatMode?: CompatMode;
+	compatMode: CompatMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode ?? "2.x");
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode);
 }
 
 const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
-	"1.x": {
+	"1": {
 		// 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 		// fewer messages will be included per flush.
@@ -188,7 +188,7 @@ const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
 		},
 		// TODO: Include explicit disables for things that are currently off-by-default?
 	},
-	"2.x": {
+	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
 		// ejection from collaboration and prevent container corruption.  It is off by default and must be explicitly enabled.
 		explicitSchemaControl: true,
