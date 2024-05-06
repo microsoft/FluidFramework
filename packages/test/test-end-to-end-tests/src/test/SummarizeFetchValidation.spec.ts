@@ -262,7 +262,7 @@ describeCompat(
 		});
 
 		it("Second summarizer from latest should not fetch", async function () {
-			// This test is consistently failing when ran against FRS. See ADO:7894
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7894
 			if (
 				provider.driver.type === "routerlicious" &&
 				provider.driver.endpointName === "frs"
@@ -314,7 +314,7 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
-			// This test is consistently failing when ran against FRS. See ADO:7895
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
 			if (
 				provider.driver.type === "routerlicious" &&
 				provider.driver.endpointName === "frs"
