@@ -812,22 +812,42 @@ describe("Routerlicious", () => {
 									});
 								}
 							});
-							describe("sending two signals", () => {
+							describe("sending multiple signals", () => {
 								[0, 1].forEach((clientIndex) => {
 									const fromClient = `from client ${clientIndex} (v${clientVersion[clientIndex]})`;
 									it(`${fromClient} should broadcast signals sent from multiple clients to all connected clients`, () => {
 										const firstSignal = sendValidAndReturnExpectedSignal(
-											clients[0],
+											clients[clientIndex],
 											"first signal",
 										);
 										const secondSignal = sendValidAndReturnExpectedSignal(
-											clients[1],
+											clients[clientIndex ^ 1],
 											"second signal",
 										);
 
 										verifyExpectedClientSignals(clients, [
 											firstSignal,
 											secondSignal,
+										]);
+									});
+									it(`${fromClient} should broadcast multiple batched signals sent from single clients to all connected clients`, () => {
+										const firstSignal = sendValidAndReturnExpectedSignal(
+											clients[clientIndex],
+											"first signal",
+										);
+										const secondSignal = sendValidAndReturnExpectedSignal(
+											clients[clientIndex],
+											"second signal",
+										);
+										const thirdSignal = sendValidAndReturnExpectedSignal(
+											clients[clientIndex],
+											"third signal",
+										);
+
+										verifyExpectedClientSignals(clients, [
+											firstSignal,
+											secondSignal,
+											thirdSignal,
 										]);
 									});
 								});
