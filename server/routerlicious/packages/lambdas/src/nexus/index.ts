@@ -138,18 +138,30 @@ export function configureWebSocketServices(
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Timer to check token expiry for this socket connection
 		const expirationTimer = new ExpirationTimer(() => socket.disconnect(true));
-		// Map from client IDs on this connection to the object ID and user info.
+
+		/**
+		 * Maps and sets to track various information related to client connections.
+		 * Note: These maps are expected to have only one entry per client ID.
+		 */
+
+		// Map from client IDs on this connection to the object ID and user info
 		const connectionsMap = new Map<string, core.IOrdererConnection>();
-		// Map from client IDs to room.
+
+		// Map from client IDs to room
 		const roomMap = new Map<string, IRoom>();
-		// Map from client Ids to scope.
+
+		// Map from client Ids to scope
 		const scopeMap = new Map<string, string[]>();
+
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
-		// Map from client Ids to supportedFeatures
+
+		// Map from client Ids to supportedFeatures ()
 		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
+
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
+
 		// Set of client Ids that have been disconnected from room and client manager.
 		const disconnectedClients = new Set<string>();
 
