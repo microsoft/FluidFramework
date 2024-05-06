@@ -22,6 +22,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	type CompatMode,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
@@ -67,11 +68,13 @@ export class TinyliciousClient {
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		// TODO: Make non-optional for creation?
+		compatMode: CompatMode = "1.x",
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatMode);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -118,11 +121,12 @@ export class TinyliciousClient {
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		compatMode: CompatMode = "1.x",
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatMode);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
@@ -143,10 +147,10 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): IHostLoader {
+	private createLoader(schema: ContainerSchema, compatMode: CompatMode): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatMode: "2.x",
+			compatMode,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
