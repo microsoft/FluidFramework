@@ -86,6 +86,7 @@ function buildPendingMessageContent(
  */
 export class PendingStateManager implements IDisposable {
 	private readonly pendingMessages = new Deque<IPendingMessage>();
+	// This queue represents already acked messages.
 	private readonly initialMessages = new Deque<IPendingMessage>();
 
 	/**
@@ -113,6 +114,15 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
+	 *
+	 * We need this so that we can properly keep local data and maintain the correct sequence window.
+	 */
+	public get minimumPendingMessageSequenceNumber(): number | undefined {
+		return this.pendingMessages.peekFront()?.referenceSequenceNumber;
 	}
 
 	/**

@@ -131,8 +131,8 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.  
-        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists 
+        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
+        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
 
 - task: Bash@3
   displayName: Update Package Version (flub)
@@ -145,9 +145,10 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
-# This template only runs for non-PR main-branch builds, generating manifest files based on the current date and build number. 
-#  Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
-- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main branch, and
+# for the build of the client release group (we don't need manifests for anything else).
+# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.tagName, 'client')) }}:
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'
