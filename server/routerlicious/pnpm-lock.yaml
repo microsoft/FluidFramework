@@ -291,7 +291,6 @@ importers:
       copyfiles: ^2.4.1
       debug: ^4.3.4
       eslint: ~8.55.0
-      events: ^3.1.0
       events_pkg: npm:events@^3.1.0
       jsrsasign: ^11.0.0
       mocha: ^10.2.0
@@ -314,7 +313,7 @@ importers:
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@fluidframework/server-test-utils': link:../test-utils
       debug: 4.3.4
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       jsrsasign: 11.0.0
       uuid: 9.0.0
     devDependencies:
@@ -334,7 +333,6 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      events_pkg: /events/3.3.0
       mocha: 10.2.0
       nock: 13.3.3
       prettier: 3.0.3
@@ -438,7 +436,6 @@ importers:
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       eslint: ~8.55.0
-      events: ^3.1.0
       events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       prettier: ~3.0.3
@@ -448,7 +445,7 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-definitions': 3.2.0
-      events: 3.3.0
+      events_pkg: /events/3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.38.0_@types+node@18.17.6
       '@fluidframework/build-common': 2.0.3
@@ -463,7 +460,6 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      events_pkg: /events/3.3.0
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -912,7 +908,6 @@ importers:
       '@types/sinon': ^9.0.9
       concurrently: ^8.2.1
       eslint: ~8.55.0
-      events: ^3.1.0
       events_pkg: npm:events@^3.1.0
       kafka-node: ^5.0.0
       nconf: ^0.12.0
@@ -926,7 +921,7 @@ importers:
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-ordering-zookeeper': link:../services-ordering-zookeeper
       '@fluidframework/server-services-telemetry': link:../services-telemetry
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       kafka-node: 5.0.0
       nconf: 0.12.0
       sillyname: 0.1.0
@@ -943,7 +938,6 @@ importers:
       '@types/sinon': 9.0.11
       concurrently: 8.2.1
       eslint: 8.55.0
-      events_pkg: /events/3.3.0
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -968,7 +962,7 @@ importers:
       '@types/sinon': ^9.0.9
       concurrently: ^8.2.1
       eslint: ~8.55.0
-      events: ^3.1.0
+      events_pkg: npm:events@^3.1.0
       nconf: ^0.12.0
       node-rdkafka: ^2.16.1
       prettier: ~3.0.3
@@ -981,7 +975,7 @@ importers:
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       nconf: 0.12.0
       node-rdkafka: 2.16.1
       sillyname: 0.1.0
