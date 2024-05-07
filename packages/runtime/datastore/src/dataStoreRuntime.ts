@@ -922,6 +922,20 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
+		/**
+		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
+		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
+		 * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
+		 *
+		 * 1. Before attaching the data store - When a detached container is attached.
+		 *
+		 * 2. After attaching the data store - When a data store is created and bound in an attached container.
+		 *
+		 * The basic idea is that all local object should become locally visible before they are globally visible.
+		 */
+
+		this.attachGraph();
+
 		// This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
 		// https://github.com/microsoft/FluidFramework/issues/9688.
 		//
@@ -1196,6 +1210,17 @@ export class FluidDataStoreRuntime
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
 			case AttachState.Attaching:
+				/**
+				 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
+				 * locally visible. However, before visibility state was added, this may not have been the case and data
+				 * store can move to "attaching" state in 2 scenarios:
+				 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
+				 * 2) After attachGraph() is called - When a detached container is attached.
+				 *
+				 * The basic idea is that all local object should become locally visible before they are globally visible.
+				 */
+				this.attachGraph();
+
 				this._attachState = AttachState.Attaching;
 
 				assert(
