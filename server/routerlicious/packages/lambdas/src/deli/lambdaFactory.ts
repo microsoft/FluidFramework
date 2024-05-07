@@ -333,16 +333,24 @@ export class DeliLambdaFactory
 				if (document?.isEphemeralContainer && this.clusterDrainingChecker) {
 					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining();
 					if (isClusterDraining) {
-						// TODO: Set activity timer?
-						Lumberjack.info("NoClient event is received", baseLumberjackProperties);
+						Lumberjack.info(
+							"Cluster is under draining and NoClient event is received",
+							baseLumberjackProperties,
+						);
 						if (updateActivityTime) {
+							// Set session activity time to be 2 minutes later.
+							// It means this labmda will be closed in about 2 minutes
 							updateActivityTime(Date.now() + 2 * 60 * 1000);
 						}
 					}
 				}
 			};
 			handler().catch((e) => {
-				Lumberjack.error("Failed to handle NoClient event.", baseLumberjackProperties, e);
+				Lumberjack.error(
+					"Failed to handle NoClient event.",
+					baseLumberjackProperties,
+					e,
+				);
 			});
 		});
 
