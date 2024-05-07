@@ -32,8 +32,6 @@ import { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-// eslint-disable-next-line import/no-internal-modules
-import { identifier } from "../../default-schema/defaultFieldKinds.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -77,9 +75,8 @@ export function fieldShaper(
 	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
-	// eslint-disable-next-line unicorn/prefer-ternary
 	if (kind.multiplicity === Multiplicity.Single) {
-		if (field.kind === identifier.identifier) {
+		if (field.kind === "Identifier") {
 			assert(field.types !== undefined, "field types must be defined in identifier field");
 			const identifierNodeEncoder = new NodeShape(
 				Array.from(field.types)[0],
