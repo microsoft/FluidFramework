@@ -1347,6 +1347,804 @@ const tree5 = {
 	enableAnyBinaryBlobOnFirstSummary: true,
 };
 
+const tree6 = {
+	summary: {
+		type: "tree",
+		entries: [
+			{
+				value: {
+					type: "tree",
+					entries: [
+						{
+							value: {
+								type: "tree",
+								entries: [
+									{
+										value: {
+											type: "tree",
+											entries: [
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"tree1":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/A/_C"}}}}}}}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: "header",
+																type: "blob",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "root",
+													type: "tree",
+												},
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "tree",
+																	entries: [
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"trunk":[],"branches":[],"version":2}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "String",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "EditManager",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "SchemaString",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Schema",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "ForestTree",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Forest",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"data":[],"maxId":0}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "DetachedFieldIndexBlob",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "DetachedFieldIndex",
+																			type: "tree",
+																		},
+																	],
+																},
+																unreferenced: undefined,
+																path: "indexes",
+																type: "tree",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/tree","snapshotFormatVersion":"0.0.0","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "_C",
+													type: "tree",
+												},
+											],
+										},
+										unreferenced: undefined,
+										path: ".channels",
+										type: "tree",
+									},
+									{
+										value: {
+											type: "blob",
+											content:
+												'{"pkg":"[\\"rootDO\\"]","summaryFormatVersion":2,"isRootDataStore":true}',
+											encoding: "utf8",
+										},
+										unreferenced: undefined,
+										path: ".component",
+										type: "blob",
+									},
+								],
+							},
+							unreferenced: undefined,
+							path: "A",
+							type: "tree",
+						},
+					],
+				},
+				unreferenced: undefined,
+				path: ".channels",
+				type: "tree",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'{"createContainerRuntimeVersion":"2.0.0-rc.4.0.0","createContainerTimestamp":1715037752782,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"tombstoneTimeoutMs":3110400000,"telemetryDocumentId":"5a32330e-5725-4a94-a994-724b49a9662a","message":{"sequenceNumber":-1},"documentSchema":{"version":1,"refSeq":0,"runtime":{"explicitSchemaControl":true,"compressionLz4":true,"idCompressorMode":"on"}}}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".metadata",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'"AAAAAAAAAEAAAAAAAAAAAAAAAAAAAPA/AAAAAAAA8D8hHIUZCp3u0BXvmdmqvXoBAAAAAAAAAAAAAAAAACCAQAAAAAAAABBA"',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".idCompressor",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '[["rootDOId","A"]]',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".aliases",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '{"electionSequenceNumber":0}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".electedSummarizer",
+				type: "blob",
+			},
+		],
+	},
+	sequenceNumber: 0,
+	values: [
+		[
+			"code",
+			{
+				key: "code",
+				value: {
+					package: "no-dynamic-package",
+					config: {},
+				},
+				approvalSequenceNumber: 0,
+				commitSequenceNumber: 0,
+				sequenceNumber: 0,
+			},
+		],
+	],
+	enableDiscovery: true,
+	generateToken: false,
+	isEphemeralContainer: true,
+	enableAnyBinaryBlobOnFirstSummary: true,
+};
+
+const tree7 = {
+	summary: {
+		type: "tree",
+		entries: [
+			{
+				value: {
+					type: "tree",
+					entries: [
+						{
+							value: {
+								type: "tree",
+								entries: [
+									{
+										value: {
+											type: "tree",
+											entries: [
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"tree1":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/A/_C"}}}}}}}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: "header",
+																type: "blob",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "root",
+													type: "tree",
+												},
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "tree",
+																	entries: [
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"trunk":[],"branches":[],"version":2}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "String",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "EditManager",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "SchemaString",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Schema",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "ForestTree",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Forest",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"data":[],"maxId":0}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "DetachedFieldIndexBlob",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "DetachedFieldIndex",
+																			type: "tree",
+																		},
+																	],
+																},
+																unreferenced: undefined,
+																path: "indexes",
+																type: "tree",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/tree","snapshotFormatVersion":"0.0.0","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "_C",
+													type: "tree",
+												},
+											],
+										},
+										unreferenced: undefined,
+										path: ".channels",
+										type: "tree",
+									},
+									{
+										value: {
+											type: "blob",
+											content:
+												'{"pkg":"[\\"rootDO\\"]","summaryFormatVersion":2,"isRootDataStore":true}',
+											encoding: "utf8",
+										},
+										unreferenced: undefined,
+										path: ".component",
+										type: "blob",
+									},
+								],
+							},
+							unreferenced: undefined,
+							path: "A",
+							type: "tree",
+						},
+					],
+				},
+				unreferenced: undefined,
+				path: ".channels",
+				type: "tree",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'{"createContainerRuntimeVersion":"2.0.0-rc.4.0.0","createContainerTimestamp":1715037734979,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"tombstoneTimeoutMs":3110400000,"telemetryDocumentId":"e61ca1ee-56a6-4f0a-a6b6-1d523019b936","message":{"sequenceNumber":-1},"documentSchema":{"version":1,"refSeq":0,"runtime":{"explicitSchemaControl":true,"compressionLz4":true,"idCompressorMode":"on"}}}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".metadata",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'"AAAAAAAAAEAAAAAAAAAAAAAAAAAAAPA/AAAAAAAA8D/uA4tXNOgTHQIFXToWSAkCAAAAAAAAAAAAAAAAACCAQAAAAAAAABBA"',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".idCompressor",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '[["rootDOId","A"]]',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".aliases",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '{"electionSequenceNumber":0}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".electedSummarizer",
+				type: "blob",
+			},
+		],
+	},
+	sequenceNumber: 0,
+	values: [
+		[
+			"code",
+			{
+				key: "code",
+				value: {
+					package: "no-dynamic-package",
+					config: {},
+				},
+				approvalSequenceNumber: 0,
+				commitSequenceNumber: 0,
+				sequenceNumber: 0,
+			},
+		],
+	],
+	enableDiscovery: true,
+	generateToken: false,
+	isEphemeralContainer: true,
+	enableAnyBinaryBlobOnFirstSummary: true,
+};
+
+const tree8 = {
+	summary: {
+		type: "tree",
+		entries: [
+			{
+				value: {
+					type: "tree",
+					entries: [
+						{
+							value: {
+								type: "tree",
+								entries: [
+									{
+										value: {
+											type: "tree",
+											entries: [
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"tree1":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/A/_C"}}}}}}}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: "header",
+																type: "blob",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "root",
+													type: "tree",
+												},
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "tree",
+																	entries: [
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"trunk":[],"branches":[],"version":2}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "String",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "EditManager",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "SchemaString",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Schema",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "ForestTree",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "Forest",
+																			type: "tree",
+																		},
+																		{
+																			value: {
+																				type: "tree",
+																				entries: [
+																					{
+																						value: {
+																							type: "blob",
+																							content:
+																								'{"version":1,"data":[],"maxId":0}',
+																							encoding:
+																								"utf8",
+																						},
+																						unreferenced:
+																							undefined,
+																						path: "DetachedFieldIndexBlob",
+																						type: "blob",
+																					},
+																				],
+																			},
+																			unreferenced: undefined,
+																			path: "DetachedFieldIndex",
+																			type: "tree",
+																		},
+																	],
+																},
+																unreferenced: undefined,
+																path: "indexes",
+																type: "tree",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/tree","snapshotFormatVersion":"0.0.0","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "_C",
+													type: "tree",
+												},
+											],
+										},
+										unreferenced: undefined,
+										path: ".channels",
+										type: "tree",
+									},
+									{
+										value: {
+											type: "blob",
+											content:
+												'{"pkg":"[\\"rootDO\\"]","summaryFormatVersion":2,"isRootDataStore":true}',
+											encoding: "utf8",
+										},
+										unreferenced: undefined,
+										path: ".component",
+										type: "blob",
+									},
+								],
+							},
+							unreferenced: undefined,
+							path: "A",
+							type: "tree",
+						},
+					],
+				},
+				unreferenced: undefined,
+				path: ".channels",
+				type: "tree",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'{"createContainerRuntimeVersion":"2.0.0-rc.4.0.0","createContainerTimestamp":1715037752782,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"tombstoneTimeoutMs":3110400000,"telemetryDocumentId":"5a32330e-5725-4a94-a994-724b49a9662a","message":{"sequenceNumber":-1},"documentSchema":{"version":1,"refSeq":0,"runtime":{"explicitSchemaControl":true,"compressionLz4":true,"idCompressorMode":"on"}}}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".metadata",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content:
+						'"AAAAAAAAAEAAAAAAAAAAAAAAAAAAAPA/AAAAAAAA8D8hHIUZCp3u0BXvmdmqvXoBAAAAAAAAAAAAAAAAACCAQAAAAAAAABBA"',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".idCompressor",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '[["rootDOId","A"]]',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".aliases",
+				type: "blob",
+			},
+			{
+				value: {
+					type: "blob",
+					content: '{"electionSequenceNumber":0}',
+					encoding: "utf8",
+				},
+				unreferenced: undefined,
+				path: ".electedSummarizer",
+				type: "blob",
+			},
+		],
+	},
+	sequenceNumber: 0,
+	values: [
+		[
+			"code",
+			{
+				key: "code",
+				value: {
+					package: "no-dynamic-package",
+					config: {},
+				},
+				approvalSequenceNumber: 0,
+				commitSequenceNumber: 0,
+				sequenceNumber: 0,
+			},
+		],
+	],
+	enableDiscovery: true,
+	generateToken: false,
+	isEphemeralContainer: true,
+	enableAnyBinaryBlobOnFirstSummary: true,
+};
+
 /**
  * Summary tree for the following test case:
  * Fluid Audience: Can find original member
@@ -1442,3 +2240,21 @@ export const changeDataObjectsWithinInitialObjectsValue = tree5;
  * Fluid data updates: Can create/add loadable objects (custom data object) dynamically during runtime
  */
 export const createAddLoadableObjectsDynamically = tree1;
+
+/**
+ * Summary tree for the following test case:
+ * Fluid data updates: Can send and receive signals
+ */
+export const sendAndRecieveSignals = tree6;
+
+/**
+ * Summary tree for the following test case:
+ * Fluid data updates: Can create a container with SharedTree and do basic ops
+ */
+export const createContainerWithSharedTree = tree7;
+
+/**
+ * Summary tree for the following test case:
+ * Fluid data updates: Can create/load a container with SharedTree collaborate with basic ops
+ */
+export const createLoadContainerWithSharedTree = tree8;

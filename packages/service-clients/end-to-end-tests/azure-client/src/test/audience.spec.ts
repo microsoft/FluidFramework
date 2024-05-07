@@ -216,8 +216,22 @@ describe("Fluid audience", () => {
 			this.skip();
 		}
 
-		const { container, services } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		let services: AzureContainerServices;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.observeMemberLeaving,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse.data.id as string;
+			({ container, services } = await client.getContainer(containerId, schema));
+		} else {
+			({ container, services } = await client.createContainer(schema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -309,8 +323,21 @@ describe("Fluid audience", () => {
 			this.skip();
 		}
 
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.observeMemberLeaving,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse.data.id as string;
+			({ container } = await client.getContainer(containerId, schema));
+		} else {
+			({ container } = await client.createContainer(schema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {

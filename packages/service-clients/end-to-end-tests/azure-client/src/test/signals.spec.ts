@@ -12,7 +12,10 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import type { AxiosResponse } from "axios";
+
+import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
 import { configProvider } from "./utils.js";
 
@@ -45,6 +48,7 @@ async function createSignalListenerPromise<T>(
 describe("Fluid Signals", () => {
 	const connectedContainers: IFluidContainer[] = [];
 	const connectTimeoutMs = 10_000;
+	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
 	const user1: AzureUser = {
 		id: "test-user-id-1",
 		name: "test-user-name-2",
@@ -88,8 +92,20 @@ describe("Fluid Signals", () => {
 		let services: AzureContainerServices;
 		let containerId: string;
 		if (id === undefined) {
-			({ container, services } = await client.createContainer(schema));
-			containerId = await container.attach();
+			if (isEphemeral) {
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.sendAndRecieveSignals,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				containerId = containerResponse.data.id as string;
+				({ container, services } = await client.getContainer(containerId, schema));
+			} else {
+				({ container, services } = await client.createContainer(schema));
+				containerId = await container.attach();
+			}
 		} else {
 			containerId = id;
 			({ container, services } = await client.getContainer(containerId, schema));

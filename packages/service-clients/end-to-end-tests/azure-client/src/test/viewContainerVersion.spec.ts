@@ -115,7 +115,6 @@ describe("viewContainerVersion scenarios", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			containerId = containerResponse.data.id as string;
-			// ({ container } = await client.getContainer(containerId, schema));
 		} else {
 			({ container } = await client.createContainer(schema));
 			containerId = await container.attach();

@@ -7,11 +7,20 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedTree, TreeConfiguration, SchemaFactory } from "@fluidframework/tree";
+import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	SharedTree,
+	TreeConfiguration,
+	SchemaFactory,
+	type TreeView,
+	type ITree,
+} from "@fluidframework/tree";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import type { AxiosResponse } from "axios";
+
+import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 const sf = new SchemaFactory("d302b84c-75f6-4ecd-9663-524f467013e3");
 
@@ -47,6 +56,7 @@ const treeConfiguration = new TreeConfiguration(
 
 describe("SharedTree with AzureClient", () => {
 	const connectTimeoutMs = 10_000;
+	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
 	let client: AzureClient;
 	const schema = {
 		initialObjects: {
@@ -66,11 +76,31 @@ describe("SharedTree with AzureClient", () => {
 	 * be returned.
 	 */
 	it("can create a container with SharedTree and do basic ops", async () => {
-		const { container: container1 } = await client.createContainer(schema);
-		const treeData = container1.initialObjects.tree1.schematize(
-			treeConfiguration, // This is defined in schema.ts
-		);
-		await container1.attach();
+		let containerId: string;
+		let container1: IFluidContainer;
+		let treeData: TreeView<typeof StringArray>;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.createContainerWithSharedTree,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse.data.id as string;
+			({ container: container1 } = await client.getContainer(containerId, schema));
+
+			treeData = (container1.initialObjects.tree1 as ITree).schematize(
+				treeConfiguration, // This is defined in schema.ts
+			);
+		} else {
+			({ container: container1 } = await client.createContainer(schema));
+
+			treeData = (container1.initialObjects.tree1 as ITree).schematize(
+				treeConfiguration, // This is defined in schema.ts
+			);
+
+			containerId = await container1.attach();
+		}
 
 		if (container1.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
@@ -101,9 +131,27 @@ describe("SharedTree with AzureClient", () => {
 	 * be returned.
 	 */
 	it("can create/load a container with SharedTree collaborate with basic ops", async () => {
-		const { container: container1 } = await client.createContainer(schema);
-		const treeData1 = container1.initialObjects.tree1.schematize(treeConfiguration);
-		const containerId = await container1.attach();
+		let containerId: string;
+		let container1: IFluidContainer;
+		let treeData1: TreeView<typeof StringArray>;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.createLoadContainerWithSharedTree,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse.data.id as string;
+			({ container: container1 } = await client.getContainer(containerId, schema));
+
+			treeData1 = (container1.initialObjects.tree1 as ITree).schematize(treeConfiguration);
+		} else {
+			({ container: container1 } = await client.createContainer(schema));
+
+			treeData1 = (container1.initialObjects.tree1 as ITree).schematize(treeConfiguration);
+
+			containerId = await container1.attach();
+		}
 
 		if (container1.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
