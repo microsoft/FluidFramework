@@ -260,7 +260,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster === undefined) {
 			// This is the first cluster in the session space
 			if (rangeBaseLocal !== -1) {
-				throw new Error("Ranges finalized out of order.");
+				throw new Error(
+					`Ranges finalized out of order, expected range starting with -1, got one starting at ${rangeBaseLocal}.`,
+				);
 			}
 			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
@@ -273,7 +275,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw new Error("Ranges finalized out of order.");
+			throw new Error(
+				`Ranges finalized out of order, expected range starting with ${
+					lastCluster.baseLocalId - lastCluster.count + 1
+				}, got one starting at ${rangeBaseLocal}.`,
+			);
 		}
 
 		if (remainingCapacity >= count) {
