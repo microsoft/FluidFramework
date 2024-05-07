@@ -6,12 +6,7 @@
 import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import type { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import {
-	CompressionAlgorithms,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -23,7 +18,6 @@ import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	DataObjectFactoryType,
-	ITestObjectProvider,
 	createAndAttachContainer,
 	ITestFluidObject,
 	waitForContainerConnection,
@@ -31,7 +25,18 @@ import {
 
 import type { ISharedMatrix } from "@fluidframework/matrix/internal";
 import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
-import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
+import {
+	ConsensusResult,
+	type ConsensusCallback,
+	type ConsensusQueue,
+	type IConsensusOrderedCollection,
+} from "@fluidframework/ordered-collection/internal";
+import {
+	ISharedTree,
+	SharedTree,
+	SchemaFactory,
+	TreeConfiguration,
+} from "@fluidframework/tree/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -48,6 +53,21 @@ const migrationShimId = "migrationShim";
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
+
+function treeSetup (dds) {
+	const builder = new SchemaFactory("test");
+				class Bar extends builder.object("bar", {
+					h: builder.optional(builder.handle),
+				}) {}
+
+				const config = new TreeConfiguration(Bar, () => ({
+					h: undefined,
+				}));
+
+				const treeView = dds.schematize(config);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return treeView;
+}
 
 describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
@@ -67,7 +87,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		[cellId, SharedCell.getFactory()],
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
-		// [treeId, SharedTree.getFactory()],
+		[treeId, SharedTree.getFactory()],
 		[matrixId, SharedMatrix.getFactory()],
 		// [legacyTreeId, LegacySharedTree.getFactory()],
 		[registerId, ConsensusRegisterCollection.getFactory()],
@@ -88,22 +108,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		runtimeOptions: {
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
-			compressionOptions: {
-				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			summaryOptions: {
-				summaryConfigOverrides: {
-					...DefaultSummaryConfiguration,
-					...{
-						maxTime: 5000 * 12,
-						maxAckWaitTime: 120000,
-						maxOps: 1,
-						initialSummarizerDelayMs: 20,
-					},
-				},
-			},
 			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
@@ -113,47 +117,31 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 	};
 
-	let provider: ITestObjectProvider;
-	let url;
-	let loader: IHostLoader;
-	let container1: IContainerExperimental;
-	let map1: ISharedMap;
-	let string1: SharedString;
-	let cell1: ISharedCell;
-	let directory1: ISharedDirectory;
-	// let tree1: ISharedTree;
-	let matrix1: ISharedMatrix;
-	// let legacyTree1: LegacySharedTree;
-	let register1: IConsensusRegisterCollection;
-	let queue1: IConsensusOrderedCollection;
-	// let migrationShim1: MigrationShim;
-
-	let waitForSummary: () => Promise<void>;
-
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider();
-		loader = provider.makeTestLoader(testContainerConfig);
-		container1 = await createAndAttachContainer(
+	async function setup() {
+		const provider = getTestObjectProvider();
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const container1 = await createAndAttachContainer(
 			provider.defaultCodeDetails,
 			loader,
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		provider.updateDocumentId(container1.resolvedUrl);
-		url = await container1.getAbsoluteUrl("");
+		const url = await container1.getAbsoluteUrl("");
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
-		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
-		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
-		// tree1 = await dataStore1.getSharedObject<ISharedTree>(treeId);
-		matrix1 = await dataStore1.getSharedObject<ISharedMatrix>(matrixId);
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+		const cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
+		const directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
+		const tree1 = await dataStore1.getSharedObject<ISharedTree>(treeId);
+		const matrix1 = await dataStore1.getSharedObject<ISharedMatrix>(matrixId);
 		// legacyTree1 = await dataStore1.getSharedObject<LegacySharedTree>(legacyTreeId);
-		register1 = await dataStore1.getSharedObject<IConsensusRegisterCollection>(registerId);
-		queue1 = await dataStore1.getSharedObject<IConsensusOrderedCollection>(queueId);
+		const register1 =
+			await dataStore1.getSharedObject<IConsensusRegisterCollection>(registerId);
+		const queue1 = await dataStore1.getSharedObject<IConsensusOrderedCollection>(queueId);
 		// migrationShim1 = await dataStore1.getSharedObject<MigrationShim>(migrationShimId);
-		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
+		const string1 = await dataStore1.getSharedObject<SharedString>(stringId);
 		string1.insertText(0, "hello");
 
-		waitForSummary = async () => {
+		const waitForSummary = async () => {
 			await new Promise<void>((resolve, reject) => {
 				let summarized = false;
 				container1.on("op", (op) => {
@@ -167,10 +155,23 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				});
 			});
 		};
-	});
+		return {
+			loader,
+			provider,
+			container1,
+			map1,
+			cell1,
+			directory1,
+			matrix1,
+			register1,
+			queue1,
+			string1,
+		};
+	}
 
 	it.skip("ensure single attach op sent in map", async function () {
 		let idB;
+		const { container1, provider } = await setup();
 		const cb = async (container, d?) => {
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			const runtime = defaultDataStore.context.containerRuntime;
@@ -197,6 +198,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 
 	it.skip("ensure single attach op sent in all other ddss", async function () {
 		let idB;
+		const { container1, provider } = await setup();
 		const cb = async (container, d?) => {
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			const runtime = defaultDataStore.context.containerRuntime;
@@ -276,24 +278,15 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				matrixRoot.setCell(0, 0, handle);
 			},
 		},
-		// {
-		// 	type: treeId,
-		// 	fn: async (defaultDataStore, handle) => {
-		// 		const treeRoot = await defaultDataStore.getSharedObject(treeId);
+		{
+			type: treeId,
+			fn: async (defaultDataStore, handle) => {
+				const treeRoot = await defaultDataStore.getSharedObject(treeId);
 
-		// 		const builder = new SchemaFactory("test");
-		// 		class Bar extends builder.object("bar", {
-		// 			h: builder.optional(builder.handle),
-		// 		}) {}
-
-		// 		const config = new TreeConfiguration(Bar, () => ({
-		// 			h: undefined,
-		// 		}));
-
-		// 		const treeView = treeRoot.schematize(config);
-		// 		treeView.root.h = handle;
-		// 	},
-		// },
+				const treeView = treeSetup(treeRoot);
+				treeView.root.h = handle;
+			},
+		},
 		// {
 		// 	type: legacyTreeId,
 		// 	fn: async (defaultDataStore, handle) => {
@@ -371,6 +364,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 
 	for (const storeHandle of handleFns) {
 		it(`store handle in dds: ${storeHandle.type}`, async () => {
+			const { container1, provider } = await setup();
 			const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 			const runtime = defaultDataStore.context.containerRuntime;
 
@@ -387,7 +381,43 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const dds2 = await default2.getSharedObject(storeHandle.type);
 
-			const handleB = dds2.get() as IFluidHandle<ITestFluidObject>;
+			let handleB;
+			switch (storeHandle.type) {
+				case mapId:
+					handleB = dds2.get("B") as IFluidHandle<ITestFluidObject>;
+					break;
+				case cellId:
+					handleB = dds2.get() as IFluidHandle<ITestFluidObject>;
+					break;
+				case directoryId:
+					handleB = dds2.get("B") as IFluidHandle<ITestFluidObject>;
+					break;
+				case stringId:
+					handleB = dds2.getPropertiesAtPosition(0)?.B;
+					break;
+				case matrixId:
+					handleB = dds2.getCell(0, 0);
+					break;
+				case treeId:
+					// eslint-disable-next-line no-case-declarations
+					const treeView = treeSetup(dds2);
+					handleB = treeView.root.h;
+					break;
+				case registerId:
+					handleB = dds2.read("B");
+					break;
+				case queueId:
+					// eslint-disable-next-line no-case-declarations
+					const callback: ConsensusCallback<IFluidHandle> = async (value) => {
+						handleB = value;
+						return ConsensusResult.Release;
+					};
+					await (dds2 as ConsensusQueue).acquire(callback);
+					break;
+				default:
+					assert(false, "unknown dds type");
+			}
+
 			const dataObjectB2 = await handleB.get();
 			assert(dataObjectB2.context.id === idB);
 		});
