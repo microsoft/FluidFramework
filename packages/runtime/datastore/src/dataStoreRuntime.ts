@@ -933,7 +933,6 @@ export class FluidDataStoreRuntime
 		 *
 		 * The basic idea is that all local object should become locally visible before they are globally visible.
 		 */
-
 		this.attachGraph();
 
 		// This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
