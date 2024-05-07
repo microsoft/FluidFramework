@@ -376,42 +376,70 @@ describe("SharedTree benchmarks", () => {
 	// Note that this runs the computation for several peers.
 	// In practice, this computation is distributed across peers, so the actual time reported is
 	// divided by the number of peers.
-	describe("rebasing commits", () => {
-		const commitCounts = [1, 10, 20];
-		const nbPeers = 5;
-		for (const nbCommits of commitCounts) {
-			const test = benchmark({
-				type: BenchmarkType.Measurement,
-				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
+	describe.only("rebasing commits", () => {
+		// Each commit generates 2 ops (one for the changeset and one for the UUID minting
+		const opsPerCommit = 2;
+		// Number of commits that are generated in the amount of time it takes of a single commit to round-trip.
+		// E.g., 10 is equivalent to all of the following (and more):
+		// - generating 5 edits per second with a 2000ms round-trip time
+		// - generating 10 edits per second with a 1000ms round-trip time
+		// - generating 100 edits per second with a 100ms round-trip time
+		const commitCounts = [5, 10, 20];
+		for (const nbPeers of [2, 4, 8]) {
+			for (const nbCommits of commitCounts) {
+				const test = benchmark({
+					type: BenchmarkType.Measurement,
+					title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+							const provider = new TestTreeProviderLite(nbPeers, factory);
 
-						// Setup
-						const provider = new TestTreeProviderLite(nbPeers, factory);
-						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
-							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
-								const peer = provider.trees[iPeer];
-								insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+							// This is the start of the stream of commits.
+							// Earlier commits are less out of date and therefore not representative.
+							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
 							}
-						}
 
-						// Measure
-						const before = state.timer.now();
-						provider.processMessages();
-						const after = state.timer.now();
-						// Divide the duration by the number of peers so we get the average time per peer.
-						duration = state.timer.toSeconds(before, after) / nbPeers;
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
-			});
+							// This block helps us reach a steady state where commits are being generated and processed at equivalent rates.
+							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+									provider.processMessages(opsPerCommit);
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
+							}
+							// By the end of the above block, all commits are equivalently out of date.
 
-			if (!isInPerformanceTestingMode) {
-				test.timeout(5000);
+							let timeSum = 0;
+							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
+								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+									const before = state.timer.now();
+									provider.processMessages(opsPerCommit);
+									const after = state.timer.now();
+									timeSum += state.timer.toSeconds(before, after);
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
+							}
+
+							// Measure
+							// Divide the duration by the number of peers so we get the average time per peer.
+							duration = timeSum / nbPeers;
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+
+				if (!isInPerformanceTestingMode) {
+					test.timeout(5000);
+				}
 			}
 		}
 	});
