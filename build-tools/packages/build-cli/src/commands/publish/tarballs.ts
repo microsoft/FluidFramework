@@ -206,6 +206,7 @@ async function publishTarball(
 	log.verbose(`Executing publish command in ${tarball.filePath}: pnpm ${args.join(" ")}`);
 	const publishOutput = await execa("pnpm", args, {
 		cwd: tarball.filePath,
+		shell: true,
 	});
 
 	if (publishOutput.exitCode !== 0) {
