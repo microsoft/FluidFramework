@@ -4,16 +4,14 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions/internal';
-import { AttachState as AttachState_2 } from '@fluidframework/container-definitions';
+import { AttachState } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
 import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
-import { IAudience } from '@fluidframework/container-definitions/internal';
-import { IAudience as IAudience_2 } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/container-definitions';
 import { IAudienceEvents } from '@fluidframework/container-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -454,7 +452,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         id?: string;
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
-        attachState?: AttachState_2;
+        attachState?: AttachState;
         registry?: readonly IChannelFactory[];
     });
     // (undocumented)
@@ -468,7 +466,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     attachGraph(): void;
     // (undocumented)
-    get attachState(): AttachState_2;
+    get attachState(): AttachState;
     // (undocumented)
     bind(handle: IFluidHandle): void;
     // (undocumented)
@@ -506,7 +504,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     getAttachSummary(): ISummaryTreeWithStats;
     // (undocumented)
-    getAudience(): IAudience_2;
+    getAudience(): IAudience;
     // (undocumented)
     getBlob(blobId: string): Promise<any>;
     // (undocumented)
@@ -559,7 +557,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     save(message: string): void;
     // (undocumented)
-    setAttachState(attachState: AttachState_2.Attaching | AttachState_2.Attached): void;
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
