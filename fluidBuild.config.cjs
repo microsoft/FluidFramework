@@ -233,6 +233,7 @@ module.exports = {
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
 				"build-tools/packages/build-cli/bin/dev.js",
+				"build-tools/packages/build-cli/bin/flub.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
 				"build-tools/packages/readme-command/bin/dev.js",
