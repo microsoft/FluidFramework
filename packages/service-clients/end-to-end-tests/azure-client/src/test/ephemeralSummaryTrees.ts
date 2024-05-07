@@ -1371,7 +1371,7 @@ const tree6 = {
 																value: {
 																	type: "blob",
 																	content:
-																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"tree1":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/A/_C"}}}}}}}',
+																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"signaler":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/C"}}}}}}}',
 																	encoding: "utf8",
 																},
 																unreferenced: undefined,
@@ -1393,129 +1393,6 @@ const tree6 = {
 													},
 													unreferenced: undefined,
 													path: "root",
-													type: "tree",
-												},
-												{
-													value: {
-														type: "tree",
-														entries: [
-															{
-																value: {
-																	type: "tree",
-																	entries: [
-																		{
-																			value: {
-																				type: "tree",
-																				entries: [
-																					{
-																						value: {
-																							type: "blob",
-																							content:
-																								'{"trunk":[],"branches":[],"version":2}',
-																							encoding:
-																								"utf8",
-																						},
-																						unreferenced:
-																							undefined,
-																						path: "String",
-																						type: "blob",
-																					},
-																				],
-																			},
-																			unreferenced: undefined,
-																			path: "EditManager",
-																			type: "tree",
-																		},
-																		{
-																			value: {
-																				type: "tree",
-																				entries: [
-																					{
-																						value: {
-																							type: "blob",
-																							content:
-																								'{"version":1,"nodes":{"com.fluidframework.leaf.string":{"leaf":1},"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray":{"object":{"":{"kind":"Sequence","types":["com.fluidframework.leaf.string"]}}}},"root":{"kind":"Value","types":["d302b84c-75f6-4ecd-9663-524f467013e3.StringArray"]}}',
-																							encoding:
-																								"utf8",
-																						},
-																						unreferenced:
-																							undefined,
-																						path: "SchemaString",
-																						type: "blob",
-																					},
-																				],
-																			},
-																			unreferenced: undefined,
-																			path: "Schema",
-																			type: "tree",
-																		},
-																		{
-																			value: {
-																				type: "tree",
-																				entries: [
-																					{
-																						value: {
-																							type: "blob",
-																							content:
-																								'{"keys":["rootFieldKey"],"fields":{"version":1,"identifiers":[],"shapes":[{"c":{"type":"d302b84c-75f6-4ecd-9663-524f467013e3.StringArray","value":false,"fields":[["",1]]}},{"a":2},{"c":{"type":"com.fluidframework.leaf.string","value":true}}],"data":[[0,0]]},"version":1}',
-																							encoding:
-																								"utf8",
-																						},
-																						unreferenced:
-																							undefined,
-																						path: "ForestTree",
-																						type: "blob",
-																					},
-																				],
-																			},
-																			unreferenced: undefined,
-																			path: "Forest",
-																			type: "tree",
-																		},
-																		{
-																			value: {
-																				type: "tree",
-																				entries: [
-																					{
-																						value: {
-																							type: "blob",
-																							content:
-																								'{"version":1,"data":[],"maxId":0}',
-																							encoding:
-																								"utf8",
-																						},
-																						unreferenced:
-																							undefined,
-																						path: "DetachedFieldIndexBlob",
-																						type: "blob",
-																					},
-																				],
-																			},
-																			unreferenced: undefined,
-																			path: "DetachedFieldIndex",
-																			type: "tree",
-																		},
-																	],
-																},
-																unreferenced: undefined,
-																path: "indexes",
-																type: "tree",
-															},
-															{
-																value: {
-																	type: "blob",
-																	content:
-																		'{"type":"https://graph.microsoft.com/types/tree","snapshotFormatVersion":"0.0.0","packageVersion":"2.0.0-rc.4.0.0"}',
-																	encoding: "utf8",
-																},
-																unreferenced: undefined,
-																path: ".attributes",
-																type: "blob",
-															},
-														],
-													},
-													unreferenced: undefined,
-													path: "_C",
 													type: "tree",
 												},
 											],
@@ -1541,6 +1418,69 @@ const tree6 = {
 							path: "A",
 							type: "tree",
 						},
+						{
+							value: {
+								type: "tree",
+								entries: [
+									{
+										value: {
+											type: "tree",
+											entries: [
+												{
+													value: {
+														type: "tree",
+														entries: [
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]}}}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: "header",
+																type: "blob",
+															},
+															{
+																value: {
+																	type: "blob",
+																	content:
+																		'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-rc.4.0.0"}',
+																	encoding: "utf8",
+																},
+																unreferenced: undefined,
+																path: ".attributes",
+																type: "blob",
+															},
+														],
+													},
+													unreferenced: undefined,
+													path: "root",
+													type: "tree",
+												},
+											],
+										},
+										unreferenced: undefined,
+										path: ".channels",
+										type: "tree",
+									},
+									{
+										value: {
+											type: "blob",
+											content:
+												'{"pkg":"[\\"rootDO\\",\\"@fluid-example/signaler-test-data-object\\"]","summaryFormatVersion":2,"isRootDataStore":false}',
+											encoding: "utf8",
+										},
+										unreferenced: undefined,
+										path: ".component",
+										type: "blob",
+									},
+								],
+							},
+							unreferenced: undefined,
+							path: "C",
+							type: "tree",
+						},
 					],
 				},
 				unreferenced: undefined,
@@ -1551,7 +1491,7 @@ const tree6 = {
 				value: {
 					type: "blob",
 					content:
-						'{"createContainerRuntimeVersion":"2.0.0-rc.4.0.0","createContainerTimestamp":1715037752782,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"tombstoneTimeoutMs":3110400000,"telemetryDocumentId":"5a32330e-5725-4a94-a994-724b49a9662a","message":{"sequenceNumber":-1},"documentSchema":{"version":1,"refSeq":0,"runtime":{"explicitSchemaControl":true,"compressionLz4":true,"idCompressorMode":"on"}}}',
+						'{"createContainerRuntimeVersion":"2.0.0-rc.4.0.0","createContainerTimestamp":1715092913112,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"tombstoneTimeoutMs":3110400000,"telemetryDocumentId":"e0997cc5-d335-448e-8762-bc4102bb76dd","message":{"sequenceNumber":-1},"documentSchema":{"version":1,"refSeq":0,"runtime":{"explicitSchemaControl":true,"compressionLz4":true,"idCompressorMode":"on"}}}',
 					encoding: "utf8",
 				},
 				unreferenced: undefined,
@@ -1561,8 +1501,7 @@ const tree6 = {
 			{
 				value: {
 					type: "blob",
-					content:
-						'"AAAAAAAAAEAAAAAAAAAAAAAAAAAAAPA/AAAAAAAA8D8hHIUZCp3u0BXvmdmqvXoBAAAAAAAAAAAAAAAAACCAQAAAAAAAABBA"',
+					content: '"AAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="',
 					encoding: "utf8",
 				},
 				unreferenced: undefined,
