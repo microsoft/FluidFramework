@@ -920,7 +920,9 @@ export interface TreeChangeEvents {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, enableSchemaValidation?: boolean);
+    // (undocumented)
+    readonly enableSchemaValidation: boolean;
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
     // (undocumented)

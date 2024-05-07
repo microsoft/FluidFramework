@@ -69,11 +69,6 @@ export interface ITree extends IChannel {
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-	private readonly _enableSchemaValidation: boolean = false;
-	public get enableSchemaValidation(): boolean {
-		return this._enableSchemaValidation;
-	}
-
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
@@ -86,10 +81,8 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 	public constructor(
 		public readonly schema: TSchema,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		enableSchemaValidation: boolean = false,
-	) {
-		this._enableSchemaValidation = enableSchemaValidation;
-	}
+		public readonly enableSchemaValidation: boolean = false,
+	) {}
 }
 
 /**
