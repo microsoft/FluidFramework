@@ -60,6 +60,7 @@ importers:
 
   packages/build-cli:
     specifiers:
+      '@andrewbranch/untar.js': ^1.0.3
       '@fluid-private/readme-command': workspace:~
       '@fluid-tools/version-tools': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -105,6 +106,7 @@ importers:
       eslint-config-oclif-typescript: ^3.1.7
       eslint-config-prettier: ~9.1.0
       execa: ^5.1.1
+      fflate: ^0.8.2
       fs-extra: ^9.1.0
       globby: ^11.1.0
       gray-matter: ^4.0.3
@@ -141,6 +143,7 @@ importers:
       type-fest: ^2.19.0
       typescript: ~5.1.6
     dependencies:
+      '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/version-tools': link:../version-tools
       '@fluidframework/build-tools': link:../build-tools
       '@fluidframework/bundle-size-tools': link:../bundle-size-tools
@@ -159,6 +162,7 @@ importers:
       date-fns: 2.30.0
       debug: 4.3.4
       execa: 5.1.1
+      fflate: 0.8.2
       fs-extra: 9.1.0
       globby: 11.1.0
       gray-matter: 4.0.3
@@ -475,6 +479,10 @@ packages:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /@andrewbranch/untar.js/1.0.3:
+    resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
+    dev: false
 
   /@aws-crypto/crc32/3.0.0:
     resolution: {integrity: sha512-IzSgsrxUcsrejQbPVilIKy16kAT52EwB6zSaI+M3xxIhKh5+aldEyvI+z6erM7TCLB2BJsFrtHjp6/4/sr+3dA==}
@@ -7042,6 +7050,10 @@ packages:
     resolution: {integrity: sha512-wBrocU2LCXXa+lWBt8RoIRD89Fi8OdABODa/kEnyeyjS5aZO5/GNvI5sEINADqP/h8M29UHTHUb53sUu5Ihqdw==}
     dependencies:
       reusify: 1.0.4
+
+  /fflate/0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+    dev: false
 
   /figures/2.0.0:
     resolution: {integrity: sha512-Oa2M9atig69ZkfwiApY8F2Yy+tzMbazyvqv21R0NsSC8floSOC09BbT1ITWAdoMGQvJ/aZnR1KMwdx9tvHnTNA==}
