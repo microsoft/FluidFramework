@@ -186,6 +186,8 @@ const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
 			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disabled
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
+		// Grouped batching is on by default but introduces a new type of op which is not compatible with 1.x clients.
+		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 	},
 	"2": {
@@ -195,9 +197,6 @@ const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// It introduces a new type of op which is not compatible with 1.x clients.
 		enableRuntimeIdCompressor: "on",
-		// Grouped batching is off by default and must be explicitly enabled. It introduces a new type of op which is not
-		// compatible with 1.x clients.
-		enableGroupedBatching: true,
 	},
 };
 
