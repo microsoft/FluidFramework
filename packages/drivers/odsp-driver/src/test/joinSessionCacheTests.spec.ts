@@ -148,7 +148,6 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} catch (error) {
 			assert(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(error as IAnyDriverError).eventName === errorEventName,
 				`eventName param with value as '${errorEventName}' should be available`,
 			);
