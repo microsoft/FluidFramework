@@ -67,11 +67,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
-		const policy = defaultSchemaPolicy;
+		const policy = { ...defaultSchemaPolicy, validateSchema: config.enableSchemaValidation };
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.flexConfig = toFlexConfig(config, {
 			schema: checkout.storedSchema,
-			policy: { ...policy, validateSchema: config.enableSchemaValidation },
+			policy,
 		});
 		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
 		this.update();
