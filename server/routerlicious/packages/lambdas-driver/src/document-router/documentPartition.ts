@@ -190,8 +190,5 @@ export class DocumentPartition {
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 		this.activityTimeoutTime =
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
-		console.log(
-			`Updating activity time, input: ${activityTime}, calculated: ${cacluatedActivityTimeout}`,
-		);
 	}
 }
