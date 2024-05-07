@@ -4,294 +4,157 @@
  */
 
 import * as fs from "node:fs/promises";
-import { isInternalVersionRange } from "@fluid-tools/version-tools";
-import { Logger } from "@fluidframework/build-tools";
+import path from "node:path";
+import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import fetch from "node-fetch";
+import { formatISO } from "date-fns";
 import { BaseCommand } from "../../base";
-import { PackageVersionList } from "../../library";
-
-// Define the interface for build details
-interface IBuildDetails {
-	definition: { name: string };
-	status: string;
-	result: string;
-	sourceBranch: string;
-	finishTime: string;
-	buildNumber: string;
-}
+import { type ReleaseReport, toReportKind } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
+	static readonly summary =
+		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
+
 	static readonly description =
-		`Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
+		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
 
 	static readonly flags = {
-		repo: Flags.string({
-			description: "Repository name",
-			required: true,
-		}),
-		ado_pat: Flags.string({
+		version: Flags.string({
 			description:
-				"ADO Personal Access Token. This flag should be provided via the ADO_PAT environment variable for security reasons.",
-			required: true,
-			env: "ADO_PAT",
-		}),
-		sourceBranch: Flags.string({
-			description: "Branch name across which the dev release manifest should be generated.",
+				"Version to generate a report for. Typically, this version is the version of a dev build.",
 			required: true,
 		}),
-		output: Flags.string({
-			description: "Output manifest file path",
+		outDir: Flags.directory({
+			description: "Release report output directory",
+			required: true,
+		}),
+		fullReportFilePath: Flags.string({
+			description: "Path to a report file in the 'full' format.",
+			exists: true,
 			required: true,
 		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { flags, logger } = this;
+		const { flags } = this;
 
-		const repoName: string[] = flags.repo.split("/");
+		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
 
-		if (repoName.length !== 2) {
-			throw new Error(
-				"Invalid repository format. Provide the repository name in the format `owner/repository-name`.",
-			);
-		}
-
-		const PACKAGE_NAME = "@fluidframework/container-runtime";
-		const GITHUB_RELEASE_URL = `https://api.github.com/repos/${flags.repo}/releases`;
-		const ADO_BASE_URL = `https://dev.azure.com/${repoName[1].toLowerCase()}/internal/_apis/build/builds?api-version=7.0`;
-		const REGISTRY_URL = `https://pkgs.dev.azure.com/${repoName[1].toLowerCase()}/internal/_packaging/build/npm/registry/`;
-
-		// Authorization header for Azure DevOps
-		const authHeader = `Basic ${Buffer.from(`:${flags.ado_pat}`).toString("base64")}`;
-
-		// Check if the authorization header is valid
-		if (authHeader === undefined || authHeader === null) {
-			this.error("Check your ADO Personal Access Token. It maybe incorrect or expired.");
-		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
 		try {
-			// Get the most recent successful build number
-			const buildNumber = await getFirstSuccessfulBuild(
-				authHeader,
-				ADO_BASE_URL,
-				flags.sourceBranch,
-				logger,
-			);
-			if (buildNumber !== undefined) {
-				this.log(
-					`Most recent successful build number within the last 24 hours for ${flags.sourceBranch} branch: ${buildNumber}`,
-				);
-				// Fetch the dev version number
-				const devVersion = await fetchDevVersionNumber(
-					authHeader,
-					REGISTRY_URL,
-					PACKAGE_NAME,
-					buildNumber,
-					logger,
-				);
-				if (devVersion !== undefined) {
-					this.log(`Fetched dev version: ${devVersion}`);
-					// Generate and write the modified manifest
-					const manifestFile = await generateReleaseReportForUnreleasedVersions(
-						GITHUB_RELEASE_URL,
-						devVersion,
-						logger,
-					);
-					if (manifestFile !== undefined) {
-						await writeManifestToFile(manifestFile, flags.output, logger);
-					}
-				}
-			} else if (buildNumber === undefined) {
-				this.log(
-					`No successful build found for ${flags.sourceBranch} branch in the last 24 hours`,
-				);
-			}
+			await generateReleaseReport(fullReleaseReport, flags.version, flags.outDir, this.logger);
 		} catch (error: unknown) {
-			throw new Error(`Error creating manifest file: ${error}`);
+			throw new Error(`Error while generating release reports: ${error}`);
 		}
 	}
 }
 
 /**
- * Fetches the first successful build number in the last 24 hours.
- * @param authHeader - Auth Header
- * @param adoUrl - Azure DevOps API URL
- * @param sourceBranch - Source branch name
- * @returns The build number if successful, otherwise undefined.
+ * Generate release reports for unreleased versions.
+ * @param fullReleaseReport - The format of the "full" release report.
+ * @param version - The version string for the reports.
+ * @param outDir - The output directory for the reports.
+ * @param log - The logger object for logging messages.
  */
-async function getFirstSuccessfulBuild(
-	authHeader: string,
-	adoUrl: string,
-	sourceBranch: string,
-	log?: Logger,
-): Promise<string | undefined> {
-	try {
-		const response = await fetch(adoUrl, { headers: { Authorization: authHeader } });
-
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-		const data = await response.json();
-
-		const twentyFourHoursAgo = new Date();
-		twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-		// Filter builds by date first
-		const recentBuilds = data.value.filter(
-			(build: IBuildDetails) => new Date(build.finishTime) >= twentyFourHoursAgo,
-		);
-
-		if (recentBuilds === undefined || recentBuilds.length === 0) {
-			log?.errorLog(`No successful builds found in the last 24 hours`);
-		}
-
-		const successfulBuilds = recentBuilds.filter(
-			(build: IBuildDetails) =>
-				build.definition.name === "Build - client packages" &&
-				build.status === "completed" &&
-				build.result === "succeeded" &&
-				build.sourceBranch === `refs/heads/${sourceBranch}`,
-		);
-
-		return successfulBuilds.length > 0
-			? (successfulBuilds[0].buildNumber as string)
-			: undefined;
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call  */
-	} catch (error) {
-		log?.errorLog("Error fetching successful builds:", error);
-		return undefined;
-	}
-}
-
-/**
- * Fetches the dev version number released in the build feed.
- * @param authHeader - Authorization header for Azure DevOps
- * @param registryUrl - ADO Registry URL
- * @param packageName - Name of the package
- * @param buildNumber - The build number
- * @returns The dev version number if found, otherwise undefined.
- */
-async function fetchDevVersionNumber(
-	authHeader: string,
-	registryUrl: string,
-	packageName: string,
-	buildNumber: string,
-	log?: Logger,
-): Promise<string | undefined> {
-	try {
-		const response = await fetch(`${registryUrl}/${packageName}`, {
-			headers: { Authorization: authHeader },
-		});
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-		const data = await response.json();
-		const buildVersionKey: string | undefined = Object.keys(data.time).find((key) =>
-			key.includes(buildNumber),
-		);
-
-		if (buildVersionKey !== undefined) {
-			return buildVersionKey;
-		}
-
-		log?.log(`No version with build number ${buildNumber} found.`);
-		return undefined;
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-	} catch (error: unknown) {
-		log?.errorLog("Error fetching dev version number:", error);
-		return undefined;
-	}
-}
-
-/**
- * Generates a modified manifest file with the specified version number.
- * @param gitHubUrl - GitHub Release API URL.
- * @param version - The version number.
- */
-async function generateReleaseReportForUnreleasedVersions(
-	gitHubUrl: string,
+async function generateReleaseReport(
+	fullReleaseReport: ReleaseReport,
 	version: string,
-	log?: Logger,
-): Promise<PackageVersionList | undefined> {
-	try {
-		const releasesResponse = await fetch(gitHubUrl);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const releases = await releasesResponse.json();
+	outDir: string,
+	log: Logger,
+): Promise<void> {
+	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-		let manifestAsset;
+	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		for (const asset of releases[0].assets) {
-			/**
-			 * Only `caret` manifest file is required by partner repository.
-			 * dev/prerelease versions are mapped to a single version instead of ranges but other packages such as common-utils and common-definitions
-			 * required caret versions which simple manifest files do not provide.
-			 * Example of simple manifest file:
-			 * ```json
-			 * {
-			 * 	"@fluidframework/cell": "2.0.0-internal.6.1.1",
-			 *	"@fluidframework/common-definitions": "0.20.1",
-			 *	"@fluidframework/common-utils": "1.1.1",
-			 * }
-			 * ```
-			 * Example of caret manifest file:
-			 * ```json
-			 * {
-			 * 	"@fluidframework/cell": ">=2.0.0-internal.6.1.1 <2.0.0-internal.7.0.0",
-			 *	"@fluidframework/common-definitions": "^0.20.1",
-			 *	"@fluidframework/common-utils": "^1.1.1",
-			 * }
-			 * ```
-			 */
-			/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-			const includesCaretJson: boolean = asset.name.includes(".caret.json");
-			if (includesCaretJson) {
-				manifestAsset = asset;
-				break;
-			}
-		}
+	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
+	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
 
-		if (Object.keys(manifestAsset).length > 0) {
-			const manifest_url_caret = manifestAsset.browser_download_url;
-			const manifestResponse = await fetch(manifest_url_caret);
-			const manifestData = await manifestResponse.buffer();
+	await Promise.all([
+		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
+		writeReport(outDir, simpleReportOutput as ReleaseReport, "simpleManifest", version, log),
+	]);
 
-			const manifestFile: PackageVersionList = JSON.parse(manifestData.toString());
-
-			for (const key of Object.keys(manifestFile)) {
-				if (isInternalVersionRange(manifestFile[key], true)) {
-					manifestFile[key] = version;
-				}
-			}
-
-			return manifestFile;
-		}
-
-		return undefined;
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-	} catch (error) {
-		log?.errorLog("Error generating manifest object:", error);
-		return undefined;
-	}
+	log.log("Release report processed successfully.");
 }
 
 /**
- * Writes a modified manifest to a file.
- * @param manifestFile - The modified manifest file
- * @param output - The path and name of the final manifest file
- * @returns The path to the final manifest file if successful, otherwise undefined
+ * Writes a modified release report to the output directory with the revised file name.
+ * @param outDir - The output directory for the report.
+ * @param report - A map of package names to full release reports.
+ * @param revisedFileName - The revised file name for the report.
+ * @param version - The version string to update packages to.
+ * @param log - The logger object for logging messages.
  */
-async function writeManifestToFile(
-	manifestFile: PackageVersionList,
-	output: string,
-	log?: Logger,
-): Promise<string | undefined> {
-	try {
-		await fs.writeFile(output, JSON.stringify(manifestFile, undefined, 2));
+async function writeReport(
+	outDir: string,
+	report: ReleaseReport,
+	revisedFileName: string,
+	version: string,
+	log: Logger,
+): Promise<void> {
+	const currentDate = formatISO(new Date(), { representation: "date" });
 
-		log?.log("Manifest modified successfully.", output);
+	const buildNumber = extractBuildNumber(version);
 
-		return output;
-	} catch (error) {
-		log?.errorLog("Error writing manifest to file:", error);
-		return undefined;
+	log.log(`Build Number: ${buildNumber}`);
+
+	const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
+	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
+
+	await Promise.all([
+		fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
+		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
+	]);
+}
+
+/**
+ * Updates versions in a release report based on specified conditions.
+ * @param report - A map of package names to full release reports. This is the format of the "full" release report.
+ * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
+ * @param version - The version string to update packages to.
+ */
+async function updateReportVersions(
+	report: ReleaseReport,
+	ignorePackageList: Set<string>,
+	version: string,
+	log: Logger,
+): Promise<void> {
+	for (const packageName of Object.keys(report)) {
+		if (ignorePackageList.has(packageName)) {
+			continue;
+		}
+
+		// updates caret ranges
+		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
+			// If the caret range is a range, reset it to an exact version.
+			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
+			report[packageName].ranges.caret = version;
+		}
+
+		if (isInternalVersionScheme(report[packageName].version)) {
+			report[packageName].version = version;
+		}
 	}
+	log.log(`Release report updated pointing to version: ${version}`);
+}
+
+/**
+ * Extracts the build number from a version string.
+ *
+ * @param version - The version string containing the build number.
+ * @returns The extracted build number.
+ *
+ * @example
+ * Returns 260312
+ * extractBuildNumber("2.0.0-dev-rc.4.0.0.260312");
+ */
+
+function extractBuildNumber(version: string): number {
+	const versionParts: string[] = version.split(".");
+	// Extract the last part of the version, which is the number you're looking for
+	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
