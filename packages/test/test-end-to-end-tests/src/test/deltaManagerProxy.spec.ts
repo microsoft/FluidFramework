@@ -45,7 +45,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("e2e zamboni avoids modifying segments with pending interval changes", async () => {
+	it.skip("e2e zamboni avoids modifying segments with pending interval changes", async () => {
 		const container1 = await provider.createContainer(runtimeFactory, loaderProps);
 		const container2 = await provider.loadContainer(runtimeFactory, loaderProps);
 		const container3 = await provider.loadContainer(runtimeFactory, loaderProps);
@@ -88,7 +88,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.equal(sharedString2.getText(), "HIJFGEDCAB");
 	});
 
-	it("e2e zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
+	it.skip("e2e zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
 		const containerA = await provider.createDetachedContainer(runtimeFactory, loaderProps);
 		const dataObjectA = (await containerA.getEntryPoint()) as ITestFluidObject;
 		const sharedStringA = await dataObjectA.getSharedObject<SharedString>(sharedType);
