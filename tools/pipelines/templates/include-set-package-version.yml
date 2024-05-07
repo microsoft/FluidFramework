@@ -72,6 +72,7 @@ steps:
         pnpm build:compile
         cd packages/build-cli
         pnpm link --global
+        echo "which flub: $(which flub)"
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
