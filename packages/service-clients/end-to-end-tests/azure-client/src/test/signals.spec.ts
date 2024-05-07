@@ -45,223 +45,240 @@ async function createSignalListenerPromise<T>(
 	);
 }
 
-describe("Fluid Signals", () => {
-	const connectedContainers: IFluidContainer[] = [];
-	const connectTimeoutMs = 10_000;
-	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
-	const user1: AzureUser = {
-		id: "test-user-id-1",
-		name: "test-user-name-2",
-	};
-	const user2: AzureUser = {
-		id: "test-user-id-1",
-		name: "test-user-name-2",
-	};
-	const user3: AzureUser = {
-		id: "test-user-id-1",
-		name: "test-user-name-2",
-	};
+const testMatrix = [
+	{
+		variant: "Durable Container",
+		options: {
+			isEphemeral: false,
+		},
+	},
+	{
+		variant: "Ephemeral Container",
+		options: {
+			isEphemeral: true,
+		},
+	},
+];
 
-	afterEach(async () => {
-		for (const container of connectedContainers) {
-			container.disconnect();
-			container.dispose();
-		}
-		connectedContainers.splice(0, connectedContainers.length);
-	});
-
-	const getOrCreateSignalerContainer = async (
-		id: string | undefined,
-		user: AzureUser,
-		config?: ReturnType<typeof configProvider>,
-		scopes?: ScopeType[],
-	): Promise<{
-		container: IFluidContainer;
-		signaler: SignalerTestDataObject;
-		services: AzureContainerServices;
-		client: AzureClient;
-		containerId: string;
-	}> => {
-		const client = createAzureClient(user.id, user.name, undefined, config, scopes);
-		const schema: ContainerSchema = {
-			initialObjects: {
-				signaler: SignalerTestDataObject,
-			},
+for (const testOpts of testMatrix) {
+	describe(`Fluid Signals (${testOpts.variant})`, () => {
+		const connectedContainers: IFluidContainer[] = [];
+		const connectTimeoutMs = 10_000;
+		const isEphemeral: boolean = testOpts.options.isEphemeral;
+		const user1: AzureUser = {
+			id: "test-user-id-1",
+			name: "test-user-name-2",
 		};
-		let container: IFluidContainer;
-		let services: AzureContainerServices;
-		let containerId: string;
-		if (id === undefined) {
-			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.sendAndRecieveSignals,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
-				({ container, services } = await client.getContainer(containerId, schema));
-			} else {
-				({ container, services } = await client.createContainer(schema));
-				containerId = await container.attach();
+		const user2: AzureUser = {
+			id: "test-user-id-1",
+			name: "test-user-name-2",
+		};
+		const user3: AzureUser = {
+			id: "test-user-id-1",
+			name: "test-user-name-2",
+		};
+
+		afterEach(async () => {
+			for (const container of connectedContainers) {
+				container.disconnect();
+				container.dispose();
 			}
-		} else {
-			containerId = id;
-			({ container, services } = await client.getContainer(containerId, schema));
-		}
+			connectedContainers.splice(0, connectedContainers.length);
+		});
 
-		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
-		}
-		connectedContainers.push(container);
+		const getOrCreateSignalerContainer = async (
+			id: string | undefined,
+			user: AzureUser,
+			config?: ReturnType<typeof configProvider>,
+			scopes?: ScopeType[],
+		): Promise<{
+			container: IFluidContainer;
+			signaler: SignalerTestDataObject;
+			services: AzureContainerServices;
+			client: AzureClient;
+			containerId: string;
+		}> => {
+			const client = createAzureClient(user.id, user.name, undefined, config, scopes);
+			const schema: ContainerSchema = {
+				initialObjects: {
+					signaler: SignalerTestDataObject,
+				},
+			};
+			let container: IFluidContainer;
+			let services: AzureContainerServices;
+			let containerId: string;
+			if (id === undefined) {
+				if (isEphemeral) {
+					const containerResponse: AxiosResponse | undefined =
+						await createContainerFromPayload(
+							ephemeralSummaryTrees.sendAndRecieveSignals,
+							"test-user-id-1",
+							"test-user-name-1",
+						);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					containerId = containerResponse.data.id as string;
+					({ container, services } = await client.getContainer(containerId, schema));
+				} else {
+					({ container, services } = await client.createContainer(schema));
+					containerId = await container.attach();
+				}
+			} else {
+				containerId = id;
+				({ container, services } = await client.getContainer(containerId, schema));
+			}
 
-		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
-		assert.strictEqual(
-			container.attachState,
-			AttachState.Attached,
-			"Container is not attached after attach is called",
-		);
+			if (container.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
+			connectedContainers.push(container);
 
-		const signaler = container.initialObjects.signaler as SignalerTestDataObject;
-		return {
-			client,
-			container,
-			signaler,
-			services,
-			containerId,
-		};
-	};
+			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+			assert.strictEqual(
+				container.attachState,
+				AttachState.Attached,
+				"Container is not attached after attach is called",
+			);
 
-	/**
-	 * Scenario: Client sends a signal and connected clients receive it.
-	 *
-	 * Expected behavior: While 2 clients are connected to a container,
-	 * a signal sent by 1 client should be recieved by both clients.
-	 */
-	it("can send and receive signals", async () => {
-		const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
-		const { signaler: signaler2 } = await getOrCreateSignalerContainer(
-			containerId,
-			user2,
-			configProvider({
-				"Fluid.Container.ForceWriteConnection": true,
-			}),
-		);
-
-		const signalName = "test-signal";
-		const signalPayload = { test: "payload" };
-
-		const listenerPromises = [
-			createSignalListenerPromise(
-				signaler2,
-				signalName,
-				signalPayload,
-				"Write client listening for write client signal",
-			),
-			createSignalListenerPromise(
+			const signaler = container.initialObjects.signaler as SignalerTestDataObject;
+			return {
+				client,
+				container,
 				signaler,
-				signalName,
-				signalPayload,
-				"Write client listening for its own signal",
-			),
-		];
+				services,
+				containerId,
+			};
+		};
 
-		signaler.submitSignal(signalName, signalPayload);
+		/**
+		 * Scenario: Client sends a signal and connected clients receive it.
+		 *
+		 * Expected behavior: While 2 clients are connected to a container,
+		 * a signal sent by 1 client should be recieved by both clients.
+		 */
+		it("can send and receive signals", async () => {
+			const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
+			const { signaler: signaler2 } = await getOrCreateSignalerContainer(
+				containerId,
+				user2,
+				configProvider({
+					"Fluid.Container.ForceWriteConnection": true,
+				}),
+			);
 
-		await assert.doesNotReject(
-			Promise.all(listenerPromises),
-			"Listening clients should receive signals.",
-		);
+			const signalName = "test-signal";
+			const signalPayload = { test: "payload" };
+
+			const listenerPromises = [
+				createSignalListenerPromise(
+					signaler2,
+					signalName,
+					signalPayload,
+					"Write client listening for write client signal",
+				),
+				createSignalListenerPromise(
+					signaler,
+					signalName,
+					signalPayload,
+					"Write client listening for its own signal",
+				),
+			];
+
+			signaler.submitSignal(signalName, signalPayload);
+
+			await assert.doesNotReject(
+				Promise.all(listenerPromises),
+				"Listening clients should receive signals.",
+			);
+		});
+
+		/**
+		 * Scenario: Read and Write clients send signals and connected clients receive them.
+		 *
+		 * Expected behavior: While 2 clients are connected (1 writer, 2 readers) to a container,
+		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
+		 */
+		it("can send and receive read-only client signals", async function () {
+			// TODO: Fix tests when ran against local service - ADO:7876
+			const useAzure = process.env.FLUID_CLIENT === "azure";
+			if (!useAzure) {
+				this.skip();
+			}
+
+			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
+				undefined,
+				user1,
+			);
+			const { signaler: readSignaler } = await getOrCreateSignalerContainer(
+				containerId,
+				user2,
+				undefined,
+				[ScopeType.DocRead],
+			);
+			const { signaler: readSignaler2 } = await getOrCreateSignalerContainer(
+				containerId,
+				user3,
+				undefined,
+				[ScopeType.DocRead],
+			);
+
+			const signalName = "test-signal";
+
+			const signalPayload1 = { test: "payload" };
+			const listenerPromises1 = [
+				createSignalListenerPromise(
+					writeSignaler,
+					signalName,
+					signalPayload1,
+					"Write client listening for read client signal",
+				),
+				createSignalListenerPromise(
+					readSignaler2,
+					signalName,
+					signalPayload1,
+					"Read client 2 listening for read client signal",
+				),
+				createSignalListenerPromise(
+					readSignaler,
+					signalName,
+					signalPayload1,
+					"Read client listening for its own signal",
+				),
+			];
+			readSignaler.submitSignal(signalName, signalPayload1);
+			await assert.doesNotReject(
+				Promise.all(listenerPromises1),
+				"Listening clients should receive signals from read clients.",
+			);
+
+			const signalPayload2 = { test: "payload2" };
+			const listenerPromises2 = [
+				createSignalListenerPromise(
+					readSignaler,
+					signalName,
+					signalPayload2,
+					"Read client listening for write client signal",
+				),
+				createSignalListenerPromise(
+					readSignaler2,
+					signalName,
+					signalPayload2,
+					"Read client 2 listening for write client signal",
+				),
+				createSignalListenerPromise(
+					writeSignaler,
+					signalName,
+					signalPayload2,
+					"Write client listening for its own signal",
+				),
+			];
+			writeSignaler.submitSignal(signalName, signalPayload2);
+			await assert.doesNotReject(
+				Promise.all(listenerPromises2),
+				"Listening clients should receive signals from write clients.",
+			);
+		});
 	});
-
-	/**
-	 * Scenario: Read and Write clients send signals and connected clients receive them.
-	 *
-	 * Expected behavior: While 2 clients are connected (1 writer, 2 readers) to a container,
-	 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
-	 */
-	it("can send and receive read-only client signals", async function () {
-		// TODO: Fix tests when ran against local service - ADO:7876
-		const useAzure = process.env.FLUID_CLIENT === "azure";
-		if (!useAzure) {
-			this.skip();
-		}
-
-		const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
-			undefined,
-			user1,
-		);
-		const { signaler: readSignaler } = await getOrCreateSignalerContainer(
-			containerId,
-			user2,
-			undefined,
-			[ScopeType.DocRead],
-		);
-		const { signaler: readSignaler2 } = await getOrCreateSignalerContainer(
-			containerId,
-			user3,
-			undefined,
-			[ScopeType.DocRead],
-		);
-
-		const signalName = "test-signal";
-
-		const signalPayload1 = { test: "payload" };
-		const listenerPromises1 = [
-			createSignalListenerPromise(
-				writeSignaler,
-				signalName,
-				signalPayload1,
-				"Write client listening for read client signal",
-			),
-			createSignalListenerPromise(
-				readSignaler2,
-				signalName,
-				signalPayload1,
-				"Read client 2 listening for read client signal",
-			),
-			createSignalListenerPromise(
-				readSignaler,
-				signalName,
-				signalPayload1,
-				"Read client listening for its own signal",
-			),
-		];
-		readSignaler.submitSignal(signalName, signalPayload1);
-		await assert.doesNotReject(
-			Promise.all(listenerPromises1),
-			"Listening clients should receive signals from read clients.",
-		);
-
-		const signalPayload2 = { test: "payload2" };
-		const listenerPromises2 = [
-			createSignalListenerPromise(
-				readSignaler,
-				signalName,
-				signalPayload2,
-				"Read client listening for write client signal",
-			),
-			createSignalListenerPromise(
-				readSignaler2,
-				signalName,
-				signalPayload2,
-				"Read client 2 listening for write client signal",
-			),
-			createSignalListenerPromise(
-				writeSignaler,
-				signalName,
-				signalPayload2,
-				"Write client listening for its own signal",
-			),
-		];
-		writeSignaler.submitSignal(signalName, signalPayload2);
-		await assert.doesNotReject(
-			Promise.all(listenerPromises2),
-			"Listening clients should receive signals from write clients.",
-		);
-	});
-});
+}
