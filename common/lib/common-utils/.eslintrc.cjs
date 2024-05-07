@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: [
 			"./tsconfig.json",
@@ -26,6 +23,14 @@ module.exports = {
 		// This package uses node's events APIs.
 		// This should probably be reconsidered, but until then we will leave an exception for it here.
 		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+
+		// This package has been deprecated. The following rules have a significant number of violations
+		// that will not be fixed here.
+		"unicorn/prefer-node-protocol": "off",
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
 	},
 	overrides: [
 		{
@@ -33,6 +38,9 @@ module.exports = {
 			rules: {
 				// It's fine for tests to use node.js modules.
 				"import/no-nodejs-modules": "off",
+
+				// It's fine for tests to use `__dirname`, etc.
+				"unicorn/prefer-module": "off",
 			},
 		},
 	],
