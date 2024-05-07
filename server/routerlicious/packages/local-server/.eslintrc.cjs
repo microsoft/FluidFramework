@@ -16,10 +16,6 @@ module.exports = {
 		// TODO: enable strict null checks in tsconfig and remove this override
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
-	rules: {
-		// This package runs in node but also in the browser so we don't want it to import Node packages.
-		"import/no-nodejs-modules": ["error"],
-	},
 	overrides: [
 		{
 			files: ["src/test/**/*.ts"],
