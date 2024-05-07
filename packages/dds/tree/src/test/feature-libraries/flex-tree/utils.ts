@@ -56,8 +56,11 @@ export function contextWithContentReadonly(content: TreeContent): Context {
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 export function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	const cursor = context.checkout.forest.allocateCursor();
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 

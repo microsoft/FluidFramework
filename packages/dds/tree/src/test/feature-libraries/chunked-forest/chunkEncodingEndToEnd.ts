@@ -134,7 +134,7 @@ describe("End to end chunked encoding", () => {
 		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -162,7 +162,7 @@ describe("End to end chunked encoding", () => {
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,

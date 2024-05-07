@@ -281,7 +281,7 @@ function contextualizeInsertedArrayContent(
 		content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		),
-		sequenceField.context.forest,
+		sequenceField.context.checkout.forest,
 	);
 }
 
