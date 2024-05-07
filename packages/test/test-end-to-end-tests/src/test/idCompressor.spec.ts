@@ -33,6 +33,8 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -553,42 +555,64 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
 	});
 
-	it("Ids generated when disconnected are correctly resubmitted", async () => {
-		// Disconnect the first container
-		container1.disconnect();
-
-		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
-		// Generate a new Id in the disconnected container
-		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		idPairs.push([id1, getIdCompressor(sharedMapContainer1)]);
-
-		// Trigger Id submission
-		sharedMapContainer1.set("key", "value");
-
-		const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(sharedMapContainer1);
-		(sharedMapContainer1 as any).reSubmitCore = (
-			content: unknown,
-			localOpMetadata: unknown,
-		) => {
-			// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
-			// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
-			const id = getIdCompressor(sharedMapContainer1).generateCompressedId();
-			idPairs.push([id, getIdCompressor(sharedMapContainer1)]);
-			superResubmit(content, localOpMetadata);
-		};
-
-		// Generate ids in a connected container but don't send them yet
-		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		idPairs.push([id2, getIdCompressor(sharedMapContainer2)]);
-		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		idPairs.push([id3, getIdCompressor(sharedMapContainer2)]);
-
-		// Reconnect the first container
-		// IdRange should be resubmitted and reflected in all compressors
-		container1.connect();
-		await waitForContainerConnection(container1);
-		await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
+	const sharedPoints = [0, 1, 3, 5];
+	const testConfigs = generatePairwiseOptions({
+		preOfflineChanges: [...sharedPoints],
+		postOfflineChanges: [...sharedPoints],
+		allocateDuringResubmitStride: [1, 2, 3, 4],
+		delayBetweenOfflineChanges: [true, false],
 	});
+
+	for (const testConfig of testConfigs) {
+		it(`Ids generated across batches are correctly resubmitted: ${JSON.stringify(
+			testConfig ?? "undefined",
+		)}`, async () => {
+			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
+
+			const simulateAllocation = (map: ISharedMap) => {
+				const idCompressor = getIdCompressor(map);
+				const id = idCompressor.generateCompressedId();
+				idPairs.push([id, idCompressor]);
+			};
+
+			for (let i = 0; i < testConfig.preOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+			}
+
+			container1.disconnect();
+
+			for (let i = 0; i < testConfig.postOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+
+				if (testConfig.delayBetweenOfflineChanges) {
+					await delay(100); // Trigger Id submission
+				}
+			}
+
+			let invokedCount = 0;
+			const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(
+				sharedMapContainer1,
+			);
+			(sharedMapContainer1 as any).reSubmitCore = (
+				content: unknown,
+				localOpMetadata: unknown,
+			) => {
+				invokedCount++;
+				if (invokedCount % testConfig.allocateDuringResubmitStride === 0) {
+					// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
+					// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
+					simulateAllocation(sharedMapContainer1);
+				}
+				superResubmit(content, localOpMetadata);
+			};
+
+			container1.connect();
+			await waitForContainerConnection(container1);
+			await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
+		});
+	}
 
 	// IdCompressor is at container runtime level, which means that individual DDSs
 	// in the same container and different DataStores should have the same underlying compressor state

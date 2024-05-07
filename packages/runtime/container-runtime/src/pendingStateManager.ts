@@ -76,6 +76,11 @@ function buildPendingMessageContent(
 }
 
 /**
+ * Tag for op local metadata to indicate that the op is an id allocation.
+ */
+export const idAllocationIndicator = new Object();
+
+/**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
  * batches along with the messages.
@@ -357,6 +362,16 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	private filterMessagesInto(dst: IPendingMessage[], addIdAllocations: boolean): void {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const pendingMessage = this.pendingMessages.get(i);
+			assert(pendingMessage !== undefined, "pendingMessage should be in queue");
+			if ((pendingMessage?.localOpMetadata === idAllocationIndicator) === addIdAllocations) {
+				dst.push(pendingMessage);
+			}
+		}
+	}
+
 	/**
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
@@ -381,15 +396,21 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
-		let remainingPendingMessagesCount = this.pendingMessages.length;
+		const messagesToReplay: IPendingMessage[] = [];
+		// The following places all id allocations to the front of the queue while maintaining their
+		// partial order and that of the rest of the ops. Since id allocations are guaranteed to
+		// never be in batches with non-id allocation ops, this code does not need to worry about batch boundaries
+		// as they will naturally be maintained.
+		this.filterMessagesInto(messagesToReplay, true);
+		this.filterMessagesInto(messagesToReplay, false);
+		assert(
+			messagesToReplay.length === initialPendingMessagesCount,
+			"All messages should be dequeued",
+		);
+		this.pendingMessages.clear();
 
-		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
-		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
-		// which must not be replayed.
-		while (remainingPendingMessagesCount > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let pendingMessage = this.pendingMessages.shift()!;
-			remainingPendingMessagesCount--;
+		for (let i = 0; i < messagesToReplay.length; i++) {
+			let pendingMessage = messagesToReplay[i];
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
@@ -402,14 +423,14 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
-					remainingPendingMessagesCount > 0,
+					i < messagesToReplay.length - 1,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
 				const batch: IPendingBatchMessage[] = [];
 
-				// check is >= because batch end may be last pending message
-				while (remainingPendingMessagesCount >= 0) {
+				// batch end may be last pending message
+				while (i < messagesToReplay.length) {
 					batch.push({
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
@@ -419,11 +440,10 @@ export class PendingStateManager implements IDisposable {
 					if (pendingMessage.opMetadata?.batch === false) {
 						break;
 					}
-					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
+					assert(i < messagesToReplay.length - 1, 0x555 /* No batch end found */);
+					i++;
 
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					pendingMessage = this.pendingMessages.shift()!;
-					remainingPendingMessagesCount--;
+					pendingMessage = messagesToReplay[i];
 					assert(
 						pendingMessage.opMetadata?.batch !== true,
 						0x556 /* Batch start needs a corresponding batch end */,
