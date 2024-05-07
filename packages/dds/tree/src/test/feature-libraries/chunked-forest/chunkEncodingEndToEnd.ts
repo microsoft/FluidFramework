@@ -43,9 +43,13 @@ import {
 	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import { ForestType, type ITreeCheckout } from "../../../shared-tree/index.js";
+import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
+import {
+	MockTreeCheckout,
+	flexTreeViewWithContent,
+	numberSequenceRootSchema,
+} from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -100,10 +104,8 @@ describe("End to end chunked encoding", () => {
 			);
 			return getTreeContext(
 				schema,
-				{
-					forest: editableForest,
-					editor: dummyEditor,
-				} as unknown as ITreeCheckout,
+				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
+				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
 				createMockNodeKeyManager(),
 				brand(nodeKeyFieldKey),
 			);

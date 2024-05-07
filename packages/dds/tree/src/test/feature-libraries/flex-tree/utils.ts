@@ -21,20 +21,14 @@ import {
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import {
-	TreeContent,
-	type ISharedTreeEditor,
-	type ITreeCheckout,
-} from "../../../shared-tree/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { forestWithContent } from "../../utils.js";
+import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as ISharedTreeEditor;
 	return getTreeContext(
 		schema,
-		{ forest, editor: dummyEditor } as unknown as ITreeCheckout,
+		new MockTreeCheckout(forest),
 		createMockNodeKeyManager(),
 		brand(nodeKeyFieldKey),
 	);
