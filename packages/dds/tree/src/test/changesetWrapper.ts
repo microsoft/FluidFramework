@@ -8,8 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ChangeAtomIdMap,
 	DeltaFieldChanges,
+	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	tagChange,
 	taggedOptAtomId,
 } from "../core/index.js";
@@ -24,6 +26,7 @@ import {
 	fail,
 	forEachInNestedMap,
 	nestedMapFromFlatList,
+	nestedMapToFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../util/index.js";
@@ -39,6 +42,7 @@ export const ChangesetWrapper = {
 	rebase,
 	compose,
 	invert,
+	inlineRevision,
 	prune,
 	toDelta,
 	assertEqual,
@@ -53,14 +57,18 @@ function create<T>(fieldChange: T, ...nodes: [NodeId, TestChange][]): ChangesetW
 }
 
 function rebase<T>(
-	change: ChangesetWrapper<T>,
+	change: TaggedChange<ChangesetWrapper<T>>,
 	base: TaggedChange<ChangesetWrapper<T>>,
-	rebaseField: (change: T, base: TaggedChange<T>, rebaseChild: NodeChangeRebaser) => T,
+	rebaseField: (
+		change: TaggedChange<T>,
+		base: TaggedChange<T>,
+		rebaseChild: NodeChangeRebaser,
+	) => T,
 ): ChangesetWrapper<T> {
 	const rebasedNodes: ChangeAtomIdMap<TestChange> = new Map();
 	const rebaseChild = (id1: NodeId | undefined, id2: NodeId | undefined): NodeId | undefined => {
 		if (id1 !== undefined) {
-			const nodeChange = tryGetFromNestedMap(change.nodes, id1.revision, id1.localId);
+			const nodeChange = tryGetFromNestedMap(change.change.nodes, id1.revision, id1.localId);
 			assert(nodeChange !== undefined, "Unknown node ID");
 			let rebasedNode: TestChange | undefined = nodeChange;
 			if (id2 !== undefined) {
@@ -77,7 +85,7 @@ function rebase<T>(
 	};
 
 	const rebasedField = rebaseField(
-		change.fieldChange,
+		mapTaggedChange(change, change.change.fieldChange),
 		{ ...base, change: base.change.fieldChange },
 		rebaseChild,
 	);
@@ -148,6 +156,23 @@ function invert<T>(
 	});
 
 	return { fieldChange: invertedField, nodes: invertedNodes };
+}
+
+function inlineRevision<T>(
+	change: ChangesetWrapper<T>,
+	revisionToInline: RevisionTag,
+	inlineField: (change: T, revision: RevisionTag) => T,
+): ChangesetWrapper<T> {
+	const fieldChange = inlineField(change.fieldChange, revisionToInline);
+	const nodes = nestedMapFromFlatList(
+		nestedMapToFlatList(change.nodes).map(([revision, id, node]) => [
+			revision ?? revisionToInline,
+			id,
+			node,
+		]),
+	);
+
+	return { fieldChange, nodes };
 }
 
 function prune<T>(

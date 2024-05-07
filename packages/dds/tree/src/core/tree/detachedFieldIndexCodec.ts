@@ -53,6 +53,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
+			revision: undefined,
 		});
 	}
 }

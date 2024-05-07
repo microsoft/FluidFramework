@@ -3,14 +3,19 @@ lockfileVersion: 5.4
 overrides:
   sharp: ^0.33.2
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.42.3':
+    hash: f66stvskxun56mencgf6l5564y
+    path: ../../../patches/@microsoft__api-extractor@7.42.3.patch
+
 importers:
 
   .:
     specifiers:
       '@arethetypeswrong/cli': ^0.15.2
-      '@fluid-tools/build-cli': ^0.36.0
+      '@fluid-tools/build-cli': ^0.37.0
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.36.0
+      '@fluidframework/build-tools': ^0.37.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@3.2.0
       '@microsoft/api-extractor': ^7.42.3
@@ -23,12 +28,12 @@ importers:
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.15.3
-      '@fluid-tools/build-cli': 0.36.0
+      '@fluid-tools/build-cli': 0.37.0
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.36.0
+      '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/3.2.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       concurrently: 6.5.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -836,15 +841,15 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.36.0:
-    resolution: {integrity: sha512-Ht4GninKl3ja698JsY71YRy/KpzEsBkazlUtvT6ChnDMMT/SCbXD+oWqJYJtOOM6soy3wGNcu8uXFKa6oODtlA==}
+  /@fluid-tools/build-cli/0.37.0:
+    resolution: {integrity: sha512-xg3AfSxCKVm8rN4VS1TfKfJYMu0CyglvADs+rsLqacf6DTCVly98+YNut18zSgRFNWEbNZTVKfvVmFFKTs5C+g==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.36.0
-      '@fluidframework/build-tools': 0.36.0
-      '@fluidframework/bundle-size-tools': 0.36.0
-      '@microsoft/api-extractor': 7.42.3
+      '@fluid-tools/version-tools': 0.37.0
+      '@fluidframework/build-tools': 0.37.0
+      '@fluidframework/bundle-size-tools': 0.37.0
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@oclif/core': 3.26.2
       '@oclif/plugin-autocomplete': 3.0.13
       '@oclif/plugin-commands': 3.2.2
@@ -896,8 +901,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.36.0:
-    resolution: {integrity: sha512-xkLEgDUwZtmwTX6lJA2GgNeR9RUInLguY5VRJH77wHQ0G+8qaYAipcRtm7bPVpQn3ctCm28USA95NllgSPCzFA==}
+  /@fluid-tools/version-tools/0.37.0:
+    resolution: {integrity: sha512-hPUJUxl8rZQAgWCpnEL5MxXRYZkdXhqusVUyJa3Wbu6f6BuaxKofOLOCB88rVkGiCgyZui8Mo5M2Q4GqLGYWIQ==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -919,13 +924,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.36.0:
-    resolution: {integrity: sha512-wAOnEC6kBUIGqofGQMx24BpoYhG31bcHfc992los+GR2f8HaCg5WDlp416le8A7iK/UruU8soQvxYXLEJUm3vw==}
+  /@fluidframework/build-tools/0.37.0:
+    resolution: {integrity: sha512-/zbGJq9oE/rvSze34yyPJdMJmnnn4E6BmYDGoO/lGA39W9bBWMbx+3NOLVqCX0ywjsrM1hBhSBoPJ/uc2X8gZw==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.36.0
-      '@fluidframework/bundle-size-tools': 0.36.0
+      '@fluid-tools/version-tools': 0.37.0
+      '@fluidframework/bundle-size-tools': 0.37.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.61.0
@@ -961,8 +966,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.36.0:
-    resolution: {integrity: sha512-nMSMfFZtSAd5+Khuhy3odO/IgVJfRJprqpCd/2V1lGja2WrcZ+gcuJ5KPEMjHl5pywpr+EcCl4SBEafQDrEwEg==}
+  /@fluidframework/bundle-size-tools/0.37.0:
+    resolution: {integrity: sha512-3KRNGWPTiaw4P9ExrbtXdF2I2dEFJjG0fJOZcGB2EAUW0QphI50fEAvhRTIctXFjXkMhEnyeyX82+akqOhaH0A==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -1219,7 +1224,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.42.3:
+  /@microsoft/api-extractor/7.42.3_f66stvskxun56mencgf6l5564y:
     resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
@@ -1239,6 +1244,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
@@ -1362,7 +1368,7 @@ packages:
       cli-progress: 3.12.0
       color: 4.2.3
       debug: 4.3.4_supports-color@8.1.1
-      ejs: 3.1.9
+      ejs: 3.1.10
       get-package-type: 0.1.0
       globby: 11.1.0
       hyperlinker: 1.0.0
@@ -1390,7 +1396,7 @@ packages:
       '@oclif/core': 3.26.2
       chalk: 5.3.0
       debug: 4.3.4
-      ejs: 3.1.9
+      ejs: 3.1.10
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3803,8 +3809,8 @@ packages:
       safe-buffer: 5.2.1
     dev: true
 
-  /ejs/3.1.9:
-    resolution: {integrity: sha512-rC+QVNMJWv+MtPgkt0y+0rVEIdbtxVADApW9JXrUVlzHetgcyczP/E7DJmWJ4fJCZF2cPcBk0laWO9ZHMG3DmQ==}
+  /ejs/3.1.10:
+    resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
     engines: {node: '>=0.10.0'}
     hasBin: true
     dependencies:
@@ -6707,7 +6713,7 @@ packages:
       chalk: 4.1.2
       change-case: 4.1.2
       debug: 4.3.4
-      ejs: 3.1.9
+      ejs: 3.1.10
       find-yarn-workspace-root: 2.0.0
       fs-extra: 8.1.0
       github-slugger: 1.5.0

@@ -16,6 +16,8 @@ import {
 	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	FieldKinds,
+	FlexFieldSchema,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
@@ -84,7 +86,7 @@ export function getFlexNode(proxy: TreeArrayNode, allowFreed?: true): FlexTreeNo
 export function getFlexNode(
 	proxy: TreeMapNode,
 	allowFreed?: true,
-): FlexTreeMapNode<FlexMapNodeSchema>;
+): FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
 export function getFlexNode(proxy: TreeNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 	const anchorNode = proxyToAnchorNode.get(proxy);

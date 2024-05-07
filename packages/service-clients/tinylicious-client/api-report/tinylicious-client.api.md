@@ -55,7 +55,7 @@ export interface TinyliciousContainerServices {
 
 // @internal
 export interface TinyliciousMember extends IMember {
-    userName: string;
+    name: string;
 }
 
 // @internal
