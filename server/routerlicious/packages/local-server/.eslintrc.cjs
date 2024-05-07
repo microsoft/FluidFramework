@@ -8,6 +8,7 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
+
 	parserOptions: {
 		"project": ["./tsconfig.json", "./src/test/tsconfig.json"],
 		"promise/catch-or-return": ["error", { allowFinally: true }],
@@ -15,4 +16,12 @@ module.exports = {
 		// TODO: enable strict null checks in tsconfig and remove this override
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/**/*.ts"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+			},
+		},
+	],
 };
