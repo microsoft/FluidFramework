@@ -345,11 +345,11 @@ export class DeliLambdaFactory
 					}
 				}
 			};
-			handler().catch((e) => {
+			handler().catch((error) => {
 				Lumberjack.error(
 					"Failed to handle NoClient event.",
 					baseLumberjackProperties,
-					e,
+					error,
 				);
 			});
 		});

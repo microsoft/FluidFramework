@@ -671,8 +671,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				this.globalCheckpointOnly = true;
 			}
 
-			// TODO: it means no client is in the session, since Deli get NoClient message it sends itself
-			// Do update activity idle timer here? or emit a event?
+			// No clients in the session, since Deli get NoClient message it sends itself, emit no client event
 			this.emit("noClient");
 		}
 

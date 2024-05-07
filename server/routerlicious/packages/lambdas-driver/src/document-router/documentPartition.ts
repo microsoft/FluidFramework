@@ -186,7 +186,6 @@ export class DocumentPartition {
 	}
 
 	private updateActivityTime(activityTime?: number) {
-		// TODO: add input arg and set it to input timestamp if provided.
 		const cacluatedActivityTimeout =
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 		this.activityTimeoutTime =
