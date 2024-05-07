@@ -235,7 +235,7 @@ export interface ITestObjectProvider {
     documentId: string;
     documentServiceFactory: IDocumentServiceFactory;
     driver: ITestDriver;
-    ensureSynchronized(timeoutDuration?: number): Promise<void>;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     logger: ITelemetryBaseLogger;
@@ -349,7 +349,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     get documentId(): string;
     get documentServiceFactory(): IDocumentServiceFactory;
     readonly driver: ITestDriver;
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): ITelemetryBaseLogger;
@@ -377,7 +377,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get documentId(): string;
     get documentServiceFactory(): IDocumentServiceFactory;
     get driver(): ITestDriver;
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): ITelemetryBaseLogger;
