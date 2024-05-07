@@ -19,7 +19,7 @@ export function safelyParseJSON(json: string): any | undefined {
 	let parsed;
 	try {
 		parsed = JSON.parse(json);
-	} catch (error) {
+	} catch {
 		return undefined;
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
