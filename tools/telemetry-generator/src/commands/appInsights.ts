@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+
 import { Command, Flags } from "@oclif/core";
 import * as appInsight from "applicationinsights";
 
