@@ -44,7 +44,7 @@ module.exports = {
 			rules: {
 				// https://mochajs.org/#arrow-functions
 				"prefer-arrow-callback": "off",
-			}
+			},
 		},
 	],
 };
