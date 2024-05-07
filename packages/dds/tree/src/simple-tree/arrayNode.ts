@@ -18,6 +18,7 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -596,10 +597,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		// but it works since cursorFromFieldData special cases arrays.
 		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
 
-		return cursorFromFieldData(content, simpleFieldSchema, {
-			schema: sequenceField.context.checkout.storedSchema,
-			policy: sequenceField.context.schema.policy,
-		});
+		return cursorFromFieldData(content, simpleFieldSchema, getSchemaAndPolicy(sequenceField));
 	}
 
 	public toJSON(): unknown {

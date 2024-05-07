@@ -17,6 +17,7 @@ import {
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
 	LocalNodeKey,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -213,10 +214,11 @@ export function setField(
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
 			const content = prepareContentForInsert(value, field.context.checkout.forest);
-			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes, {
-				schema: field.context.checkout.storedSchema,
-				policy: field.context.schema.policy,
-			});
+			const cursor = cursorFromNodeData(
+				content,
+				simpleFieldSchema.allowedTypes,
+				getSchemaAndPolicy(field),
+			);
 
 			typedField.content = cursor;
 			break;

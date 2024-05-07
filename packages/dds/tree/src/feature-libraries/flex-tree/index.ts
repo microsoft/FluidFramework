@@ -62,3 +62,5 @@ export {
 } from "./flexTreeTypes.js";
 
 export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
+
+export { getSchemaAndPolicy } from "./utilities.js";

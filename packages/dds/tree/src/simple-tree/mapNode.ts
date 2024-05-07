@@ -12,6 +12,7 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -123,10 +124,11 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		);
 
 		const classSchema = getSimpleNodeSchema(node.schema);
-		const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes, {
-			schema: node.context.checkout.storedSchema,
-			policy: node.context.schema.policy,
-		});
+		const cursor = cursorFromNodeData(
+			content,
+			classSchema.info as ImplicitAllowedTypes,
+			getSchemaAndPolicy(node),
+		);
 
 		node.set(key, cursor);
 		return this;
