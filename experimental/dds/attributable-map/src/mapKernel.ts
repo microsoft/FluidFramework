@@ -9,7 +9,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ValueType } from "@fluidframework/shared-object-base/internal";
+import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
@@ -314,6 +314,10 @@ export class AttributableMapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			// this is necessary to bind the potential handles in the value
+			// to this DDS, as we do not walk the object normally unless we
+			// are attached
+			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
