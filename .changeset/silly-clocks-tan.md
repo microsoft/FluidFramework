@@ -32,7 +32,7 @@ As an example, something like the following code may have been used before for b
 
 ```typescript
 const tree = SharedTree.create(runtime, "foo");
-const view = tree.schematize({ schema: Point, initialTree: () => new Point({ x: 0, y: 0 }) });
+const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 ```
 
 Now, that code would look like this on the create codepath:
