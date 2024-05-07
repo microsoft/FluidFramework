@@ -821,7 +821,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes> e
     moveToStart(sourceIndex: number): void;
     moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
     removeAt(index: number): void;
-    removeRange(start?: number, end?: number): void;
+    sequenceEditor(): SequenceFieldEditBuilder;
 }
 
 // @internal

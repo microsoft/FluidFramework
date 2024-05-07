@@ -43,6 +43,7 @@ import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -85,10 +86,16 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	/**
 	 * Removes all items between the specified indices.
 	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the array.
-	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if `start` is not in the range [0, `array.length`).
+	 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
+	 * @throws Throws if `start` is not in the range [0, `array.length`].
 	 * @throws Throws if `end` is less than `start`.
 	 * If `end` is not supplied or is greater than the length of the array, all items after `start` are removed.
+	 *
+	 * @remarks
+	 * The default values for start and end are computed when this is called,
+	 * and thus the behavior is the same as providing them explicitly, even with respect to merge resolution with concurrent edits.
+	 * For example, two concurrent transactions both emptying the array with `node.removeRange()` then inserting an item,
+	 * will merge to result in the array having both inserted items.
 	 */
 	removeRange(start?: number, end?: number): void;
 
@@ -644,7 +651,18 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		getSequenceField(this).removeAt(index);
 	}
 	public removeRange(start?: number, end?: number): void {
-		getSequenceField(this).removeRange(start, end);
+		const field = getSequenceField(this);
+		const fieldEditor = field.sequenceEditor();
+		const { length } = field;
+		const removeStart = start ?? 0;
+		const removeEnd = Math.min(length, end ?? length);
+		validatePositiveIndex(removeStart);
+		validatePositiveIndex(removeEnd);
+		if (removeEnd < removeStart) {
+			// This catches both the case where start is > array.length and when end is > array.length.
+			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
+		}
+		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		if (source !== undefined) {
@@ -808,4 +826,17 @@ function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>
 	const copy = Array.from(content);
 	markContentType(typeName, copy);
 	return copy;
+}
+
+function validateSafeInteger(index: number): void {
+	if (!Number.isSafeInteger(index)) {
+		throw new UsageError(`Expected a safe integer, got ${index}.`);
+	}
+}
+
+function validatePositiveIndex(index: number): void {
+	validateSafeInteger(index);
+	if (index < 0) {
+		throw new UsageError(`Expected non-negative index, got ${index}.`);
+	}
 }
