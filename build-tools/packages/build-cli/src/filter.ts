@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
-import { filterFlags, selectionFlags } from "./flags";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
 import { Context } from "./library";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
@@ -67,21 +67,50 @@ export interface PackageFilterOptions {
  * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
  *
  * @param flags - The parsed command flags.
+ * @param defaultSelection - Controls what packages are selected when all flags are set to their default values. With
+ * the default value of undefined, no packages will be selected. Setting this to `all` will select all packages by
+ * default. Setting it to `dir` will select the package in the current directory.
  */
 export const parsePackageSelectionFlags = (
 	flags: selectionFlags,
+	defaultSelection: PackageSelectionDefault,
 ): PackageSelectionCriteria => {
-	const options: PackageSelectionCriteria =
-		flags.all === true
-			? AllPackagesSelectionCriteria
-			: {
-					independentPackages: flags.packages ?? false,
-					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
-					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
-					directory: flags.dir,
-				};
+	const useDefault =
+		flags.releaseGroup === undefined &&
+		flags.releaseGroupRoot === undefined &&
+		flags.dir === undefined &&
+		(flags.packages === false || flags.packages === undefined) &&
+		(flags.all === false || flags.all === undefined);
 
-	return options;
+	if (flags.all || (useDefault && defaultSelection === "all")) {
+		return AllPackagesSelectionCriteria;
+	}
+
+	if (useDefault && defaultSelection === "dir") {
+		return {
+			independentPackages: false,
+			releaseGroups: [],
+			releaseGroupRoots: [],
+			directory: ".",
+		};
+	}
+
+	const releaseGroups =
+		flags.releaseGroup?.includes("all") === true
+			? AllPackagesSelectionCriteria.releaseGroups
+			: flags.releaseGroup;
+
+	const roots =
+		flags.releaseGroupRoot?.includes("all") === true
+			? AllPackagesSelectionCriteria.releaseGroupRoots
+			: flags.releaseGroupRoot;
+
+	return {
+		independentPackages: flags.packages ?? false,
+		releaseGroups: (releaseGroups ?? []) as ReleaseGroup[],
+		releaseGroupRoots: (roots ?? []) as ReleaseGroup[],
+		directory: flags.dir,
+	};
 };
 
 /**
@@ -145,7 +174,10 @@ const selectPackagesFromContext = (
 
 	if (selection.directory !== undefined) {
 		const pkg = Package.load(
-			path.join(selection.directory, "package.json"),
+			path.join(
+				selection.directory === "." ? process.cwd() : selection.directory,
+				"package.json",
+			),
 			"none",
 			undefined,
 			{

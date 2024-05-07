@@ -17,6 +17,7 @@ export function testSnapshots() {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {
 			originatorId: compressor.localSessionId,
+			revision: undefined,
 		};
 
 		const family = SequenceField.sequenceFieldChangeCodecFactory(

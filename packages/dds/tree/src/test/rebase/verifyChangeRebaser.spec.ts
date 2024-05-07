@@ -11,14 +11,16 @@ const counterRebaser: ChangeRebaser<number> = {
 	compose: (changes: TaggedChange<number>[]) =>
 		changes.map((c) => c.change).reduce((a, b) => a + b, 0),
 	invert: (change: TaggedChange<number>) => -change.change,
-	rebase: (change: number, over: TaggedChange<number>) => change,
+	rebase: (change: TaggedChange<number>, over: TaggedChange<number>) => change.change,
+	changeRevision: (change: number) => change,
 };
 
 const incorrectCounterRebaser: ChangeRebaser<number> = {
 	compose: (changes: TaggedChange<number>[]) =>
 		changes.map((c) => c.change).reduce((a, b) => a + b - 1, 0),
 	invert: (change: TaggedChange<number>) => -change.change + 1,
-	rebase: (change: number, over: TaggedChange<number>) => change + 1,
+	rebase: (change: TaggedChange<number>, over: TaggedChange<number>) => change.change + 1,
+	changeRevision: (change: number) => change,
 };
 
 describe("verifyChangeRebaser", () => {

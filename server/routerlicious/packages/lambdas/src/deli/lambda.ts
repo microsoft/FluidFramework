@@ -879,9 +879,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				this.documentId,
 				LumberEventName.SessionResult,
 				this.serviceConfiguration,
-			);
-			this.sessionMetric?.setProperty(
-				CommonProperties.isEphemeralContainer,
 				isEphemeralContainer,
 			);
 		}

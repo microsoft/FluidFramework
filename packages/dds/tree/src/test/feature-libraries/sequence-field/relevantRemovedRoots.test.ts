@@ -4,13 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
-import {
-	ChangeAtomId,
-	DeltaDetachedNodeId,
-	makeAnonChange,
-	tagChange,
-} from "../../../core/index.js";
+import { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
@@ -37,37 +31,37 @@ export function testRelevantRemovedRoots() {
 		describe("does not include", () => {
 			it("a tree that remains in-doc", () => {
 				const input: SF.Changeset = [{ count: 1 }];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a tree with child changes that remains in-doc", () => {
 				const input: SF.Changeset = [Mark.modify(childChange)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a tree that remains removed", () => {
 				const input: SF.Changeset = [{ count: 1, cellId: atomId }];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a tree being removed", () => {
 				const input: SF.Changeset = [Mark.remove(1, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a tree with child changes being removed", () => {
 				const input: SF.Changeset = [Mark.remove(1, atomId, { changes: childChange })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a tree being moved", () => {
 				const input: SF.Changeset = [Mark.moveOut(1, atomId), Mark.moveIn(1, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
@@ -76,13 +70,13 @@ export function testRelevantRemovedRoots() {
 					Mark.moveOut(1, atomId, { changes: childChange }),
 					Mark.moveIn(1, atomId),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
 			it("a live tree being pinned", () => {
 				const input: SF.Changeset = [Mark.pin(1, brand(0))];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, []);
 			});
@@ -90,7 +84,7 @@ export function testRelevantRemovedRoots() {
 		describe("does include", () => {
 			it("a tree being inserted", () => {
 				const input: SF.Changeset = [Mark.insert(1, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
@@ -98,7 +92,7 @@ export function testRelevantRemovedRoots() {
 				const input: SF.Changeset = [
 					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.remove(1, atomId)),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
@@ -106,49 +100,49 @@ export function testRelevantRemovedRoots() {
 				const input: SF.Changeset = [
 					Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("relevant roots from nested changes under a tree that remains in-doc", () => {
 				const input: SF.Changeset = [Mark.modify(childChange)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [relevantNestedTree]);
 			});
 			it("relevant roots from nested changes under a tree that remains removed", () => {
 				const input: SF.Changeset = [Mark.modify(childChange, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
 			it("a removed tree with nested changes", () => {
 				const input: SF.Changeset = [Mark.modify(childChange, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("a tree being restored by revive", () => {
 				const input: SF.Changeset = [Mark.revive(1, atomId)];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("a tree being restored by pin", () => {
 				const input: SF.Changeset = [Mark.pin(1, brand(0), { cellId: atomId })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("a tree being transiently restored", () => {
 				const input: SF.Changeset = [Mark.remove(1, brand(0), { cellId: atomId })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), noTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, noTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId]);
 			});
 			it("relevant roots from nested changes under a tree being restored by revive", () => {
 				const input: SF.Changeset = [Mark.revive(1, atomId, { changes: childChange })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
@@ -156,19 +150,19 @@ export function testRelevantRemovedRoots() {
 				const input: SF.Changeset = [
 					Mark.pin(1, brand(0), { cellId: atomId, changes: childChange }),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
 			it("relevant roots from nested changes under a tree being removed", () => {
 				const input: SF.Changeset = [Mark.remove(1, atomId, { changes: childChange })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [relevantNestedTree]);
 			});
 			it("relevant roots from nested changes under a tree being inserted", () => {
 				const input: SF.Changeset = [Mark.insert(1, atomId, { changes: childChange })];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
@@ -177,7 +171,7 @@ export function testRelevantRemovedRoots() {
 					Mark.moveOut(1, atomId, { changes: childChange }),
 					Mark.moveIn(1, atomId),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [relevantNestedTree]);
 			});
@@ -187,7 +181,7 @@ export function testRelevantRemovedRoots() {
 						changes: childChange,
 					}),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
@@ -195,7 +189,7 @@ export function testRelevantRemovedRoots() {
 				const input: SF.Changeset = [
 					Mark.remove(1, brand(0), { cellId: atomId, changes: childChange }),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
@@ -205,16 +199,10 @@ export function testRelevantRemovedRoots() {
 						changes: childChange,
 					}),
 				];
-				const actual = SF.relevantRemovedRoots(makeAnonChange(input), oneTreeDelegate);
+				const actual = SF.relevantRemovedRoots(input, oneTreeDelegate);
 				const array = Array.from(actual);
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
-		});
-		it("uses passed down revision", () => {
-			const input: SF.Changeset = [Mark.modify(childChange, { localId: brand(42) })];
-			const actual = SF.relevantRemovedRoots(tagChange(input, tag), noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, [{ major: tag, minor: 42 }]);
 		});
 	});
 }
