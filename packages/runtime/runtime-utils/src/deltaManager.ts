@@ -11,7 +11,8 @@ import type {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Manages the transmission of ops between the runtime and storage.
+ * Casts the public API for delta manager into the internal one,
+ * exposing access to APIs needed by the implementation of Fluid Framework but not its users.
  * @alpha
  */
 export function toDeltaManagerInternal(
@@ -21,7 +22,7 @@ export function toDeltaManagerInternal(
 }
 
 /**
- * Manages the transmission of ops between the runtime and storage.
+ * Casts the the internal API for delta manager into the public type erased API for returning from public APIs that should not have access to any of its members.
  * @internal
  */
 export function toDeltaManagerErased(
