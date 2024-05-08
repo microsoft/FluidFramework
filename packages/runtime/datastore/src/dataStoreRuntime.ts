@@ -70,6 +70,7 @@ import {
 	processAttachMessageGCData,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
+	toDeltaManagerErased,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -83,7 +84,6 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import { FluidObjectHandle } from "./fluidHandle.js";

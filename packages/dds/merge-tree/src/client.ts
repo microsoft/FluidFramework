@@ -20,8 +20,8 @@ import {
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
-import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";

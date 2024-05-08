@@ -8,9 +8,7 @@ import type { AttachState } from '@fluidframework/container-definitions';
 import type { ErasedType } from '@fluidframework/core-interfaces';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
@@ -156,11 +154,5 @@ export type JsonableTypeWith<T> = undefined | null | boolean | number | string |
 
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
-
-// @internal
-export function toDeltaManagerErased(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>): IDeltaManagerErased;
-
-// @alpha
-export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 ```

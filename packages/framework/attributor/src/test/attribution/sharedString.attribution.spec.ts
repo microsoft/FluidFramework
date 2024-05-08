@@ -26,10 +26,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	toDeltaManagerInternal,
-	type Jsonable,
-} from "@fluidframework/datastore-definitions/internal";
+import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,
@@ -46,6 +43,7 @@ import {
 	MockStorage,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {

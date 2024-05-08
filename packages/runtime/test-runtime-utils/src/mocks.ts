@@ -52,11 +52,11 @@ import {
 import {
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
+	toDeltaManagerErased,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
