@@ -100,7 +100,7 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
-	private refreshSnapshot: Promise<void> | undefined;
+	private refreshSnapshotP: Promise<ISnapshotInfo | undefined> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	constructor(
@@ -128,8 +128,16 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
+	/**
+	 * Promise that will resolve whenever we've successfully downloaded the latest snapshot(s) from storage
+	 *
+	 * Note: This promise will resolve whether or not the snapshot download/refresh succeeded.
+	 */
 	public get waitForInitialRefresh(): Promise<void> | undefined {
-		return this.refreshSnapshot;
+		return this.refreshSnapshotP?.then(
+			() => {},
+			() => {},
+		);
 	}
 
 	public addProcessedOp(message: ISequencedDocumentMessage) {
@@ -177,10 +185,20 @@ export class SerializedStateManager {
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
 
-			if (this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true)
-				this.refreshSnapshot ??= (async () => {
-					await this.refreshLatestSnapshot(supportGetSnapshotApi);
-				})();
+			// Fire and forget the refresh snapshot call (if enabled)
+			if (
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
+			) {
+				this.refreshSnapshotP ??= this.refreshLatestSnapshot(supportGetSnapshotApi).catch(
+					(e) => {
+						this.mc.logger.sendErrorEvent({
+							eventName: "RefreshSnapshotFailed",
+							error: e,
+						});
+						return undefined;
+					},
+				);
+			}
 
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
@@ -198,7 +216,17 @@ export class SerializedStateManager {
 		}
 	}
 
-	public async refreshLatestSnapshot(supportGetSnapshotApi: boolean) {
+	/**
+	 * Fetch the latest snapshot for the container, including delay-loaded groupIds if pendingLocalState was provided and contained any groupIds.
+	 *
+	 * If there are no groupIds, then we will attempt to update the class's snapshot and processedOps.
+	 *
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @returns SnapshotInfo form of delay-loaded snapshots (only if we loaded with pendingLocalState containing any groupIds), otherwise undefined.
+	 */
+	public async refreshLatestSnapshot(
+		supportGetSnapshotApi: boolean,
+	): Promise<ISnapshotInfo | undefined> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
 			this.mc,
 			this.storageAdapter,
