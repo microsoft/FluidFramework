@@ -17,14 +17,6 @@ module.exports = {
 
 		// TODO: remove usages of deprecated APIs and remove this override
 		"import/no-deprecated": "warn",
+		"import/no-nodejs-modules": "off",
 	},
-	overrides: [
-		{
-			files: ["src/rdkafkaBase.ts"],
-			rules: {
-				// It's fine for tests to use node.js modules.
-				"import/no-nodejs-modules": "off",
-			},
-		},
-	],
 };
