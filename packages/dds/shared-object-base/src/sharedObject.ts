@@ -138,6 +138,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 	}
 
+	/**
+	 * Accessor for `this.runtime`'s {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.deltaManagerErased} as a {@link @fluidframework/container-definitions/internal#IDeltaManager}
+	 */
 	protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 		return toDeltaManagerInternal(this.runtime.deltaManagerErased);
 	}
