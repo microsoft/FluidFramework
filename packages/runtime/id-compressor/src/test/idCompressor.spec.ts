@@ -380,8 +380,9 @@ describe("IdCompressor", () => {
 			assert.throws(
 				() => compressor.finalizeCreationRange(batchRange),
 				(e: Error) =>
-					e.message ===
-					"Ranges finalized out of order, expected range starting with -3, got one starting at -1.",
+					e.message === "Ranges finalized out of order" &&
+					(e as any).expectedStart === -3 &&
+					(e as any).actualStart === -1,
 			);
 		});
 
@@ -394,8 +395,9 @@ describe("IdCompressor", () => {
 			assert.throws(
 				() => compressor.finalizeCreationRange(secondRange),
 				(e: Error) =>
-					e.message ===
-					"Ranges finalized out of order, expected range starting with -1, got one starting at -2.",
+					e.message === "Ranges finalized out of order" &&
+					(e as any).expectedStart === -1 &&
+					(e as any).actualStart === -2,
 			);
 		});
 

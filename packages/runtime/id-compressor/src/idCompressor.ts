@@ -6,7 +6,11 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { FinalSpace } from "./finalSpace.js";
 import { FinalCompressedId, LocalCompressedId, NumericUuid, isFinalId } from "./identifiers.js";
@@ -260,9 +264,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster === undefined) {
 			// This is the first cluster in the session space
 			if (rangeBaseLocal !== -1) {
-				throw new Error(
-					`Ranges finalized out of order, expected range starting with -1, got one starting at ${rangeBaseLocal}.`,
-				);
+				throw new LoggingError("Ranges finalized out of order", {
+					expectedStart: -1,
+					actualStart: rangeBaseLocal,
+				});
 			}
 			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
@@ -275,11 +280,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw new Error(
-				`Ranges finalized out of order, expected range starting with ${
-					lastCluster.baseLocalId - lastCluster.count + 1
-				}, got one starting at ${rangeBaseLocal}.`,
-			);
+			throw new LoggingError("Ranges finalized out of order", {
+				expectedStart: lastCluster.baseLocalId - lastCluster.count + 1,
+				actualStart: rangeBaseLocal,
+			});
 		}
 
 		if (remainingCapacity >= count) {
