@@ -61,6 +61,13 @@ import {
  */
 const currentWrittenVersion = 2.0;
 
+function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
+	return new LoggingError("Ranges finalized out of order", {
+		expectedStart,
+		actualStart,
+	});
+}
+
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
@@ -264,10 +271,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster === undefined) {
 			// This is the first cluster in the session space
 			if (rangeBaseLocal !== -1) {
-				throw new LoggingError("Ranges finalized out of order", {
-					expectedStart: -1,
-					actualStart: rangeBaseLocal,
-				});
+				throw rangeFinalizationError(-1, rangeBaseLocal);
 			}
 			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
@@ -280,10 +284,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw new LoggingError("Ranges finalized out of order", {
-				expectedStart: lastCluster.baseLocalId - lastCluster.count + 1,
-				actualStart: rangeBaseLocal,
-			});
+			throw rangeFinalizationError(
+				lastCluster.baseLocalId - lastCluster.count + 1,
+				rangeBaseLocal,
+			);
 		}
 
 		if (remainingCapacity >= count) {
