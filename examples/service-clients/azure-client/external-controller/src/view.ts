@@ -57,18 +57,18 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 		const useAzure = process.env.FLUID_CLIENT === "azure";
 
 		members.forEach((member: AzureMember<ICustomUserDetails>) => {
-			if (member.userId !== self?.userId) {
+			if (member.id !== self?.id) {
 				if (useAzure) {
-					const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
+					const memberString = `${member.name}: {Gender: ${member.additionalDetails?.gender},
                         Email: ${member.additionalDetails?.email}}`;
 					memberStrings.push(memberString);
 				} else {
-					memberStrings.push(member.userName);
+					memberStrings.push(member.name);
 				}
 			}
 		});
 		audienceDiv.innerHTML = `
-            Current User: ${self?.userName} <br />
+            Current User: ${self?.name} <br />
             Other Users: ${memberStrings.join(", ")}
         `;
 	};

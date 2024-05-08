@@ -28,7 +28,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
-import { IErrorBase } from "@fluidframework/core-interfaces";
+import { IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
@@ -44,6 +44,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -209,7 +210,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 
 	const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 	const response = await containerRuntime.resolveHandle({
-		url: testDataObject.handle.absolutePath,
+		url: toFluidHandleInternal(testDataObject.handle).absolutePath,
 	});
 	const summarizerDataObject = response.value as ITestDataObject;
 	await delay(sweepTimeoutMs + 10);
@@ -726,38 +727,32 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		});
 	});
 
-	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
-		beforeEach("setValidateSummaryBeforeUpload", () => {
-			configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", true);
-		});
-
-		itExpects(
-			"can run sweep without failing summaries due to local changes",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
-				},
-			],
-			async () => {
-				const { summarizer } = await summarizationWithUnreferencedDataStoreAfterTime();
-
-				// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
-				// the GC op does not fail summary due to local changes.
-				await assert.doesNotReject(
-					async () => ensureSynchronizedAndSummarize(summarizer),
-					"Summary and GC should succeed in presence of GC op",
-				);
-
-				// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
-				// summarize and GC succeed.
-				await assert.doesNotReject(
-					async () => ensureSynchronizedAndSummarize(summarizer),
-					"Summary and GC should succeed with deleted data store",
-				);
+	itExpects(
+		"can run sweep without failing summaries due to local changes",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
+				clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
 			},
-		);
-	});
+		],
+		async () => {
+			const { summarizer } = await summarizationWithUnreferencedDataStoreAfterTime();
+
+			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
+			// the GC op does not fail summary due to local changes.
+			await assert.doesNotReject(
+				async () => ensureSynchronizedAndSummarize(summarizer),
+				"Summary and GC should succeed in presence of GC op",
+			);
+
+			// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
+			// summarize and GC succeed.
+			await assert.doesNotReject(
+				async () => ensureSynchronizedAndSummarize(summarizer),
+				"Summary and GC should succeed with deleted data store",
+			);
+		},
+	);
 
 	describe("Sweep with summarize failures and retries", () => {
 		const summarizeErrorMessage = "SimulatedTestFailure";

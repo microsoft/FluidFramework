@@ -195,6 +195,9 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
+// @internal
+export function getSnapshotTree(tree: ISnapshotTree | ISnapshot): ISnapshotTree;
+
 // @public (undocumented)
 export interface ICompressionStorageConfig {
     // (undocumented)

@@ -28,11 +28,12 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -130,7 +131,7 @@ import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
+import { DeltaManagerPendingOpsProxy, DeltaManagerSummarizerProxy } from "./deltaManagerProxies.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -465,10 +466,7 @@ export interface IContainerRuntimeOptions {
 	 * message to be sent to the service.
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
-	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
-	 * flag can be used to disable it at runtime.
-	 *
-	 * @experimental Not ready for use.
+	 * By default, the feature is enabled.
 	 */
 	readonly enableGroupedBatching?: boolean;
 
@@ -801,7 +799,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableGroupedBatching = false,
+			enableGroupedBatching = true,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -962,9 +960,6 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableGroupedBatching = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
-		);
 		const disableCompression = mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionDisabled",
 		);
@@ -972,8 +967,6 @@ export class ContainerRuntime
 			disableCompression !== true &&
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
-
-		const opGroupingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
@@ -983,7 +976,7 @@ export class ContainerRuntime
 				explicitSchemaControl,
 				compressionLz4,
 				idCompressorMode,
-				opGroupingEnabled,
+				opGroupingEnabled: enableGroupedBatching,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -992,7 +985,6 @@ export class ContainerRuntime
 		);
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableGroupedBatching,
 			disableCompression,
 		};
 
@@ -1250,13 +1242,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
-	/**
-	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
-	 * summaries will be accepted once uploaded, so they should be validated before upload. However, this can
-	 * currently be controlled via a feature flag as its a new functionality.
-	 */
-	private readonly validateSummaryBeforeUpload: boolean;
-
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
@@ -1401,6 +1386,7 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.mc = createChildMonitoringContext({
@@ -1420,7 +1406,6 @@ export class ContainerRuntime
 		};
 
 		this.innerDeltaManager = deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1525,6 +1510,44 @@ export class ContainerRuntime
 			opGroupingManager,
 		);
 
+		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		this.pendingStateManager = new PendingStateManager(
+			{
+				applyStashedOp: this.applyStashedOp.bind(this),
+				clientId: () => this.clientId,
+				close: this.closeFn,
+				connected: () => this.connected,
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
+				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
+				isAttached: () => this.attachState !== AttachState.Detached,
+			},
+			pendingRuntimeState?.pending,
+			this.logger,
+		);
+
+		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+		const useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
+		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+		outerDeltaManager = summarizerDeltaManagerProxy;
+
+		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
+		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
+		if (useDeltaManagerOpsProxy) {
+			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
+				summarizerDeltaManagerProxy,
+				this.pendingStateManager,
+			);
+			outerDeltaManager = pendingOpsDeltaManagerProxy;
+		}
+
+		this.deltaManager = outerDeltaManager;
+
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
 		if (this.summaryConfiguration.state === "enabled") {
@@ -1549,8 +1572,6 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-
-		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -1623,8 +1644,19 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
+		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
+			baseSnapshot,
+			metadata,
+		);
+		if (snapshot !== undefined && snapshotWithContents !== undefined) {
+			snapshot = {
+				...snapshotWithContents,
+				snapshotTree: snapshot,
+			};
+		}
+
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			snapshot,
 			parentContext,
 			this.mc.logger,
 			(props) => this.garbageCollector.nodeUpdated(props),
@@ -1665,24 +1697,6 @@ export class ContainerRuntime
 			this,
 			() => this.clientId,
 			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
-		);
-
-		this.pendingStateManager = new PendingStateManager(
-			{
-				applyStashedOp: this.applyStashedOp.bind(this),
-				clientId: () => this.clientId,
-				close: this.closeFn,
-				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
-				reSubmitBatch: this.reSubmitBatch.bind(this),
-				isActiveConnection: () => this.innerDeltaManager.active,
-				isAttached: () => this.attachState !== AttachState.Detached,
-			},
-			pendingRuntimeState?.pending,
-			this.logger,
 		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
@@ -1750,9 +1764,6 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
-		this.validateSummaryBeforeUpload =
-			this.mc.config.getBoolean("Fluid.Summarizer.ValidateSummaryBeforeUpload") ?? false;
-
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
@@ -1874,6 +1885,7 @@ export class ContainerRuntime
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
@@ -2382,8 +2394,6 @@ export class ContainerRuntime
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
-			case ContainerMessageType.ChunkedOp:
-				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
@@ -2396,7 +2406,7 @@ export class ContainerRuntime
 				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
-						"Stashed runtime message of unknown type",
+						"Stashed runtime message of unexpected type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
@@ -2591,6 +2601,17 @@ export class ContainerRuntime
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
 		const { message, local } = messageWithContext;
+
+		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		if (
+			this.deltaManager.minimumSequenceNumber <
+			messageWithContext.message.minimumSequenceNumber
+		) {
+			messageWithContext.message.minimumSequenceNumber =
+				this.deltaManager.minimumSequenceNumber;
+		}
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -3417,10 +3438,14 @@ export class ContainerRuntime
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
+		let summaryRefSeqNum: number | undefined;
 		const summaryNumberLogger = createChildLogger({
 			logger: summaryLogger,
 			properties: {
-				all: { summaryNumber },
+				all: {
+					summaryNumber,
+					referenceSequenceNumber: () => summaryRefSeqNum,
+				},
 			},
 		});
 
@@ -3439,7 +3464,7 @@ export class ContainerRuntime
 		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
 		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
 		// saved within the timeout, check if it should be failed or can continue.
-		if (this.validateSummaryBeforeUpload && this.isDirty) {
+		if (this.isDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
@@ -3488,8 +3513,6 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
 			) === true;
-
-		let summaryRefSeqNum: number | undefined;
 
 		try {
 			await this.deltaManager.inbound.pause();
@@ -3610,35 +3633,34 @@ export class ContainerRuntime
 				};
 			}
 
-			// If validateSummaryBeforeUpload is true, validate that the summary generated is correct before uploading.
-			if (this.validateSummaryBeforeUpload) {
-				// Validate that the summaries generated by summarize nodes is correct.
-				const validateResult = this.summarizerNode.validateSummary();
-				if (!validateResult.success) {
-					const { success, ...loggingProps } = validateResult;
-					const error = new RetriableSummaryError(
-						validateResult.reason,
-						validateResult.retryAfterSeconds,
-						{ ...loggingProps },
-					);
-					return {
-						stage: "base",
-						referenceSequenceNumber: summaryRefSeqNum,
-						minimumSequenceNumber,
-						error,
-					};
-				}
-
-				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
-					summaryNumberLogger,
-					summaryRefSeqNum,
-					minimumSequenceNumber,
-					finalAttempt,
-					false /* beforeSummaryGeneration */,
+			// Validate that the summary generated by summarizer nodes is correct before uploading.
+			const validateResult = this.summarizerNode.validateSummary();
+			if (!validateResult.success) {
+				const { success, ...loggingProps } = validateResult;
+				const error = new RetriableSummaryError(
+					validateResult.reason,
+					validateResult.retryAfterSeconds,
+					{ ...loggingProps },
 				);
-				if (pendingMessagesFailResult !== undefined) {
-					return pendingMessagesFailResult;
-				}
+				return {
+					stage: "base",
+					referenceSequenceNumber: summaryRefSeqNum,
+					minimumSequenceNumber,
+					error,
+				};
+			}
+
+			// If there are pending unacked ops, this summary attempt may fail as the uploaded
+			// summary would be eventually inconsistent.
+			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+				summaryNumberLogger,
+				summaryRefSeqNum,
+				minimumSequenceNumber,
+				finalAttempt,
+				false /* beforeSummaryGeneration */,
+			);
+			if (pendingMessagesFailResult !== undefined) {
+				return pendingMessagesFailResult;
 			}
 
 			const { summary: summaryTree, stats: partialStats } = summarizeResult;
@@ -3755,11 +3777,7 @@ export class ContainerRuntime
 			} as const;
 
 			try {
-				// If validateSummaryBeforeUpload is false, the summary should be validated in this step.
-				this.summarizerNode.completeSummary(
-					handle,
-					!this.validateSummaryBeforeUpload /* validate */,
-				);
+				this.summarizerNode.completeSummary(handle);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -3892,7 +3910,7 @@ export class ContainerRuntime
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
 	}
@@ -4118,8 +4136,6 @@ export class ContainerRuntime
 				this.submit(message, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.ChunkedOp:
-				throw new Error(`chunkedOp not expected here`);
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.reSubmit(opMetadata);
 				break;
@@ -4146,7 +4162,7 @@ export class ContainerRuntime
 					});
 				} else {
 					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unknown type",
+						"Resubmitting runtime message of unexpected type",
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
 						{

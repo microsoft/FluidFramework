@@ -18,13 +18,13 @@ if [ -f ".releaseGroup" ]; then
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/scoped/ ./*.tgz" && \
   flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
-  # This saves a list of the packages in the working directory in topological order to a temporary file.
-  # Each package name is modified to match the packed tar files.
-  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
-
 else
   $PACKAGE_MANAGER pack && mv -t $STAGING_PATH/pack/scoped/ ./*.tgz
 fi
+
+# This saves a list of the packages in the working directory in topological order to a temporary file.
+# Each package name is modified to match the packed tar files.
+flub list $RELEASE_GROUP --no-private --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+flub list $RELEASE_GROUP --no-private --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+flub list $RELEASE_GROUP --no-private --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+flub list $RELEASE_GROUP --no-private --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
