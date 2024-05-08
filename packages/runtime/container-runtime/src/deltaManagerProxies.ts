@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 import { summarizerClientType } from "./summary/index.js";
+import type { PendingStateManager } from "./pendingStateManager.js";
 
 /**
  * Base class for DeltaManager proxy that proxy's access to the real DeltaManager.
@@ -139,7 +140,10 @@ export abstract class BaseDeltaManagerProxy
 	private readonly onSubmitOp = (message: IDocumentMessage): void => {
 		this.emit("submitOp", message);
 	};
-	private readonly onOp = (message: ISequencedDocumentMessage, processingTime: number): void => {
+	protected readonly onOp = (
+		message: ISequencedDocumentMessage,
+		processingTime: number,
+	): void => {
 		this.emit("op", message, processingTime);
 	};
 	private readonly onPong = (latency: number): void => {
@@ -192,5 +196,53 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 	) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
+	}
+}
+
+export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
+	public get minimumSequenceNumber(): number {
+		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
+		// There is a chance that minPendingSeqNum is greater than minimum sequence number.
+		// minPendingSeqNum is based on the pending ops, so it's based on ref seq number.
+		// Imagine an op has just be sent while there's another client that has been lagging behind,
+		// it will likely have a ref seq number greater than the minimum seq number.
+		if (
+			minPendingSeqNum !== undefined &&
+			minPendingSeqNum < this.deltaManager.minimumSequenceNumber
+		) {
+			return minPendingSeqNum;
+		}
+		return this.deltaManager.minimumSequenceNumber;
+	}
+
+	public get lastMessage() {
+		if (this.deltaManager.lastMessage === undefined) {
+			return this.deltaManager.lastMessage;
+		}
+		return {
+			...this.deltaManager.lastMessage,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+		};
+	}
+
+	protected readonly onOp = (
+		message: ISequencedDocumentMessage,
+		processingTime: number,
+	): void => {
+		const messageIntercept = {
+			...message,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+		};
+		this.emit("op", messageIntercept, processingTime);
+	};
+
+	constructor(
+		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly pendingStateManager: Pick<
+			PendingStateManager,
+			"minimumPendingMessageSequenceNumber"
+		>,
+	) {
+		super(deltaManager);
 	}
 }

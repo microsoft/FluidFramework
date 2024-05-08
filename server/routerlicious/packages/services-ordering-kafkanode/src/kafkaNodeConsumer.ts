@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 import * as util from "util";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
