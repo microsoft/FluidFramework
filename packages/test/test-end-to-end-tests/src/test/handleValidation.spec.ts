@@ -125,32 +125,11 @@ async function setup(getTestObjectProvider, apis) {
 	const string1 = await dataStore1.getSharedObject<SharedString>(stringId);
 	string1.insertText(0, "hello");
 
-	const waitForSummary = async () => {
-		await new Promise<void>((resolve, reject) => {
-			let summarized = false;
-			container1.on("op", (op) => {
-				if (op.type === "summarize") {
-					summarized = true;
-				} else if (summarized && op.type === "summaryAck") {
-					resolve();
-				} else if (op.type === "summaryNack") {
-					reject(new Error("summaryNack"));
-				}
-			});
-		});
-	};
 	return {
 		loader,
 		provider,
 		container1,
 		testContainerConfig,
-		map1,
-		cell1,
-		directory1,
-		matrix1,
-		register1,
-		queue1,
-		string1,
 	};
 }
 
@@ -336,7 +315,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			await handle.storeHandle(defaultDataStore, dataObjectB.handle);
 
 			await provider.ensureSynchronized();
-			const container2: IContainerExperimental =
+			const container2 =
 				await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container2);
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
