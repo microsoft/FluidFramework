@@ -494,7 +494,7 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Optional, T> {
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
@@ -517,7 +517,7 @@ export class SchemaFactory<
 	 */
 	public required<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Required, T> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
@@ -531,7 +531,7 @@ export class SchemaFactory<
 	 */
 	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Optional, T> {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
 	}
@@ -545,7 +545,7 @@ export class SchemaFactory<
 	 */
 	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Required, T> {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}

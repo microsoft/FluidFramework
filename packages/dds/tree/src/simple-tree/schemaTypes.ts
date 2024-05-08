@@ -252,7 +252,7 @@ export interface FieldProps {
 	readonly key?: string;
 	/**
 	 * A default provider used for fields which were not provided any values.
-	 * @remarks
+	 * @privateRemarks
 	 * We are using an erased type here, as we want to expose this API but `InsertableContent` and `NodeKeyManager` are not public.
 	 */
 	readonly defaultProvider?: DefaultProvider;
