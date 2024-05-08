@@ -53,7 +53,8 @@ steps:
         # Prepend the cli bin dir to the path. See
         # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
         # more information.
-        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/bin"
+        echo "which flub: $(which flub)"
 
   - template: include-install-pnpm.yml
     parameters:
@@ -93,7 +94,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Output the help and full command list for debugging purposes
-      which flub
+      echo "which flub: $(which flub)"
       flub --help
       flub commands
 
