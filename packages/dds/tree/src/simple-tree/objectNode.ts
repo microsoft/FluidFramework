@@ -41,7 +41,7 @@ import {
 	type,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
@@ -99,13 +99,13 @@ export type InsertableObjectFromSchemaRecord<
  * Keys with symbols are currently never used, but allowed to make lookups on non-field things
  * (returning undefined) easier.
  */
-type SimpleKeyMap = Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
+type SimpleKeyMap = ReadonlyMap<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
 
 /**
  * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
 function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
-	const keyMap: SimpleKeyMap = new Map();
+	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(viewKey, fieldSchema);
 		keyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
@@ -214,7 +214,7 @@ export function setField(
 				| FlexTreeRequiredField<FlexAllowedTypes>
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
-			const content = prepareContentForInsert(value, field.context.forest);
+			const content = prepareContentForInsert(value, field.context.checkout.forest);
 			const cursor = cursorFromNodeData(
 				content,
 				simpleFieldSchema.allowedTypes,
@@ -245,7 +245,11 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
->(identifier: TName, info: T, implicitlyConstructable: ImplicitlyConstructable) {
+>(
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable> {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(identifier, info);
@@ -258,6 +262,10 @@ export function objectSchema<
 	let flexSchema: FlexObjectNodeSchema;
 
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
+		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
+			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
+		);
+
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -340,14 +348,10 @@ export function objectSchema<
 		}
 	}
 
-	return CustomObjectNode as TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	>;
+	return CustomObjectNode as typeof CustomObjectNode &
+		(new (
+			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<T, TName>);
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
@@ -406,4 +410,38 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 	const copy = { ...content };
 	markContentType(typeName, copy);
 	return copy;
+}
+
+/**
+ * A schema for {@link TreeObjectNode}s.
+ * @privateRemarks
+ * This is a candidate for being promoted to the public package API.
+ */
+export interface ObjectNodeSchema<
+	TName extends string = string,
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
+		string,
+		ImplicitFieldSchema
+	>,
+	ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeObjectNode<T, TName>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		ImplicitlyConstructable,
+		T
+	> {
+	readonly fields: ReadonlyMap<string, FieldSchema>;
+}
+
+export const ObjectNodeSchema = {
+	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
+		return isObjectNodeSchema(value);
+	},
+} as const;
+
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchema {
+	return schema.kind === NodeKind.Object;
 }
