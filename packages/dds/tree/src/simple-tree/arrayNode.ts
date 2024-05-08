@@ -659,7 +659,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		validatePositiveIndex(removeStart);
 		validatePositiveIndex(removeEnd);
 		if (removeEnd < removeStart) {
-			// This catches both the case where start is > array.length and when end is > array.length.
+			// This catches both the case where start is > array.length and when start is > end.
 			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
 		}
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
