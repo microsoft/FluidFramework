@@ -82,7 +82,7 @@ export interface FuzzDescribeOptions {
  * @internal
  */
 export const defaultOptions: Required<FuzzDescribeOptions> = {
-	defaultTestCount: 1,
+	defaultTestCount: 100,
 };
 
 /**
