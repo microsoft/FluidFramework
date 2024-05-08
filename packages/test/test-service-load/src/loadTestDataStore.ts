@@ -26,7 +26,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ILoadTestConfig } from "./testConfigFile.js";
 
@@ -87,13 +87,19 @@ export class LoadTestDataStoreModel {
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+					toDeltaManagerInternal(runtime.deltaManagerErased).off(
+						"op",
+						resolveIfDisposedOrCaughtUp,
+					);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+			toDeltaManagerInternal(runtime.deltaManagerErased).on(
+				"op",
+				resolveIfDisposedOrCaughtUp,
+			);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
 		});

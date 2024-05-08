@@ -23,7 +23,6 @@ export type {
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
 } from "./dataStoreRuntime.js";
-export { toDeltaManagerInternal, toDeltaManagerErased } from "./dataStoreRuntime.js";
 export type {
 	Jsonable,
 	JsonableTypeWith,

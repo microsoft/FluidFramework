@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const mapId = "map";
 

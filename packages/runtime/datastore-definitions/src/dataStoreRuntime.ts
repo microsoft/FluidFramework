@@ -4,7 +4,6 @@
  */
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
@@ -17,7 +16,6 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -42,26 +40,6 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  */
 export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
-
-/**
- * Manages the transmission of ops between the runtime and storage.
- * @alpha
- */
-export function toDeltaManagerInternal(
-	deltaManager: IDeltaManagerErased,
-): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-	return deltaManager as unknown as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-}
-
-/**
- * Manages the transmission of ops between the runtime and storage.
- * @internal
- */
-export function toDeltaManagerErased(
-	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-): IDeltaManagerErased {
-	return deltaManager as unknown as IDeltaManagerErased;
-}
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.

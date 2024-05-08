@@ -488,7 +488,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
-    deltaManagerErased: IDeltaManagerErased;
+    get deltaManagerErased(): IDeltaManagerErased;
     // (undocumented)
     dispose(): void;
     // (undocumented)

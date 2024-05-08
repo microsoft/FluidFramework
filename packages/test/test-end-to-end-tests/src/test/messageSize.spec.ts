@@ -621,6 +621,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
+
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 empty ops
 				// which would unroll the original ops from compression
@@ -683,6 +691,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// This is not supported by the local server. See ADO:2690
 				// This test is flaky on tinylicious. See ADO:2964
 				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7969
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
 					this.skip();
 				}
 

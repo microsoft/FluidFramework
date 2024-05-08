@@ -24,7 +24,7 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

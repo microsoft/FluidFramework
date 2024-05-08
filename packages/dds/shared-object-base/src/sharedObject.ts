@@ -43,7 +43,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerInternal } from "@fluidframework/datastore-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
 import { SharedObjectHandle } from "./handle.js";
