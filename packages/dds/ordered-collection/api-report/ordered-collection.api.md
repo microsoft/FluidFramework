@@ -8,7 +8,6 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IConsensusOrderedCollection as IConsensusOrderedCollection_2 } from './interfaces.js';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -52,7 +51,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 }
 
 // @alpha
-export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection_2<any>>;
+export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>>;
 
 // @alpha
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

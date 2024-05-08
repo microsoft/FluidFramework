@@ -4,10 +4,8 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
-import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory.js";
 import { IOrderedCollection } from "./interfaces.js";
 import { SnapshotableArray } from "./snapshotableArray.js";
 
@@ -46,14 +44,3 @@ export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> 
 		super(id, runtime, attributes, new SnapshotableQueue<T>());
 	}
 }
-
-/**
- * {@inheritDoc ConsensusQueueClass}
- * @alpha
- */
-export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
-/**
- * {@inheritDoc ConsensusQueueClass}
- * @alpha
- */
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

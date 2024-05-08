@@ -8,6 +8,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusQueueClass } from "./consensusQueue.js";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
@@ -55,3 +56,15 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		return collection;
 	}
 }
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
