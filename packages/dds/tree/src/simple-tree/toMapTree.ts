@@ -311,19 +311,22 @@ export function objectToMapTree(
 	const fields = new Map<FieldKey, MapTree[]>();
 
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
-	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as string[];
-
-	for (const viewKey of keys) {
-		const fieldValue = (data as Record<string, InsertableContent>)[viewKey];
-		const fieldSchema = getObjectFieldSchema(schema, viewKey);
-		setFieldValue(fields, fieldValue, fieldSchema, nodeKeyManager, viewKey);
-	}
+	const keys = Reflect.ownKeys(data).filter((key): key is string => typeof key === "string");
 
 	// Loop through field keys without data, and assign value from its default provider.
 	for (const [key, fieldSchema] of Object.entries(
 		schema.info as Record<string, ImplicitFieldSchema>,
 	)) {
-		if (!keys.includes(key)) {
+		if (keys.includes(key)) {
+			const fieldValue = (data as Record<string, InsertableContent>)[key];
+			setFieldValue(
+				fields,
+				fieldValue,
+				getObjectFieldSchema(schema, key),
+				nodeKeyManager,
+				key,
+			);
+		} else {
 			if (fieldSchema instanceof FieldSchema) {
 				const defaultProvider = fieldSchema.props?.defaultProvider;
 				if (defaultProvider !== undefined) {

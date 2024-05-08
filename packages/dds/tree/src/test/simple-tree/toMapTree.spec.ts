@@ -344,8 +344,9 @@ describe("toMapTree", () => {
 				});
 
 				const tree = {};
+				const nodeKeyManager = createMockNodeKeyManager();
 
-				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
+				const actual = objectToMapTree(tree, schema, nodeKeyManager);
 
 				const expected: MapTree = {
 					type: brand("test.object"),
@@ -355,7 +356,7 @@ describe("toMapTree", () => {
 							[
 								{
 									type: leaf.string.name,
-									value: "a110ca7e-add1-4000-8000-000000000000",
+									value: nodeKeyManager.getId(0),
 									fields: new Map(),
 								},
 							],

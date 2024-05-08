@@ -509,7 +509,6 @@ export interface FieldMapObject<TChild> {
 
 // @public
 export interface FieldProps {
-    // (undocumented)
     readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
 }
