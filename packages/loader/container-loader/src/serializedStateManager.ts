@@ -28,11 +28,15 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
+/**
+ * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * they are already converted to string.
+ */
 export interface SnapshotWithBlobs {
 	/**
 	 * Snapshot from which container initially loaded.
@@ -44,6 +48,7 @@ export interface SnapshotWithBlobs {
 	 */
 	snapshotBlobs: ISerializableBlobContents;
 }
+
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
@@ -55,8 +60,16 @@ export interface SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
+	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
 	attached: true;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState: unknown;
+	/**
+	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
+	 */
 	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
@@ -64,7 +77,9 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
+	/** The Container's URL in the service, needed to hook up the driver during rehydration */
 	url: string;
+	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
 	clientId?: string;
 }
 
@@ -74,8 +89,14 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
+	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
 	attached: false;
+	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState?: unknown;
 }
 
@@ -95,6 +116,9 @@ interface ISerializerEvent extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void): void;
 }
 
+/**
+ * Helper class to manage the state of the container needed for proper serialization.
+ */
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
@@ -301,18 +325,22 @@ export class SerializedStateManager {
 		}
 	}
 
-	public async getPendingLocalStateCore(
+	/**
+	 * Assembles and serializes the {@link IPendingContainerState} for the container,
+	 * to be stored and used to rehydrate the container at a later time.
+	 */
+	public async getPendingLocalState(
 		props: IGetPendingLocalStateProps,
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
-	) {
+	): Promise<string> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				processedOpsSize: this.processedOps.length,
+					processedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
