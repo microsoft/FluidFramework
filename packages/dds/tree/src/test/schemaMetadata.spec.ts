@@ -8,7 +8,6 @@ import assert from "assert";
 import { SchemaFactory, treeNodeApi, TreeNode } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "./simple-tree/utils.js";
-import { TreeValue } from "../core/index.js";
 import { isTreeValue } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../simple-tree/proxies.js";
@@ -149,6 +148,8 @@ describe.only("Schema Metadata example patterns", () => {
 							return value;
 						}
 
+						// Note: app schema does not include maps, so we don't need to special case them here.
+
 						// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
 						// e.g. an array. Return it as is.
 						if (!isTreeNode(this)) {
@@ -187,98 +188,6 @@ describe.only("Schema Metadata example patterns", () => {
 				JSON.stringify({ notes: [{ text: "Hello" }, { text: "World" }] }),
 			);
 		});
-	});
-
-	// TODO: docs
-	it("Search example", () => {
-		const schemaFactory = new SchemaFactory("CanvasApp");
-
-		interface AppSchemaMetadata {
-			searchHidden?: boolean;
-		}
-
-		class Point extends schemaFactory.object("Point", {
-			x: schemaFactory.number,
-			y: schemaFactory.number,
-		}) {}
-
-		class Note extends schemaFactory.object("Note", {
-			position: schemaFactory.required(Point, { metadata: { searchHidden: true } }),
-			width: schemaFactory.required(schemaFactory.number, {
-				metadata: { searchHidden: true },
-			}),
-			height: schemaFactory.required(schemaFactory.number, {
-				metadata: { searchHidden: true },
-			}),
-			text: schemaFactory.string,
-		}) {}
-
-		class Canvas extends schemaFactory.object("Canvas", {
-			width: schemaFactory.required(schemaFactory.number, {
-				metadata: { searchHidden: true },
-			}),
-			height: schemaFactory.required(schemaFactory.number, {
-				metadata: { searchHidden: true },
-			}),
-			notes: schemaFactory.array(Note),
-		}) {}
-
-		function search(
-			input: TreeNode | TreeValue,
-			condition: (node: TreeNode | TreeValue) => boolean,
-		): boolean {
-			if (condition(input)) {
-				return true;
-			}
-
-			// If our condition failed, and we are looking at something other than a tree node, then there is nothing left to do.
-			// Return false;
-			if (isTreeValue(input)) {
-				return false;
-			}
-
-			// Recurse through indexable fields only
-			let result = false;
-			for (const [key, value] of Object.entries(input)) {
-				const metadata = treeNodeApi.fieldMetadata(input, key) as AppSchemaMetadata;
-				if (metadata?.searchHidden !== true) {
-					result = result || search(value, condition);
-				}
-			}
-			return result;
-		}
-
-		const tree = hydrate(Canvas, {
-			width: 100,
-			height: 200,
-			notes: [
-				{
-					position: { x: 10, y: 10 },
-					width: 10,
-					height: 20,
-					text: "Hello",
-				},
-				{
-					position: { x: 30, y: 10 },
-					width: 30,
-					height: 40,
-					text: "World",
-				},
-			],
-		});
-
-		const findText = (node: TreeNode | TreeValue, text: string): boolean => {
-			return typeof node === "string" && node.includes(text);
-		};
-
-		assert.equal(
-			search(tree, (node) => findText(node, "Hello")),
-			true,
-		);
-		assert.equal(
-			search(tree, (node) => findText(node, "Foo")),
-			false,
-		);
 	});
 
 	// TODO: docs
@@ -333,6 +242,8 @@ describe.only("Schema Metadata example patterns", () => {
 					if (value === input) {
 						return value;
 					}
+
+					// Note: app schema does not include maps, so we don't need to special case them here.
 
 					// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
 					// e.g. an array. Return it as is.
