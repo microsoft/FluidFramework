@@ -67,16 +67,12 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
-	protected createErrorObject(
-		socketEvent: string,
-		error?: any,
-		canRetry = true,
-	): IAnyDriverError {
+	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
 		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-			? errorObjectFromSocketError(error as IR11sSocketError, socketEvent)
-			: super.createErrorObject(socketEvent, error, canRetry);
+			? errorObjectFromSocketError(error as IR11sSocketError, handler)
+			: super.createErrorObject(handler, error, canRetry);
 	}
 }

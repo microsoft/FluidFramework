@@ -362,7 +362,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(
-		socketEvent: string,
+		handler: string,
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		error?: any,
 		canRetry = true,
@@ -372,8 +372,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		// - anything else: let base class handle it
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-			? errorObjectFromSocketError(error as IOdspSocketError, socketEvent)
-			: super.createErrorObject(socketEvent, error, canRetry);
+			? errorObjectFromSocketError(error as IOdspSocketError, handler)
+			: super.createErrorObject(handler, error, canRetry);
 	}
 
 	/**

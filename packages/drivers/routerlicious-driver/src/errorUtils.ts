@@ -124,9 +124,9 @@ export function throwR11sNetworkError(
  */
 export function errorObjectFromSocketError(
 	socketError: IR11sSocketError,
-	socketEvent: string,
+	handler: string,
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
-	const message = `R11s socket error (${socketEvent}): ${socketError.message}`;
+	const message = `R11s socket error (${handler}): ${socketError.message}`;
 	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs);
 }

@@ -736,13 +736,13 @@ export class DocumentDeltaConnection
 	}
 
 	private createErrorObjectWithProps(
-		socketEvent: string,
+		handler: string,
 		error?: any,
 		props?: ITelemetryBaseProperties,
 		canRetry = true,
 	): IAnyDriverError {
 		return createGenericNetworkError(
-			`socket.io (${socketEvent}): ${this.getErrorMessage(error)}`,
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
 			{
 				...props,
@@ -750,7 +750,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				scenarioName: socketEvent,
+				scenarioName: handler,
 			},
 		);
 	}
@@ -758,20 +758,16 @@ export class DocumentDeltaConnection
 	/**
 	 * Error raising for socket.io issues
 	 */
-	protected createErrorObject(
-		socketEvent: string,
-		error?: any,
-		canRetry = true,
-	): IAnyDriverError {
+	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
 		return createGenericNetworkError(
-			`socket.io (${socketEvent}): ${this.getErrorMessage(error)}`,
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
 			{
 				driverVersion,
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				scenarioName: socketEvent,
+				scenarioName: handler,
 			},
 		);
 	}
