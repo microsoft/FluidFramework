@@ -13,7 +13,11 @@ import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-sta
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import {
+	createAzureClient,
+	createContainerFromPayload,
+	getContainerIdFromPayloadResponse,
+} from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import { mapWait } from "./utils.js";
@@ -65,8 +69,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: newContainer } = await client.getContainer(containerId, schema));
 			} else {
 				({ container: newContainer } = await client.createContainer(schema));
@@ -110,8 +113,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema));
 			} else {
 				({ container } = await client.createContainer(schema));
@@ -157,8 +159,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, doSchema));
 			} else {
 				({ container } = await client.createContainer(doSchema));
@@ -218,8 +219,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, doSchema));
 			} else {
 				({ container } = await client.createContainer(doSchema));
@@ -284,8 +284,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
 				({ container } = await client.createContainer(doSchema));
 
@@ -345,8 +344,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, dynamicSchema));
 			} else {
 				({ container } = await client.createContainer(dynamicSchema));

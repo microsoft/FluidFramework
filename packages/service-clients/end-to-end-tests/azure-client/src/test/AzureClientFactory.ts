@@ -97,7 +97,7 @@ export async function createContainerFromPayload(
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
-		: "frs-client-tenant";
+		: "local";
 	const user = {
 		id: userID ?? uuid(),
 		name: userName ?? uuid(),
@@ -141,7 +141,7 @@ export async function createContainerFromPayload(
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if (response?.data?.id === undefined) {
+		if (response?.data === undefined || (useAzure && response?.data?.id === undefined)) {
 			throw new Error(`ID of the created container is undefined`);
 		}
 
@@ -149,4 +149,18 @@ export async function createContainerFromPayload(
 	} catch (error) {
 		throw new Error(`An error occurred: ${error}`);
 	}
+}
+
+/**
+ * This function takes an AxiosResponse returned by the createContainerFromPayload and returns the containerId.
+ * A separate function is used for this, since the data path to the containerID is not always the same.
+ * (Tinylicious has the ID stored at a different path than other services)
+ *
+ * @param response - A container creation response returned by createContainerFromPayload
+ * @returns - The ID of the container that was created by createContainerFromPayload
+ */
+export function getContainerIdFromPayloadResponse(response: AxiosResponse): string {
+	const useAzure = process.env.FLUID_CLIENT === "azure";
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	return (useAzure ? response.data.id : response.data) as string;
 }

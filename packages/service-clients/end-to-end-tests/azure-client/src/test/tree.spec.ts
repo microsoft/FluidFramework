@@ -19,7 +19,11 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { AxiosResponse } from "axios";
 
-import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import {
+	createAzureClient,
+	createContainerFromPayload,
+	getContainerIdFromPayloadResponse,
+} from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 const sf = new SchemaFactory("d302b84c-75f6-4ecd-9663-524f467013e3");
@@ -102,8 +106,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema));
 
 				treeData = (container1.initialObjects.tree1 as ITree).schematize(
@@ -158,8 +161,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema));
 
 				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(

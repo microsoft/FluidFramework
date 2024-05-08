@@ -14,7 +14,11 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { AxiosResponse } from "axios";
 
-import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import {
+	createAzureClient,
+	createContainerFromPayload,
+	getContainerIdFromPayloadResponse,
+} from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
 import { configProvider } from "./utils.js";
@@ -115,8 +119,7 @@ for (const testOpts of testMatrix) {
 							"test-user-id-1",
 							"test-user-name-1",
 						);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					containerId = containerResponse.data.id as string;
+					containerId = getContainerIdFromPayloadResponse(containerResponse);
 					({ container, services } = await client.getContainer(containerId, schema));
 				} else {
 					({ container, services } = await client.createContainer(schema));

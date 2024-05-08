@@ -15,7 +15,11 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import {
+	createAzureClient,
+	createContainerFromPayload,
+	getContainerIdFromPayloadResponse,
+} from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -95,8 +99,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema));
 			} else {
 				({ container } = await client.createContainer(schema));
@@ -134,8 +137,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema));
 			} else {
 				({ container } = await client.createContainer(schema));
@@ -178,8 +180,7 @@ for (const testOpts of testMatrix) {
 						"test-user-id-1",
 						"test-user-name-1",
 					);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				containerId = containerResponse.data.id as string;
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
 				({ container: newContainer } = await client.createContainer(schema));
 				containerId = await newContainer.attach();
