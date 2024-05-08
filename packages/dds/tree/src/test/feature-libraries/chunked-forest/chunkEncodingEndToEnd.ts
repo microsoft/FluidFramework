@@ -47,9 +47,15 @@ import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.j
 import { brand } from "../../../util/index.js";
 import {
 	MockTreeCheckout,
+	checkoutWithContent,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
+	testIdCompressor,
 } from "../../utils.js";
+import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 
 const options = {
 	jsonValidator: typeboxValidator,
