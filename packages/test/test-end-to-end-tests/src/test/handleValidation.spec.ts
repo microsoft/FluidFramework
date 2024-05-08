@@ -6,7 +6,6 @@
 import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -123,7 +122,6 @@ async function setup(getTestObjectProvider, apis) {
 	const queue1 = await dataStore1.getSharedObject<IConsensusOrderedCollection>(queueId);
 	// migrationShim1 = await dataStore1.getSharedObject<MigrationShim>(migrationShimId);
 	const string1 = await dataStore1.getSharedObject<SharedString>(stringId);
-	string1.insertText(0, "hello");
 
 	return {
 		loader,
@@ -175,6 +173,7 @@ const handleFns: {
 		type: stringId,
 		storeHandle: async (defaultDataStore, handle) => {
 			const stringRoot = await defaultDataStore.getSharedObject(stringId);
+			stringRoot.insertText(0, "hello");
 			stringRoot.annotateRange(0, 1, { B: handle });
 		},
 		readHandle: async (defaultDataStore) => {
@@ -262,7 +261,7 @@ const handleFns: {
 				handle2 = value;
 				return ConsensusResult.Complete;
 			};
-			await queueRoot.acquire(callback);
+			await queueRoot.waitAndAcquire(callback);
 			return handle2;
 		},
 	},
@@ -315,8 +314,9 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			await handle.storeHandle(defaultDataStore, dataObjectB.handle);
 
 			await provider.ensureSynchronized();
-			const container2 =
-				await provider.loadTestContainer(testContainerConfig);
+			container1.dispose();
+
+			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container2);
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
