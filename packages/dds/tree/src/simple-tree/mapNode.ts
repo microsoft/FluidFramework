@@ -117,7 +117,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
 		const node = getFlexNode(this);
-		const content = prepareContentForInsert(value as InsertableContent, node.context.forest);
+		const content = prepareContentForInsert(
+			value as InsertableContent,
+			node.context.checkout.forest,
+		);
 
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);

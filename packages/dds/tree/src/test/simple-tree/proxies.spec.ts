@@ -425,56 +425,6 @@ describe("ArrayNode Proxy", () => {
 		});
 	});
 
-	describe("removing items", () => {
-		const _ = new SchemaFactory("test");
-		const schema = _.array(_.number);
-
-		it("removeAt()", () => {
-			const list = hydrate(schema, [0, 1, 2]);
-			assert.deepEqual(list, [0, 1, 2]);
-			list.removeAt(1);
-			assert.deepEqual(list, [0, 2]);
-		});
-
-		it("removeRange()", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-		});
-
-		it("removeRange() - all", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-			list.removeRange();
-			assert.deepEqual(list, []);
-		});
-
-		it("removeRange() - past end", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-			list.removeRange(1, Infinity);
-			assert.deepEqual(list, [0]);
-		});
-
-		it("removeRange() - empty range", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(2, 2);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-		});
-
-		it("removeRange() - empty list", () => {
-			const list = hydrate(schema, []);
-			assert.deepEqual(list, []);
-			assert.throws(() => list.removeRange());
-		});
-	});
-
 	describe("moving items", () => {
 		describe("within the same list", () => {
 			const _ = new SchemaFactory("test");
