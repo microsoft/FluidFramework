@@ -75,6 +75,10 @@ lib/commands/generate/packlist.d.ts
 lib/commands/generate/packlist.d.ts.map
 lib/commands/generate/packlist.js
 lib/commands/generate/packlist.js.map
+lib/commands/generate/typetests.d.ts
+lib/commands/generate/typetests.d.ts.map
+lib/commands/generate/typetests.js
+lib/commands/generate/typetests.js.map
 lib/commands/generate/upcoming.d.ts
 lib/commands/generate/upcoming.d.ts.map
 lib/commands/generate/upcoming.js
@@ -99,6 +103,10 @@ lib/commands/modify/fluid-imports.d.ts
 lib/commands/modify/fluid-imports.d.ts.map
 lib/commands/modify/fluid-imports.js
 lib/commands/modify/fluid-imports.js.map
+lib/commands/modify/lockfile.d.ts
+lib/commands/modify/lockfile.d.ts.map
+lib/commands/modify/lockfile.js
+lib/commands/modify/lockfile.js.map
 lib/commands/release.d.ts
 lib/commands/release.d.ts.map
 lib/commands/release.js
@@ -215,10 +223,10 @@ lib/library/context.d.ts
 lib/library/context.d.ts.map
 lib/library/context.js
 lib/library/context.js.map
-lib/library/dangerfile.d.ts
-lib/library/dangerfile.d.ts.map
-lib/library/dangerfile.js
-lib/library/dangerfile.js.map
+lib/library/dangerfile.cjs
+lib/library/dangerfile.cjs.map
+lib/library/dangerfile.d.cts
+lib/library/dangerfile.d.cts.map
 lib/library/dates.d.ts
 lib/library/dates.d.ts.map
 lib/library/dates.js
