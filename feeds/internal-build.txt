@@ -11,7 +11,7 @@
 @fluid-internal/test-app-insights-logger
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
-@fluid-experimental/odsp-client
+@fluidframework/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
 @fluidframework/azure-end-to-end-tests
 @fluidframework/azure-client
