@@ -11120,7 +11120,7 @@ importers:
       simple-git: ^3.19.1
       ts-jest: ^29.1.1
       typescript: ~5.1.6
-      vite: ^4.4.3
+      vite: ^4.5.2
     dependencies:
       '@fluentui/react': 8.112.9_z2l4bd7d7kzuhnbxbmhiesmtme
       '@fluentui/react-components': 9.47.5_3eymgwxym437wpq7il2js5u6au
@@ -11153,7 +11153,7 @@ importers:
       '@previewjs/api': 13.0.0
       '@previewjs/chromeless': 7.0.3_@types+node@18.19.1
       '@previewjs/core': 23.0.1_@types+node@18.19.1
-      '@previewjs/plugin-react': 11.0.0_mfm7mnpb4icxq5kiedhdm45pzu
+      '@previewjs/plugin-react': 11.0.0_v66ndez7snbygay4gg3ezcrbbi
       '@testing-library/dom': 8.20.1
       '@testing-library/jest-dom': 5.17.0
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
@@ -11190,7 +11190,7 @@ importers:
       simple-git: 3.21.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       typescript: 5.1.6
-      vite: 4.5.0_@types+node@18.19.1
+      vite: 4.5.3_@types+node@18.19.1
 
   packages/tools/fetch-tool:
     specifiers:
@@ -18675,7 +18675,7 @@ packages:
       - supports-color
     dev: true
 
-  /@fwouts/vite-tsconfig-paths/4.2.1_ah7snkqdiegnosaxffkwmchslm:
+  /@fwouts/vite-tsconfig-paths/4.2.1_3mw333ovkuvtlygjs5yq5kgy5u:
     resolution: {integrity: sha512-z18jfssqNPiMTiCgogWGF+KE0p0DgX4lBWr5dmeSI3sp0hFHG+h8rRUGCAdyTT0Ej79PxtjSLuL3up5uFi89EQ==}
     peerDependencies:
       vite: '*'
@@ -18687,7 +18687,7 @@ packages:
       debug: 4.3.4
       globrex: 0.1.2
       tsconfck: 2.1.2_typescript@5.1.6
-      vite: 4.5.0_@types+node@18.19.1
+      vite: 4.5.3_@types+node@18.19.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -20622,7 +20622,7 @@ packages:
   /@previewjs/core/23.0.1_@types+node@18.19.1:
     resolution: {integrity: sha512-WBbZMzDOsnsDdKXFi2zOSw0RpBp496zCYc56g4YskQikdS8A48UlBEE1oO8OOFHK4wwbVTH2HQ46ordDKyczBA==}
     dependencies:
-      '@fwouts/vite-tsconfig-paths': 4.2.1_ah7snkqdiegnosaxffkwmchslm
+      '@fwouts/vite-tsconfig-paths': 4.2.1_3mw333ovkuvtlygjs5yq5kgy5u
       '@previewjs/api': 13.0.0
       '@previewjs/config': 4.9.16
       '@previewjs/iframe': 11.0.1
@@ -20644,7 +20644,7 @@ packages:
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsconfig-paths: 4.2.0
       typescript: 5.1.6
-      vite: 4.5.0_@types+node@18.19.1
+      vite: 4.5.3_@types+node@18.19.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -20663,7 +20663,7 @@ packages:
     resolution: {integrity: sha512-VJrzAzQotZnH9uLRJsgdukwcYVJBBCyzg7V2ucLTGPJNyuPY0XI4AUcfVBpFI2kwgVZWh8bmumj+2NAIUK0Vsw==}
     dev: true
 
-  /@previewjs/plugin-react/11.0.0_mfm7mnpb4icxq5kiedhdm45pzu:
+  /@previewjs/plugin-react/11.0.0_v66ndez7snbygay4gg3ezcrbbi:
     resolution: {integrity: sha512-0394TdKvoqtsNgsj8p7TeQLkhJQI/dWd6tIAc+9yijNIN2XmFBzLiPsnY1/LWOfi0RR+8meGC9QaBM9MuMVqQw==}
     dependencies:
       '@previewjs/api': 13.0.0
@@ -20671,7 +20671,7 @@ packages:
       '@previewjs/storybook-helpers': 3.0.0_@types+node@18.19.1
       '@previewjs/type-analyzer': 8.0.2
       '@previewjs/vfs': 2.1.0
-      '@vitejs/plugin-react': 4.2.0_vite@4.5.0
+      '@vitejs/plugin-react': 4.2.0_vite@4.5.3
       typescript: 5.1.6
     transitivePeerDependencies:
       - '@swc/core'
@@ -22368,7 +22368,7 @@ packages:
       fs-extra: 9.1.0
       global: 4.4.0
       globby: 11.1.0
-      ip: 2.0.0
+      ip: 2.0.1
       lodash: 4.17.21
       node-fetch: 2.7.0
       open: 8.4.2
@@ -24243,7 +24243,7 @@ packages:
   /@ungap/structured-clone/1.2.0:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
-  /@vitejs/plugin-react/4.2.0_vite@4.5.0:
+  /@vitejs/plugin-react/4.2.0_vite@4.5.3:
     resolution: {integrity: sha512-+MHTH/e6H12kRp5HUkzOGqPMksezRMmW+TNzlh/QXfI8rRf6l2Z2yH/v12no1UvTwhZgEDMuQ7g7rrfMseU6FQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -24254,7 +24254,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.23.3_@babel+core@7.24.4
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.0
-      vite: 4.5.0_@types+node@18.19.1
+      vite: 4.5.3_@types+node@18.19.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -32219,12 +32219,12 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /ip/1.1.8:
-    resolution: {integrity: sha512-PuExPYUiu6qMBQb4l06ecm6T6ujzhmh+MeJcW9wa89PoAz5pvd4zPgN5WJV104mb6S2T1AwNIAaB70JNrLQWhg==}
+  /ip/1.1.9:
+    resolution: {integrity: sha512-cyRxvOEpNHNtchU3Ln9KC/auJgup87llfQpQ+t5ghoC/UhL16SWzbueiCsdTnWmqAWl7LadfuwhlqmtOaqMHdQ==}
     dev: true
 
-  /ip/2.0.0:
-    resolution: {integrity: sha512-WKa+XuLG1A1R0UWhl2+1XQSi+fZWMsYKffMZTTYsiZaUD8k2yDAj5atimTUD2TZkyCkNEeYE5NhFZmupOGtjYQ==}
+  /ip/2.0.1:
+    resolution: {integrity: sha512-lJUL9imLTNi1ZfXT+DU6rBBdbiKGBuay9B6xGSPVjUeQwaH1RIGqef8RZkUtHioLmSNpPR5M4HVKJGm1j8FWVQ==}
     dev: true
 
   /ipaddr.js/1.9.1:
@@ -36801,7 +36801,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       degenerator: 5.0.1
-      ip: 1.1.8
+      ip: 1.1.9
       netmask: 2.0.2
     dev: true
 
@@ -40253,7 +40253,7 @@ packages:
     resolution: {integrity: sha512-7maUZy1N7uo6+WVEX6psASxtNlKaNVMlGQKkG/63nEDdLOWNbiUMoLK7X4uYoLhQstau72mLgfEWcXcwsaHbYQ==}
     engines: {node: '>= 10.13.0', npm: '>= 3.0.0'}
     dependencies:
-      ip: 2.0.0
+      ip: 2.0.1
       smart-buffer: 4.2.0
     dev: true
 
@@ -42868,8 +42868,8 @@ packages:
       d3-timer: 3.0.1
     dev: false
 
-  /vite/4.5.0_@types+node@18.19.1:
-    resolution: {integrity: sha512-ulr8rNLA6rkyFAlVWw2q5YJ91v098AFQ2R0PRFwPzREXOUJQPtFUG0t+/ZikhaOCDqFoDhN6/v8Sq0o4araFAw==}
+  /vite/4.5.3_@types+node@18.19.1:
+    resolution: {integrity: sha512-kQL23kMeX92v3ph7IauVkXkikdDRsYMGTVl5KY2E9OY4ONLvkHf04MDTbnfo6NKxZiDLWzVpP5oTa8hQD8U3dg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
