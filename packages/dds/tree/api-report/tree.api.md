@@ -628,7 +628,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
-    readonly forest: IForestSubscription;
+    readonly checkout: ITreeCheckout;
     // (undocumented)
     readonly nodeKeyManager: NodeKeyManager;
     get root(): FlexTreeField;
