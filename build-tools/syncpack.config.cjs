@@ -72,7 +72,7 @@ module.exports = {
 
 		{
 			label: "Must use exact dependency ranges",
-			dependencies: ["sort-package-json"],
+			dependencies: ["jssm", "jssm-viz-cli", "sort-package-json"],
 			packages: ["**"],
 			range: "",
 		},
