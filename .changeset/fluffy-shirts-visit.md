@@ -21,3 +21,5 @@ Marks the following types which were reachable from it as alpha:
 -   ReadOnlyInfo
 
 As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
+
+Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
