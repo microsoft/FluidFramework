@@ -159,7 +159,9 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "remove": {
-			field.removeRange(change.range.first, change.range.last + 1);
+			field
+				.sequenceEditor()
+				.remove(change.range.first, change.range.last + 1 - change.range.first);
 			break;
 		}
 		case "intraFieldMove": {
