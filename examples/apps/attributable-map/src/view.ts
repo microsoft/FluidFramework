@@ -13,18 +13,18 @@ export function renderHitCounter(
 	hitCounter: IHitCounter,
 	runtimeAttributor: IRuntimeAttributor | undefined,
 	div: HTMLDivElement,
-) {
-	const redCounterContainerDiv = document.getElementById("red-counter-container-div")!;
-	const greenCounterContainerDiv = document.getElementById("green-counter-container-div")!;
-	const redAttributionContainerDiv = document.getElementById("red-attribution-container-div");
-	const greenAttributionContainerDiv = document.getElementById("green-attribution-container-div");
+): void {
+	const redCounterContainerDiv = document.querySelector("#red-counter-container-div")!;
+	const greenCounterContainerDiv = document.querySelector("#green-counter-container-div")!;
+	const redAttributionContainerDiv = document.querySelector("#red-attribution-container-div");
+	const greenAttributionContainerDiv = document.querySelector("#green-attribution-container-div");
 
-	const redButton = document.getElementById("red-button")!;
+	const redButton = document.querySelector("#red-button")!;
 	redButton.addEventListener("click", () => {
 		hitCounter.hit("red");
 	});
 
-	const greenButton = document.getElementById("green-button")!;
+	const greenButton = document.querySelector("#green-button")!;
 	greenButton.addEventListener("click", () => {
 		hitCounter.hit("green");
 	});

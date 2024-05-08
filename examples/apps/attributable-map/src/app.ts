@@ -35,7 +35,7 @@ async function start() {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
@@ -43,7 +43,7 @@ async function start() {
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	renderHitCounter(model.hitCounter, model.runtimeAttributor, contentDiv);
 }
 
