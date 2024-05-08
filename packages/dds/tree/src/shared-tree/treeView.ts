@@ -81,13 +81,7 @@ export class CheckoutFlexTreeView<
 		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(
-			schema,
-			this.checkout.forest,
-			this.checkout.editor,
-			nodeKeyManager,
-			nodeKeyFieldKey,
-		);
+		this.context = getTreeContext(schema, this.checkout, nodeKeyManager, nodeKeyFieldKey);
 		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
