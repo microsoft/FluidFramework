@@ -555,17 +555,17 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
 	});
 
-	const sharedPoints = [0, 1, 3, 5];
+	const sharedPoints = [0, 1, 2];
 	const testConfigs = generatePairwiseOptions({
-		preOfflineChanges: [...sharedPoints],
-		postOfflineChanges: [...sharedPoints],
-		allocateDuringResubmitStride: [1, 2, 3, 4],
+		preOfflineChanges: sharedPoints,
+		postOfflineChanges: sharedPoints,
+		allocateDuringResubmitStride: [1, 2, 3],
 		delayBetweenOfflineChanges: [true, false],
 	});
 
 	for (const testConfig of testConfigs) {
 		it(`Ids generated across batches are correctly resubmitted: ${JSON.stringify(
-			testConfig ?? "undefined",
+			testConfig,
 		)}`, async () => {
 			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 

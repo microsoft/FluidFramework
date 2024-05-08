@@ -393,11 +393,13 @@ export class PendingStateManager implements IDisposable {
 		// as they will naturally be maintained.
 		filterMessagesInto(this.pendingMessages, messagesToReplay, true);
 		filterMessagesInto(this.pendingMessages, messagesToReplay, false);
-		assert(
-			messagesToReplay.length === initialPendingMessagesCount,
-			"All messages should be dequeued",
-		);
 		this.pendingMessages.clear();
+
+		assert(
+			messagesToReplay.length === initialPendingMessagesCount &&
+				this.pendingMessages.isEmpty(),
+			"All messages should be moved to messagesToReplay queue",
+		);
 
 		for (let i = 0; i < messagesToReplay.length; i++) {
 			let pendingMessage = messagesToReplay[i];
@@ -431,9 +433,7 @@ export class PendingStateManager implements IDisposable {
 						break;
 					}
 					assert(i < messagesToReplay.length - 1, 0x555 /* No batch end found */);
-					i++;
-
-					pendingMessage = messagesToReplay[i];
+					pendingMessage = messagesToReplay[++i];
 					assert(
 						pendingMessage.opMetadata?.batch !== true,
 						0x556 /* Batch start needs a corresponding batch end */,
