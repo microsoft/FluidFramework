@@ -107,7 +107,7 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
-    handleGenerationDisabled: boolean;
+    handleGenerationDisabled?: boolean;
     idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
@@ -159,7 +159,7 @@ export interface DDSRandom extends IRandom {
 }
 
 // @internal (undocumented)
-export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions;
+export const defaultDDSFuzzSuiteOptions: Required<Omit<DDSFuzzSuiteOptions, "replay" | "containerRuntimeOptions" | "idCompressorFactory">>;
 
 // @internal (undocumented)
 export type FuzzSerializedIdCompressor = {

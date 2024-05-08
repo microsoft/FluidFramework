@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import * as path from "node:path";
 
 import type { AsyncGenerator, Generator } from "@fluid-private/stochastic-test-utils";
 import {
@@ -21,7 +20,6 @@ import type { Serializable } from "@fluidframework/datastore-definitions/interna
 
 import { CellFactory } from "../cellFactory.js";
 import type { ISharedCell } from "../interfaces.js";
-import { _dirname } from "./dirname.cjs";
 
 interface SetKey {
 	type: "setKey";
@@ -37,15 +35,15 @@ type Operation = SetKey | DeleteKey;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<CellFactory>;
 
-async function assertMapsAreEquivalent(a: ISharedCell, b: ISharedCell): Promise<void> {
-	const aVal: unknown = a.get();
-	const bVal: unknown = b.get();
-	const aHandle: unknown = isFluidHandle(aVal) ? await aVal.get() : aVal;
-	const bHandle: unknown = isFluidHandle(bVal) ? await bVal.get() : bVal;
+async function assertCellsAreEquivalent(a: ISharedCell, b: ISharedCell): Promise<void> {
+	const aUnknown = a.get();
+	const bUnknown = b.get();
+	const aVal = isFluidHandle(aUnknown) ? await aUnknown.get() : aUnknown;
+	const bVal = isFluidHandle(bUnknown) ? await bUnknown.get() : bUnknown;
 	assert.deepEqual(
-		aHandle,
-		bHandle,
-		`${a.id} and ${b.id} differ}: ${JSON.stringify(aHandle)} vs ${JSON.stringify(bHandle)}`,
+		aVal,
+		bVal,
+		`${a.id} and ${b.id} differ}: ${JSON.stringify(aVal)} vs ${JSON.stringify(bVal)}`,
 	);
 }
 
@@ -100,12 +98,12 @@ describe("Cell fuzz tests", () => {
 		factory: new CellFactory(),
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
+		validateConsistency: async (a, b) => assertCellsAreEquivalent(a.channel, b.channel),
 	};
 
 	createDDSFuzzSuite(model, {
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		saveFailures: { directory: path.join(_dirname, "/results/") },
+		// saveFailures: { directory: set path to save failures},
 	});
 });
