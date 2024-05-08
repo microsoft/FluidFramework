@@ -361,8 +361,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+	protected createErrorObject(
+		handler: string,
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		error?: any,
+		canRetry = true,
+	): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it

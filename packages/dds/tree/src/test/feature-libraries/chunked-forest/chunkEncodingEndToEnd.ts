@@ -43,18 +43,13 @@ import {
 	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import { ForestType } from "../../../shared-tree/index.js";
+import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
-	checkoutWithContent,
+	MockTreeCheckout,
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
-	testIdCompressor,
 } from "../../utils.js";
-import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -110,8 +105,8 @@ describe("End to end chunked encoding", () => {
 			);
 			return getTreeContext(
 				schema,
-				editableForest,
-				dummyEditor,
+				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
+				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
 				createMockNodeKeyManager(),
 				brand(nodeKeyFieldKey),
 			);
@@ -142,7 +137,7 @@ describe("End to end chunked encoding", () => {
 		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -171,7 +166,7 @@ describe("End to end chunked encoding", () => {
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,

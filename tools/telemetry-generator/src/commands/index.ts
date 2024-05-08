@@ -5,8 +5,10 @@
 
 import fs from "fs";
 import path from "path";
-import { Command, Flags } from "@oclif/core";
+
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { Command, Flags } from "@oclif/core";
+
 import { ConsoleLogger } from "../logger";
 
 // Allow for dynamic injection of a logger. Leveraged in internal CI pipelines.
