@@ -14,6 +14,7 @@ import {
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
 	Multiplicity,
+	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
@@ -76,7 +77,7 @@ export function fieldShaper(
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
-		if (field.kind === "Identifier") {
+		if (field.kind === identifierFieldKindIdentifier) {
 			assert(field.types !== undefined, "field types must be defined in identifier field");
 			const identifierNodeEncoder = new NodeShape(
 				Array.from(field.types)[0],

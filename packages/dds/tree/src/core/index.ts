@@ -130,6 +130,7 @@ export {
 	schemaDataIsEmpty,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
+	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
 	schemaFormat,

@@ -11,6 +11,7 @@ export {
 	FieldKindData,
 	TreeStoredSchema,
 	forbiddenFieldKindIdentifier,
+	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
 	LeafNodeStoredSchema,

@@ -87,6 +87,7 @@ export {
 	RevertibleStatus,
 	CommitMetadata,
 	forbiddenFieldKindIdentifier,
+	identifierFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
 	ObjectNodeStoredSchema,

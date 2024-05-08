@@ -234,16 +234,21 @@ describe("End to end chunked encoding", () => {
 			assert(tree.type === SummaryType.Blob);
 			const treeContent = JSON.parse(tree.content as string);
 			const identifierValue = treeContent.fields.data[0][1];
+			// Check that the identifierValue is compressed.
 			assert.equal(identifierValue, identifierCompressor.recompress(id));
 		});
 
-		it("is the uncompressed value when it is an invalid identifier", () => {
+		it("is the uncompressed value when it is an unknown/invalid identifier", () => {
 			const schema = new SchemaFactory("com.example");
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
 			const identifierCompressor = testIdCompressor;
-			const id = "a110ca7e-add1-4000-8000-000000000000";
+
+			// generate an id from a different id compressor.
+			const nodeKeyManager = createMockNodeKeyManager();
+			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: id,
 			}));
@@ -282,6 +287,7 @@ describe("End to end chunked encoding", () => {
 			assert(tree.type === SummaryType.Blob);
 			const treeContent = JSON.parse(tree.content as string);
 			const identifierValue = treeContent.fields.data[0][1];
+			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);
 		});
 	});

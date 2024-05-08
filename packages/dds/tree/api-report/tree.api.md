@@ -933,6 +933,9 @@ export interface IDefaultEditBuilder {
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {
 }
 
+// @internal
+export const identifierFieldKindIdentifier = "Identifier";
+
 // @public
 export interface IDisposable {
     [disposeSymbol](): void;
