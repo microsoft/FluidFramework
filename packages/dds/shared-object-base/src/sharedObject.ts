@@ -139,10 +139,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	/**
-	 * Accessor for `this.runtime`'s {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.deltaManagerErased} as a {@link @fluidframework/container-definitions/internal#IDeltaManager}
+	 * Accessor for `this.runtime`'s {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.deltaManager} as a {@link @fluidframework/container-definitions/internal#IDeltaManager}
 	 */
 	protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return toDeltaManagerInternal(this.runtime.deltaManagerErased);
+		return toDeltaManagerInternal(this.runtime.deltaManager);
 	}
 
 	/**

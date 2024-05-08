@@ -77,7 +77,7 @@ export class LoadTestDataStoreModel {
 			resolveIfConnectedOrDisposed();
 		});
 
-		const deltaManager = toDeltaManagerInternal(runtime.deltaManagerErased);
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
 		const lastKnownSeq = deltaManager.lastKnownSeqNumber;
 		assert(
 			deltaManager.lastSequenceNumber <= lastKnownSeq,
@@ -87,7 +87,7 @@ export class LoadTestDataStoreModel {
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					toDeltaManagerInternal(runtime.deltaManagerErased).off(
+					toDeltaManagerInternal(runtime.deltaManager).off(
 						"op",
 						resolveIfDisposedOrCaughtUp,
 					);
@@ -96,10 +96,7 @@ export class LoadTestDataStoreModel {
 				}
 			};
 
-			toDeltaManagerInternal(runtime.deltaManagerErased).on(
-				"op",
-				resolveIfDisposedOrCaughtUp,
-			);
+			toDeltaManagerInternal(runtime.deltaManager).on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
 		});
@@ -479,7 +476,7 @@ export class LoadTestDataStoreModel {
 			const totalMin = (now - this.startTime) / 60000;
 			const taskMin = this.totalTaskTime / 60000;
 
-			const deltaManager = toDeltaManagerInternal(this.runtime.deltaManagerErased);
+			const deltaManager = toDeltaManagerInternal(this.runtime.deltaManager);
 			const opCount = deltaManager.lastKnownSeqNumber;
 			const opRate = Math.floor(deltaManager.lastKnownSeqNumber / totalMin);
 			const sendRate = Math.floor(this.counter.value / taskMin);

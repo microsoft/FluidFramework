@@ -212,7 +212,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.deltaManager.minimumSequenceNumber = msn;
 		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-		this.dataStoreRuntime.deltaManager = this.deltaManager;
+		this.dataStoreRuntime.deltaManagerInternal = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
 		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
@@ -823,9 +823,9 @@ export class MockFluidDataStoreRuntime
 	public clientId: string;
 	public readonly path = "";
 	public readonly connected = true;
-	public deltaManager = new MockDeltaManager();
-	public get deltaManagerErased(): IDeltaManagerErased {
-		return toDeltaManagerErased(this.deltaManager);
+	public deltaManagerInternal = new MockDeltaManager();
+	public get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;

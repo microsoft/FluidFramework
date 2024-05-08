@@ -62,7 +62,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		assert(toDeltaManagerInternal(dataStore.runtime.deltaManagerErased).outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		await cb(container, dataStore, map);
 

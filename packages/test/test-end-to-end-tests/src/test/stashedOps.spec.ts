@@ -148,7 +148,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		assert(toDeltaManagerInternal(dataStore.runtime.deltaManagerErased).outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		await cb(container, dataStore);
 
@@ -1139,7 +1139,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(toDeltaManagerInternal(dataStore.runtime.deltaManagerErased).outbound.paused);
+			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1315,7 +1315,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManagerErased).outbound.paused);
+			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();

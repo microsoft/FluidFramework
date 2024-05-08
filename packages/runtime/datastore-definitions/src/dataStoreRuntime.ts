@@ -60,7 +60,7 @@ export interface IFluidDataStoreRuntime
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
-	readonly deltaManagerErased: IDeltaManagerErased;
+	readonly deltaManager: IDeltaManagerErased;
 
 	readonly clientId: string | undefined;
 

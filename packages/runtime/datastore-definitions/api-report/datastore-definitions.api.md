@@ -102,7 +102,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly connected: boolean;
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
-    readonly deltaManagerErased: IDeltaManagerErased;
+    readonly deltaManager: IDeltaManagerErased;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;

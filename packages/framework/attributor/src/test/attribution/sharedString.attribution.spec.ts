@@ -260,7 +260,7 @@ function createSharedString(
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			};
-			const { deltaManager } = dataStoreRuntime;
+			const deltaManager = dataStoreRuntime.deltaManagerInternal;
 			const sharedString = SharedString.create(
 				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
@@ -633,7 +633,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManagerErased),
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -652,7 +652,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManagerErased),
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -671,7 +671,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManagerErased),
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),

@@ -54,7 +54,7 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		[...Array(60).keys()].map((i) => map2.set(`test op ${i}`, i));
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container2);
-		assert(toDeltaManagerInternal(dataStore2.runtime.deltaManagerErased).outbound.paused);
+		assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
 
 		map2.set("a key", "a value");
 		await provider.ensureSynchronized();

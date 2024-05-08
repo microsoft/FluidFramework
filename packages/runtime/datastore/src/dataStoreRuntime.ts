@@ -338,7 +338,7 @@ export class FluidDataStoreRuntime
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 	}
 
-	get deltaManagerErased(): IDeltaManagerErased {
+	get deltaManager(): IDeltaManagerErased {
 		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 
