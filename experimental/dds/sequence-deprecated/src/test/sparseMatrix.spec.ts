@@ -39,12 +39,10 @@ describe("SparseMatrix", () => {
 		let matrix: SparseMatrix;
 
 		before(async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			matrix = new SparseMatrixClass(
-				dataStoreRuntime,
-				"matrix",
-				SparseMatrixFactory.Attributes,
-			);
+			dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SparseMatrix.getFactory()],
+			});
+			matrix = SparseMatrix.create(dataStoreRuntime);
 		});
 
 		const expect = async (expected: readonly (readonly any[])[]) => {
