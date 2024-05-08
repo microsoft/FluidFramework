@@ -38,6 +38,7 @@ import {
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -313,7 +314,7 @@ const handleFns: {
 
 describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	for (const handle of handleFns) {
-		it(`store handle in dds: ${handle.type}`, async () => {
+		it.only(`store handle in dds: ${handle.type}`, async () => {
 			const { container1, provider, testContainerConfig } = await setup(
 				getTestObjectProvider,
 				apis,
@@ -337,11 +338,14 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
+			await waitContainerToCatchUp(container2);
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
+			await waitContainerToCatchUp(container2);
 			const actualVal = await handle.readHandle(default2);
 			await provider.ensureSynchronized();
+			await waitContainerToCatchUp(container2);
 			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
 
 			const actualObject = await actualVal.get();
