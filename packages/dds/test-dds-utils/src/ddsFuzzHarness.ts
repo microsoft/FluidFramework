@@ -391,7 +391,7 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * Defines whether or not ops can be submitted with handles.
 	 */
-	handleGenerationDisabled: boolean;
+	handleGenerationDisabled?: boolean;
 
 	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
@@ -533,22 +533,30 @@ export interface DDSFuzzSuiteOptions {
 /**
  * @internal
  */
-export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
+export const defaultDDSFuzzSuiteOptions: Required<
+	Omit<DDSFuzzSuiteOptions, "replay" | "containerRuntimeOptions" | "idCompressorFactory">
+> = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
-	handleGenerationDisabled: true,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
+	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
+	reconnectProbability: 0.01,
+	rebaseProbability: 0.01,
+	saveSuccesses: false,
+	saveFailures: false,
+	validationStrategy: { type: "random", probability: 0.05 },
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.01,
+		stashableClientProbability: 0.01,
+	},
+	handleGenerationDisabled: false,
+	skipMinimization: false,
 	only: [],
 	skip: [],
-	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
-	reconnectProbability: 0,
-	rebaseProbability: 0,
-	saveFailures: false,
-	saveSuccesses: false,
-	validationStrategy: { type: "random", probability: 0.05 },
 };
 
 /**
