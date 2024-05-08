@@ -298,7 +298,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		return this.map((x) => x);
 	}
 
-	private sequenceEditor(): SequenceFieldEditBuilder {
+	public sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
 		return fieldEditor;
@@ -329,15 +329,6 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.remove(index, 1);
-	}
-
-	public removeRange(start?: number, end?: number): void {
-		const fieldEditor = this.sequenceEditor();
-		const { length } = this;
-		const removeStart = start ?? 0;
-		const removeEnd = Math.min(length, end ?? length);
-		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;

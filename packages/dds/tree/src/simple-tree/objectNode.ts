@@ -219,7 +219,6 @@ export function setField(
 				simpleFieldSchema.allowedTypes,
 				getSchemaAndPolicy(field),
 			);
-
 			typedField.content = cursor;
 			break;
 		}
