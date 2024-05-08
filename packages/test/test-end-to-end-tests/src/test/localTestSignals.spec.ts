@@ -329,7 +329,7 @@ describeCompat("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 			});
 
 			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
-			await waitForSignal(localRuntime);
+			await waitForTargetedSignal(localRuntime, [remoteRuntime1, remoteRuntime2]);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		}
 
