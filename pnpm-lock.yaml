@@ -11,8 +11,6 @@ overrides:
   '@oclif/core': ~2.4.0
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
-  ip@^1.1.8: ^1.1.9
-  ip@^2.0.0: ^2.0.1
 
 patchedDependencies:
   '@microsoft/api-extractor@7.42.3':
