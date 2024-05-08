@@ -343,10 +343,10 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 
 		if (this.details.supportedFeatures?.submit_signals_v2 === true) {
-			const signal: ISentSignalMessage = {
-				content,
-				targetClientId,
-			};
+			const signal: ISentSignalMessage = { content };
+			if (targetClientId !== undefined) {
+				signal.targetClientId = targetClientId;
+			}
 			this.emitMessages("submitSignal", [signal]);
 		} else {
 			this.emitMessages("submitSignal", [[content]]);

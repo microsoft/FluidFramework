@@ -9,7 +9,6 @@ import {
 	IClient,
 	IConnect,
 	IDocumentMessage,
-	type ISentSignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
@@ -80,18 +79,6 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		Promise.resolve().then(() => {
 			this.emitMessages("submitOp", [messages]);
 		});
-	}
-
-	/**
-	 * Submits a new signal to the server
-	 */
-	public submitSignal(content: string, targetClientId?: string): void {
-		const signal: ISentSignalMessage = {
-			content,
-			targetClientId,
-		};
-
-		this.emitMessages("submitSignal", [signal]);
 	}
 
 	/**
