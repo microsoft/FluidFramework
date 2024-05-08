@@ -16,6 +16,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
@@ -42,17 +43,13 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "../simple-tree/index.js";
+import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
+import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -132,11 +129,12 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
-	assert(versions !== undefined, "Unknown format version");
+	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
 }
 
@@ -162,7 +160,7 @@ export class SharedTree
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		optionsParam: SharedTreeOptions,
-		telemetryContextPrefix: string,
+		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
@@ -234,7 +232,17 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			{ schema, policy: defaultSchemaPolicy },
+			schema,
+			defaultSchemaPolicy,
+			new DefaultCommitEnricher(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				() => {
+					return new SharedTreeChangeEnricher(
+						forest.clone(schema, new AnchorSet()),
+						removedRoots.clone(),
+					);
+				},
+			),
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -289,7 +297,7 @@ export class SharedTree
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
@@ -318,8 +326,16 @@ export class SharedTree
 export const SharedTreeFormatVersion = {
 	/**
 	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 *
+	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * Do not write production documents using this format, as they may not be loadable in the future.
 	 */
 	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
 } as const;
 
 /**
@@ -362,7 +378,7 @@ export interface SharedTreeFormatOptions {
 	 * To be safe, application authors should verify that they have saturated this version
 	 * of \@fluidframework/tree in their ecosystem before changing the format version.
 	 *
-	 * This option defaults to SharedTreeFormatVersion.v1.
+	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
@@ -386,12 +402,11 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v1,
+	formatVersion: SharedTreeFormatVersion.v2,
 };
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @internal
  */
 export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";
@@ -410,13 +425,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
 	}

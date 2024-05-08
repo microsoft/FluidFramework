@@ -11,7 +11,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
+import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -248,7 +248,7 @@ describe("DDS Fuzz Harness", () => {
 						...baseModel,
 						generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
 						validateConsistency: (a, b) => {
-							perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+							perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 						},
 					},
 					options,
@@ -292,7 +292,7 @@ describe("DDS Fuzz Harness", () => {
 									takeAsync(1, baseModel.generatorFactory()),
 								),
 							validateConsistency: (a, b) => {
-								perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+								perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 							},
 						},
 						options,

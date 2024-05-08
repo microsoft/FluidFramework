@@ -7,14 +7,13 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
-import { SchemaFactory, SchemaFactoryRecursive } from "../../simple-tree/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
@@ -76,7 +75,7 @@ describe("toMapTree", () => {
 	});
 
 	it("recursive", () => {
-		const schemaFactory = new SchemaFactoryRecursive("test");
+		const schemaFactory = new SchemaFactory("test");
 		class Foo extends schemaFactory.objectRecursive("Foo", {
 			x: schemaFactory.optionalRecursive(() => Bar),
 		}) {}
@@ -124,7 +123,7 @@ describe("toMapTree", () => {
 	});
 
 	it("Fails when referenced schema has not yet been instantiated", () => {
-		const schemaFactory = new SchemaFactoryRecursive("test");
+		const schemaFactory = new SchemaFactory("test");
 
 		let Bar: any;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
@@ -329,6 +328,24 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
+		it("Empty object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.number),
+			});
+
+			const tree = {};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
 		it("Non-empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
@@ -362,19 +379,35 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty object", () => {
+		it("Object with stored field keys specified", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
-				a: schemaFactory.optional(schemaFactory.number),
+				a: schemaFactory.required(schemaFactory.string, { key: "foo" }),
+				b: schemaFactory.optional(schemaFactory.number, { key: "bar" }),
+				c: schemaFactory.boolean,
+				d: schemaFactory.optional(schemaFactory.number),
 			});
 
-			const tree = {};
+			const tree = {
+				a: "Hello world",
+				b: 42,
+				c: false,
+				d: 37,
+			};
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
-				fields: new Map<FieldKey, MapTree[]>(),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("foo"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[brand("bar"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+					[brand("d"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);

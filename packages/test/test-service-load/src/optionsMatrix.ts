@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	OptionsMatrix,
 	booleanCases,
@@ -18,7 +19,6 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
@@ -102,7 +102,6 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
-		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],

@@ -6,9 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedMap } from "@fluidframework/map";
-import { MapFactory } from "@fluidframework/map/internal";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { MapFactory, SharedMap } from "@fluidframework/map/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 import { type ContainerSchema } from "../types.js";
 import { parseDataObjectsFromSharedObjects } from "../utils.js";
@@ -39,7 +38,11 @@ describe("parseDataObjectsFromSharedObjects", () => {
 
 		const types = sharedObjects.map((item) => item.type);
 		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
-		assert.strictEqual(types[1], SharedStringFactory.Type, "SharedString should be included");
+		assert.strictEqual(
+			types[1],
+			SharedString.getFactory().type,
+			"SharedString should be included",
+		);
 	});
 
 	it("should be able to handle dup DDS types", () => {
@@ -57,7 +60,11 @@ describe("parseDataObjectsFromSharedObjects", () => {
 
 		const types = sharedObjects.map((item) => item.type);
 		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
-		assert.strictEqual(types[1], SharedStringFactory.Type, "SharedString should be included");
+		assert.strictEqual(
+			types[1],
+			SharedString.getFactory().type,
+			"SharedString should be included",
+		);
 	});
 
 	it("should be able to handle Data Objects", () => {

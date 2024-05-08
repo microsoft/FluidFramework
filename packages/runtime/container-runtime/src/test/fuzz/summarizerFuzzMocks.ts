@@ -14,8 +14,11 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	type IMockContainerRuntimeOptions,
 	MockContainerRuntimeFactoryForReconnection,

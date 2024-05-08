@@ -21,7 +21,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITestContainerConfig } from '@fluidframework/test-utils/internal';
 import { ITestObjectProvider } from '@fluidframework/test-utils/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
@@ -31,7 +31,7 @@ import * as orderedCollection from '@fluidframework/ordered-collection/internal'
 import * as registerCollection from '@fluidframework/register-collection/internal';
 import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 
@@ -66,6 +66,9 @@ export interface CompatApis {
 }
 
 // @internal (undocumented)
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
+
+// @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
     BaseContainerRuntimeFactory: typeof BaseContainerRuntimeFactory;
@@ -81,14 +84,14 @@ export const DataRuntimeApi: {
     FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
-        SharedCell: typeof cell.SharedCell;
-        SharedCounter: typeof counter.SharedCounter;
+        SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
-        SharedMatrix: typeof matrix.SharedMatrix;
+        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
-        ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
-        SharedString: typeof sequence.SharedString;
+        ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
+        SharedString: ISharedObjectKind<sequence.ISharedString>;
         SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
     };
     packages: {
@@ -116,7 +119,7 @@ export type DescribeCompat = DescribeCompatSuite & {
 export const describeCompat: DescribeCompat;
 
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, compatVersion: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export type DescribeCompatSuite = (name: string, compatVersion: CompatType, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {

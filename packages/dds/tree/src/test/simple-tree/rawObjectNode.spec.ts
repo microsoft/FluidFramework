@@ -15,9 +15,10 @@ import {
 	FlexObjectNodeSchema,
 	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
-import { RawObjectNode, extractRawNodeContent } from "../../simple-tree/rawNode.js";
+import { extractRawNodeContent } from "../../simple-tree/rawNode.js";
 import { brand } from "../../util/index.js";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
+import { RawObjectNode } from "../../simple-tree/objectNode.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {

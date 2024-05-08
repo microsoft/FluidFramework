@@ -5,8 +5,8 @@
 
 import fs from "fs";
 
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
@@ -412,7 +412,7 @@ function createE2EDocCompatSuite(
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
-							const logErrors = getUnexpectedLogErrorException(provider.logger);
+							const logErrors = getUnexpectedLogErrorException(provider.tracker);
 							done(logErrors);
 						} else {
 							done();

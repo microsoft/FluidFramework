@@ -339,19 +339,19 @@ stateDiagram-v2
 	state "Store original (uncompressed, unchunked, ungrouped) batch locally" as store
     state if_compression <<choice>>
 	[*] --> ContainerRuntime.submit
-	ContainerRuntime.submit --> outbox.submitAttach
+	ContainerRuntime.submit --> outbox.submitIdAllocation
 	ContainerRuntime.submit --> outbox.submitBlobAttach
 	ContainerRuntime.submit --> outbox.submit
 	outbox.submit --> scheduleFlush
-	outbox.submitAttach --> scheduleFlush
+	outbox.submitIdAllocation --> scheduleFlush
 	outbox.submitBlobAttach --> scheduleFlush
 	scheduleFlush --> jsTurn
 	jsTurn --> flush
 	flush --> outbox.flushInternalMain
-	flush --> outbox.flushInternalAttach
+	flush --> outbox.flushInternalIdAllocation
 	flush --> outbox.flushInternalBlobAttach
 	outbox.flushInternalMain --> flushInternal
-	outbox.flushInternalAttach --> flushInternal
+	outbox.flushInternalIdAllocation --> flushInternal
 	outbox.flushInternalBlobAttach --> flushInternal
 	flushInternal --> ContainerRuntime.reSubmit: if batch has reentrant ops and should group
 	ContainerRuntime.reSubmit --> flushInternal

@@ -14,7 +14,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedString, SharedStringFactory } from "../index.js";
+import { SharedString, SharedStringClass } from "../index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
 
 function applyOperations(
 	sharedString: SharedString,
@@ -52,12 +53,12 @@ function generateSummaryTree(
 	const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime1.options = options;
 	// Connect the first SharedString.
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const services1: IChannelServices = {
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const sharedString = new SharedString(
+	const sharedString = new SharedStringClass(
 		dataStoreRuntime1,
 		"shared-string",
 		SharedStringFactory.Attributes,
@@ -68,8 +69,8 @@ function generateSummaryTree(
 	// Create and connect a second SharedString.
 	const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime2.options = options;
-	const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-	const sharedString2 = new SharedString(
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+	const sharedString2 = new SharedStringClass(
 		dataStoreRuntime2,
 		"shared-string",
 		SharedStringFactory.Attributes,
@@ -107,7 +108,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -133,7 +134,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -163,7 +164,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -197,7 +198,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -246,7 +247,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -292,7 +293,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,

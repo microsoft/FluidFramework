@@ -43,7 +43,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	readonly checkout: ITreeCheckout;
 
 	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 * Get a typed view of the tree content using the flex-tree API.
 	 */
 	readonly flexTree: FlexTreeTypedField<TRoot>;
 
@@ -81,13 +81,7 @@ export class CheckoutFlexTreeView<
 		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(
-			schema,
-			this.checkout.forest,
-			this.checkout.editor,
-			nodeKeyManager,
-			nodeKeyFieldKey,
-		);
+		this.context = getTreeContext(schema, this.checkout, nodeKeyManager, nodeKeyFieldKey);
 		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}

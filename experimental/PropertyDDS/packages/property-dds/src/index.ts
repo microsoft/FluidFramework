@@ -21,4 +21,4 @@ export {
 	DeflatedPropertyTreeFactory,
 	LZ4PropertyTreeFactory,
 } from "./propertyTreeExtFactories.js";
-export { PropertyTreeFactory } from "./propertyTreeFactory.js";
+export { PropertyTreeFactory, SharedPropertyTreeKind } from "./propertyTreeFactory.js";

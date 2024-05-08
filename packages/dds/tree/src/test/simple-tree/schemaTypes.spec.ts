@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeValue } from "../../core/index.js";
-import { SchemaFactory, SchemaFactoryRecursive, TreeNode } from "../../simple-tree/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 import {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
@@ -28,11 +28,6 @@ const schema = new SchemaFactory("com.example");
 const factory = new TreeFactory({});
 
 describe("schemaTypes", () => {
-	it("TreeNode", () => {
-		// @ts-expect-error TreeNode should not allow non-node objects.
-		const n: TreeNode = {};
-	});
-
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
@@ -173,7 +168,7 @@ describe("schemaTypes", () => {
 		});
 
 		it("Normalizes recursive schemas", () => {
-			const schemaFactory = new SchemaFactoryRecursive("test");
+			const schemaFactory = new SchemaFactory("test");
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				x: () => Bar,
 			}) {}
@@ -187,7 +182,7 @@ describe("schemaTypes", () => {
 		});
 
 		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
-			const schemaFactory = new SchemaFactoryRecursive("test");
+			const schemaFactory = new SchemaFactory("test");
 
 			let Bar: any;
 			class Foo extends schemaFactory.objectRecursive("Foo", {

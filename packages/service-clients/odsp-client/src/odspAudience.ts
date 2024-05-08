@@ -36,7 +36,7 @@ export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	);
 
 	return {
-		userId: user.oid,
+		id: user.oid,
 		name: user.name,
 		email: user.email,
 		connections: [],

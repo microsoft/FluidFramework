@@ -14,6 +14,7 @@ import {
 	type Parameter,
 	ReleaseTag,
 	type TypeParameter,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
 import {
@@ -163,7 +164,7 @@ export function createSummaryTable(
 		case ApiItemKind.Method:
 		case ApiItemKind.MethodSignature: {
 			return createFunctionLikeSummaryTable(
-				apiItems.map((apiItem) => apiItem as ApiFunctionLike),
+				apiItems as ApiFunctionLike[],
 				itemKind,
 				config,
 				options,
@@ -172,18 +173,15 @@ export function createSummaryTable(
 
 		case ApiItemKind.Property:
 		case ApiItemKind.PropertySignature: {
-			return createPropertiesTable(
-				apiItems.map((apiItem) => apiItem as ApiPropertyItem),
-				config,
-				options,
-			);
+			return createPropertiesTable(apiItems as ApiPropertyItem[], config, options);
+		}
+
+		case ApiItemKind.Variable: {
+			return createVariablesTable(apiItems as ApiVariable[], config, options);
 		}
 
 		case ApiItemKind.Package: {
-			return createPackagesTable(
-				apiItems.map((apiItem) => apiItem as ApiPackage),
-				config,
-			);
+			return createPackagesTable(apiItems as ApiPackage[], config);
 		}
 
 		default: {
@@ -500,8 +498,64 @@ export function createPropertiesTable(
 		if (hasDefaultValues) {
 			bodyRowCells.push(createDefaultValueCell(apiProperty, config));
 		}
-		bodyRowCells.push(createPropertyTypeCell(apiProperty, config));
+		bodyRowCells.push(createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config));
 		bodyRowCells.push(createApiSummaryCell(apiProperty, config));
+
+		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+	}
+
+	return new TableNode(bodyRows, headerRow);
+}
+
+/**
+ * Creates a simple summary table for a series of variable items.
+ * Displays each variable's name, modifiers, type, and description (summary) comment.
+ *
+ * @param apiVariables - The `Variable` items to be displayed.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param options - Table content / formatting options.
+ */
+export function createVariablesTable(
+	apiVariables: readonly ApiVariable[],
+	config: Required<ApiItemTransformationConfiguration>,
+	options?: TableCreationOptions,
+): TableNode | undefined {
+	if (apiVariables.length === 0) {
+		return undefined;
+	}
+
+	// Only display "Alerts" column if there are any deprecated or alpha/beta items in the list.
+	const hasAlerts = doItemsContainAlerts(apiVariables);
+
+	// Only display "Modifiers" column if there are any modifiers to display.
+	const hasModifiers = apiVariables.some(
+		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
+	);
+
+	const headerRowCells: TableHeaderCellNode[] = [
+		TableHeaderCellNode.createFromPlainText("Variable"),
+	];
+	if (hasAlerts) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+	}
+	if (hasModifiers) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+	}
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
+	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
+	const headerRow = new TableHeaderRowNode(headerRowCells);
+
+	const bodyRows: TableBodyRowNode[] = [];
+	for (const apiVariable of apiVariables) {
+		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiVariable, config)];
+		if (hasAlerts) {
+			bodyRowCells.push(createAlertsCell(apiVariable));
+		}
+		if (hasModifiers) {
+			bodyRowCells.push(createModifiersCell(apiVariable, options?.modifiersToOmit));
+		}
+		bodyRowCells.push(createTypeExcerptCell(apiVariable.variableTypeExcerpt, config));
+		bodyRowCells.push(createApiSummaryCell(apiVariable, config));
 
 		bodyRows.push(new TableBodyRowNode(bodyRowCells));
 	}
@@ -691,22 +745,6 @@ export function createAlertsCell(apiItem: ApiItem): TableBodyCellNode {
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
 		: new TableBodyCellNode(injectSeparator(alerts, new PlainTextNode(", ")));
-}
-
-/**
- * Creates a table cell containing the type information about the provided property.
- *
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param apiProperty - The property whose type information will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function createPropertyTypeCell(
-	apiProperty: ApiPropertyItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): TableBodyCellNode {
-	return createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
 
 /**

@@ -10,7 +10,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
@@ -122,8 +122,8 @@ describe("Fluid audience", () => {
 		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		assert.notStrictEqual(
-			partner?.userId,
-			originalSelf?.userId,
+			partner?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 	});

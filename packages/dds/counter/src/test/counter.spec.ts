@@ -18,8 +18,9 @@ import {
 
 import { CounterFactory } from "../counterFactory.js";
 import { type ISharedCounter, SharedCounter } from "../index.js";
+import { SharedCounter as SharedCounterClass } from "../counter.js";
 
-class TestSharedCounter extends SharedCounter {
+class TestSharedCounter extends SharedCounterClass {
 	public testApplyStashedOp(content: unknown): void {
 		this.applyStashedOp(content);
 	}
@@ -109,7 +110,10 @@ describe("SharedCounter", () => {
 				const services = MockSharedObjectServices.createFromSummary(
 					testCounter.getAttachSummary().summary,
 				);
-				const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
+				const testCounter2 = factory.create(
+					dataStoreRuntime,
+					"counter2",
+				) as SharedCounterClass;
 				await testCounter2.load(services);
 
 				// Verify that the new SharedCounter has the correct value.

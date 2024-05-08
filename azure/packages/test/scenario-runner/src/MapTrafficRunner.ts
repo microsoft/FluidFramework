@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -55,8 +55,8 @@ export class MapTrafficRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 

@@ -31,8 +31,8 @@ import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import type { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
@@ -194,6 +194,9 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @internal
+export function getSnapshotTree(tree: ISnapshotTree | ISnapshot): ISnapshotTree;
 
 // @public (undocumented)
 export interface ICompressionStorageConfig {

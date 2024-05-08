@@ -7,18 +7,25 @@ import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
+import {
+	NodeFromSchema,
+	SchemaFactory,
+	TreeArrayNode,
+	TreeConfiguration,
+} from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 
 import { hydrate, pretty } from "./utils.js";
+import { getView } from "../utils.js";
+import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
 	const childSchema = sb.object("object", {
-		content: sb.number,
+		content: sb.required(sb.number, { key: "storedContentKey" }),
 	});
 
 	const schema = sb.object("parent", {
@@ -84,7 +91,7 @@ describe("SharedTreeObject", () => {
 	const schema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
-		optional: sb.optional(numberChild),
+		optional: sb.optional(numberChild, { key: "storedOptionalKey" }),
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
@@ -161,6 +168,20 @@ describe("SharedTreeObject", () => {
 		root.optional = undefined;
 		assert.equal(root.optional, undefined);
 	});
+
+	it("returns the stable id under the identifier field kind.", () => {
+		const schemaWithIdentifier = sb.object("parent", {
+			identifier: sb.identifier,
+		});
+		const nodeKeyManager = createMockNodeKeyManager();
+		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+			identifier: id,
+		}));
+
+		const root = getView(config, nodeKeyManager).root;
+		assert.equal(root.identifier, id);
+	});
 });
 
 describe("ArrayNode Proxy", () => {
@@ -234,20 +255,6 @@ describe("ArrayNode Proxy", () => {
 				array.length = 1;
 			});
 		}
-	});
-
-	it("Json stringify", () => {
-		// JSON.stringify uses ownKeys and getOwnPropertyDescriptor
-
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [])), "[]");
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [1, 2, 3])), "[1,2,3]");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [])), "{}");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [1, 2, 3])), `{"0":1,"1":2,"2":3}`);
-
-		assert.equal(
-			JSON.stringify(hydrate(CustomizedArray, [1, 2, 3])),
-			`{"0":1,"1":2,"2":3,"extra":"foo"}`,
-		);
 	});
 
 	describe("inserting nodes created by factory", () => {

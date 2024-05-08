@@ -7,11 +7,13 @@ import crypto from "crypto";
 import fs from "node:fs";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import {
