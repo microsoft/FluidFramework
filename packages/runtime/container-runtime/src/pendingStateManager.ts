@@ -78,7 +78,7 @@ function buildPendingMessageContent(
 /**
  * Tag for op local metadata to indicate that the op is an id allocation.
  */
-export const idAllocationIndicator = new Object();
+export const idAllocationIndicator = Symbol("idAllocationIndicator");
 
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
@@ -362,16 +362,6 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
-	private filterMessagesInto(dst: IPendingMessage[], addIdAllocations: boolean): void {
-		for (let i = 0; i < this.pendingMessages.length; i++) {
-			const pendingMessage = this.pendingMessages.get(i);
-			assert(pendingMessage !== undefined, "pendingMessage should be in queue");
-			if ((pendingMessage?.localOpMetadata === idAllocationIndicator) === addIdAllocations) {
-				dst.push(pendingMessage);
-			}
-		}
-	}
-
 	/**
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
@@ -401,8 +391,8 @@ export class PendingStateManager implements IDisposable {
 		// partial order and that of the rest of the ops. Since id allocations are guaranteed to
 		// never be in batches with non-id allocation ops, this code does not need to worry about batch boundaries
 		// as they will naturally be maintained.
-		this.filterMessagesInto(messagesToReplay, true);
-		this.filterMessagesInto(messagesToReplay, false);
+		filterMessagesInto(this.pendingMessages, messagesToReplay, true);
+		filterMessagesInto(this.pendingMessages, messagesToReplay, false);
 		assert(
 			messagesToReplay.length === initialPendingMessagesCount,
 			"All messages should be dequeued",
@@ -472,6 +462,20 @@ export class PendingStateManager implements IDisposable {
 				count: initialPendingMessagesCount,
 				clientId: this.stateHandler.clientId(),
 			});
+		}
+	}
+}
+
+function filterMessagesInto(
+	src: Deque<IPendingMessage>,
+	dst: IPendingMessage[],
+	addIdAllocations: boolean,
+): void {
+	for (let i = 0; i < src.length; i++) {
+		const pendingMessage = src.get(i);
+		assert(pendingMessage !== undefined, "pendingMessage should be in queue");
+		if ((pendingMessage?.localOpMetadata === idAllocationIndicator) === addIdAllocations) {
+			dst.push(pendingMessage);
 		}
 	}
 }
