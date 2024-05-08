@@ -87,12 +87,6 @@ use_old_ClassDeclaration_ConsensusOrderedCollection(
  * typeValidation.broken:
  * "RemovedClassDeclaration_ConsensusQueue": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_ConsensusQueue():
-    TypeOnly<old.ConsensusQueue>;
-declare function use_current_RemovedClassDeclaration_ConsensusQueue(
-    use: TypeOnly<current.ConsensusQueue>): void;
-use_current_RemovedClassDeclaration_ConsensusQueue(
-    get_old_ClassDeclaration_ConsensusQueue());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
