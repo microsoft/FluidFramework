@@ -25,6 +25,11 @@ import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions'
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions';
 
+// @beta
+type FlattenIntersection<T> = T extends Record<any, any> ? {
+    [K in keyof T]: T[K];
+} : T;
+
 // @public (undocumented)
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
@@ -136,19 +141,56 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @alpha (undocumented)
-export interface Internal_InterfaceOfJsonableTypesWith<T> {
-    // (undocumented)
-    [index: string | number]: JsonableTypeWith<T>;
+// @alpha
+export type Internal_JsonableForArrayItem<T, TReplaced, TParent> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : undefined extends T ? "error-array-or-tuple-may-not-allow-undefined-value-consider-null" : (<G>() => G extends T ? 1 : 2) extends <G>() => G extends TParent ? 1 : 2 ? TParent : Jsonable<T, TReplaced>;
+
+declare namespace InternalUtilityTypes {
+    export {
+        NonSymbolWithOptionalPropertyOf,
+        NonSymbolWithRequiredPropertyOf,
+        IsEnumLike,
+        IsExactlyObject,
+        FlattenIntersection
+    }
 }
+export { InternalUtilityTypes }
+
+// @beta
+type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
+    readonly [i: number]: string;
+    readonly [p: string]: number | string;
+} ? true extends {
+    [K in keyof T]: T[K] extends never ? true : never;
+}[keyof T] ? false : true : false;
+
+// @beta
+type IsExactlyObject<T extends object> = object extends Required<T> ? false extends T ? false : true : false;
 
 // @alpha
-export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
-    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
-} : never : never;
+export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
+    [K in keyof T]: Internal_JsonableForArrayItem<T[K], TReplaced, T>;
+} : IsExactlyObject<T> extends true ? JsonableTypeWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
+    [K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K] ? "error-required-property-may-not-allow-undefined-value" : Jsonable<T[K], TReplaced>;
+} & {
+    [K in NonSymbolWithOptionalPropertyOf<T>]?: Jsonable<T[K], TReplaced | undefined>;
+} & {
+    [K in keyof T & symbol]: never;
+}> : never : never;
 
 // @alpha
-export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
+export type JsonableTypeWith<T> = null | boolean | number | string | T | {
+    [key: string | number]: JsonableTypeWith<T>;
+} | JsonableTypeWith<T>[];
+
+// @beta
+type NonSymbolWithOptionalPropertyOf<T extends object> = Exclude<{
+    [K in keyof T]: T extends Record<K, T[K]> ? never : K;
+}[keyof T], undefined | symbol>;
+
+// @beta
+type NonSymbolWithRequiredPropertyOf<T extends object> = Exclude<{
+    [K in keyof T]: T extends Record<K, T[K]> ? K : never;
+}[keyof T], undefined | symbol>;
 
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
