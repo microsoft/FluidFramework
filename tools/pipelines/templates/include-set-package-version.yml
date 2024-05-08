@@ -53,7 +53,7 @@ steps:
         # Prepend the cli bin dir to the path. See
         # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
         # more information.
-        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/bin"
+        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
         echo "which flub: $(which flub)"
 
   - template: include-install-pnpm.yml
@@ -72,7 +72,8 @@ steps:
         pnpm i --frozen-lockfile
         pnpm build:compile
         cd packages/build-cli
-        pnpm link --global
+        # Use npm link instead of pnpm link because it handles bins better
+        npm link
         echo "which flub: $(which flub)"
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
