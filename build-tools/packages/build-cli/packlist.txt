@@ -4,7 +4,6 @@ oclif.manifest.json
 package.json
 bin/dev.cmd
 bin/dev.js
-bin/flub
 bin/run.cmd
 bin/run.js
 lib/BasePackageCommand.d.ts
