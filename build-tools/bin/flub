@@ -9,6 +9,6 @@ import path from "node:path";
 import { execute } from "@oclif/core";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dir = pathToFileURL(path.join(__dirname, "packages/build-cli/bin/run.js"));
+const dir = pathToFileURL(path.join(__dirname, "../packages/build-cli/bin/run.js"));
 
 await execute({ dir });
