@@ -211,7 +211,7 @@ export function setField(
 				| FlexTreeRequiredField<FlexAllowedTypes>
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
-			const content = prepareContentForInsert(value, field.context.forest);
+			const content = prepareContentForInsert(value, field.context.checkout.forest);
 			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
 			typedField.content = cursor;
 			break;

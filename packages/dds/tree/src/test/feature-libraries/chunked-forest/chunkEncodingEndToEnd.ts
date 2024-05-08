@@ -42,8 +42,12 @@ import {
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 } from "../../../feature-libraries/index.js";
-import { ForestType } from "../../../shared-tree/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
+import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
+import {
+	MockTreeCheckout,
+	flexTreeViewWithContent,
+	numberSequenceRootSchema,
+} from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -96,7 +100,12 @@ describe("End to end chunked encoding", () => {
 				new DefaultChangeFamily(codec),
 				changeReceiver,
 			);
-			return getTreeContext(schema, editableForest, dummyEditor, createMockNodeKeyManager());
+			return getTreeContext(
+				schema,
+				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
+				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
+				createMockNodeKeyManager(),
+			);
 		}
 
 		const flexTree = createFlexTree(forest, numberSequenceRootSchema);
@@ -124,7 +133,7 @@ describe("End to end chunked encoding", () => {
 		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -152,7 +161,7 @@ describe("End to end chunked encoding", () => {
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
