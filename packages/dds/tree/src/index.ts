@@ -240,7 +240,6 @@ export {
 	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
-	SharedTreeFactory,
 	SharedTreeOptions,
 	ITreeCheckoutFork,
 	CheckoutEvents,
@@ -307,6 +306,7 @@ export {
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,

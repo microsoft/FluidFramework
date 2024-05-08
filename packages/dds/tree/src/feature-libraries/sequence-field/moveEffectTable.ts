@@ -161,33 +161,28 @@ function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): M
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable,
-): Mark[] {
-	const length = getFirstMoveEffectLength(mark, mark.count, revision, effects);
+export function splitMarkForMoveEffects(mark: Mark, effects: MoveEffectTable): Mark[] {
+	const length = getFirstMoveEffectLength(mark, mark.count, effects);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
 
 function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
-	revision: RevisionTag | undefined,
 	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
 		return getMoveEffect(
 			effects,
 			getCrossFieldTargetFromMove(markEffect),
-			markEffect.revision ?? revision,
+			markEffect.revision,
 			markEffect.id,
 			count,
 		).length;
 	} else if (isAttachAndDetachEffect(markEffect)) {
 		return Math.min(
-			getFirstMoveEffectLength(markEffect.attach, count, revision, effects),
-			getFirstMoveEffectLength(markEffect.detach, count, revision, effects),
+			getFirstMoveEffectLength(markEffect.attach, count, effects),
+			getFirstMoveEffectLength(markEffect.detach, count, effects),
 		);
 	}
 

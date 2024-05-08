@@ -140,7 +140,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
 		if (fieldAnchor.parent !== undefined) {
 			const anchorNode =
-				context.forest.anchors.locate(fieldAnchor.parent) ??
+				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
 				fail("parent anchor node should always exist since field is under a node");
 			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
 				this[disposeSymbol]();
@@ -182,13 +182,13 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
 		this.offAfterDestroy?.();
 		if (this[anchorSymbol].parent === undefined) return;
-		this.context.forest.anchors.forget(this[anchorSymbol].parent);
+		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
 	}
 
 	public get length(): number {
@@ -246,11 +246,11 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		if (parentAnchor === undefined) {
 			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
 		}
-		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
+		const parentAnchorNode = this.context.checkout.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
+		return treeStatusFromAnchorCache(parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {
@@ -300,7 +300,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.sequenceField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -438,7 +438,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		assertValidIndex(index, this, true);
 		const sourceFieldPath = sourceField.getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
-		this.context.editor.move(
+		this.context.checkout.editor.move(
 			sourceFieldPath,
 			sourceStart,
 			movedCount,
@@ -489,7 +489,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.valueField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -540,7 +540,7 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 
 	private optionalEditor(): OptionalFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.optionalField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}
 
