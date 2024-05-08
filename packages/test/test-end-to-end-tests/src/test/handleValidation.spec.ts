@@ -139,7 +139,7 @@ async function setup(getTestObjectProvider, apis) {
 const handleFns: {
 	type: string;
 	storeHandle: (defaultDataStore: ITestFluidObject, handle: IFluidHandle) => Promise<void>;
-	readHandle: (defaultDataStore: ITestFluidObject) => unknown;
+	readHandle: (defaultDataStore: ITestFluidObject) => Promise<unknown>;
 }[] = [
 	{
 		type: mapId,
@@ -336,8 +336,10 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			await waitForContainerConnection(container2);
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
+			await provider.ensureSynchronized();
 			const actualVal = await handle.readHandle(default2);
-			assert(isFluidHandle(actualVal), "not a handle");
+			await provider.ensureSynchronized();
+			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
 
 			const actualObject = await actualVal.get();
 			assert(isObject(actualObject), "not an object");
