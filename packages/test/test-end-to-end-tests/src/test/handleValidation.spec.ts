@@ -6,9 +6,12 @@
 import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import type { SharedString } from "@fluidframework/sequence/internal";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
+import {
+	ISharedDirectory,
+	type ISharedMap,
+	type SharedDirectory,
+} from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -17,9 +20,8 @@ import {
 	ITestFluidObject,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
 import type { ISharedMatrix } from "@fluidframework/matrix/internal";
-import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import { type IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	ConsensusResult,
 	type ConsensusCallback,
@@ -30,7 +32,11 @@ import {
 	SharedTree,
 	SchemaFactory,
 	TreeConfiguration,
+	type TreeView,
 } from "@fluidframework/tree/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -54,8 +60,7 @@ function treeSetup(dds) {
 		h: undefined,
 	}));
 
-	const treeView = dds.schematize(config);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	const treeView: TreeView<typeof Bar> = dds.schematize(config);
 	return treeView;
 }
 
@@ -134,84 +139,84 @@ async function setup(getTestObjectProvider, apis) {
 const handleFns: {
 	type: string;
 	storeHandle: (defaultDataStore: ITestFluidObject, handle: IFluidHandle) => Promise<void>;
-	readHandle: (defaultDataStore: ITestFluidObject) => Promise<unknown>;
+	readHandle: (defaultDataStore: ITestFluidObject) => unknown;
 }[] = [
 	{
 		type: mapId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const mapRoot = await defaultDataStore.getSharedObject(mapId);
+			const mapRoot = await defaultDataStore.getSharedObject<ISharedMap>(mapId);
 			mapRoot.set("B", handle);
 		},
 		readHandle: async (defaultDataStore) => {
-			const mapRoot = await defaultDataStore.getSharedObject(mapId);
-			return mapRoot.get("B") as IFluidHandle<ITestFluidObject>;
+			const mapRoot = await defaultDataStore.getSharedObject<ISharedMap>(mapId);
+			return mapRoot.get("B");
 		},
 	},
 	{
 		type: cellId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const cellRoot = await defaultDataStore.getSharedObject(cellId);
-			cellRoot.set(handle) as IFluidHandle<ITestFluidObject>;
+			const cellRoot = await defaultDataStore.getSharedObject<ISharedCell>(cellId);
+			cellRoot.set(handle);
 		},
 		readHandle: async (defaultDataStore) => {
-			const cellRoot = await defaultDataStore.getSharedObject(cellId);
-			return cellRoot.get() as IFluidHandle<ITestFluidObject>;
+			const cellRoot = await defaultDataStore.getSharedObject<ISharedCell>(cellId);
+			return cellRoot.get();
 		},
 	},
 	{
 		type: directoryId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const dirRoot = await defaultDataStore.getSharedObject(directoryId);
+			const dirRoot = await defaultDataStore.getSharedObject<ISharedDirectory>(directoryId);
 			dirRoot.set("B", handle);
 		},
 		readHandle: async (defaultDataStore) => {
-			const dirRoot = await defaultDataStore.getSharedObject(directoryId);
-			return dirRoot.get("B") as IFluidHandle<ITestFluidObject>;
+			const dirRoot = await defaultDataStore.getSharedObject<ISharedDirectory>(directoryId);
+			return dirRoot.get("B");
 		},
 	},
 	{
 		type: stringId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const stringRoot = await defaultDataStore.getSharedObject(stringId);
+			const stringRoot = await defaultDataStore.getSharedObject<SharedString>(stringId);
 			stringRoot.insertText(0, "hello");
 			stringRoot.annotateRange(0, 1, { B: handle });
 		},
 		readHandle: async (defaultDataStore) => {
-			const stringRoot = await defaultDataStore.getSharedObject(stringId);
-			return stringRoot.getPropertiesAtPosition(0)?.B as IFluidHandle<ITestFluidObject>;
+			const stringRoot = await defaultDataStore.getSharedObject<SharedString>(stringId);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return stringRoot.getPropertiesAtPosition(0)?.B;
 		},
 	},
 	{
 		type: matrixId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const matrixRoot = await defaultDataStore.getSharedObject(matrixId);
+			const matrixRoot = await defaultDataStore.getSharedObject<ISharedMatrix>(matrixId);
 			matrixRoot.insertRows(0, 1);
 			matrixRoot.insertCols(0, 1);
 			matrixRoot.setCell(0, 0, handle);
 		},
 		readHandle: async (defaultDataStore) => {
-			const matrixRoot = await defaultDataStore.getSharedObject(matrixId);
-			return matrixRoot.getCell(0, 0) as IFluidHandle<ITestFluidObject>;
+			const matrixRoot = await defaultDataStore.getSharedObject<ISharedMatrix>(matrixId);
+			return matrixRoot.getCell(0, 0);
 		},
 	},
 	{
 		type: treeId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const treeRoot = await defaultDataStore.getSharedObject(treeId);
-
+			const treeRoot = await defaultDataStore.getSharedObject<ISharedTree>(treeId);
 			const treeView = treeSetup(treeRoot);
 			treeView.root.h = handle;
 		},
 		readHandle: async (defaultDataStore) => {
-			const treeRoot = await defaultDataStore.getSharedObject(treeId);
+			const treeRoot = await defaultDataStore.getSharedObject<ISharedTree>(treeId);
 			const treeView = treeSetup(treeRoot);
-			return treeView.root.h as IFluidHandle<ITestFluidObject>;
+			return treeView.root.h;
 		},
 	},
 	// {
 	// 	type: legacyTreeId,
 	// 	storeHandle: async (defaultDataStore, handle) => {
-	// 		const treeRoot = await defaultDataStore.getSharedObject(legacyTreeId);
+	// 		const treeRoot = await defaultDataStore.getSharedObject<LegacySharedTree>(legacyTreeId);
 	// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
 	// 		const handleNode: BuildNode = {
@@ -240,23 +245,31 @@ const handleFns: {
 	{
 		type: registerId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const registerRoot = await defaultDataStore.getSharedObject(registerId);
-			registerRoot.write("B", handle);
+			const registerRoot =
+				await defaultDataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(
+					registerId,
+				);
+			await registerRoot.write("B", handle);
 		},
 		readHandle: async (defaultDataStore) => {
-			const registerRoot = await defaultDataStore.getSharedObject(registerId);
-			return registerRoot.read("B") as IFluidHandle<ITestFluidObject>;
+			const registerRoot =
+				await defaultDataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(
+					registerId,
+				);
+			return registerRoot.read("B");
 		},
 	},
 	{
 		type: queueId,
 		storeHandle: async (defaultDataStore, handle) => {
-			const queueRoot = await defaultDataStore.getSharedObject(queueId);
-			queueRoot.add(handle);
+			const queueRoot =
+				await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(queueId);
+			await queueRoot.add(handle);
 		},
 		readHandle: async (defaultDataStore) => {
 			let handle2: unknown;
-			const queueRoot = await defaultDataStore.getSharedObject(queueId);
+			const queueRoot =
+				await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(queueId);
 			const callback: ConsensusCallback<IFluidHandle> = async (value) => {
 				handle2 = value;
 				return ConsensusResult.Complete;
@@ -268,7 +281,7 @@ const handleFns: {
 	// {
 	// 	type: migrationShimId,
 	// 	storeHandle: async (defaultDataStore, handle) => {
-	// 		const migrationShimRoot = await defaultDataStore.getSharedObject(migrationShimId);
+	// 		const migrationShimRoot = await defaultDataStore.getSharedObject<MigrationShim>(migrationShimId);
 	// 		const tree = migrationShimRoot.currentTree as LegacySharedTree;
 	// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -304,25 +317,33 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				getTestObjectProvider,
 				apis,
 			);
-			const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-			const runtime = defaultDataStore.context.containerRuntime;
+			let idA: string;
+			{
+				const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+				const runtime = defaultDataStore.context.containerRuntime;
+				idA = defaultDataStore.context.id;
 
-			const dataStoreB = await runtime.createDataStore(["default"]);
-			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
-			const idB = dataObjectB.context.id;
+				const dataStoreB = await runtime.createDataStore(["default"]);
+				const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
 
-			await handle.storeHandle(defaultDataStore, dataObjectB.handle);
+				await handle.storeHandle(defaultDataStore, dataObjectB.handle);
 
-			await provider.ensureSynchronized();
-			container1.dispose();
+				await provider.ensureSynchronized();
+				container1.dispose();
+			}
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container2);
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
-			const handleB = (await handle.readHandle(default2)) as IFluidHandle<ITestFluidObject>;
-			const dataObjectB2 = await handleB.get();
-			assert(dataObjectB2.context.id === idB);
+			const actualVal = await handle.readHandle(default2);
+			assert(isFluidHandle(actualVal), "not a handle");
+
+			const actualObject = await actualVal.get();
+			assert(isObject(actualObject), "not an object");
+
+			const actualId: FluidObject<ITestFluidObject> = actualObject;
+			assert(actualId.ITestFluidObject?.context.id, idA);
 		});
 	}
 });
