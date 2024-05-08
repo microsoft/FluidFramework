@@ -23,13 +23,13 @@ import {
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
-import { JsonCompatible } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeEnricher } from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
 	IdAllocator,
+	JsonCompatible,
 	brand,
 	disposeSymbol,
 	idAllocatorFromMaxId,
