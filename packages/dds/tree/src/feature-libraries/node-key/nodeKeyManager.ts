@@ -109,7 +109,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 	private count = 0;
 
 	public generateStableNodeKey(): StableNodeKey {
-		return brand(this.createMockStableId(this.count++));
+		return brand(this.getId(this.count++));
 	}
 
 	public generateLocalNodeKey(): LocalNodeKey {
@@ -121,7 +121,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public stabilizeNodeKey(key: LocalNodeKey): StableNodeKey {
-		return brand(this.createMockStableId(extractFromOpaque(key)));
+		return brand(this.getId(extractFromOpaque(key)));
 	}
 
 	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
@@ -134,11 +134,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 			: undefined;
 	}
 
-	public getId(n: number): StableId {
-		return this.createMockStableId(n);
-	}
-
-	public createMockStableId(offset: number): StableId {
+	public getId(offset: number): StableId {
 		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
 		return assertIsStableId(
