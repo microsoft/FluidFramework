@@ -72,7 +72,7 @@ export class TestFluidObject implements ITestFluidObject {
 		for (const key of this.factoryEntriesMap.keys()) {
 			if (key === id) {
 				const handle = this.root.get<IFluidHandle>(id);
-				return (await handle?.get()) as Promise<T>;
+				return handle?.get() as Promise<T>;
 			}
 		}
 
