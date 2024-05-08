@@ -168,7 +168,6 @@ import {
 	IPendingBatchMessage,
 	IPendingLocalState,
 	PendingStateManager,
-	idAllocationIndicator,
 } from "./pendingStateManager.js";
 import { ScheduleManager } from "./scheduleManager.js";
 import {
@@ -3928,9 +3927,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					// tag the id allocation message with the idAllocationIndicator to ensure it is handled
-					// before other op types if a resubmit occurs
-					localOpMetadata: idAllocationIndicator,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
