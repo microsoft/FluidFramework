@@ -14,7 +14,7 @@ import { renderHitCounter } from "./view.js";
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	/**
 	 * Manually enable the attribution config,
 	 */
@@ -47,4 +47,8 @@ async function start() {
 	renderHitCounter(model.hitCounter, model.runtimeAttributor, contentDiv);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}
