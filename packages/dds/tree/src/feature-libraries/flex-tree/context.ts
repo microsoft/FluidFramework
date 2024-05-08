@@ -78,15 +78,12 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
 	 * @param nodeKeyManager - an object which handles node key generation and conversion
-	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
-	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly schema: FlexTreeSchema,
 		public readonly forest: IForestSubscription,
 		public readonly editor: IDefaultEditBuilder,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeChange", () => {
@@ -166,8 +163,6 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
  * @param nodeKeyManager - an object which handles node key generation and conversion.
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
@@ -176,7 +171,6 @@ export function getTreeContext(
 	forest: IForestSubscription,
 	editor: IDefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): Context {
-	return new Context(schema, forest, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new Context(schema, forest, editor, nodeKeyManager);
 }

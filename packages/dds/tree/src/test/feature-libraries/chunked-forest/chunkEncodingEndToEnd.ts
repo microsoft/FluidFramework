@@ -41,10 +41,8 @@ import {
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { ForestType } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
 import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 
 const options = {
@@ -98,13 +96,7 @@ describe("End to end chunked encoding", () => {
 				new DefaultChangeFamily(codec),
 				changeReceiver,
 			);
-			return getTreeContext(
-				schema,
-				editableForest,
-				dummyEditor,
-				createMockNodeKeyManager(),
-				brand(nodeKeyFieldKey),
-			);
+			return getTreeContext(schema, editableForest, dummyEditor, createMockNodeKeyManager());
 		}
 
 		const flexTree = createFlexTree(forest, numberSequenceRootSchema);

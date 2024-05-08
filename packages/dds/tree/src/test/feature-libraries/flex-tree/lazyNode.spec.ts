@@ -45,7 +45,6 @@ import {
 	FlexTreeNodeSchema,
 	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
-	nodeKeyFieldKey,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
@@ -332,13 +331,7 @@ describe("LazyNode", () => {
 				bar: "world",
 			},
 		});
-		const context = getTreeContext(
-			schema,
-			forest,
-			editBuilder,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const context = getTreeContext(schema, forest, editBuilder, createMockNodeKeyManager());
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
 		cursor.enterNode(0);
@@ -429,13 +422,7 @@ describe("LazyNode", () => {
 			bar: [], // Won't unbox
 		};
 		const forest = forestWithContent({ schema, initialTree });
-		const context = getTreeContext(
-			schema,
-			forest,
-			editBuilder,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const context = getTreeContext(schema, forest, editBuilder, createMockNodeKeyManager());
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
 		cursor.enterNode(0);

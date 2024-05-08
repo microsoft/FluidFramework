@@ -35,7 +35,6 @@ import {
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -44,7 +43,6 @@ import {
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
 import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -291,7 +289,6 @@ export class SharedTree
 			viewSchema,
 			onDispose,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 	}
 
@@ -302,7 +299,6 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
 		if (view.error?.canInitialize === true) {

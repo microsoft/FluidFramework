@@ -23,7 +23,6 @@ import {
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { LocalNodeKey } from "../node-key/index.js";
 import {
 	Any,
 	FlexAllowedTypes,
@@ -71,7 +70,7 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
-import { LazyNodeKeyField, makeField } from "./lazyField.js";
+import { makeField } from "./lazyField.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
@@ -465,34 +464,7 @@ export function propertyNameFromFieldKey<T extends string>(key: T): PropertyName
 
 export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
 	extends LazyTreeNode<TSchema>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
-		// TODO: Optimize this to avoid allocating the field object.
-
-		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.objectNodeFields.get(key);
-
-		if (fieldSchema === undefined) {
-			return undefined;
-		}
-
-		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
-		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
-		// assert(
-		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
-		// 	"invalid node key field",
-		// );
-
-		if (this.context.nodeKeyFieldKey === undefined) {
-			return undefined;
-		}
-
-		return field.localNodeKey;
-	}
-}
+	implements FlexTreeObjectNode {}
 
 export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,

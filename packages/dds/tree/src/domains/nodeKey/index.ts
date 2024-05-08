@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKeySchema.js";
+export { nodeKeySchema, nodeKeyTreeSchema } from "./nodeKeySchema.js";

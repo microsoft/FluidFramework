@@ -20,22 +20,14 @@ import {
 	FlexFieldKind,
 	FlexTreeSchema,
 	createMockNodeKeyManager,
-	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
 import { forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getTreeContext(
-		schema,
-		forest,
-		dummyEditor,
-		createMockNodeKeyManager(),
-		brand(nodeKeyFieldKey),
-	);
+	return getTreeContext(schema, forest, dummyEditor, createMockNodeKeyManager());
 }
 
 /**
