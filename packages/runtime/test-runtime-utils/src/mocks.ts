@@ -31,6 +31,7 @@ import {
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
@@ -823,7 +824,9 @@ export class MockFluidDataStoreRuntime
 	public readonly path = "";
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
-	public deltaManagerErased = toDeltaManagerErased(this.deltaManager);
+	public get deltaManagerErased(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManager);
+	}
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
