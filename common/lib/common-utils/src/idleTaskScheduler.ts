@@ -17,8 +17,8 @@ export async function scheduleIdleTask<T>(callback: () => T, timeout: number): P
 		const doLowPriorityTask = (): any => {
 			try {
 				resolve(callback());
-			} catch (err: any) {
-				reject(err);
+			} catch (error: any) {
+				reject(error);
 			}
 		};
 
