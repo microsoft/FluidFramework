@@ -192,7 +192,10 @@ export class FluidDataStoreRuntime
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly options: Record<string | number, any>;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly deltaManagerInternal: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
@@ -241,7 +244,7 @@ export class FluidDataStoreRuntime
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
-		this.deltaManager = dataStoreContext.deltaManager;
+		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 
@@ -336,7 +339,7 @@ export class FluidDataStoreRuntime
 	}
 
 	get deltaManagerErased(): IDeltaManagerErased {
-		return toDeltaManagerErased(this.deltaManager);
+		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 
 	public dispose(): void {

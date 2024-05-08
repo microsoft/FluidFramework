@@ -115,7 +115,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     bindToContext(): void;
     connect(services: IChannelServices): void;
     get connected(): boolean;
-    // (undocumented)
     protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     protected didAttach(): void;
     protected dirty(): void;
