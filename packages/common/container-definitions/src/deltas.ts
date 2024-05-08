@@ -46,6 +46,13 @@ export interface IConnectionDetails {
 	 * information which is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
+
+	/**
+	 * A list of optional features that ordering service supports.
+	 * Features supported might be service specific.
+	 * If we have standardized features across all services, they need to be exposed in more structured way.
+	 */
+	supportedFeatures?: Record<string, unknown>;
 }
 
 /**

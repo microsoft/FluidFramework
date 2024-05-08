@@ -240,7 +240,7 @@ export class ConnectionManager implements IConnectionManager {
 	public readonly clientDetails: IClientDetails;
 
 	public get supportedFeatures(): Record<string, unknown> | undefined {
-		return this.connection.supportedFeatures;
+		return this.connection?.supportedFeatures;
 	}
 
 	/**
@@ -374,6 +374,7 @@ export class ConnectionManager implements IConnectionManager {
 			mode: connection.mode,
 			serviceConfiguration: connection.serviceConfiguration,
 			version: connection.version,
+			supportedFeatures: connection.supportedFeatures,
 			reason,
 		};
 	}

@@ -280,10 +280,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	public get clientDetails() {
 		return this.connectionManager.clientDetails;
 	}
-	public get supportedFeatures() {
-		return this.connectionManager.supportedFeatures;
-	}
-
 	public submit(
 		type: MessageType,
 		contents?: string,
