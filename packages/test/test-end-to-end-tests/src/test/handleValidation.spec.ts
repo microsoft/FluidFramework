@@ -19,6 +19,7 @@ import {
 	createAndAttachContainer,
 	ITestFluidObject,
 	waitForContainerConnection,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ISharedMatrix } from "@fluidframework/matrix/internal";
 import { type IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
@@ -107,7 +108,7 @@ async function setup(getTestObjectProvider, apis) {
 		},
 	};
 
-	const provider = getTestObjectProvider();
+	const provider: ITestObjectProvider = getTestObjectProvider();
 	const loader = provider.makeTestLoader(testContainerConfig);
 	const container1 = await createAndAttachContainer(
 		provider.defaultCodeDetails,
@@ -330,10 +331,12 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 
 				await provider.ensureSynchronized();
 				container1.dispose();
+				await provider.ensureSynchronized();
 			}
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
