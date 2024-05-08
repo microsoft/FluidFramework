@@ -763,6 +763,17 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 */
 	sequenceEditor(): SequenceFieldEditBuilder;
 
+	/*
+	 * TODO:
+	 * Remove these editing methods and replace their use with use of `sequenceEditor`.
+	 * These editing methods replicate the API exposed by simple-tree, but using flex-tree types.
+	 * As these methods just re-abstract the lower level SequenceFieldEditBuilder API, they add little value.
+	 * Migrating the logic implementing them to simple-tree (and having it just use `sequenceEditor` directly)
+	 * avoids duplicating the API surface (and documentation), as well as makes it simpler to implement the desired user facing validation and errors
+	 * since simple-tree becomes responsible for all the validation and can produce usage errors in terms of the public package API.
+	 */
+	// #region Editing Methods
+
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -911,6 +922,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 		sourceEnd: number,
 		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
+
+	// #endregion
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 

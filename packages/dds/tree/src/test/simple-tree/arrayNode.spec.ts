@@ -89,7 +89,7 @@ describe("ArrayNode", () => {
 
 			it("past end", () => {
 				const list = hydrate(schemaType, [0, 1, 2, 3]);
-				list.removeRange(1, Infinity);
+				list.removeRange(1, Number.POSITIVE_INFINITY);
 				assert.deepEqual([...list], [0]);
 			});
 
@@ -122,6 +122,21 @@ describe("ArrayNode", () => {
 				// non-integer index
 				assert.throws(() => list.removeRange(1.5, 2), validateUsageError(/integer/));
 			});
+
+			it("invalid empty range", () => {
+				// If someday someone optimized empty ranges to no op earlier, they still need to error in these cases:
+				const list = hydrate(schemaType, [0, 1, 2, 3]);
+				// Past end
+				assert.throws(() => list.removeRange(5, 5), validateUsageError(/Too large/));
+				// negative index
+				assert.throws(() => list.removeRange(-1, -1), validateUsageError(/index/));
+				// non-integer index
+				assert.throws(
+					() => list.removeRange(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+					validateUsageError(/safe integer/),
+				);
+				assert.throws(() => list.removeRange(1.5, 1.5), validateUsageError(/integer/));
+			});
 		});
 	}
 
@@ -146,5 +161,6 @@ describe("ArrayNode", () => {
 		assert.equal(asIndex("0x1", Number.POSITIVE_INFINITY), undefined);
 		assert.equal(asIndex(" 1", Number.POSITIVE_INFINITY), undefined);
 		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
+		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
 	});
 });
