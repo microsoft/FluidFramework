@@ -129,7 +129,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	 * This property is used predominantly for socket io errors. It captures the underlying socket event name which resulted in the error.
 	 * i.e. connect_error, connect_document_error etc.
 	 */
-	eventName?: string;
+	scenarioName?: string;
 }
 
 /**

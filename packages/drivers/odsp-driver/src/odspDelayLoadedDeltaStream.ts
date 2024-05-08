@@ -228,8 +228,8 @@ export class OdspDelayLoadedDeltaStream {
 				if (
 					error &&
 					typeof error === "object" &&
-					((error as IAnyDriverError).eventName === "connect_document_error" ||
-						(error as IAnyDriverError).eventName === undefined)
+					((error as IAnyDriverError).scenarioName === "connect_document_error" ||
+						(error as IAnyDriverError).scenarioName === undefined)
 				) {
 					this.clearJoinSessionTimer();
 					this.cache.sessionJoinCache.remove(this.joinSessionKey);

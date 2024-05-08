@@ -750,7 +750,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				eventName: socketEvent,
+				scenarioName: socketEvent,
 			},
 		);
 	}
@@ -771,7 +771,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				eventName: socketEvent,
+				scenarioName: socketEvent,
 			},
 		);
 	}

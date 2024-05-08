@@ -82,7 +82,7 @@ export type FiveDaysMs = 432000000;
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
-    eventName?: string;
+    scenarioName?: string;
 }
 
 // @alpha (undocumented)

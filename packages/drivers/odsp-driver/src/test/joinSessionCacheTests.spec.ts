@@ -148,8 +148,8 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} catch (error) {
 			assert(
-				(error as IAnyDriverError).eventName === errorEventName,
-				`eventName param with value as '${errorEventName}' should be available`,
+				(error as IAnyDriverError).scenarioName === errorEventName,
+				`scenarioName param with value as '${errorEventName}' should be available`,
 			);
 
 			const info =
@@ -215,8 +215,8 @@ describe("expose joinSessionInfo Tests", () => {
 		} catch (error) {
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(error as any).eventName === errorEventName,
-				`eventName param with value as ${errorEventName} should be present`,
+				(error as IAnyDriverError).scenarioName === errorEventName,
+				`scenarioName param with value as ${errorEventName} should be present`,
 			);
 
 			const info =
