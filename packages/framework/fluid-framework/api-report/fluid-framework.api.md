@@ -191,7 +191,6 @@ export enum FieldKind {
 
 // @public
 export interface FieldProps {
-    // (undocumented)
     readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
 }
