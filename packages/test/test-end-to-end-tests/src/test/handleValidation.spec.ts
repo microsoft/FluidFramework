@@ -117,18 +117,6 @@ async function setup(getTestObjectProvider, apis) {
 		provider.driver.createCreateNewRequest(provider.documentId),
 	);
 	provider.updateDocumentId(container1.resolvedUrl);
-	const url = await container1.getAbsoluteUrl("");
-	const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-	const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
-	const cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
-	const directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
-	const tree1 = await dataStore1.getSharedObject<ISharedTree>(treeId);
-	const matrix1 = await dataStore1.getSharedObject<ISharedMatrix>(matrixId);
-	// legacyTree1 = await dataStore1.getSharedObject<LegacySharedTree>(legacyTreeId);
-	const register1 = await dataStore1.getSharedObject<IConsensusRegisterCollection>(registerId);
-	const queue1 = await dataStore1.getSharedObject<IConsensusOrderedCollection>(queueId);
-	// migrationShim1 = await dataStore1.getSharedObject<MigrationShim>(migrationShimId);
-	const string1 = await dataStore1.getSharedObject<SharedString>(stringId);
 
 	return {
 		loader,
@@ -334,14 +322,9 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				await provider.ensureSynchronized();
 				seq = container1.deltaManager.lastSequenceNumber;
 				container1.dispose();
-				await provider.ensureSynchronized();
 			}
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			await waitForContainerConnection(container2);
-			await provider.ensureSynchronized();
-			await waitContainerToCatchUp(container2);
-
 			if (container2.deltaManager.lastSequenceNumber < seq) {
 				await new Promise<void>((resolve, reject) => {
 					const func = () => {
@@ -358,11 +341,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
-			await provider.ensureSynchronized();
-			await waitContainerToCatchUp(container2);
 			const actualVal = await handle.readHandle(default2);
-			await provider.ensureSynchronized();
-			await waitContainerToCatchUp(container2);
 			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
 
 			const actualObject = await actualVal.get();
