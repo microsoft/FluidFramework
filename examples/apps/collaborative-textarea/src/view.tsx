@@ -12,9 +12,10 @@ interface CollaborativeTextProps {
 }
 
 /**
+ * Collaborative text-area component.
  * @internal
  */
-export const CollaborativeTextView = (props: CollaborativeTextProps) => {
+export const CollaborativeTextView = (props: CollaborativeTextProps): React.ReactElement => {
 	return (
 		<div className="text-area">
 			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(props.text)} />

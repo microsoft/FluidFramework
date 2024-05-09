@@ -17,7 +17,7 @@ import { CollaborativeTextView } from "./view.js";
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<ICollaborativeTextAppModel>(
 		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
 	);
@@ -38,6 +38,7 @@ async function start() {
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
@@ -51,10 +52,12 @@ async function start() {
 	}
 }
 
-start().catch((error) => {
+try {
+	await start();
+} catch (error) {
 	console.error(error);
 	console.log(
 		"%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
 		"font-size:30px",
 	);
-});
+}
