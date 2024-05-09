@@ -33,7 +33,7 @@ async function start() {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
@@ -42,7 +42,7 @@ async function start() {
 	document.title = id;
 
 	// Render it
-	const contentDiv = document.getElementById("content");
+	const contentDiv = document.querySelector("#content");
 	if (contentDiv !== null) {
 		ReactDOM.render(
 			React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
@@ -51,8 +51,8 @@ async function start() {
 	}
 }
 
-start().catch((e) => {
-	console.error(e);
+start().catch((error) => {
+	console.error(error);
 	console.log(
 		"%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
 		"font-size:30px",
