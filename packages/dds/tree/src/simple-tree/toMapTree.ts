@@ -316,13 +316,7 @@ export function objectToMapTree(
 	)) {
 		const value = (data as Record<string, InsertableContent>)[key];
 		if (value !== undefined && Object.hasOwnProperty.call(data, key)) {
-			setFieldValue(
-				fields,
-				value,
-				getObjectFieldSchema(schema, key),
-				nodeKeyManager,
-				key,
-			);
+			setFieldValue(fields, value, getObjectFieldSchema(schema, key), nodeKeyManager, key);
 		} else {
 			if (fieldSchema instanceof FieldSchema) {
 				const defaultProvider = fieldSchema.props?.defaultProvider;
