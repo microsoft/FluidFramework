@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import Table from "easy-table";
 import chalk from "chalk";
+import Table from "easy-table";
 
 /**
  * Library for converting a `Record<string, unknown>` into formatted table cells.

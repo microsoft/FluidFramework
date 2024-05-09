@@ -16,6 +16,7 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
+	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -152,7 +153,7 @@ function createProxyHandler(
 
 			const flexNode = getFlexNode(proxy);
 			const field = flexNode.getBoxed(fieldInfo.storedKey);
-			setField(field, fieldInfo.schema, value);
+			setField(field, fieldInfo.schema, value, flexNode.context.nodeKeyManager);
 
 			return true;
 		},
@@ -203,6 +204,7 @@ export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent,
+	nodeKeyManager: NodeKeyManager,
 ): void {
 	switch (field.schema.kind) {
 		case FieldKinds.required:
@@ -212,7 +214,11 @@ export function setField(
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
 			const content = prepareContentForInsert(value, field.context.checkout.forest);
-			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
+			const cursor = cursorFromNodeData(
+				content,
+				simpleFieldSchema.allowedTypes,
+				nodeKeyManager,
+			);
 			typedField.content = cursor;
 			break;
 		}

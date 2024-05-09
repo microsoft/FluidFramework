@@ -151,6 +151,9 @@
 			"InterfaceDeclaration_IConsensusOrderedCollection": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_ConsensusQueue": {
+				"forwardCompat": false
 			}
 		}
 	}

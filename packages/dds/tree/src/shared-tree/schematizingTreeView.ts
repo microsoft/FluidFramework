@@ -67,7 +67,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config);
+		this.flexConfig = toFlexConfig(config, nodeKeyManager);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		this.update();
 
@@ -222,7 +222,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 
-		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
+		setField(
+			view.context.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent,
+			view.context.nodeKeyManager,
+		);
 	}
 }
 
