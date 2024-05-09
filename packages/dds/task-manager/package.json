@@ -149,6 +149,10 @@
 			"InterfaceDeclaration_ITaskManager": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_TaskManager": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
