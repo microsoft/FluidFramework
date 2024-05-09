@@ -46,7 +46,6 @@ import {
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
-	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
@@ -462,21 +461,17 @@ export function propertyNameFromFieldKey<T extends string>(key: T): PropertyName
 	return key as PropertyNameFromFieldKey<T>;
 }
 
-export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
-	extends LazyTreeNode<TSchema>
-	implements FlexTreeObjectNode {}
-
 export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyObjectNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
+): LazyTreeNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
 	const objectNodeClass = getOrCreate(cachedStructClasses, schema, () =>
 		buildStructClass(schema),
 	);
-	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyObjectNode<TSchema> &
+	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyTreeNode<TSchema> &
 		FlexTreeObjectNodeTyped<TSchema>;
 }
 
@@ -487,7 +482,7 @@ const cachedStructClasses = new WeakMap<
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyObjectNode<FlexObjectNodeSchema>
+	) => LazyTreeNode<FlexObjectNodeSchema>
 >();
 
 function getBoxedField(
@@ -507,7 +502,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-) => LazyObjectNode<TSchema> {
+) => LazyTreeNode<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
@@ -577,7 +572,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyObjectNode<TSchema> {
+	class CustomStruct extends LazyTreeNode<TSchema> {
 		public constructor(
 			context: Context,
 			cursor: ITreeSubscriptionCursor,
