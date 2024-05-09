@@ -238,6 +238,40 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return range;
 	}
 
+	public retakeOutstandingCreationRange(): IdCreationRange {
+		const lastLocalCluster = this.localSession.getLastCluster();
+		let count: number;
+		let firstGenCount: number;
+		if (lastLocalCluster === undefined) {
+			firstGenCount = 1;
+			count = this.localGenCount;
+		} else {
+			firstGenCount = genCountFromLocalId(
+				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+			);
+			count = this.localGenCount - firstGenCount + 1;
+		}
+
+		if (count === 0) {
+			return {
+				sessionId: this.localSessionId,
+			};
+		}
+
+		const range: IdCreationRange = {
+			ids: {
+				count,
+				firstGenCount,
+				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
+				requestedClusterSize: this.nextRequestedClusterSize,
+			},
+			sessionId: this.localSessionId,
+		};
+
+		IdCompressor.assertValidRange(range);
+		return range;
+	}
+
 	private static assertValidRange(range: IdCreationRange): void {
 		if (range.ids === undefined) {
 			return;
@@ -285,7 +319,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
 			throw rangeFinalizationError(
-				lastCluster.baseLocalId - lastCluster.count + 1,
+				lastCluster.baseLocalId - lastCluster.count,
 				rangeBaseLocal,
 			);
 		}
