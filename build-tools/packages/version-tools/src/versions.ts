@@ -27,7 +27,7 @@ export function getSimpleVersion(
 ) {
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
-	const buildId = simplePatchVersioning ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
+	const buildId = simplePatchVersioning ? Number.parseInt(argBuildNum.split(".")[0], 10) : undefined;
 	let version = fileVersion;
 	if (isInternalVersionScheme(version, /* allowPrereleases */ true)) {
 		if (simplePatchVersioning) {
@@ -37,7 +37,7 @@ export function getSimpleVersion(
 		}
 
 		if (!argRelease) {
-			const [, , prereleaseId] = fromInternalScheme(version);
+			const prereleaseId = fromInternalScheme(version)[2];
 			version = changePreReleaseIdentifier(
 				version,
 				// The "internal" prerelease identifier was historically transformed to "dev", so that behavior is preserved
@@ -144,7 +144,7 @@ function parseFileVersion(fileVersion: string, buildId?: number) {
 			console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
 			process.exit(9);
 		}
-		r[2] = (parseInt(r[2], 10) + buildId).toString();
+		r[2] = (Number.parseInt(r[2], 10) + buildId).toString();
 		releaseVersion = r.join(".");
 	}
 
@@ -174,7 +174,7 @@ function getVersions(prefix: TagPrefix) {
 function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
 	const versions = tags
 		.filter((v) => v.startsWith(`${prefix}_v`))
-		.map((tag) => tag.substring(`${prefix}_v`.length));
+		.map((tag) => tag.slice(`${prefix}_v`.length));
 	semver.sort(versions);
 	return versions;
 }

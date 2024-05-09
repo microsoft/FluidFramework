@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import * as semver from "semver";
 
 import { VersionBumpType } from "./bumpTypes";
 
-/** The virtualPatch format uses this value to encode and decode versions in that scheme. */
+/**
+ * The virtualPatch format uses this value to encode and decode versions in that scheme.
+ */
 const VIRTUAL_PATCH_FORMAT_MULTIPLIER = 1000;
 
 /**

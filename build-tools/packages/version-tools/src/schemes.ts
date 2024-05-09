@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
@@ -111,15 +111,18 @@ export function bumpVersionScheme(
 	switch (scheme) {
 		case "semver": {
 			switch (bumpType) {
-				case "current":
+				case "current": {
 					return sv;
+				}
 				case "major":
 				case "minor":
-				case "patch":
+				case "patch": {
 					return sv?.inc(bumpType) ?? null;
-				default:
+				}
+				default: {
 					// If the bump type is an explicit version, just use it.
 					return bumpType;
+				}
 			}
 		}
 		case "internal": {
@@ -131,12 +134,12 @@ export function bumpVersionScheme(
 		case "virtualPatch": {
 			if (isVersionBumpType(bumpType)) {
 				const translatedVersion = bumpVirtualPatchVersion(bumpType, sv);
-				if (!isVersionBumpType(translatedVersion)) {
-					return translatedVersion;
-				} else {
+				if (isVersionBumpType(translatedVersion)) {
 					throw new Error(
 						`Applying virtual patch failed. The version returned was: ${translatedVersion}`,
 					);
+				} else {
+					return translatedVersion;
 				}
 			} else {
 				return sv;
