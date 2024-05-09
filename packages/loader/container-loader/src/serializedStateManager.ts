@@ -100,7 +100,7 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
-	private refreshSnapshotP: Promise<ISnapshotInfo | undefined> | undefined;
+	private refreshSnapshotP: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	constructor(
@@ -185,14 +185,14 @@ export class SerializedStateManager {
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
 
-			// Fire and forget the refresh snapshot call (if enabled)
 			if (
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
 			) {
+				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 				this.refreshSnapshotP ??= this.refreshLatestSnapshot(supportGetSnapshotApi).catch(
 					(e) => {
 						this.mc.logger.sendErrorEvent({
-							eventName: "RefreshSnapshotFailed",
+							eventName: "RefreshLatestSnapshotFailed",
 							error: e,
 						});
 						return undefined;
@@ -218,25 +218,23 @@ export class SerializedStateManager {
 
 	/**
 	 * Fetch the latest snapshot for the container, including delay-loaded groupIds if pendingLocalState was provided and contained any groupIds.
+	 * Note that this will update the StorageAdapter's cached snapshots for the groupIds (if present)
 	 *
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree (must be true to fetch by groupIds)
-	 * @returns SnapshotInfo form of delay-loaded snapshot
 	 */
-	private async refreshLatestSnapshot(
-		supportGetSnapshotApi: boolean,
-	): Promise<ISnapshotInfo | undefined> {
+	private async refreshLatestSnapshot(supportGetSnapshotApi: boolean): Promise<void> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
 			this.mc,
 			this.storageAdapter,
 			supportGetSnapshotApi,
 		);
 
-		let delayLoadedSnapshot: ISnapshotInfo | undefined;
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
+		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
 		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
-		// We are making two network calls because it requires work for storage to add a special base groupId.
 		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
 			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			// (This is a separate network call from above because it requires work for storage to add a special base groupId)
 			const snapshot = await this.storageAdapter.getSnapshot({
 				versionId: undefined,
 				scenarioName: "getLatestSnapshotInfo",
@@ -245,10 +243,9 @@ export class SerializedStateManager {
 				fetchSource: FetchSource.noCache,
 			});
 			assert(snapshot !== undefined, "Snapshot should exist");
-			delayLoadedSnapshot = convertSnapshotToSnapshotInfo(snapshot);
 		}
+
 		this.updateSnapshotAndProcessedOpsMaybe();
-		return delayLoadedSnapshot;
 	}
 
 	/**
