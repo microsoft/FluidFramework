@@ -8,7 +8,12 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import type {
 	IDirectory,
 	IDirectoryValueChanged,
@@ -872,7 +877,13 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject = maybeTestFluidObject.ITestFluidObject;
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		clearEventCount = 0;
@@ -1295,17 +1306,26 @@ describeCompat(
 		beforeEach("createSharedDirectories", async () => {
 			// Create a Container for the first client.
 			container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
 			// Load the Container that was created by the first client.
 			container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
 			// Load the Container that was created by the first client.
 			container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+				await container3.getEntryPoint();
+			const dataObject3 = maybeTestFluidObject3.ITestFluidObject;
+			assert(dataObject3 !== undefined, "dataObject3 not a ITestFluidObject");
 			sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
 			await provider.ensureSynchronized();

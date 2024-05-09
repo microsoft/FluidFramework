@@ -9,7 +9,11 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -74,7 +78,13 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject = maybeTestFluidObject.ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);

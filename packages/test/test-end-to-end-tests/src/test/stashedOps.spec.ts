@@ -30,6 +30,7 @@ import {
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
+	type FluidObject,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
@@ -139,7 +140,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	) => {
 		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 
 		[...Array(lots).keys()].map((i) =>
 			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
@@ -268,7 +272,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	async function getMapFromProvider(
 		getMap: (t: ITestFluidObject) => Promise<MinimalMap>,
 	): Promise<MinimalMap> {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		return getMap(dataStore);
 	}
 
@@ -294,7 +301,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		provider.updateDocumentId(container1.resolvedUrl);
 		url = await container1.getAbsoluteUrl("");
-		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
@@ -351,7 +361,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
@@ -409,7 +422,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
@@ -466,7 +482,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
 		const container2 = await loader.resolve({ url, headers }, pendingOps);
 		container2.connect();
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
@@ -508,7 +527,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// load with pending ops, which it should not resend because they were already sent successfully
 			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await getMap(dataStore2);
 			const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
@@ -534,7 +556,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// load container with pending ops, which should resend the op not sent by previous container
 			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await getMap(dataStore2);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
@@ -555,7 +580,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// load container with pending ops, which should resend the ops not sent by previous container
 			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await getMap(dataStore2);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
@@ -588,7 +616,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// load container with pending ops, which should not resend the ops sent by previous container
 			const container2 = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await getMap(dataStore2);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
@@ -614,7 +645,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -638,7 +672,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -671,7 +708,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should not resend the ops sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
@@ -688,7 +728,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -719,7 +762,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -738,7 +784,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -760,7 +809,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -784,7 +836,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -800,7 +855,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load with pending ops, which it should not resend because they were already sent successfully
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -816,7 +874,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -834,7 +895,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load with pending ops, which it should not resend because they were already sent successfully
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -850,7 +914,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -868,7 +935,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		string1.annotateRange(0, string1.getLength(), { bold: false });
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -892,7 +962,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -937,11 +1010,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const newMapId = "newMap";
 		let id;
 		const pendingOps = await getPendingOps(provider, false, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 			const runtime = defaultDataStore.context.containerRuntime;
 
 			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await createdDataStore.entryPoint.get();
+			const dataStore = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			id = dataStore.context.id;
 
 			const channel = dataStore.runtime.createChannel(
@@ -959,7 +1038,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(container2);
 
 		// get new datastore from first container
-		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const entryPoint = maybeTestFluidObject3.ITestFluidObject;
+		assert(entryPoint !== undefined, "entryPoint not a ITestFluidObject");
 		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
@@ -972,11 +1054,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("doesn't resend successful attach op", async function () {
 		const newMapId = "newMap";
 		const pendingOps = await getPendingOps(provider, true, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 			const runtime = defaultDataStore.context.containerRuntime;
 
 			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await createdDataStore.entryPoint.get();
+			const dataStore = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 
 			const channel = dataStore.runtime.createChannel(
 				newMapId,
@@ -1012,7 +1100,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new DDS from first container
 		await provider.ensureSynchronized();
-		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 		const containerRuntime = dataStore1.context.containerRuntime as ContainerRuntime;
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
@@ -1027,7 +1118,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
-		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 
 		await provider.opProcessingController.pauseProcessing(container);
 
@@ -1070,7 +1164,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
-		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 		const string = await defaultDataStore.getSharedObject<SharedString>(stringId);
 
 		await provider.ensureSynchronized();
@@ -1109,7 +1206,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// op yet, because the reference sequence number of the second op is lower than the sequence number
 		// of the first op
 		const container2 = await loader.resolve({ url }, stashedOps);
-		const defaultDataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const defaultDataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(defaultDataStore2 !== undefined, "defaultDataStore2 not a ITestFluidObject");
 		const string2 = await defaultDataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		assert.strictEqual(
@@ -1129,7 +1229,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		async () => {
 			const container: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
-			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			// Force to write mode to get a leave message
 			dataStore.root.set("forceWrite", true);
 			await provider.ensureSynchronized();
@@ -1173,7 +1276,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		const container2 = await loadOffline(provider, { url }, pendingOps);
-		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.container.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
@@ -1228,7 +1334,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		const container2 = await loadOffline(provider, { url }, pendingOps);
-		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.container.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
@@ -1246,7 +1355,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const morePendingOps = await container2.container.closeAndGetPendingLocalState?.();
 
 		const container3 = await loadOffline(provider, { url }, morePendingOps);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container3.container.getEntryPoint();
+		const dataStore3 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore3 !== undefined, "dataStore3 not a ITestFluidObject");
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes from both containers should be applied
@@ -1292,7 +1404,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 
 			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container2);
 			const serializedClientId = container2.clientId;
@@ -1344,7 +1459,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("offline blob upload", async function () {
 		const container = await loadOffline(provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
@@ -1355,7 +1473,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 		map.set("blob handle", handle);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -1366,7 +1487,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("close while uploading blob", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
@@ -1377,7 +1501,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await pendingOpsP;
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -1392,7 +1519,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("abort while stashing blobs", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		const ac = new AbortController();
 		await provider.ensureSynchronized();
@@ -1406,7 +1536,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await pendingOpsP;
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		assert.strictEqual(
@@ -1416,7 +1549,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("close while uploading multiple blob", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
@@ -1430,7 +1566,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await pendingOpsP;
 
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
@@ -1453,7 +1592,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		async function () {
 			// upload blob offline so an entry is added to redirect table
 			const container = await loadOffline(provider, { url });
-			const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.container.getEntryPoint();
+			const dataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
@@ -1474,7 +1616,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("load offline from stashed ops with pending blob", async function () {
 		const container = await loadOffline(provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
@@ -1486,7 +1631,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const stashedChanges = await stashedChangesP;
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container3.container.getEntryPoint();
+		const dataStore3 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore3 !== undefined, "dataStore3 not a ITestFluidObject");
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// blob is accessible offline
@@ -1510,7 +1658,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("stashed changes with blobs", async function () {
 		const container = await loadOffline(provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
@@ -1522,7 +1673,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const stashedChanges = await stashedChangesP;
 
 		const container3 = await loader.resolve({ url }, stashedChanges);
-		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container3.getEntryPoint();
+		const dataStore3 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore3 !== undefined, "dataStore3 not a ITestFluidObject");
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -1543,11 +1697,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let id;
 		// stash attach op
 		const pendingOps = await getPendingOps(provider, false, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 			const runtime = defaultDataStore.context.containerRuntime;
 
 			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await createdDataStore.entryPoint.get();
+			const dataStore = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			id = dataStore.context.id;
 
 			const channel = dataStore.runtime.createChannel(
@@ -1564,7 +1724,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// load offline; new datastore should be accessible
 		const container2 = await loadOffline(provider, { url }, pendingOps);
 		{
-			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.container.getEntryPoint();
+			const entryPoint = maybeTestFluidObject.ITestFluidObject;
+			assert(entryPoint !== undefined, "entryPoint not a ITestFluidObject");
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
@@ -1578,7 +1741,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// get new datastore from first container
 		{
-			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const entryPoint = maybeTestFluidObject.ITestFluidObject;
+			assert(entryPoint !== undefined, "entryPoint not a ITestFluidObject");
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
@@ -1594,7 +1760,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const detachedContainer: IContainerExperimental = await loader2.createDetachedContainer(
 			provider.defaultCodeDetails,
 		);
-		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await detachedContainer.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
@@ -1604,7 +1773,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const url2 = await detachedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
 		const container2 = await loader2.resolve({ url: url2 }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1614,7 +1786,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const detachedContainer = await loader2.createDetachedContainer(
 			provider.defaultCodeDetails,
 		);
-		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await detachedContainer.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
@@ -1622,7 +1797,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		detachedContainer.close();
 		const rehydratedContainer: IContainerExperimental =
 			await loader2.rehydrateDetachedContainerFromSnapshot(summary);
-		const dataStore2 = (await rehydratedContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await rehydratedContainer.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		map2.set(testKey2, testValue);
 
@@ -1635,7 +1813,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.ok(url2);
 
 		const container3 = await loader2.resolve({ url: url2 }, pendingOps);
-		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+			await container3.getEntryPoint();
+		const dataStore3 = maybeTestFluidObject3.ITestFluidObject;
+		assert(dataStore3 !== undefined, "dataStore3 not a ITestFluidObject");
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		assert.strictEqual(map3.get(testKey), testValue);
 		assert.strictEqual(map3.get(testKey2), testValue);
@@ -1656,7 +1837,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -1692,7 +1876,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await container.deltaManager.outbound.pause();
 		let pendingState: string | undefined;
 		let pendingStateP;
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		for (let i = 5; i--; ) {
 			map.set(`${i}`, `${i}`);
@@ -1719,7 +1906,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		const container2 = await loader.resolve({ url }, pendingState);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		for (let i = 5; i--; ) {
@@ -1738,7 +1928,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let pendingState;
 		let pendingStateP;
 
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
 		for (let i = 5; i--; ) {
 			counter.increment(1);
@@ -1763,7 +1956,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use
 		const container2 = await loader.resolve({ url }, pendingState);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		await provider.ensureSynchronized();
 		// local value is what we expect
@@ -1789,7 +1985,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// avoid our join op being saved
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
 		const container: IContainerExperimental = await loader.resolve({ url, headers });
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		// generate ops with RSN === summary SN
 		map.set(testKey, testValue);
@@ -1804,7 +2003,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
@@ -1861,7 +2063,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(url, "no url");
 		container.disconnect();
 
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		const pendingOps = await container.closeAndGetPendingLocalState?.();
@@ -1871,7 +2076,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader2.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
 		await provider2.ensureSynchronized();

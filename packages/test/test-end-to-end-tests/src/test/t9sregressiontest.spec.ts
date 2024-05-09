@@ -14,6 +14,7 @@ import {
 	ITestFluidObject,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 const mapId = "map";
 
@@ -41,11 +42,17 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		const url = await container1.getAbsoluteUrl("");
 		assert(typeof url === "string");
 		console.log(url);
-		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		if (!(container2 as any).connected) {
 			await new Promise((resolve) => container2.on("connected", resolve));

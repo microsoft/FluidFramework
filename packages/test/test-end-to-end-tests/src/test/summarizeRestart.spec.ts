@@ -16,6 +16,7 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
@@ -195,7 +196,10 @@ describeCompat(
 			],
 			async () => {
 				const container = await createContainer();
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const counter = SharedCounter.create(dataObject.runtime, "counter");
 				dataObject.root.set("counter", counter.handle);
 

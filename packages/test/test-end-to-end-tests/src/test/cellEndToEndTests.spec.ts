@@ -9,7 +9,12 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	ChannelFactoryRegistry,
@@ -334,7 +339,13 @@ describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvide
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject = maybeTestFluidObject.ITestFluidObject;
 		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];

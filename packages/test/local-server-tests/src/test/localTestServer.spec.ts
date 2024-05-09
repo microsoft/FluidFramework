@@ -26,6 +26,7 @@ import {
 	createAndAttachContainer,
 	createLoader,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
@@ -94,12 +95,24 @@ describe("LocalTestServer", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject1 = maybeTestFluidObject.ITestFluidObject;
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		assert(
+			maybeTestFluidObject2.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject2 = maybeTestFluidObject.ITestFluidObject;
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 

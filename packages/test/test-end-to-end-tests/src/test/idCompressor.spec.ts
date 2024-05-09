@@ -16,7 +16,7 @@ import {
 	IContainerRuntimeOptions,
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, type FluidObject } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -78,7 +78,10 @@ describeCompat(
 			it("has no compressor if not enabled", async () => {
 				provider.reset();
 				const container = await provider.makeTestContainer(containerConfigNoCompressor);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 
 				assert(getIdCompressor(map) === undefined);
@@ -87,7 +90,10 @@ describeCompat(
 			it("can't enable compressor on an existing container", async () => {
 				provider.reset();
 				const container = await provider.makeTestContainer(containerConfigNoCompressor);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 				assert(getIdCompressor(map) === undefined);
 
@@ -102,12 +108,18 @@ describeCompat(
 
 			it("can't disable compressor if previously enabled on existing container", async () => {
 				const container = await provider.makeTestContainer(containerConfigWithCompressor);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 				assert(getIdCompressor(map) !== undefined);
 
 				const container2 = await provider.loadTestContainer(containerConfigNoCompressor);
-				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 				const map2 = await dataObject2.getSharedObject<ISharedMap>("mapId");
 				assert(getIdCompressor(map2) !== undefined);
 			});
@@ -674,7 +686,10 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
 
 		// Generate an Id before attaching the container
@@ -687,7 +702,10 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 		const url: any = await container.getAbsoluteUrl("");
 		const loader2 = provider.makeTestLoader(testConfig) as Loader;
 		const container2 = await loader2.resolve({ url });
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
 		// Generate an Id in the second attached container and send an op to send the Ids
 		(testChannel2 as any).runtime.idCompressor.generateCompressedId();

@@ -14,7 +14,11 @@ import {
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -393,7 +397,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				this.skip();
 			}
 			const dataStore = await runtimeOf(dataObject1).createDataStore(packageName);
-			const dataObject = (await dataStore.entryPoint?.get()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await dataStore.entryPoint?.get();
+			const dataObject = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 			assert(dataObject !== undefined, "could not create data store");
 
 			await assert.rejects(

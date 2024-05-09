@@ -43,6 +43,7 @@ import { v5 as uuidv5 } from "uuid";
 // 'lodash' import workaround.
 const { range, sortedIndex, isFunction } = lodash;
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { SharedPropertyTree } from "../propertyTree.js";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests
@@ -192,13 +193,25 @@ describe("PropertyDDS", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject1 = maybeTestFluidObject.ITestFluidObject;
 		sharedPropertyTree1 = await dataObject1.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree1 as any).__id = 1; // Add an id to simplify debugging via conditional breakpoints
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		assert(
+			maybeTestFluidObject2.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject2 = maybeTestFluidObject.ITestFluidObject;
 		sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 

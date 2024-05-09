@@ -304,12 +304,18 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			let idA: string;
 			let seq: number;
 			{
-				const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+				assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 				const runtime = defaultDataStore.context.containerRuntime;
 				idA = defaultDataStore.context.id;
 
 				const dataStoreB = await runtime.createDataStore(["default"]);
-				const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await dataStoreB.entryPoint.get();
+				const dataObjectB = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObjectB !== undefined, "dataObjectB not a ITestFluidObject");
 
 				await handle.storeHandle(defaultDataStore, dataObjectB.handle);
 
@@ -333,7 +339,10 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				});
 			}
 
-			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const default2 = maybeTestFluidObject.ITestFluidObject;
+			assert(default2 !== undefined, "default2 not a ITestFluidObject");
 
 			const actualVal = await handle.readHandle(default2);
 			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);

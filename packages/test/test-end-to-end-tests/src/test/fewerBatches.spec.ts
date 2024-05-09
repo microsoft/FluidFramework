@@ -8,7 +8,11 @@ import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions/internal";
@@ -71,12 +75,24 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = (await localContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await localContainer.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject1 = maybeTestFluidObject.ITestFluidObject;
 		dataObject1map = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await remoteContainer.getEntryPoint();
+		assert(
+			maybeTestFluidObject2.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject2 = maybeTestFluidObject.ITestFluidObject;
 		dataObject2map = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);

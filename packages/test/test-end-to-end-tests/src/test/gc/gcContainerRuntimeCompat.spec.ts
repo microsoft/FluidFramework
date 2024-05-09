@@ -27,6 +27,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { getGCFeatureFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 interface LayerApis {
@@ -111,7 +112,13 @@ describeCompat(
 			}
 			mainContainer = await createContainer(version1Apis);
 			if (mainContainer.getEntryPoint !== undefined) {
-				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await mainContainer.getEntryPoint();
+				assert(
+					maybeTestFluidObject.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataStoreA = maybeTestFluidObject.ITestFluidObject;
 			} else {
 				// Back-compat: versions of container-loader before 2.0.0-internal.3.3.0 don't have a getEntryPoint API.
 				const result = await (mainContainer as any).request({ url: "/" });
@@ -178,7 +185,13 @@ describeCompat(
 				await dataStoreA.context.containerRuntime.createDataStore(dataObjectType);
 			let dataObjectB: ITestFluidObject;
 			if (dataStoreB.entryPoint !== undefined) {
-				dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await dataStoreB.entryPoint.get();
+				assert(
+					maybeTestFluidObject.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataObjectB = maybeTestFluidObject.ITestFluidObject;
 			} else {
 				// Back-compat: old runtime versions won't have an entry point API.
 				const result = await (dataStoreB as any).request({ url: "/" });

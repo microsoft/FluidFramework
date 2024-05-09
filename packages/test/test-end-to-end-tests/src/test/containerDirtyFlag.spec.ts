@@ -8,7 +8,11 @@ import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
@@ -52,7 +56,10 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
 		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		[...Array(lots).keys()].map((i) =>
@@ -91,7 +98,10 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		const verifyDirtyStateTransitions = async (container: IContainer) => {
 			assert.strictEqual(container.isDirty, false, "Container should not be dirty");
 
-			const dataStore2 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore2 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			map2.set("key", "value");
 
@@ -116,7 +126,10 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 			);
 			provider.updateDocumentId(container1.resolvedUrl);
 			url = await container1.getAbsoluteUrl("");
-			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		});
 

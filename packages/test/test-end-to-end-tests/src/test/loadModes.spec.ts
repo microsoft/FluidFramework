@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { type CompatApis, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequestHeader, type FluidObject } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
@@ -330,7 +330,10 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			registry: [[mapId, apis.dds.SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
-		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await created.getEntryPoint();
+		const do1 = maybeTestFluidObject.ITestFluidObject;
+		assert(do1 !== undefined, "do1 not a ITestFluidObject");
 		const map1 = await do1.getSharedObject<ISharedMap>(mapId);
 
 		const headers: IRequestHeader = {
@@ -343,7 +346,10 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			url: await provider.driver.createContainerUrl(provider.documentId),
 			headers,
 		});
-		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await loaded.getEntryPoint();
+		const do2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(do2 !== undefined, "do2 not a ITestFluidObject");
 		loaded.connect();
 		loaded.forceReadonly?.(true);
 		const map2 = await do2.getSharedObject<ISharedMap>(mapId);

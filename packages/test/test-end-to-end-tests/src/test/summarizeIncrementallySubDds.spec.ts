@@ -39,6 +39,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds
@@ -536,7 +537,10 @@ describeCompat(
 
 		it("can create summary handles for blobs in DDSes that do not change", async () => {
 			const container = await createContainer();
-			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const datastore = maybeTestFluidObject.ITestFluidObject;
+			assert(datastore !== undefined, "datastore not a ITestFluidObject");
 			const dds = await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
 				TestIncrementalSummaryBlobDDS.getFactory().type,
 			);
@@ -581,7 +585,10 @@ describeCompat(
 
 		it("can create summary handles for trees in DDSes that do not change", async () => {
 			const container = await createContainer();
-			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const datastore = maybeTestFluidObject.ITestFluidObject;
+			assert(datastore !== undefined, "datastore not a ITestFluidObject");
 			const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
 				TestIncrementalSummaryTreeDDS.getFactory().type,
 			);
@@ -658,7 +665,10 @@ describeCompat(
 
 			// Test that we can load from multiple containers
 			const container2 = await loadContainer(summaryVersion);
-			const datastore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const datastore2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(datastore2 !== undefined, "datastore2 not a ITestFluidObject");
 			const dds2 = await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
 				TestIncrementalSummaryTreeDDS.getFactory().type,
 			);

@@ -23,6 +23,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 const versionWithChunking = "0.56.0";
 
@@ -85,7 +86,10 @@ describeInstallVersions(
 		oldMap = await oldDataObject.getSharedObject<ISharedMap>(mapId);
 
 		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await containerOnLatest.getEntryPoint();
+		const newDataObject = maybeTestFluidObject.ITestFluidObject;
+		assert(newDataObject !== undefined, "newDataObject not a ITestFluidObject");
 		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();

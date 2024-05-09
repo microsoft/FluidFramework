@@ -38,6 +38,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
@@ -320,7 +321,13 @@ describeCompat(
 					);
 
 				mainContainer = await createContainer();
-				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await mainContainer.getEntryPoint();
+				assert(
+					maybeTestFluidObject.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataStoreA = maybeTestFluidObject.ITestFluidObject;
 
 				// Create data stores B and C, and mark them as referenced.
 				const containerRuntime = dataStoreA.context.containerRuntime;

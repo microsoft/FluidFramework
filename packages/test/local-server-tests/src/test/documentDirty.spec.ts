@@ -24,6 +24,7 @@ import {
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 describe("Document Dirty", () => {
 	const documentId = "documentDirtyTest";
@@ -147,7 +148,13 @@ describe("Document Dirty", () => {
 
 			// Create the first container, component and DDSes.
 			container = await createContainer();
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject = maybeTestFluidObject.ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
@@ -546,7 +553,13 @@ describe("Document Dirty", () => {
 
 			// Create the first container, component and DDSes.
 			container = await createDetachedContainer();
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject = maybeTestFluidObject.ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 

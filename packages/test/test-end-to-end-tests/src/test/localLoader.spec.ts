@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
@@ -276,7 +276,10 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 				const container = await createContainer(documentId, factory);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				text = await dataObject.getSharedObject("text");
 			});
 
@@ -299,11 +302,23 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
 				const container1 = await createContainer(documentId, factory);
-				dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				assert(
+					maybeTestFluidObject.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataObject1 = maybeTestFluidObject.ITestFluidObject;
 				text1 = await dataObject1.getSharedObject<SharedString>("text");
 
 				const container2 = await loadContainer(documentId, container1.resolvedUrl, factory);
-				dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				assert(
+					maybeTestFluidObject2.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataObject2 = maybeTestFluidObject.ITestFluidObject;
 				text2 = await dataObject2.getSharedObject<SharedString>("text");
 			});
 

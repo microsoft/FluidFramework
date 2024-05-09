@@ -25,6 +25,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -127,7 +128,10 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
-		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await mainContainer.getEntryPoint();
+		const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 		dataStore1Id = dataStore1.context.id;
 
 		// Create couple more data stores and mark them as referenced.

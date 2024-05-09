@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { type SharedString } from "@fluidframework/sequence/internal";
 import {
 	DataObjectFactoryType,
@@ -56,13 +58,19 @@ describeCompat(
 			async () => {
 				// Create container with read-connection
 				const container1 = await provider.makeTestContainer(configWithReadConnection);
-				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 				sharedString1.insertText(0, "a");
 
 				// Load the container with read-connection
 				const container2 = await provider.loadTestContainer(configWithReadConnection);
-				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 				sharedString2.insertText(0, "b");
 
@@ -80,13 +88,19 @@ describeCompat(
 			async () => {
 				// Create container with read-connection
 				const container1 = await provider.makeTestContainer(configWithReadConnection);
-				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 				sharedString1.insertText(0, "a");
 
 				// Load the container with write-connection
 				const container2 = await provider.loadTestContainer(configWithWriteConnection);
-				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 				sharedString2.insertText(0, "b");
 
@@ -104,13 +118,19 @@ describeCompat(
 			async () => {
 				// Create container with write-connection
 				const container1 = await provider.makeTestContainer(configWithWriteConnection);
-				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 				sharedString1.insertText(0, "a");
 
 				// Load the container with read-connection
 				const container2 = await provider.loadTestContainer(configWithReadConnection);
-				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 				sharedString2.insertText(0, "b");
 
@@ -128,13 +148,19 @@ describeCompat(
 			async () => {
 				// Create container with write-connection
 				const container1 = await provider.makeTestContainer(configWithWriteConnection);
-				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container1.getEntryPoint();
+				const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 				sharedString1.insertText(0, "a");
 
 				// Load the container with write-connection
 				const container2 = await provider.loadTestContainer(configWithWriteConnection);
-				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+					await container2.getEntryPoint();
+				const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+				assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 				sharedString2.insertText(0, "b");
 

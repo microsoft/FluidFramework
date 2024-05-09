@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces/internal";
+import { IRequest, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -72,7 +72,10 @@ describeCompat(
 		async function createDetachedContainerAndGetEntryPoint() {
 			const container = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const defaultDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(defaultDataStore !== undefined, "defaultDataStore not a ITestFluidObject");
 			return {
 				container,
 				defaultDataStore,
@@ -81,7 +84,10 @@ describeCompat(
 
 		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
-			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await dataStore.entryPoint.get();
+			const peerDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(peerDataStore !== undefined, "peerDataStore not a ITestFluidObject");
 			return {
 				peerDataStore,
 				peerDataStoreRuntimeChannel: peerDataStore.channel,

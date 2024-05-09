@@ -9,7 +9,11 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import type {
 	IIntervalCollection,
 	SequenceInterval,
@@ -120,7 +124,10 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		const container: IContainerExperimental =
 			await provider.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 
 		[...Array(30).keys()].map((i) =>
 			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),

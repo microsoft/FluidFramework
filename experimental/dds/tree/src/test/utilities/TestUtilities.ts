@@ -14,7 +14,13 @@ import {
 } from '@fluidframework/container-definitions/internal';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
-import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import type {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -388,7 +394,9 @@ export async function setUpLocalServerTestSharedTree(
 		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
-	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+	const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined = await container.getEntryPoint();
+	const dataObject = maybeTestFluidObject.ITestFluidObject;
+	assert(dataObject !== undefined, 'dataObject not a ITestFluidObject');
 
 	const uploadedBlobs =
 		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));
