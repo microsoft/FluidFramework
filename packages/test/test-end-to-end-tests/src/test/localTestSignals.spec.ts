@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type CompatType } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -21,11 +21,8 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-import * as semver from "semver";
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
-
-type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBaseWithClientId;
 
 interface SignalClient {
 	dataStoreRuntime: IFluidDataStoreRuntime;
@@ -232,191 +229,104 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-["NoCompat", "FullCompat"].forEach((compat) =>
-	describeCompat("Targeted Signals", compat as CompatType, (getTestObjectProvider) => {
-		const numberOfClients = 3;
-		assert(numberOfClients >= 2, "Need at least 2 clients for targeted signals");
-		let clients: SignalClient[];
-		let provider: ITestObjectProvider;
-		let createDriverVersion: string;
+describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
+	const numberOfClients = 3;
+	assert(numberOfClients >= 2, "Need at least 2 clients for targeted signals");
+	let clients: SignalClient[];
+	let provider: ITestObjectProvider;
 
-		beforeEach("setup containers", async () => {
-			provider = getTestObjectProvider();
-			createDriverVersion = provider.driver.version;
-			clients = [];
+	beforeEach("setup containers", async () => {
+		provider = getTestObjectProvider();
+		clients = [];
+		for (let i = 0; i < numberOfClients; i++) {
+			const container = await (i === 0
+				? provider.makeTestContainer(testContainerConfig)
+				: provider.loadTestContainer(testContainerConfig));
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			clients.push({
+				dataStoreRuntime: dataObject.runtime,
+				containerRuntime: dataObject.context.containerRuntime,
+				signalReceivedCount: 0,
+				clientId: container.clientId,
+			});
+			if (container.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container.once("connected", resolve));
+			}
+		}
+	});
+
+	describe("Supported Targeted Signals", () => {
+		async function sendAndVerifyRemoteSignals(
+			runtime: "containerRuntime" | "dataStoreRuntime",
+		) {
+			clients.forEach((client) => {
+				client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
+					assert.equal(local, false, "Signal should be remote");
+					assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
+					assert.equal(message.content, true, "Signal content should be true");
+					client.signalReceivedCount += 1;
+				});
+			});
+
 			for (let i = 0; i < numberOfClients; i++) {
-				const container = await (i === 0
-					? provider.makeTestContainer(testContainerConfig)
-					: provider.loadTestContainer(testContainerConfig));
-				const dataObject =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-				clients.push({
-					dataStoreRuntime: dataObject.runtime,
-					containerRuntime: dataObject.context.containerRuntime,
-					signalReceivedCount: 0,
-					clientId: container.clientId,
-				});
-				if (container.connectionState !== ConnectionState.Connected) {
-					await new Promise((resolve) => container.once("connected", resolve));
-				}
-			}
-		});
-
-		describe("Supported Targeted Signals", () => {
-			async function sendAndVerifyRemoteSignals(
-				runtime: "containerRuntime" | "dataStoreRuntime",
-			) {
-				clients.forEach((client) => {
-					client[runtime].on(
-						"signal",
-						(message: IInboundSignalMessage, local: boolean) => {
-							assert.equal(local, false, "Signal should be remote");
-							assert.equal(
-								message.type,
-								"TestSignal",
-								"Signal type should be TestSignal",
-							);
-							assert.equal(message.content, true, "Signal content should be true");
-							client.signalReceivedCount += 1;
-						},
-					);
-				});
-
-				for (let i = 0; i < numberOfClients; i++) {
-					const targetClient = clients[(i + 1) % numberOfClients];
-					clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
-					await waitForTargetedSignal(
-						targetClient[runtime],
-						clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
-					);
-				}
-
-				clients.forEach((client, index) => {
-					assert.equal(
-						client.signalReceivedCount,
-						1,
-						`client ${index + 1} did not receive signal`,
-					);
-				});
+				const targetClient = clients[(i + 1) % numberOfClients];
+				clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
+				await waitForTargetedSignal(
+					targetClient[runtime],
+					clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
+				);
 			}
 
-			async function sendAndVerifyLocalSignals(
-				runtime: "containerRuntime" | "dataStoreRuntime",
-			) {
-				clients.forEach((client) => {
-					client[runtime].on(
-						"signal",
-						(message: IInboundSignalMessage, local: boolean) => {
-							assert.equal(local, true, "Signal should be local");
-							assert.equal(
-								message.type,
-								"TestSignal",
-								"Signal type should be TestSignal",
-							);
-							assert.equal(message.content, true, "Signal content should be true");
-							client.signalReceivedCount += 1;
-						},
-					);
-				});
-
-				for (let i = 0; i < numberOfClients; i++) {
-					clients[i][runtime].submitSignal("TestSignal", true, clients[i].clientId);
-					await waitForTargetedSignal(
-						clients[i][runtime],
-						clients.filter((c) => c !== clients[i]).map((c) => c[runtime]),
-					);
-				}
-
-				clients.forEach((client, index) => {
-					assert.equal(
-						client.signalReceivedCount,
-						1,
-						`client ${index + 1} did not receive signal`,
-					);
-				});
-			}
-
-			beforeEach("check compat type", async function () {
-				// FullCompat tests fail since older loaders do not support targeted signals
-				if (compat === "FullCompat") {
-					this.skip();
-				}
+			clients.forEach((client, index) => {
+				assert.equal(
+					client.signalReceivedCount,
+					1,
+					`client ${index + 1} did not receive signal`,
+				);
 			});
+		}
 
-			it("Validates data store runtime remote signals", async () => {
-				await sendAndVerifyRemoteSignals("dataStoreRuntime");
-			});
-
-			it("Validates ContainerRuntime remote signals", async () => {
-				await sendAndVerifyRemoteSignals("containerRuntime");
-			});
-
-			it("Validates data store local signals", async () => {
-				await sendAndVerifyLocalSignals("dataStoreRuntime");
-			});
-
-			it("Validates ContainerRuntime local signals", async () => {
-				await sendAndVerifyLocalSignals("containerRuntime");
-			});
-		});
-
-		describe("Unsupported Targeted Signals", () => {
-			async function sendAndVerifyBroadcast(
-				runtime: "containerRuntime" | "dataStoreRuntime",
-			) {
-				const localRuntime = clients[0][runtime];
-				localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+		async function sendAndVerifyLocalSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
+			clients.forEach((client) => {
+				client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
 					assert.equal(local, true, "Signal should be local");
 					assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
 					assert.equal(message.content, true, "Signal content should be true");
-					clients[0].signalReceivedCount += 1;
+					client.signalReceivedCount += 1;
 				});
-				clients.forEach((client, index) => {
-					if (index !== 0) {
-						client[runtime].on(
-							"signal",
-							(message: IInboundSignalMessage, local: boolean) => {
-								assert.equal(local, false, "Signal should be remote");
-								assert.equal(
-									message.type,
-									"TestSignal",
-									"Signal type should be TestSignal",
-								);
-								assert.equal(
-									message.content,
-									true,
-									"Signal content should be true",
-								);
-								client.signalReceivedCount += 1;
-							},
-						);
-					}
-				});
-				localRuntime.submitSignal("TestSignal", true, clients[0].clientId);
-				await waitForSignal(...clients.map((client) => client[runtime]));
-				clients.forEach((client, index) => {
-					assert.equal(
-						client.signalReceivedCount,
-						1,
-						`client ${index + 1} did not receive signal`,
-					);
-				});
+			});
+
+			for (let i = 0; i < numberOfClients; i++) {
+				clients[i][runtime].submitSignal("TestSignal", true, clients[i].clientId);
+				await waitForTargetedSignal(
+					clients[i][runtime],
+					clients.filter((c) => c !== clients[i]).map((c) => c[runtime]),
+				);
 			}
 
-			beforeEach("check driver version check", function () {
-				// Skip tests where the driver version >= 2.0.0-rc.4.0.0 since it supports targeted signals.
-				if (semver.gte(createDriverVersion, "2.0.0-rc.4.0.0")) {
-					this.skip();
-				}
+			clients.forEach((client, index) => {
+				assert.equal(
+					client.signalReceivedCount,
+					1,
+					`client ${index + 1} did not receive signal`,
+				);
 			});
+		}
 
-			it("Validate data store runtime broadcast ", async () => {
-				await sendAndVerifyBroadcast("dataStoreRuntime");
-			});
-
-			it("Validate ContainerRuntime broadcast", async () => {
-				await sendAndVerifyBroadcast("containerRuntime");
-			});
+		it("Validates data store runtime remote signals", async () => {
+			await sendAndVerifyRemoteSignals("dataStoreRuntime");
 		});
-	}),
-);
+
+		it("Validates ContainerRuntime remote signals", async () => {
+			await sendAndVerifyRemoteSignals("containerRuntime");
+		});
+
+		it("Validates data store local signals", async () => {
+			await sendAndVerifyLocalSignals("dataStoreRuntime");
+		});
+
+		it("Validates ContainerRuntime local signals", async () => {
+			await sendAndVerifyLocalSignals("containerRuntime");
+		});
+	});
+});
