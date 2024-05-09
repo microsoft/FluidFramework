@@ -379,6 +379,7 @@ describe("SharedTree benchmarks", () => {
 	describe("rebasing commits", () => {
 		// Each commit generates 2 ops (one for the changeset and one for the UUID minting
 		const opsPerCommit = 2;
+		const sampleSize = 10;
 		// Number of peers that are generating commits.
 		const peerCounts = [2, 4];
 		// Number of commits that are generated in the amount of time it takes of a single commit to round-trip.
@@ -421,7 +422,7 @@ describe("SharedTree benchmarks", () => {
 							// We could theoretically measure the time it takes for a single commit to be processed,
 							// but averaging over multiple commits gives a more stable result.
 							let timeSum = 0;
-							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
 									provider.processMessages(opsPerCommit);
@@ -434,7 +435,7 @@ describe("SharedTree benchmarks", () => {
 							}
 
 							// We want the average time it would take one peer to process one incoming edit
-							duration = timeSum / (peerCount * peerCount * commitCount);
+							duration = timeSum / (peerCount * peerCount * sampleSize);
 						} while (state.recordBatch(duration));
 					},
 					// Force batch size of 1
