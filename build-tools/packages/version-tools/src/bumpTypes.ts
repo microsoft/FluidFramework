@@ -95,7 +95,7 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 		return true;
 	}
 
-	if (semver.validRange(r as string | semver.Range) === null) {
+	if ((typeof r === "string" || r instanceof semver.Range) && semver.validRange(r) === null) {
 		return false;
 	}
 
