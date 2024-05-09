@@ -61,10 +61,7 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 		}
 
 		return "semver";
-	} else if (
-		typeof rangeOrVersion === "string" &&
-		semver.validRange(rangeOrVersion) !== null
-	) {
+	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
 		// Must be a range string
 		if (isInternalVersionRange(rangeOrVersion)) {
 			return "internal";
@@ -139,9 +136,8 @@ export function bumpVersionScheme(
 					throw new Error(
 						`Applying virtual patch failed. The version returned was: ${translatedVersion}`,
 					);
-				} else {
-					return translatedVersion;
 				}
+				return translatedVersion;
 			} else {
 				return sv;
 			}
@@ -160,10 +156,7 @@ export function bumpVersionScheme(
  * only released versions will be returned.
  * @returns The highest version number in the list.
  */
-export function getLatestReleaseFromList(
-	versionList: string[],
-	allowPrereleases = false,
-): string {
+export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false): string {
 	const list = sortVersions(versionList, allowPrereleases);
 	const latest = list[0];
 
