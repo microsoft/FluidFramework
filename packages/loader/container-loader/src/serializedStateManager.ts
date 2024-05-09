@@ -118,6 +118,10 @@ interface ISerializerEvent extends IEvent {
 
 /**
  * Helper class to manage the state of the container needed for proper serialization.
+ *
+ * It holds the pendingLocalState the container was rehydrated from (if any),
+ * as well as the snapshot to be used for serialization.
+ * It also keeps track of container dirty state and which local ops have been processed
  */
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
@@ -127,6 +131,14 @@ export class SerializedStateManager {
 	private refreshSnapshot: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
+	/**
+	 * @param pendingLocalState - The pendlingLocalState being rehydrated, if any (undefined when loading directly from storage)
+	 * @param subLogger - Container's logger to hang our logger under
+	 * @param storageAdapter - Storage adapter for fetching snapshots
+	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
+	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
+	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
+	 */
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryBaseLogger,
@@ -156,6 +168,9 @@ export class SerializedStateManager {
 		return this.refreshSnapshot;
 	}
 
+	/**
+	 * Called whenever an incoming op is processed by the Container
+	 */
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
@@ -163,6 +178,16 @@ export class SerializedStateManager {
 		}
 	}
 
+	/**
+	 * This wraps the basic functionality of fetching the snapshot for this container during Container load.
+	 *
+	 * If we have pendingLocalState, we get the snapshot from there.
+	 * Otherwise, fetch it from storage (according to specifiedVersion if provided)
+	 *
+	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @returns The snapshot to boot the container from
+	 */
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean,
@@ -300,9 +325,10 @@ export class SerializedStateManager {
 	}
 
 	/**
+	 * When the Container attaches, we need to stash the initial snapshot (a form of the attach summary).
 	 * This method is only meant to be used by Container.attach() to set the initial
 	 * base snapshot when attaching.
-	 * @param snapshot - snapshot and blobs collected while attaching
+	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
@@ -340,7 +366,7 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-					processedOpsSize: this.processedOps.length,
+				processedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
