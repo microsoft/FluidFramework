@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat, type CompatType } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import type {
 	IContainerRuntimeBase,
@@ -25,6 +26,13 @@ import * as semver from "semver";
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
 
 type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBaseWithClientId;
+
+interface SignalClient {
+	dataStoreRuntime: IFluidDataStoreRuntime;
+	containerRuntime: IContainerRuntimeBaseWithClientId;
+	signalReceivedCount: number;
+	clientId: string | undefined;
+}
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -226,116 +234,106 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 
 ["NoCompat", "FullCompat"].forEach((compat) =>
 	describeCompat("Targeted Signals", compat as CompatType, (getTestObjectProvider) => {
+		const numberOfClients = 3;
+		assert(numberOfClients >= 2, "Need at least 2 clients for targeted signals");
+		let clients: SignalClient[];
 		let provider: ITestObjectProvider;
-		let dataObject1: ITestFluidObject;
-		let dataObject2: ITestFluidObject;
-		let dataObject3: ITestFluidObject;
-		let user1SignalReceivedCount: number;
-		let user2SignalReceivedCount: number;
-		let user3SignalReceivedCount: number;
-		let user1ContainerRuntime: IContainerRuntimeBaseWithClientId;
-		let user2ContainerRuntime: IContainerRuntimeBaseWithClientId;
-		let user3ContainerRuntime: IContainerRuntimeBaseWithClientId;
 		let createDriverVersion: string;
 
 		beforeEach("setup containers", async () => {
 			provider = getTestObjectProvider();
 			createDriverVersion = provider.driver.version;
-
-			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-
-			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-
-			const container3 = await provider.loadTestContainer(testContainerConfig);
-			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-
-			user1SignalReceivedCount = 0;
-			user2SignalReceivedCount = 0;
-			user3SignalReceivedCount = 0;
-
-			user1ContainerRuntime = dataObject1.context.containerRuntime;
-			user2ContainerRuntime = dataObject2.context.containerRuntime;
-			user3ContainerRuntime = dataObject3.context.containerRuntime;
-
-			// need to be connected to send signals
-			if (container1.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => container1.once("connected", resolve));
-			}
-			if (container2.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => container2.once("connected", resolve));
-			}
-			if (container3.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => container3.once("connected", resolve));
+			clients = [];
+			for (let i = 0; i < numberOfClients; i++) {
+				const container = await (i === 0
+					? provider.makeTestContainer(testContainerConfig)
+					: provider.loadTestContainer(testContainerConfig));
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+				clients.push({
+					dataStoreRuntime: dataObject.runtime,
+					containerRuntime: dataObject.context.containerRuntime,
+					signalReceivedCount: 0,
+					clientId: container.clientId,
+				});
+				if (container.connectionState !== ConnectionState.Connected) {
+					await new Promise((resolve) => container.once("connected", resolve));
+				}
 			}
 		});
 
 		describe("Supported Targeted Signals", () => {
 			async function sendAndVerifyRemoteSignals(
-				runtime1: RuntimeType,
-				runtime2: RuntimeType,
-				runtime3: RuntimeType,
+				runtime: "containerRuntime" | "dataStoreRuntime",
 			) {
-				runtime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, false, "Signal should be remote");
-					if (message.type === "TestSignal") {
-						user1SignalReceivedCount += 1;
-					}
-				});
-				runtime2.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, false, "Signal should be remote");
-					if (message.type === "TestSignal") {
-						user2SignalReceivedCount += 1;
-					}
-				});
-				runtime3.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, false, "Signal should be remote");
-					if (message.type === "TestSignal") {
-						user3SignalReceivedCount += 1;
-					}
+				clients.forEach((client) => {
+					client[runtime].on(
+						"signal",
+						(message: IInboundSignalMessage, local: boolean) => {
+							assert.equal(local, false, "Signal should be remote");
+							assert.equal(
+								message.type,
+								"TestSignal",
+								"Signal type should be TestSignal",
+							);
+							assert.equal(message.content, true, "Signal content should be true");
+							client.signalReceivedCount += 1;
+						},
+					);
 				});
 
-				runtime1.submitSignal("TestSignal", true, runtime2.clientId);
-				await waitForTargetedSignal(runtime2, [runtime1, runtime3]);
-				assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
-				assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
-				assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
+				for (let i = 0; i < numberOfClients; i++) {
+					const targetClient = clients[(i + 1) % numberOfClients];
+					clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
+					await waitForTargetedSignal(
+						targetClient[runtime],
+						clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
+					);
+				}
 
-				runtime1.submitSignal("TestSignal", true, runtime3.clientId);
-				await waitForTargetedSignal(runtime3, [runtime1, runtime2]);
-				assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
-				assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
-				assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
-
-				runtime2.submitSignal("TestSignal", true, runtime1.clientId);
-				await waitForTargetedSignal(runtime1, [runtime2, runtime3]);
-				assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
-				assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
-				assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
+				clients.forEach((client, index) => {
+					assert.equal(
+						client.signalReceivedCount,
+						1,
+						`client ${index + 1} did not receive signal`,
+					);
+				});
 			}
 
 			async function sendAndVerifyLocalSignals(
-				localRuntime: RuntimeType,
-				remoteRuntime1: RuntimeType,
-				remoteRuntime2: RuntimeType,
+				runtime: "containerRuntime" | "dataStoreRuntime",
 			) {
-				localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, true, "Signal should be local");
-					if (message.type === "TestSignal") {
-						user1SignalReceivedCount += 1;
-					}
-				});
-				remoteRuntime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					throw new Error("Remote client should not receive signal");
-				});
-				remoteRuntime2.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					throw new Error("Remote client should not receive signal");
+				clients.forEach((client) => {
+					client[runtime].on(
+						"signal",
+						(message: IInboundSignalMessage, local: boolean) => {
+							assert.equal(local, true, "Signal should be local");
+							assert.equal(
+								message.type,
+								"TestSignal",
+								"Signal type should be TestSignal",
+							);
+							assert.equal(message.content, true, "Signal content should be true");
+							client.signalReceivedCount += 1;
+						},
+					);
 				});
 
-				localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
-				await waitForTargetedSignal(localRuntime, [remoteRuntime1, remoteRuntime2]);
-				assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
+				for (let i = 0; i < numberOfClients; i++) {
+					clients[i][runtime].submitSignal("TestSignal", true, clients[i].clientId);
+					await waitForTargetedSignal(
+						clients[i][runtime],
+						clients.filter((c) => c !== clients[i]).map((c) => c[runtime]),
+					);
+				}
+
+				clients.forEach((client, index) => {
+					assert.equal(
+						client.signalReceivedCount,
+						1,
+						`client ${index + 1} did not receive signal`,
+					);
+				});
 			}
 
 			beforeEach("check compat type", async function () {
@@ -346,68 +344,63 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			});
 
 			it("Validates data store runtime remote signals", async () => {
-				await sendAndVerifyRemoteSignals(
-					dataObject1.runtime,
-					dataObject2.runtime,
-					dataObject3.runtime,
-				);
+				await sendAndVerifyRemoteSignals("dataStoreRuntime");
 			});
 
 			it("Validates ContainerRuntime remote signals", async () => {
-				await sendAndVerifyRemoteSignals(
-					user1ContainerRuntime,
-					user2ContainerRuntime,
-					user3ContainerRuntime,
-				);
+				await sendAndVerifyRemoteSignals("containerRuntime");
 			});
 
 			it("Validates data store local signals", async () => {
-				await sendAndVerifyLocalSignals(
-					dataObject1.runtime,
-					dataObject2.runtime,
-					dataObject3.runtime,
-				);
+				await sendAndVerifyLocalSignals("dataStoreRuntime");
 			});
 
 			it("Validates ContainerRuntime local signals", async () => {
-				await sendAndVerifyLocalSignals(
-					user1ContainerRuntime,
-					user2ContainerRuntime,
-					user3ContainerRuntime,
-				);
+				await sendAndVerifyLocalSignals("containerRuntime");
 			});
 		});
 
 		describe("Unsupported Targeted Signals", () => {
 			async function sendAndVerifyBroadcast(
-				localRuntime: RuntimeType,
-				remoteRuntime1: RuntimeType,
-				remoteRuntime2: RuntimeType,
+				runtime: "containerRuntime" | "dataStoreRuntime",
 			) {
+				const localRuntime = clients[0][runtime];
 				localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 					assert.equal(local, true, "Signal should be local");
-					if (message.type === "TestSignal") {
-						user1SignalReceivedCount += 1;
+					assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
+					assert.equal(message.content, true, "Signal content should be true");
+					clients[0].signalReceivedCount += 1;
+				});
+				clients.forEach((client, index) => {
+					if (index !== 0) {
+						client[runtime].on(
+							"signal",
+							(message: IInboundSignalMessage, local: boolean) => {
+								assert.equal(local, false, "Signal should be remote");
+								assert.equal(
+									message.type,
+									"TestSignal",
+									"Signal type should be TestSignal",
+								);
+								assert.equal(
+									message.content,
+									true,
+									"Signal content should be true",
+								);
+								client.signalReceivedCount += 1;
+							},
+						);
 					}
 				});
-				remoteRuntime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, false, "Signal should be remote");
-					if (message.type === "TestSignal") {
-						user2SignalReceivedCount += 1;
-					}
+				localRuntime.submitSignal("TestSignal", true, clients[0].clientId);
+				await waitForSignal(...clients.map((client) => client[runtime]));
+				clients.forEach((client, index) => {
+					assert.equal(
+						client.signalReceivedCount,
+						1,
+						`client ${index + 1} did not receive signal`,
+					);
 				});
-				remoteRuntime2.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-					assert.equal(local, false, "Signal should be remote");
-					if (message.type === "TestSignal") {
-						user3SignalReceivedCount += 1;
-					}
-				});
-
-				localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
-				await waitForSignal(remoteRuntime1);
-				assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
-				assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
-				assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 			}
 
 			beforeEach("check driver version check", function () {
@@ -418,19 +411,11 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			});
 
 			it("Validate data store runtime broadcast ", async () => {
-				await sendAndVerifyBroadcast(
-					dataObject1.runtime,
-					dataObject2.runtime,
-					dataObject3.runtime,
-				);
+				await sendAndVerifyBroadcast("dataStoreRuntime");
 			});
 
 			it("Validate ContainerRuntime broadcast", async () => {
-				await sendAndVerifyBroadcast(
-					user1ContainerRuntime,
-					user2ContainerRuntime,
-					user3ContainerRuntime,
-				);
+				await sendAndVerifyBroadcast("containerRuntime");
 			});
 		});
 	}),
