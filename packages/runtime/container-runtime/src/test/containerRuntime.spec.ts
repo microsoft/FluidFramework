@@ -1029,7 +1029,9 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
-					runtimeOptions: {},
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
@@ -1477,7 +1479,6 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
-					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1494,11 +1495,10 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
-							disableGroupedBatching: true,
 							disableCompression: true,
 							disableChunking: true,
 						}),
-						groupedBatchingEnabled: false,
+						groupedBatchingEnabled: true,
 					},
 				]);
 			});

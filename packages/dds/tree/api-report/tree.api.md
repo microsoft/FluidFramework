@@ -628,7 +628,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
-    readonly forest: IForestSubscription;
+    readonly checkout: ITreeCheckout;
     // (undocumented)
     readonly nodeKeyManager: NodeKeyManager;
     get root(): FlexTreeField;
@@ -821,7 +821,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes> e
     moveToStart(sourceIndex: number): void;
     moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
     removeAt(index: number): void;
-    removeRange(start?: number, end?: number): void;
+    sequenceEditor(): SequenceFieldEditBuilder;
 }
 
 // @internal
