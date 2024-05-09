@@ -376,61 +376,65 @@ describe("SharedTree benchmarks", () => {
 	// Note that this runs the computation for several peers.
 	// In practice, this computation is distributed across peers, so the actual time reported is
 	// divided by the number of peers.
-	describe.only("rebasing commits", () => {
+	describe("rebasing commits", () => {
 		// Each commit generates 2 ops (one for the changeset and one for the UUID minting
 		const opsPerCommit = 2;
+		// Number of peers that are generating commits.
+		const peerCounts = [2, 4];
 		// Number of commits that are generated in the amount of time it takes of a single commit to round-trip.
 		// E.g., 10 is equivalent to all of the following (and more):
 		// - generating 5 edits per second with a 2000ms round-trip time
 		// - generating 10 edits per second with a 1000ms round-trip time
 		// - generating 100 edits per second with a 100ms round-trip time
-		const commitCounts = [5, 10, 20];
-		for (const nbPeers of [2, 4, 8]) {
-			for (const nbCommits of commitCounts) {
+		const commitCounts = [1, 5, 10];
+		for (const peerCount of peerCounts) {
+			for (const commitCount of commitCounts) {
 				const test = benchmark({
 					type: BenchmarkType.Measurement,
-					title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
+					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
 					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 						let duration: number;
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
 							assert.equal(state.iterationsPerBatch, 1);
-							const provider = new TestTreeProviderLite(nbPeers, factory);
+							const provider = new TestTreeProviderLite(peerCount, factory);
 
 							// This is the start of the stream of commits.
 							// Earlier commits are less out of date and therefore not representative.
-							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
-								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const peer = provider.trees[iPeer];
 									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
-							// This block helps us reach a steady state where commits are being generated and processed at equivalent rates.
-							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
-								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+							// This block generates commits that are all out of date to the same degree
+							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									provider.processMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
 									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
-							// By the end of the above block, all commits are equivalently out of date.
 
+							// This block measures commits that are all out of date to the same degree.
+							// We could theoretically measure the time it takes for a single commit to be processed,
+							// but averaging over multiple commits gives a more stable result.
 							let timeSum = 0;
-							for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
-								for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
+							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
 									provider.processMessages(opsPerCommit);
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
+									// We still generate commits because it affects local branch rebasing
 									const peer = provider.trees[iPeer];
 									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
-							// Measure
-							// Divide the duration by the number of peers so we get the average time per peer.
-							duration = timeSum / nbPeers;
+							// We want the average time it would take one peer to process one incoming edit
+							duration = timeSum / (peerCount * peerCount * commitCount);
 						} while (state.recordBatch(duration));
 					},
 					// Force batch size of 1
