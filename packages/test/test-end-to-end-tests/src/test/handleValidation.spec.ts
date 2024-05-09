@@ -320,6 +320,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				apis,
 			);
 			let idA: string;
+			let seq: number;
 			{
 				const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 				const runtime = defaultDataStore.context.containerRuntime;
@@ -331,6 +332,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				await handle.storeHandle(defaultDataStore, dataObjectB.handle);
 
 				await provider.ensureSynchronized();
+				seq = container1.deltaManager.lastSequenceNumber;
 				container1.dispose();
 				await provider.ensureSynchronized();
 			}
@@ -339,6 +341,21 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
 			await waitContainerToCatchUp(container2);
+
+			if (container2.deltaManager.lastSequenceNumber < seq) {
+				await new Promise<void>((resolve, reject) => {
+					const func = () => {
+						if (container2.deltaManager.lastSequenceNumber >= seq) {
+							container2.deltaManager.off("op", func);
+							container2.off("closed", reject);
+							resolve();
+						}
+					};
+					container2.deltaManager.on("op", func);
+					container2.once("closed", reject);
+				});
+			}
+
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
