@@ -213,7 +213,9 @@ export const treeNodeApi: TreeNodeApi = {
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.
  * Returns undefined for other values.
  */
-function tryGetSchema<T>(value: T): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
+export function tryGetSchema<T>(
+	value: T,
+): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
 	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
 	switch (typeof value) {
 		case "string":

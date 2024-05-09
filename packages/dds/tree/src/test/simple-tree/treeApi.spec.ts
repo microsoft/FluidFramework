@@ -6,8 +6,12 @@
 import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { UpPath, rootFieldKey } from "../../core/index.js";
+import {
+	TreeStatus,
+	createMockNodeKeyManager,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -17,12 +21,25 @@ import {
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
+import { brand } from "../../util/index.js";
+import { leaf } from "../../domains/index.js";
+
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/leafNodeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
 
 const schema = new SchemaFactory("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe("treeApi", () => {
+describe("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeConfiguration([Point, schema.number], () => ({}));
@@ -91,11 +108,26 @@ describe("treeApi", () => {
 		});
 	});
 
-	it("schema", () => {
-		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const root = getView(config).root;
-		assert.equal(Tree.schema(root), Point);
-		assert.equal(Tree.schema(5), schema.number);
+	describe("schema", () => {
+		it("primitives", () => {
+			assert.equal(Tree.schema(5), numberSchema);
+			assert.equal(Tree.schema(""), stringSchema);
+			assert.equal(Tree.schema(true), booleanSchema);
+			assert.equal(Tree.schema(new MockHandle(5)), handleSchema);
+			assert.equal(Tree.schema(null), nullSchema);
+			assert.equal(tryGetSchema({}), undefined);
+		});
+
+		it("node", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			assert.equal(new Point({}), Point);
+			const nodePojo = schemaFactory.object("Node", {});
+			assert.equal(new nodePojo({}), nodePojo);
+		});
+
+		it("hydrated node", () => {
+			assert.equal(Tree.schema(hydrate(Point, {})), Point);
+		});
 	});
 
 	it("key", () => {
@@ -610,6 +642,48 @@ describe("treeApi", () => {
 			actAndVerify(() => root.rootObject.arrayProp?.removeAt(0), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
 			// Detach array node
 			actAndVerify(() => (root.rootObject.arrayProp = undefined), 2, 1);
+		});
+
+		it(`batched changes to several direct fields trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+			const rootNode: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const sb = new SchemaFactory("object-node-in-root");
+			const treeSchema = sb.object("root", {
+				prop1: sb.number,
+				prop2: sb.number,
+			});
+
+			const { root, checkout } = getView(
+				new TreeConfiguration(treeSchema, () => ({ prop1: 1, prop2: 1 })),
+			);
+
+			let shallowChanges = 0;
+			let deepChanges = 0;
+			Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
+			Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+
+			const branch = checkout.fork();
+			branch.editor
+				.valueField({ parent: rootNode, field: brand("prop1") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+			branch.editor
+				.valueField({ parent: rootNode, field: brand("prop2") })
+				.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
+
+			checkout.merge(branch);
+
+			assert.equal(root.prop1, 2, "'prop2' value did not change as expected");
+			assert.equal(root.prop2, 2, "'prop2' value did not change as expected");
+			// Changes should be batched so we should only get "one" firing of each event type.
+			// In practice this actually means two for treeChanged, because it fires once during each visitor pass
+			// (detach then attach).
+			// Node replacements only have effects during the attach pass so nodeChanged only fires once.
+			assert.equal(deepChanges, 2, "'treeChanged' should fire twice");
+			assert.equal(shallowChanges, 1, "'nodeChanged' should only fire once");
 		});
 	});
 });
