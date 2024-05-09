@@ -279,8 +279,7 @@ describe("Schema Comparison", () => {
 
 			// If repo B's field is a sequence, potentially accommodating more fields than repo A, it should be
 			// considered a superset
-			testOrder(compareTwoRepo, [[valueTestTree], [anyTestTree]]);
-			testOrder(compareTwoRepo, [[optionalTestTree], [anyTestTree]]);
+			testOrder(compareTwoRepo, [[valueTestTree], [optionalTestTree], [anyTestTree]]);
 			testOrder(compareTwoRepo, [[valueTestTree, emptyTestTree], [anyTestTree]]);
 		});
 
