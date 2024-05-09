@@ -132,8 +132,8 @@ export class SerializedStateManager {
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	/**
-	 * @param pendingLocalState - The pendlingLocalState being rehydrated, if any (undefined when loading directly from storage)
-	 * @param subLogger - Container's logger to hang our logger under
+	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
+	 * @param subLogger - Container's logger to parent our logger under
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
 	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded

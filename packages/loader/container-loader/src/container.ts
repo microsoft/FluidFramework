@@ -432,7 +432,9 @@ export class Container
 
 	/**
 	 * Create a new container in a detached state that is initialized with a
-	 * snapshot from a previous detached container (generated via {@link serialize}).
+	 * snapshot from a previous detached container.
+	 * @param createProps - Config options for this new container instance
+	 * @param snapshot - A stringified {@link IPendingDetachedContainerState}, e.g. generated via {@link serialize}
 	 */
 	public static async rehydrateDetachedFromSnapshot(
 		createProps: IContainerCreateProps,
