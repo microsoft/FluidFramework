@@ -5,6 +5,7 @@
 
 export const ApiTag = {
 	public: "public",
+	legacy: "legacy",
 	beta: "beta",
 	alpha: "alpha",
 	internal: "internal",
