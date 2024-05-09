@@ -219,12 +219,10 @@ export class SerializedStateManager {
 	/**
 	 * Fetch the latest snapshot for the container, including delay-loaded groupIds if pendingLocalState was provided and contained any groupIds.
 	 *
-	 * If there are no groupIds, then we will attempt to update the class's snapshot and processedOps.
-	 *
-	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
-	 * @returns SnapshotInfo form of delay-loaded snapshots (only if we loaded with pendingLocalState containing any groupIds), otherwise undefined.
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree (must be true to fetch by groupIds)
+	 * @returns SnapshotInfo form of delay-loaded snapshot
 	 */
-	public async refreshLatestSnapshot(
+	private async refreshLatestSnapshot(
 		supportGetSnapshotApi: boolean,
 	): Promise<ISnapshotInfo | undefined> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
@@ -233,6 +231,7 @@ export class SerializedStateManager {
 			supportGetSnapshotApi,
 		);
 
+		let delayLoadedSnapshot: ISnapshotInfo | undefined;
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
 		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
 		// We are making two network calls because it requires work for storage to add a special base groupId.
@@ -246,9 +245,10 @@ export class SerializedStateManager {
 				fetchSource: FetchSource.noCache,
 			});
 			assert(snapshot !== undefined, "Snapshot should exist");
-			return convertSnapshotToSnapshotInfo(snapshot);
+			delayLoadedSnapshot = convertSnapshotToSnapshotInfo(snapshot);
 		}
 		this.updateSnapshotAndProcessedOpsMaybe();
+		return delayLoadedSnapshot;
 	}
 
 	/**
