@@ -31,7 +31,6 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 
 const mapId = "map";
@@ -336,9 +335,10 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			const actualVal = await handle.readHandle(default2);
-			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
+			assert(isObject(actualVal), `not a handle: ${actualVal}`);
+			const actualHandle: FluidObject<IFluidHandle> = actualVal;
 
-			const actualObject = await actualVal.get();
+			const actualObject = await actualHandle.IFluidHandle?.get();
 			assert(isObject(actualObject), "not an object");
 
 			const actualId: FluidObject<ITestFluidObject> = actualObject;
