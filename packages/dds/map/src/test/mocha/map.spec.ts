@@ -29,6 +29,9 @@ import type {
 import { SharedMap as SharedMapInternal } from "../../map.js";
 import type { IMapOperation } from "../../mapKernel.js";
 
+/**
+ * Creates and connects a new {@link ISharedMap}.
+ */
 export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,

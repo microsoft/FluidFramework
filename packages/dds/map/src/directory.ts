@@ -1094,6 +1094,9 @@ interface IDeleteSubDirLocalOpMetadata {
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
 
+/**
+ * Types of local op metadata.
+ */
 export type DirectoryLocalOpMetadata =
 	| IClearLocalOpMetadata
 	| IKeyEditLocalOpMetadata

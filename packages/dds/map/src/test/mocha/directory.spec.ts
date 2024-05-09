@@ -30,6 +30,9 @@ import type { SharedMap as SharedMapInternal } from "../../map.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
+/**
+ * Creates and connects a new {@link ISharedDirectory}.
+ */
 export function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
