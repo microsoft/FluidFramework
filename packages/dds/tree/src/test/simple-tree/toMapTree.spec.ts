@@ -47,11 +47,7 @@ function nodeDataToMapTree(
 	allowedTypes: ImplicitAllowedTypes,
 	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
-	return nodeDataToMapTreeBase(
-		tree,
-		normalizeAllowedTypes(allowedTypes),
-		schemaAndPolicy,
-	);
+	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes), schemaAndPolicy);
 }
 
 describe("toMapTree", () => {

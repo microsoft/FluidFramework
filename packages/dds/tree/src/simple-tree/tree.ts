@@ -65,10 +65,28 @@ export interface ITree extends IChannel {
 }
 
 /**
+ * Options when schematizing a tree.
+ * @public
+ */
+export interface ITreeConfigurationOptions {
+	/**
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 */
+	enableSchemaValidation: boolean;
+}
+
+const defaultTreeConfigurationOptions: ITreeConfigurationOptions = {
+	enableSchemaValidation: false,
+};
+
+/**
  * Configuration for how to {@link ITree.schematize|schematize} a tree.
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	public readonly options: ITreeConfigurationOptions;
+
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
@@ -81,8 +99,10 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 	public constructor(
 		public readonly schema: TSchema,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		public readonly enableSchemaValidation: boolean = false,
-	) {}
+		options?: ITreeConfigurationOptions,
+	) {
+		this.options = { ...defaultTreeConfigurationOptions, ...options };
+	}
 }
 
 /**
