@@ -22,7 +22,6 @@ export interface IMapSetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 

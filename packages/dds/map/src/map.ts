@@ -284,6 +284,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			this.kernel.tryProcessMessage(
 				message.contents as IMapOperation,

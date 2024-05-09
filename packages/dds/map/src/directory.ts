@@ -768,6 +768,7 @@ export class SharedDirectory
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
@@ -1092,6 +1093,7 @@ interface IDeleteSubDirLocalOpMetadata {
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
+
 export type DirectoryLocalOpMetadata =
 	| IClearLocalOpMetadata
 	| IKeyEditLocalOpMetadata
