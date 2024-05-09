@@ -6823,7 +6823,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
-      '@sinclair/typebox': ^0.29.4
+      '@sinclair/typebox': ^0.32.29
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
@@ -6833,7 +6833,7 @@ importers:
       '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
       ajv: ^8.12.0
-      ajv-formats: ^2.1.1
+      ajv-formats: ^3.0.1
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -6862,7 +6862,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@sinclair/typebox': 0.29.6
+      '@sinclair/typebox': 0.32.29
       '@tylerbu/sorted-btree-es6': 1.8.0
       '@ungap/structured-clone': 1.2.0
       uuid: 9.0.1
@@ -6890,7 +6890,7 @@ importers:
       '@types/ungap__structured-clone': 1.2.0
       '@types/uuid': 9.0.7
       ajv: 8.12.0
-      ajv-formats: 2.1.1_ajv@8.12.0
+      ajv-formats: 3.0.1_ajv@8.12.0
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -21005,6 +21005,11 @@ packages:
 
   /@sinclair/typebox/0.29.6:
     resolution: {integrity: sha512-aX5IFYWlMa7tQ8xZr3b2gtVReCvg7f3LEhjir/JAjX2bJCMVJA5tIPv30wTD4KDfcwMd7DDYY3hFDeGmOgtrZQ==}
+    dev: true
+
+  /@sinclair/typebox/0.32.29:
+    resolution: {integrity: sha512-GWKskKPGQV0vVYizqCu0E1YLwGthvlkDqpRxB3iBuqxJ8dN/9n1cnDRSQHF59GMoxDJwzSgmxpU617SidtUnMw==}
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
@@ -24822,8 +24827,16 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1_ajv@8.12.0:
+  /ajv-formats/2.1.1:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.12.0
+
+  /ajv-formats/3.0.1_ajv@8.12.0:
+    resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
     peerDependencies:
       ajv: ^8.0.0
     peerDependenciesMeta:
@@ -24831,6 +24844,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.12.0
+    dev: true
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -39679,7 +39693,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.12.0
-      ajv-formats: 2.1.1_ajv@8.12.0
+      ajv-formats: 2.1.1
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /section-matter/1.0.0:

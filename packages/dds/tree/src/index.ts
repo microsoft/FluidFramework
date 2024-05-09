@@ -305,6 +305,7 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
+	DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
 
