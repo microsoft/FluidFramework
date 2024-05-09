@@ -120,7 +120,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@sinclair/typebox": "^0.32.29",
+		"@sinclair/typebox": "^0.30.4",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
