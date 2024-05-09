@@ -45,12 +45,12 @@ import { brand } from "../../util/index.js";
 function nodeDataToMapTree(
 	tree: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	performSchemaValidation: SchemaAndPolicy | undefined = undefined,
+	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
 	return nodeDataToMapTreeBase(
 		tree,
 		normalizeAllowedTypes(allowedTypes),
-		performSchemaValidation,
+		schemaAndPolicy,
 	);
 }
 
