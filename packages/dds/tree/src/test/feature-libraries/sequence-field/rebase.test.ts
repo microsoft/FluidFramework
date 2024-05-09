@@ -25,7 +25,7 @@ import {
 	withoutTombstones,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
-import { brand } from "../../../index.js";
+import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 
 const tag1: RevisionTag = mintRevisionTag();

@@ -32,7 +32,11 @@ export function errorObjectFromSocketError(
 				: undefined, // responseText
 		);
 
-		error.addTelemetryProperties({ odspError: true, relayServiceError: true });
+		error.addTelemetryProperties({
+			odspError: true,
+			relayServiceError: true,
+			scenarioName: handler,
+		});
 		return error;
 	} catch {
 		return new NonRetryableError(

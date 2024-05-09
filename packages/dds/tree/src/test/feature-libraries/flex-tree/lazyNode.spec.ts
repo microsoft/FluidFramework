@@ -48,7 +48,7 @@ import {
 	nodeKeyFieldKey,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import { TreeContent, type ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
@@ -70,9 +70,12 @@ const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
+	const cursor = context.checkout.forest.allocateCursor();
 
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 
@@ -108,8 +111,8 @@ function createAnchors(
 	context: Context,
 	cursor: ITreeSubscriptionCursor,
 ): { anchor: Anchor; anchorNode: AnchorNode } {
-	const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
-	const anchorNode = context.forest.anchors.locate(anchor) ?? fail();
+	const anchor = context.checkout.forest.anchors.track(cursor.getPath() ?? fail());
+	const anchorNode = context.checkout.forest.anchors.locate(anchor) ?? fail();
 
 	return { anchor, anchorNode };
 }
@@ -334,8 +337,7 @@ describe("LazyNode", () => {
 		});
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);
@@ -431,8 +433,7 @@ describe("LazyNode", () => {
 		const forest = forestWithContent({ schema, initialTree });
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);
