@@ -314,7 +314,7 @@ const handleFns: {
 
 describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	for (const handle of handleFns) {
-		it.only(`store handle in dds: ${handle.type}`, async () => {
+		it(`store handle in dds: ${handle.type}`, async () => {
 			const { container1, provider, testContainerConfig } = await setup(
 				getTestObjectProvider,
 				apis,
