@@ -74,6 +74,11 @@ export interface DetachedFieldCache {
 	detachedField: DetachedField;
 }
 
+/**
+ * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
+ * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
+ * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
+ */
 export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
 	return {
 		schema: nodeOrField.context.checkout.storedSchema,
