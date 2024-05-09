@@ -864,6 +864,11 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		if (this.isAttached) {
+			throw new LoggingError(
+				"Data store should not be attached when generating attach summary",
+			);
+		}
 		const summaryBuilder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: LocalChannelContextBase) => {

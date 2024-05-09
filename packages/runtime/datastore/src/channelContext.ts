@@ -28,6 +28,7 @@ import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	tagCodeArtifacts,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
@@ -109,6 +110,9 @@ export function summarizeChannel(
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
+	if (channel.isAttached()) {
+		throw new LoggingError("Channel  should not be attached when generating attach summary");
+	}
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.

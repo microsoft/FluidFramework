@@ -1135,6 +1135,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		if (this.parentContext.attachState !== AttachState.Detached) {
+			throw new LoggingError("parentContext be detached when generating attach summary");
+		}
+
 		const builder = new SummaryTreeBuilder();
 		// Attaching graph of some stores can cause other stores to get bound too.
 		// So keep taking summary until no new stores get bound.
