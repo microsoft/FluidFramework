@@ -1317,7 +1317,7 @@ export const shortCodeMap = {
 	"0x85a": "newMark should have cell ID",
 	"0x85b": "Expected cells to have the same revision",
 	"0x85d": "reentrant code",
-	"0x85e": "reentrant code on exit",
+	"0x85e": "indicates a problem with the reentrancy tracking code.",
 	"0x85f": "should be in Fww mode when calling this method",
 	"0x860": "clientId should not be null",
 	"0x861": "clientId should not be null!!",
@@ -1543,5 +1543,6 @@ export const shortCodeMap = {
 	"0x952": "Expected the touched up range to contain the queried ID",
 	"0x953": "Expected the first range to start after the queried ID",
 	"0x954": "Expected the touched up range to contain the queried ID",
-	"0x955": "Expected the last range to end before the queried ID"
+	"0x955": "Expected the last range to end before the queried ID",
+	"0x956": "Keys must not be duplicated",
 };

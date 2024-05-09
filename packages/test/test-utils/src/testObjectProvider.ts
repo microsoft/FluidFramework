@@ -197,7 +197,7 @@ export interface ITestObjectProvider {
 	/**
 	 * Make sure all the tracked containers are synchronized.
 	 */
-	ensureSynchronized(timeoutDuration?: number): Promise<void>;
+	ensureSynchronized(...containers: IContainer[]): Promise<void>;
 
 	/**
 	 * Reset the tracker, closing all containers and stop tracking them.
@@ -677,8 +677,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {
@@ -1055,8 +1055,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {
