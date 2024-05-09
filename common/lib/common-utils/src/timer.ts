@@ -161,10 +161,7 @@ export class Timer implements ITimer {
 	 * @param handler - overrides previous or default handler
 	 */
 	public restart(ms?: number, handler?: () => void): void {
-		if (!this.runningState) {
-			// If restart is called first, it behaves as a call to start
-			this.start(ms, handler);
-		} else {
+		if (this.runningState) {
 			const duration = ms ?? this.runningState.intendedDuration;
 			const handlerToUse =
 				handler ?? this.runningState.restart?.handler ?? this.runningState.handler;
@@ -188,6 +185,9 @@ export class Timer implements ITimer {
 					handler: handlerToUse,
 				};
 			}
+		} else {
+			// If restart is called first, it behaves as a call to start
+			this.start(ms, handler);
 		}
 	}
 
@@ -213,15 +213,15 @@ export class Timer implements ITimer {
 	private handler(): void {
 		assert(!!this.runningState, 0x00a /* "Running timer missing handler" */);
 		const restart = this.runningState.restart;
-		if (restart !== undefined) {
-			// Restart with remaining time
-			const remainingTime = this.calculateRemainingTime(restart);
-			this.startCore(remainingTime, () => restart.handler(), restart.duration);
-		} else {
+		if (restart === undefined) {
 			// Run clear first, in case the handler decides to start again
 			const handler = this.runningState.handler;
 			this.clear();
 			handler();
+		} else {
+			// Restart with remaining time
+			const remainingTime = this.calculateRemainingTime(restart);
+			this.startCore(remainingTime, () => restart.handler(), restart.duration);
 		}
 	}
 

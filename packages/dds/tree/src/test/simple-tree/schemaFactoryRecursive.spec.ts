@@ -119,7 +119,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
+				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 				: "zzz";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
