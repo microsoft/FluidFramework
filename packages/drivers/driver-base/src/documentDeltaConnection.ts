@@ -750,6 +750,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				scenarioName: handler,
 			},
 		);
 	}
@@ -766,6 +767,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				scenarioName: handler,
 			},
 		);
 	}
