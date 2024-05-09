@@ -92,8 +92,8 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 	}
 
 	if (
-		RangeOperators.includes(r as RangeOperator) ||
-		WorkspaceRanges.includes(r as WorkspaceRange)
+		isRangeOperator(r) ||
+		isWorkspaceRange(r)
 	) {
 		return true;
 	}
@@ -103,7 +103,7 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 	}
 
 	if (typeof r === "string") {
-		return RangeOperators.includes(r[0] as RangeOperator);
+		return isRangeOperator(r[0]);
 	}
 
 	return false;
