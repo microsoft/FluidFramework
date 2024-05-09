@@ -75,11 +75,7 @@ export function fromInternalScheme(
 	internalVersion: semver.SemVer | string,
 	allowPrereleases = false,
 	allowAnyPrereleaseId = false,
-): [
-	publicVersion: semver.SemVer,
-	internalVersion: semver.SemVer,
-	prereleaseIndentifier: string,
-] {
+): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string] {
 	const parsedVersion = semver.parse(internalVersion);
 	validateVersionScheme(
 		parsedVersion,
@@ -157,8 +153,7 @@ export function toInternalScheme(
 	}
 
 	const prereleaseSections = parsedVersion.prerelease;
-	const newPrerelease =
-		prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
+	const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
 	const newSemVerString = `${publicVersion}-${prereleaseIdentifier}.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
 	const newSemVer = semver.parse(newSemVerString);
 	if (newSemVer === null) {
@@ -192,7 +187,7 @@ export function validateVersionScheme(
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
 	prereleaseIdentifiers?: readonly string[],
-) {
+): boolean {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
 		throw new Error(`Couldn't parse ${version} as a semver.`);
@@ -321,7 +316,8 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	return (
 		singleRangeSet.find(
 			(comparator) =>
-				comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
+				comparator.operator === "<" &&
+				comparator.semver.version.startsWith(prereleasePrefix),
 		) !== undefined
 	);
 }
@@ -457,9 +453,7 @@ export function changePreReleaseIdentifier(
  *
  * @internal
  */
-export function detectInternalVersionConstraintType(
-	range: string,
-): "minor" | "patch" | "exact" {
+export function detectInternalVersionConstraintType(range: string): "minor" | "patch" | "exact" {
 	if (semver.validRange(range) === null) {
 		throw new Error(`Invalid range: ${range}`);
 	}

@@ -151,7 +151,7 @@ export default class VersionCommand extends Command {
 			bumped,
 		};
 
-		const tablify = (scheme: VersionScheme) => {
+		const tablify = (scheme: VersionScheme): string => {
 			return table(Object.entries(scheme), {
 				columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "left" }],
 				singleLine: true,

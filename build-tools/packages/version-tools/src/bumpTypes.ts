@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Range, SemVer } from "semver";
 import * as semver from "semver";
 
 /**
@@ -34,8 +35,8 @@ export type RangeOperator = (typeof RangeOperators)[number];
 /**
  * A typeguard to check if a variable is a {@link RangeOperator}.
  */
-export function isRangeOperator(r: any): r is RangeOperator {
-	return RangeOperators.includes(r);
+export function isRangeOperator(r: unknown): r is RangeOperator {
+	return RangeOperators.includes(r as RangeOperator);
 }
 
 /**
@@ -64,8 +65,8 @@ export type WorkspaceRange = (typeof WorkspaceRanges)[number];
 /**
  * A typeguard to check if a variable is a {@link WorkspaceRange}.
  */
-export function isWorkspaceRange(r: any): r is WorkspaceRange {
-	return WorkspaceRanges.includes(r);
+export function isWorkspaceRange(r: unknown): r is WorkspaceRange {
+	return WorkspaceRanges.includes(r as WorkspaceRange);
 }
 
 /**
@@ -86,21 +87,24 @@ export type InterdependencyRange =
  * excluding non-conforming strings than it does at finding valid ones. This appears to be sufficient for our needs,
  * which is good because I don't know how to fix it.
  */
-export function isInterdependencyRange(r: any): r is InterdependencyRange {
-	if (semver.valid(r) !== null) {
+export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
+	if (semver.valid(r as string | SemVer) !== null) {
 		return true;
 	}
 
-	if (RangeOperators.includes(r) || WorkspaceRanges.includes(r)) {
+	if (
+		RangeOperators.includes(r as RangeOperator) ||
+		WorkspaceRanges.includes(r as WorkspaceRange)
+	) {
 		return true;
 	}
 
-	if (semver.validRange(r) === null) {
+	if (semver.validRange(r as string | Range) === null) {
 		return false;
 	}
 
 	if (typeof r === "string") {
-		return RangeOperators.includes(r[0] as any);
+		return RangeOperators.includes(r[0] as RangeOperator);
 	}
 
 	return false;
