@@ -123,7 +123,11 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		);
 
 		const classSchema = getSimpleNodeSchema(node.schema);
-		const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
+		const cursor = cursorFromNodeData(
+			content,
+			classSchema.info as ImplicitAllowedTypes,
+			node.context.nodeKeyManager,
+		);
 
 		node.set(key, cursor);
 		return this;

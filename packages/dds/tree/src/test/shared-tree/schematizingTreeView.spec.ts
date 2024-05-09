@@ -31,8 +31,8 @@ import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
-const flexConfig = toFlexConfig(config);
-const flexConfigGeneralized = toFlexConfig(configGeneralized);
+const flexConfig = toFlexConfig(config, createMockNodeKeyManager());
+const flexConfigGeneralized = toFlexConfig(configGeneralized, createMockNodeKeyManager());
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -250,10 +250,11 @@ describe("SchematizingSimpleTreeView", () => {
 			// Initial tree contains a proxy
 			initialTree: () => new TestObject({ value: 3 }),
 		};
+		const nodeKeyManager = createMockNodeKeyManager();
 		const view = new SchematizingSimpleTreeView(
-			checkoutWithContent(toFlexConfig(treeContent)),
+			checkoutWithContent(toFlexConfig(treeContent, nodeKeyManager)),
 			treeContent,
-			createMockNodeKeyManager(),
+			nodeKeyManager,
 			brand(nodeKeyFieldKey),
 		);
 
