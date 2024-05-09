@@ -37,6 +37,7 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
 const feature_submit_signals_v2 = "submit_signals_v2";
+const enable_single_commit_summary = "enable_single_commit_summary";
 
 export interface FlushResult {
 	lastPersistedSequenceNumber?: number;
@@ -637,12 +638,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout).finally(() => {
+		try {
+			await super.initialize(connectMessage, timeout);
+			if (this._details) {
+				if (!this.details.supportedFeatures) {
+					this._details.supportedFeatures = {};
+				}
+				this._details.supportedFeatures![enable_single_commit_summary] = true;
+			}
+		} finally {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
 			});
-		});
+		}
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

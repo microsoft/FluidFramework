@@ -70,7 +70,7 @@ export class DocumentDeltaConnection
 
 	private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	private _details: IConnected | undefined;
+	protected _details: IConnected | undefined;
 
 	private trackLatencyTimeout: ReturnType<typeof setTimeout> | undefined;
 
