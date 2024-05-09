@@ -7,18 +7,13 @@ import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
-import {
-	ISharedDirectory,
-	type ISharedMap,
-	type SharedDirectory,
-} from "@fluidframework/map/internal";
+import { ISharedDirectory, type ISharedMap } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	DataObjectFactoryType,
 	createAndAttachContainer,
 	ITestFluidObject,
-	waitForContainerConnection,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ISharedMatrix } from "@fluidframework/matrix/internal";
@@ -38,7 +33,6 @@ import {
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
