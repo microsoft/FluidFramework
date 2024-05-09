@@ -286,6 +286,12 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			});
 		}
 
+		before("skip tinylicious", function () {
+			if (provider.driver.type === "tinylicious") {
+				this.skip();
+			}
+		});
+
 		async function sendAndVerifyLocalSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
 			clients.forEach((client) => {
 				client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
