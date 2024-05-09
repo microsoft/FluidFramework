@@ -255,7 +255,7 @@ export interface IResolvedUrl {
     url: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ISnapshot {
     // (undocumented)
     blobContents: Map<string, ArrayBuffer>;
