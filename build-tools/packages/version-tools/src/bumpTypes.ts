@@ -91,10 +91,7 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 		return true;
 	}
 
-	if (
-		isRangeOperator(r) ||
-		isWorkspaceRange(r)
-	) {
+	if (isRangeOperator(r) || isWorkspaceRange(r)) {
 		return true;
 	}
 
