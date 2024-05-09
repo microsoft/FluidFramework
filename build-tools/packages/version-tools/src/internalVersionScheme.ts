@@ -290,7 +290,7 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	const singleRangeSet = semverRange.set[0];
 
 	// Prerelease ranges must have comparator operators. This definition expects at least one '>='.
-	if (singleRangeSet.find((comparator) => comparator.operator === ">=") === undefined) {
+	if (!singleRangeSet.some((comparator) => comparator.operator === ">=")) {
 		return false;
 	}
 
@@ -313,12 +313,9 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	// For internal version, range should not exceed the scope of single internal version.
 	// There should be a limit spec in range set (has '<' operator) with same prefix.
 	const prereleasePrefix = `${minVer.major}.${minVer.minor}.${minVer.patch}-${minVer.prerelease[0]}.`;
-	return (
-		singleRangeSet.find(
-			(comparator) =>
-				comparator.operator === "<" &&
-				comparator.semver.version.startsWith(prereleasePrefix),
-		) !== undefined
+	return singleRangeSet.some(
+		(comparator) =>
+			comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
 	);
 }
 
