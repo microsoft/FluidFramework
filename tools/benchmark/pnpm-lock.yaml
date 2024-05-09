@@ -7,7 +7,7 @@ importers:
       '@fluid-internal/mocha-test-setup': ~2.0.0-rc.3.0.3
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^5.2.0
-      '@microsoft/api-extractor': ^7.42.3
+      '@microsoft/api-extractor': ^7.43.1
       '@types/benchmark': ^2.1.0
       '@types/chai': ^4.3.4
       '@types/easy-table': ^0.0.32
@@ -39,7 +39,7 @@ importers:
       '@fluid-internal/mocha-test-setup': 2.0.0-rc.3.0.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 5.3.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@14.18.38
+      '@microsoft/api-extractor': 7.43.1_@types+node@14.18.38
       '@types/benchmark': 2.1.2
       '@types/chai': 4.3.11
       '@types/easy-table': 0.0.32
