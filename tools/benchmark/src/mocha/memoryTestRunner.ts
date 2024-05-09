@@ -4,8 +4,10 @@
  */
 
 import type * as v8 from "node:v8";
+
 import { assert } from "chai";
 import { Test } from "mocha";
+
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,

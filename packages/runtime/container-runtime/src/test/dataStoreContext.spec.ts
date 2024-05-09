@@ -575,7 +575,10 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
 				clientDetails: {},
-			} as ContainerRuntime;
+				isSnapshotFetchRequired: (path) => false,
+				containerRuntime,
+				blobContents: undefined,
+			} as unknown as ContainerRuntime;
 		});
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
@@ -639,7 +642,7 @@ describe("Data Store Context Tests", () => {
 
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
-						snapshotTree,
+						snapshot: snapshotTree,
 						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
@@ -693,7 +696,7 @@ describe("Data Store Context Tests", () => {
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
-						snapshotTree: undefined,
+						snapshot: undefined,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -767,7 +770,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -819,7 +822,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -871,7 +874,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -925,7 +928,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -1000,7 +1003,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
