@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILocalValue } from "./localValues.js";
+import type { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.
