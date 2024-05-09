@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # API Overview
 
 ## Packages

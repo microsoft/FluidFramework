@@ -271,6 +271,11 @@ export const makeTreeEditGenerator = (
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
+			case "com.fluidframework.leaf.handle":
+				return {
+					type: brand("com.fluidframework.leaf.handle"),
+					value: state.random.handle(),
+				};
 			case "treefuzz.node":
 				return {
 					type: brand("treefuzz.node"),

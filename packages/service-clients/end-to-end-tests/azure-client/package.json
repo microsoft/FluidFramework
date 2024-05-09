@@ -73,6 +73,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
@@ -86,7 +87,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.6.2",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.38.0-259537",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",

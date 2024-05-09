@@ -125,9 +125,9 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "0.38.0-259537",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.38.0-259537",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/map-previous": "npm:@fluidframework/map@2.0.0-rc.3.0.0",
@@ -150,6 +150,30 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedDirectory": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedDirectory": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

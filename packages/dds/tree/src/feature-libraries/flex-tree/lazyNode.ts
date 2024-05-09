@@ -82,11 +82,11 @@ import { treeStatusFromAnchorCache } from "./utilities.js";
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
-		context.forest.anchors.locate(anchor) ??
+		context.checkout.forest.anchors.locate(anchor) ??
 		fail("cursor should point to a node that is not the root of the AnchorSet");
 	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
-		context.forest.anchors.forget(anchor);
+		context.checkout.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
@@ -178,7 +178,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
@@ -187,7 +187,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(this[anchorSymbol]);
+		this.context.checkout.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {
@@ -266,7 +266,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
+		return treeStatusFromAnchorCache(this.anchorNode);
 	}
 
 	public on<K extends keyof FlexTreeNodeEvents>(
