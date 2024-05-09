@@ -129,15 +129,10 @@ export class SerializedStateManager {
 	}
 
 	/**
-	 * Promise that will resolve whenever we've successfully downloaded the latest snapshot(s) from storage
-	 *
-	 * Note: This promise will resolve whether or not the snapshot download/refresh succeeded.
+	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
 	 */
 	public get waitForInitialRefresh(): Promise<void> | undefined {
-		return this.refreshSnapshotP?.then(
-			() => {},
-			() => {},
-		);
+		return this.refreshSnapshotP;
 	}
 
 	public addProcessedOp(message: ISequencedDocumentMessage) {
@@ -186,18 +181,17 @@ export class SerializedStateManager {
 			};
 
 			if (
+				this.refreshSnapshotP === undefined &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
 			) {
 				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-				this.refreshSnapshotP ??= this.refreshLatestSnapshot(supportGetSnapshotApi).catch(
-					(e) => {
-						this.mc.logger.sendErrorEvent({
-							eventName: "RefreshLatestSnapshotFailed",
-							error: e,
-						});
-						return undefined;
-					},
-				);
+				this.refreshSnapshotP = this.refreshLatestSnapshot(supportGetSnapshotApi);
+				this.refreshSnapshotP.catch((e) => {
+					this.mc.logger.sendErrorEvent({
+						eventName: "RefreshLatestSnapshotFailed",
+						error: e,
+					});
+				});
 			}
 
 			const blobContents = new Map<string, ArrayBuffer>();
