@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Range, SemVer } from "semver";
 import * as semver from "semver";
 
 /**
@@ -88,7 +87,7 @@ export type InterdependencyRange =
  * which is good because I don't know how to fix it.
  */
 export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
-	if (semver.valid(r as string | SemVer) !== null) {
+	if (semver.valid(r as string | semver.SemVer) !== null) {
 		return true;
 	}
 
@@ -99,7 +98,7 @@ export function isInterdependencyRange(r: unknown): r is InterdependencyRange {
 		return true;
 	}
 
-	if (semver.validRange(r as string | Range) === null) {
+	if (semver.validRange(r as string | semver.Range) === null) {
 		return false;
 	}
 
