@@ -91,7 +91,7 @@ export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 
 /**
  * An error object that supports exporting its properties to be logged to telemetry
- * @internal
+ * @alpha
  */
 export interface ILoggingError extends Error {
 	/**

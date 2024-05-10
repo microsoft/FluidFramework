@@ -461,9 +461,11 @@ describe("SharedTree", () => {
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber: dataStoreRuntime1.deltaManager.lastSequenceNumber,
+					summarySequenceNumber:
+						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
-					latestSummarySequenceNumber: dataStoreRuntime1.deltaManager.lastSequenceNumber,
+					latestSummarySequenceNumber:
+						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					summaryPath: "test",
 				};

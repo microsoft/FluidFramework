@@ -36,7 +36,7 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": [
 			"error",
 			{
-				allowExpressions: false,
+				allowExpressions: true,
 				allowTypedFunctionExpressions: true,
 				allowHigherOrderFunctions: true,
 				allowDirectConstAssertionInArrowFunctions: true,

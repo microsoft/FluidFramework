@@ -240,7 +240,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
 	 */
 	private get currentRefSeq() {
-		return this.ongoingResubmitRefSeq ?? this.runtime.deltaManager.lastSequenceNumber;
+		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
@@ -811,7 +811,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.loadedDeferred.isCompleted,
 			0x074 /* "Snapshot called when not fully loaded" */,
 		);
-		const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
+		const minSeq = this.deltaManager.minimumSequenceNumber;
 
 		this.processMinSequenceNumberChanged(minSeq);
 
