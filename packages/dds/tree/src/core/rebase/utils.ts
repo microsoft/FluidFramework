@@ -265,7 +265,7 @@ export function rebaseBranch<TChange>(
 	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		get sourceChange() {
+		get sourceChange(): TChange | undefined {
 			if (netChange === undefined) {
 				netChange = changeRebaser.compose(editsToCompose);
 			}
@@ -339,7 +339,7 @@ export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
-) {
+): TChange {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
 		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
@@ -438,7 +438,7 @@ export function findAncestor<T extends { parent?: T }>(
 ): T | undefined;
 export function findAncestor<T extends { parent?: T }>(
 	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
-	predicate: (t: T) => boolean = (t) => t.parent === undefined,
+	predicate: (t: T) => boolean = (t): boolean => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;
@@ -510,7 +510,7 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
-	const reversePaths = () => {
+	const reversePaths = (): void => {
 		pathA?.reverse();
 		pathB?.reverse();
 	};
