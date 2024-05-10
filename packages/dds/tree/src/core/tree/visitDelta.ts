@@ -506,7 +506,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						const rootDestination = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, i),
-							config.latestRevision
+							config.latestRevision,
 						);
 						const destinationField =
 							config.detachedFieldIndex.toFieldKey(rootDestination);
