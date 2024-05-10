@@ -107,11 +107,15 @@ export {
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaFeatures,
+<<<<<<< HEAD
 	ReadFluidDataStoreAttributes,
 	IFluidDataStoreAttributes0,
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
+=======
+	IRetriableSummaryError,
+>>>>>>> b75ef66d3b (PR feedback and retriable errors)
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

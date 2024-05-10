@@ -38,6 +38,7 @@ import {
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	SummarizerStopReason,
+	type IRetriableSummaryError,
 } from "./summarizerTypes.js";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
@@ -684,7 +685,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
-		let error: any;
+		let error: IRetriableSummaryError | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {

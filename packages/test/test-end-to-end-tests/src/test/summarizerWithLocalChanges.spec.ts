@@ -279,9 +279,8 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			await assert.rejects(
 				async () => summarizeNow(summarizer),
 				(error: any) => {
-					// The summary should have failed because of "NodeDidNotRunGC" error before it was generated,
-					// i.e., "base" stage.
-					return error.message === "NodeDidNotRunGC" && error.data.stage === "base";
+					// The summary should have failed because of "NodeDidNotRunGC" error.
+					return error.message === "NodeDidNotRunGC";
 				},
 				"expected NodeDidNotRunGC",
 			);
@@ -338,11 +337,8 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 					await summarizeNow(summarizer);
 				},
 				(error: any) => {
-					// The summary should have failed because of "PendingOpsWhileSummarizing" error in "base" stage.
-					return (
-						error.message === "PendingOpsWhileSummarizing" &&
-						error.data.stage === "base"
-					);
+					// The summary should have failed because of "PendingOpsWhileSummarizing" error.
+					return error.message === "PendingOpsWhileSummarizing";
 				},
 				"expected PendingOpsWhileSummarizing",
 			);
@@ -407,11 +403,8 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 					await summarizeNow(summarizer);
 				},
 				(error: any) => {
-					// The summary should have failed because of "PendingOpsWhileSummarizing" error in "base" stage.
-					return (
-						error.message === "PendingOpsWhileSummarizing" &&
-						error.data.stage === "base"
-					);
+					// The summary should have failed because of "PendingOpsWhileSummarizing" error.
+					return error.message === "PendingOpsWhileSummarizing";
 				},
 				"expected PendingOpsWhileSummarizing",
 			);

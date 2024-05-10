@@ -630,7 +630,7 @@ export interface IAckSummaryResult {
 
 // @alpha
 export interface IBaseSummarizeResult {
-    readonly error: Error | undefined;
+    readonly error: IRetriableSummaryError | undefined;
     // (undocumented)
     readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
@@ -978,6 +978,12 @@ export interface IRetriableFailureResult {
 }
 
 // @alpha
+export interface IRetriableSummaryError extends Error {
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
+}
+
+// @alpha
 export interface ISerializedElection {
     readonly electedClientId: string | undefined;
     readonly electedParentId: string | undefined;
@@ -1299,7 +1305,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: false;
     data: TFailure | undefined;
     message: string;
-    error: any;
+    error: IRetriableSummaryError;
 };
 
 // @alpha (undocumented)

@@ -77,6 +77,14 @@ export interface ISummarizingWarning extends ContainerWarning {
 }
 
 /**
+ * Retriable error type for summary failures.
+ * @alpha
+ */
+export interface IRetriableSummaryError extends Error {
+	readonly retryAfterSeconds?: number;
+}
+
+/**
  * @alpha
  */
 export interface IConnectableRuntime {
@@ -182,8 +190,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
-	/** Error object related to failed summarize attempt. */
-	readonly error: Error | undefined;
+	/** Retriable error object related to failed summarize attempt. */
+	readonly error: IRetriableSummaryError | undefined;
 	/** Reference sequence number as of the generate summary attempt. */
 	readonly referenceSequenceNumber: number;
 	readonly minimumSequenceNumber: number;
@@ -310,7 +318,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			success: false;
 			data: TFailure | undefined;
 			message: string;
-			error: any;
+			error: IRetriableSummaryError;
 	  };
 
 /**

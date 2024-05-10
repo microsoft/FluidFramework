@@ -3549,7 +3549,7 @@ export class ContainerRuntime
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
-						error: new LoggingError(
+						error: new RetriableSummaryError(
 							`Summarizer node state inconsistent with summarizer state.`,
 						),
 					};
@@ -3601,7 +3601,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3622,7 +3622,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3697,7 +3697,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3724,7 +3724,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3747,7 +3747,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3758,7 +3758,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3775,7 +3775,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 			return submitData;

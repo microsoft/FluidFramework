@@ -35,6 +35,7 @@ import {
 	SubmitSummaryResult,
 	SummarizeResultPart,
 	SummaryGeneratorTelemetry,
+	type IRetriableSummaryError,
 } from "./summarizerTypes.js";
 import { IClientSummaryWatcher } from "./summaryCollection.js";
 
@@ -184,8 +185,7 @@ export class SummarizeResultBuilder {
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
-export class RetriableSummaryError extends LoggingError {
-	public readonly canRetry = this.retryAfterSeconds !== undefined;
+export class RetriableSummaryError extends LoggingError implements IRetriableSummaryError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,
@@ -273,7 +273,7 @@ export class SummaryGenerator {
 		 */
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
-			error?: Error,
+			error?: IRetriableSummaryError,
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
@@ -368,11 +368,14 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail(
 				"submitSummaryFailure",
-				wrapError(error, (message) => new LoggingError(message)),
+				wrapError(
+					error,
+					(message) =>
+						new RetriableSummaryError(message, getRetryDelaySecondsFromError(error)),
+				),
 				undefined /* properties */,
 				{
 					stage: "unknown",
-					retryAfterSeconds: getRetryDelaySecondsFromError(error),
 				},
 			);
 		} finally {
@@ -483,8 +486,7 @@ export class SummaryGenerator {
 				const retryAfterSeconds = summaryNack?.retryAfter;
 
 				// pre-0.58 error message prefix: summaryNack
-				const error = new LoggingError(`Received summaryNack`, {
-					retryAfterSeconds,
+				const error = new RetriableSummaryError(`Received summaryNack`, retryAfterSeconds, {
 					errorMessage,
 				});
 
