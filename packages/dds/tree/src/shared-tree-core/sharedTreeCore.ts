@@ -244,6 +244,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					this.preparedCommits.length = 0;
 					// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
 					// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
+					// It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
+					// and these commits are never in flight.
 					if (this.detachedRevision !== undefined) {
 						for (const c of change.newCommits) {
 							this.preparedCommits.push({ local: c, toSend: c });
