@@ -80,6 +80,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Maybe just provide `SchemaFactory.nested` to east creating nested scopes?
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
 	factory: SchemaFactory<TScope>,
 	members: TEnum,
@@ -100,7 +101,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
-	const factoryOut = <TValue extends Values>(value: TValue) => {
+	const factoryOut = <TValue extends Values>(value: TValue): NodeType => {
 		return new out[inverse.get(value) ?? fail("missing enum value")]({}) as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
 		>;
@@ -147,6 +148,7 @@ export function typedObjectValues<TKey extends string, TValues>(
  * ```
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<TScope extends string, const Members extends string>(
 	factory: SchemaFactory<TScope>,
 	members: Members[],
@@ -178,6 +180,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 // TODO: Why does this one generate an invalid d.ts file if exported?
 // Tracked by https://github.com/microsoft/TypeScript/issues/56718
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,
