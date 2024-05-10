@@ -1543,5 +1543,6 @@ export const shortCodeMap = {
 	"0x952": "Expected the touched up range to contain the queried ID",
 	"0x953": "Expected the first range to start after the queried ID",
 	"0x954": "Expected the touched up range to contain the queried ID",
-	"0x955": "Expected the last range to end before the queried ID"
+	"0x955": "Expected the last range to end before the queried ID",
+	"0x956": "Keys must not be duplicated",
 };

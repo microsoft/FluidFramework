@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILocalValue } from "./localValues.js";
+import type { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.
@@ -22,7 +22,6 @@ export interface IMapSetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 
