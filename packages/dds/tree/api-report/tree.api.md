@@ -1913,7 +1913,7 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
+    is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
