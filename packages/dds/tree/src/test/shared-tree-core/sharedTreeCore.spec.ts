@@ -392,10 +392,11 @@ describe("SharedTreeCore", () => {
 				throw new Error("Unexpected use of fork");
 			}
 
-			public updateChangeEnrichments(change: T): T {
+			public updateChangeEnrichments(input: T): T {
 				assert.equal(this.isDisposed, false);
-				this.enrichmentLog.push({ input: change, output: { ...change } });
-				return change;
+				const output = { ...input };
+				this.enrichmentLog.push({ input, output });
+				return output;
 			}
 
 			public [disposeSymbol](): void {
@@ -424,7 +425,7 @@ describe("SharedTreeCore", () => {
 			assert.equal(machine.sequencingLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.submissionLog.length, 1);
-			assert.deepEqual(machine.submissionLog, [true]);
+			assert.deepEqual(machine.sequencingLog, [true]);
 		});
 
 		it("enriches commits on first submit", () => {
@@ -444,8 +445,8 @@ describe("SharedTreeCore", () => {
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
-			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0]);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
 		it("enriches transactions on first submit", () => {
@@ -465,14 +466,14 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead());
+			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead().change);
 			tree.getLocalBranch().commitTransaction();
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
-			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead());
+			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
 		});
 
 		it("update commit enrichments on re-submit", () => {
@@ -501,9 +502,9 @@ describe("SharedTreeCore", () => {
 			assert.equal(machine.resubmissionLog.length, 1);
 			assert.equal(machine.resubmissionLog[0].length, 2);
 			assert.equal(machine.resubmitQueue.length, 0);
-			assert.equal(machine.submissionLog.length, 2);
-			assert.equal(machine.submissionLog[0].original, machine.resubmissionLog[0][0]);
-			assert.equal(machine.submissionLog[1].original, machine.resubmissionLog[0][1]);
+			assert.equal(machine.submissionLog.length, 4);
+			assert.equal(machine.submissionLog[2].original, machine.resubmissionLog[0][0]);
+			assert.equal(machine.submissionLog[3].original, machine.resubmissionLog[0][1]);
 			assert.equal(machine.sequencingLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(machine.sequencingLog.length, 2);

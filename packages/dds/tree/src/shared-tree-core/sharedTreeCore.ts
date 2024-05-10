@@ -248,6 +248,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const newCommit = change.newCommits[0];
 			switch (eventKind) {
 				case "beforeChange": {
+					if (this.detachedRevision !== undefined) {
+						// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
+						// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
+						// It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
+						// and these commits are never in flight.
+						break;
+					}
 					if (this.getLocalBranch().isTransacting()) {
 						// We do not submit ops for changes that are part of a transaction.
 						// But we need to enrich the commits that will be sent if the transaction is committed.
@@ -259,50 +266,50 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 						}
 						this.transactionEnricher.addTransactionStep(newCommit);
 					} else {
-						this.preparedCommit =
-							this.detachedRevision !== undefined
-								? // Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-								  // Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
-								  // It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
-								  // and these commits are never in flight.
-								  { local: newCommit, toSend: newCommit }
-								: {
-										local: newCommit,
-										toSend: replaceChange(
-											newCommit,
-											this.enricher.updateChangeEnrichments(
-												newCommit.change,
-												newCommit.revision,
-											),
-										),
-								  };
+						if (
+							change.type === "replace" &&
+							getChangeReplaceType(change) === "transactionCommit"
+						) {
+							assert(
+								this.transactionEnricher !== undefined,
+								"Unexpected transaction commit without transaction steps",
+							);
+							const enrichedChange = this.transactionEnricher.getComposedChange(
+								change.newCommits[0].revision,
+							);
+							delete this.transactionEnricher;
+							this.preparedCommit = {
+								local: newCommit,
+								toSend: replaceChange(newCommit, enrichedChange),
+							};
+						} else {
+							this.preparedCommit = {
+								local: newCommit,
+								toSend: replaceChange(
+									newCommit,
+									this.enricher.updateChangeEnrichments(
+										newCommit.change,
+										newCommit.revision,
+									),
+								),
+							};
+						}
 					}
 					break;
 				}
 				case "afterChange": {
-					if (
-						change.type === "replace" &&
-						getChangeReplaceType(change) === "transactionCommit"
-					) {
-						assert(
-							this.transactionEnricher !== undefined,
-							"Unexpected transaction commit without transaction steps",
-						);
-						const enrichedChange = this.transactionEnricher.getComposedChange(
-							change.newCommits[0].revision,
-						);
-						delete this.transactionEnricher;
-						this.submitCommit(
-							replaceChange(newCommit, enrichedChange),
-							this.schemaAndPolicy,
-						);
-					} else {
-						assert(
-							this.preparedCommit?.local === newCommit,
-							"Inconsistent commits between before and after change",
-						);
-						this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
+					if (this.getLocalBranch().isTransacting()) {
+						// We do not submit ops for changes that are part of a transaction.
+						break;
 					}
+					if (this.detachedRevision !== undefined) {
+						this.submitCommit(newCommit, this.schemaAndPolicy);
+					}
+					assert(
+						this.preparedCommit?.local === newCommit,
+						"Inconsistent commits between before and after change",
+					);
+					this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
 					break;
 				}
 				default:
