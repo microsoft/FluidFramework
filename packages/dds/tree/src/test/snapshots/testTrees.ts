@@ -59,7 +59,7 @@ import {
 // session ids explicitly.
 export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
-export function createSnapshotCompressor(): IIdCompressor & IIdCompressorCore {
+export function createSnapshotCompressor() {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
 }
 
