@@ -258,7 +258,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
-		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
+		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
@@ -689,45 +689,33 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.serializer,
 			);
 
-			// setup a promise to process the
-			// catch up ops, and finishing the loading process
-			const loadCatchUpOps = catchupOpsP
-				.then((msgs) => {
-					msgs.forEach((m) => {
-						const collabWindow = this.client.getCollabWindow();
-						if (
-							m.minimumSequenceNumber < collabWindow.minSeq ||
-							m.referenceSequenceNumber < collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.minSeq ||
-							// sequenceNumber could be the same if messages are part of a grouped batch
-							m.sequenceNumber < collabWindow.currentSeq
-						) {
-							throw new Error(
-								`Invalid catchup operations in snapshot: ${JSON.stringify({
-									op: {
-										seq: m.sequenceNumber,
-										minSeq: m.minimumSequenceNumber,
-										refSeq: m.referenceSequenceNumber,
-									},
-									collabWindow: {
-										seq: collabWindow.currentSeq,
-										minSeq: collabWindow.minSeq,
-									},
-								})}`,
-							);
-						}
-						this.processMergeTreeMsg(m);
-					});
-					this.loadFinished();
-				})
-				.catch((error) => {
-					this.loadFinished(error);
-				});
-			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
-				// if we not doing partial load, await the catch up ops,
-				// and the finalization of the load
-				await loadCatchUpOps;
-			}
+			// process the catch up ops, and finishing the loading process
+			(await catchupOpsP).forEach((m) => {
+				const collabWindow = this.client.getCollabWindow();
+				if (
+					m.minimumSequenceNumber < collabWindow.minSeq ||
+					m.referenceSequenceNumber < collabWindow.minSeq ||
+					m.sequenceNumber <= collabWindow.minSeq ||
+					// sequenceNumber could be the same if messages are part of a grouped batch
+					m.sequenceNumber < collabWindow.currentSeq
+				) {
+					throw new Error(
+						`Invalid catchup operations in snapshot: ${JSON.stringify({
+							op: {
+								seq: m.sequenceNumber,
+								minSeq: m.minimumSequenceNumber,
+								refSeq: m.referenceSequenceNumber,
+							},
+							collabWindow: {
+								seq: collabWindow.currentSeq,
+								minSeq: collabWindow.minSeq,
+							},
+						})}`,
+					);
+				}
+				this.processMergeTreeMsg(m);
+			});
+			this.loadFinished();
 		} catch (error) {
 			this.loadFinished(error);
 		}
