@@ -1412,7 +1412,7 @@
             "error"
         ],
         "unicorn/number-literal-case": [
-            "off"
+            "error"
         ],
         "unicorn/numeric-separators-style": [
             "error",
