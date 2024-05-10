@@ -22,13 +22,13 @@ import { IGCMetadata } from "../gc/index.js";
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
- * @deprecated - This interface will no longer be exported in the future.
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @alpha
  */
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 
 /**
- * @deprecated - This interface will no longer be exported in the future.
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @alpha
  */
 export interface IFluidDataStoreAttributes0 {
@@ -44,7 +44,7 @@ export interface IFluidDataStoreAttributes0 {
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future.
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @alpha
  */
 export interface IFluidDataStoreAttributes1
@@ -54,7 +54,7 @@ export interface IFluidDataStoreAttributes1
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future.
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @alpha
  */
 export interface IFluidDataStoreAttributes2
@@ -75,7 +75,7 @@ export interface IFluidDataStoreAttributes2
  * store like the package, snapshotFormatVersion to take different decisions based on a particular
  * snapshotFormatVersion.
  *
- * @deprecated - This interface will no longer be exported in the future.
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
  * @alpha
  *
