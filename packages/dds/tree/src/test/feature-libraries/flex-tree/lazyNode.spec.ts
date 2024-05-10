@@ -45,7 +45,6 @@ import {
 	FlexTreeNodeSchema,
 	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
-	nodeKeyFieldKey,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
 import { TreeContent, type ITreeCheckout } from "../../../shared-tree/index.js";
@@ -339,7 +338,6 @@ describe("LazyNode", () => {
 			schema,
 			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
@@ -435,7 +433,6 @@ describe("LazyNode", () => {
 			schema,
 			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);

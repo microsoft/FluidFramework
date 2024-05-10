@@ -47,7 +47,6 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
-	nodeKeyFieldKey,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
 import {
@@ -1893,11 +1892,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(
-		tree.checkout,
-		viewSchema,
-		onDispose,
-		createMockNodeKeyManager(),
-		brand(nodeKeyFieldKey),
-	);
+	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
 }

@@ -6,7 +6,13 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { TreeValue } from "../core/index.js";
-import { FlexTreeNode, Unenforced, isFlexTreeNode, isLazy } from "../feature-libraries/index.js";
+import {
+	FlexTreeNode,
+	NodeKeyManager,
+	Unenforced,
+	isFlexTreeNode,
+	isLazy,
+} from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
@@ -28,6 +34,8 @@ import {
 	WithType,
 	type FieldProps,
 	createFieldSchema,
+	DefaultProvider,
+	getDefaultProvider,
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -486,9 +494,15 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Optional, T> {
-		return createFieldSchema(FieldKind.Optional, t, props);
+		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+			return undefined;
+		});
+		return createFieldSchema(FieldKind.Optional, t, {
+			...props,
+			defaultProvider: defaultOptionalProvider,
+		});
 	}
 
 	/**
@@ -503,7 +517,7 @@ export class SchemaFactory<
 	 */
 	public required<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Required, T> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
@@ -517,7 +531,7 @@ export class SchemaFactory<
 	 */
 	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Optional, T> {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
 	}
@@ -531,7 +545,7 @@ export class SchemaFactory<
 	 */
 	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchemaUnsafe<FieldKind.Required, T> {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}
@@ -540,7 +554,14 @@ export class SchemaFactory<
 	 * Make a field of type identifier instead of the default which is required.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return createFieldSchema(FieldKind.Identifier, this.string);
+		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
+			(nodeKeyManager: NodeKeyManager) => {
+				return nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			},
+		);
+		return createFieldSchema(FieldKind.Identifier, this.string, {
+			defaultProvider: defaultIdentifierProvider,
+		});
 	}
 
 	/**
