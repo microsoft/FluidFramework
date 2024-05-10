@@ -9270,6 +9270,7 @@ importers:
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
+      '@fluidframework/azure-client-legacy': npm:@fluidframework/azure-client@^1.2.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.38.0
       '@fluidframework/container-definitions': workspace:~
@@ -9280,6 +9281,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
+      '@fluidframework/map-legacy': npm:@fluidframework/map@^1.4.0
       '@fluidframework/matrix': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -9313,6 +9315,7 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/azure-client-legacy': /@fluidframework/azure-client/1.2.0
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
@@ -9320,6 +9323,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/map-legacy': /@fluidframework/map/1.4.0
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/runtime-definitions': link:../../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../dds/sequence
@@ -16679,6 +16683,30 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/aqueduct/1.4.0:
+    resolution: {integrity: sha512-b3I3fWGAWuXQbyuEFeeEi3GVVUOYPWJfFaB4httsu5Jn4C0QSkKxftkielDlor9/7rCJYjHc4IEWViaVO+kBbA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-loader': 1.4.0
+      '@fluidframework/container-runtime': 1.4.0
+      '@fluidframework/container-runtime-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/map': 1.4.0
+      '@fluidframework/request-handler': 1.4.0
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/synthesize': 1.4.0
+      '@fluidframework/view-interfaces': 1.4.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/aqueduct/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-YcZViE/ty+vRp19pMusij2tCSZUFvtRvszvaxg/0A7d0N2kziVXb9G2LF1MX2LbQ58a01K5DmzW8loIQ6qLGtQ==}
     dependencies:
@@ -16721,6 +16749,37 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/azure-client/1.2.0:
+    resolution: {integrity: sha512-jpfYF6I1uwwCqOc8X0fOgZz4Lj91QFzKV4S9lM7jSW84GxytlL3nDanj9+EYC+vLn4liRVaOCA3zRwpkDNXRWg==}
+    peerDependencies:
+      fluid-framework: ^1.4.0
+    peerDependenciesMeta:
+      fluid-framework:
+        optional: true
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-loader': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/fluid-static': 1.4.0
+      '@fluidframework/map': 1.4.0
+      '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/routerlicious-driver': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/server-services-client': 0.1036.5002
+      axios: 0.28.1
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+    dev: false
+
   /@fluidframework/azure-client/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-bjQ10mdy5Ir0bezgZ1jjrm9+GSeZonqmQab4mtYFgyll9Y0Hnm/sCRCRp0SUs28roFZ701uDPPPoO3gkQ25trg==}
     dependencies:
@@ -16749,7 +16808,7 @@ packages:
     resolution: {integrity: sha512-oaPfmxt2jWc2ruu4kYplFwhs3t9BSs0fBBeNVo4fIaGufpdTtRzjGBO/mWyY0EFmiLWKbSK4NyqtQ7bfkLlJ8w==}
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.0
       uuid: 9.0.1
     dev: true
 
@@ -16988,8 +17047,36 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/common-definitions/0.20.1:
+    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
+    dev: false
+
   /@fluidframework/common-definitions/1.1.0:
     resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
+
+  /@fluidframework/common-utils/0.32.2:
+    resolution: {integrity: sha512-PoGX7/l0vWKt5JaAxcgFOdGje30Q6qSE06YzFIKh9Ba3oq7B60+TFqu7c2ErQt6sNddmvcAcAiLVNaTGAip3vw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@types/events': 3.0.3
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: false
+
+  /@fluidframework/common-utils/1.1.1:
+    resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@types/events': 3.0.3
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: false
 
   /@fluidframework/common-utils/3.1.0:
     resolution: {integrity: sha512-KpBQqpZKAHCKFMoxtAdrgqL1nIJhT7r2IRGmS3Rm5CMTLsegQ8ifX5lFvd6IbjeWmvLz1qLsY3eS5HBYqy9CVQ==}
@@ -17001,6 +17088,16 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
+
+  /@fluidframework/container-definitions/1.4.0:
+    resolution: {integrity: sha512-UwyxdX739ltQhQ9Zr2n7mBKN2eYEVnY7GCsV60ZfLUawb021eeL0rVZZgT0t3BiTCCilBMl4Bw4KQ8XyYu2g/w==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      events: 3.3.0
+    dev: false
 
   /@fluidframework/container-definitions/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-6Ml7WM8c54fkv+Qc+XZxkYSaLOuBtCSEWz20/n8nMtqyzDA5bcfKWcFmbbeKqePNTv6RV0fgwKgzJNsndlLWMA==}
@@ -17019,6 +17116,30 @@ packages:
       '@fluidframework/protocol-definitions': 3.2.0
       '@types/events_pkg': /@types/events/3.0.3
     dev: true
+
+  /@fluidframework/container-loader/1.4.0:
+    resolution: {integrity: sha512-D54tW/W5EXLb2nRUGCNd8bID9t9KVkQJmtnHfnQ/JggpaBWODaQRp2tCDtidwo8y6bkiqIheMGjIdjgP9SqJzw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.4.0
+      abort-controller: 3.0.0
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      lodash: 4.17.21
+      url: 0.11.3
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/container-loader/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-1HKFP1/HbwMbYyQ118LvfltY1ctKJ31jJgn6M0+dbSek7gLbCkPXUO1wyMT7VqRLBoJtJ4yxZ7A5TeTQtXvNUA==}
@@ -17060,6 +17181,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-runtime-definitions/1.4.0:
+    resolution: {integrity: sha512-0rlswYsMVQiD1/btlJ5Ebf3rfTyFd06E2/zRJiKWiaMzgmn9QqF7OoVtiJfAIUsyey+dR8hnI0IFlB1IMfIPOg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+    dev: false
+
   /@fluidframework/container-runtime-definitions/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-Y861rUSBuqGgXEhWmYd3VRJ/GZ2Pj9PViUFA9NSo78dotvz8ynFLaP5aoBQSiq6yIjbTGfBrhYySYjv4jDRfQw==}
     dependencies:
@@ -17083,6 +17215,32 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/container-runtime/1.4.0:
+    resolution: {integrity: sha512-KENgBxuPD7GdNmdjmsyVJpPKZwfXoRlzAxaMNhGdMSbi6oXDrd1LSekY5tchhsLWBpB5ucZpuvmSgbU+h9z3HQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-runtime-definitions': 1.4.0
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/garbage-collector': 1.4.0
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/container-runtime/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-dDzWFWgdJ6DW/cDQAcCGlzKJ3smNGrsESj/D1ug0crUTd6liTXol5AJo9xeCE3cMhIqP3CjVw4uXoEB2tKRCWg==}
@@ -17162,6 +17320,22 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-utils/1.4.0:
+    resolution: {integrity: sha512-OKYpvuzz5N62gQn8JELMyuKEwJAlToiLNWJP/dn/PS1HCKux5C/Mg7Twdi19DCgXP/hp5qvzAd+EHPqYWxMUGg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.4.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@fluidframework/core-interfaces/1.4.0:
+    resolution: {integrity: sha512-PDIglmsa9BgFh7Xhfs32KA3Q34/arTVHF4m3M0IuAByP4z8Oi2lVuNENZnBEk+IJMcrUhUDk5Q9LH8KGfoAw+Q==}
+    dev: false
+
   /@fluidframework/core-interfaces/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-KK1fCmG3eWNq6diRmWuIliqz/WZx/Vtf6UN4DYI1svQ0QTPKmZcPmV2YpQMM/MSogwnlN2M4ioSu8kQ+v6M3/g==}
     dev: true
@@ -17208,6 +17382,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/datastore-definitions/1.4.0:
+    resolution: {integrity: sha512-Xmebp+XFyK2K8EIauQx10UdwOXYskuSyQt8pSZ6ggTMMFpUsnx44tSR8I8KacSFoYkrWzG/G64osRu23SPCcjQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+    dev: false
+
   /@fluidframework/datastore-definitions/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-JGgnRVLEsnUwCqGuWn10mDU0xl76H3ZaqzjKMFXYwXK3+CMweoc9NYx6i9ZNodS0NmQPVpQVCCQGNBH3J1SlUA==}
     dependencies:
@@ -17231,6 +17416,30 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/datastore/1.4.0:
+    resolution: {integrity: sha512-xV8cfmNzGAcpbQMrtEXTe7N6h6IkybrStrguyhZB6zBFzaPw3RNeAsMTiSxEMeVkU4UFcnI/ZU2rMalzVVC3Tg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/garbage-collector': 1.4.0
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+      lodash: 4.17.21
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/datastore/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-6T4zsr8oSIpt8RbEEPvcNeF84nHWGJK+2Frl3VC2iiGV8erbaALeslB+k6+03oI/xRqOsZNITUzq/J3lZCBsUw==}
@@ -17365,6 +17574,20 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-base/1.4.0:
+    resolution: {integrity: sha512-w3fYGp1Bkdjp9he3W3dSPQb1vU+zsRIcZZV9wGNfPA1ii7z9rnXzSgscn39IdLbZqvS2704endNwOIYHyBT34g==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.4.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/driver-base/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-1I7peab4CUztWR8/mkhY78smyh43I1R0g4GUPPQtYXnm1phTcgar5kJ2wUzJh7xERTA5EmTarLh36BYc0ABcqA==}
     dependencies:
@@ -17395,6 +17618,14 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-definitions/1.4.0:
+    resolution: {integrity: sha512-ay6Wwl8zGS64fjDsdh2iOeKiVVxT57Opeqjp6DqSglnnJi6AkSfYVoOVlMZ5+vJTfYJN3N4ptjrP/i3Mao9zPA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: false
+
   /@fluidframework/driver-definitions/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-embs9fZpDflLkWaW9M9LBL0tDCrRIocK/sPMVVqWRKO8AnbEsN08jVN9nSACw+Vre0QwDec5p2N+IxwMqKkKEQ==}
     dependencies:
@@ -17408,6 +17639,24 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-rc.3.0.3
       '@fluidframework/protocol-definitions': 3.2.0
     dev: true
+
+  /@fluidframework/driver-utils/1.4.0:
+    resolution: {integrity: sha512-NPTFw54a+EnIzop7iwrHTONdt0UAjW59HhMlYVPMH8/aOBodddHl7oi2Ek96nZLc+6qruHImjJ+0OW+NxNS+Gw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/gitresources': 0.1036.5002
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.4.0
+      axios: 0.28.1
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/driver-utils/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-B2j1Sn/9ISDcHWR74DYafTNor2cHptYBSvKw2m+e1sU0HYytzDEK/hKB/ZhdJPM2NwKtNWGczt6XnXJNN97C5w==}
@@ -17544,6 +17793,26 @@ packages:
       - utf-8-validate
     dev: true
 
+  /@fluidframework/fluid-static/1.4.0:
+    resolution: {integrity: sha512-YlSX6Ibm3HquB+swxoIJt6QM1Bd6R9rBHp/HYDR9/9JuQwCIqW1xvF2NHmXPN/TGl51DnbhSB0gtm9k6pYd7pg==}
+    dependencies:
+      '@fluidframework/aqueduct': 1.4.0
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-loader': 1.4.0
+      '@fluidframework/container-runtime-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/request-handler': 1.4.0
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/fluid-static/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-5SOydTh1SRlWjXOEDmUiWaIbhWb9MeOxeEecX0gSUEsF7IUyWNpJqQk0V4dwjFGbqm2Nfhqd5TpkmuB5n1saug==}
     dependencies:
@@ -17565,6 +17834,18 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/garbage-collector/1.4.0:
+    resolution: {integrity: sha512-bwt1mv3B2PcvVN/JqBkm8MwdRydVboBM7MguQkANDGkmUPD56dRzjBYEdOl3yNZJEO/xJ2v15RPrkf1coI78Bg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/runtime-definitions': 1.4.0
+    dev: false
+
+  /@fluidframework/gitresources/0.1036.5002:
+    resolution: {integrity: sha512-/xdmCca+arU9x9tDGdIl2CCk0DmpWlFjZdcTdWjLNiexKMVKDrHmSw9vCpUMlGmECq8EOO7fyzBnAGM+nu+i0g==}
+    dev: false
 
   /@fluidframework/gitresources/4.0.0:
     resolution: {integrity: sha512-3E4bjOp0/el0EFIzut8fb5XDM5xF/zWKyKn8n1RLEsstMM9nktjFOhCHoP57tRsfc16p3g9GoXhtpWCwe0vqnQ==}
@@ -17612,7 +17893,7 @@ packages:
       '@fluidframework/server-services-core': 4.0.0
       '@fluidframework/server-test-utils': 4.0.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.3.0.3
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -17639,7 +17920,7 @@ packages:
       '@fluidframework/server-services-core': 4.0.0
       '@fluidframework/server-test-utils': 4.0.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.3.0.3
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -17648,6 +17929,25 @@ packages:
       - supports-color
       - utf-8-validate
     dev: true
+
+  /@fluidframework/map/1.4.0:
+    resolution: {integrity: sha512-KBdHBxCcIvPtsUSqnc5Ztgs2U01FwgnsW8WF3bl+TGt55Xs4esm3+p43WNkET1YU5Q95RVocRVp03dYMN7xelQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/shared-object-base': 1.4.0
+      path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/map/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-yYOOAiPZ2nhGkj15TNhUWCTHeikiajHaK1T7246Ese8d9Hp/au84v3XrPi+h27bqlgqUyy/3C/cy/6QFYJVMAg==}
@@ -17907,6 +18207,15 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/protocol-base/0.1036.5002:
+    resolution: {integrity: sha512-mlI9okyLeSusGx7qU32NDJ4GJptSzVo3V6tPDhphPIOPtyOVTBuL4EQRFYdceoSLHlxEdVnQprwhyoRiMNw7Kw==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      lodash: 4.17.21
+    dev: false
+
   /@fluidframework/protocol-base/4.0.0:
     resolution: {integrity: sha512-mpuYXOOfCXKKEdzauxQ3KTY+ZWNj+NTEQTEJW8PD/xqN95g3AYoYXiikEkuzPbKghkAWcr6gYNxmK//MLbIVFw==}
     dependencies:
@@ -17914,6 +18223,18 @@ packages:
       '@fluidframework/gitresources': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       events: 3.3.0
+
+  /@fluidframework/protocol-definitions/0.1028.2000:
+    resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+    dev: false
+
+  /@fluidframework/protocol-definitions/1.2.0:
+    resolution: {integrity: sha512-2/GoupA8mjHD8gcjyn4SedqJStKlQAZxga5PtDBoh+xHsuugQRhsAHJCX+8tdqbSK4ZOo9z8iq/vWKVLUi5Dzw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+    dev: false
 
   /@fluidframework/protocol-definitions/3.2.0:
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
@@ -17949,6 +18270,18 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/request-handler/1.4.0:
+    resolution: {integrity: sha512-KDYjQcrdvSuHXBtIG+LkDCcIjiDdw1CKX4iWi/aQrbGOTFVyLzfb2SnEXOBz7sw0YuMhxf+S322KTcX/OWd12w==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-runtime-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/request-handler/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-8uHcF3bz0nuyMXO71B1pcpvmW+6T7GgBoBw7/G2w6oBWZDJjhRrbBYlbPFQdyAT4OBQFcUztQteDwqZEQfZveA==}
     dependencies:
@@ -17974,6 +18307,33 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/routerlicious-driver/1.4.0:
+    resolution: {integrity: sha512-iyLywWEgo7zWYCiJj0GPzsrn4lmLw65GYJLEod57fBCk9eLRRxhQ2GJuu2k9XGV6nCFadEc1ZEKufDUNIiBPow==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-base': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/driver-utils': 1.4.0
+      '@fluidframework/gitresources': 0.1036.5002
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/server-services-client': 0.1036.5002
+      '@fluidframework/telemetry-utils': 1.4.0
+      cross-fetch: 3.1.8
+      json-stringify-safe: 5.0.1
+      querystring: 0.2.1
+      socket.io-client: 4.7.4
+      url-parse: 1.5.10
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@fluidframework/routerlicious-driver/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-kClEI7m/rmCNLRpV1PMY76wCO7tn1g6I/vfDGKgwcIjclKUo1Fw1mqujykDQKISTdeFXnWzqG8L57a2r4zhmOg==}
@@ -18037,6 +18397,17 @@ packages:
       nconf: 0.12.1
     dev: true
 
+  /@fluidframework/runtime-definitions/1.4.0:
+    resolution: {integrity: sha512-GewpwBxbeMutnHHXzVWsFYbGQJHKh8dFNqTiW0covMfaOOhXVSM0qzuf7RY7qX9n8Vn/bK3zF4WRo6gx/32fmg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: false
+
   /@fluidframework/runtime-definitions/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-PaOX+lVz6VmLRj0JH5ncNPuJP+KWeR9n6tiCE5TMWcl02Irg+xGK6TJ6FWK99AU1eKxTX9I1v+OTBjnxy/EAkQ==}
     dependencies:
@@ -18060,6 +18431,24 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/runtime-utils/1.4.0:
+    resolution: {integrity: sha512-0drnuEdUja1m2401FXcsB9l66x5oCGjgW43mLjZgZFKcz5v5jYZml8OKWAtLmwfI/UNLJ9bQkb/nHQSM0Tf3Rw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-runtime-definitions': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/garbage-collector': 1.4.0
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fluidframework/runtime-utils/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-eECVyWjB+cgBWEd/K9afV4WKdaHvfr1UBrnvzS3keU44qosNwzb7CagNIf6Z+/OPY1ed8UINAEQq2SGXd/iR0w==}
@@ -18277,6 +18666,26 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /@fluidframework/server-services-client/0.1036.5002:
+    resolution: {integrity: sha512-2d0RSUXvfNlFgHVLiehiU4LgJheqGXlspIgug6U6nvPdwFGtQSbButh2SysBDFilIJ9E6Bacdd0P0e+4HRpCaQ==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5002
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      axios: 0.28.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 11.1.0
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/server-services-client/4.0.0:
     resolution: {integrity: sha512-ExvztSQrliaYMSeLLxlACdWkuDk6auDle4eIQ2euvkgl0RWnupatPYgUVdfnNMIE6vBIeOwDzJaWy2giFx7Z6Q==}
     dependencies:
@@ -18394,6 +18803,27 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/shared-object-base/1.4.0:
+    resolution: {integrity: sha512-NI94dsIyZL7s76UN/UVawd0JqV106cS84MaW1r9Qv91+QGU8aq/KCS3j8R9ZZ8pWFQ46sX9BT4CKa4hy4xZedw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-runtime': 1.4.0
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/shared-object-base/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-3yj0k0xMt1mqUwucuhF5sQP2Z11Bh/ZoNaFpLlmD8hhQdOQzI+M3XCAVYx0AFmUE8bDhcgkxrYdorh9tk7HOKw==}
     dependencies:
@@ -18468,6 +18898,10 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/synthesize/1.4.0:
+    resolution: {integrity: sha512-0pdq28pZ/cA/OVOp7KiUv8/bDxltwQy2ca7UJQGuyRDF9n1QcXoWC98liu2fB3/imahdfDi5pZ6l2vw/nIiFkA==}
+    dev: false
+
   /@fluidframework/synthesize/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-SPk/BR1bPLQ+uzA72LXpqVns91fQ5H7NtV1+cSv2zFUq7OefNiVB4/68G4NkFThH4DX/Pt5DFQODkEbBl37lpA==}
     dependencies:
@@ -18491,6 +18925,18 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/telemetry-utils/1.4.0:
+    resolution: {integrity: sha512-WXG1ThL+WJLGdBtUGlCPPlIrHxqnc+zy+YHrYtqFnlIp+75W3W+YApR5dyP1uCfvapISoBPo0htK3WNIiyj8Rw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      debug: 4.3.4
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fluidframework/telemetry-utils/2.0.0-rc.3.0.0:
     resolution: {integrity: sha512-n3C8cbi7TmInWimE16JKz2Y+GLMJSP+fljVvoHiUFsPw6V5NHdVL2AzcYJPSJ/Z55kaKHkYm2CqoIPX+lT+PoA==}
@@ -18534,7 +18980,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-rc.3.0.3
       '@fluidframework/runtime-utils': 2.0.0-rc.3.0.3
       '@fluidframework/telemetry-utils': 2.0.0-rc.3.0.3
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -18615,7 +19061,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-rc.3.0.3
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': 2.0.0-rc.3.0.0
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -18676,6 +19122,12 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/view-interfaces/1.4.0:
+    resolution: {integrity: sha512-YD0HE6rMpG6h/ELR717flLZ4Th0Ik0UUkECgaouW+Qy+Of+uPbi4KVoKRqTEEKzZqBFSbvSR5x3TlbmcXiEZnw==}
+    dependencies:
+      '@fluidframework/core-interfaces': 1.4.0
+    dev: false
 
   /@fwouts/vite-tsconfig-paths/4.2.1_3mw333ovkuvtlygjs5yq5kgy5u:
     resolution: {integrity: sha512-z18jfssqNPiMTiCgogWGF+KE0p0DgX4lBWr5dmeSI3sp0hFHG+h8rRUGCAdyTT0Ej79PxtjSLuL3up5uFi89EQ==}
@@ -24647,7 +25099,6 @@ packages:
     engines: {node: '>=6.5'}
     dependencies:
       event-target-shim: 5.0.1
-    dev: true
 
   /abstract-level/1.0.3:
     resolution: {integrity: sha512-t6jv+xHy+VYwc4xqZMn2Pa9DjcdzvzZmQGRjTFc8spIbRGHgBrEKbPq+rYXc7CCo0lxgYvSgKVg9qZAhpVQSjA==}
@@ -25446,6 +25897,26 @@ packages:
     resolution: {integrity: sha512-NmWvPnx0F1SfrQbYwOi7OeaNGokp9XhzNioJ/CSBs8Qa4vxug81mhJEAVZwxXuBmYB5KDRfMq/F3RR0BIU7sWg==}
     dev: true
     optional: true
+
+  /axios/0.28.1:
+    resolution: {integrity: sha512-iUcGA5a7p0mVb4Gm/sy+FSECNkPFT4y7wt6OM/CDpO/OnNCvSs3PoMG8ibrC9jRoGYU0gUK5pXVC4NPXq6lHRQ==}
+    dependencies:
+      follow-redirects: 1.15.6
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /axios/0.28.1_debug@4.3.4:
+    resolution: {integrity: sha512-iUcGA5a7p0mVb4Gm/sy+FSECNkPFT4y7wt6OM/CDpO/OnNCvSs3PoMG8ibrC9jRoGYU0gUK5pXVC4NPXq6lHRQ==}
+    dependencies:
+      follow-redirects: 1.15.6_debug@4.3.4
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
 
   /axios/1.6.2:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
@@ -29720,7 +30191,6 @@ packages:
   /event-target-shim/5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
-    dev: true
 
   /eventemitter2/0.4.14:
     resolution: {integrity: sha512-K7J4xq5xAD5jHsGM5ReWXRTFa3JRGofHiMcVgQ8PRwgWxzjHpMWCIzsmyf60+mh8KLsqYPcjUMa0AC4hd6lPyQ==}
@@ -34073,6 +34543,9 @@ packages:
   /jsrsasign/11.0.0:
     resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
 
+  /jsrsasign/11.1.0:
+    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
+
   /jss-plugin-camel-case/10.10.0:
     resolution: {integrity: sha512-z+HETfj5IYgFxh1wJnUAU8jByI48ED+v0fuTuhKrPR+pRBYS2EDwbusU8aFOpCdYhtRc9zhN+PJ7iNE8pAWyPw==}
     dependencies:
@@ -34187,6 +34660,10 @@ packages:
     dependencies:
       jwa: 1.4.1
       safe-buffer: 5.2.1
+
+  /jwt-decode/3.1.2:
+    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: false
 
   /jwt-decode/4.0.0:
     resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
@@ -38174,7 +38651,6 @@ packages:
 
   /punycode/1.4.1:
     resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
-    dev: true
 
   /punycode/2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -38259,9 +38735,14 @@ packages:
     engines: {node: '>=0.4.x'}
     dev: true
 
+  /querystring/0.2.1:
+    resolution: {integrity: sha512-wkvS7mL/JMugcup3/rMitHmd9ecIGd2lhFhK9N3UUQ450h66d1r3Y9nvXzQAW1Lq+wyx61k/1pfKS5KuKiyEbg==}
+    engines: {node: '>=0.4.x'}
+    deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
+    dev: false
+
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
-    dev: true
 
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -42661,7 +43142,6 @@ packages:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
-    dev: true
 
   /url-slug/2.0.0:
     resolution: {integrity: sha512-aiNmSsVgrjCiJ2+KWPferjT46YFKoE8i0YX04BlMVDue022Xwhg/zYlnZ6V9/mP3p8Wj7LEp0myiTkC/p6sxew==}
@@ -42674,7 +43154,6 @@ packages:
     dependencies:
       punycode: 1.4.1
       qs: 6.11.2
-    dev: true
 
   /urlpattern-polyfill/10.0.0:
     resolution: {integrity: sha512-H/A06tKD7sS1O1X2SshBVeA5FLycRpjqiBeqGKmBwBDBy28EnRjORxTNe269KSSr5un5qyWi1iL61wLxpd+ZOg==}

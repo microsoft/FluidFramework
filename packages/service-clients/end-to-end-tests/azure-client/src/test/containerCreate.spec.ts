@@ -6,15 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
+import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import { createAzureClient, createAzureClientLegacy } from "./AzureClientFactory.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -187,5 +189,101 @@ describe("Container create with feature flags", () => {
 		assert(event !== undefined, "ContainerLoadStats event should exist");
 		const featureGates = event.featureGates as string;
 		assert(featureGates.length > 0);
+	});
+});
+
+/**
+ * Testing scenarios for creating/loading containers with the legacy (LTS) version of AzureClient.
+ */
+describe("Container create with legacy version", () => {
+	const connectTimeoutMs = 10_000;
+	let clientCurrent: AzureClient;
+	let clientLegacy: AzureClientLegacy;
+	const schemaCurrent = {
+		initialObjects: {
+			map1: SharedMap,
+		},
+	} satisfies ContainerSchema;
+
+	const schemaLegacy = {
+		initialObjects: {
+			map1: SharedMapLegacy,
+		},
+	};
+
+	beforeEach("createAzureClients", () => {
+		clientCurrent = createAzureClient();
+		clientLegacy = createAzureClientLegacy();
+	});
+
+	/**
+	 * Scenario: test if a legacy AzureClient can get a container made by the current AzureClient.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("Legacy AzureClient can get container made by current AzureClient", async () => {
+		const { container: container1 } = await clientCurrent.createContainer(schemaCurrent);
+		const containerId = await container1.attach();
+
+		if (container1.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container1 connect() timeout",
+			});
+		}
+
+		container1.initialObjects.map1.set("key", "value");
+
+		const resources = clientLegacy.getContainer(containerId, schemaLegacy);
+		await assert.doesNotReject(resources, () => true, "container could not be loaded");
+
+		const { container: container2 } = await resources;
+		if (container2.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container2 connect() timeout",
+			});
+		}
+
+		const result = (await (container2.initialObjects.map1 as SharedMapLegacy).get(
+			"key",
+		)) as string;
+		assert.strictEqual(result, "value", "Value not found in copied container");
+	});
+
+	/**
+	 * Scenario: test if a legacy AzureClient can get a container made by the current AzureClient.
+	 *
+	 * Expected behavior: an error should not be thrown nor should a rejected promise
+	 * be returned.
+	 */
+	it("2.X container can get container made by 1.X", async () => {
+		const { container: container1 } = await clientLegacy.createContainer(schemaLegacy);
+		const containerId = await container1.attach();
+
+		if (container1.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container1 connect() timeout",
+			});
+		}
+
+		(container1.initialObjects.map1 as SharedMapLegacy).set("key", "value");
+
+		const resources = clientCurrent.getContainer(containerId, schemaCurrent);
+		await assert.doesNotReject(resources, () => true, "container could not be loaded");
+
+		const { container: container2 } = await resources;
+
+		if (container2.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container2 connect() timeout",
+			});
+		}
+
+		const result = (await container2.initialObjects.map1.get("key")) as string;
+		assert.strictEqual(result, "value", "Value not found in copied container");
 	});
 });
