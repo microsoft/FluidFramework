@@ -294,7 +294,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
-		} = this.messageCodec.decode(content, {});
+		} = this.messageCodec.decode(this.serializer.decode(content), {});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit, true);
 	}
