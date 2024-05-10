@@ -28,11 +28,15 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
+/**
+ * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
+ * they are already converted to string.
+ */
 export interface SnapshotWithBlobs {
 	/**
 	 * Snapshot from which container initially loaded.
@@ -44,19 +48,28 @@ export interface SnapshotWithBlobs {
 	 */
 	snapshotBlobs: ISerializableBlobContents;
 }
+
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  *
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
- * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
  * they are already converted to string.
  *
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
+	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
 	attached: true;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState: unknown;
+	/**
+	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
+	 */
 	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
@@ -64,7 +77,9 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
+	/** The Container's URL in the service, needed to hook up the driver during rehydration */
 	url: string;
+	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
 	clientId?: string;
 }
 
@@ -74,8 +89,14 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
+	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
 	attached: false;
+	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState?: unknown;
 }
 
@@ -95,6 +116,13 @@ interface ISerializerEvent extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void): void;
 }
 
+/**
+ * Helper class to manage the state of the container needed for proper serialization.
+ *
+ * It holds the pendingLocalState the container was rehydrated from (if any),
+ * as well as the snapshot to be used for serialization.
+ * It also keeps track of container dirty state and which local ops have been processed
+ */
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
@@ -103,6 +131,14 @@ export class SerializedStateManager {
 	private refreshSnapshotP: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
+	/**
+	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
+	 * @param subLogger - Container's logger to use as parent for our logger
+	 * @param storageAdapter - Storage adapter for fetching snapshots
+	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
+	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
+	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
+	 */
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryBaseLogger,
@@ -135,6 +171,9 @@ export class SerializedStateManager {
 		return this.refreshSnapshotP;
 	}
 
+	/**
+	 * Called whenever an incoming op is processed by the Container
+	 */
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
@@ -142,6 +181,16 @@ export class SerializedStateManager {
 		}
 	}
 
+	/**
+	 * This wraps the basic functionality of fetching the snapshot for this container during Container load.
+	 *
+	 * If we have pendingLocalState, we get the snapshot from there.
+	 * Otherwise, fetch it from storage (according to specifiedVersion if provided)
+	 *
+	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @returns The snapshot to boot the container from
+	 */
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean,
@@ -298,9 +347,10 @@ export class SerializedStateManager {
 	}
 
 	/**
+	 * When the Container attaches, we need to stash the initial snapshot (a form of the attach summary).
 	 * This method is only meant to be used by Container.attach() to set the initial
 	 * base snapshot when attaching.
-	 * @param snapshot - snapshot and blobs collected while attaching
+	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
@@ -323,12 +373,16 @@ export class SerializedStateManager {
 		}
 	}
 
-	public async getPendingLocalStateCore(
+	/**
+	 * Assembles and serializes the {@link IPendingContainerState} for the container,
+	 * to be stored and used to rehydrate the container at a later time.
+	 */
+	public async getPendingLocalState(
 		props: IGetPendingLocalStateProps,
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
-	) {
+	): Promise<string> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
