@@ -20,9 +20,25 @@ type Script = string;
 export type PackageNameAndScript = string;
 type AbsoluteFilePath = string;
 type ModuleType = "CommonJS" | "ESM";
+/**
+ * Representation of a package.json script that generates "build" output.
+ */
 export interface BuildScript {
+	/**
+	 * Name of the package where script is located.
+	 */
 	packageName: PackageName;
+	/**
+	 * Name of the script within package.
+	 */
 	script: Script;
+	/**
+	 * The recognized module type, if any, that the script generates.
+	 * An `undefined` value indicates that script is not known to be associated
+	 * with a certain module type. This might happen for script that only copies
+	 * files as copying files has no inherent association to one module type or
+	 * the other.
+	 */
 	moduleType: ModuleType | undefined;
 }
 
@@ -50,6 +66,14 @@ function flubOutput(
 		// ignored - not recognized as build command
 		return undefined;
 	}
+
+	// Determine select output from flub generate entrypoints.
+	// Fluid packages use two import levels: internal and public.
+	// internal is built from tsc and public is generated. It is likely exported
+	// as . (root), but what matters is matching command implementation and
+	// output for public. So, match required logic bits of normal command.
+	// If it were possible, it would be better to use the command code
+	// more directly.
 	const args = readArgValues(commandLine, {
 		outDir: "./lib",
 		outFilePrefix: "",
@@ -196,6 +220,9 @@ const generationCommands: Partial<
 	"tsc": tscDeclOutput,
 };
 
+/**
+ * Maintains a database of build outputs by package script entries.
+ */
 export class FluidBuildDatabase {
 	private readonly outputSource = new Map<AbsoluteFilePath, BuildScript>();
 

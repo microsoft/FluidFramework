@@ -9,6 +9,16 @@ import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
 import { ApiTag } from "./apiTag";
 
+/**
+ * Properties for an "exports" leaf entry block in package.json.
+ * A block is the set of conditions and final results as in:
+ * ```json
+ * {
+ *    "types": "./index.d.ts",
+ *    "default": "./index.js"
+ * }
+ * ```
+ */
 export interface ExportData {
 	/**
 	 * Location of file relative to package
@@ -23,7 +33,11 @@ export interface ExportData {
 	 */
 	isTypeOnly: boolean;
 }
-export type Node10CompatExportData = Omit<ExportData, "conditions">;
+/**
+ * Minimal set of properties required from an "exports" entry to generate
+ * Node10 compatible redirection files.
+ */
+export type Node10CompatExportData = Pick<ExportData, "relPath" | "isTypeOnly">;
 
 /**
  * Only the value types of exports that are records.
@@ -71,6 +85,17 @@ function findTypesPathMatching(
 	return undefined;
 }
 
+/**
+ * Read package "exports" to determine which of given file paths are present.
+ *
+ * @param packageJson - json content of package.json
+ * @param mapQueryPathToApiTagLevel - keys of map represent paths to match. When matched
+ * value, if defined, is used to set entry key in output mapApiTagLevelToOutput.
+ * @param node10TypeCompat - when true, populates output mapNode10CompatExportPathToData.
+ * @param logger - optional Logger
+ * @returns object with mapApiTagLevelToOutput, map of ApiTags to output paths, and
+ * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
+ */
 export function queryOutputMapsFromPackageExports(
 	packageJson: PackageJson,
 	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
