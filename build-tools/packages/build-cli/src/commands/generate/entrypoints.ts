@@ -105,7 +105,7 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
 		}
 
-		const { mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
+		const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
 			queryOutputMapsFromPackageExports(
 				packageJson,
 				mapQueryPathToApiTagLevel,

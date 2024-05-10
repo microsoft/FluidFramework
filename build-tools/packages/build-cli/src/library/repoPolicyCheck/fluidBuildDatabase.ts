@@ -80,7 +80,7 @@ function flubOutput(
 		outFilePublic: ApiLevel.public,
 		outFileSuffix: ".d.ts",
 	});
-	const { mapApiTagLevelToOutput } = queryOutputMapsFromPackageExports(
+	const { mapKeyToOutput: mapApiTagLevelToOutput } = queryOutputMapsFromPackageExports(
 		pkg.packageJson,
 		// We are only concerned with public generated
 		new Map([[`${args.outDir}/${args.outFilePublic}${args.outFileSuffix}`, ApiTag.public]]),

@@ -7,8 +7,6 @@ import path from "node:path";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
-import { ApiTag } from "./apiTag";
-
 /**
  * Properties for an "exports" leaf entry block in package.json.
  * A block is the set of conditions and final results as in:
@@ -44,15 +42,15 @@ export type Node10CompatExportData = Pick<ExportData, "relPath" | "isTypeOnly">;
  */
 type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
 
-function findTypesPathMatching(
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
+function findTypesPathMatching<TOutKey>(
+	mapQueryPathToOutKey: Map<string | RegExp, TOutKey | undefined>,
 	exports: ExportsRecordValue,
 	conditions: string[],
-): (ExportData & { apiTagLevel: ApiTag | undefined }) | undefined {
+): (ExportData & { outKey: TOutKey | undefined }) | undefined {
 	for (const [entry, value] of Object.entries(exports)) {
 		if (typeof value === "string") {
 			if (entry === "types") {
-				for (const [key, apiTagLevel] of mapQueryPathToApiTagLevel.entries()) {
+				for (const [key, outKey] of mapQueryPathToOutKey.entries()) {
 					// eslint-disable-next-line max-depth
 					if (
 						typeof key === "string"
@@ -64,7 +62,7 @@ function findTypesPathMatching(
 							"import" in exports ||
 							"require" in exports
 						);
-						return { apiTagLevel, relPath: value, conditions, isTypeOnly };
+						return { outKey, relPath: value, conditions, isTypeOnly };
 					}
 				}
 			}
@@ -72,7 +70,7 @@ function findTypesPathMatching(
 			if (Array.isArray(value)) {
 				continue;
 			}
-			const deepFind = findTypesPathMatching(mapQueryPathToApiTagLevel, value, [
+			const deepFind = findTypesPathMatching(mapQueryPathToOutKey, value, [
 				...conditions,
 				entry,
 			]);
@@ -89,23 +87,23 @@ function findTypesPathMatching(
  * Read package "exports" to determine which of given file paths are present.
  *
  * @param packageJson - json content of package.json
- * @param mapQueryPathToApiTagLevel - keys of map represent paths to match. When matched
- * value, if defined, is used to set entry key in output mapApiTagLevelToOutput.
+ * @param mapQueryPathToOutKey - keys of map represent paths to match. When matched
+ * value, if defined, is used to set entry key in output mapKeyToOutput.
  * @param node10TypeCompat - when true, populates output mapNode10CompatExportPathToData.
  * @param logger - optional Logger
- * @returns object with mapApiTagLevelToOutput, map of ApiTags to output paths, and
+ * @returns object with mapKeyToOutput, map of ApiTags to output paths, and
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
  */
-export function queryOutputMapsFromPackageExports(
+export function queryOutputMapsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
+	mapQueryPathToOutKey: Map<string | RegExp, TOutKey | undefined>,
 	node10TypeCompat: boolean,
 	logger?: Logger,
 ): {
-	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
+	mapKeyToOutput: Map<TOutKey, ExportData>;
 	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
 } {
-	const mapApiTagLevelToOutput = new Map<ApiTag, ExportData>();
+	const mapKeyToOutput = new Map<TOutKey, ExportData>();
 	const mapNode10CompatExportPathToData = new Map<string, Node10CompatExportData>();
 
 	const { exports } = packageJson;
@@ -133,16 +131,16 @@ export function queryOutputMapsFromPackageExports(
 			continue;
 		}
 
-		const findResult = findTypesPathMatching(mapQueryPathToApiTagLevel, exportValue, []);
+		const findResult = findTypesPathMatching(mapQueryPathToOutKey, exportValue, []);
 		if (findResult !== undefined) {
-			const { apiTagLevel, relPath, conditions, isTypeOnly } = findResult;
+			const { outKey, relPath, conditions, isTypeOnly } = findResult;
 
-			// Add mapping for API level file generation
-			if (apiTagLevel !== undefined) {
-				if (mapApiTagLevelToOutput.has(apiTagLevel)) {
+			// Add mapping for using given key, if defined.
+			if (outKey !== undefined) {
+				if (mapKeyToOutput.has(outKey)) {
 					logger?.warning(`${relPath} found in exports multiple times.`);
 				} else {
-					mapApiTagLevelToOutput.set(apiTagLevel, { relPath, conditions, isTypeOnly });
+					mapKeyToOutput.set(outKey, { relPath, conditions, isTypeOnly });
 				}
 			}
 
@@ -161,5 +159,5 @@ export function queryOutputMapsFromPackageExports(
 		}
 	}
 
-	return { mapApiTagLevelToOutput, mapNode10CompatExportPathToData };
+	return { mapKeyToOutput, mapNode10CompatExportPathToData };
 }
