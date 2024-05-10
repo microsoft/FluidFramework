@@ -893,10 +893,10 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @internal (undocumented)
