@@ -256,15 +256,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 						break;
 					}
 					if (this.getLocalBranch().isTransacting()) {
-						// We do not submit ops for changes that are part of a transaction.
-						// But we need to enrich the commits that will be sent if the transaction is committed.
-						if (this.transactionEnricher === undefined) {
-							this.transactionEnricher = new TransactionEnricher(
-								this.editManager.changeFamily.rebaser,
-								this.enricher,
-							);
+						if (
+							change.type === "replace" &&
+							getChangeReplaceType(change) === "transactionCommit"
+						) {
+							// This event if fired for the completion of a nested transaction.
+							// We do not need to add the commit to the transaction enricher
+							// because we have already added the steps that make up this nested transaction.
+						} else {
+							// We do not submit ops for changes that are part of a transaction.
+							// But we need to enrich the commits that will be sent if the transaction is committed.
+							if (this.transactionEnricher === undefined) {
+								this.transactionEnricher = new TransactionEnricher(
+									this.editManager.changeFamily.rebaser,
+									this.enricher,
+								);
+							}
+							this.transactionEnricher.addTransactionStep(newCommit);
 						}
-						this.transactionEnricher.addTransactionStep(newCommit);
 					} else {
 						if (
 							change.type === "replace" &&
@@ -304,12 +313,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					}
 					if (this.detachedRevision !== undefined) {
 						this.submitCommit(newCommit, this.schemaAndPolicy);
+					} else {
+						assert(
+							this.preparedCommit?.local === newCommit,
+							"Inconsistent commits between before and after change",
+						);
+						this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
 					}
-					assert(
-						this.preparedCommit?.local === newCommit,
-						"Inconsistent commits between before and after change",
-					);
-					this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
 					break;
 				}
 				default:
