@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IDeltaManager } from "@fluidframework/container-definitions";
+import { type IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	MessageType,
