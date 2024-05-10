@@ -54,7 +54,7 @@ export interface SnapshotWithBlobs {
  * of the container to the same state
  *
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
- * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
  * they are already converted to string.
  *
  * @internal
