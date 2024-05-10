@@ -108,7 +108,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @public
+// @alpha
 export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
@@ -216,7 +216,7 @@ export interface IContainerEvents extends IEvent {
     (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
@@ -227,7 +227,7 @@ export interface IContainerLoadMode {
 // @public
 export type ICriticalContainerError = IErrorBase_2;
 
-// @public @sealed
+// @alpha @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
@@ -250,7 +250,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly version: string;
 }
 
-// @public @sealed
+// @alpha @sealed
 export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
@@ -266,7 +266,7 @@ export interface IDeltaManagerEvents extends IEvent {
     }) => void): any;
 }
 
-// @public @sealed
+// @alpha @sealed
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     idle: boolean;
     length: number;
@@ -281,14 +281,14 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     }>;
 }
 
-// @public @sealed
+// @alpha @sealed
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void): any;
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @public @sealed
+// @alpha @sealed
 export interface IDeltaSender {
     flush(): void;
 }
@@ -504,7 +504,7 @@ export enum LoaderHeader {
     version = "version"
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type ReadOnlyInfo = {
     readonly readonly: false | undefined;
 } | {

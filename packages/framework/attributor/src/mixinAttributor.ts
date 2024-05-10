@@ -4,8 +4,10 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { type IDeltaManager } from "@fluidframework/container-definitions";
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	type IDeltaManager,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";

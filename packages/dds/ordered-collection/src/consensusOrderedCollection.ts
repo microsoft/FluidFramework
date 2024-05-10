@@ -202,7 +202,7 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	protected isActive() {
-		return this.runtime.connected && this.runtime.deltaManager.active;
+		return this.runtime.connected && this.deltaManager.active;
 	}
 
 	protected async complete(acquireId: string) {

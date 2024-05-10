@@ -24,6 +24,7 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
@@ -128,7 +129,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);

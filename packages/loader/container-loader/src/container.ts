@@ -8,8 +8,6 @@ import {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
-	IDeltaManager,
-	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import {
 	ContainerWarning,
@@ -27,6 +25,8 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
+	IDeltaManager,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
