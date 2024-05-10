@@ -9,7 +9,6 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
-	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -19,6 +18,7 @@ import {
 	IRuntime,
 	LoaderHeader,
 	type IAudienceEvents,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,

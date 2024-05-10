@@ -456,7 +456,7 @@ export class SharedMatrix<T = any>
 			localSeq,
 			rowsRef,
 			colsRef,
-			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -695,7 +695,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').

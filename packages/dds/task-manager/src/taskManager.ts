@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
@@ -105,7 +105,7 @@ export class TaskManagerClass extends SharedObject<ITaskManagerEvents> implement
 	 * Returns a ReadOnlyInfo object to determine current read/write permissions.
 	 */
 	private get readOnlyInfo(): ReadOnlyInfo {
-		return this.runtime.deltaManager.readOnlyInfo;
+		return this.deltaManager.readOnlyInfo;
 	}
 
 	/**
