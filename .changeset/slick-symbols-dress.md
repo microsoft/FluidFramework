@@ -2,7 +2,7 @@
 "@fluidframework/container-runtime": major
 ---
 
-Make op grouping On by default
+container-runtime: Make op grouping On by default
 
 Op grouping feature reduces number of ops on the wire by grouping all ops in a batch. This allows applications to substantially reduce chances of being throttled by service when sending a lot of ops.
 This feature could be enabled only by applications that have consumed 2.0.0-internal.7.0.2 version and have application version based on it saturated in the marker (to 99.99% or higher). Enabling it too soon will result on old client crashing when processing grouped ops.
