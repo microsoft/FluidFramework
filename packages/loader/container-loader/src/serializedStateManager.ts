@@ -21,6 +21,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
+	IClient,
 } from "@fluidframework/protocol-definitions";
 import {
 	MonitoringContext,
@@ -66,6 +67,10 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
 	clientId?: string;
+	/**
+	 * "read" clients from Audience
+	 */
+	readClients: Record<string, IClient>;
 }
 
 /**
@@ -325,6 +330,7 @@ export class SerializedStateManager {
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
+		readClients: Record<string, IClient>,
 	) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -365,6 +371,7 @@ export class SerializedStateManager {
 						? loadedGroupIdSnapshots
 						: undefined,
 					savedOps: this.processedOps,
+					readClients,
 					url: resolvedUrl.url,
 					clientId,
 				};

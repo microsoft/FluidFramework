@@ -64,6 +64,7 @@ const pendingLocalState: IPendingContainerState = {
 	pendingRuntimeState: {},
 	savedOps,
 	url: "fluid",
+	readClients: {},
 };
 
 const eventEmitter = new EventEmitter();
@@ -202,6 +203,7 @@ describe("serializedStateManager", () => {
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
+					{}, // readClients
 				),
 			(error: Error) =>
 				errorFn(error, "Can't get pending local state unless offline load is enabled"),
@@ -230,6 +232,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 	});
 
@@ -258,6 +261,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 		assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
 	});
@@ -284,6 +288,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 		const parsed = JSON.parse(state);
 		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
@@ -330,6 +335,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
@@ -380,6 +386,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
@@ -437,6 +444,7 @@ describe("serializedStateManager", () => {
 			"clientId",
 			new MockRuntime(),
 			resolvedUrl,
+			{}, // readClients
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
