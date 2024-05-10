@@ -23,7 +23,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
 		const message = { contents: generateStringOfSize(1024) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit: Infinity });
+		const batchManager = new BatchManager({ hardLimit: Infinity, canRebase: true });
 
 		for (let i = 1; i <= 10; i++) {
 			assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -32,7 +32,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch metadata is set correctly", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },
