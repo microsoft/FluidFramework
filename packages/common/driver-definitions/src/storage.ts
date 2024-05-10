@@ -467,7 +467,7 @@ export enum FetchSource {
 }
 
 /**
- * A "Full" container Snapshot, include ISnapshotTree, blobs and outstanding ops (and other metadata)
+ * A "Full" container Snapshot, including ISnapshotTree, blobs and outstanding ops (and other metadata)
  *
  * @alpha
  */

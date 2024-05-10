@@ -34,7 +34,7 @@ import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
- * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
  * they are already converted to string.
  */
 export interface SnapshotWithBlobs {
@@ -133,7 +133,7 @@ export class SerializedStateManager {
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
-	 * @param subLogger - Container's logger to parent our logger under
+	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
 	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
