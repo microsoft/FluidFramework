@@ -162,7 +162,7 @@ export interface IContainerLoadProps {
 	readonly loadMode?: IContainerLoadMode;
 
 	/**
-	 * The pending state serialized from a pervious container instance
+	 * The pending state serialized from a previous container instance
 	 */
 	readonly pendingLocalState?: IPendingContainerState;
 }
@@ -433,6 +433,8 @@ export class Container
 	/**
 	 * Create a new container in a detached state that is initialized with a
 	 * snapshot from a previous detached container.
+	 * @param createProps - Config options for this new container instance
+	 * @param snapshot - A stringified {@link IPendingDetachedContainerState}, e.g. generated via {@link serialize}
 	 */
 	public static async rehydrateDetachedFromSnapshot(
 		createProps: IContainerCreateProps,
@@ -1138,6 +1140,11 @@ export class Container
 		return pendingState;
 	}
 
+	/**
+	 * Serialize current container state required to rehydrate to the same position without dataloss.
+	 * Note: The container must already be attached. For detached containers use {@link serialize}
+	 * @returns stringified {@link IPendingContainerState} for the container
+	 */
 	public async getPendingLocalState(): Promise<string> {
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
@@ -1156,7 +1163,7 @@ export class Container
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
-		const pendingState = await this.serializedStateManager.getPendingLocalStateCore(
+		const pendingState = await this.serializedStateManager.getPendingLocalState(
 			props,
 			this.clientId,
 			this.runtime,
@@ -1169,6 +1176,12 @@ export class Container
 		return this.attachmentData.state;
 	}
 
+	/**
+	 * Serialize current container state required to rehydrate to the same position without dataloss.
+	 * Note: The container must be detached and not closed. For attached containers use
+	 * {@link getPendingLocalState} or {@link closeAndGetPendingLocalState}
+	 * @returns stringified {@link IPendingDetachedContainerState} for the container
+	 */
 	public serialize(): string {
 		if (this.attachmentData.state === AttachState.Attached || this.closed) {
 			throw new UsageError("Container must not be attached or closed.");
@@ -1309,8 +1322,11 @@ export class Container
 							throw normalizeErrorAndClose(error);
 						});
 					}
+
+					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
+
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
