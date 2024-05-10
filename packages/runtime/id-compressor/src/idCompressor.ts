@@ -234,8 +234,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			},
 		};
 		this.nextRangeBaseGenCount = this.localGenCount + 1;
-		IdCompressor.assertValidRange(range);
-		return range;
+		return IdCompressor.assertValidRange(range);
 	}
 
 	public retakeOutstandingCreationRange(): IdCreationRange {
@@ -268,13 +267,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessionId: this.localSessionId,
 		};
 
-		IdCompressor.assertValidRange(range);
-		return range;
+		return IdCompressor.assertValidRange(range);
 	}
 
-	private static assertValidRange(range: IdCreationRange): void {
+	private static assertValidRange(range: IdCreationRange): IdCreationRange {
 		if (range.ids === undefined) {
-			return;
+			return range;
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
@@ -283,6 +281,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			requestedClusterSize <= IdCompressor.maxClusterSize,
 			0x877 /* Clusters must not exceed max cluster size. */,
 		);
+		return range;
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
