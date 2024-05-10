@@ -357,7 +357,10 @@ function hasTaskDependency(
 	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
-	// Searched deps that are package specific
+	// Searched deps that are package specific (e.g. <packageName>#<taskName>)
+	// It is expected that all packageNames are other packages' names; using
+	// given package's name (json.name) will alway return false as package is
+	// not a dependency of itself. Skip "name# prefix for self dependencies.
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
 	// Set of package dependencies
 	const packageDependencies = new Set([
@@ -384,7 +387,8 @@ function hasTaskDependency(
 			return true;
 		}
 		if (dep.startsWith("^")) {
-			// ^ means depend on package dependencies of same name, or all for ^*.
+			// ^ means "depends on the task of the same name in all package dependencies".
+			// dep of exactly ^* means "_all_ tasks in all package dependencies".
 			const regexSearchMatches = new RegExp(dep === "^*" ? "." : `#${dep.slice(1)}$`);
 			const possibleSearchMatches = packageSpecificSearchDeps.filter((searchDep) =>
 				regexSearchMatches.test(searchDep),
