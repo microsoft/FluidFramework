@@ -253,12 +253,12 @@ describe("Container create with legacy version", () => {
 	});
 
 	/**
-	 * Scenario: test if a legacy AzureClient can get a container made by the current AzureClient.
+	 * Scenario: test if a current AzureClient can get a container made by a legacy AzureClient.
 	 *
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("2.X container can get container made by 1.X", async () => {
+	it("Current AzureClient can get container made by legacy AzureClient", async () => {
 		const { container: container1 } = await clientLegacy.createContainer(schemaLegacy);
 		const containerId = await container1.attach();
 
