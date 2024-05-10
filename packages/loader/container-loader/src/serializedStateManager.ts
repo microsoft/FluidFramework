@@ -227,7 +227,10 @@ export class SerializedStateManager {
 		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
 		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
 		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
-			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			assert(
+				this.storageAdapter.getSnapshot !== undefined,
+				0x972 /* getSnapshot should exist */,
+			);
 			// (This is a separate network call from above because it requires work for storage to add a special base groupId)
 			const snapshot = await this.storageAdapter.getSnapshot({
 				versionId: undefined,
@@ -236,7 +239,7 @@ export class SerializedStateManager {
 				loadingGroupIds: downloadedGroupIds,
 				fetchSource: FetchSource.noCache,
 			});
-			assert(snapshot !== undefined, "Snapshot should exist");
+			assert(snapshot !== undefined, 0x973 /* Snapshot should exist */);
 		}
 
 		this.updateSnapshotAndProcessedOpsMaybe();
