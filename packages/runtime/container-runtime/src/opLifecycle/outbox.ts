@@ -300,7 +300,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(!batchManager.options.canRebase, "BatchManager does not support rebase");
+		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
