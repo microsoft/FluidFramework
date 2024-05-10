@@ -141,7 +141,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		args: ITestObjectProvider,
 		send: boolean,
 		cb: SharedObjCallback = () => undefined,
-		doNotClose: boolean = false,
 	) => {
 		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
@@ -161,13 +160,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (send) {
 			pendingState = await container.getPendingLocalState?.();
 			await args.ensureSynchronized();
-			if (!doNotClose) {
-				container.close();
-			}
+			container.close();
 		} else {
-			pendingState = doNotClose
-				? await container.getPendingLocalState?.()
-				: await container.closeAndGetPendingLocalState?.();
+			pendingState = await container.closeAndGetPendingLocalState?.();
 		}
 
 		args.opProcessingController.resumeProcessing();
@@ -1830,21 +1825,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const duplicatedIncrementValue = 3;
 			const getMap = getMapBackedMap;
 			const map = await getMapFromProvider(getMap);
-			const pendingLocalState = await getPendingOps(
-				provider,
-				true,
-				async (c, d) => {
-					const mapPre = await getMap(d);
-					mapPre.set(testKey, "Duplication Threat");
-					const cell = await d.getSharedObject<ISharedCell>(cellId);
-					cell.set("Duplication Threat");
-					const counter = await d.getSharedObject<SharedCounter>(counterId);
-					counter.increment(duplicatedIncrementValue);
-					const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-					directory.set(testKey, "Duplication Threat");
-				},
-				true /* doNotClose */,
-			);
+			const pendingLocalState = await getPendingOps(provider, true, async (c, d) => {
+				const mapPre = await getMap(d);
+				mapPre.set(testKey, "Duplication Threat");
+				const cell = await d.getSharedObject<ISharedCell>(cellId);
+				cell.set("Duplication Threat");
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(duplicatedIncrementValue);
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				directory.set(testKey, "Duplication Threat");
+			});
 			// If the container doesn't close, clientId could have changed (i.e. the ops could have been resubmitted).
 			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState
 			const obj = JSON.parse(pendingLocalState);
