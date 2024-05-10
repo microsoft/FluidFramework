@@ -31,7 +31,7 @@ module.exports = {
 
 		// TODO: Remove these overrides once this config has been updated to extend at least the "recommended" base config.
 		"@typescript-eslint/explicit-function-return-type": [
-			"error",
+			"warn",
 			{
 				allowExpressions: false,
 				allowTypedFunctionExpressions: true,
