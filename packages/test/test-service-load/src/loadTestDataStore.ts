@@ -87,16 +87,13 @@ export class LoadTestDataStoreModel {
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					toDeltaManagerInternal(runtime.deltaManager).off(
-						"op",
-						resolveIfDisposedOrCaughtUp,
-					);
+					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			toDeltaManagerInternal(runtime.deltaManager).on("op", resolveIfDisposedOrCaughtUp);
+			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
 		});
