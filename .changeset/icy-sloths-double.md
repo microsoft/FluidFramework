@@ -2,7 +2,7 @@
 "@fluidframework/matrix": minor
 ---
 
-SharedMatrix class hidden
+matrix: SharedMatrix class hidden
 
 The `SharedMatrix` class has been hidden from the alpha API.
 In its place:
