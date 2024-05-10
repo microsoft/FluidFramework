@@ -101,7 +101,8 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
-	const factoryOut = <TValue extends Values>(value: TValue): NodeType => {
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[inverse.get(value) ?? fail("missing enum value")]({}) as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
 		>;
@@ -159,6 +160,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 	}
 
 	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Members>(value: TValue) => {
 		return new out[value]({}) as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
