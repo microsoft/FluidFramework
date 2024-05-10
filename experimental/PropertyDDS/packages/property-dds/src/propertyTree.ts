@@ -217,7 +217,7 @@ export class SharedPropertyTree extends SharedObject {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
-			let dm = (this.runtime.deltaManager as any).deltaManager;
+			let dm = (this.deltaManager as any).deltaManager;
 			if (dm.deltaManager !== undefined) {
 				dm = dm.deltaManager;
 			}
@@ -494,7 +494,7 @@ export class SharedPropertyTree extends SharedObject {
 		};
 	}
 	public pruneHistory() {
-		const msn = this.runtime.deltaManager.minimumSequenceNumber;
+		const msn = this.deltaManager.minimumSequenceNumber;
 
 		let lastKnownRemoteGuid = this.headCommitGuid;
 		// We use the reference GUID of the first change in the list
@@ -568,7 +568,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
-			summaryMinimumSequenceNumber: this.runtime.deltaManager.minimumSequenceNumber,
+			summaryMinimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 			useMH: this.useMH,
 			numChunks: 0,
 		};
@@ -713,7 +713,7 @@ export class SharedPropertyTree extends SharedObject {
 				);
 				const lastDelta = commitMetadata.sequenceNumber;
 
-				const dm = (this.runtime.deltaManager as any).deltaManager;
+				const dm = (this.deltaManager as any).deltaManager;
 				// TODO: This is accessing a private member of the delta manager, and should not be.
 				await dm.getDeltas(
 					"DocumentOpen",

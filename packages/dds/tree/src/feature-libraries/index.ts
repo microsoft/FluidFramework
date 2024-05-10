@@ -202,7 +202,6 @@ export {
 	StableNodeKey,
 	NodeKeyIndex,
 	NodeKeyManager,
-	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
 } from "./node-key/index.js";
 
@@ -211,7 +210,6 @@ export {
 	Required,
 	Optional,
 	Sequence,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	DefaultChangeset,
