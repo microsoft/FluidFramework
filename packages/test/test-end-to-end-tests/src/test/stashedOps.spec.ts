@@ -141,6 +141,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		args: ITestObjectProvider,
 		send: boolean,
 		cb: SharedObjCallback = () => undefined,
+		doNotClose: boolean = false,
 	) => {
 		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
@@ -160,9 +161,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (send) {
 			pendingState = await container.getPendingLocalState?.();
 			await args.ensureSynchronized();
-			container.close();
+			if (!doNotClose) {
+				container.close();
+			}
 		} else {
-			pendingState = await container.closeAndGetPendingLocalState?.();
+			pendingState = doNotClose
+				? await container.getPendingLocalState?.()
+				: await container.closeAndGetPendingLocalState?.();
 		}
 
 		args.opProcessingController.resumeProcessing();
@@ -1813,6 +1818,64 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	describe.only("Negative tests for Offline Phase 3 - serializing without closing", () => {
+		it(`WRONGLY resend successful op (SharedMap)`, async function () {
+			const duplicatedIncrementValue = 3;
+			const getMap = getMapBackedMap;
+			const map = await getMapFromProvider(getMap);
+			const pendingLocalState = await getPendingOps(
+				provider,
+				true,
+				async (c, d) => {
+					const mapPre = await getMap(d);
+					mapPre.set(testKey, "Duplication Threat");
+					const cell = await d.getSharedObject<ISharedCell>(cellId);
+					cell.set("Duplication Threat");
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(duplicatedIncrementValue);
+					const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+					directory.set(testKey, "Duplication Threat");
+				},
+				true /* doNotClose */,
+			);
+			// If the container doesn't close, clientId could have changed (i.e. the ops could have been resubmitted).
+			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState
+			const obj = JSON.parse(pendingLocalState);
+			obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+			const pendingLocalStateAdjusted = JSON.stringify(obj);
+
+			// These will WRONGLY get overwritten
+			map.set(testKey, testValue);
+			cell1.set(testValue);
+			counter1.increment(testIncrementValue);
+			directory1.set(testKey, testValue);
+			await provider.ensureSynchronized();
+
+			// load with pending ops with bogus clientId, which makes it impossible (today) to correlate the local ops and they're resent
+			const container2 = await loader.resolve({ url }, pendingLocalStateAdjusted);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.get(testKey), "Duplication Threat");
+			assert.strictEqual(map2.get(testKey), "Duplication Threat");
+			assert.strictEqual(cell1.get(), "Duplication Threat");
+			assert.strictEqual(cell2.get(), "Duplication Threat");
+			assert.strictEqual(counter1.value, testIncrementValue + 2 * duplicatedIncrementValue);
+			assert.strictEqual(counter2.value, testIncrementValue + 2 * duplicatedIncrementValue);
+			assert.strictEqual(directory1.get(testKey), "Duplication Threat");
+			assert.strictEqual(directory2.get(testKey), "Duplication Threat");
+		});
 	});
 });
 
