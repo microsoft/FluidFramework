@@ -307,6 +307,11 @@ export {
 	DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
+	// Test
+	ITree2,
+	PackageSeal,
+	InPackageTester,
+	InPackage,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,

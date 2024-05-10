@@ -15,6 +15,7 @@ import {
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 } from "./schemaTypes.js";
+import { ErasedType } from "@fluidframework/core-interfaces";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -63,6 +64,33 @@ export interface ITree extends IChannel {
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TRoot>;
 }
+
+/**
+ * This type parameter is covariant from within the package, but has no impact on assignability from outside the package since the type of private members are dropped.
+ * @public
+ */
+export class InPackageTester<T> {
+	private readonly test!: T;
+}
+
+/**
+ * True when use within this package, false from outside it.
+ * @public
+ */
+export type InPackage = InPackageTester<1> extends InPackageTester<2> ? false : true;
+
+/**
+ * Adapt an interface to be "sealed" making it non-constructable and non implementable, but only from outside the package.
+ * @public
+ */
+export type PackageSeal<T> = InPackage extends true
+	? T
+	: T & ErasedType<readonly ["PackageSeal", T]>;
+
+/**
+ * @public
+ */
+export type ITree2 = PackageSeal<ITree>;
 
 /**
  * Configuration for how to {@link ITree.schematize|schematize} a tree.

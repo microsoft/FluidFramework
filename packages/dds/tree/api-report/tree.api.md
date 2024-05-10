@@ -242,7 +242,7 @@ export interface CommitMetadata {
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
 
 // @internal
-export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree>;
+export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree2>;
 
 // @internal
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
@@ -983,6 +983,13 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends FlexFieldSch
 // @internal
 export type _InlineTrick = 0;
 
+// @public
+export type InPackage = InPackageTester<1> extends InPackageTester<2> ? false : true;
+
+// @public
+export class InPackageTester<T> {
+}
+
 // @internal
 export type InsertableFlexField<TField extends FlexFieldSchema> = [
 ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToFlexInsertableTree<TField["allowedTypes"]>>
@@ -1086,6 +1093,9 @@ export interface ITransaction {
 export interface ITree extends IChannel {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
+
+// @public (undocumented)
+export type ITree2 = PackageSeal<ITree>;
 
 // @internal
 export interface ITreeCheckout extends AnchorLocator {
@@ -1396,6 +1406,9 @@ export type OptionalFields<T> = [
 }
 ][_InlineTrick];
 
+// @public
+export type PackageSeal<T> = InPackage extends true ? T : T & ErasedType<readonly ["PackageSeal", T]>;
+
 // @internal
 export interface PathRootPrefix {
     indexOffset?: number;
@@ -1692,7 +1705,7 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @public
-export const SharedTree: ISharedObjectKind<ITree>;
+export const SharedTree: ISharedObjectKind<ITree2>;
 
 // @internal
 export interface SharedTreeContentSnapshot {

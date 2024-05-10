@@ -14,7 +14,7 @@ import { createSharedObjectKind } from "@fluidframework/shared-object-base/inter
 
 import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
-import { ITree } from "./simple-tree/index.js";
+import { ITree, ITree2 } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -55,7 +55,7 @@ export class TreeFactory implements IChannelFactory<ITree> {
  * of objects, arrays, and other data types.
  * @public
  */
-export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
+export const SharedTree: ISharedObjectKind<ITree2> = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -82,7 +82,7 @@ export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
  * Maybe as part of a test utils or dev-tool package?
  * @internal
  */
-export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree> {
+export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree2> {
 	class ConfiguredFactory extends TreeFactory {
 		public constructor() {
 			super(options);

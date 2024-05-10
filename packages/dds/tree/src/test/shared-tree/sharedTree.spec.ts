@@ -66,7 +66,13 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import {
+	ITree2,
+	ImplicitFieldSchema,
+	SchemaFactory,
+	TreeConfiguration,
+	TreeView,
+} from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	ConnectionSetter,
@@ -90,11 +96,55 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
+import {
+	ITelemetryContext,
+	ISummaryTreeWithStats,
+	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+} from "@fluidframework/runtime-definitions";
+
+// This it outside the package (for TSC, not for intellisense) so it fails to build since implementing this interface is blocked.
+const bad: ITree2 = {
+	schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TRoot> {
+		throw new Error("Function not implemented.");
+	},
+	id: "",
+	attributes: undefined as any,
+	getAttachSummary(
+		fullTree?: boolean | undefined,
+		trackState?: boolean | undefined,
+		telemetryContext?: ITelemetryContext | undefined,
+	): ISummaryTreeWithStats {
+		throw new Error("Function not implemented.");
+	},
+	async summarize(
+		fullTree?: boolean | undefined,
+		trackState?: boolean | undefined,
+		telemetryContext?: ITelemetryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+	): Promise<ISummaryTreeWithStats> {
+		throw new Error("Function not implemented.");
+	},
+	isAttached(): boolean {
+		throw new Error("Function not implemented.");
+	},
+	connect(services: IChannelServices): void {
+		throw new Error("Function not implemented.");
+	},
+	getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
+		throw new Error("Function not implemented.");
+	},
+	handle: undefined as any,
+	IFluidLoadable: undefined as any,
+};
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-}) as ISharedObjectKind<SharedTree>;
+}) as unknown as ISharedObjectKind<SharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
