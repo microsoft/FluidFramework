@@ -361,6 +361,13 @@ export type InitialObjects<T extends ContainerSchema> = {
 };
 
 // @public
+export type InPackage = InPackageTester<1> extends InPackageTester<2> ? false : true;
+
+// @public
+export class InPackageTester<T> {
+}
+
+// @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
     readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
@@ -559,6 +566,9 @@ export interface ITree extends IChannel {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
+// @public (undocumented)
+export type ITree2 = PackageSeal<ITree>;
+
 // @alpha @sealed
 export interface IValueChanged {
     readonly key: string;
@@ -633,6 +643,9 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @public
+export type PackageSeal<T> = InPackage extends true ? T : T & ErasedType<readonly ["PackageSeal", T]>;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -865,7 +878,7 @@ export type SharedString = ISharedString;
 export type SharedStringSegment = TextSegment | Marker;
 
 // @public
-export const SharedTree: ISharedObjectKind<ITree>;
+export const SharedTree: ISharedObjectKind<ITree2>;
 
 // @alpha
 export enum Side {
