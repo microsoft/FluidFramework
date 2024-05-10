@@ -62,7 +62,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
-	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
+	protected readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**

@@ -402,7 +402,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				root = config.detachedFieldIndex.getEntry(id);
 			}
 			// the revision is updated for any refresher data included in the delta that is used
-			config.detachedFieldIndex.updateLatestRevision(root, config.latestRevision);
+			config.detachedFieldIndex.updateLatestRevision(id, config.latestRevision);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -422,11 +422,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			}
 			if (isDetachMark(mark)) {
 				for (let i = 0; i < mark.count; i += 1) {
-					const root = config.detachedFieldIndex.createEntry(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						offsetDetachId(mark.detach!, i),
-					);
-					config.detachedFieldIndex.updateLatestRevision(root, config.latestRevision);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const id = offsetDetachId(mark.detach!, i);
+					const root = config.detachedFieldIndex.createEntry(id, config.latestRevision);
 					if (mark.fields !== undefined) {
 						config.attachPassRoots.set(root, mark.fields);
 					}
@@ -450,7 +448,7 @@ function buildTrees(
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
-		root = config.detachedFieldIndex.createEntry(offsettedId);
+		root = config.detachedFieldIndex.createEntry(offsettedId, config.latestRevision);
 		const field = config.detachedFieldIndex.toFieldKey(root);
 		visitor.create([trees[i]], field);
 	}
@@ -508,6 +506,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						const rootDestination = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, i),
+							config.latestRevision
 						);
 						const destinationField =
 							config.detachedFieldIndex.toFieldKey(rootDestination);

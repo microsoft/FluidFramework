@@ -457,7 +457,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								);
 								this.revertRevertible(revision, data.kind);
 								if (release) {
-									revertible[disposeSymbol]();
+									this.disposeRevertible(revertible, revision);
+									onRevertibleDisposed?.(revertible);
 								}
 							},
 							[disposeSymbol]: () => revertible.dispose(),
@@ -467,6 +468,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									0x910 /* a disposed revertible cannot be disposed */,
 								);
 								this.disposeRevertible(revertible, revision);
+								this.disposeRevertibleRoots(revision);
 								onRevertibleDisposed?.(revertible);
 							},
 						};
@@ -490,7 +492,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						.getLatestRelevantRoots(revision)
 						.map((root) => this.removedRoots.toFieldKey(root))
 						.forEach((field) => visitor.destroy(field, 1));
-					this.removedRoots.deleteRevision(revision);
+					this.removedRoots.deleteLatestRelevantRoots(revision);
 				});
 			});
 		});
@@ -603,6 +605,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return trees;
 	}
 
+	public setRevisionsForLoadedData(revision: RevisionTag) {
+		this.removedRoots.setRevisionsForLoadedData(revision);
+	}
+
 	private purgeRevertibles(): void {
 		for (const revertible of this.revertibles) {
 			revertible.dispose();
@@ -613,14 +619,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
-		this.withCombinedVisitor((visitor) => {
-			// get all the roots associated with the revision
-			this.removedRoots
-				.getRoots(revision)
-				.map((root) => this.removedRoots.toFieldKey(root))
-				.forEach((field) => visitor.destroy(field, 1));
-		});
-		this.removedRoots.deleteRevision(revision);
+	}
+
+	private disposeRevertibleRoots(revision: RevisionTag): void {
+		const roots = this.removedRoots.getRoots(revision);
+		if (roots.length > 0) {
+			this.withCombinedVisitor((visitor) => {
+				// get all the roots associated with the revision
+				roots
+					.map((root) => this.removedRoots.toFieldKey(root))
+					.forEach((field) => visitor.destroy(field, 1));
+			});
+			this.removedRoots.deleteRoots(revision);
+		}
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {

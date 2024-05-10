@@ -1035,6 +1035,7 @@ describe("SharedTree", () => {
 			const repairCursor2 = tree2.checkout.forest.allocateCursor();
 			moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
 			assert.equal(repairCursor2.firstNode(), false);
+			repairCursor2.free();
 			undoStack[0]?.revert();
 
 			provider.processMessages();
@@ -1077,7 +1078,7 @@ describe("SharedTree", () => {
 				const removeSequenceNumber = provider.sequenceNumber;
 				assert.deepEqual([...root1], ["B", "C", "D"]);
 				assert.deepEqual([...root2], ["B", "C", "D"]);
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
@@ -1087,13 +1088,9 @@ describe("SharedTree", () => {
 				repairCursor1.free();
 
 				// send edits to move the collab window up
-				root2.insertAt(3, ["y"]);
+				root1.insertAt(0, ["y"]);
 				provider.processMessages();
-				root1.removeAt(3);
-				provider.processMessages();
-				root2.insertAt(3, ["y"]);
-				provider.processMessages();
-				root1.removeAt(3);
+				root1.removeAt(0);
 				provider.processMessages();
 
 				assert.deepEqual([...root1], ["B", "C", "D"]);
@@ -1107,7 +1104,7 @@ describe("SharedTree", () => {
 				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
@@ -1137,7 +1134,7 @@ describe("SharedTree", () => {
 				const removeSequenceNumber = provider.sequenceNumber;
 				assert.deepEqual([...root1], ["C", "D"]);
 				assert.deepEqual([...root2], ["C", "D"]);
-				assert.equal(tree1.checkout.getRemovedRoots().length, 2);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 2);
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
@@ -1150,11 +1147,7 @@ describe("SharedTree", () => {
 				repairCursor1.free();
 
 				// send edits to move the collab window up
-				root2.insertAt(0, ["y"]);
-				provider.processMessages();
-				root1.removeAt(0);
-				provider.processMessages();
-				root2.insertAt(0, ["y"]);
+				root1.insertAt(0, ["y"]);
 				provider.processMessages();
 				root1.removeAt(0);
 				provider.processMessages();
@@ -1172,7 +1165,7 @@ describe("SharedTree", () => {
 				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-5"));
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
@@ -1335,7 +1328,7 @@ describe("SharedTree", () => {
 				assert.equal(repairCursor2.firstNode(), true);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
 
 				unsubscribe();
 			});
@@ -1396,7 +1389,7 @@ describe("SharedTree", () => {
 				assert.equal(repairCursor2.firstNode(), true);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
 
 				unsubscribe();
 			});
