@@ -24,7 +24,7 @@ import {
 	fieldKinds,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChangeEnricher } from "../../shared-tree/sharedTreeChangeEnricher.js";
+import { SharedTreeReadonlyChangeEnricher } from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
@@ -70,7 +70,7 @@ function setupEnricher() {
 	);
 	const forest = buildForest();
 	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
-	const enricher = new SharedTreeChangeEnricher(forest, removedRoots);
+	const enricher = new SharedTreeReadonlyChangeEnricher(forest, removedRoots);
 	return { enricher, forest, removedRoots };
 }
 

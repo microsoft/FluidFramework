@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
 import {
-	ChangeEnricherCheckout,
+	ChangeEnricherMutableCheckout,
 	DefaultCommitEnricher,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/defaultCommitEnricher.js";
@@ -20,8 +20,9 @@ interface TestChange {
 	readonly rebased?: true;
 }
 
-class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
+class TestChangeEnricher implements ChangeEnricherMutableCheckout<TestChange> {
 	public isDisposed = false;
+	public context: RevisionTag;
 
 	// These counters are used to verify that the commit enricher does not perform unnecessary work
 	public static commitsEnriched = 0;
@@ -34,13 +35,20 @@ class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 		TestChangeEnricher.checkoutsCreated = 0;
 	}
 
-	public constructor(public context: RevisionTag) {
+	public constructor(public getContext: () => RevisionTag) {
+		this.context = getContext();
 		TestChangeEnricher.checkoutsCreated += 1;
+	}
+
+	public fork(): TestChangeEnricher {
+		assert.equal(this.isDisposed, false);
+		const fixedContext = this.context;
+		return new TestChangeEnricher(() => fixedContext);
 	}
 
 	public updateChangeEnrichments(change: TestChange): TestChange {
 		assert.equal(this.isDisposed, false);
-		assert.equal(change.inputContext, this.context);
+		assert.equal(change.inputContext, this.getContext);
 		TestChangeEnricher.commitsEnriched += 1;
 		return {
 			...change,
@@ -50,7 +58,7 @@ class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 
 	public applyTipChange(change: TestChange, revision?: RevisionTag): void {
 		assert.equal(this.isDisposed, false);
-		assert.equal(change.inputContext, this.context);
+		assert.equal(change.inputContext, this.getContext);
 		if (revision !== undefined) {
 			assert.equal(revision, change.outputContext);
 		}
@@ -109,8 +117,8 @@ const commit3: GraphCommit<TestChange> = {
 describe("DefaultCommitEnricher", () => {
 	it("enriches commits for first submit", () => {
 		let currentRevision = revision0;
-		const factory = () => new TestChangeEnricher(currentRevision);
-		const enricher = new DefaultCommitEnricher(inverter, factory);
+		const changeEnricher = new TestChangeEnricher(() => currentRevision);
+		const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 		currentRevision = revision1;
 		const enriched1 = enricher.enrichCommit(commit1);
 		assert.deepEqual(enriched1, {
@@ -137,8 +145,8 @@ describe("DefaultCommitEnricher", () => {
 	describe("omits already sequenced commits from resubmit phase", () => {
 		it("omits sequenced commits that were not rebased", () => {
 			let currentRevision = revision0;
-			const factory = () => new TestChangeEnricher(currentRevision);
-			const enricher = new DefaultCommitEnricher(inverter, factory);
+			const changeEnricher = new TestChangeEnricher(() => currentRevision);
+			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
@@ -160,8 +168,8 @@ describe("DefaultCommitEnricher", () => {
 
 		it("omits sequenced commits that were rebased", () => {
 			let currentRevision = revision0;
-			const factory = () => new TestChangeEnricher(currentRevision);
-			const enricher = new DefaultCommitEnricher(inverter, factory);
+			const changeEnricher = new TestChangeEnricher(() => currentRevision);
+			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
@@ -189,8 +197,8 @@ describe("DefaultCommitEnricher", () => {
 
 		it("tolerates empty resubmit", () => {
 			let currentRevision = revision0;
-			const factory = () => new TestChangeEnricher(currentRevision);
-			const enricher = new DefaultCommitEnricher(inverter, factory);
+			const changeEnricher = new TestChangeEnricher(() => currentRevision);
+			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
@@ -216,8 +224,8 @@ describe("DefaultCommitEnricher", () => {
 	describe("enriches commits for resubmit", () => {
 		it("when the commits do not undergo rebasing", () => {
 			let currentRevision = revision0;
-			const factory = () => new TestChangeEnricher(currentRevision);
-			const enricher = new DefaultCommitEnricher(inverter, factory);
+			const changeEnricher = new TestChangeEnricher(() => currentRevision);
+			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 			currentRevision = revision1;
 			const enriched1 = enricher.enrichCommit(commit1);
 			currentRevision = revision2;
@@ -250,8 +258,8 @@ describe("DefaultCommitEnricher", () => {
 		for (const scenario of ["only", "and before"]) {
 			it(`when the commits undergo rebasing at resubmit time ${scenario}`, () => {
 				let currentRevision = revision0;
-				const factory = () => new TestChangeEnricher(currentRevision);
-				const enricher = new DefaultCommitEnricher(inverter, factory);
+				const changeEnricher = new TestChangeEnricher(() => currentRevision);
+				const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 				currentRevision = revision1;
 				enricher.enrichCommit(commit1);
 
@@ -320,8 +328,8 @@ describe("DefaultCommitEnricher", () => {
 
 		it("when the commits undergo rebasing before resubmit time", () => {
 			let currentRevision = revision0;
-			const factory = () => new TestChangeEnricher(currentRevision);
-			const enricher = new DefaultCommitEnricher(inverter, factory);
+			const changeEnricher = new TestChangeEnricher(() => currentRevision);
+			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
 			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
 			currentRevision = revision2;

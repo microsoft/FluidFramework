@@ -11,6 +11,7 @@ import { GraphCommit } from "../core/index.js";
 export interface CommitEnricher<TChange> {
 	/**
 	 * Enriches a commit with adequate refreshers.
+	 * Assumes that the commit has not yet been applied to the local checkout.
 	 * Assumes that the commit will be submitted before the next call to `onSequencedCommitApplied()`.
 	 * @param commit - the commit to enrich. Not mutated.
 	 * @returns the enriched commit. Possibly the same as the one passed in.

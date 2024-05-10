@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -34,7 +34,7 @@ import {
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
-import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import { SharedTreeBranch, SharedTreeBranchChange, getChangeReplaceType } from "./branch.js";
 import { CommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
@@ -147,26 +147,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
-		this.editManager.localBranch.on("afterChange", (args) => {
-			if (this.getLocalBranch().isTransacting()) {
-				// Avoid submitting ops for changes that are part of a transaction.
-				return;
-			}
-			switch (args.type) {
-				case "append":
-					for (const c of args.newCommits) {
-						this.submitCommit(c, this.schemaAndPolicy);
-					}
-					break;
-				case "replace":
-					if (getChangeReplaceType(args) === "transactionCommit") {
-						this.submitCommit(args.newCommits[0], this.schemaAndPolicy);
-					}
-					break;
-				default:
-					break;
-			}
-		});
+		this.editManager.localBranch.on("beforeChange", (args) =>
+			this.handleBranchChange("beforeChange", args),
+		);
+		this.editManager.localBranch.on("afterChange", (args) =>
+			this.handleBranchChange("afterChange", args),
+		);
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
@@ -230,6 +216,60 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
+	}
+
+	private readonly preparedCommits: {
+		readonly local: GraphCommit<TChange>;
+		readonly toSend: GraphCommit<TChange>;
+	}[] = [];
+
+	private handleBranchChange(
+		eventKind: "beforeChange" | "afterChange",
+		change: SharedTreeBranchChange<TChange>,
+	): void {
+		if (this.getLocalBranch().isTransacting()) {
+			// Avoid submitting ops for changes that are part of a transaction.
+			return;
+		}
+		if (
+			change.type === "append" ||
+			(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+		) {
+			switch (eventKind) {
+				case "beforeChange": {
+					assert(
+						this.commitEnricher?.isInResubmitPhase !== true,
+						"Invalid enrichment call during resubmit phase",
+					);
+					this.preparedCommits.length = 0;
+					for (const c of change.newCommits) {
+						this.preparedCommits.push({
+							local: c,
+							toSend: this.commitEnricher?.enrichCommit(c) ?? c,
+						});
+					}
+					break;
+				}
+				case "afterChange": {
+					assert(
+						this.preparedCommits.length === change.newCommits.length,
+						"Expected prepared commits",
+					);
+					let iCommit = 0;
+					for (const { local, toSend } of this.preparedCommits) {
+						assert(
+							local === change.newCommits[iCommit],
+							"Inconsistent commits between before and after change",
+						);
+						this.submitCommit(toSend, this.schemaAndPolicy);
+						iCommit += 1;
+					}
+					break;
+				}
+				default:
+					unreachableCase(eventKind);
+			}
+		}
 	}
 
 	/**

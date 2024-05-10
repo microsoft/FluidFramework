@@ -49,7 +49,7 @@ import { brand } from "../util/index.js";
 import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
-import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -236,12 +236,7 @@ export class SharedTree
 			defaultSchemaPolicy,
 			new DefaultCommitEnricher(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
-				() => {
-					return new SharedTreeChangeEnricher(
-						forest.clone(schema, new AnchorSet()),
-						removedRoots.clone(),
-					);
-				},
+				new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots),
 			),
 		);
 		this._events = createEmitter<CheckoutEvents>();

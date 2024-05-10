@@ -9,7 +9,7 @@ import { ICommitEnricher } from "../shared-tree-core/index.js";
 import { disposeSymbol } from "../util/index.js";
 
 /**
- * A checkout whose state can be controlled by a {@link CommitEnricher} to enrich changes with refreshers.
+ * A checkout that can be used by a {@link CommitEnricher} to enrich changes with refreshers.
  *
  * This is similar to a {@link TreeCheckout} in that it represents the state of the tree at a specific revision.
  * But unlike a `TreeCheckout`...
@@ -19,7 +19,7 @@ import { disposeSymbol } from "../util/index.js";
  *
  * See implementations for examples.
  */
-export interface ChangeEnricherCheckout<TChange> {
+export interface ChangeEnricherReadonlyCheckout<TChange> {
 	/**
 	 * Updates the set of refreshers on a change.
 	 * @param change - the change to enrich. Not mutated.
@@ -29,12 +29,9 @@ export interface ChangeEnricherCheckout<TChange> {
 	updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange;
 
 	/**
-	 * Applies a change to the tip state.
-	 * @param change - the change to apply. Not mutated.
-	 * @param revision - the revision associated with the change.
-	 * Can be undefined when the applied change is a rollback.
+	 * Forks the checkout, creating a new checkout that represents the same state but can be mutated.
 	 */
-	applyTipChange(change: TChange, revision?: RevisionTag): void;
+	fork(): ChangeEnricherMutableCheckout<TChange>;
 
 	/**
 	 * Disposes of the enricher.
@@ -43,15 +40,23 @@ export interface ChangeEnricherCheckout<TChange> {
 }
 
 /**
+ * A {@link ChangeEnricherReadonlyCheckout} whose state can be controlled by a {@link CommitEnricher}.
+ */
+export interface ChangeEnricherMutableCheckout<TChange>
+	extends ChangeEnricherReadonlyCheckout<TChange> {
+	/**
+	 * Applies a change to the tip state.
+	 * @param change - the change to apply. Not mutated.
+	 * @param revision - the revision associated with the change.
+	 * Can be undefined when the applied change is a rollback.
+	 */
+	applyTipChange(change: TChange, revision?: RevisionTag): void;
+}
+
+/**
  * Default implementation of {@link ICommitEnricher}.
  */
 export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> {
-	/**
-	 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
-	 * commits are applied and automatically rebased).
-	 */
-	private tip: ChangeEnricherCheckout<TChange>;
-
 	/**
 	 * The list of commits (from oldest to most recent) that have been submitted but not sequenced.
 	 */
@@ -80,13 +85,11 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		 */
 		private readonly inverter: ChangeRebaser<TChange>["invert"],
 		/**
-		 * A factory that return a new {@link ChangeEnricherCheckout} that corresponds to the tip of the top-most local
-		 * branch.
+		 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
+		 * commits are applied and automatically rebased).
 		 */
-		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
-	) {
-		this.tip = this.checkoutFactory();
-	}
+		private readonly tip: ChangeEnricherReadonlyCheckout<TChange>,
+	) {}
 
 	public enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
 		const toResubmit = this.resubmitQueue.shift();
@@ -97,8 +100,6 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
 			const updatedCommit = { ...commit, change: updatedChange };
 			this.inFlightQueue.push(updatedCommit);
-			this.tip[disposeSymbol]();
-			this.tip = this.checkoutFactory();
 			return updatedCommit;
 		}
 	}
@@ -117,7 +118,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 			this.resubmitQueue = this.inFlightQueue;
 			this.inFlightQueue = [];
 		} else {
-			const checkout = this.checkoutFactory();
+			const checkout = this.tip.fork();
 			// Roll back the checkout to the state before the oldest commit
 			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
 				const commit = toResubmit[iCommit];
@@ -145,6 +146,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 				}
 				this.inFlightQueue.shift();
 			}
+			checkout[disposeSymbol]();
 			// Whatever commits are left do not have stale enrichments
 			for (const commit of this.inFlightQueue) {
 				this.resubmitQueue.push(commit);
@@ -169,8 +171,6 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		} else {
 			// A peer commit has been sequenced
 			this.latestInFlightCommitWithStaleEnrichments = this.inFlightQueue.length - 1;
-			this.tip[disposeSymbol]();
-			this.tip = this.checkoutFactory();
 		}
 	}
 }
