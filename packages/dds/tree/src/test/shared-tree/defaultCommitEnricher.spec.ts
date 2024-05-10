@@ -22,7 +22,9 @@ interface TestChange {
 
 class TestChangeEnricher implements ChangeEnricherMutableCheckout<TestChange> {
 	public isDisposed = false;
-	public context: RevisionTag;
+	public isReadonly;
+	public contextOverride?: RevisionTag;
+	private readonly getContext: () => RevisionTag;
 
 	// These counters are used to verify that the commit enricher does not perform unnecessary work
 	public static commitsEnriched = 0;
@@ -35,20 +37,25 @@ class TestChangeEnricher implements ChangeEnricherMutableCheckout<TestChange> {
 		TestChangeEnricher.checkoutsCreated = 0;
 	}
 
-	public constructor(public getContext: () => RevisionTag) {
-		this.context = getContext();
+	public constructor(getContext: () => RevisionTag, isReadonly: boolean = true) {
+		this.getContext = getContext;
+		this.isReadonly = isReadonly;
 		TestChangeEnricher.checkoutsCreated += 1;
+	}
+
+	public get context(): RevisionTag {
+		return this.contextOverride ?? this.getContext();
 	}
 
 	public fork(): TestChangeEnricher {
 		assert.equal(this.isDisposed, false);
 		const fixedContext = this.context;
-		return new TestChangeEnricher(() => fixedContext);
+		return new TestChangeEnricher(() => fixedContext, false);
 	}
 
 	public updateChangeEnrichments(change: TestChange): TestChange {
 		assert.equal(this.isDisposed, false);
-		assert.equal(change.inputContext, this.getContext);
+		assert.equal(change.inputContext, this.context);
 		TestChangeEnricher.commitsEnriched += 1;
 		return {
 			...change,
@@ -58,11 +65,11 @@ class TestChangeEnricher implements ChangeEnricherMutableCheckout<TestChange> {
 
 	public applyTipChange(change: TestChange, revision?: RevisionTag): void {
 		assert.equal(this.isDisposed, false);
-		assert.equal(change.inputContext, this.getContext);
+		assert.equal(change.inputContext, this.context);
 		if (revision !== undefined) {
 			assert.equal(revision, change.outputContext);
 		}
-		this.context = change.outputContext;
+		this.contextOverride = change.outputContext;
 		TestChangeEnricher.commitsApplied += 1;
 	}
 
@@ -119,8 +126,10 @@ describe("DefaultCommitEnricher", () => {
 		let currentRevision = revision0;
 		const changeEnricher = new TestChangeEnricher(() => currentRevision);
 		const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-		currentRevision = revision1;
 		const enriched1 = enricher.enrichCommit(commit1);
+		// Updating currentRevision simulates applying the commit to the local checkout.
+		// This is because TestChangeEnricher has access to it through the lambda passed to its constructor.
+		currentRevision = revision1;
 		assert.deepEqual(enriched1, {
 			change: {
 				inputContext: revision0,
@@ -129,8 +138,8 @@ describe("DefaultCommitEnricher", () => {
 			},
 			revision: revision1,
 		});
-		currentRevision = revision2;
 		const enriched2 = enricher.enrichCommit(commit2);
+		currentRevision = revision2;
 		assert.deepEqual(enriched2, {
 			change: {
 				inputContext: revision1,
@@ -147,10 +156,10 @@ describe("DefaultCommitEnricher", () => {
 			let currentRevision = revision0;
 			const changeEnricher = new TestChangeEnricher(() => currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
-			currentRevision = revision2;
+			currentRevision = revision1;
 			enricher.enrichCommit(commit2);
+			currentRevision = revision2;
 			// Simulate the sequencing of commit 1
 			enricher.onSequencedCommitApplied(true);
 
@@ -170,10 +179,10 @@ describe("DefaultCommitEnricher", () => {
 			let currentRevision = revision0;
 			const changeEnricher = new TestChangeEnricher(() => currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
-			currentRevision = revision2;
+			currentRevision = revision1;
 			enricher.enrichCommit(commit2);
+			currentRevision = revision2;
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
 			enricher.onSequencedCommitApplied(false);
 			// Simulate the sequencing of commit 1
@@ -199,10 +208,10 @@ describe("DefaultCommitEnricher", () => {
 			let currentRevision = revision0;
 			const changeEnricher = new TestChangeEnricher(() => currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
-			currentRevision = revision2;
+			currentRevision = revision1;
 			enricher.enrichCommit(commit2);
+			currentRevision = revision2;
 			// Simulate the sequencing of commit 1
 			enricher.onSequencedCommitApplied(true);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commit 2.
@@ -226,10 +235,10 @@ describe("DefaultCommitEnricher", () => {
 			let currentRevision = revision0;
 			const changeEnricher = new TestChangeEnricher(() => currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-			currentRevision = revision1;
 			const enriched1 = enricher.enrichCommit(commit1);
-			currentRevision = revision2;
+			currentRevision = revision1;
 			const enriched2 = enricher.enrichCommit(commit2);
+			currentRevision = revision2;
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
@@ -260,16 +269,16 @@ describe("DefaultCommitEnricher", () => {
 				let currentRevision = revision0;
 				const changeEnricher = new TestChangeEnricher(() => currentRevision);
 				const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-				currentRevision = revision1;
 				enricher.enrichCommit(commit1);
+				currentRevision = revision1;
 
 				if (scenario === "and before") {
 					// Simulate the sequencing of a peer commit
 					enricher.onSequencedCommitApplied(false);
 				}
 
-				currentRevision = revision2;
 				enricher.enrichCommit(commit2);
+				currentRevision = revision2;
 
 				// Simulate the sequencing of a peer commit as part of the resubmit phase
 				enricher.onSequencedCommitApplied(false);
@@ -330,10 +339,10 @@ describe("DefaultCommitEnricher", () => {
 			let currentRevision = revision0;
 			const changeEnricher = new TestChangeEnricher(() => currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, changeEnricher);
-			currentRevision = revision1;
 			enricher.enrichCommit(commit1);
-			currentRevision = revision2;
+			currentRevision = revision1;
 			enricher.enrichCommit(commit2);
+			currentRevision = revision2;
 
 			// Simulate the sequencing of a peer commit
 			enricher.onSequencedCommitApplied(false);
@@ -349,8 +358,8 @@ describe("DefaultCommitEnricher", () => {
 				change: { ...commit2.change, rebased: true },
 			};
 
-			currentRevision = revision3;
 			const enriched3 = enricher.enrichCommit(commit3);
+			currentRevision = revision3;
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);

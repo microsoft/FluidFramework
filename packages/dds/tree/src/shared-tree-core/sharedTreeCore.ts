@@ -307,26 +307,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.editManager.advanceMinimumSequenceNumber(newRevision);
 			return undefined;
 		}
-		let enrichedCommit: GraphCommit<TChange>;
-		if (this.commitEnricher !== undefined) {
-			if (isResubmit) {
-				assert(
-					this.commitEnricher.isInResubmitPhase,
-					"Invalid resubmit outside of resubmit phase",
-				);
-			} else {
-				assert(
-					!this.commitEnricher.isInResubmitPhase,
-					"Invalid enrichment call during resubmit phase",
-				);
-			}
-			enrichedCommit = this.commitEnricher.enrichCommit(commit);
-		} else {
-			enrichedCommit = commit;
-		}
 		const message = this.messageCodec.encode(
 			{
-				commit: enrichedCommit,
+				commit,
 				sessionId: this.editManager.localSessionId,
 			},
 			{
@@ -338,7 +321,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
 		});
-		return enrichedCommit;
+		return commit;
 	}
 
 	protected processCore(
@@ -393,7 +376,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			isClonableSchemaPolicy(localOpMetadata),
 			"Local metadata must contain schema and policy.",
 		);
-		this.submitCommit(commit, localOpMetadata, true);
+		assert(
+			this.commitEnricher?.isInResubmitPhase !== false,
+			"Invalid resubmit outside of resubmit phase",
+		);
+		const enrichedCommit = this.commitEnricher?.enrichCommit(commit) ?? commit;
+		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {

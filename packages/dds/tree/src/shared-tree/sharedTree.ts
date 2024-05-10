@@ -16,7 +16,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
