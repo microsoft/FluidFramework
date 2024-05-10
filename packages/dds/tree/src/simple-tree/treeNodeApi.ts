@@ -28,7 +28,13 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
-import { handleSchema, nullSchema, numberSchema, stringSchema } from "./leafNodeSchema.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "./leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 /**
@@ -223,7 +229,7 @@ export function tryGetSchema<T>(
 		case "number":
 			return numberSchema as TOut;
 		case "boolean":
-			return numberSchema as TOut;
+			return booleanSchema as TOut;
 		case "object": {
 			if (isTreeNode(value)) {
 				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.

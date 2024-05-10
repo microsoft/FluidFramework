@@ -118,11 +118,10 @@ describe("treeNodeApi", () => {
 			assert.equal(tryGetSchema({}), undefined);
 		});
 
-		it("node", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			assert.equal(new Point({}), Point);
-			const nodePojo = schemaFactory.object("Node", {});
-			assert.equal(new nodePojo({}), nodePojo);
+		it("unhydrated node", () => {
+			assert.equal(Tree.schema(new Point({})), Point);
+			const nodePojo = schema.object("Node", {});
+			assert.equal(Tree.schema(new nodePojo({})), nodePojo);
 		});
 
 		it("hydrated node", () => {
