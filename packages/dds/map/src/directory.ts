@@ -203,6 +203,9 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 
 /**
  * Create info for the subdirectory.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface ICreateInfo {
@@ -224,6 +227,9 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface IDirectoryDataObject {
@@ -251,7 +257,9 @@ export interface IDirectoryDataObject {
 /**
  * {@link IDirectory} storage format.
  *
- * @internal
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
+ * @alpha
  */
 export interface IDirectoryNewStorageFormat {
 	/**

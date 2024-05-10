@@ -300,7 +300,7 @@ export interface IGenericError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
-// @internal
+// @alpha
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
