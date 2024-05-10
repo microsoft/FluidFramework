@@ -25,7 +25,7 @@ describe("SharedTree op format snapshots", () => {
 	function spyOnFutureMessages(runtime: MockContainerRuntime): any[] {
 		const messages: any[] = [];
 		const originalSubmit = runtime.submit.bind(runtime);
-		runtime.submit = (content, localOpMetadata) => {
+		runtime.submit = (content, localOpMetadata): number => {
 			messages.push(content);
 			return originalSubmit(content, localOpMetadata);
 		};
