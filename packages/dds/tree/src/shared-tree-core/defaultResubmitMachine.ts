@@ -47,9 +47,9 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
-		const toResubmit = this.resubmitQueue.shift();
-		if (toResubmit !== commit) {
-			this.resubmitQueue.shift();
+		if (this.isInResubmitPhase) {
+			const toResubmit = this.resubmitQueue.shift();
+			assert(toResubmit === commit, "Unexpected commit submitted during resubmit phase");
 		}
 		this.inFlightQueue.push(commit);
 	}

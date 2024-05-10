@@ -92,7 +92,8 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(machine.isInResubmitPhase, false);
 			machine.prepareForResubmit([rebased2]);
 			assert.equal(machine.isInResubmitPhase, true);
-			machine.onCommitSubmitted(rebased2);
+			const enriched2Resubmit = machine.peekNextCommit();
+			machine.onCommitSubmitted(enriched2Resubmit);
 			assert.equal(machine.isInResubmitPhase, false);
 			// One enrichment should be necessary
 			assert.equal(MockChangeEnricher.checkoutsCreated, 1);
@@ -193,9 +194,11 @@ describe("DefaultResubmitMachine", () => {
 				assert.equal(machine.isInResubmitPhase, false);
 				machine.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(machine.isInResubmitPhase, true);
-				const enriched1Resubmit = machine.onCommitSubmitted(rebased1);
+				const enriched1Resubmit = machine.peekNextCommit();
+				machine.onCommitSubmitted(enriched1Resubmit);
 				assert.equal(machine.isInResubmitPhase, true);
-				const enriched2Resubmit = machine.onCommitSubmitted(rebased2);
+				const enriched2Resubmit = machine.peekNextCommit();
+				machine.onCommitSubmitted(enriched2Resubmit);
 				assert.equal(machine.isInResubmitPhase, false);
 				assert.deepEqual(enriched1Resubmit, {
 					change: {
@@ -224,9 +227,11 @@ describe("DefaultResubmitMachine", () => {
 				// Verify that the enricher can resubmit those commits again
 				machine.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(machine.isInResubmitPhase, true);
-				assert.equal(machine.onCommitSubmitted(rebased1), enriched1Resubmit);
+				assert.equal(machine.peekNextCommit(), enriched1Resubmit);
+				machine.onCommitSubmitted(enriched1Resubmit);
 				assert.equal(machine.isInResubmitPhase, true);
-				assert.equal(machine.onCommitSubmitted(rebased2), enriched2Resubmit);
+				assert.equal(machine.peekNextCommit(), enriched2Resubmit);
+				machine.onCommitSubmitted(enriched2Resubmit);
 				assert.equal(machine.isInResubmitPhase, false);
 			});
 		}
@@ -254,18 +259,21 @@ describe("DefaultResubmitMachine", () => {
 				change: { ...commit2.change, rebased: true },
 			};
 
-			const enriched3 = machine.onCommitSubmitted(commit3);
+			machine.onCommitSubmitted(commit3);
 			currentRevision = revision3;
 
 			MockChangeEnricher.resetCounters();
 			assert.equal(machine.isInResubmitPhase, false);
 			machine.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(machine.isInResubmitPhase, true);
-			const enriched1Resubmit = machine.onCommitSubmitted(rebased1);
+			const enriched1Resubmit = machine.peekNextCommit();
+			machine.onCommitSubmitted(enriched1Resubmit);
 			assert.equal(machine.isInResubmitPhase, true);
-			const enriched2Resubmit = machine.onCommitSubmitted(rebased2);
+			const enriched2Resubmit = machine.peekNextCommit();
+			machine.onCommitSubmitted(enriched2Resubmit);
 			assert.equal(machine.isInResubmitPhase, true);
-			const enriched3Resubmit = machine.onCommitSubmitted(commit3);
+			const enriched3Resubmit = machine.peekNextCommit();
+			machine.onCommitSubmitted(enriched3Resubmit);
 			assert.equal(machine.isInResubmitPhase, false);
 			assert.deepEqual(enriched1Resubmit, {
 				change: {
@@ -287,7 +295,7 @@ describe("DefaultResubmitMachine", () => {
 				parent: rebased1,
 			});
 			// This commit did not undergo rebasing so its enrichments did not need updating
-			assert.equal(enriched3Resubmit, enriched3);
+			assert.equal(enriched3Resubmit, commit3);
 			// Two enrichments should be necessary, which requires creating a new checkout and rewinding the state
 			assert.equal(MockChangeEnricher.checkoutsCreated, 1);
 			assert.equal(MockChangeEnricher.commitsEnriched, 2);
@@ -297,11 +305,14 @@ describe("DefaultResubmitMachine", () => {
 			// Verify that the enricher can resubmit those commits again
 			machine.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.onCommitSubmitted(rebased1), enriched1Resubmit);
+			assert.equal(machine.peekNextCommit(), enriched1Resubmit);
+			machine.onCommitSubmitted(enriched1Resubmit);
 			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.onCommitSubmitted(rebased2), enriched2Resubmit);
+			assert.equal(machine.peekNextCommit(), enriched2Resubmit);
+			machine.onCommitSubmitted(enriched2Resubmit);
 			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.onCommitSubmitted(commit3), enriched3Resubmit);
+			assert.equal(machine.peekNextCommit(), enriched3Resubmit);
+			machine.onCommitSubmitted(enriched3Resubmit);
 			assert.equal(machine.isInResubmitPhase, false);
 		});
 	});
