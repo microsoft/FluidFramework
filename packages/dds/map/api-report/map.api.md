@@ -26,6 +26,12 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     get type(): string;
 }
 
+// @alpha @deprecated
+export interface ICreateInfo {
+    ccIds: string[];
+    csn: number;
+}
+
 // @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
@@ -40,6 +46,13 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
+// @alpha @deprecated
+export interface IDirectoryDataObject {
+    ci?: ICreateInfo;
+    storage?: Record<string, ISerializableValue>;
+    subdirectories?: Record<string, IDirectoryDataObject>;
+}
+
 // @alpha
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -49,9 +62,21 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
+// @alpha @deprecated
+export interface IDirectoryNewStorageFormat {
+    blobs: string[];
+    content: IDirectoryDataObject;
+}
+
 // @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
+}
+
+// @alpha @deprecated
+export interface ISerializableValue {
+    type: string;
+    value: any;
 }
 
 // @alpha
