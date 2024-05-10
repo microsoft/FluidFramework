@@ -1,5 +1,14 @@
 # @fluid-experimental/azure-scenario-runner
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
+    2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
