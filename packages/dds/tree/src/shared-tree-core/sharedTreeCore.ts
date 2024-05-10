@@ -31,17 +31,21 @@ import {
 	SchemaAndPolicy,
 	SchemaPolicy,
 	TreeStoredSchemaRepository,
+	replaceChange,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
 import { SharedTreeBranch, SharedTreeBranchChange, getChangeReplaceType } from "./branch.js";
-import { CommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
+import { ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import { ResubmitMachine } from "./resubmitMachine.js";
+import { TransactionEnricher } from "./transactionEnricher.js";
+import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -98,7 +102,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly commitEnricher?: CommitEnricher<TChange>;
+	private readonly resubmitMachine: ResubmitMachine<TChange>;
+	private readonly enricher: ChangeEnricherReadonlyCheckout<TChange>;
 
 	protected readonly mintRevisionTag: () => RevisionTag;
 
@@ -125,7 +130,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		telemetryContextPrefix: string,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
-		enricher?: CommitEnricher<TChange>,
+		resubmitMachine?: ResubmitMachine<TChange>,
+		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -177,7 +183,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			formatOptions.message,
 		);
 
-		this.commitEnricher = enricher;
+		this.enricher = enricher ?? new NoOpChangeEnricher();
+		this.resubmitMachine =
+			resubmitMachine ??
+			new DefaultResubmitMachine(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				this.enricher,
+			);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -218,61 +230,78 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		await Promise.all(loadSummaries);
 	}
 
-	private readonly preparedCommits: {
+	private transactionEnricher?: TransactionEnricher<TChange>;
+	private preparedCommit?: {
 		readonly local: GraphCommit<TChange>;
 		readonly toSend: GraphCommit<TChange>;
-	}[] = [];
+	};
 
 	private handleBranchChange(
 		eventKind: "beforeChange" | "afterChange",
 		change: SharedTreeBranchChange<TChange>,
 	): void {
-		if (this.getLocalBranch().isTransacting()) {
-			// Avoid submitting ops for changes that are part of a transaction.
-			return;
-		}
 		if (
 			change.type === "append" ||
 			(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
 		) {
+			assert(change.newCommits.length === 1, "Expected exactly one commit for sending");
+			const newCommit = change.newCommits[0];
 			switch (eventKind) {
 				case "beforeChange": {
-					assert(
-						this.commitEnricher?.isInResubmitPhase !== true,
-						"Invalid enrichment call during resubmit phase",
-					);
-					this.preparedCommits.length = 0;
-					// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-					// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
-					// It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
-					// and these commits are never in flight.
-					if (this.detachedRevision !== undefined) {
-						for (const c of change.newCommits) {
-							this.preparedCommits.push({ local: c, toSend: c });
+					if (this.getLocalBranch().isTransacting()) {
+						// We do not submit ops for changes that are part of a transaction.
+						// But we need to enrich the commits that will be sent if the transaction is committed.
+						if (this.transactionEnricher === undefined) {
+							this.transactionEnricher = new TransactionEnricher(
+								this.editManager.changeFamily.rebaser,
+								this.enricher,
+							);
 						}
+						this.transactionEnricher.addTransactionStep(newCommit);
 					} else {
-						for (const c of change.newCommits) {
-							this.preparedCommits.push({
-								local: c,
-								toSend: this.commitEnricher?.enrichCommit(c) ?? c,
-							});
-						}
+						this.preparedCommit =
+							this.detachedRevision !== undefined
+								? // Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
+								  // Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
+								  // It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
+								  // and these commits are never in flight.
+								  { local: newCommit, toSend: newCommit }
+								: {
+										local: newCommit,
+										toSend: replaceChange(
+											newCommit,
+											this.enricher.updateChangeEnrichments(
+												newCommit.change,
+												newCommit.revision,
+											),
+										),
+								  };
 					}
 					break;
 				}
 				case "afterChange": {
-					assert(
-						this.preparedCommits.length === change.newCommits.length,
-						"Expected prepared commits",
-					);
-					let iCommit = 0;
-					for (const { local, toSend } of this.preparedCommits) {
+					if (
+						change.type === "replace" &&
+						getChangeReplaceType(change) === "transactionCommit"
+					) {
 						assert(
-							local === change.newCommits[iCommit],
+							this.transactionEnricher !== undefined,
+							"Unexpected transaction commit without transaction steps",
+						);
+						const enrichedChange = this.transactionEnricher.getComposedChange(
+							change.newCommits[0].revision,
+						);
+						delete this.transactionEnricher;
+						this.submitCommit(
+							replaceChange(newCommit, enrichedChange),
+							this.schemaAndPolicy,
+						);
+					} else {
+						assert(
+							this.preparedCommit?.local === newCommit,
 							"Inconsistent commits between before and after change",
 						);
-						this.submitCommit(toSend, this.schemaAndPolicy);
-						iCommit += 1;
+						this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
 					}
 					break;
 				}
@@ -288,7 +317,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-	protected submitCommit(
+	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit = false,
@@ -331,6 +360,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
 		});
+		this.resubmitMachine.onCommitSubmitted(commit);
 		return commit;
 	}
 
@@ -347,7 +377,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
-		this.commitEnricher?.onSequencedCommitApplied(local);
+		this.resubmitMachine.onSequencedCommitApplied(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
@@ -374,23 +404,23 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		} = this.messageCodec.decode(this.serializer.decode(content), {});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-		if (this.commitEnricher?.isInResubmitPhase === false) {
+		if (this.resubmitMachine.isInResubmitPhase === false) {
 			const toResubmit = this.editManager.getLocalCommits();
 			assert(
 				commit === toResubmit[0],
 				"Resubmit phase should start with the oldest local commit",
 			);
-			this.commitEnricher.prepareForResubmit(toResubmit);
+			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
 			"Local metadata must contain schema and policy.",
 		);
 		assert(
-			this.commitEnricher?.isInResubmitPhase !== false,
+			this.resubmitMachine.isInResubmitPhase !== false,
 			"Invalid resubmit outside of resubmit phase",
 		);
-		const enrichedCommit = this.commitEnricher?.enrichCommit(commit) ?? commit;
+		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 

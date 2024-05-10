@@ -189,3 +189,12 @@ export function mintCommit<TChange>(
 		parent,
 	};
 }
+
+export function replaceChange<TChange>(
+	commit: GraphCommit<TChange>,
+	change: TChange,
+): GraphCommit<TChange> {
+	const output = { ...commit, change };
+	delete output.inverse;
+	return output;
+}

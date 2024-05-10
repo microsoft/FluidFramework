@@ -41,11 +41,14 @@ import {
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
+import {
+	DefaultResubmitMachine,
+	ExplicitCoreCodecVersions,
+	SharedTreeCore,
+} from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
-import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
@@ -222,6 +225,7 @@ export class SharedTree
 				throw error;
 			},
 		);
+		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
@@ -233,10 +237,11 @@ export class SharedTree
 			telemetryContextPrefix,
 			schema,
 			defaultSchemaPolicy,
-			new DefaultCommitEnricher(
+			new DefaultResubmitMachine(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
-				new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots),
+				changeEnricher,
 			),
+			changeEnricher,
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

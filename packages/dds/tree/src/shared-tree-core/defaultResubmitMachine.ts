@@ -4,59 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
-import { ICommitEnricher } from "../shared-tree-core/index.js";
+import { ChangeRebaser, GraphCommit } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
+import { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**
- * A checkout that can be used by a {@link CommitEnricher} to enrich changes with refreshers.
- *
- * This is similar to a {@link TreeCheckout} in that it represents the state of the tree at a specific revision.
- * But unlike a `TreeCheckout`...
- * - It is not backed by a branch because the `CommitEnricher` that owns it controls which revision it should represent.
- * - The host application has no knowledge of it, so applying changes to it has not impact on the application.
- * - It need not maintain any state or indexes that do not play a role in enriching changes.
- *
- * See implementations for examples.
+ * Default implementation of {@link ResubmitMachine}.
  */
-export interface ChangeEnricherReadonlyCheckout<TChange> {
-	/**
-	 * Updates the set of refreshers on a change.
-	 * @param change - the change to enrich. Not mutated.
-	 * @param revision - the revision associated with the change.
-	 * @returns the enriched change. Possibly the same as the one passed in.
-	 */
-	updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange;
-
-	/**
-	 * Forks the checkout, creating a new checkout that represents the same state but can be mutated.
-	 */
-	fork(): ChangeEnricherMutableCheckout<TChange>;
-
-	/**
-	 * Disposes of the enricher.
-	 */
-	[disposeSymbol](): void;
-}
-
-/**
- * A {@link ChangeEnricherReadonlyCheckout} whose state can be controlled by a {@link CommitEnricher}.
- */
-export interface ChangeEnricherMutableCheckout<TChange>
-	extends ChangeEnricherReadonlyCheckout<TChange> {
-	/**
-	 * Applies a change to the tip state.
-	 * @param change - the change to apply. Not mutated.
-	 * @param revision - the revision associated with the change.
-	 * Can be undefined when the applied change is a rollback.
-	 */
-	applyTipChange(change: TChange, revision?: RevisionTag): void;
-}
-
-/**
- * Default implementation of {@link ICommitEnricher}.
- */
-export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> {
+export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange> {
 	/**
 	 * The list of commits (from oldest to most recent) that have been submitted but not sequenced.
 	 */
@@ -91,17 +46,12 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		private readonly tip: ChangeEnricherReadonlyCheckout<TChange>,
 	) {}
 
-	public enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
+	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
 		const toResubmit = this.resubmitQueue.shift();
-		if (toResubmit !== undefined) {
-			this.inFlightQueue.push(toResubmit);
-			return toResubmit;
-		} else {
-			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
-			const updatedCommit = { ...commit, change: updatedChange };
-			this.inFlightQueue.push(updatedCommit);
-			return updatedCommit;
+		if (toResubmit !== commit) {
+			this.resubmitQueue.shift();
 		}
+		this.inFlightQueue.push(commit);
 	}
 
 	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
@@ -154,6 +104,11 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 			this.inFlightQueue.length = 0;
 		}
 		this.latestInFlightCommitWithStaleEnrichments = -1;
+	}
+
+	public peekNextCommit(): GraphCommit<TChange> {
+		assert(this.isInResubmitPhase, "No available commit to resubmit outside of resubmit phase");
+		return this.resubmitQueue[0];
 	}
 
 	public get isInResubmitPhase(): boolean {
