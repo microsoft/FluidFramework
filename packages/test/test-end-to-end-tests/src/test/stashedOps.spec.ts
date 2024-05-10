@@ -115,7 +115,7 @@ const getPendingOps = async (
 	let pendingState: string | undefined;
 	if (send) {
 		pendingState = await container.getPendingLocalState?.();
-		await testObjectProvider.ensureSynchronized();
+		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else {
 		pendingState = await container.closeAndGetPendingLocalState?.();
@@ -341,7 +341,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.set(testKey, testValue);
@@ -409,7 +409,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				assert((map as any).runtime.idCompressor !== undefined);
@@ -485,7 +485,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.set(testKey, testValue);
@@ -528,7 +528,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
-				true,
+				true, // Do send ops from first container instance before closing
 				async (c, d) => {
 					const mapPre = await getMap(d);
 					mapPre.set(testKey, "something unimportant");
@@ -571,7 +571,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
-				false,
+				false, // Don't send ops from first container instance before closing
 				async (c, d) => {
 					const mapPre = await getMap(d);
 					mapPre.delete("clear");
@@ -597,7 +597,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
-				false,
+				false, // Don't send ops from first container instance before closing
 				async (c, d) => {
 					const mapPre = await getMap(d);
 					[...Array(lots).keys()].map((i) => mapPre.set(i.toString(), i.toString()));
@@ -631,7 +631,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
-				true,
+				true, // Do send ops from first container instance before closing
 				async (c, d) => {
 					const mapPre = await getMap(d);
 					[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
@@ -661,7 +661,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 				directory.set("key1", "value1");
@@ -693,7 +693,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				(c as any).runtime.orderSequentially(() => {
@@ -728,7 +728,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				(c as any).runtime.orderSequentially(() => {
@@ -755,7 +755,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.set(testKey, bigString);
@@ -786,7 +786,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.set(testKey, bigString);
@@ -816,7 +816,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.clear();
@@ -840,7 +840,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.clear();
@@ -871,7 +871,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.insertText(s.getLength(), " world!");
@@ -892,7 +892,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.insertText(s.getLength(), " world!");
@@ -913,7 +913,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.removeText(0, s.getLength());
@@ -934,7 +934,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.removeText(0, s.getLength());
@@ -957,7 +957,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.annotateRange(0, s.getLength(), { bold: true });
@@ -978,7 +978,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.annotateRange(0, s.getLength(), { bold: true });
@@ -1001,7 +1001,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const s = await d.getSharedObject<SharedString>(stringId);
 				s.insertMarker(s.getLength(), ReferenceType.Simple, {
@@ -1065,7 +1065,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (container, d) => {
 				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 				const runtime = defaultDataStore.context.containerRuntime;
@@ -1105,7 +1105,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			true,
+			true, // Do send ops from first container instance before closing
 			async (container, d) => {
 				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 				const runtime = defaultDataStore.context.containerRuntime;
@@ -1134,7 +1134,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (_, dataStore) => {
 				const channel = dataStore.runtime.createChannel(
 					newMapId,
@@ -1219,15 +1219,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate local op
 		assert.strictEqual(string.getText(), "hello");
-		string.insertText(5, "; long amount of text that will produce a high index");
+		string.insertText(5, " / First op");
 
 		// op is submitted on top of first op at some later time (not in the same JS turn, so not batched)
 		await Promise.resolve();
-		string.insertText(string.getLength(), ", for testing purposes");
-		assert.strictEqual(
-			string.getText(),
-			"hello; long amount of text that will produce a high index, for testing purposes",
-		);
+		string.insertText(string.getLength(), " / Second op");
+		assert.strictEqual(string.getText(), "hello / First op / Second op");
 
 		const stashP = new Promise<string>((resolve) => {
 			container.on("op", (op) => {
@@ -1244,19 +1241,25 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 		});
 		provider.opProcessingController.resumeProcessing(container);
-		const stashedOps = await stashP;
+		const pendingLocalState = await stashP;
 
-		// when this container tries to apply the second op, it will not have replayed the first
-		// op yet, because the reference sequence number of the second op is lower than the sequence number
-		// of the first op
-		const container2 = await loader.resolve({ url }, stashedOps);
+		// Op stream [client ID] at this point -- These are in "savedOps" in the pendingLocalState
+		// 1: Join op [A]
+		// 2: "hello" (from test setup) [A]
+		// 3: Join op [B]
+		// 4: " / First op" [B]
+		//
+		// Stashed Ops (ref seq num is 3) -- These are in ContainerRuntime's PendingStateManager.initialMessages
+		// 4: "First op" [B]
+		// _: " / Second op" [B]
+
+		// This container will have to replay the first op even though it was already sequenced,
+		// since both ops' reference sequence number is lower than the first op's sequence number.
+		const container2 = await loader.resolve({ url }, pendingLocalState);
 		const defaultDataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const string2 = await defaultDataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
-		assert.strictEqual(
-			string2.getText(),
-			"hello; long amount of text that will produce a high index, for testing purposes",
-		);
+		assert.strictEqual(string2.getText(), "hello / First op / Second op");
 		await provider.ensureSynchronized();
 		assert.strictEqual(string2.getText(), string1.getText());
 	});
@@ -1311,7 +1314,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -1356,7 +1359,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -1376,7 +1379,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -1450,7 +1453,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
-				false,
+				false, // Don't send ops from first container instance before closing
 				async (c, d) => {
 					const map = await d.getSharedObject<ISharedMap>(mapId);
 					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -1716,7 +1719,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (container, d) => {
 				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 				const runtime = defaultDataStore.context.containerRuntime;
@@ -1825,7 +1828,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(
 			testContainerConfig,
 			provider,
-			false,
+			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const map = await d.getSharedObject<ISharedMap>(mapId);
 				map.set(testKey, testValue);
