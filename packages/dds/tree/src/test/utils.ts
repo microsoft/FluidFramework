@@ -317,7 +317,7 @@ export class TestTreeProvider {
 			this.summarizer = summarizer;
 		}
 		return new Proxy(this, {
-			get: (target, prop, receiver): any => {
+			get: (target, prop, receiver) => {
 				// Route all properties that are on the `TestTreeProvider` itself
 				if ((target as never)[prop] !== undefined) {
 					return Reflect.get(target, prop, receiver) as unknown;
@@ -384,7 +384,7 @@ export class TestTreeProviderLite {
 			});
 			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
 				connectionState: boolean,
-			): void => {
+			) => {
 				containerRuntime.connected = connectionState;
 			};
 			t.push(tree);
@@ -525,7 +525,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
 	if (trees.length > 1) {
 		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
 		for (const tree of trees.slice(1)) {
@@ -851,7 +851,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export const mockIntoDelta = (delta: DeltaRoot): DeltaRoot => delta;
+export const mockIntoDelta = (delta: DeltaRoot) => delta;
 
 export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
@@ -870,7 +870,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: any, b: any): void => assert.deepEqual(a, b);
+const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
@@ -972,8 +972,8 @@ export function testChangeReceiver<TChange>(
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange): number => changes.push(change);
-	return [changeReceiver, (): readonly TChange[] => [...changes]];
+	const changeReceiver = (change: TChange) => changes.push(change);
+	return [changeReceiver, () => [...changes]];
 }
 
 export function defaultRevisionMetadataFromChanges(
@@ -1091,7 +1091,7 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	}
 
 	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
-	const unsubscribe = (): void => {
+	const unsubscribe = () => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
 			revertible[disposeSymbol]();
@@ -1129,7 +1129,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	return requireSchema(
 		tree.checkout,
 		viewSchema,
-		onDispose ?? ((): void => {}),
+		onDispose ?? (() => {}),
 		nodeKeyManager ?? createMockNodeKeyManager(),
 	);
 }

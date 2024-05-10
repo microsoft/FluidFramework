@@ -61,7 +61,7 @@ function testField<T extends FlexFieldSchema>(
 	return {
 		name,
 		schemaData: schema,
-		treeFactory: (): JsonableTree[] => {
+		treeFactory: () => {
 			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
 			return jsonableTreeFromFieldCursor(cursor);
 		},

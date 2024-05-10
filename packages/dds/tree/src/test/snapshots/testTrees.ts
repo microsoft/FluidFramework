@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId, type IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import { SessionId } from "@fluidframework/id-compressor";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -160,7 +159,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 	}[] = [
 		{
 			name: "move-across-fields",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0].checkout;
 
@@ -223,7 +222,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "insert-and-remove",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig);
@@ -255,7 +254,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			 * EditManager's persisted format.
 			 */
 			name: "optional-field-scenarios",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const innerBuilder = new SchemaBuilder({
 					scope: "optional-field",
 					libraries: [leaf.library],
@@ -314,7 +313,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "competing-removes",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const provider = new TestTreeProviderLite(4, factory, true);
 					const config: InitializeAndSchematizeConfiguration = {
@@ -338,7 +337,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "concurrent-inserts",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const baseTree = provider.trees[0];
 				const tree1 = schematizeFlexTree(baseTree, {
@@ -377,7 +376,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "complete-3x3",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const fieldKeyA: FieldKey = brand("FieldA");
 				const fieldKeyB: FieldKey = brand("FieldB");
 				const fieldKeyC: FieldKey = brand("FieldC");
@@ -389,7 +388,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "has-handle",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(1, factory, true);
 
 				const innerBuilder = new SchemaBuilder({
@@ -424,7 +423,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "nested-sequence-change",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				const provider = new TestTreeProviderLite(1, factory, true);
 
 				const innerBuilder = new SchemaBuilder({
@@ -474,7 +473,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "empty-root",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				await takeSnapshot(
 					generateCompleteTree([], 0, 0, factoryOptions),
 					`final-${testEncodeType}`,
@@ -483,7 +482,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		},
 		{
 			name: "attachment-tree",
-			runScenario: async (takeSnapshot): Promise<void> => {
+			runScenario: async (takeSnapshot) => {
 				// This test makes changes only while detached to test EditManager's optimization of omitting
 				// changes outside the collab window (which is all changes when detached).
 				const baseTree = treeTestFactory({
