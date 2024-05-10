@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentStorageService,
 	type ISnapshot,

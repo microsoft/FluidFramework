@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
-import { DriverError } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverError,
+	DriverErrorTypes,
+	IDriverErrorBase,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,

@@ -5,7 +5,7 @@
 ```ts
 
 import type { FluidObject } from '@fluidframework/core-interfaces';
-import type { IAnyDriverError } from '@fluidframework/driver-definitions';
+import type { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
 import type { IClient } from '@fluidframework/protocol-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';

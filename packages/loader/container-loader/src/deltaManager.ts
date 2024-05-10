@@ -16,10 +16,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
