@@ -174,7 +174,6 @@ export {
 	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	nodeKeyFieldKey,
 	SchemaLintConfiguration,
 	TreeStatus,
 	FlexTreeFieldNode,
@@ -389,7 +388,6 @@ export {
 	// These names also are collision prone.
 	Required,
 	Optional,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	Sequence,

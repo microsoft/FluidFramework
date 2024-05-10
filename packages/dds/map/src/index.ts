@@ -15,7 +15,7 @@
  * @packageDocumentation
  */
 
-export {
+export type {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
