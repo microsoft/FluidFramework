@@ -77,11 +77,9 @@ class FileLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
+	public readonly minLogLevel: LogLevel = LogLevel.verbose;
 
-	private constructor(
-		private readonly baseLogger?: ITelemetryBufferedLogger,
-		public readonly minLogLevel: LogLevel = LogLevel.verbose,
-	) {}
+	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
