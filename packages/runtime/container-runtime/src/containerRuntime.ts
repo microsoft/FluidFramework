@@ -1750,7 +1750,7 @@ export class ContainerRuntime
 			let oldClientId = this.clientId;
 			this.on("connected", () => {
 				const clientId = this.clientId;
-				assert(clientId !== undefined, "can't be undefined");
+				assert(clientId !== undefined, 0x975 /* can't be undefined */);
 				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
 					"selfChanged",
 					{ clientId: oldClientId },
@@ -2439,7 +2439,7 @@ export class ContainerRuntime
 					for (const range of ops) {
 						compressor.finalizeCreationRange(range);
 					}
-					assert(this.pendingIdCompressorOps.length === 0, "No new ops added");
+					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 					this._idCompressor = compressor;
 				})
 				.catch((error) => {
@@ -2453,8 +2453,11 @@ export class ContainerRuntime
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
-		assert(clientId === currentClientId, "input clientId does not match Audience");
-		assert(this.clientId === currentClientId, "this.clientId does not match Audience");
+		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
+		assert(
+			this.clientId === currentClientId,
+			0x978 /* this.clientId does not match Audience */,
+		);
 
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -2702,7 +2705,7 @@ export class ContainerRuntime
 					} else {
 						assert(
 							this.pendingIdCompressorOps.length === 0,
-							"there should be no pending ops!",
+							0x979 /* there should be no pending ops! */,
 						);
 						this._idCompressor.finalizeCreationRange(range);
 					}

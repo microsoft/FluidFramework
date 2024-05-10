@@ -159,7 +159,7 @@ export const mixinAttributor = (
 			const { quorum, deltaManager, taggedLogger } = context;
 			assert(
 				quorum !== undefined,
-				"quorum must exist when instantiating attribution-providing runtime",
+				0x968 /* quorum must exist when instantiating attribution-providing runtime */,
 			);
 
 			const mc = loggerToMonitoringContext(taggedLogger);

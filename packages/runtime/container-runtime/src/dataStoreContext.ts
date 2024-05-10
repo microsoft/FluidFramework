@@ -1118,8 +1118,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		let sequenceNumber: number | undefined;
 		// Check whether we need to fetch the snapshot first to load.
 		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
-			assert(this.blobContents !== undefined, "Blob contents should be present to evaluate");
-			assert(this._baseSnapshot !== undefined, "snapshotTree should be present to evaluate");
+			assert(
+				this.blobContents !== undefined,
+				0x97a /* Blob contents should be present to evaluate */,
+			);
+			assert(
+				this._baseSnapshot !== undefined,
+				0x97b /* snapshotTree should be present to evaluate */,
+			);
 			this.snapshotFetchRequired = isSnapshotFetchRequiredForLoadingGroupId(
 				this._baseSnapshot,
 				this.blobContents,
