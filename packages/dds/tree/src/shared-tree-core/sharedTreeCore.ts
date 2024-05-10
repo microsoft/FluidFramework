@@ -231,10 +231,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	private transactionEnricher?: TransactionEnricher<TChange>;
-	private preparedCommit?: {
+	private readonly preparedCommits: {
 		readonly local: GraphCommit<TChange>;
 		readonly toSend: GraphCommit<TChange>;
-	};
+	}[] = [];
 
 	private handleBranchChange(
 		eventKind: "beforeChange" | "afterChange",
@@ -244,8 +244,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			change.type === "append" ||
 			(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
 		) {
-			assert(change.newCommits.length === 1, "Expected exactly one commit for sending");
-			const newCommit = change.newCommits[0];
 			switch (eventKind) {
 				case "beforeChange": {
 					if (this.detachedRevision !== undefined) {
@@ -272,7 +270,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 									this.enricher,
 								);
 							}
-							this.transactionEnricher.addTransactionStep(newCommit);
+							this.transactionEnricher.addTransactionSteps(change.newCommits);
 						}
 					} else {
 						if (
@@ -283,25 +281,31 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 								this.transactionEnricher !== undefined,
 								"Unexpected transaction commit without transaction steps",
 							);
+							assert(
+								change.newCommits.length === 1,
+								"Transaction commits should produce exactly one commit",
+							);
+							const newCommit = change.newCommits[0];
 							const enrichedChange = this.transactionEnricher.getComposedChange(
 								change.newCommits[0].revision,
 							);
 							delete this.transactionEnricher;
-							this.preparedCommit = {
+
+							this.preparedCommits.push({
 								local: newCommit,
 								toSend: replaceChange(newCommit, enrichedChange),
-							};
+							});
 						} else {
-							this.preparedCommit = {
-								local: newCommit,
-								toSend: replaceChange(
-									newCommit,
-									this.enricher.updateChangeEnrichments(
-										newCommit.change,
-										newCommit.revision,
-									),
-								),
-							};
+							for (const newCommit of change.newCommits) {
+								const enrichedChange = this.enricher.updateChangeEnrichments(
+									newCommit.change,
+									newCommit.revision,
+								);
+								this.preparedCommits.push({
+									local: newCommit,
+									toSend: replaceChange(newCommit, enrichedChange),
+								});
+							}
 						}
 					}
 					break;
@@ -312,13 +316,25 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 						break;
 					}
 					if (this.detachedRevision !== undefined) {
-						this.submitCommit(newCommit, this.schemaAndPolicy);
+						for (const newCommit of change.newCommits) {
+							this.submitCommit(newCommit, this.schemaAndPolicy);
+						}
 					} else {
 						assert(
-							this.preparedCommit?.local === newCommit,
-							"Inconsistent commits between before and after change",
+							change.newCommits.length === this.preparedCommits.length,
+							"Inconsistent number of commits between before and after change",
 						);
-						this.submitCommit(this.preparedCommit.toSend, this.schemaAndPolicy);
+						let iCommit = 0;
+						for (const newCommit of change.newCommits) {
+							const prepared = this.preparedCommits[iCommit];
+							assert(
+								prepared.local === newCommit,
+								"Inconsistent commits between before and after change",
+							);
+							this.submitCommit(prepared.toSend, this.schemaAndPolicy);
+							iCommit += 1;
+						}
+						this.preparedCommits.length = 0;
 					}
 					break;
 				}
