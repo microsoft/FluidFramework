@@ -150,7 +150,7 @@ async function start(): Promise<void> {
 		// The newly attached container is given a unique ID that can be used to access the container in another session
 		location.hash = id;
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(id, containerSchema));
@@ -175,7 +175,7 @@ async function start(): Promise<void> {
 	const diceRollerController1 = new DiceRollerController(diceRollerController1Props);
 	const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
 
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	contentDiv.append(
 		makeAppView([diceRollerController1, diceRollerController2], services.audience),
 	);
