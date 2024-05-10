@@ -9,5 +9,9 @@ module.exports = {
 		// Demoted to warning as a workaround to layer-check challenges. Tracked by:
 		// https://github.com/microsoft/FluidFramework/issues/10226
 		"import/no-extraneous-dependencies": "warn",
+
+		// Incompatible with prettier
+		// TODO: remove this override once config dependency has been updated to a version with this rule disabled..
+		"unicorn/number-literal-case": "off",
 	},
 };
