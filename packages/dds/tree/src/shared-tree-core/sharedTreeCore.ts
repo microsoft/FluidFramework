@@ -273,6 +273,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 							this.transactionEnricher.addTransactionSteps(change.newCommits);
 						}
 					} else {
+						assert(this.preparedCommits.length === 0, "Unexpected prepared commits");
 						if (
 							change.type === "replace" &&
 							getChangeReplaceType(change) === "transactionCommit"
