@@ -66,6 +66,9 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		if (!driverSupportsBlobs(provider.driver)) {
+			this.skip();
+		}
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 			tombstoneTimeoutMs,
@@ -93,12 +96,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 			return { dataStore, summarizer };
 		}
-
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
 
 		itExpects(
 			"fails retrieval of tombstones attachment blobs",
@@ -472,12 +469,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach("conditionalSkip", async function () {
-			if (!driverSupportsBlobs(provider.driver)) {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"tombstones blobs uploaded in detached container",
 			[
@@ -825,12 +816,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			await summarizeNow(summarizer);
 			return summarizer;
 		}
-
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
 
 		itExpects(
 			"tombstones blobs uploaded in disconnected container",
