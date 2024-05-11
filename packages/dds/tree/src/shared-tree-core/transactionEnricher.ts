@@ -22,11 +22,9 @@ export class TransactionEnricher<TChange> {
 		this.enricher = enricher;
 	}
 
-	public addTransactionSteps(commits: Iterable<GraphCommit<TChange>>): void {
-		for (const commit of commits) {
-			const change = this.enricher.updateChangeEnrichments(commit.change, commit.revision);
-			this.transactionCommits.push({ ...commit, change });
-		}
+	public addTransactionSteps(commit: GraphCommit<TChange>): void {
+		const change = this.enricher.updateChangeEnrichments(commit.change, commit.revision);
+		this.transactionCommits.push({ ...commit, change });
 	}
 
 	public getComposedChange(revision: RevisionTag): TChange {

@@ -31,7 +31,6 @@ import {
 	SchemaAndPolicy,
 	SchemaPolicy,
 	TreeStoredSchemaRepository,
-	replaceChange,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
@@ -44,8 +43,8 @@ import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { ResubmitMachine } from "./resubmitMachine.js";
-import { TransactionEnricher } from "./transactionEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
+import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -103,7 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly idCompressor: IIdCompressor;
 
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	private readonly enricher: ChangeEnricherReadonlyCheckout<TChange>;
+	private readonly commitEnricher: BranchCommitEnricher<TChange>;
 
 	protected readonly mintRevisionTag: () => RevisionTag;
 
@@ -183,13 +182,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			formatOptions.message,
 		);
 
-		this.enricher = enricher ?? new NoOpChangeEnricher();
+		const changeEnricher = enricher ?? new NoOpChangeEnricher();
 		this.resubmitMachine =
 			resubmitMachine ??
 			new DefaultResubmitMachine(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
-				this.enricher,
+				changeEnricher,
 			);
+		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -230,12 +230,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		await Promise.all(loadSummaries);
 	}
 
-	private transactionEnricher?: TransactionEnricher<TChange>;
-	private readonly preparedCommits: {
-		readonly local: GraphCommit<TChange>;
-		readonly toSend: GraphCommit<TChange>;
-	}[] = [];
-
 	private handleBranchChange(
 		eventKind: "beforeChange" | "afterChange",
 		change: SharedTreeBranchChange<TChange>,
@@ -248,66 +242,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				case "beforeChange": {
 					if (this.detachedRevision !== undefined) {
 						// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-						// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
-						// It's important that we not feed these commits to the enricher because the enricher tracks which commits are in flight,
-						// and these commits are never in flight.
 						break;
 					}
-					if (this.getLocalBranch().isTransacting()) {
-						if (
-							change.type === "replace" &&
-							getChangeReplaceType(change) === "transactionCommit"
-						) {
-							// This event if fired for the completion of a nested transaction.
-							// We do not need to add the commit to the transaction enricher
-							// because we have already added the steps that make up this nested transaction.
-						} else {
-							// We do not submit ops for changes that are part of a transaction.
-							// But we need to enrich the commits that will be sent if the transaction is committed.
-							if (this.transactionEnricher === undefined) {
-								this.transactionEnricher = new TransactionEnricher(
-									this.editManager.changeFamily.rebaser,
-									this.enricher,
-								);
-							}
-							this.transactionEnricher.addTransactionSteps(change.newCommits);
-						}
-					} else {
-						assert(this.preparedCommits.length === 0, "Unexpected prepared commits");
-						if (
-							change.type === "replace" &&
-							getChangeReplaceType(change) === "transactionCommit"
-						) {
-							assert(
-								this.transactionEnricher !== undefined,
-								"Unexpected transaction commit without transaction steps",
-							);
-							assert(
-								change.newCommits.length === 1,
-								"Transaction commits should produce exactly one commit",
-							);
-							const newCommit = change.newCommits[0];
-							const enrichedChange = this.transactionEnricher.getComposedChange(
-								change.newCommits[0].revision,
-							);
-							delete this.transactionEnricher;
-
-							this.preparedCommits.push({
-								local: newCommit,
-								toSend: replaceChange(newCommit, enrichedChange),
-							});
-						} else {
-							for (const newCommit of change.newCommits) {
-								const enrichedChange = this.enricher.updateChangeEnrichments(
-									newCommit.change,
-									newCommit.revision,
-								);
-								this.preparedCommits.push({
-									local: newCommit,
-									toSend: replaceChange(newCommit, enrichedChange),
-								});
-							}
-						}
+					const isTransactionOngoing = this.getLocalBranch().isTransacting();
+					const isTransactionCommit =
+						change.type === "replace" &&
+						getChangeReplaceType(change) === "transactionCommit";
+					for (const newCommit of change.newCommits) {
+						this.commitEnricher.prepareCommit(
+							newCommit,
+							isTransactionOngoing,
+							isTransactionCommit,
+						);
 					}
 					break;
 				}
@@ -321,21 +267,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 							this.submitCommit(newCommit, this.schemaAndPolicy);
 						}
 					} else {
-						assert(
-							change.newCommits.length === this.preparedCommits.length,
-							"Inconsistent number of commits between before and after change",
-						);
-						let iCommit = 0;
 						for (const newCommit of change.newCommits) {
-							const prepared = this.preparedCommits[iCommit];
-							assert(
-								prepared.local === newCommit,
-								"Inconsistent commits between before and after change",
-							);
-							this.submitCommit(prepared.toSend, this.schemaAndPolicy);
-							iCommit += 1;
+							const prepared = this.commitEnricher.getPreparedCommit(newCommit);
+							this.submitCommit(prepared, this.schemaAndPolicy);
 						}
-						this.preparedCommits.length = 0;
 					}
 					break;
 				}
