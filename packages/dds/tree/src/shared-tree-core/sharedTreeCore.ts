@@ -152,12 +152,49 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
-		this.editManager.localBranch.on("beforeChange", (args) =>
-			this.handleBranchChange("beforeChange", args),
-		);
-		this.editManager.localBranch.on("afterChange", (args) =>
-			this.handleBranchChange("afterChange", args),
-		);
+		this.editManager.localBranch.on("beforeChange", (change) => {
+			if (this.detachedRevision !== undefined) {
+				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
+				return;
+			}
+			if (
+				change.type === "append" ||
+				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+			) {
+				const isTransactionOngoing = this.getLocalBranch().isTransacting();
+				const isTransactionCommit =
+					change.type === "replace" &&
+					getChangeReplaceType(change) === "transactionCommit";
+				for (const newCommit of change.newCommits) {
+					this.commitEnricher.prepareCommit(
+						newCommit,
+						isTransactionOngoing,
+						isTransactionCommit,
+					);
+				}
+			}
+		});
+		this.editManager.localBranch.on("afterChange", (change) => {
+			if (this.getLocalBranch().isTransacting()) {
+				// We do not submit ops for changes that are part of a transaction.
+				return;
+			}
+			if (
+				change.type === "append" ||
+				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+			) {
+				if (this.detachedRevision !== undefined) {
+					for (const newCommit of change.newCommits) {
+						this.submitCommit(newCommit, this.schemaAndPolicy);
+					}
+				} else {
+					for (const newCommit of change.newCommits) {
+						const prepared = this.commitEnricher.getPreparedCommit(newCommit);
+						this.submitCommit(prepared, this.schemaAndPolicy);
+					}
+				}
+			}
+		});
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
@@ -228,56 +265,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
-	}
-
-	private handleBranchChange(
-		eventKind: "beforeChange" | "afterChange",
-		change: SharedTreeBranchChange<TChange>,
-	): void {
-		if (
-			change.type === "append" ||
-			(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-		) {
-			switch (eventKind) {
-				case "beforeChange": {
-					if (this.detachedRevision !== undefined) {
-						// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-						break;
-					}
-					const isTransactionOngoing = this.getLocalBranch().isTransacting();
-					const isTransactionCommit =
-						change.type === "replace" &&
-						getChangeReplaceType(change) === "transactionCommit";
-					for (const newCommit of change.newCommits) {
-						this.commitEnricher.prepareCommit(
-							newCommit,
-							isTransactionOngoing,
-							isTransactionCommit,
-						);
-					}
-					break;
-				}
-				case "afterChange": {
-					if (this.getLocalBranch().isTransacting()) {
-						// We do not submit ops for changes that are part of a transaction.
-						break;
-					}
-					if (this.detachedRevision !== undefined) {
-						for (const newCommit of change.newCommits) {
-							this.submitCommit(newCommit, this.schemaAndPolicy);
-						}
-					} else {
-						for (const newCommit of change.newCommits) {
-							const prepared = this.commitEnricher.getPreparedCommit(newCommit);
-							this.submitCommit(prepared, this.schemaAndPolicy);
-						}
-					}
-					break;
-				}
-				default:
-					unreachableCase(eventKind);
-			}
-		}
 	}
 
 	/**
