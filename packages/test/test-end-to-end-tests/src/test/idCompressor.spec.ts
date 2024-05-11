@@ -608,6 +608,11 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 				superResubmit(content, localOpMetadata);
 			};
 
+			// important allocation to test the ordering of generate, takeNext, generate, retakeOutstanding, takeNext.
+			// correctness here relies on mutation in retaking if we want the last takeNext to return an empty range
+			// which it must be if we want to avoid overlapping range bugs
+			simulateAllocation(sharedMapContainer1);
+
 			container1.connect();
 			await waitForContainerConnection(container1);
 			await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
