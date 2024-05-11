@@ -17,7 +17,7 @@ import {
 	ApiLevel,
 	ApiTag,
 	getApiExports,
-	queryOutputMapsFromPackageExports,
+	queryResolutionPathsFromPackageExports,
 } from "../../library";
 import type { CommandLogger } from "../../logging";
 
@@ -111,7 +111,7 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 		}
 
 		const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
-			queryOutputMapsFromPackageExports(
+			queryResolutionPathsFromPackageExports(
 				packageJson,
 				mapQueryPathToApiTagLevel,
 				node10TypeCompat,

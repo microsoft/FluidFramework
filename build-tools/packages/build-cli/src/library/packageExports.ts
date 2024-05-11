@@ -143,7 +143,7 @@ function findFirstTypesPathMatching<TOutKey>(
  * @returns object with mapKeyToOutput, map of ApiTags to output paths, and
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
  */
-export function queryOutputMapsFromPackageExports<TOutKey>(
+export function queryResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	node10TypeCompat: boolean,

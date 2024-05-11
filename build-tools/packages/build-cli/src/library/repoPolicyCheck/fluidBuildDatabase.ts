@@ -13,7 +13,7 @@ import { type Package, TscUtils } from "@fluidframework/build-tools";
 import type { TsConfigJson } from "type-fest";
 
 import { ApiLevel } from "../apiLevel";
-import { queryOutputMapsFromPackageExports } from "../packageExports";
+import { queryResolutionPathsFromPackageExports } from "../packageExports";
 
 type PackageName = string;
 type Script = string;
@@ -97,7 +97,7 @@ function flubOutput(
 		outFilePublic: ApiLevel.public,
 		outFileSuffix: ".d.ts",
 	});
-	const { mapKeyToOutput: mapApiTagLevelToOutput } = queryOutputMapsFromPackageExports(
+	const { mapKeyToOutput: mapApiTagLevelToOutput } = queryResolutionPathsFromPackageExports(
 		pkg.packageJson,
 		// We are only concerned with public generated. Values in map don't matter
 		// except that should be unique and not be undefined.

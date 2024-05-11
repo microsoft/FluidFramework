@@ -6,7 +6,7 @@
 import { assert } from "chai";
 
 import type { ExportData, Node10CompatExportData } from "../../src/library";
-import { queryOutputMapsFromPackageExports } from "../../src/library";
+import { queryResolutionPathsFromPackageExports } from "../../src/library";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
@@ -246,7 +246,7 @@ function assertEquivalentMaps<TKeys, TValues>(
 }
 
 describe("library/packageExports", () => {
-	describe("queryOutputMapsFromPackageExports", () => {
+	describe("queryResolutionPathsFromPackageExports", () => {
 		[
 			["commonjs (dist path)", "dist", "require"] as const,
 			["esm (lib path)", "lib", "import"] as const,
@@ -266,7 +266,7 @@ describe("library/packageExports", () => {
 				} = genTestData(path, condition);
 
 				it("finds path in common package export pattern", () => {
-					const { mapKeyToOutput } = queryOutputMapsFromPackageExports(
+					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
 						commonExportsPackage,
 						query,
 						false,
@@ -279,7 +279,7 @@ describe("library/packageExports", () => {
 				});
 
 				it("finds type only export paths", () => {
-					const { mapKeyToOutput } = queryOutputMapsFromPackageExports(
+					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
 						typeOnlyExportPackage,
 						query,
 						false,
@@ -292,7 +292,7 @@ describe("library/packageExports", () => {
 				});
 
 				it("warns on double referenced export paths", () => {
-					const { mapKeyToOutput } = queryOutputMapsFromPackageExports(
+					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
 						doubleReferencingExportsPackage,
 						query,
 						false,
@@ -311,7 +311,7 @@ describe("library/packageExports", () => {
 				});
 
 				it("finds beta and internal in common package export pattern for node10 compat", () => {
-					const { mapNode10CompatExportPathToData } = queryOutputMapsFromPackageExports(
+					const { mapNode10CompatExportPathToData } = queryResolutionPathsFromPackageExports(
 						commonExportsPackage,
 						query,
 						true,
