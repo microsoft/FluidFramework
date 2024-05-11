@@ -52,7 +52,7 @@ type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unkno
  *
  * @param test - the value to check key conditions against
  * @param mapQuery - map with keys as match conditions (exact strings or regex)
- * @returns undefined when there are no matches or the value of matched key as { value: value }
+ * @returns undefined when there are no matches or the value of matched key as \{ value: value \}
  */
 function valueOfFirstKeyMatching<TValue>(
 	test: string,
@@ -66,6 +66,10 @@ function valueOfFirstKeyMatching<TValue>(
 	}
 	return undefined;
 }
+
+// Some common "exports" conditions
+const typesExportCondition = "types";
+const defaultExportCondition = "default";
 
 /**
  * Performs a depth first search of exports conditions looking for a "types" constrained
@@ -81,19 +85,21 @@ function findFirstTypesPathMatching<TOutKey>(
 	exports: Readonly<ExportsRecordValue>,
 	previous: Readonly<{
 		conditions: readonly string[];
-		isTypeOnly: boolean;
-	}> = { conditions: [], isTypeOnly: false },
+		isTypeOnly?: boolean;
+	}>,
 ): (ExportData & { outKey: TOutKey | undefined }) | undefined {
 	// All exports are type only if there was a previous condition where the only option
 	// was "types" constrained. Otherwise they may still become constrained or not.
-	const isTypeOnlySettled = previous.isTypeOnly && previous.conditions.includes("types");
+	const isTypeOnlySettled =
+		(previous.isTypeOnly ?? false) && previous.conditions.includes(typesExportCondition);
 	const entries = Object.entries(exports);
 	for (const [entry, value] of entries) {
 		// Current conditions
 		// "default" is not an explicit condition, but a catch all; so, never add it to conditions
 		const conditions =
-			entry === "default" ? previous.conditions : [...previous.conditions, entry];
-		const isTypeOnly = isTypeOnlySettled || (entries.length === 1 && entry === "types");
+			entry === defaultExportCondition ? previous.conditions : [...previous.conditions, entry];
+		const isTypeOnly =
+			isTypeOnlySettled || (entries.length === 1 && entry === typesExportCondition);
 		// First check if this entry is a leaf; where value is only
 		// expected to be a string (a relative file path).
 		if (typeof value === "string") {
@@ -101,7 +107,7 @@ function findFirstTypesPathMatching<TOutKey>(
 			// At the leaf level, look for "types" entries which either is the current
 			// condition (entry) or is an inherited condition, both of which have been
 			// combined into local conditions.
-			if (conditions.includes("types")) {
+			if (conditions.includes(typesExportCondition)) {
 				const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
 				if (queryResult !== undefined) {
 					return { outKey: queryResult.value, relPath, conditions, isTypeOnly };
@@ -174,7 +180,9 @@ export function queryOutputMapsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		const findResult = findFirstTypesPathMatching(mapQueryPathToOutKey, exportValue);
+		const findResult = findFirstTypesPathMatching(mapQueryPathToOutKey, exportValue, {
+			conditions: [],
+		});
 		if (findResult !== undefined) {
 			const { outKey, relPath, conditions, isTypeOnly } = findResult;
 
