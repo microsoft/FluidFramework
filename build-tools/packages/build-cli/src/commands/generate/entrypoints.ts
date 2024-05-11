@@ -91,6 +91,11 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 
 		const pathPrefix = getOutPathPrefix(this.flags, packageJson).replace(/\\/g, "/");
 
+		/**
+		 * Note that if general generated output changes be sure to update mimicked logic
+		 * in {@link ../../library/repoPolicyCheck/fluidBuildDatabase#FluidBuildDatabase}.
+		 */
+
 		const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
 			[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
 			[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
