@@ -34,7 +34,6 @@ import {
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -47,7 +46,6 @@ import {
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
@@ -178,7 +176,7 @@ export class SharedTree
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
+			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -290,7 +288,6 @@ export class SharedTree
 			viewSchema,
 			onDispose,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 	}
 
@@ -301,7 +298,6 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
 		if (view.error?.canInitialize === true) {

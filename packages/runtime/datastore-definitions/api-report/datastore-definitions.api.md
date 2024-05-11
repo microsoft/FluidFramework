@@ -5,11 +5,10 @@
 ```ts
 
 import type { AttachState } from '@fluidframework/container-definitions';
+import type { ErasedType } from '@fluidframework/core-interfaces';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
@@ -88,6 +87,9 @@ export interface IDeltaHandler {
 }
 
 // @public
+export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+// @public @sealed
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
     addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
@@ -100,7 +102,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly connected: boolean;
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManager: IDeltaManagerErased;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;

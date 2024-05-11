@@ -175,7 +175,8 @@ describe("SharedString Partial Load", () => {
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
 
 		await localSharedString.loaded;
-		localDataStoreRuntime.deltaManager.lastSequenceNumber = localSharedString.getCurrentSeq();
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+			localSharedString.getCurrentSeq();
 
 		assert.equal(localSharedString.getText(), remoteSharedString.getText());
 	});
@@ -206,10 +207,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -255,10 +256,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -301,10 +302,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());

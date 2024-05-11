@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
 
-import { ISharedMapEvents } from "./interfaces.js";
-import {
+import type { ISharedMapEvents } from "./interfaces.js";
+import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
@@ -21,7 +21,7 @@ import {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import { type ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -62,17 +62,13 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
-export interface IMapDataObjectSerializable {
-	// eslint-disable-next-line import/no-deprecated
-	[key: string]: ISerializableValue;
-}
+// eslint-disable-next-line import/no-deprecated
+export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
 
 /**
  * Serialized key/value data.
  */
-export interface IMapDataObjectSerialized {
-	[key: string]: ISerializedValue;
-}
+export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 
 type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
 type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
@@ -153,7 +149,7 @@ export class MapKernel {
 	/**
 	 * Keys that have been modified locally but not yet ack'd from the server.
 	 */
-	private readonly pendingKeys: Map<string, number[]> = new Map();
+	private readonly pendingKeys = new Map<string, number[]>();
 
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.

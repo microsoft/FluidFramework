@@ -288,7 +288,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
-			"Detached revision should only be set when not attached",
+			0x95a /* Detached revision should only be set when not attached */,
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -367,13 +367,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const toResubmit = this.editManager.getLocalCommits();
 			assert(
 				commit === toResubmit[0],
-				"Resubmit phase should start with the oldest local commit",
+				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
 			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
-			"Local metadata must contain schema and policy.",
+			0x95e /* Local metadata must contain schema and policy. */,
 		);
 		assert(
 			this.resubmitMachine.isInResubmitPhase !== false,

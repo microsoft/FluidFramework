@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { stub, useFakeTimers } from "sinon";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
