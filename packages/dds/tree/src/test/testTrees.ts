@@ -29,6 +29,7 @@ import {
 	valueSymbol,
 } from "../feature-libraries/index.js";
 import { TreeContent } from "../shared-tree/index.js";
+import { testIdCompressor } from "./utils.js";
 
 interface TestTree {
 	readonly name: string;
@@ -157,6 +158,12 @@ export const testTrees: readonly TestTree[] = [
 		library,
 		FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 		[1, 2, 3],
+	),
+	testField(
+		"identifier-field",
+		library,
+		FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+		testIdCompressor.decompress(testIdCompressor.generateCompressedId()),
 	),
 	testTree("true boolean", library, leaf.boolean, true),
 	testTree("false boolean", library, leaf.boolean, false),
