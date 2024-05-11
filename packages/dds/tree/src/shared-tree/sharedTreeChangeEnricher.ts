@@ -74,10 +74,6 @@ export class SharedTreeReadonlyChangeEnricher
 		}
 		return undefined;
 	};
-
-	public [disposeSymbol](): void {
-		// TODO: in the future, forest and/or its AnchorSet may require disposal.
-	}
 }
 
 export class SharedTreeMutableChangeEnricher
@@ -105,5 +101,9 @@ export class SharedTreeMutableChangeEnricher
 					unreachableCase(type);
 			}
 		}
+	}
+
+	public [disposeSymbol](): void {
+		// TODO: in the future, forest and/or its AnchorSet may require disposal.
 	}
 }

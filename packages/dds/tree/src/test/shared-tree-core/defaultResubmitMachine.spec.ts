@@ -11,7 +11,7 @@ import {
 	MockEnrichableChange,
 	inverter,
 	// eslint-disable-next-line import/no-internal-modules
-} from "./MockChangeEnricher.js";
+} from "./mockChangeEnricher.js";
 import { DefaultResubmitMachine } from "../../shared-tree-core/index.js";
 
 const revision0 = testIdCompressor.generateCompressedId();

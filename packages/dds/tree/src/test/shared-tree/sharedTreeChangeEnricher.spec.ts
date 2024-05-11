@@ -148,8 +148,8 @@ describe("SharedTreeChangeEnricher", () => {
 	});
 
 	it("can be disposed right after creation", () => {
-		const { enricher, fork } = setupEnricher();
-		enricher[disposeSymbol]();
+		const { fork } = setupEnricher();
+		fork[disposeSymbol]();
 	});
 
 	it("can be disposed after mutation", () => {

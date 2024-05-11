@@ -30,11 +30,6 @@ export interface ChangeEnricherReadonlyCheckout<TChange> {
 	 * Forks the checkout, creating a new checkout that represents the same state but can be mutated.
 	 */
 	fork(): ChangeEnricherMutableCheckout<TChange>;
-
-	/**
-	 * Disposes of the enricher.
-	 */
-	[disposeSymbol](): void;
 }
 
 /**
@@ -49,6 +44,11 @@ export interface ChangeEnricherMutableCheckout<TChange>
 	 * Can be undefined when the applied change is a rollback.
 	 */
 	applyTipChange(change: TChange, revision?: RevisionTag): void;
+
+	/**
+	 * Disposes of the enricher.
+	 */
+	[disposeSymbol](): void;
 }
 
 export class NoOpChangeEnricher<TChange> implements ChangeEnricherMutableCheckout<TChange> {
