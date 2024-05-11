@@ -8,7 +8,7 @@ import type { AttachState } from '@fluidframework/container-definitions';
 import type { FluidObject } from '@fluidframework/core-interfaces/internal';
 import type { IAudience } from '@fluidframework/container-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';

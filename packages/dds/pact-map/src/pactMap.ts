@@ -257,7 +257,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 			type: "set",
 			key,
 			value,
-			refSeq: this.runtime.deltaManager.lastSequenceNumber,
+			refSeq: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(setOp);
@@ -387,7 +387,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 				if (pending.expectedSignoffs.length === 0) {
 					// The pending value has settled
-					const clientLeaveSequenceNumber = this.runtime.deltaManager.lastSequenceNumber;
+					const clientLeaveSequenceNumber = this.deltaManager.lastSequenceNumber;
 					this.values.set(key, {
 						accepted: {
 							value: pending.value,

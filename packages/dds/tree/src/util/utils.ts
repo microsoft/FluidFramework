@@ -260,7 +260,7 @@ export function assertValidRangeIndices(
 	startIndex: number,
 	endIndex: number,
 	array: { readonly length: number },
-) {
+): void {
 	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
@@ -270,7 +270,7 @@ export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
-) {
+): void {
 	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
 		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
@@ -282,14 +282,14 @@ export function assertValidIndex(
 export function assertValidRange(
 	{ start, end }: { start: number; end: number },
 	array: { readonly length: number },
-) {
+): void {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
 	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
 	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
-export function assertNonNegativeSafeInteger(index: number) {
+export function assertNonNegativeSafeInteger(index: number): void {
 	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
 	assert(index >= 0, 0x377 /* index must be non-negative */);
 }

@@ -19,19 +19,12 @@ import {
 	FlexFieldKind,
 	FlexTreeSchema,
 	createMockNodeKeyManager,
-	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
-	return getTreeContext(
-		schema,
-		new MockTreeCheckout(forest),
-		createMockNodeKeyManager(),
-		brand(nodeKeyFieldKey),
-	);
+	return getTreeContext(schema, new MockTreeCheckout(forest), createMockNodeKeyManager());
 }
 
 /**

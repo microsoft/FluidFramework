@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -131,7 +131,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.0.0-rc.3.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^9.1.1",

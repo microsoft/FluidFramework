@@ -141,7 +141,7 @@ export class ConsensusRegisterCollection<T>
 				type: "Plain",
 				value,
 			},
-			refSeq: this.runtime.deltaManager.lastSequenceNumber,
+			refSeq: this.deltaManager.lastSequenceNumber,
 		};
 
 		return this.newAckBasedPromise<boolean>((resolve) => {

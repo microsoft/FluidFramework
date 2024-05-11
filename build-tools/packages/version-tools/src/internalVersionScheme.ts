@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended } from "./bumpTypes";
@@ -15,10 +15,14 @@ import { detectVersionScheme } from "./schemes";
  */
 export const MINIMUM_PUBLIC_VERSION = "2.0.0";
 
-/** The semver major version of the {@link MINIMUM_PUBLIC_VERSION}. */
+/**
+ * The semver major version of the {@link MINIMUM_PUBLIC_VERSION}.
+ */
 const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
 
-/** The minimum number of prerelease sections a version should have to be considered a Fluid internal version. */
+/**
+ * The minimum number of prerelease sections a version should have to be considered a Fluid internal version.
+ */
 const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
 
 /**
@@ -146,7 +150,7 @@ export function toInternalScheme(
 		throw new Error(`Couldn't parse ${version} as a semver.`);
 	}
 
-	if (!allowPrereleases && parsedVersion.prerelease.length !== 0) {
+	if (!allowPrereleases && parsedVersion.prerelease.length > 0) {
 		throw new Error(
 			`Input version already has a pre-release component (${parsedVersion.prerelease}), which is not expected.`,
 		);
@@ -188,7 +192,7 @@ export function validateVersionScheme(
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
 	prereleaseIdentifiers?: readonly string[],
-) {
+): boolean {
 	const parsedVersion = semver.parse(version);
 	if (parsedVersion === null) {
 		throw new Error(`Couldn't parse ${version} as a semver.`);
@@ -256,7 +260,7 @@ export function isInternalVersionScheme(
 
 	try {
 		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseIds);
-	} catch (error) {
+	} catch {
 		return false;
 	}
 
@@ -291,7 +295,7 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	const singleRangeSet = semverRange.set[0];
 
 	// Prerelease ranges must have comparator operators. This definition expects at least one '>='.
-	if (singleRangeSet.find((comparator) => comparator.operator === ">=") === undefined) {
+	if (!singleRangeSet.some((comparator) => comparator.operator === ">=")) {
 		return false;
 	}
 
@@ -314,11 +318,9 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	// For internal version, range should not exceed the scope of single internal version.
 	// There should be a limit spec in range set (has '<' operator) with same prefix.
 	const prereleasePrefix = `${minVer.major}.${minVer.minor}.${minVer.patch}-${minVer.prerelease[0]}.`;
-	return (
-		singleRangeSet.find(
-			(comparator) =>
-				comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
-		) !== undefined
+	return singleRangeSet.some(
+		(comparator) =>
+			comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
 	);
 }
 
@@ -413,7 +415,7 @@ export function changePreReleaseIdentifier(
 	}
 
 	const pr = ver.prerelease;
-	if (pr.length < 1) {
+	if (pr.length === 0) {
 		throw new Error(`Version has no prerelease section: ${version}`);
 	}
 
