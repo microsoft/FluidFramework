@@ -601,7 +601,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		}
 	}
 
-	private removeChildren(path: UpPath, count: number) {
+	private removeChildren(path: UpPath, count: number): void {
 		const nodes = this.decoupleNodes(path, count);
 		this.deepDelete(nodes);
 	}

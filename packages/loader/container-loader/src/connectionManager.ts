@@ -11,11 +11,12 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
+	DriverErrorTypes,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,

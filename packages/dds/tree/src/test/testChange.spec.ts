@@ -121,7 +121,7 @@ describe("TestChange", () => {
 	function assertChangesetsEquivalent(
 		change1: TaggedChange<TestChange>,
 		change2: TaggedChange<TestChange>,
-	) {
+	): void {
 		assert.deepEqual(change1, change2);
 	}
 
