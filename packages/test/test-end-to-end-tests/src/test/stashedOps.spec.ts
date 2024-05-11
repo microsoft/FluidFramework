@@ -1733,6 +1733,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
+	//* Check how this test relates to O3
 	it("get pending state without close doesn't duplicate ops", async () => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
@@ -1835,6 +1836,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 				directory.set(testKey, "Duplication Threat");
 			});
+			//* Consider actually doing the stash-then-reconnect-then-send dance
 			// If the container doesn't close, clientId could have changed (i.e. the ops could have been resubmitted).
 			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState
 			const obj = JSON.parse(pendingLocalState);
@@ -1865,6 +1867,35 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(counter2.value, testIncrementValue + 2 * duplicatedIncrementValue);
 			assert.strictEqual(directory1.get(testKey), "Duplication Threat");
 			assert.strictEqual(directory2.get(testKey), "Duplication Threat");
+		});
+
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
+			const duplicatedIncrementValue = 3;
+			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(duplicatedIncrementValue);
+			});
+
+			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await provider.opProcessingController.processOutgoing(container2, container3);
+
+			//* unnecessary?
+			await Promise.resolve();
+
+			//* how does pendingStateManager deal with the extra ops? Shouldn't it consider them local since the clientId matches?
+			provider.opProcessingController.resumeProcessing(container2, container3);
+
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+			await provider.ensureSynchronized();
+
+			assert.strictEqual(counter1.value, 2 * duplicatedIncrementValue);
+			assert.strictEqual(counter2.value, 2 * duplicatedIncrementValue);
+			assert.strictEqual(counter3.value, 2 * duplicatedIncrementValue);
 		});
 	});
 });
