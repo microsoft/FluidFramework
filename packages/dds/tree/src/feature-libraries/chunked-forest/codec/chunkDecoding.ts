@@ -90,6 +90,7 @@ export function readValue(
 			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
 			return shape[0] as Value;
 		} else if (shape === SpecialField.Identifier) {
+			// This case is a special case handling the decoding of identifier fields.
 			const streamValue = readStream(stream);
 			assert(
 				typeof streamValue === "number" || typeof streamValue === "string",
