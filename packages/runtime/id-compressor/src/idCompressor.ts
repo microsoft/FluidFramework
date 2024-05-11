@@ -233,8 +233,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				),
 			},
 		};
-		this.nextRangeBaseGenCount = this.localGenCount + 1;
-		return IdCompressor.assertValidRange(range);
+		return this.updateToRange(range);
 	}
 
 	public retakeOutstandingCreationRange(): IdCreationRange {
@@ -266,7 +265,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			},
 			sessionId: this.localSessionId,
 		};
+		return this.updateToRange(range);
+	}
 
+	private updateToRange(range: IdCreationRange): IdCreationRange {
+		this.nextRangeBaseGenCount = this.localGenCount + 1;
 		return IdCompressor.assertValidRange(range);
 	}
 

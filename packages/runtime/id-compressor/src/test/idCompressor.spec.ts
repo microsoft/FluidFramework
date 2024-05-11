@@ -388,11 +388,33 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 1);
 				compressor.takeNextCreationRange();
 
-				const retakenRangeLocalOnly = compressor.retakeOutstandingCreationRange();
+				let retakenRangeLocalOnly = compressor.retakeOutstandingCreationRange();
 				assert.deepEqual(retakenRangeLocalOnly.ids, {
 					firstGenCount: 1,
 					count: 1,
 					localIdRanges: [[1, 1]],
+					requestedClusterSize: 2,
+				});
+
+				generateCompressedIds(compressor, 1);
+				retakenRangeLocalOnly = compressor.retakeOutstandingCreationRange();
+				assert.deepEqual(retakenRangeLocalOnly.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+
+				let postRetakeRange = compressor.takeNextCreationRange();
+				// IDs should be undefined because retaking should still advance the taken ID counter
+				// if it doesn't, ranges will be resubmitted causing out of order errors
+				assert.equal(postRetakeRange.ids, undefined);
+				generateCompressedIds(compressor, 1);
+				postRetakeRange = compressor.takeNextCreationRange();
+				assert.deepEqual(postRetakeRange.ids, {
+					firstGenCount: 3,
+					count: 1,
+					localIdRanges: [[3, 1]],
 					requestedClusterSize: 2,
 				});
 
