@@ -80,7 +80,8 @@ import {
 export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
-	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time this method was called.
+	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time either
+	 * this method or `retakeOutstandingCreationRange` was called.
 	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
 	 */
