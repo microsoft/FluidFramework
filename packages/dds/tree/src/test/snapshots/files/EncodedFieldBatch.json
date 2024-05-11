@@ -87,7 +87,12 @@
                     "items": {}
                   },
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "const": 0
+                      }
+                    ]
                   }
                 ]
               },

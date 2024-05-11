@@ -30,6 +30,7 @@ import {
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	EncodedChunkShape,
+	SpecialField,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -115,6 +116,19 @@ describe("chunkDecoding", () => {
 			const stream: StreamCursor = { data: [1, 2, 3], offset: 0 };
 			assert.equal(readValue(stream, ["x"], testIdCompressor), "x");
 			assert.equal(stream.offset, 0);
+		});
+
+		describe("SpecialField shape", () => {
+			it("identifier field", () => {
+				const compressedId = testIdCompressor.generateCompressedId();
+				const stableId = testIdCompressor.decompress(compressedId);
+				const stream: StreamCursor = { data: [compressedId], offset: 0 };
+				assert.equal(
+					readValue(stream, SpecialField.Identifier, testIdCompressor),
+					stableId,
+				);
+				assert.equal(stream.offset, 1);
+			});
 		});
 	});
 
@@ -292,6 +306,24 @@ describe("chunkDecoding", () => {
 			const stream = { data: [], offset: 0 };
 			const result = decoder.decode([], stream);
 			assertChunkCursorEquals(result, [{ type: brand("baz") }]);
+		});
+
+		it("identifier node", () => {
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			const cache = new DecoderContext([], [], testIdCompressor);
+
+			const decoder = new TreeDecoder(
+				{
+					type: "identifier",
+					value: SpecialField.Identifier,
+					fields: [],
+				},
+				cache,
+			);
+			const stream = { data: [compressedId], offset: 0 };
+			const result = decoder.decode([], stream);
+			assertChunkCursorEquals(result, [{ type: brand("identifier"), value: stableId }]);
 		});
 
 		it("dynamic", () => {

@@ -58,7 +58,7 @@ export function buildCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
-			fieldShaper(treeHandler, field, cache),
+			fieldShaper(treeHandler, field, cache, schema),
 		policy.fieldKinds,
 		idCompressor,
 	);
@@ -72,19 +72,22 @@ export function fieldShaper(
 	treeHandler: TreeShaper,
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
+	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
 	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
-			assert(field.types !== undefined, "field types must be defined in identifier field");
-			const identifierNodeEncoder = new NodeShape(
-				Array.from(field.types)[0],
-				0,
-				[],
-				undefined,
+			assert(type !== undefined, "field type must be defined in identifier field");
+			const nodeSchema = storedSchema.nodeSchema.get(type);
+			assert(nodeSchema !== undefined, "nodeSchema must be defined");
+			assert(
+				nodeSchema instanceof LeafNodeStoredSchema,
+				"nodeSchema must be LeafNodeStoredSchema",
 			);
+			assert(nodeSchema.leafValue === 1, "identifier field can only be type string");
+			const identifierNodeEncoder = new NodeShape(type, 0, [], undefined);
 			return asFieldEncoder(identifierNodeEncoder);
 		}
 		return asFieldEncoder(nodeEncoder);

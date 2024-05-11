@@ -31,6 +31,7 @@ import {
 	EncodedFieldBatch,
 	EncodedNestedArray,
 	EncodedValueShape,
+	SpecialField,
 	version,
 } from "./format.js";
 import { IIdCompressor } from "@fluidframework/id-compressor";
@@ -411,11 +412,9 @@ export function encodeValue(
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
 			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
-		} else if (typeof shape === "number") {
-			if (shape === 0) {
-				assert(value !== undefined, "required value must not be missing");
-				outputBuffer.push(value);
-			}
+		} else if (shape === SpecialField.Identifier) {
+			assert(value !== undefined, "required value must not be missing");
+			outputBuffer.push(value);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");

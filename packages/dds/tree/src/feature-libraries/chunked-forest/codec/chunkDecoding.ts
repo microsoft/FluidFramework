@@ -36,6 +36,7 @@ import {
 	EncodedNestedArray,
 	EncodedTreeShape,
 	EncodedValueShape,
+	SpecialField,
 } from "./format.js";
 import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
@@ -88,12 +89,15 @@ export function readValue(
 		} else if (Array.isArray(shape)) {
 			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
 			return shape[0] as Value;
-		} else if (typeof shape === "number") {
-			if (shape === 0) {
-				return idCompressor.decompress(
-					stream.data[stream.offset] as SessionSpaceCompressedId,
-				);
-			}
+		} else if (shape === SpecialField.Identifier) {
+			const streamValue = readStream(stream);
+			assert(
+				typeof streamValue === "number" || typeof streamValue === "string",
+				"identifier must be string or number.",
+			);
+			return typeof streamValue === "number"
+				? idCompressor.decompress(streamValue as SessionSpaceCompressedId)
+				: streamValue;
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");

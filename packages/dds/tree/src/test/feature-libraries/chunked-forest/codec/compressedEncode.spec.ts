@@ -91,19 +91,18 @@ describe("compressedEncode", () => {
 		for (const [name, jsonable] of schemalessTestTrees) {
 			it(name, () => {
 				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
-				const idCompressor = testIdCompressor;
 				const cache = new EncoderCache(
 					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
 						anyNodeShape,
 					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 					fieldKinds,
-					idCompressor,
+					testIdCompressor,
 				);
 				const codec = makeFieldBatchCodec(
 					{ jsonValidator: typeboxValidator },
 					cache,
-					idCompressor,
+					testIdCompressor,
 				);
 				const result = codec.encode(input);
 				const decoded = codec.decode(result);
@@ -146,6 +145,17 @@ describe("compressedEncode", () => {
 	});
 
 	it("anyNodeEncoder", () => {
+		const cache = new EncoderCache(
+			() => anyNodeShape,
+			() => fail(),
+			fieldKinds,
+			testIdCompressor,
+		);
+		const buffer = checkNodeEncode(anyNodeEncoder, cache, { type: brand("foo") });
+		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
+	});
+
+	it("encode identifier", () => {
 		const cache = new EncoderCache(
 			() => anyNodeShape,
 			() => fail(),

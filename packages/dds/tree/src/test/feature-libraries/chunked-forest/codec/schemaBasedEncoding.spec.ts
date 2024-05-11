@@ -56,10 +56,13 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
+const identifierShape = new NodeShape(leaf.string.name, SpecialField.Identifier, [], undefined);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {
@@ -86,6 +89,7 @@ describe("schemaBasedEncoding", () => {
 				},
 				FlexFieldSchema.create(FieldKinds.required, [minimal]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
 			assert.equal(shape.shape, onlyTypeShape);
@@ -114,6 +118,7 @@ describe("schemaBasedEncoding", () => {
 				},
 				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
 			assert.equal(shape.shape, AnyShape.instance);
@@ -138,6 +143,7 @@ describe("schemaBasedEncoding", () => {
 				},
 				FlexFieldSchema.create(FieldKinds.sequence, [minimal]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
 			assert.equal(shape.shape, cache.nestedArray(onlyTypeShape));
@@ -148,6 +154,36 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(
 				checkFieldEncode(shape, cache, [{ type: minimal.name }, { type: minimal.name }]),
 				[[new IdentifierToken("test.minimal"), new IdentifierToken("test.minimal")]],
+			);
+		});
+
+		it("identifier", () => {
+			const cache = new EncoderCache(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+			);
+			const log: string[] = [];
+			const identifierField = FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]);
+			const storedSchema = identifierField.stored;
+			const shape = fieldShaper(
+				{
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
+						log.push(schemaName);
+						return identifierShape;
+					},
+				},
+				storedSchema,
+				cache,
+				{ nodeSchema: new Map([[leaf.string.name, leaf.string.stored]]) },
+			);
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			assert.deepEqual(shape.shape, identifierShape);
+			assert.deepEqual(
+				checkFieldEncode(shape, cache, [{ type: leaf.string.name, value: stableId }]),
+				[compressedId],
 			);
 		});
 	});

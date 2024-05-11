@@ -56,6 +56,8 @@ import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import type { StableId } from "../../../../../../runtime/id-compressor/dist/index.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -73,6 +75,30 @@ const context = {
 	idCompressor,
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
+
+const schemaFactory = new SchemaFactory("com.example");
+const schemaWithIdentifier = schemaFactory.object("parent", {
+	identifier: schemaFactory.identifier,
+});
+
+function getIdentifierEncodingContext(id: StableId) {
+	const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+		identifier: id,
+	}));
+
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+
+	const encoderContext = {
+		encodeType: options.summaryEncodeType,
+		idCompressor: testIdCompressor,
+		schema: {
+			schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
+			policy: defaultSchemaPolicy,
+		},
+	};
+	return { encoderContext, checkout };
+}
 
 describe("End to end chunked encoding", () => {
 	it(`insert ops shares reference with the original chunk.`, () => {
@@ -189,41 +215,19 @@ describe("End to end chunked encoding", () => {
 		}
 		forestSummarizer.getAttachSummary(stringifier);
 	});
+
 	describe("identifier field encoding", () => {
 		it("is encoded as compressed id when the identifier is a valid stable id.", () => {
-			const schema = new SchemaFactory("com.example");
-			const schemaWithIdentifier = schema.object("parent", {
-				identifier: schema.identifier,
-			});
-			const identifierCompressor = testIdCompressor;
-			const id = identifierCompressor.decompress(identifierCompressor.generateCompressedId());
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: id,
-			}));
-			const flexConfig = toFlexConfig(config);
-			const checkout = checkoutWithContent(flexConfig);
+			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
-			const codecOptions = {
-				jsonValidator: typeboxValidator,
-				forest: ForestType.Optimized,
-				summaryEncodeType: TreeCompressionStrategy.Compressed,
-			};
-
-			const encoderContext = {
-				encodeType: options.summaryEncodeType,
-				idCompressor: identifierCompressor,
-				schema: {
-					schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
-					policy: defaultSchemaPolicy,
-				},
-			};
+			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(identifierCompressor),
+				new RevisionTagCodec(testIdCompressor),
 				fieldBatchCodec,
 				encoderContext,
-				codecOptions,
+				options,
 				idCompressor,
 			);
 
@@ -236,47 +240,22 @@ describe("End to end chunked encoding", () => {
 			const treeContent = JSON.parse(tree.content as string);
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is compressed.
-			assert.equal(identifierValue, identifierCompressor.recompress(id));
+			assert.equal(identifierValue, testIdCompressor.recompress(id));
 		});
 
 		it("is the uncompressed value when it is an unknown/invalid identifier", () => {
-			const schema = new SchemaFactory("com.example");
-			const schemaWithIdentifier = schema.object("parent", {
-				identifier: schema.identifier,
-			});
-			const identifierCompressor = testIdCompressor;
-
 			// generate an id from a different id compressor.
 			const nodeKeyManager = createMockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: id,
-			}));
-			const flexConfig = toFlexConfig(config);
-			const checkout = checkoutWithContent(flexConfig);
-
-			const codecOptions = {
-				jsonValidator: typeboxValidator,
-				forest: ForestType.Optimized,
-				summaryEncodeType: TreeCompressionStrategy.Compressed,
-			};
-
-			const encoderContext = {
-				encodeType: options.summaryEncodeType,
-				idCompressor: identifierCompressor,
-				schema: {
-					schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
-					policy: defaultSchemaPolicy,
-				},
-			};
+			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(identifierCompressor),
+				new RevisionTagCodec(testIdCompressor),
 				fieldBatchCodec,
 				encoderContext,
-				codecOptions,
+				options,
 				idCompressor,
 			);
 
