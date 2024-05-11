@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -34,7 +34,7 @@ import {
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
-import { SharedTreeBranch, SharedTreeBranchChange, getChangeReplaceType } from "./branch.js";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
@@ -155,23 +155,26 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.localBranch.on("beforeChange", (change) => {
 			if (this.detachedRevision !== undefined) {
 				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
-				return;
-			}
-			if (
-				change.type === "append" ||
-				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-			) {
-				const isTransactionOngoing = this.getLocalBranch().isTransacting();
-				const isTransactionCommit =
-					change.type === "replace" &&
-					getChangeReplaceType(change) === "transactionCommit";
-				for (const newCommit of change.newCommits) {
-					this.commitEnricher.prepareCommit(
-						newCommit,
-						isTransactionOngoing,
-						isTransactionCommit,
-					);
+			} else if (change.type === "append") {
+				if (this.getLocalBranch().isTransacting()) {
+					for (const newCommit of change.newCommits) {
+						this.commitEnricher.ingestTransactionCommit(newCommit);
+					}
+				} else {
+					for (const newCommit of change.newCommits) {
+						this.commitEnricher.prepareCommit(newCommit, false);
+					}
 				}
+			} else if (
+				change.type === "replace" &&
+				getChangeReplaceType(change) === "transactionCommit" &&
+				!this.getLocalBranch().isTransacting()
+			) {
+				assert(
+					change.newCommits.length === 1,
+					"Unexpected number of commits when committing transaction",
+				);
+				this.commitEnricher.prepareCommit(change.newCommits[0], true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {
