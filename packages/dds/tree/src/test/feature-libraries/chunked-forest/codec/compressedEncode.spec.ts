@@ -155,17 +155,6 @@ describe("compressedEncode", () => {
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
 	});
 
-	it("encode identifier", () => {
-		const cache = new EncoderCache(
-			() => anyNodeShape,
-			() => fail(),
-			fieldKinds,
-			testIdCompressor,
-		);
-		const buffer = checkNodeEncode(anyNodeEncoder, cache, { type: brand("foo") });
-		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
-	});
-
 	describe("InlineArrayShape", () => {
 		it("empty", () => {
 			const cache = new EncoderCache(
