@@ -23,11 +23,16 @@ export interface ExportData {
 	 */
 	relPath: string;
 	/**
-	 * Conditions required for export access; in hierarchy order
+	 * Conditions required for export access; in hierarchy order.
 	 */
-	conditions: string[];
+	conditions: readonly string[];
 	/**
-	 * Export is only .d.ts file
+	 * Package export path is only for "types" (expected .d.ts file(s)).
+	 * Precisely, there are no alternate conditions where "types" condition
+	 * is set, from the package path this export relates to.
+	 * In other words, if "types" condition is removed from all of those that
+	 * are required to resolve to this file, there are *definitely* no other
+	 * resolutions.
 	 */
 	isTypeOnly: boolean;
 }
@@ -42,38 +47,76 @@ export type Node10CompatExportData = Pick<ExportData, "relPath" | "isTypeOnly">;
  */
 type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
 
-function findTypesPathMatching<TOutKey>(
-	mapQueryPathToOutKey: Map<string | RegExp, TOutKey | undefined>,
-	exports: ExportsRecordValue,
-	conditions: string[],
+/**
+ * Returns value of first key to match test value, if any.
+ *
+ * @param test - the value to check key conditions against
+ * @param mapQuery - map with keys as match conditions (exact strings or regex)
+ * @returns undefined when there are no matches or the value of matched key as { value: value }
+ */
+function valueOfFirstKeyMatching<TValue>(
+	test: string,
+	mapQuery: ReadonlyMap<string | RegExp, TValue>,
+): { value: TValue } | undefined {
+	for (const [key, value] of mapQuery.entries()) {
+		if (typeof key === "string" ? path.resolve(test) === path.resolve(key) : key.test(test)) {
+			// box value to distinguish nothing found from found value that is undefined.
+			return { value };
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Performs a depth first search of exports conditions looking for a "types" constrained
+ * resolution path (relative file path) matching keys in query map.
+ *
+ * @param mapQueryPathToOutKey - map with match keys
+ * @param exports - export conditions
+ * @param previous - accumulated conditions and sense of t
+ * @returns matching export data and matching query entry value as outKey property
+ */
+function findFirstTypesPathMatching<TOutKey>(
+	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
+	exports: Readonly<ExportsRecordValue>,
+	previous: Readonly<{
+		conditions: readonly string[];
+		isTypeOnly: boolean;
+	}> = { conditions: [], isTypeOnly: false },
 ): (ExportData & { outKey: TOutKey | undefined }) | undefined {
-	for (const [entry, value] of Object.entries(exports)) {
+	// All exports are type only if there was a previous condition where the only option
+	// was "types" constrained. Otherwise they may still become constrained or not.
+	const isTypeOnlySettled = previous.isTypeOnly && previous.conditions.includes("types");
+	const entries = Object.entries(exports);
+	for (const [entry, value] of entries) {
+		// Current conditions
+		// "default" is not an explicit condition, but a catch all; so, never add it to conditions
+		const conditions =
+			entry === "default" ? previous.conditions : [...previous.conditions, entry];
+		const isTypeOnly = isTypeOnlySettled || (entries.length === 1 && entry === "types");
+		// First check if this entry is a leaf; where value is only
+		// expected to be a string (a relative file path).
 		if (typeof value === "string") {
-			if (entry === "types") {
-				for (const [key, outKey] of mapQueryPathToOutKey.entries()) {
-					// eslint-disable-next-line max-depth
-					if (
-						typeof key === "string"
-							? path.resolve(value) === path.resolve(key)
-							: key.test(value)
-					) {
-						const isTypeOnly = !(
-							"default" in exports ||
-							"import" in exports ||
-							"require" in exports
-						);
-						return { outKey, relPath: value, conditions, isTypeOnly };
-					}
+			const relPath = value;
+			// At the leaf level, look for "types" entries which either is the current
+			// condition (entry) or is an inherited condition, both of which have been
+			// combined into local conditions.
+			if (conditions.includes("types")) {
+				const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
+				if (queryResult !== undefined) {
+					return { outKey: queryResult.value, relPath, conditions, isTypeOnly };
 				}
 			}
 		} else if (value !== null) {
+			// Type constrain away array set that is not supported (and not expected
+			// but non-fatal to known use cases).
 			if (Array.isArray(value)) {
 				continue;
 			}
-			const deepFind = findTypesPathMatching(mapQueryPathToOutKey, value, [
-				...conditions,
-				entry,
-			]);
+			const deepFind = findFirstTypesPathMatching(mapQueryPathToOutKey, value, {
+				conditions,
+				isTypeOnly,
+			});
 			if (deepFind !== undefined) {
 				return deepFind;
 			}
@@ -96,7 +139,7 @@ function findTypesPathMatching<TOutKey>(
  */
 export function queryOutputMapsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
-	mapQueryPathToOutKey: Map<string | RegExp, TOutKey | undefined>,
+	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	node10TypeCompat: boolean,
 	logger?: Logger,
 ): {
@@ -131,7 +174,7 @@ export function queryOutputMapsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		const findResult = findTypesPathMatching(mapQueryPathToOutKey, exportValue, []);
+		const findResult = findFirstTypesPathMatching(mapQueryPathToOutKey, exportValue);
 		if (findResult !== undefined) {
 			const { outKey, relPath, conditions, isTypeOnly } = findResult;
 
