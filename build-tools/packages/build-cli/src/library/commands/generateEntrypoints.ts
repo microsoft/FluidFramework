@@ -22,6 +22,16 @@ import { getApiExports } from "../typescriptApi.js";
 
 import { unscopedPackageNameString } from "./constants.js";
 
+const optionDefaults = {
+	mainEntrypoint: "./src/index.ts",
+	outDir: "./lib",
+	outFilePrefix: "",
+	outFileAlpha: ApiLevel.alpha,
+	outFileBeta: ApiLevel.beta,
+	outFilePublic: ApiLevel.public,
+	outFileSuffix: ".d.ts",
+} as const;
+
 /**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
@@ -34,34 +44,34 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
 			description: "Main entrypoint file containing all untrimmed exports.",
-			default: "./src/index.ts",
+			default: optionDefaults.mainEntrypoint,
 			exists: true,
 		}),
 		outDir: Flags.directory({
 			description: "Directory to emit entrypoint declaration files.",
-			default: "./lib",
+			default: optionDefaults.outDir,
 			exists: true,
 		}),
 		outFilePrefix: Flags.string({
 			description: `File name prefix for emitting entrypoint declaration files. Pattern of '${unscopedPackageNameString}' within value will be replaced with the unscoped name of this package.`,
-			default: "",
+			default: optionDefaults.outFilePrefix,
 		}),
 		outFileAlpha: Flags.string({
 			description: "Base file name for alpha entrypoint declaration files.",
-			default: ApiLevel.alpha,
+			default: optionDefaults.outFileAlpha,
 		}),
 		outFileBeta: Flags.string({
 			description: "Base file name for beta entrypoint declaration files.",
-			default: ApiLevel.beta,
+			default: optionDefaults.outFileBeta,
 		}),
 		outFilePublic: Flags.string({
 			description: "Base file name for public entrypoint declaration files.",
-			default: ApiLevel.public,
+			default: optionDefaults.outFilePublic,
 		}),
 		outFileSuffix: Flags.string({
 			description:
 				"File name suffix including extension for emitting entrypoint declaration files.",
-			default: ".d.ts",
+			default: optionDefaults.outFileSuffix,
 		}),
 		node10TypeCompat: Flags.boolean({
 			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
@@ -70,45 +80,15 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const {
-			mainEntrypoint,
-			outFileSuffix,
-			outFileAlpha,
-			outFileBeta,
-			outFilePublic,
-			node10TypeCompat,
-		} = this.flags;
+		const { mainEntrypoint, node10TypeCompat } = this.flags;
 
 		const packageJson = await readPackageJson();
 
-		const pathPrefix = getOutPathPrefix(this.flags, packageJson).replace(/\\/g, "/");
-
-		/**
-		 * Note that if general generated output changes be sure to update mimicked logic
-		 * in {@link ../../library/repoPolicyCheck/fluidBuildDatabase#FluidBuildDatabase}.
-		 */
-
-		const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-			[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
-			[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
-			[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiTag.public],
-		]);
-
-		if (node10TypeCompat) {
-			// /internal export may be supported without API level generation; so
-			// add query for such path for Node10 type compat generation.
-			const dirPath = pathPrefix.replace(/\/[^/]*$/, "");
-			const internalPathRegex = new RegExp(`${dirPath}\\/index\\.d\\.?[cm]?ts$`);
-			mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
-		}
-
-		const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
-			queryResolutionPathsFromPackageExports(
-				packageJson,
-				mapQueryPathToApiTagLevel,
-				node10TypeCompat,
-				this.logger,
-			);
+		const {
+			mapQueryPathToApiTagLevel,
+			mapApiTagLevelToOutput,
+			mapNode10CompatExportPathToData,
+		} = getOutputConfiguration(this.flags, packageJson, this.logger);
 
 		const promises: Promise<void>[] = [];
 
@@ -189,6 +169,92 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 	}
 
 	return unscopedPackageName;
+}
+
+function getOutputConfiguration(
+	flags: Readonly<Record<keyof typeof optionDefaults, string>> & { node10TypeCompat: boolean },
+	packageJson: PackageJson,
+	logger?: CommandLogger,
+): {
+	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>;
+	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
+	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
+} {
+	const { outFileSuffix, outFileAlpha, outFileBeta, outFilePublic, node10TypeCompat } = flags;
+
+	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
+
+	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
+		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
+		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
+		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiTag.public],
+	]);
+
+	if (node10TypeCompat) {
+		// /internal export may be supported without API level generation; so
+		// add query for such path for Node10 type compat generation.
+		const dirPath = pathPrefix.replace(/\/[^/]*$/, "");
+		const internalPathRegex = new RegExp(`${dirPath}\\/index\\.d\\.?[cm]?ts$`);
+		mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
+	}
+
+	const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
+		queryResolutionPathsFromPackageExports(
+			packageJson,
+			mapQueryPathToApiTagLevel,
+			node10TypeCompat,
+			logger,
+		);
+
+	return {
+		mapQueryPathToApiTagLevel,
+		mapApiTagLevelToOutput,
+		mapNode10CompatExportPathToData,
+	};
+}
+
+/**
+ * Reads command line argument values that are simple value following option like:
+ * --optionName value
+ *
+ * @param commandLine - command line to extract from
+ * @param argQuery - record of arguments to read (keys) with default values
+ * @returns record of argument values extracted or given default value
+ */
+function readArgValues<TQuery extends Readonly<Record<string, string>>>(
+	commandLine: string,
+	argQuery: TQuery,
+): TQuery {
+	const values: Record<string, string> = {};
+	const args = commandLine.split(" ");
+	for (const [argName, defaultValue] of Object.entries(argQuery)) {
+		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
+		values[argName] =
+			0 < indexOfArgValue && indexOfArgValue < args.length
+				? args[indexOfArgValue]
+				: defaultValue;
+	}
+	return values as TQuery;
+}
+
+export function getGenerateEntrypointsOutput(
+	packageJson: PackageJson,
+	commandLine: string,
+): IterableIterator<ExportData> {
+	// Determine select output from flub generate entrypoints.
+	// Fluid packages use two import levels: internal and public.
+	// internal is built from tsc and public is generated. It is likely exported
+	// as . (root), but what matters is matching command implementation and
+	// output for public. So, match required logic bits of normal command.
+	// If it were possible, it would be better to use the command code
+	// more directly.
+	const args = readArgValues(commandLine, optionDefaults);
+
+	const { mapApiTagLevelToOutput } = getOutputConfiguration(
+		{ ...args, node10TypeCompat: commandLine.includes("--node10TypeCompat") },
+		packageJson,
+	);
+	return mapApiTagLevelToOutput.values();
 }
 
 function sourceContext(node: Node): string {
