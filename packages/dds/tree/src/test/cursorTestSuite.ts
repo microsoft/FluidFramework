@@ -24,6 +24,7 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
+	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 	prefixFieldPath,
@@ -49,10 +50,14 @@ export const mapSchema = schemaBuilder.map(
 export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
-
+export const identifierSchema = schemaBuilder.object("identifier-object", {
+	identifier: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const testTreeSchema = schemaBuilder.intoSchema(
 	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 );
+
+const nodeKeyManager = createMockNodeKeyManager();
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],
@@ -62,6 +67,22 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["string", { type: leaf.string.name, value: "test" }],
 	["string with escaped characters", { type: leaf.string.name, value: '\\"\b\f\n\r\t' }],
 	["string with emoticon", { type: leaf.string.name, value: "😀" }],
+	[
+		"identifier field",
+		{
+			type: identifierSchema.name,
+			fields: {
+				identifier: [
+					{
+						type: leaf.string.name,
+						value: nodeKeyManager.stabilizeNodeKey(
+							nodeKeyManager.generateLocalNodeKey(),
+						),
+					},
+				],
+			},
+		},
+	],
 	[
 		"field",
 		{

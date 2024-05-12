@@ -14,14 +14,14 @@
   "data": [
     [
       0,
-      "Cursor Test Suite.parent",
+      "Cursor Test Suite.identifier-object",
       false,
       [
-        "a",
+        "identifier",
         0,
         "com.fluidframework.leaf.string",
         true,
-        "085708a1-5dfd-498f-9525-454a90af97e7",
+        "a110ca7e-add1-4000-8000-000000000001",
         []
       ]
     ]
