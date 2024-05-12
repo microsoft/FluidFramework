@@ -37,8 +37,8 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
+import { BaseCommand } from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 

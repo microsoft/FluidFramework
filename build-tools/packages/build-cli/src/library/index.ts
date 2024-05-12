@@ -22,6 +22,11 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
 export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
+export {
+	unscopedPackageNameString,
+	BaseCommand,
+	GenerateEntrypointsCommand,
+} from "./commands/index.js";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {
