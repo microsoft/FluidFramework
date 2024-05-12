@@ -91,6 +91,16 @@
         }
       }
     },
+    "test.hasIdentifierField": {
+      "object": {
+        "field": {
+          "kind": "Identifier",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
     "test.hasMinimalValueField": {
       "object": {
         "field": {

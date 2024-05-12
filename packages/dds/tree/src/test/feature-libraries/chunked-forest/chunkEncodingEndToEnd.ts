@@ -84,7 +84,7 @@ function getIdentifierEncodingContext(id: StableId) {
 		identifier: id,
 	}));
 
-	const flexConfig = toFlexConfig(config);
+	const flexConfig = toFlexConfig(config, createMockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 
 	const encoderContext = {
@@ -225,7 +225,7 @@ describe("End to end chunked encoding", () => {
 				fieldBatchCodec,
 				encoderContext,
 				options,
-				idCompressor,
+				testIdCompressor,
 			);
 
 			function stringifier(content: unknown) {
@@ -253,7 +253,7 @@ describe("End to end chunked encoding", () => {
 				fieldBatchCodec,
 				encoderContext,
 				options,
-				idCompressor,
+				testIdCompressor,
 			);
 
 			function stringifier(content: unknown) {

@@ -114,6 +114,9 @@ export const hasAnyValueField = builder.object("hasAnyValueField", {
 export const hasOptionalField = builder.object("hasOptionalField", {
 	field: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 });
+export const hasIdentifierField = builder.object("hasIdentifierField", {
+	field: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const allTheFields = builder.object("allTheFields", {
 	optional: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 	valueField: leaf.number,
@@ -159,12 +162,9 @@ export const testTrees: readonly TestTree[] = [
 		FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 		[1, 2, 3],
 	),
-	testField(
-		"identifier-field",
-		library,
-		FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
-		testIdCompressor.decompress(testIdCompressor.generateCompressedId()),
-	),
+	testTree("node-with-identifier-field", library, hasIdentifierField, {
+		field: testIdCompressor.decompress(testIdCompressor.generateCompressedId()),
+	}),
 	testTree("true boolean", library, leaf.boolean, true),
 	testTree("false boolean", library, leaf.boolean, false),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {
