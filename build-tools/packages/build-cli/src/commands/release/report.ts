@@ -14,6 +14,7 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import {
+	BaseCommand,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
@@ -38,7 +39,6 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { releaseGroupFlag } from "../../flags";
-import { BaseCommand } from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
