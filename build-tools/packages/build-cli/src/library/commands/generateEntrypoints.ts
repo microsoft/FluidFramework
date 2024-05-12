@@ -11,16 +11,16 @@ import { Flags } from "@oclif/core";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
-import type { CommandLogger } from "../../logging.js";
-import { BaseCommand } from "./base.js";
+import type { CommandLogger } from "../../logging";
+import { BaseCommand } from "./base";
 
-import { ApiLevel } from "../apiLevel.js";
-import { ApiTag } from "../apiTag.js";
-import type { ExportData, Node10CompatExportData } from "../packageExports.js";
-import { queryResolutionPathsFromPackageExports } from "../packageExports.js";
-import { getApiExports } from "../typescriptApi.js";
+import { ApiLevel } from "../apiLevel";
+import { ApiTag } from "../apiTag";
+import type { ExportData, Node10CompatExportData } from "../packageExports";
+import { queryResolutionPathsFromPackageExports } from "../packageExports";
+import { getApiExports } from "../typescriptApi";
 
-import { unscopedPackageNameString } from "./constants.js";
+import { unscopedPackageNameString } from "./constants";
 
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",

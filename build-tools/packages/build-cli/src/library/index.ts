@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	ApiLevel,
-	knownApiLevels,
-	isKnownApiLevel,
-} from "./apiLevel";
+export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel";
 export { ApiTag } from "./apiTag";
 export {
 	generateBumpVersionBranchName,
@@ -26,7 +22,7 @@ export {
 	unscopedPackageNameString,
 	BaseCommand,
 	GenerateEntrypointsCommand,
-} from "./commands/index.js";
+} from "./commands";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {
