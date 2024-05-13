@@ -112,9 +112,9 @@ export class Outbox {
 		// We need to allow infinite size batches if we enable compression
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 
-		this.mainBatch = new BatchManager({ hardLimit });
-		this.blobAttachBatch = new BatchManager({ hardLimit });
-		this.idAllocationBatch = new BatchManager({ hardLimit });
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
 	}
 
 	public get messageCount(): number {
@@ -270,7 +270,7 @@ export class Outbox {
 		const rawBatch = batchManager.popBatch();
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
-		if (rawBatch.hasReentrantOps === true && shouldGroup) {
+		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -300,6 +300,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
