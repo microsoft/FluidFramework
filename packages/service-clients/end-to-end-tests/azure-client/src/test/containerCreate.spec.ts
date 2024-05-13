@@ -223,30 +223,30 @@ describe("Container create with legacy version", () => {
 	 * be returned.
 	 */
 	it("Legacy AzureClient can get container made by current AzureClient", async () => {
-		const { container: container1 } = await clientCurrent.createContainer(schemaCurrent);
-		const containerId = await container1.attach();
+		const { container: containerCurrent } = await clientCurrent.createContainer(schemaCurrent);
+		const containerId = await containerCurrent.attach();
 
-		if (container1.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+		if (containerCurrent.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerCurrent.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container1 connect() timeout",
+				errorMsg: "containerCurrent connect() timeout",
 			});
 		}
 
-		container1.initialObjects.map1.set("key", "value");
+		containerCurrent.initialObjects.map1.set("key", "value");
 
 		const resources = clientLegacy.getContainer(containerId, schemaLegacy);
 		await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
-		const { container: container2 } = await resources;
-		if (container2.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+		const { container: containerLegacy } = await resources;
+		if (containerLegacy.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container2 connect() timeout",
+				errorMsg: "containerLegacy connect() timeout",
 			});
 		}
 
-		const result = (await (container2.initialObjects.map1 as SharedMapLegacy).get(
+		const result = (await (containerLegacy.initialObjects.map1 as SharedMapLegacy).get(
 			"key",
 		)) as string;
 		assert.strictEqual(result, "value", "Value not found in copied container");
@@ -259,31 +259,31 @@ describe("Container create with legacy version", () => {
 	 * be returned.
 	 */
 	it("Current AzureClient can get container made by legacy AzureClient", async () => {
-		const { container: container1 } = await clientLegacy.createContainer(schemaLegacy);
-		const containerId = await container1.attach();
+		const { container: containerLegacy } = await clientLegacy.createContainer(schemaLegacy);
+		const containerId = await containerLegacy.attach();
 
-		if (container1.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
+		if (containerLegacy.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container1 connect() timeout",
+				errorMsg: "containerLegacy connect() timeout",
 			});
 		}
 
-		(container1.initialObjects.map1 as SharedMapLegacy).set("key", "value");
+		(containerLegacy.initialObjects.map1 as SharedMapLegacy).set("key", "value");
 
 		const resources = clientCurrent.getContainer(containerId, schemaCurrent);
 		await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
-		const { container: container2 } = await resources;
+		const { container: containerCurrent } = await resources;
 
-		if (container2.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+		if (containerCurrent.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => containerCurrent.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container2 connect() timeout",
+				errorMsg: "containerCurrent connect() timeout",
 			});
 		}
 
-		const result = (await container2.initialObjects.map1.get("key")) as string;
+		const result = (await containerCurrent.initialObjects.map1.get("key")) as string;
 		assert.strictEqual(result, "value", "Value not found in copied container");
 	});
 });
