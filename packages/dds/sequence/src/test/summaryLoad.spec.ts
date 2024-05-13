@@ -92,8 +92,8 @@ function generateSummaryTree(
 	return [sharedString2, summaryTree];
 }
 
-describe("SharedString Partial Load", () => {
-	it("Validate Full Load", async () => {
+describe("SharedString Summary Load", () => {
+	it("Validate Summary Load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const options = { mergeTreeSnapshotChunkSize };
 		const [remoteSharedString, summaryTree] = generateSummaryTree(
