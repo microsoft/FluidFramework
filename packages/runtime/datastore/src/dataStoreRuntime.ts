@@ -4,14 +4,16 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -23,6 +25,7 @@ import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
@@ -65,7 +68,9 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
+	toDeltaManagerErased,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -119,7 +124,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
@@ -182,12 +187,15 @@ export class FluidDataStoreRuntime
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
 	// store becomes visible.
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly options: Record<string | number, any>;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly deltaManagerInternal: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
@@ -236,7 +244,7 @@ export class FluidDataStoreRuntime
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
-		this.deltaManager = dataStoreContext.deltaManager;
+		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 
@@ -328,6 +336,10 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+	}
+
+	get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 
 	public dispose(): void {
@@ -530,7 +542,7 @@ export class FluidDataStoreRuntime
 		 * If this channel is already waiting to be made visible, do nothing. This can happen during attachGraph() when
 		 * a channel's graph is attached. It calls bindToContext on the shared object which will end up back here.
 		 */
-		if (this.pendingHandlesToMakeVisible.has(channel.handle)) {
+		if (this.pendingHandlesToMakeVisible.has(toFluidHandleInternal(channel.handle))) {
 			return;
 		}
 
@@ -579,10 +591,10 @@ export class FluidDataStoreRuntime
 	public bind(handle: IFluidHandle): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {
-			handle.attachGraph();
+			toFluidHandleInternal(handle).attachGraph();
 			return;
 		}
-		this.pendingHandlesToMakeVisible.add(handle);
+		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
@@ -815,7 +827,10 @@ export class FluidDataStoreRuntime
 		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
 		// will be the one to call addedGCOutboundReference directly.
 		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
-		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+		this.dataStoreContext.addedGCOutboundReference?.(
+			toFluidHandleInternal(srcHandle),
+			toFluidHandleInternal(outboundHandle),
+		);
 	}
 
 	/**
@@ -981,7 +996,7 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		channel.handle.attachGraph();
+		toFluidHandleInternal(channel.handle).attachGraph();
 
 		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
 		assert(

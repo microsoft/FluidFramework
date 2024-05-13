@@ -7,20 +7,24 @@ import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
 import {
-	AsyncGenerator,
-	Generator,
+	type AsyncGenerator,
+	type Generator,
 	combineReducers,
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isObject } from "@fluidframework/core-utils/internal";
-import { ISharedMap, MapFactory } from "../../index.js";
+import { type ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -130,7 +134,7 @@ describe("Map fuzz tests", () => {
 		factory: new MapFactory(),
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: assertMapsAreEquivalent,
+		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 	};
 
 	createDDSFuzzSuite(model, {

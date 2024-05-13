@@ -342,26 +342,24 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
 		const aHandle2 = await testObj2.createBlob("hello");
-		// This is a hack. It turns out IFluidHandle<ArrayBufferLike> is not assignable to IFluidHandle
-		updateHandle(legacyTree2, aHandle2 as unknown as IFluidHandle);
+		updateHandle(legacyTree2, aHandle2);
 		await provider.ensureSynchronized();
 		const aHandle1 = getHandle(legacyTree1);
 		assert(aHandle1 !== undefined, "handle should be defined");
-		const aBuffer1 = (await aHandle1.get()) as unknown as ArrayBufferLike;
-		const aBuffer2 = (await aHandle2.get()) as unknown as ArrayBufferLike;
+		const aBuffer1 = (await aHandle1.get()) as ArrayBufferLike;
+		const aBuffer2 = await aHandle2.get();
 		const aContent1 = bufferToString(aBuffer1, "utf8");
 		const aContent2 = bufferToString(aBuffer2, "utf8");
 		assert(aContent1 === "hello", "expected aContent1 to be live and sync");
 		assert(aContent2 === "hello", "expected aContent2 to be live and sync");
 
 		const bHandle1 = await testObj1.createBlob("hello2");
-		// This is a hack. It turns out IFluidHandle<ArrayBufferLike> is not assignable to IFluidHandle
-		updateHandle(legacyTree1, bHandle1 as unknown as IFluidHandle);
+		updateHandle(legacyTree1, bHandle1);
 		await provider.ensureSynchronized();
 		const bHandle2 = getHandle(legacyTree2);
 		assert(bHandle2 !== undefined, "handle should be defined");
-		const bBuffer1 = (await bHandle1.get()) as unknown as ArrayBufferLike;
-		const bBuffer2 = (await bHandle2.get()) as unknown as ArrayBufferLike;
+		const bBuffer1 = await bHandle1.get();
+		const bBuffer2 = (await bHandle2.get()) as ArrayBufferLike;
 		const bContent1 = bufferToString(bBuffer1, "utf8");
 		const bContent2 = bufferToString(bBuffer2, "utf8");
 		assert(bContent1 === "hello2", "expected bContent1 to be live and sync");

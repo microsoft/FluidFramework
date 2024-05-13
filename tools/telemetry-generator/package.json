@@ -36,7 +36,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.1",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@types/node": "^14.18.0",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",

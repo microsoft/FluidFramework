@@ -9,6 +9,7 @@ import {
 	SharedMap,
 	DirectoryFactory,
 	MapFactory,
+	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
@@ -47,6 +48,7 @@ export class DataObjectFactory<
 
 		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
+			// eslint-disable-next-line import/no-deprecated
 			mergedObjects.push(SharedDirectory.getFactory());
 		}
 

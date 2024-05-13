@@ -7,6 +7,7 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
@@ -14,7 +15,7 @@ import {
 	IResolvedUrl,
 	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	type IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -22,16 +23,20 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
+/**
+ * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
+ * they are already converted to string.
+ */
 export interface SnapshotWithBlobs {
 	/**
 	 * Snapshot from which container initially loaded.
@@ -43,19 +48,28 @@ export interface SnapshotWithBlobs {
 	 */
 	snapshotBlobs: ISerializableBlobContents;
 }
+
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  *
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
- * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
  * they are already converted to string.
  *
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
+	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
 	attached: true;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState: unknown;
+	/**
+	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
+	 */
 	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
@@ -63,7 +77,9 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
+	/** The Container's URL in the service, needed to hook up the driver during rehydration */
 	url: string;
+	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
 	clientId?: string;
 }
 
@@ -73,8 +89,14 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
+	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
 	attached: false;
+	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState?: unknown;
 }
 
@@ -94,17 +116,32 @@ interface ISerializerEvent extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void): void;
 }
 
+/**
+ * Helper class to manage the state of the container needed for proper serialization.
+ *
+ * It holds the pendingLocalState the container was rehydrated from (if any),
+ * as well as the snapshot to be used for serialization.
+ * It also keeps track of container dirty state and which local ops have been processed
+ */
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
-	private refreshSnapshot: Promise<void> | undefined;
+	private refreshSnapshotP: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 
+	/**
+	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
+	 * @param subLogger - Container's logger to use as parent for our logger
+	 * @param storageAdapter - Storage adapter for fetching snapshots
+	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
+	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
+	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
+	 */
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
-		subLogger: ITelemetryLoggerExt,
+		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
@@ -127,10 +164,16 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
+	/**
+	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
+	 */
 	public get waitForInitialRefresh(): Promise<void> | undefined {
-		return this.refreshSnapshot;
+		return this.refreshSnapshotP;
 	}
 
+	/**
+	 * Called whenever an incoming op is processed by the Container
+	 */
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
@@ -138,26 +181,40 @@ export class SerializedStateManager {
 		}
 	}
 
+	/**
+	 * This wraps the basic functionality of fetching the snapshot for this container during Container load.
+	 *
+	 * If we have pendingLocalState, we get the snapshot from there.
+	 * Otherwise, fetch it from storage (according to specifiedVersion if provided)
+	 *
+	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @returns The snapshot to boot the container from
+	 */
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean,
 	) {
 		if (this.pendingLocalState === undefined) {
-			const { baseSnapshot, version } = await getSnapshotTree(
+			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
 				supportGetSnapshotApi,
 				specifiedVersion,
 			);
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
-					baseSnapshot,
+					baseSnapshotTree,
 					this.storageAdapter,
 				);
-				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+				const attributes = await getDocumentAttributes(
+					this.storageAdapter,
+					baseSnapshotTree,
+				);
 				this.snapshot = {
-					baseSnapshot,
+					baseSnapshot: baseSnapshotTree,
 					snapshotBlobs,
 					snapshotSequenceNumber: attributes.sequenceNumber,
 				};
@@ -171,15 +228,44 @@ export class SerializedStateManager {
 				snapshotBlobs,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
-			this.refreshSnapshot ??= (async () => {
-				await this.refreshLatestSnapshot(supportGetSnapshotApi);
-			})();
 
-			return { baseSnapshot, version: undefined };
+			if (
+				this.refreshSnapshotP === undefined &&
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
+			) {
+				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
+				this.refreshSnapshotP = this.refreshLatestSnapshot(supportGetSnapshotApi);
+				this.refreshSnapshotP.catch((e) => {
+					this.mc.logger.sendErrorEvent({
+						eventName: "RefreshLatestSnapshotFailed",
+						error: e,
+					});
+				});
+			}
+
+			const blobContents = new Map<string, ArrayBuffer>();
+			for (const [id, value] of Object.entries(snapshotBlobs)) {
+				blobContents.set(id, stringToBuffer(value, "utf8"));
+			}
+			const iSnapshot: ISnapshot = {
+				sequenceNumber: this.snapshot.snapshotSequenceNumber,
+				snapshotTree: baseSnapshot,
+				blobContents,
+				latestSequenceNumber: undefined,
+				ops: [],
+				snapshotFormatV: 1,
+			};
+			return { baseSnapshot: iSnapshot, version: undefined };
 		}
 	}
 
-	public async refreshLatestSnapshot(supportGetSnapshotApi: boolean) {
+	/**
+	 * Fetch the latest snapshot for the container, including delay-loaded groupIds if pendingLocalState was provided and contained any groupIds.
+	 * Note that this will update the StorageAdapter's cached snapshots for the groupIds (if present)
+	 *
+	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree (must be true to fetch by groupIds)
+	 */
+	private async refreshLatestSnapshot(supportGetSnapshotApi: boolean): Promise<void> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
 			this.mc,
 			this.storageAdapter,
@@ -187,10 +273,14 @@ export class SerializedStateManager {
 		);
 
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
+		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
 		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
-		// We are making two network calls because it requires work for storage to add a special base groupId.
 		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
-			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			assert(
+				this.storageAdapter.getSnapshot !== undefined,
+				0x972 /* getSnapshot should exist */,
+			);
+			// (This is a separate network call from above because it requires work for storage to add a special base groupId)
 			const snapshot = await this.storageAdapter.getSnapshot({
 				versionId: undefined,
 				scenarioName: "getLatestSnapshotInfo",
@@ -198,9 +288,9 @@ export class SerializedStateManager {
 				loadingGroupIds: downloadedGroupIds,
 				fetchSource: FetchSource.noCache,
 			});
-			assert(snapshot !== undefined, "Snapshot should exist");
-			return convertSnapshotToSnapshotInfo(snapshot);
+			assert(snapshot !== undefined, 0x973 /* Snapshot should exist */);
 		}
+
 		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
@@ -257,9 +347,10 @@ export class SerializedStateManager {
 	}
 
 	/**
+	 * When the Container attaches, we need to stash the initial snapshot (a form of the attach summary).
 	 * This method is only meant to be used by Container.attach() to set the initial
 	 * base snapshot when attaching.
-	 * @param snapshot - snapshot and blobs collected while attaching
+	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
@@ -282,12 +373,16 @@ export class SerializedStateManager {
 		}
 	}
 
-	public async getPendingLocalStateCore(
+	/**
+	 * Assembles and serializes the {@link IPendingContainerState} for the container,
+	 * to be stored and used to rehydrate the container at a later time.
+	 */
+	public async getPendingLocalState(
 		props: IGetPendingLocalStateProps,
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
-	) {
+	): Promise<string> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -354,20 +449,27 @@ export async function getLatestSnapshotInfo(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
-			const { baseSnapshot } = await getSnapshotTree(
+			const { baseSnapshot } = await getSnapshot(
 				mc,
 				storageAdapter,
 				supportGetSnapshotApi,
 				undefined,
 			);
+
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			const snapshotFetchedTime = Date.now();
-			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
+			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshotTree, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
-				baseSnapshot,
+				baseSnapshotTree,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
+			return {
+				baseSnapshot: baseSnapshotTree,
+				snapshotBlobs,
+				snapshotSequenceNumber,
+				snapshotFetchedTime,
+			};
 		},
 	).catch(() => undefined);
 }
@@ -381,7 +483,7 @@ export async function getLatestSnapshotInfo(
  * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
  * @returns - An ISnapshotTree and its version.
  */
-async function getSnapshotTree(
+async function getSnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<
 		IDocumentStorageService,
@@ -389,15 +491,12 @@ async function getSnapshotTree(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
-): Promise<{ baseSnapshot: ISnapshotTree; version?: IVersion }> {
+): Promise<{ baseSnapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
 	const { snapshot, version } = supportGetSnapshotApi
 		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
-	const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-		? snapshot.snapshotTree
-		: snapshot;
-	assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
-	return { baseSnapshot, version };
+	assert(snapshot !== undefined, 0x8e4 /* Snapshot should exist */);
+	return { baseSnapshot: snapshot, version };
 }
 
 /**

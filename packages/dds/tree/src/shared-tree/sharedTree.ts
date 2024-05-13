@@ -16,6 +16,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
@@ -34,7 +35,6 @@ import {
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -43,10 +43,11 @@ import {
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
+import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -157,7 +158,7 @@ export class SharedTree
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		optionsParam: SharedTreeOptions,
-		telemetryContextPrefix: string,
+		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
@@ -173,7 +174,7 @@ export class SharedTree
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
+			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -231,6 +232,15 @@ export class SharedTree
 			telemetryContextPrefix,
 			schema,
 			defaultSchemaPolicy,
+			new DefaultCommitEnricher(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				() => {
+					return new SharedTreeChangeEnricher(
+						forest.clone(schema, new AnchorSet()),
+						removedRoots.clone(),
+					);
+				},
+			),
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -279,7 +289,6 @@ export class SharedTree
 			viewSchema,
 			onDispose,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 	}
 
@@ -290,7 +299,6 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
 		if (view.error?.canInitialize === true) {
@@ -395,7 +403,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @internal
  */
 export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";
@@ -414,13 +421,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
 	}

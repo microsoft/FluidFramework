@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { mintRevisionTag } from "../../utils.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
+import { ChangeAtomId, RevisionTag, makeAnonChange } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -20,11 +20,12 @@ import {
 	rebaseOverComposition,
 	rebaseTagged,
 	shallowCompose,
+	tagChangeInline,
 	withOrderingMethod,
 	withoutTombstones,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
-import { brand } from "../../../index.js";
+import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -37,7 +38,7 @@ function rebase(
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
 ): SF.Changeset {
-	return rebaseI(change, tagChange(base, baseRev ?? tag1), config);
+	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
 export function testRebase() {
@@ -618,38 +619,42 @@ export function testRebase() {
 
 		it("concurrent inserts ↷ remove", () =>
 			withConfig(() => {
-				const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
-				const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
-				const insertC = tagChange(Change.insert(1, 1), mintRevisionTag());
+				const tagC = mintRevisionTag();
+				const delA = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
+				const insertB = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
+				const insertC = tagChangeInline(Change.insert(1, 1), tagC);
 				const insertB2 = rebaseTagged(insertB, delA);
 				const insertC2 = rebaseOverChanges(insertC, [delA, insertB2]);
-				const expected = Change.insert(1, 1);
-				checkDeltaEquality(insertC2.change, expected);
+				const expected = tagChangeInline(Change.insert(1, 1), tagC);
+				checkDeltaEquality(insertC2.change, expected.change);
 			}));
 
 		it("concurrent inserts ↷ connected remove", () =>
 			withConfig(() => {
-				const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
-				const delB = tagChange(Change.remove(1, 1), mintRevisionTag());
-				const delC = tagChange(Change.remove(0, 1), mintRevisionTag());
+				const delA = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
+				const delB = tagChangeInline(Change.remove(1, 1), mintRevisionTag());
+				const delC = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
 
-				const insertD = tagChange(Change.insert(0, 1), mintRevisionTag());
-				const insertE = tagChange(Change.insert(3, 1), mintRevisionTag());
+				const insertD = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
+
+				const tagE = mintRevisionTag();
+				const insertE = tagChangeInline(Change.insert(3, 1), tagE);
 				const insertD2 = rebaseOverChanges(insertD, [delA, delB, delC]);
 				const insertE2 = rebaseOverChanges(insertE, [delA, delB, delC, insertD2]);
-				const expected = Change.insert(1, 1);
-				checkDeltaEquality(insertE2.change, expected);
+				const expected = tagChangeInline(Change.insert(1, 1), tagE);
+				checkDeltaEquality(insertE2.change, expected.change);
 			}));
 
 		it("concurrent insert and move ↷ remove", () =>
 			withConfig(() => {
-				const delA = tagChange(Change.remove(0, 1), mintRevisionTag());
-				const insertB = tagChange(Change.insert(0, 1), mintRevisionTag());
-				const moveC = tagChange(Change.move(2, 1, 1), mintRevisionTag());
+				const delA = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
+				const insertB = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
+				const tagC = mintRevisionTag();
+				const moveC = tagChangeInline(Change.move(2, 1, 1), tagC);
 				const insertB2 = rebaseTagged(insertB, delA);
 				const moveC2 = rebaseOverChanges(moveC, [delA, insertB2]);
-				const expected = Change.move(2, 1, 1);
-				checkDeltaEquality(moveC2.change, expected);
+				const expected = tagChangeInline(Change.move(2, 1, 1), tagC);
+				checkDeltaEquality(moveC2.change, expected.change);
 			}));
 
 		it("modify ↷ move right", () =>
@@ -677,7 +682,7 @@ export function testRebase() {
 		it("modify ↷ move left + modify", () =>
 			withConfig(() => {
 				const nodeId: NodeId = { localId: brand(0) };
-				const baseNodeId: NodeId = { localId: brand(1) };
+				const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
 
 				const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
 				const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));
@@ -1214,8 +1219,8 @@ export function testRebase() {
 			it("insert ↷ [remove, remove]", () =>
 				withConfig(() => {
 					const removes: SF.Changeset = shallowCompose([
-						tagChange(Change.remove(1, 2), tag1),
-						tagChange(Change.remove(0, 2), tag2),
+						tagChangeInline(Change.remove(1, 2), tag1),
+						tagChangeInline(Change.remove(0, 2), tag2),
 					]);
 
 					const insert = Change.insert(3, 1);
@@ -1224,6 +1229,7 @@ export function testRebase() {
 						removes,
 						rebaseRevisionMetadataFromInfo(
 							[{ revision: tag1 }, { revision: tag2 }],
+							undefined,
 							[tag1, tag2],
 						),
 					);
@@ -1247,8 +1253,8 @@ export function testRebase() {
 			it("modify ↷ [remove, remove]", () =>
 				withConfig(() => {
 					const removes: SF.Changeset = shallowCompose([
-						tagChange(Change.remove(1, 3), tag1),
-						tagChange(Change.remove(0, 2), tag2),
+						tagChangeInline(Change.remove(1, 3), tag1),
+						tagChangeInline(Change.remove(0, 2), tag2),
 					]);
 
 					const nodeChange = TestNodeId.create(
@@ -1261,6 +1267,7 @@ export function testRebase() {
 						removes,
 						rebaseRevisionMetadataFromInfo(
 							[{ revision: tag1 }, { revision: tag2 }],
+							undefined,
 							[tag1, tag2],
 						),
 					);

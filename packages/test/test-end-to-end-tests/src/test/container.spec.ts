@@ -35,7 +35,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	FiveDaysMs,
 	IDocumentServiceFactory,
@@ -1022,12 +1022,13 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 		let documentServiceFactory: IDocumentServiceFactory | undefined;
 		const deferredSnapshot = new Deferred<void>();
+		let connectionCount = 0;
 		const connectionP = new Promise<IDocumentDeltaConnection>((resolve) => {
 			documentServiceFactory = wrapFactory(
 				// deltaStreamHandler
 				async (v) => {
+					connectionCount++;
 					resolve(v);
-					// await deferredConnect.promise;
 				},
 				// snapshotHandler
 				async () => {
@@ -1048,6 +1049,57 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		deferredSnapshot.resolve();
 
 		await finishLoadingTestContainers(container, await containerP);
+
+		// Connections we expect:
+		// "read" initial connection
+		// upgrade to "write" connection
+		assert(connectionCount === 2, "initial connect, `write` reconnect");
+	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
+
+	it("Test early connection disconnecting", async () => {
+		// Create container
+		const container = await provider.makeTestContainer();
+		await waitForContainerConnection(container);
+
+		let documentServiceFactory: IDocumentServiceFactory | undefined;
+		const deferredSnapshot = new Deferred<void>();
+		let connectionCount = 0;
+		const connectionP = new Promise<IDocumentDeltaConnection>((resolve) => {
+			documentServiceFactory = wrapFactory(
+				// deltaStreamHandler
+				async (v) => {
+					connectionCount++;
+					resolve(v);
+				},
+				// snapshotHandler
+				async () => {
+					await deferredSnapshot.promise;
+				},
+			);
+		});
+
+		const containerP = loadContainer(documentServiceFactory);
+
+		// Wait for connection to happen
+		const deltaConnection = await connectionP;
+
+		// Simulate really long snapshot load
+		await clock.tickAsync(59 * 1000);
+
+		// Disconnect and force new connection
+		deltaConnection.dispose(new Error("Disconnect"));
+		await clock.tickAsync(1 * 1000);
+
+		// Allow snapshot loading to keep going.
+		deferredSnapshot.resolve();
+
+		await finishLoadingTestContainers(container, await containerP);
+
+		// Connections we expect:
+		// "read" initial connection, disconnected by this test
+		// "read" reconnect
+		// upgrade to "write" connection
+		assert(connectionCount === 3, "initial connect, reconnect, `write` reconnect");
 	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
 	async function testEarlySnapshot(deltaConnection?: "delayed" | "none") {

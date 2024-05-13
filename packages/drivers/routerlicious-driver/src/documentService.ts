@@ -122,7 +122,7 @@ export class DocumentService
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
-					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.storageRestWrapper = RouterliciousStorageRestWrapper.load(
 						this.tenantId,
 						this.storageTokenFetcher,
 						this.logger,
@@ -174,7 +174,7 @@ export class DocumentService
 				const rateLimiter = new RateLimiter(
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,

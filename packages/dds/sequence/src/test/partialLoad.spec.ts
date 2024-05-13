@@ -14,7 +14,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedString, SharedStringFactory } from "../index.js";
+import { SharedString, SharedStringClass } from "../index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
 
 function applyOperations(
 	sharedString: SharedString,
@@ -57,7 +58,7 @@ function generateSummaryTree(
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const sharedString = new SharedString(
+	const sharedString = new SharedStringClass(
 		dataStoreRuntime1,
 		"shared-string",
 		SharedStringFactory.Attributes,
@@ -69,7 +70,7 @@ function generateSummaryTree(
 	const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime2.options = options;
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-	const sharedString2 = new SharedString(
+	const sharedString2 = new SharedStringClass(
 		dataStoreRuntime2,
 		"shared-string",
 		SharedStringFactory.Attributes,
@@ -107,7 +108,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -133,7 +134,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -163,7 +164,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -174,7 +175,8 @@ describe("SharedString Partial Load", () => {
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
 
 		await localSharedString.loaded;
-		localDataStoreRuntime.deltaManager.lastSequenceNumber = localSharedString.getCurrentSeq();
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+			localSharedString.getCurrentSeq();
 
 		assert.equal(localSharedString.getText(), remoteSharedString.getText());
 	});
@@ -197,7 +199,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -205,10 +207,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -246,7 +248,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -254,10 +256,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -292,7 +294,7 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = new SharedString(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
 			SharedStringFactory.Attributes,
@@ -300,10 +302,10 @@ describe("SharedString Partial Load", () => {
 
 		await localSharedString.load(localServices);
 
-		localDataStoreRuntime.deltaManager.lastSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
 			containerRuntimeFactory.sequenceNumber;
 
-		localDataStoreRuntime.deltaManager.minimumSequenceNumber =
+		localDataStoreRuntime.deltaManagerInternal.minimumSequenceNumber =
 			containerRuntimeFactory.getMinSeq();
 
 		assert.notEqual(localSharedString.getText(), remoteSharedString.getText());

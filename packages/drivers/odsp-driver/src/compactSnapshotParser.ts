@@ -202,15 +202,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.groupId = groupId;
 		}
 
-		if (records.omitted !== undefined) {
-			assertBoolInstance(records.omitted, "omitted should be a boolean");
-			assert(
-				!records.omitted || snapshotTree.groupId !== undefined,
-				0x8df /* GroupId absent but omitted is true */,
-			);
-			snapshotTree.omitted = records.omitted;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(

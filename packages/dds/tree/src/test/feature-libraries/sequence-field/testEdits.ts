@@ -11,8 +11,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { ChangesetLocalId, RevisionTag } from "../../../index.js";
-import { ChangeAtomId } from "../../../core/index.js";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 

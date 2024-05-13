@@ -98,6 +98,10 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
+	IFluidDataStoreAttributes0,
+	IFluidDataStoreAttributes1,
+	IFluidDataStoreAttributes2,
+	OmitAttributesVersions,
 } from "./summaryFormat.js";
 export {
 	IdCompressorMode,

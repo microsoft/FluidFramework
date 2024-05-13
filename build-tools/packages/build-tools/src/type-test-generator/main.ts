@@ -9,9 +9,9 @@ import { readJsonSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
+import { typeOnly } from "../typeValidator/compatibility";
 import { TestCaseTypeData, buildTestCase } from "../typeValidator/testGeneration";
 import { TypeData, getFullTypeName, getNodeTypeData } from "../typeValidator/typeData";
-import { typeOnly } from "./compatibility";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.

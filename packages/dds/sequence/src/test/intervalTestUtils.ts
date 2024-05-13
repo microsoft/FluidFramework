@@ -12,7 +12,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
 	sharedString: SharedString;
@@ -125,24 +125,15 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 		for (const key of aKeys.concat(bKeys)) {
 			const aVal: unknown = aProps[key];
 			const bVal: unknown = bProps[key];
-			if (isObject(aVal) === true) {
-				assert(isObject(bVal), `Values differ at key ${key}: ${aVal} vs ${bVal}`);
-				const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
-				const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
-				assert.equal(
+			const aHandle = isObject(aVal) && isFluidHandle(aVal) ? await aVal.get() : aVal;
+			const bHandle = isObject(bVal) && isFluidHandle(bVal) ? await bVal.get() : bVal;
+			assert.deepEqual(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at pos: ${i} and key ${key}: ${JSON.stringify(
 					aHandle,
-					bHandle,
-					`${a.id} and ${b.id} differ at key ${key}: ${JSON.stringify(
-						aHandle,
-					)} vs ${JSON.stringify(bHandle)}`,
-				);
-			} else {
-				assert.deepEqual(
-					aVal,
-					bVal,
-					`Property sets have different values @${i} for  key ${key}: ${aVal} vs ${bVal}`,
-				);
-			}
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
 		}
 	}
 }

@@ -1,5 +1,13 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-rc.4.0.0
+
+### Major Changes
+
+-   telemetry-utils: Internal telemetry types removed from public API surface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    We have updated the tags for the following telemetry-related types in the FluidFramework: TelemetryEventCategory, TelemetryEventPropertyTypeExt, ITelemetryPropertiesExt, ITelemetryGenericEventExt, ITelemetryErrorEventExt, ITelemetryPerformanceEventExt, ITelemetryLoggerExt. For developers using any of these types, the primary action required is to transition to using the corresponding "base" type. For example, replace ITelemetryPerformanceEventExt with ITelemetryBaseEvent from @core-interfaces.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

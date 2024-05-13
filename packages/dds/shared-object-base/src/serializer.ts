@@ -6,11 +6,16 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import {
+	IFluidHandle,
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
 	isFluidHandle,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
@@ -110,7 +115,8 @@ export class FluidSerializer implements IFluidSerializer {
 	}
 
 	public stringify(input: unknown, bind: IFluidHandle) {
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
+		const bindInternal = toFluidHandleInternal(bind);
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
@@ -120,9 +126,11 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: unknown, bind: IFluidHandle) => {
+	private readonly encodeValue = (value: unknown, bind: IFluidHandleInternal) => {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return isFluidHandle(value) ? this.serializeHandle(value, bind) : value;
+		return isFluidHandle(value)
+			? this.serializeHandle(toFluidHandleInternal(value), bind)
+			: value;
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
@@ -192,7 +200,7 @@ export class FluidSerializer implements IFluidSerializer {
 		return clone ?? input;
 	}
 
-	protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
+	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {
 		bind.bind(handle);
 		return {
 			type: "__fluid_handle__",
