@@ -210,12 +210,6 @@ describe("SharedTree", () => {
 			lint: { rejectEmpty: false, rejectForbidden: false },
 		}).intoSchema(FlexFieldSchema.empty);
 
-		function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
-			tree.checkout.updateSchema(intoStoredSchema(schema));
-			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
-			tree.checkout.events.emit("afterBatch");
-		}
-
 		it("empty", () => {
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -258,17 +252,25 @@ describe("SharedTree", () => {
 	});
 
 	it("handle in op", async () => {
-		// TODO: ADO#7111 schema should be specified to enable compressed encoding.
 		const provider = await TestTreeProvider.create(
 			2,
 			SummarizeType.disabled,
 			new SharedTreeFactory({
 				jsonValidator: typeboxValidator,
-				treeEncodeType: TreeCompressionStrategy.Uncompressed,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}),
 		);
 		assert(provider.trees[0].isAttached());
 		assert(provider.trees[1].isAttached());
+
+		const builder = new SchemaBuilderBase(FieldKinds.optional, {
+			scope: "test",
+			libraries: [leaf.library],
+		});
+		const schemaGeneralized = builder.intoSchema(Any);
+
+		updateSchema(provider.trees[0], schemaGeneralized);
+		assertSchema(provider.trees[0], schemaGeneralized);
 
 		const field = provider.trees[0].editor.optionalField({
 			parent: undefined,
@@ -1886,11 +1888,17 @@ describe("SharedTree", () => {
 	});
 });
 
-function assertSchema<TRoot extends FlexFieldSchema>(
+export function assertSchema<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
 	schema: FlexTreeSchema<TRoot>,
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
+}
+
+export function updateSchema(tree: SharedTree, schema: FlexTreeSchema): void {
+	tree.checkout.updateSchema(intoStoredSchema(schema));
+	// Workaround to trigger for schema update batching kludge in afterSchemaChanges
+	tree.checkout.events.emit("afterBatch");
 }
