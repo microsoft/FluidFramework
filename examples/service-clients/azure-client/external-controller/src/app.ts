@@ -188,8 +188,4 @@ async function start(): Promise<void> {
 	);
 }
 
-try {
-	await start();
-} catch (error) {
-	console.error(error);
-}
+await start();
