@@ -146,6 +146,7 @@ export async function scribeCreate(
 
 	const externalOrdererUrl = config.get("worker:serverUrl");
 	const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+	const enableSessionStartMetric: boolean = config.get("worker:enableSessionStartMetric");
 	const scrubUserDataInGlobalCheckpoints: boolean =
 		config.get("scribe:scrubUserDataInGlobalCheckpoints") ??
 		DefaultServiceConfiguration.scribe.scrubUserDataInGlobalCheckpoints;
@@ -165,6 +166,7 @@ export async function scribeCreate(
 			scrubUserDataInLocalCheckpoints,
 			scrubUserDataInSummaries,
 		},
+		enableSessionStartMetric,
 	};
 
 	const checkpointService = new core.CheckpointService(

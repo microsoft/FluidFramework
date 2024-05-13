@@ -28,7 +28,11 @@ export const createSessionMetric = <T extends string = LumberEventName>(
 	serviceConfiguration: IServiceConfiguration,
 	isEphemeralContainer: boolean = false,
 ): Lumber<T> | undefined => {
-	if (!serviceConfiguration.enableLumberjack) {
+	if (
+		!serviceConfiguration.enableLumberjack ||
+		(lumberEventName === LumberEventName.StartSessionResult &&
+			serviceConfiguration.enableSessionStartMetric === false)
+	) {
 		return undefined;
 	}
 

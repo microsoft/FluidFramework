@@ -175,6 +175,7 @@ export async function deliCreate(
 
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+	const enableSessionStartMetric: boolean = config.get("worker:enableSessionStartMetric");
 	const serviceConfiguration: core.IServiceConfiguration = {
 		...core.DefaultServiceConfiguration,
 		externalOrdererUrl,
@@ -185,6 +186,7 @@ export async function deliCreate(
 			kafkaCheckpointOnReprocessingOp,
 			enableLeaveOpNoClientServerMetadata,
 		},
+		enableSessionStartMetric,
 	};
 
 	const checkpointService = new core.CheckpointService(

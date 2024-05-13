@@ -274,7 +274,8 @@ data:
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"],
-            "enforceDiscoveryFlow": {{ .Values.session.enforceDiscoveryFlow }}
+            "enforceDiscoveryFlow": {{ .Values.session.enforceDiscoveryFlow }},
+            "enableSessionStartMetric": {{ .Values.session.enableSessionStartMetric }},
         },
         "tenantConfig": [
             {{- $lastIndex := sub (len .Values.riddler.tenants) 1}}

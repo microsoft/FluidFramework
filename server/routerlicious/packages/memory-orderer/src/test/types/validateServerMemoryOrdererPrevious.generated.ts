@@ -105,6 +105,7 @@ declare function get_old_InterfaceDeclaration_IConnectedMessage():
 declare function use_current_InterfaceDeclaration_IConnectedMessage(
     use: TypeOnly<current.IConnectedMessage>): void;
 use_current_InterfaceDeclaration_IConnectedMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConnectedMessage());
 
 /*
@@ -177,6 +178,7 @@ declare function get_old_InterfaceDeclaration_INodeMessage():
 declare function use_current_InterfaceDeclaration_INodeMessage(
     use: TypeOnly<current.INodeMessage>): void;
 use_current_InterfaceDeclaration_INodeMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_INodeMessage());
 
 /*

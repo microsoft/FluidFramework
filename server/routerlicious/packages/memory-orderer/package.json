@@ -95,6 +95,13 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IConnectedMessage": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_INodeMessage": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

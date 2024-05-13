@@ -226,6 +226,9 @@ export interface IServerConfiguration {
 
 	// Enable telemetry using the Lumberjack framework
 	enableLumberjack: boolean;
+
+	// enables the session start metric
+	enableSessionStartMetric: boolean;
 }
 
 /**
@@ -305,4 +308,5 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		partitionActivityTimeout: 10 * 60 * 1000,
 		partitionActivityCheckInterval: 60 * 1000,
 	},
+	enableSessionStartMetric: true,
 };

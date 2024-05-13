@@ -71,6 +71,7 @@ checkpoints:
 
 session:
   enforceDiscoveryFlow: false
+  enableSessionStartMetric: true
 
 deli:
   name: deli
