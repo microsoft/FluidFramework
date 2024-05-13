@@ -17,8 +17,10 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 
-import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
-import type { ConsensusQueue } from "../consensusQueue.js";
+import {
+	ConsensusQueueFactory,
+	type ConsensusQueue,
+} from "../consensusOrderedCollectionFactory.js";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 

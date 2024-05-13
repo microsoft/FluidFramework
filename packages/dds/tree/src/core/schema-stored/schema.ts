@@ -258,7 +258,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => {
+	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));

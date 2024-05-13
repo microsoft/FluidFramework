@@ -107,6 +107,11 @@ export {
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
 	IDocumentSchemaFeatures,
+	ReadFluidDataStoreAttributes,
+	IFluidDataStoreAttributes0,
+	IFluidDataStoreAttributes1,
+	IFluidDataStoreAttributes2,
+	OmitAttributesVersions,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

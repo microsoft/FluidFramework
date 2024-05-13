@@ -31,6 +31,7 @@ import {
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
@@ -52,6 +53,7 @@ import {
 import {
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
+	toDeltaManagerErased,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -210,7 +212,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.deltaManager.minimumSequenceNumber = msn;
 		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-		this.dataStoreRuntime.deltaManager = this.deltaManager;
+		this.dataStoreRuntime.deltaManagerInternal = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
 		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
@@ -821,7 +823,10 @@ export class MockFluidDataStoreRuntime
 	public clientId: string;
 	public readonly path = "";
 	public readonly connected = true;
-	public deltaManager = new MockDeltaManager();
+	public deltaManagerInternal = new MockDeltaManager();
+	public get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
+	}
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
