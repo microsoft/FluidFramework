@@ -133,6 +133,9 @@ export class DetachedFieldIndex {
 						0x7a9 /* Collision during index update */,
 					);
 					innerUpdated.set(minor, entry);
+					this.latestRelevantRevisionToFields
+						.get(entry.latestRelevantRevision)
+						?.set(entry.root, { major: updated, minor });
 				}
 			}
 		}
