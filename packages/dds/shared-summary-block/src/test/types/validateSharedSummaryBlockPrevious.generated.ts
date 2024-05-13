@@ -58,54 +58,29 @@ use_old_InterfaceDeclaration_ISharedSummaryBlock(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedSummaryBlock": {"forwardCompat": false}
+ * "RemovedClassDeclaration_SharedSummaryBlock": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedSummaryBlock():
-    TypeOnly<old.SharedSummaryBlock>;
-declare function use_current_ClassDeclaration_SharedSummaryBlock(
-    use: TypeOnly<current.SharedSummaryBlock>): void;
-use_current_ClassDeclaration_SharedSummaryBlock(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_SharedSummaryBlock());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedSummaryBlock": {"backCompat": false}
+ * "RemovedClassDeclaration_SharedSummaryBlock": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_SharedSummaryBlock():
-    TypeOnly<current.SharedSummaryBlock>;
-declare function use_old_ClassDeclaration_SharedSummaryBlock(
-    use: TypeOnly<old.SharedSummaryBlock>): void;
-use_old_ClassDeclaration_SharedSummaryBlock(
-    get_current_ClassDeclaration_SharedSummaryBlock());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedSummaryBlockFactory": {"forwardCompat": false}
+ * "RemovedClassDeclaration_SharedSummaryBlockFactory": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedSummaryBlockFactory():
-    TypeOnly<old.SharedSummaryBlockFactory>;
-declare function use_current_ClassDeclaration_SharedSummaryBlockFactory(
-    use: TypeOnly<current.SharedSummaryBlockFactory>): void;
-use_current_ClassDeclaration_SharedSummaryBlockFactory(
-    get_old_ClassDeclaration_SharedSummaryBlockFactory());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_SharedSummaryBlockFactory": {"backCompat": false}
+ * "RemovedClassDeclaration_SharedSummaryBlockFactory": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_SharedSummaryBlockFactory():
-    TypeOnly<current.SharedSummaryBlockFactory>;
-declare function use_old_ClassDeclaration_SharedSummaryBlockFactory(
-    use: TypeOnly<old.SharedSummaryBlockFactory>): void;
-use_old_ClassDeclaration_SharedSummaryBlockFactory(
-    get_current_ClassDeclaration_SharedSummaryBlockFactory());

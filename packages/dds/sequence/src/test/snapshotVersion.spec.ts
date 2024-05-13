@@ -91,7 +91,6 @@ describe("SharedString Snapshot Version", () => {
 			SharedStringFactory.Attributes,
 		);
 		await sharedString.load(services);
-		await sharedString.loaded;
 		return sharedString;
 	}
 
