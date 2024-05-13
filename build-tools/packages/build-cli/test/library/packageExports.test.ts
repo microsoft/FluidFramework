@@ -5,8 +5,8 @@
 
 import { assert } from "chai";
 
-import type { ExportData, Node10CompatExportData } from "../../src/library";
-import { queryResolutionPathsFromPackageExports } from "../../src/library";
+import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports";
+import { queryResolutionPathsFromPackageExports } from "../../src/library/packageExports";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
