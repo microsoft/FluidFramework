@@ -16,6 +16,8 @@ import {
 	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	FieldKinds,
+	FlexFieldSchema,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
@@ -84,7 +86,7 @@ export function getFlexNode(proxy: TreeArrayNode, allowFreed?: true): FlexTreeNo
 export function getFlexNode(
 	proxy: TreeMapNode,
 	allowFreed?: true,
-): FlexTreeMapNode<FlexMapNodeSchema>;
+): FlexTreeMapNode<FlexMapNodeSchema<string, FlexFieldSchema<typeof FieldKinds.optional>>>;
 export function getFlexNode(proxy: TreeNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 	const anchorNode = proxyToAnchorNode.get(proxy);
@@ -95,8 +97,8 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 			return flexNode; // If it does have a flex node, return it...
 		} // ...otherwise, the flex node must be created
 		const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
-		const cursor = context.forest.allocateCursor();
-		context.forest.moveCursorToPath(anchorNode, cursor);
+		const cursor = context.checkout.forest.allocateCursor();
+		context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 		const newFlexNode = makeTree(context, cursor);
 		cursor.free();
 		// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode

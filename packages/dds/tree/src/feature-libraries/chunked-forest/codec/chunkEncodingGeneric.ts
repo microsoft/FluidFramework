@@ -59,7 +59,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 	// These collections enable that.
 	const shapesSeen = new Set<Shape<TEncodedShape>>();
 	const shapeToCount: Shape<TEncodedShape>[] = [];
-	const shapeDiscovered = (shape: Shape<TEncodedShape>) => {
+	const shapeDiscovered = (shape: Shape<TEncodedShape>): void => {
 		shapes.add(shape);
 		if (!shapesSeen.has(shape)) {
 			shapesSeen.add(shape);

@@ -228,7 +228,7 @@ export class PartitionManager extends EventEmitter {
 					);
 					return;
 				}
-
+				Lumberjack.verbose("Emitting error from partitionManager, partition error event");
 				this.emit("error", error, errorData);
 			});
 

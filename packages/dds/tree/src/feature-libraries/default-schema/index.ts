@@ -8,7 +8,6 @@ export {
 	Required,
 	Optional,
 	Sequence,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	fieldKinds,

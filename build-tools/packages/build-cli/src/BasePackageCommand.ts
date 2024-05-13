@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
-
 import { BaseCommand } from "./base";
 import {
 	PackageFilterOptions,
@@ -18,7 +17,7 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter";
-import { filterFlags, selectionFlags } from "./flags";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
 
 /**
  * Commands that run operations per project.
@@ -35,6 +34,13 @@ export abstract class PackageCommand<
 		...filterFlags,
 		...BaseCommand.flags,
 	};
+
+	/**
+	 * The default to use as selection criteria when none is explicitly provided by the user. This enables commands
+	 * without flags to operate on a collection of packages by default that make sense based on the command.
+	 */
+	protected abstract get defaultSelection(): PackageSelectionDefault;
+	protected abstract set defaultSelection(value: PackageSelectionDefault);
 
 	protected filterOptions: PackageFilterOptions | undefined;
 	protected selectionOptions: PackageSelectionCriteria | undefined;
@@ -67,7 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags(): void {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.defaultSelection);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 
@@ -103,14 +109,29 @@ export abstract class PackageCommand<
 			)}`,
 		);
 
-		await this.processPackages(this.filteredPackages);
+		const errors = await this.processPackages(this.filteredPackages);
+		if (errors.length > 0) {
+			this.errorLog(`Completed with ${errors.length} errors.`);
+			for (const error of errors) {
+				this.errorLog(error);
+			}
+			this.exit(1);
+		}
+
 		return undefined;
 	}
 
-	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
+	/**
+	 * Runs the processPackage method on each package in the provided array.
+	 *
+	 * @returns An array of error strings. If the array is not empty, at least one of the calls to processPackage failed.
+	 */
+	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
+		const errors: string[] = [];
+
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
 		const { verbose } = this.flags;
@@ -137,8 +158,11 @@ export abstract class PackageCommand<
 					await this.processPackage(pkg, pkg.kind);
 					succeeded += 1;
 				} catch (error: unknown) {
-					this.errorLog(`Error updating ${pkg.name}: ${error}`);
-					this.log((error as Error).stack);
+					const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
+						(error as Error).stack
+					}`;
+					errors.push(errorString);
+					this.verbose(errorString);
 				} finally {
 					finished += 1;
 					updateStatus();
@@ -150,6 +174,7 @@ export abstract class PackageCommand<
 				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
 			}
 		}
+		return errors;
 	}
 }
 

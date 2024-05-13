@@ -5,14 +5,25 @@
 
 import fs from "fs";
 import path from "path";
-import { Command, Flags } from "@oclif/core";
+
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { Command, Flags } from "@oclif/core";
+
 import { ConsoleLogger } from "../logger";
 
 // Allow for dynamic injection of a logger. Leveraged in internal CI pipelines.
-// The parameter to getTestLogger() is a delay to apply after flushing the buffer.
 const _global: any = global;
-let logger: ITelemetryBufferedLogger = _global.getTestLogger?.(5_000);
+let logger: ITelemetryBufferedLogger = _global.getTestLogger?.({
+	// The telemetry libraries have issues with reporting synchronous flush completion.
+	// If the process exits too early, some telemetry may be lost. 5s here is likely a bit
+	// paranoid, but not much in the grand scheme of the pipeline.
+	afterFlushDelayMs: 5_000,
+	// This strategy of emitting an event with summary stats from each benchmark generates many telemetry
+	// events in a small window of time.
+	// The default test logger has client-side throttling (which is useful for contexts like e2e tests,
+	// where bugs may result in overlogging), which is not applicable here.
+	throttleLogging: false,
+});
 
 if (logger === undefined) {
 	logger = new ConsoleLogger();

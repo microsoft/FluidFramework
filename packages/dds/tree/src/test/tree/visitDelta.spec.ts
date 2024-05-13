@@ -22,7 +22,8 @@ import {
 import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze, rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
+import { rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 function visit(
 	delta: DeltaRoot,

@@ -29,6 +29,7 @@ export function makeSharedStringOperationGenerator(
 	const {
 		addText,
 		removeRange,
+		annotateRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
 		hasNonzeroLength,
@@ -47,6 +48,7 @@ export function makeSharedStringOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 	]);
 }
 
