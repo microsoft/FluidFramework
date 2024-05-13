@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
+import { performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryBaseProperties,
 	LogLevel,
 	Tagged,
 	TelemetryBaseEventPropertyType,
@@ -35,14 +34,6 @@ import {
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
 
-export interface Memory {
-	usedJSHeapSize: number;
-}
-
-export interface PerformanceWithMemory extends IsomorphicPerformance {
-	readonly memory: Memory;
-}
-
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  *
@@ -64,7 +55,7 @@ export enum TelemetryDataTag {
 /**
  * @alpha
  */
-export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
+export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
  * @alpha
@@ -646,10 +637,9 @@ export class PerformanceEvent {
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize: boolean = false,
 		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
+		return new PerformanceEvent(logger, event, markers, emitLogs);
 	}
 
 	/**
@@ -678,7 +668,6 @@ export class PerformanceEvent {
 			logger,
 			event,
 			markers,
-			undefined, // recordHeapSize
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -712,14 +701,12 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize?: boolean,
 		sampleThreshold: number = 1,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
-			recordHeapSize,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -739,13 +726,11 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performance.now();
 	private startMark?: string;
-	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
-		private readonly recordHeapSize: boolean = false,
 		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
@@ -820,19 +805,6 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
-			if (this.startMemoryCollection) {
-				const currentMemory = (performance as PerformanceWithMemory)?.memory
-					?.usedJSHeapSize;
-				const differenceInKBytes = Math.floor(
-					(currentMemory - this.startMemoryCollection) / 1024,
-				);
-				if (differenceInKBytes > 0) {
-					event.usedJSHeapSize = differenceInKBytes;
-				}
-			}
-		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
-				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
@@ -958,7 +930,7 @@ export const tagData = <
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)
 		.filter((e) => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
 			// The ternary form is less legible in this case.

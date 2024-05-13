@@ -17,7 +17,7 @@ import {
 import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringClass, type ISharedString } from "../sharedString.js";
 
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
@@ -25,15 +25,20 @@ async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
 	id: string,
 	summary: ISummaryTree,
-): Promise<SharedString> {
+): Promise<ISharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
+	dataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+		containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
-	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime,
+		id,
+		SharedStringFactory.Attributes,
+	);
 	await sharedString.load(services);
 	await sharedString.loaded;
 	return sharedString;
@@ -51,7 +56,11 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const sharedString = new SharedString(dataStoreRuntime, "", SharedStringFactory.Attributes);
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime,
+		"",
+		SharedStringFactory.Attributes,
+	);
 	sharedString.initializeLocal();
 	sharedString.connect(services);
 	sharedString.insertText(0, "ABCDEF");
@@ -140,8 +149,8 @@ describe("IntervalCollection snapshotting", () => {
 	});
 
 	describe("enables operations on reload", () => {
-		let sharedString: SharedString;
-		let sharedString2: SharedString;
+		let sharedString: ISharedString;
+		let sharedString2: ISharedString;
 		let collection: IIntervalCollection<SequenceInterval>;
 		let collection2: IIntervalCollection<SequenceInterval>;
 		let id: string;

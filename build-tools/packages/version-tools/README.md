@@ -125,7 +125,7 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.0.13/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.0.16/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMAND]`
 
@@ -145,7 +145,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.20/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.21/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 

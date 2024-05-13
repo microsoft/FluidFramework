@@ -23,8 +23,9 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { type ITelemetryErrorEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
@@ -310,12 +311,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
-	public completeSummary(proposalHandle: string, validate: boolean) {
+	public completeSummary(proposalHandle: string) {
 		this.completeSummaryCore(
 			proposalHandle,
 			undefined /* parentPath */,
 			false /* parentSkipRecursion */,
-			validate,
 		);
 	}
 
@@ -331,15 +331,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
-		validate: boolean,
 	) {
-		if (validate && this.wasSummarizeMissed(parentSkipRecursion)) {
-			this.throwUnexpectedError({
-				eventName: "NodeDidNotSummarize",
-				proposalHandle,
-			});
-		}
-
 		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
 		let localPathsToUse = this.wipLocalPaths;
 
@@ -382,7 +374,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 				proposalHandle,
 				fullPathForChildren,
 				this.wipSkipRecursion || parentSkipRecursion,
-				validate,
 			);
 		}
 		// Note that this overwrites existing pending summary with

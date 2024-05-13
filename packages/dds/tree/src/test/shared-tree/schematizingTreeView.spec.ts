@@ -13,7 +13,6 @@ import {
 	SchemaBuilderBase,
 	createMockNodeKeyManager,
 	intoStoredSchema,
-	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
@@ -22,15 +21,15 @@ import {
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { brand, disposeSymbol } from "../../util/index.js";
+import { disposeSymbol } from "../../util/index.js";
 import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
 const configGeneralized2 = new TreeConfiguration([schema.number, schema.boolean], () => false);
-const flexConfig = toFlexConfig(config);
-const flexConfigGeneralized = toFlexConfig(configGeneralized);
+const flexConfig = toFlexConfig(config, createMockNodeKeyManager());
+const flexConfigGeneralized = toFlexConfig(configGeneralized, createMockNodeKeyManager());
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -48,12 +47,7 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 
 		assert.throws(
 			() => view.root,
@@ -81,12 +75,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 		assert.equal(view.compatibility.isExactMatch, true);
 		const root = view.root;
 		assert.equal(root, 5);
@@ -115,12 +104,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Modify root", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
@@ -138,12 +122,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
@@ -179,7 +158,6 @@ describe("SchematizingSimpleTreeView", () => {
 			checkout,
 			configGeneralized,
 			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
 		);
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
@@ -202,12 +180,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open document using view schema that allows a subset of stored schema documents", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 
 		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.canUpgrade, false);
@@ -226,7 +199,6 @@ describe("SchematizingSimpleTreeView", () => {
 			checkout,
 			configGeneralized2,
 			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
 		);
 
 		assert.equal(view.compatibility.canView, false);
@@ -249,12 +221,7 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(
-			checkout,
-			config,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
-		);
+		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
 
 		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
 
@@ -276,11 +243,11 @@ describe("SchematizingSimpleTreeView", () => {
 			// Initial tree contains a proxy
 			initialTree: () => new TestObject({ value: 3 }),
 		};
+		const nodeKeyManager = createMockNodeKeyManager();
 		const view = new SchematizingSimpleTreeView(
-			checkoutWithContent(toFlexConfig(treeContent)),
+			checkoutWithContent(toFlexConfig(treeContent, nodeKeyManager)),
 			treeContent,
-			createMockNodeKeyManager(),
-			brand(nodeKeyFieldKey),
+			nodeKeyManager,
 		);
 
 		// We do not call `upgradeSchema()` and thus the initial tree remains unused.

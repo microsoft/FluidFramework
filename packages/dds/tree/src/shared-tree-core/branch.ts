@@ -91,7 +91,8 @@ export function getChangeReplaceType(
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange> {
+export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange>
+	extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
@@ -119,6 +120,23 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
+}
+
+/**
+ * Events related to branch trimming.
+ *
+ * @remarks
+ * Trimming is a very specific kind of mutation which is the only allowed mutations to branches.
+ * References to commits from other commits are removed so that the commit objects can be GC'd by the JS engine.
+ * This happens by changing a commit's parent property to undefined, which drops all commits that are in its "ancestry".
+ * It is done as a performance optimization when it is determined that commits are no longer needed for future computation.
+ */
+export interface BranchTrimmingEvents {
+	/**
+	 * Fired when some contiguous range of commits beginning with the "global tail" of this branch are trimmed from the branch.
+	 * This happens by deleting the parent pointer to the last commit in that range. This event can be fired at any time.
+	 */
+	ancestryTrimmed(trimmedRevisions: RevisionTag[]): void;
 }
 
 /**
@@ -153,20 +171,27 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
+	private readonly unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
+	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly branchTrimmer?: ISubscribable<BranchTrimmingEvents>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
 			this.apply(change, mintRevisionTag()),
 		);
+		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
+			this.emit("ancestryTrimmed", commit);
+		});
 	}
 
 	/**
@@ -192,14 +217,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+
 		const newHead = mintCommit(this.head, {
 			revision,
-			change,
+			change: changeWithRevision,
 		});
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(change, revision),
+			change: tagChange(changeWithRevision, revision),
 			newCommits: [newHead],
 		} as const;
 
@@ -212,7 +239,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		this.emit("afterChange", changeEvent);
-		return [change, newHead];
+		return [changeWithRevision, newHead];
 	}
 
 	/**
@@ -261,16 +288,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		// Anonymize the commits from this transaction by stripping their revision tags.
-		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
+		const squashedChange = this.changeFamily.rebaser.compose(commits);
 		const revision = this.mintRevisionTag();
 
 		const newHead = mintCommit(startCommit, {
 			revision,
-			change: squashedChange,
+			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
 		});
 
 		const changeEvent = {
@@ -312,8 +336,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
-			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagRollbackInverse(inverse, this.mintRevisionTag(), commits[i].revision));
+			const revision = this.mintRevisionTag();
+			const inverse = this.changeFamily.rebaser.changeRevision(
+				this.changeFamily.rebaser.invert(commits[i], false),
+				revision,
+				commits[i].revision,
+			);
+
+			inverses.push(tagRollbackInverse(inverse, revision, commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -366,7 +396,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(this.head, this.changeFamily, this.mintRevisionTag);
+		const fork = new SharedTreeBranch(
+			this.head,
+			this.changeFamily,
+			this.mintRevisionTag,
+			this.branchTrimmer,
+		);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -501,6 +536,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		while (this.isTransacting()) {
 			this.abortTransaction();
 		}
+
+		this.unsubscribeBranchTrimmer?.();
 
 		this.disposed = true;
 		this.emit("dispose");

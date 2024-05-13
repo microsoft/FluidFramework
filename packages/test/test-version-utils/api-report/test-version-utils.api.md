@@ -21,7 +21,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITestContainerConfig } from '@fluidframework/test-utils/internal';
 import { ITestObjectProvider } from '@fluidframework/test-utils/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
@@ -84,15 +84,15 @@ export const DataRuntimeApi: {
     FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
-        SharedCell: typeof cell.SharedCell;
-        SharedCounter: typeof counter.SharedCounter;
+        SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
-        SharedMatrix: typeof matrix.SharedMatrix;
-        ConsensusQueue: typeof orderedCollection.ConsensusQueue;
-        ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
-        SharedString: typeof sequence.SharedString;
-        SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
+        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
+        ConsensusQueue: ISharedObjectKind<orderedCollection.IConsensusOrderedCollection<any>>;
+        ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
+        SharedString: ISharedObjectKind<sequence.ISharedString>;
+        SparseMatrix: ISharedObjectKind<sequenceDeprecated.SparseMatrixClass>;
     };
     packages: {
         cell: typeof cell;

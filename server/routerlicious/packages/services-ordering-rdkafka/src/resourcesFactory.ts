@@ -74,6 +74,9 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 		const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 		const customRestartOnKafkaErrorCodes = config.get("kafka:customRestartOnKafkaErrorCodes");
+		const consumerGlobalAdditionalConfig = config.get(
+			"kafka:lib:consumerGlobalAdditionalConfig",
+		);
 
 		// Receive topic and group - for now we will assume an entry in config mapping
 		// to the given name. Later though the lambda config will likely be split from the stream config
@@ -99,6 +102,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			zooKeeperClientConstructor: this.zookeeperClientConstructor,
 			eventHubConnString,
 			restartOnKafkaErrorCodes: customRestartOnKafkaErrorCodes,
+			additionalOptions: consumerGlobalAdditionalConfig,
 		};
 
 		const consumer = new RdkafkaConsumer(endpoints, clientId, receiveTopic, groupId, options);

@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
-import { getParam } from "@fluidframework/server-services-utils";
+import { getParam, ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { decode } from "jsonwebtoken";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
@@ -28,6 +28,7 @@ export function create(
 	secretManager: ISecretManager,
 	fetchTenantKeyMetricInterval: number,
 	riddlerStorageRequestMetricInterval: number,
+	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
 ): Router {
 	const router: Router = Router();
@@ -39,6 +40,7 @@ export function create(
 		secretManager,
 		fetchTenantKeyMetricInterval,
 		riddlerStorageRequestMetricInterval,
+		tenantKeyGenerator,
 		cache,
 	);
 

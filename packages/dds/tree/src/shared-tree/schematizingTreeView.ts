@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, Compatibility, FieldKey } from "../core/index.js";
+import { AllowedUpdateType, Compatibility } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
@@ -79,10 +79,9 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config);
+		this.flexConfig = toFlexConfig(config, nodeKeyManager);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
@@ -114,7 +113,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				initialTree:
 					content === undefined
 						? undefined
-						: cursorFromUnhydratedRoot(this.config.schema, content),
+						: cursorFromUnhydratedRoot(
+								this.config.schema,
+								content,
+								this.nodeKeyManager,
+						  ),
 			});
 		});
 	}
@@ -226,7 +229,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.viewSchema,
 				onViewDispose,
 				this.nodeKeyManager,
-				this.nodeKeyFieldKey,
 			);
 		} else {
 			this.view = undefined;
@@ -295,7 +297,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
+		setField(
+			view.context.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent,
+			view.context.nodeKeyManager,
+		);
 	}
 }
 
@@ -308,7 +315,6 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	viewSchema: ViewSchema<TRoot>,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const slots = checkout.forest.anchors.slots;
 	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
@@ -321,13 +327,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		nodeKeyFieldKey,
-		onDispose,
-	);
+	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {

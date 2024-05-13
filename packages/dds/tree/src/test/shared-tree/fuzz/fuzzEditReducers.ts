@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { DDSFuzzTestState, type Client } from "@fluid-private/test-dds-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Revertible, ValueSchema } from "../../../core/index.js";
@@ -22,9 +22,9 @@ import {
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
-import { validateTreeConsistency } from "../../utils.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	FuzzTestState,
@@ -80,9 +80,9 @@ export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFac
 	operation,
 ) => syncFuzzReducer(state, operation);
 
-export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
+export function checkTreesAreSynchronized(trees: readonly Client<SharedTreeFactory>[]) {
 	for (const tree of trees) {
-		validateTreeConsistency(trees[0], tree);
+		validateFuzzTreeConsistency(trees[0], tree);
 	}
 }
 
@@ -90,9 +90,9 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 	state.containerRuntimeFactory.processAllMessages();
 	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length > 0) {
-		const readonlyChannel = state.summarizerClient.channel;
-		for (const { channel } of connectedClients) {
-			validateTreeConsistency(channel, readonlyChannel);
+		const readonlyClient = state.summarizerClient;
+		for (const client of connectedClients) {
+			validateFuzzTreeConsistency(client, readonlyClient);
 		}
 	}
 }
@@ -159,7 +159,9 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "remove": {
-			field.removeRange(change.range.first, change.range.last + 1);
+			field
+				.sequenceEditor()
+				.remove(change.range.first, change.range.last + 1 - change.range.first);
 			break;
 		}
 		case "intraFieldMove": {

@@ -77,7 +77,8 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -168,7 +169,6 @@ module.exports = {
 
 		// Independent packages
 		"build": "common/build",
-		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -449,7 +449,6 @@ module.exports = {
 			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
-			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",

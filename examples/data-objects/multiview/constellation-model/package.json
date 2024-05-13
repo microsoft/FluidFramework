@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-model",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"private": true,
 	"description": "Constellation model for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -45,7 +45,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.6.2",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",

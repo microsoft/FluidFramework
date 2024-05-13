@@ -12,7 +12,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)
@@ -394,9 +394,7 @@ export interface IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
-    // (undocumented)
     readonly deltaSegments: IMergeTreeSegmentDelta[];
-    // (undocumented)
     readonly operation: TOperationType;
 }
 
@@ -481,9 +479,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeSegmentDelta {
-    // (undocumented)
     propertyDeltas?: PropertySet;
-    // (undocumented)
     segment: ISegment;
 }
 
@@ -758,7 +754,7 @@ export class PropertiesManager {
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
-    hasPendingProperties(): boolean;
+    hasPendingProperties(props: PropertySet): boolean;
     // (undocumented)
     hasPendingProperty(key: string): boolean;
 }
@@ -897,10 +893,10 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @internal (undocumented)

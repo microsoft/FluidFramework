@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -17,36 +18,41 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IDirectoryNewStorageFormat } from "../../directory.js";
+import type { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
-	IDirectory,
-	IDirectoryValueChanged,
+	type IDirectory,
+	type IDirectoryValueChanged,
 	type ISharedDirectory,
-	ISharedMap,
 	SharedDirectory,
 	SharedMap,
 } from "../../index.js";
+import type { SharedMap as SharedMapInternal } from "../../map.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
+/**
+ * Creates and connects a new {@link ISharedDirectory}.
+ */
 export function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedDirectory {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedDirectory.getFactory()],
+	});
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const directory = SharedDirectory.getFactory().create(dataStoreRuntime, id);
+	const directory = SharedDirectory.create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
 }
 
-function createLocalMap(id: string): ISharedMap {
+function createLocalMap(id: string): SharedMapInternal {
 	const factory = SharedMap.getFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMapInternal;
 }
 
 async function populate(content: unknown): Promise<ISharedDirectory> {
@@ -111,8 +117,11 @@ describe("Directory", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			directory = SharedDirectory.getFactory().create(dataStoreRuntime, "directory");
+			dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+				registry: [SharedDirectory.getFactory()],
+			});
+			directory = SharedDirectory.create(dataStoreRuntime, "directory");
 		});
 
 		describe("API", () => {
@@ -481,7 +490,7 @@ describe("Directory", () => {
 					.createSubDirectory("nested3")
 					.set("deepKey2", "deepValue2");
 
-				const subMapHandleUrl = subMap.handle.absolutePath;
+				const subMapHandleUrl = toFluidHandleInternal(subMap.handle).absolutePath;
 				const serialized = serialize(directory);
 				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
@@ -1949,7 +1958,7 @@ describe("Directory", () => {
 				const subMapId1 = `subMap-${++this.subMapCount}`;
 				const subMap1 = createLocalMap(subMapId1);
 				this.directory1.set(subMapId1, subMap1.handle);
-				this._expectedRoutes.push(subMap1.handle.absolutePath);
+				this._expectedRoutes.push(toFluidHandleInternal(subMap1.handle).absolutePath);
 
 				const fooDirectory =
 					this.directory1.getSubDirectory("foo") ??
@@ -1957,7 +1966,7 @@ describe("Directory", () => {
 				const subMapId2 = `subMap-${++this.subMapCount}`;
 				const subMap2 = createLocalMap(subMapId2);
 				fooDirectory.set(subMapId2, subMap2.handle);
-				this._expectedRoutes.push(subMap2.handle.absolutePath);
+				this._expectedRoutes.push(toFluidHandleInternal(subMap2.handle).absolutePath);
 
 				this.containerRuntimeFactory.processAllMessages();
 			}
@@ -1972,7 +1981,7 @@ describe("Directory", () => {
 
 				const subMapId = `subMap-${this.subMapCount}`;
 
-				const deletedHandle = fooDirectory.get(subMapId) as IFluidHandle;
+				const deletedHandle = fooDirectory.get(subMapId) as IFluidHandleInternal;
 				assert(deletedHandle, "Route must be added before deleting");
 
 				fooDirectory.delete(subMapId);
@@ -2003,7 +2012,10 @@ describe("Directory", () => {
 				};
 				fooDirectory.set(subMapId2, containingObject);
 				this.containerRuntimeFactory.processAllMessages();
-				this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
+				this._expectedRoutes.push(
+					toFluidHandleInternal(subMap.handle).absolutePath,
+					toFluidHandleInternal(subMap2.handle).absolutePath,
+				);
 			}
 		}
 
