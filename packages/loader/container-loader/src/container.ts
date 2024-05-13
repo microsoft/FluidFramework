@@ -960,11 +960,14 @@ export class Container
 
 		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context or supportedFeatures flag by the service.
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-		const shouldEnableSummarizeProtocolTree =
+		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree ??
-			(this._deltaManager.connectionManager.supportedFeatures
-				?.enable_single_commit_summary as boolean);
+			(typeof this._deltaManager.connectionManager.supportedFeatures
+				?.enable_single_commit_summary === "boolean"
+				? this._deltaManager.connectionManager.supportedFeatures
+						?.enable_single_commit_summary
+				: false);
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
@@ -972,7 +975,7 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
-			shouldEnableSummarizeProtocolTree,
+			shouldSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
