@@ -69,7 +69,11 @@ export {
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
 } from "./revertibles.js";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence.js";
+export {
+	ISharedSegmentSequenceEvents,
+	SharedSegmentSequence,
+	ISharedSegmentSequence,
+} from "./sequence.js";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,

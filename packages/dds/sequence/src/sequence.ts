@@ -47,7 +47,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedObject, type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -113,9 +113,90 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 /**
  * @alpha
  */
+export interface ISharedSegmentSequence<T extends ISegment>
+	extends ISharedObject<ISharedSegmentSequenceEvents>,
+		ISharedIntervalCollection<SequenceInterval>,
+		MergeTreeRevertibleDriver {
+	/**
+	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
+	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
+	 * @param segment - Segment to add the local reference on
+	 * @param offset - Offset on the segment at which to place the local reference
+	 * @param refType - ReferenceType for the created local reference
+	 * @param properties - PropertySet to place on the created local reference
+	 */
+	createLocalReferencePosition(
+		segment: T,
+		offset: number,
+		refType: ReferenceType,
+		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
+	): LocalReferencePosition;
+
+	/**
+	 * Removes a `LocalReferencePosition` from this SharedString.
+	 */
+	removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+
+	/**
+	 * Returns the length of the current sequence for the client
+	 */
+	getLength(): number;
+
+	/**
+	 * Returns the current position of a segment, and -1 if the segment
+	 * does not exist in this sequence
+	 * @param segment - The segment to get the position of
+	 */
+	getPosition(segment: ISegment): number;
+
+	/**
+	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
+	 */
+	localReferencePositionToPosition(lref: ReferencePosition): number;
+
+	/**
+	 * Walk the underlying segments of the sequence.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
+	 *
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
+	 * @param start - Optional. The start of range walk.
+	 * @param end - Optional. The end of range walk
+	 * @param accum - Optional. An object that will be passed to the handler for accumulation
+	 * @param splitRange - Optional. Splits boundary segments on the range boundaries. Defaults to false.
+	 */
+	walkSegments<TClientData>(
+		handler: ISegmentAction<TClientData>,
+		start?: number,
+		end?: number,
+		accum?: TClientData,
+		splitRange?: boolean,
+	): void;
+
+	/**
+	 * Inserts a segment directly before a `ReferencePosition`.
+	 * @param refPos - The reference position to insert the segment at
+	 * @param segment - The segment to insert
+	 */
+	insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+}
+
+/**
+ * @alpha
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
-	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
+	implements ISharedSegmentSequence<T>
 {
 	get loaded(): Promise<void> {
 		return this.loadedDeferred.promise;
@@ -366,15 +447,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * Returns the length of the current sequence for the client
 	 */
-	public getLength() {
+	public getLength(): number {
 		return this.client.getLength();
 	}
 
-	/**
-	 * Returns the current position of a segment, and -1 if the segment
-	 * does not exist in this sequence
-	 * @param segment - The segment to get the position of
-	 */
 	public getPosition(segment: ISegment): number {
 		return this.client.getPosition(segment);
 	}
@@ -399,14 +475,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getRangeExtentsOfPosition(pos);
 	}
 
-	/**
-	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-	 * @param segment - Segment to add the local reference on
-	 * @param offset - Offset on the segment at which to place the local reference
-	 * @param refType - ReferenceType for the created local reference
-	 * @param properties - PropertySet to place on the created local reference
-	 */
 	public createLocalReferencePosition(
 		segment: T,
 		offset: number,
@@ -425,22 +493,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
-	 *
-	 * Reference positions that point to a character that has been removed will
-	 * always return the position of the nearest non-removed character, regardless
-	 * of `ReferenceType`. To handle this case specifically, one may wish
-	 * to look at the segment returned by `ReferencePosition.getSegment`.
-	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);
 	}
 
-	/**
-	 * Removes a `LocalReferencePosition` from this SharedString.
-	 */
-	public removeLocalReferencePosition(lref: LocalReferencePosition) {
+	public removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined {
 		return this.client.removeLocalReferencePosition(lref);
 	}
 
@@ -500,20 +559,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.posFromRelativePos(relativePos);
 	}
 
-	/**
-	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range if the segments cross the
-	 * ranges start or end boundaries.
-	 *
-	 * Set split range to true to ensure only segments within the range are walked.
-	 *
-	 * @param handler - The function to handle each segment. Traversal ends if
-	 * this function returns true.
-	 * @param start - Optional. The start of range walk.
-	 * @param end - Optional. The end of range walk
-	 * @param accum - Optional. An object that will be passed to the handler for accumulation
-	 * @param splitRange - Optional. Splits boundary segments on the range boundaries
-	 */
 	public walkSegments<TClientData>(
 		handler: ISegmentAction<TClientData>,
 		start?: number,
@@ -532,11 +577,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getCurrentSeq();
 	}
 
-	/**
-	 * Inserts a segment directly before a `ReferencePosition`.
-	 * @param refPos - The reference position to insert the segment at
-	 * @param segment - The segment to insert
-	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
