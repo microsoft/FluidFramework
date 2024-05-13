@@ -126,6 +126,8 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
+		// All of the output actions (deletes of stale files or writing of new/updated files)
+		// are all independent and can be done in parallel.
 		await Promise.all(promises);
 	}
 }
@@ -135,8 +137,24 @@ async function readPackageJson(): Promise<PackageJson> {
 	return JSON.parse(packageJson) as PackageJson;
 }
 
+/**
+ * Returns the path "prefix" for all of the output files.
+ * This is the out path + / + any common file prefix.
+ */
 function getOutPathPrefix(
-	{ outDir, outFilePrefix }: { outDir: string; outFilePrefix: string },
+	{
+		outDir,
+		outFilePrefix,
+	}: {
+		/**
+		 * {@link GenerateEntrypointsCommand.flags.outDir}.
+		 */
+		outDir: string;
+		/**
+		 * {@link GenerateEntrypointsCommand.flags.outFilePrefix}.
+		 */
+		outFilePrefix: string;
+	},
 	packageJson: PackageJson,
 ): string {
 	if (!outFilePrefix) {
