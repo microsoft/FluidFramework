@@ -113,10 +113,10 @@ export class Outbox {
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 		const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
-		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
-		this.mainBatch = new BatchManager({ hardLimit });
-		this.blobAttachBatch = new BatchManager({ hardLimit });
-		this.idAllocationBatch = new BatchManager({ hardLimit });
+		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit, canRebase: true });
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: true });
 	}
 
 	public get messageCount(): number {
@@ -323,10 +323,9 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch();
-		if (
-			rawBatch.hasReentrantOps === true &&
-			this.params.groupingManager.shouldGroup(rawBatch)
-		) {
+		const shouldGroup =
+			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
+		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -339,7 +338,9 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
+			const processedBatch = this.compressBatch(
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+			);
 			this.sendBatch(processedBatch);
 		}
 
@@ -354,6 +355,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
@@ -385,7 +387,7 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
-	private compressBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
+	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
@@ -394,12 +396,10 @@ export class Outbox {
 			this.params.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch);
+			return batch;
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(
-			disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch),
-		);
+		const compressedBatch = this.params.compressor.compressBatch(batch);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes

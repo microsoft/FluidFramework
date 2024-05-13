@@ -60,6 +60,7 @@ export interface IIdCompressorCore {
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     takeNextCreationRange(): IdCreationRange;
+    takeUnfinalizedCreationRange(): IdCreationRange;
 }
 
 // @internal

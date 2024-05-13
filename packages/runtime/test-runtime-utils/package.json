@@ -165,6 +165,9 @@
 			},
 			"ClassDeclaration_MockDeltaManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
+				"forwardCompat": false
 			}
 		}
 	}

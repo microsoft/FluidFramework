@@ -30,11 +30,13 @@ import {
 	AttachState,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedDirectory } from "@fluidframework/map";
 import type { IChannel } from "@fluidframework/datastore-definitions";
+import { delay } from "@fluidframework/core-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -546,32 +548,101 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
 	});
 
-	it.skip("Ids generated when disconnected are correctly resubmitted", async () => {
-		// Disconnect the first container
-		container1.disconnect();
+	const sharedPoints = [0, 1, 2];
+	const testConfigs = generatePairwiseOptions({
+		preOfflineChanges: sharedPoints,
+		postOfflineChanges: sharedPoints,
+		allocateDuringResubmitStride: [1, 2, 3],
+		delayBetweenOfflineChanges: [true, false],
+	});
 
-		// Generate a new Id in the disconnected container
-		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		// Trigger Id submission
-		sharedMapContainer1.set("key", "value");
+	for (const testConfig of testConfigs) {
+		it(`Ids generated across batches are correctly resubmitted: ${JSON.stringify(
+			testConfig,
+		)}`, async () => {
+			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 
-		const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(sharedMapContainer1);
-		(sharedMapContainer1 as any).reSubmitCore = (
-			content: unknown,
-			localOpMetadata: unknown,
-		) => {
-			// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
-			// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
-			getIdCompressor(sharedMapContainer1).generateCompressedId();
-			superResubmit(content, localOpMetadata);
+			const simulateAllocation = (map: ISharedMap) => {
+				const idCompressor = getIdCompressor(map);
+				const id = idCompressor.generateCompressedId();
+				idPairs.push([id, idCompressor]);
+			};
+
+			for (let i = 0; i < testConfig.preOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+			}
+
+			container1.disconnect();
+
+			for (let i = 0; i < testConfig.postOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+
+				if (testConfig.delayBetweenOfflineChanges) {
+					await delay(100); // Trigger Id submission
+				}
+			}
+
+			let invokedCount = 0;
+			const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(
+				sharedMapContainer1,
+			);
+			(sharedMapContainer1 as any).reSubmitCore = (
+				content: unknown,
+				localOpMetadata: unknown,
+			) => {
+				invokedCount++;
+				if (invokedCount % testConfig.allocateDuringResubmitStride === 0) {
+					// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
+					// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
+					simulateAllocation(sharedMapContainer1);
+				}
+				superResubmit(content, localOpMetadata);
+			};
+
+			// important allocation to test the ordering of generate, takeNext, generate, retakeOutstanding, takeNext.
+			// correctness here relies on mutation in retaking if we want the last takeNext to return an empty range
+			// which it must be if we want to avoid overlapping range bugs
+			simulateAllocation(sharedMapContainer1);
+
+			container1.connect();
+			await waitForContainerConnection(container1);
+			await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
+		});
+	}
+
+	it("Reentrant ops do not cause resubmission of ID allocation ops", async () => {
+		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
+
+		const simulateAllocation = (map: ISharedMap) => {
+			const idCompressor = getIdCompressor(map);
+			const id = idCompressor.generateCompressedId();
+			idPairs.push([id, idCompressor]);
 		};
 
-		// Generate ids in a connected container but don't send them yet
-		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
+		container1.disconnect();
 
-		// Reconnect the first container
-		// IdRange should be resubmitted and reflected in all compressors
+		sharedMapContainer2.set("key", "first");
+
+		let invokedCount = 0;
+		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as any).processCore = (
+			message: ISequencedDocumentMessage,
+			local: boolean,
+			localOpMetadata: unknown,
+		) => {
+			if (invokedCount === 0) {
+				// Force reentrancy during first op processing to cause batch manager rebase (which should skip rebasing allocation ops)
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant1");
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant2");
+			}
+			superProcessCore(message, local, localOpMetadata);
+			invokedCount++;
+		};
+
 		container1.connect();
 		await waitForContainerConnection(container1);
 		await provider.ensureSynchronized();
