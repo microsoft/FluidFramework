@@ -494,7 +494,7 @@ export class IdCompressorTestNetwork {
 				}
 			});
 
-			const retakenRange = compressor.retakeOutstandingCreationRange();
+			const retakenRange = compressor.takeUnfinalizedCreationRange();
 			if (retakenRange.ids !== undefined) {
 				const retakenLocalIds = new SessionSpaceNormalizer();
 				retakenRange.ids.localIdRanges.forEach(([genCount, count]) => {

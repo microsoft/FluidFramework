@@ -373,12 +373,12 @@ describe("IdCompressor", () => {
 		describe("by retaking all outstanding ranges", () => {
 			it("when there are no outstanding ranges", () => {
 				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
-				let retakenRangeEmpty = compressor.retakeOutstandingCreationRange();
+				let retakenRangeEmpty = compressor.takeUnfinalizedCreationRange();
 				assert.equal(retakenRangeEmpty.ids, undefined);
 				compressor.finalizeCreationRange(retakenRangeEmpty);
 				generateCompressedIds(compressor, 1);
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				retakenRangeEmpty = compressor.retakeOutstandingCreationRange();
+				retakenRangeEmpty = compressor.takeUnfinalizedCreationRange();
 				assert.equal(retakenRangeEmpty.ids, undefined);
 			});
 
@@ -388,7 +388,7 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 1);
 				compressor.takeNextCreationRange();
 
-				let retakenRangeLocalOnly = compressor.retakeOutstandingCreationRange();
+				let retakenRangeLocalOnly = compressor.takeUnfinalizedCreationRange();
 				assert.deepEqual(retakenRangeLocalOnly.ids, {
 					firstGenCount: 1,
 					count: 1,
@@ -397,7 +397,7 @@ describe("IdCompressor", () => {
 				});
 
 				generateCompressedIds(compressor, 1);
-				retakenRangeLocalOnly = compressor.retakeOutstandingCreationRange();
+				retakenRangeLocalOnly = compressor.takeUnfinalizedCreationRange();
 				assert.deepEqual(retakenRangeLocalOnly.ids, {
 					firstGenCount: 1,
 					count: 2,
@@ -436,7 +436,7 @@ describe("IdCompressor", () => {
 				const range4 = compressor.takeNextCreationRange();
 				assert.deepEqual(range4.ids?.localIdRanges, [[4, 1]]);
 
-				const retakenRange = compressor.retakeOutstandingCreationRange();
+				const retakenRange = compressor.takeUnfinalizedCreationRange();
 				assert.deepEqual(retakenRange.ids?.firstGenCount, 2);
 				assert.deepEqual(retakenRange.ids?.count, 3);
 				assert.deepEqual(retakenRange.ids?.localIdRanges, [

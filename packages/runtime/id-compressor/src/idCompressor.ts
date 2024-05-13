@@ -236,7 +236,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return this.updateToRange(range);
 	}
 
-	public retakeOutstandingCreationRange(): IdCreationRange {
+	public takeUnfinalizedCreationRange(): IdCreationRange {
 		const lastLocalCluster = this.localSession.getLastCluster();
 		let count: number;
 		let firstGenCount: number;

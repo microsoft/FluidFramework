@@ -3919,7 +3919,7 @@ export class ContainerRuntime
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
-				? this.idCompressor?.retakeOutstandingCreationRange()
+				? this.idCompressor?.takeUnfinalizedCreationRange()
 				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {

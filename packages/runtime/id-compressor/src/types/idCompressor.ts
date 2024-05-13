@@ -81,7 +81,7 @@ export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
 	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
-	 * range was taken (via this method or `retakeOutstandingCreationRange`).
+	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
 	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
 	 */
@@ -95,7 +95,7 @@ export interface IIdCompressorCore {
 	 * Note: after finalizing the range returned by this method, finalizing any ranges that had been previously taken
 	 * will result in an error.
 	 */
-	retakeOutstandingCreationRange(): IdCreationRange;
+	takeUnfinalizedCreationRange(): IdCreationRange;
 
 	/**
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
