@@ -5,7 +5,6 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { Deferred } from '@fluidframework/core-utils/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -147,31 +146,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 // @public
 export const disposeSymbol: unique symbol;
-
-// @public
-export const DriverErrorTypes: {
-    readonly genericNetworkError: "genericNetworkError";
-    readonly authorizationError: "authorizationError";
-    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
-    readonly offlineError: "offlineError";
-    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
-    readonly writeError: "writeError";
-    readonly fetchFailure: "fetchFailure";
-    readonly fetchTokenError: "fetchTokenError";
-    readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
-    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection";
-    readonly fluidInvalidSchema: "fluidInvalidSchema";
-    readonly fileIsLocked: "fileIsLocked";
-    readonly outOfStorageError: "outOfStorageError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly usageError: "usageError";
-};
-
-// @public
-export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -833,9 +807,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @deprecated
     get loaded(): Promise<void>;
-    protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     obliterateRange(start: number, end: number): void;
     protected onConnect(): void;
@@ -965,7 +938,7 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
+    is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;

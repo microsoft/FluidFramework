@@ -6,7 +6,11 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { FinalSpace } from "./finalSpace.js";
 import { FinalCompressedId, LocalCompressedId, NumericUuid, isFinalId } from "./identifiers.js";
@@ -56,6 +60,13 @@ import {
  * This should not be changed without careful consideration to compatibility.
  */
 const currentWrittenVersion = 2.0;
+
+function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
+	return new LoggingError("Ranges finalized out of order", {
+		expectedStart,
+		actualStart,
+	});
+}
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
@@ -222,14 +233,49 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				),
 			},
 		};
-		this.nextRangeBaseGenCount = this.localGenCount + 1;
-		IdCompressor.assertValidRange(range);
-		return range;
+		return this.updateToRange(range);
 	}
 
-	private static assertValidRange(range: IdCreationRange): void {
+	public takeUnfinalizedCreationRange(): IdCreationRange {
+		const lastLocalCluster = this.localSession.getLastCluster();
+		let count: number;
+		let firstGenCount: number;
+		if (lastLocalCluster === undefined) {
+			firstGenCount = 1;
+			count = this.localGenCount;
+		} else {
+			firstGenCount = genCountFromLocalId(
+				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+			);
+			count = this.localGenCount - firstGenCount + 1;
+		}
+
+		if (count === 0) {
+			return {
+				sessionId: this.localSessionId,
+			};
+		}
+
+		const range: IdCreationRange = {
+			ids: {
+				count,
+				firstGenCount,
+				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
+				requestedClusterSize: this.nextRequestedClusterSize,
+			},
+			sessionId: this.localSessionId,
+		};
+		return this.updateToRange(range);
+	}
+
+	private updateToRange(range: IdCreationRange): IdCreationRange {
+		this.nextRangeBaseGenCount = this.localGenCount + 1;
+		return IdCompressor.assertValidRange(range);
+	}
+
+	private static assertValidRange(range: IdCreationRange): IdCreationRange {
 		if (range.ids === undefined) {
-			return;
+			return range;
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
@@ -238,6 +284,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			requestedClusterSize <= IdCompressor.maxClusterSize,
 			0x877 /* Clusters must not exceed max cluster size. */,
 		);
+		return range;
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
@@ -260,7 +307,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster === undefined) {
 			// This is the first cluster in the session space
 			if (rangeBaseLocal !== -1) {
-				throw new Error("Ranges finalized out of order.");
+				throw rangeFinalizationError(-1, rangeBaseLocal);
 			}
 			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
@@ -273,7 +320,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw new Error("Ranges finalized out of order.");
+			throw rangeFinalizationError(
+				lastCluster.baseLocalId - lastCluster.count,
+				rangeBaseLocal,
+			);
 		}
 
 		if (remainingCapacity >= count) {
