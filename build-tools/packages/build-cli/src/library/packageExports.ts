@@ -133,17 +133,18 @@ function findFirstTypesPathMatching<TOutKey>(
 }
 
 /**
- * Read package "exports" to determine which of given file paths are present.
+ * Read package "exports" to determine which of given "types" file paths are present.
  *
  * @param packageJson - json content of package.json
- * @param mapQueryPathToOutKey - keys of map represent paths to match. When matched
- * value, if defined, is used to set entry key in output mapKeyToOutput.
+ * @param mapQueryPathToOutKey - keys of map represent paths to match. When one of those
+ * paths is found in the package.json's exports, the corresponding value (if defined) is
+ * used to set entry key in output mapKeyToOutput.
  * @param node10TypeCompat - when true, populates output mapNode10CompatExportPathToData.
  * @param logger - optional Logger
  * @returns object with mapKeyToOutput, map of ApiTags to output paths, and
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
  */
-export function queryResolutionPathsFromPackageExports<TOutKey>(
+export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	node10TypeCompat: boolean,

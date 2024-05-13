@@ -17,7 +17,7 @@ import { BaseCommand } from "./base";
 import { ApiLevel } from "../apiLevel";
 import { ApiTag } from "../apiTag";
 import type { ExportData, Node10CompatExportData } from "../packageExports";
-import { queryResolutionPathsFromPackageExports } from "../packageExports";
+import { queryTypesResolutionPathsFromPackageExports } from "../packageExports";
 import { getApiExports } from "../typescriptApi";
 
 import { unscopedPackageNameString } from "./constants";
@@ -217,7 +217,7 @@ function getOutputConfiguration(
 	}
 
 	const { mapKeyToOutput: mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
-		queryResolutionPathsFromPackageExports(
+		queryTypesResolutionPathsFromPackageExports(
 			packageJson,
 			mapQueryPathToApiTagLevel,
 			node10TypeCompat,

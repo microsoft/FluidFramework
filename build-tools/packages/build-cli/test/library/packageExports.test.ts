@@ -6,7 +6,7 @@
 import { assert } from "chai";
 
 import type { ExportData, Node10CompatExportData } from "../../src/library/packageExports";
-import { queryResolutionPathsFromPackageExports } from "../../src/library/packageExports";
+import { queryTypesResolutionPathsFromPackageExports } from "../../src/library/packageExports";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
@@ -266,7 +266,7 @@ describe("library/packageExports", () => {
 				} = genTestData(path, condition);
 
 				it("finds path in common package export pattern", () => {
-					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
+					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						commonExportsPackage,
 						query,
 						false,
@@ -279,7 +279,7 @@ describe("library/packageExports", () => {
 				});
 
 				it("finds type only export paths", () => {
-					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
+					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						typeOnlyExportPackage,
 						query,
 						false,
@@ -292,7 +292,7 @@ describe("library/packageExports", () => {
 				});
 
 				it("warns on double referenced export paths", () => {
-					const { mapKeyToOutput } = queryResolutionPathsFromPackageExports(
+					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						doubleReferencingExportsPackage,
 						query,
 						false,
@@ -311,12 +311,13 @@ describe("library/packageExports", () => {
 				});
 
 				it("finds beta and internal in common package export pattern for node10 compat", () => {
-					const { mapNode10CompatExportPathToData } = queryResolutionPathsFromPackageExports(
-						commonExportsPackage,
-						query,
-						true,
-						logger,
-					);
+					const { mapNode10CompatExportPathToData } =
+						queryTypesResolutionPathsFromPackageExports(
+							commonExportsPackage,
+							query,
+							true,
+							logger,
+						);
 
 					// Verify
 					assert(logger.calls.length === 0, "logs nothing of interest");
