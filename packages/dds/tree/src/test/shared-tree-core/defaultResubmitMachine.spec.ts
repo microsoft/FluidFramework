@@ -6,13 +6,8 @@
 import { strict as assert } from "assert";
 import { GraphCommit } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
-import {
-	MockChangeEnricher,
-	MockEnrichableChange,
-	inverter,
-	// eslint-disable-next-line import/no-internal-modules
-} from "./mockChangeEnricher.js";
 import { DefaultResubmitMachine } from "../../shared-tree-core/index.js";
+import { MockChangeEnricher, MockEnrichableChange, inverter } from "./mockChangeEnricher.js";
 
 const revision0 = testIdCompressor.generateCompressedId();
 const revision1 = testIdCompressor.generateCompressedId();
