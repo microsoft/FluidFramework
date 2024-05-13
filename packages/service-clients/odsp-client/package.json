@@ -133,6 +133,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {}
 	}
 }
