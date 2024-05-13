@@ -331,13 +331,27 @@ describeCompat(
 
 				// Create data stores B and C, and mark them as referenced.
 				const containerRuntime = dataStoreA.context.containerRuntime;
-				dataStoreB = (await (
-					await containerRuntime.createDataStore(defaultFactory.type)
-				).entryPoint.get()) as ITestFluidObject;
+				dataStoreB = await containerRuntime
+					.createDataStore(defaultFactory.type)
+					.then(async (d) => d.entryPoint.get())
+					.then((fo: FluidObject<ITestFluidObject>) => {
+						assert(
+							fo.ITestFluidObject !== undefined,
+							"dataStoreB not a ITestFluidObject",
+						);
+						return fo.ITestFluidObject;
+					});
 				dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-				dataStoreC = (await (
-					await containerRuntime.createDataStore(defaultFactory.type)
-				).entryPoint.get()) as ITestFluidObject;
+				dataStoreC = await containerRuntime
+					.createDataStore(defaultFactory.type)
+					.then(async (d) => d.entryPoint.get())
+					.then((fo: FluidObject<ITestFluidObject>) => {
+						assert(
+							fo.ITestFluidObject !== undefined,
+							"dataStoreC not a ITestFluidObject",
+						);
+						return fo.ITestFluidObject;
+					});
 				dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
 				await waitForContainerConnection(mainContainer);

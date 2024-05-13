@@ -16,7 +16,6 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
-	LocalNodeKey,
 	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
@@ -44,7 +43,7 @@ import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
+import { RawTreeNode } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -361,12 +360,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
 	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
+	implements FlexTreeObjectNode {}
 
 /**
  * Ensures that the set of view keys in the schema is unique.

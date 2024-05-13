@@ -141,7 +141,7 @@ export class PendingStateManager implements IDisposable {
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,
-				"saved op should already have a sequence number",
+				0x97c /* saved op should already have a sequence number */,
 			);
 			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
 		});

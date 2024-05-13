@@ -136,13 +136,21 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 
 		// Create couple more data stores and mark them as referenced.
 		const containerRuntime = dataStore1.context.containerRuntime;
-		const dataStore2 = (await (
-			await containerRuntime.createDataStore(defaultFactory.type)
-		).entryPoint.get()) as ITestFluidObject;
+		const dataStore2 = await containerRuntime
+			.createDataStore(defaultFactory.type)
+			.then(async (d) => d.entryPoint.get())
+			.then((fo: FluidObject<ITestFluidObject>) => {
+				assert(fo.ITestFluidObject !== undefined, "dataStore2 not a ITestFluidObject");
+				return fo.ITestFluidObject;
+			});
 		dataStore1.root.set("dataStore2", dataStore2.handle);
-		const dataStore3 = (await (
-			await containerRuntime.createDataStore(defaultFactory.type)
-		).entryPoint.get()) as ITestFluidObject;
+		const dataStore3 = await containerRuntime
+			.createDataStore(defaultFactory.type)
+			.then(async (d) => d.entryPoint.get())
+			.then((fo: FluidObject<ITestFluidObject>) => {
+				assert(fo.ITestFluidObject !== undefined, "dataStore3 not a ITestFluidObject");
+				return fo.ITestFluidObject;
+			});
 		dataStore1.root.set("dataStore3", dataStore3.handle);
 		dataStore2Id = dataStore2.context.id;
 		dataStore3Id = dataStore3.context.id;

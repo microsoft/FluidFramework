@@ -339,10 +339,10 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 				});
 			}
 
-			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
 				await container2.getEntryPoint();
-			const default2 = maybeTestFluidObject.ITestFluidObject;
-			assert(default2 !== undefined, "default2 not a ITestFluidObject");
+			const default2 = maybeTestFluidObject3.ITestFluidObject;
+			assert(default2 !== undefined, "default3 not a ITestFluidObject");
 
 			const actualVal = await handle.readHandle(default2);
 			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
