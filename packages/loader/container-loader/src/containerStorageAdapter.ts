@@ -74,7 +74,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
+	 * @param shouldEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -86,10 +86,10 @@ export class ContainerStorageAdapter
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		forceEnableSummarizeProtocolTree: boolean | undefined,
+		shouldEnableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
+		this._summarizeProtocolTree = shouldEnableSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
