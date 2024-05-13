@@ -239,10 +239,6 @@ export class ConnectionManager implements IConnectionManager {
 
 	public readonly clientDetails: IClientDetails;
 
-	public get supportedFeatures(): Record<string, unknown> | undefined {
-		return this.connection?.supportedFeatures;
-	}
-
 	/**
 	 * The current connection mode, initially read.
 	 */

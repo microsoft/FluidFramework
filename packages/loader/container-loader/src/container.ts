@@ -963,9 +963,9 @@ export class Container
 		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree ??
-			(typeof this._deltaManager.connectionManager.supportedFeatures
+			(typeof this._deltaManager.connectionManager.connectionDetails?.supportedFeatures
 				?.enable_single_commit_summary === "boolean"
-				? this._deltaManager.connectionManager.supportedFeatures
+				? this._deltaManager.connectionManager.connectionDetails?.supportedFeatures
 						?.enable_single_commit_summary
 				: false);
 
