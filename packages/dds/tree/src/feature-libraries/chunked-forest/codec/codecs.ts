@@ -22,7 +22,10 @@ export interface FieldBatchEncodingContext {
 	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
-
+/**
+ * @remarks
+ * Fields in this batch currently don't have field schema for the root, which limits optimizations.
+ */
 export type FieldBatchCodec = IJsonCodec<
 	FieldBatch,
 	EncodedFieldBatch,

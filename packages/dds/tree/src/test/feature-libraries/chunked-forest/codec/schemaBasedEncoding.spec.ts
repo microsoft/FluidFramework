@@ -55,9 +55,11 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { testIdCompressor } from "../../../utils.js";
+import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createIdCompressor } from "../../../../../../../runtime/id-compressor/dist/idCompressor.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -293,19 +295,23 @@ describe("schemaBasedEncoding", () => {
 		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
+				const idCompressor = createIdCompressor(
+					assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+				);
 				const storedSchema = intoStoredSchema(schemaData);
-				const tree = treeFactory();
+				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
-				const cache = buildCache(storedSchema, defaultSchemaPolicy, testIdCompressor);
-				checkFieldEncode(anyFieldEncoder, cache, tree);
+				const cache = buildCache(storedSchema, defaultSchemaPolicy, idCompressor);
+				checkFieldEncode(anyFieldEncoder, cache, tree, idCompressor);
 
 				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
-					idCompressor: testIdCompressor,
+					idCompressor,
 				};
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				// End to end test
+				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], context);
 				const result = codec.decode(encoded, context);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);

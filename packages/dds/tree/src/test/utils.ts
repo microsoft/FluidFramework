@@ -16,7 +16,11 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	SessionId,
+	assertIsStableId,
+	createIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -1105,8 +1109,13 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	return { undoStack, redoStack, unsubscribe };
 }
 
+export function assertIsSessionId(sessionId: string): SessionId {
+	assertIsStableId(sessionId);
+	return sessionId as SessionId;
+}
+
 export const testIdCompressor = createAlwaysFinalizedIdCompressor(
-	"00000000-0000-4000-b000-000000000000" as SessionId,
+	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 );
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();

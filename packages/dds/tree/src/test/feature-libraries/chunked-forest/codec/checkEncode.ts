@@ -31,6 +31,7 @@ import {
 import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,
@@ -51,21 +52,26 @@ export function checkFieldEncode(
 	shape: FieldEncoder,
 	cache: EncoderCache,
 	tree: JsonableTree[],
+	idCompressor?: IIdCompressor,
 ): BufferFormat {
 	const buffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeField(tree);
 	shape.encodeField(cursor, cache, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree]);
+	checkDecode([buffer], [tree], idCompressor);
 
 	return buffer.slice(1);
 }
 
-function checkDecode(buffer: BufferFormat[], tree: JsonableTree[][]): void {
+function checkDecode(
+	buffer: BufferFormat[],
+	tree: JsonableTree[][],
+	idCompressor?: IIdCompressor,
+): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false);
-	testDecode(buffer, tree, () => true);
+	testDecode(buffer, tree, () => false, idCompressor);
+	testDecode(buffer, tree, () => true, idCompressor);
 }
 
 /**
@@ -79,13 +85,14 @@ function testDecode(
 	buffer: BufferFormat[],
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
+	idCompressor?: IIdCompressor,
 ): EncodedFieldBatch {
 	const chunk = handleShapesAndIdentifiers(version, cloneArrays(buffer), identifierFilter);
 
 	// TODO: check chunk matches schema
 
 	// Check decode
-	const result = decode(chunk, testIdCompressor);
+	const result = decode(chunk, idCompressor ?? testIdCompressor);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
 	// handles can't be roundtripped through JSON. the FluidSerializer can't be
@@ -110,7 +117,7 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(parsed, testIdCompressor);
+		const parsedResult = decode(parsed, idCompressor ?? testIdCompressor);
 		assert.deepEqual(parsedResult, result);
 	}
 
