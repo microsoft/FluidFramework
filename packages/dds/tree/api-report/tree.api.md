@@ -4,13 +4,9 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
