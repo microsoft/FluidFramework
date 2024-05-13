@@ -26,6 +26,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ILoadTestConfig } from "./testConfigFile.js";
 
@@ -76,22 +77,23 @@ export class LoadTestDataStoreModel {
 			resolveIfConnectedOrDisposed();
 		});
 
-		const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
+		const lastKnownSeq = deltaManager.lastKnownSeqNumber;
 		assert(
-			runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
+			deltaManager.lastSequenceNumber <= lastKnownSeq,
 			"lastKnownSeqNumber should never be below last processed sequence number",
 		);
 
 		await new Promise<void>((resolve) => {
 			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					runtime.deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			runtime.deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
 		});
@@ -470,8 +472,10 @@ export class LoadTestDataStoreModel {
 			const now = Date.now();
 			const totalMin = (now - this.startTime) / 60000;
 			const taskMin = this.totalTaskTime / 60000;
-			const opCount = this.runtime.deltaManager.lastKnownSeqNumber;
-			const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+
+			const deltaManager = toDeltaManagerInternal(this.runtime.deltaManager);
+			const opCount = deltaManager.lastKnownSeqNumber;
+			const opRate = Math.floor(deltaManager.lastKnownSeqNumber / totalMin);
 			const sendRate = Math.floor(this.counter.value / taskMin);
 			const disposed = this.runtime.disposed;
 			const blobsEnabled = (this.config.testConfig.totalBlobCount ?? 0) > 0;

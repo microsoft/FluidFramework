@@ -43,3 +43,4 @@ export {
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
+export { toDeltaManagerErased, toDeltaManagerInternal } from "./deltaManager.js";
