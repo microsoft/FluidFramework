@@ -71,21 +71,28 @@ export interface ITree extends IChannel {
 export interface ITreeConfigurationOptions {
 	/**
 	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
+	 * and throw an error if the new content doesn't match the expected schema. Defaults to `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
 	 */
-	enableSchemaValidation: boolean;
+	enableSchemaValidation?: boolean;
 }
 
-const defaultTreeConfigurationOptions: ITreeConfigurationOptions = {
+const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 	enableSchemaValidation: false,
 };
 
 /**
- * Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * Configuration for how to {@link ITree.schematize | schematize} a tree.
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-	public readonly options: ITreeConfigurationOptions;
+	/**
+	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 */
+	public readonly options: Required<ITreeConfigurationOptions>;
 
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
@@ -93,8 +100,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 	 * (meaning it does not even have any schema set at all).
 	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
 	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
-	 * @param enableSchemaValidation - If true, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
+	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
 	 */
 	public constructor(
 		public readonly schema: TSchema,

@@ -1102,7 +1102,7 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 
 // @public
 export interface ITreeConfigurationOptions {
-    enableSchemaValidation: boolean;
+    enableSchemaValidation?: boolean;
 }
 
 // @internal
@@ -1852,8 +1852,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly options: ITreeConfigurationOptions;
+    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }

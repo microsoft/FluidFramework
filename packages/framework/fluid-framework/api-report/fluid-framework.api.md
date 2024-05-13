@@ -552,7 +552,7 @@ export interface ITree extends IChannel {
 
 // @public
 export interface ITreeConfigurationOptions {
-    enableSchemaValidation: boolean;
+    enableSchemaValidation?: boolean;
 }
 
 // @alpha @sealed
@@ -928,8 +928,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly options: ITreeConfigurationOptions;
+    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }

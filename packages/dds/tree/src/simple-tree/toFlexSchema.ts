@@ -70,6 +70,17 @@ function cursorFromUnhydratedRoot(
 	);
 }
 
+/**
+ *
+ * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * @param schemaAndPolicy - Stored schema and policy for the tree. If the policy specifies
+ * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
+ * object.
+ * @returns A configuration object for a FlexTree.
+ *
+ * @privateremarks
+ * TODO: Improve docs
+ */
 export function toFlexConfig(
 	config: TreeConfiguration,
 	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,

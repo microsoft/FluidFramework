@@ -33,7 +33,7 @@ import {
 import { brand } from "../../../util/index.js";
 
 /**
- * Creates a schema and policy and indicates stored schema validation should be performed.
+ * Creates a schema and policy. Indicates stored schema validation should be performed.
  */
 function createSchemaAndPolicy(
 	nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
