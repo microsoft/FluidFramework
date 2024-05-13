@@ -114,26 +114,13 @@ use_old_TypeAliasDeclaration_TaskEventListener(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TaskManager": {"forwardCompat": false}
+ * "RemovedClassDeclaration_TaskManager": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_TaskManager():
-    TypeOnly<old.TaskManager>;
-declare function use_current_ClassDeclaration_TaskManager(
-    use: TypeOnly<current.TaskManager>): void;
-use_current_ClassDeclaration_TaskManager(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_TaskManager());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_TaskManager": {"backCompat": false}
+ * "RemovedClassDeclaration_TaskManager": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_TaskManager():
-    TypeOnly<current.TaskManager>;
-declare function use_old_ClassDeclaration_TaskManager(
-    use: TypeOnly<old.TaskManager>): void;
-use_old_ClassDeclaration_TaskManager(
-    get_current_ClassDeclaration_TaskManager());
