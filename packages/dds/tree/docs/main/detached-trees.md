@@ -14,9 +14,7 @@ This keeps the contents of the removed subtree in the forest instead of erasing 
 
 Keeping all detached trees forever would lead to unbounded memory growth in clients,
 and would run the risk of seriously bloating the document's snapshot size.
-In order to avoid that, we intend to
-(this is not implemented at the time of writing)
-garbage-collect detached trees.
+In order to avoid that, detached trees will be garbage collected (though this is not yet implemented as of April 2024).
 How this happens is covered further down,
 but the key idea is that most of our systems are allowed to ignore the existence of this garbage collection scheme,
 thereby making those systems' contracts and implementations simpler.
@@ -28,10 +26,10 @@ Detached trees are needed when a removed tree's contents
 become relevant again.
 There are four scenarios where this can happen:
 
--   Updating the view after reverting a commit
--   Updating the view after aborting a transaction
--   Updating the view after rebasing a local branch
--   Updating the view after merging in a rebased commit
+-   Updating the `TreeCheckout` after reverting a commit
+-   Updating the `TreeCheckout` after aborting a transaction
+-   Updating the `TreeCheckout` after rebasing a local branch
+-   Updating the `TreeCheckout` after merging in a rebased commit
 
 ### After Reverting a Commit
 
@@ -121,10 +119,10 @@ but this complexity is contained in a relatively small body of code that exists 
 
 This approach allows us to think of SharedTree as a composite DDS made up of two sub-DDSes:
 
--   One that is concerned with the existence of trees:
-    -   New trees can be created
-    -   Trees are never deleted, but clients are allowed to forget their existence/contents
-    -   Clients can refresh one-another on the existence and contents of trees
+-   One that is concerned with the existence of nodes:
+    -   New nodes can be created
+    -   Nodes are never deleted, but clients are allowed to forget their existence/contents
+    -   Clients can refresh one-another on the existence of detached nodes and their descendants
 -   One that is concerned with the location of nodes with respect to one-another:
     -   Nodes can be moved (which includes removal and restoration)
 
@@ -207,7 +205,7 @@ which is why `DetachedNodeId`s are a straightforward copy of `ChangeAtomId`s.
 The `Forest`, `AnchorSet`, and `DeltaVisitor` abstractions do not feature the concept of detached tree.
 At this layer, we identify detached trees using a path that starts in a detached field.
 (The same kind of field as the one that contains the root of the document.)
-We may decide to force these abstractions to adopt the concept detached tree in the future if we see a benefit.
+We may decide to force these abstractions to adopt the concept of a detached tree in the future if we see a benefit.
 
 The current approach has the following consequences:
 
@@ -238,14 +236,14 @@ function detachedNodeIdToPath(id: DetachedNodeId): UpPath {
 
 While this would work, it has the following drawbacks:
 
-1. The overhear per detached tree may be prohibitive in scenarios (like text editing)
+1. The overhead per detached tree may be prohibitive in scenarios (like text editing)
    that lead to a large number of small detached trees,
    because the `Forest` would have to store a string of the form `detached-<major>-<minor>` for each detached tree.
 2. It assumes we are able to dictate to `DeltaVisitor`s (specifically, to `Forest`s) how they should identify detached trees.
    This is not currently an issue because we do have that ability,
    but it is possible we will want to allow `Forest`s to have their own (more efficient) scheme for identifying them.
    This point is weak on its own, but it provides an incentive to pick an approach that,
-   on top of addressing point 1, also addresses it.
+   on top of addressing point 1, also addresses this concern.
 
 #### The Current Scheme
 
