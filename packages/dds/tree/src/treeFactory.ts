@@ -4,7 +4,6 @@
  */
 
 import {
-	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
