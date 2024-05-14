@@ -8,8 +8,8 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { Ink } from "./ink.js";
 import { pkgVersion } from "./packageVersion.js";

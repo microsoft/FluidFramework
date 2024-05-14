@@ -20,7 +20,10 @@ import {
 import { type IDirectory } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import type { ISharedObjectKind, SharedObjectKind } from "@fluidframework/shared-object-base";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import {
 	type ContainerSchema,

@@ -9,7 +9,7 @@ import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
@@ -21,7 +21,7 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';

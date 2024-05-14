@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 
 import { SharedPropertyTree } from "./propertyTree.js";
 import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyTreeExtFactories.js";

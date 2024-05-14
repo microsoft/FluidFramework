@@ -4,7 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type { InitialObjects } from "../index.js";

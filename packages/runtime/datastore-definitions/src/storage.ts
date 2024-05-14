@@ -5,7 +5,7 @@
 
 /**
  * Represents the attributes of a channel/DDS.
- * @public
+ * @alpha
  */
 export interface IChannelAttributes {
 	/**

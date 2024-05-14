@@ -25,7 +25,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
 	SummaryTreeBuilder,

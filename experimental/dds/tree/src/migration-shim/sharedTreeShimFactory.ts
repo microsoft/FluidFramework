@@ -9,7 +9,7 @@ import {
 	type IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+} from '@fluidframework/datastore-definitions/internal';
 import type { ITree } from '@fluidframework/tree';
 
 import { SharedTreeShim } from './sharedTreeShim.js';

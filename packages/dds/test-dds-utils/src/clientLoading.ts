@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,

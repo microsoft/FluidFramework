@@ -15,7 +15,7 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";

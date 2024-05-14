@@ -10,7 +10,6 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -19,6 +18,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,

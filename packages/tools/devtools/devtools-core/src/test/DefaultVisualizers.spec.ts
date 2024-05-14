@@ -14,7 +14,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree/internal";
 import { expect } from "chai";

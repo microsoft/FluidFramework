@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 

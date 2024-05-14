@@ -89,7 +89,7 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,

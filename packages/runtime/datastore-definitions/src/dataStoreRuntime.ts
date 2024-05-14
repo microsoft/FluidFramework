@@ -44,7 +44,7 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,

@@ -13,7 +13,7 @@ import {
 	type IResponse,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";

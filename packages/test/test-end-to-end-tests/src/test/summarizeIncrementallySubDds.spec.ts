@@ -14,7 +14,7 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,

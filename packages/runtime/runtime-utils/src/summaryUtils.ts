@@ -27,12 +27,14 @@ import {
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-	IGarbageCollectionData,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ISummarizeResult } from "@fluidframework/runtime-definitions/internal";
+import {
+	IGarbageCollectionData,
+	ISummarizeResult,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Combines summary stats by adding their totals together.

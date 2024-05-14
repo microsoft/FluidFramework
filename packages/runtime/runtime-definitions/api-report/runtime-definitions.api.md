@@ -289,7 +289,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @public
+// @alpha
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];

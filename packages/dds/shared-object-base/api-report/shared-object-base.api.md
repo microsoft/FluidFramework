@@ -7,23 +7,23 @@
 import { ErasedType } from '@fluidframework/core-interfaces/internal';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -66,7 +66,7 @@ export interface IFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
-// @public
+// @alpha
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
@@ -80,7 +80,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @public
+// @alpha
 export interface ISharedObjectKind<TSharedObject> {
     create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
     getFactory(): IChannelFactory<TSharedObject>;

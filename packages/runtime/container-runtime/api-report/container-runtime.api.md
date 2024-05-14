@@ -39,7 +39,7 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleContext as IFluidHandleContext_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';

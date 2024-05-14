@@ -7,10 +7,10 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,

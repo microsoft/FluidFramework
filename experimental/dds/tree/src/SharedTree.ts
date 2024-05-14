@@ -13,7 +13,7 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+} from '@fluidframework/datastore-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';

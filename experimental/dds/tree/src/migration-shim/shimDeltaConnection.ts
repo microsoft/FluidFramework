@@ -9,7 +9,7 @@ import {
 	type IChannelAttributes,
 	type IDeltaConnection,
 	type IDeltaHandler,
-} from '@fluidframework/datastore-definitions';
+} from '@fluidframework/datastore-definitions/internal';
 
 import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 

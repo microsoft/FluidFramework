@@ -10,7 +10,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, noopValidator } from "../../codec/index.js";

@@ -15,7 +15,7 @@ import {
 	IDeltaConnection,
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,

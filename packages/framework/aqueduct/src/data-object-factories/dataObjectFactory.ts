@@ -4,7 +4,7 @@
  */
 
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedMap,
 	DirectoryFactory,

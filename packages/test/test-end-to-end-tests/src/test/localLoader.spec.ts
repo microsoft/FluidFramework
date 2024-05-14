@@ -10,7 +10,7 @@ import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";

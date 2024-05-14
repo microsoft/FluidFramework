@@ -24,8 +24,8 @@ import {
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,

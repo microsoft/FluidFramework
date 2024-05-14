@@ -9,7 +9,10 @@ import type {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import type { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Type of "valueChanged" event parameter.

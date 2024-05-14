@@ -8,7 +8,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 

@@ -18,18 +18,18 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	ISequencedDocumentMessage,
 	type IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -792,7 +792,7 @@ export abstract class SharedObject<
  * For use internally and in the "encapsulated API".
  * See {@link SharedObjectKind} for the type erased version for use in the public declarative API.
  *
- * @public
+ * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**

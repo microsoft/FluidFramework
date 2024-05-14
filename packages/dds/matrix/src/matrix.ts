@@ -14,7 +14,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	type IChannel,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,

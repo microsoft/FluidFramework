@@ -7,7 +7,7 @@
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';

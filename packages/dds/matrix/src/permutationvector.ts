@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,

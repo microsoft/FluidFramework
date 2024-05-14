@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISharedObject } from "@fluidframework/shared-object-base";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Defines a set of functions to be passed to the GC test runner.

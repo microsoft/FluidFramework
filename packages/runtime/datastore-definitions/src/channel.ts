@@ -10,13 +10,13 @@ import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -268,7 +268,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @public
+ * @alpha
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**

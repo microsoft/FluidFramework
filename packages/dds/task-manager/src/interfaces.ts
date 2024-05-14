@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Describes the event listener format for {@link ITaskManagerEvents} events.

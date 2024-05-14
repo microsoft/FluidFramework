@@ -17,7 +17,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';

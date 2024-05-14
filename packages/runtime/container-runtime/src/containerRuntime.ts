@@ -69,12 +69,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
