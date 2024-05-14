@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { Command, Flags } from "@oclif/core";
@@ -17,7 +17,7 @@ let logger: ITelemetryBufferedLogger = _global.getTestLogger?.({
 	// The telemetry libraries have issues with reporting synchronous flush completion.
 	// If the process exits too early, some telemetry may be lost. 5s here is likely a bit
 	// paranoid, but not much in the grand scheme of the pipeline.
-	afterFlushDelayMs: 5_000,
+	afterFlushDelayMs: 5000,
 	// This strategy of emitting an event with summary stats from each benchmark generates many telemetry
 	// events in a small window of time.
 	// The default test logger has client-side throttling (which is useful for contexts like e2e tests,
@@ -67,8 +67,8 @@ export class EntryPoint extends Command {
 			// one needs to be very familiar with Node's module resolution strategy and understand exactly which file
 			// is the one getting executed at runtime (since that's where the relative path will be resolved from).
 			handler = (await import(flags.handlerModule)).default;
-		} catch (err) {
-			exitWithError(`Unexpected error importing specified handler module.\n${err}`);
+		} catch (error) {
+			exitWithError(`Unexpected error importing specified handler module.\n${error}`);
 		}
 
 		if (typeof handler !== "function") {
@@ -84,18 +84,18 @@ export class EntryPoint extends Command {
 			const stat = fs.statSync(dir);
 			if (stat.isDirectory()) {
 				const dirEnts = fs.readdirSync(dir, { withFileTypes: true });
-				dirEnts.forEach((dirent) => {
+				for (const dirent of dirEnts) {
 					const direntFullPath = path.join(dir, dirent.name);
 					if (dirent.isDirectory()) {
 						dirs.push(direntFullPath);
-						return;
+						continue;
 					}
 					// We expect the files to be processed to be .json files. Ignore everything else.
 					if (!dirent.name.endsWith(".json")) {
-						return;
+						continue;
 					}
 					filesToProcess.push(direntFullPath);
-				});
+				}
 			} else if (stat.isFile()) {
 				filesToProcess.push(dir);
 			} else {
@@ -103,21 +103,23 @@ export class EntryPoint extends Command {
 			}
 		}
 
-		filesToProcess.forEach((fullPath) => {
+		for (const fullPath of filesToProcess) {
 			try {
 				console.log(`Processing file '${fullPath}'`);
 				const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
 				handler(data, logger);
-			} catch (err: any) {
-				console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
+			} catch (error: unknown) {
+				console.error(
+					`Unexpected error processing file '${fullPath}'.\n${(error as Error).stack}`,
+				);
 			}
-		});
+		}
 
 		await logger.flush();
 	}
 }
 
-function exitWithError(errorMessage: string) {
+function exitWithError(errorMessage: string): void {
 	console.error(errorMessage);
 	process.exit(1);
 }

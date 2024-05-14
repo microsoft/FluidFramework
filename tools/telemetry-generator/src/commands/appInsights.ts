@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 import { Command, Flags } from "@oclif/core";
 import * as appInsight from "applicationinsights";
@@ -54,8 +54,8 @@ export class EntryPoint extends Command {
 			// one needs to be very familiar with Node's module resolution strategy and understand exactly which file
 			// is the one getting executed at runtime (since that's where the relative path will be resolved from).
 			handler = (await import(flags.handlerModule)).default;
-		} catch (err) {
-			exitWithError(`Unexpected error importing specified handler module.\n${err}`);
+		} catch (error) {
+			exitWithError(`Unexpected error importing specified handler module.\n${error}`);
 		}
 
 		if (typeof handler !== "function") {
@@ -73,18 +73,18 @@ export class EntryPoint extends Command {
 			const stat = fs.statSync(dir);
 			if (stat.isDirectory()) {
 				const dirEnts = fs.readdirSync(dir, { withFileTypes: true });
-				dirEnts.forEach((dirent) => {
+				for (const dirent of dirEnts) {
 					const direntFullPath = path.join(dir, dirent.name);
 					if (dirent.isDirectory()) {
 						dirs.push(direntFullPath);
-						return;
+						continue;
 					}
 					// We expect the files to be processed to be .json files. Ignore everything else.
 					if (!dirent.name.endsWith(".json")) {
-						return;
+						continue;
 					}
 					filesToProcess.push(direntFullPath);
-				});
+				}
 			} else if (stat.isFile()) {
 				filesToProcess.push(dir);
 			} else {
@@ -92,15 +92,15 @@ export class EntryPoint extends Command {
 			}
 		}
 
-		filesToProcess.forEach((fullPath) => {
+		for (const fullPath of filesToProcess) {
 			try {
 				console.log(`Processing file '${fullPath}'`);
 				const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
 				handler(data, telemetryClient);
-			} catch (err: any) {
-				console.error(`Unexpected error processing file '${fullPath}'.\n${err.stack}`);
+			} catch (error: any) {
+				console.error(`Unexpected error processing file '${fullPath}'.\n${error.stack}`);
 			}
-		});
+		}
 
 		telemetryClient.flush();
 	}

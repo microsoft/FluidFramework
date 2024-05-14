@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/** Interface to make it easier to parse json returned from the timeline REST API */
+/**
+ * Interface to make it easier to parse json returned from the timeline REST API
+ */
 interface ParsedJob {
 	stageName: string;
 	startTime: number;
@@ -22,10 +24,10 @@ module.exports = function handler(fileData, logger) {
 	if (fileData.records?.length === undefined || fileData.records?.length === 0) {
 		console.log(`could not locate records info`);
 	}
-	if (process.env.BUILD_ID !== undefined) {
-		console.log("BUILD_ID", process.env.BUILD_ID);
-	} else {
+	if (process.env.BUILD_ID === undefined) {
 		console.log("BUILD_ID not defined.");
+	} else {
+		console.log("BUILD_ID", process.env.BUILD_ID);
 	}
 
 	// Note: type == "Task" would include tasks from the stages in the result set. It might be interesting in the future - for now we will only collect stages.

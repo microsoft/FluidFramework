@@ -11,14 +11,14 @@
  * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
  */
 module.exports = function handler(fileData, logger) {
-	if (fileData.resultSummary == null) {
+	if (fileData.resultSummary == undefined) {
 		console.log(`Could not locate test result info.`);
 		return;
 	}
-	if (process.env.BUILD_ID !== undefined) {
-		console.log("BUILD_ID", process.env.BUILD_ID);
-	} else {
+	if (process.env.BUILD_ID === undefined) {
 		console.log("BUILD_ID not defined.");
+	} else {
+		console.log("BUILD_ID", process.env.BUILD_ID);
 	}
 	const resultSummary = fileData.resultSummary.resultSummaryByRunState.Completed;
 	console.log(resultSummary);
@@ -26,7 +26,7 @@ module.exports = function handler(fileData, logger) {
 	const passedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Passed?.count ?? 0;
 	const failedTests: number = resultSummary.aggregatedResultDetailsByOutcome.Failed?.count ?? 0;
 	const totalTests = passedTests + failedTests;
-	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
+	const passRate = totalTests === 0 ? 0 : passedTests / totalTests;
 	console.log(passRate);
 
 	logger.send({
