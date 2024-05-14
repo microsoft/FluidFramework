@@ -9,7 +9,7 @@ module.exports = {
 		"prettier",
 	],
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: ["./tsconfig.lint.json"],
 	},
 	settings: {
 		"import/resolver": "node",

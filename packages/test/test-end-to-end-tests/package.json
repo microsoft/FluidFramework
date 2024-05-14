@@ -149,27 +149,8 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"compile": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"ci:build": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"build:test": [
-				"...",
-				"^build:esnext"
-			],
 			"build:test:esm": [
-				"...",
-				"^tsc",
+				"^build:esnext",
 				"build:genver"
 			]
 		}
