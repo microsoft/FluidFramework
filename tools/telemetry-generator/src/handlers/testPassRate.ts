@@ -10,8 +10,8 @@
  * @param fileData - A JSON object obtained by calling JSON.parse() on the contents of a file.
  * @param logger - An ITelemetryBufferedLogger. Call its send() method to write the output telemetry events.
  */
-module.exports = function handler(fileData, logger) {
-	if (fileData.resultSummary == undefined) {
+module.exports = function handler(fileData, logger): void {
+	if (fileData.resultSummary === undefined) {
 		console.log(`Could not locate test result info.`);
 		return;
 	}

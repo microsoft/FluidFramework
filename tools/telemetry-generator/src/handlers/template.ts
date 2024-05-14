@@ -7,7 +7,7 @@
  * This is a template for how to define a handler file that can be passed to this tool to process
  * arbitrary JSON files.
  */
-module.exports = function handler(fileData, logger) {
+module.exports = function handler(fileData, logger): void {
 	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
 	// - logger is an ITelemetryBufferedLogger. Call its send() method to write the output telemetry
 	//   events.

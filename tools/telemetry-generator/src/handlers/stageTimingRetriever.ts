@@ -15,7 +15,7 @@ interface ParsedJob {
 	result: string;
 }
 
-module.exports = function handler(fileData, logger) {
+module.exports = function handler(fileData, logger): void {
 	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
 	// In this particular handler, we are using the timeline REST API to retrieve the status of the pipeline:
 	// Ex. https://dev.azure.com/fluidframework/internal/_apis/build/builds/<buildId>/timeline?api-version=6.0-preview.1
