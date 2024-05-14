@@ -163,7 +163,7 @@ export class DocumentPartition {
 	private markAsCorrupt(error: any, message?: IQueuedMessage) {
 		if (this.closed) {
 			Lumberjack.info(
-				"Skipping marking document as corrupt as the document partition is already closed",
+				"Skipping marking document as corrupt since the document partition is already closed",
 				{ ...getLumberBaseProperties(this.documentId, this.tenantId), error },
 			);
 			return;
