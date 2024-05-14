@@ -1041,7 +1041,15 @@ function replaceIdMapRevisions<T>(
 	);
 }
 
-function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
+interface BuildsDestroysAndRefreshers {
+	readonly allBuilds: ChangeAtomIdMap<TreeChunk>;
+	readonly allDestroys: ChangeAtomIdMap<number>;
+	readonly allRefreshers: ChangeAtomIdMap<TreeChunk>;
+}
+
+function composeBuildsDestroysAndRefreshers(
+	changes: TaggedChange<ModularChangeset>[],
+): BuildsDestroysAndRefreshers {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 	const allDestroys: ChangeAtomIdMap<number> = new Map();
 	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
