@@ -112,7 +112,7 @@ describe("Data Store Creation Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: globalRegistry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				baselogger: createChildLogger(),
 				clientDetails: {},
 			} as unknown as ContainerRuntime;
 			const summarizerNode = createRootSummarizerNodeWithGC(

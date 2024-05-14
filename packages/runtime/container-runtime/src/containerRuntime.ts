@@ -1350,7 +1350,8 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		readonly baseLogger: ITelemetryBaseLogger,
+		// Create a custom ITelemetryBaseLogger to output telemetry events.
+		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
