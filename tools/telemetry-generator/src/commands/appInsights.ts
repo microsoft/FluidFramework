@@ -45,7 +45,7 @@ export class EntryPoint extends Command {
 		},
 	];
 
-	async run() {
+	async run(): Promise<void> {
 		const { flags } = await this.parse(EntryPoint);
 
 		let handler;
@@ -106,7 +106,8 @@ export class EntryPoint extends Command {
 	}
 }
 
-function exitWithError(errorMessage: string) {
+function exitWithError(errorMessage: string): void {
 	console.error(errorMessage);
+	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(1);
 }

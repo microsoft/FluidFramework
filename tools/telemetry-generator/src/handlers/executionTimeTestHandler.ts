@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-module.exports = function handler(fileData, logger) {
+module.exports = function handler(fileData, logger): void {
 	if (process.env.FLUID_ENDPOINTNAME === undefined) {
 		console.log("ENDPOINTNAME not defined using local as default.");
 	} else {

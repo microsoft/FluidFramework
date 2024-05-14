@@ -9,7 +9,7 @@ import { TelemetryClient } from "applicationinsights";
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.tests.length} total benchmark tests to emit`);
 	fileData.tests.forEach(async (testData) => {
 		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;

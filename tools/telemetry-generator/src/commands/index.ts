@@ -12,6 +12,7 @@ import { Command, Flags } from "@oclif/core";
 import { ConsoleLogger } from "../logger";
 
 // Allow for dynamic injection of a logger. Leveraged in internal CI pipelines.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const _global: any = global;
 let logger: ITelemetryBufferedLogger = _global.getTestLogger?.({
 	// The telemetry libraries have issues with reporting synchronous flush completion.
@@ -58,7 +59,7 @@ export class EntryPoint extends Command {
 		},
 	];
 
-	async run() {
+	async run(): Promise<void> {
 		const { flags } = await this.parse(EntryPoint);
 
 		let handler;
@@ -121,5 +122,6 @@ export class EntryPoint extends Command {
 
 function exitWithError(errorMessage: string): void {
 	console.error(errorMessage);
+	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(1);
 }

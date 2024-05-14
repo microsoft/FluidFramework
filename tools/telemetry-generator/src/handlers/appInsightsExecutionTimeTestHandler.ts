@@ -9,7 +9,7 @@ import { TelemetryClient } from "applicationinsights";
  * This handler emits metrics to the Azure App Insights instance configured by the telemetryClient provided to this handler.
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
-module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
+module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
 	fileData.benchmarks.forEach(async (testData) => {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
