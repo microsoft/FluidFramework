@@ -20,7 +20,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITestContainerConfig } from '@fluidframework/test-utils/internal';
 import { ITestObjectProvider } from '@fluidframework/test-utils/internal';
@@ -31,7 +31,7 @@ import * as orderedCollection from '@fluidframework/ordered-collection/internal'
 import * as registerCollection from '@fluidframework/register-collection/internal';
 import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
-import { SharedObjectKind } from '@fluidframework/shared-object-base';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils/internal';

@@ -43,6 +43,13 @@ import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 // ContainerRuntime and Data Runtime API
 import * as semver from "semver";
 
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+// Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
+// For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
+export type _fakeUsage = ISharedObjectKind<unknown>;
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
