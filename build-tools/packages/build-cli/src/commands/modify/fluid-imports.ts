@@ -9,8 +9,13 @@ import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
-import { BaseCommand } from "../../base";
-import { ApiLevel, getApiExports, isKnownApiLevel, knownApiLevels } from "../../library";
+import {
+	ApiLevel,
+	BaseCommand,
+	getApiExports,
+	isKnownApiLevel,
+	knownApiLevels,
+} from "../../library";
 import type { CommandLogger } from "../../logging";
 
 const maxConcurrency = 4;

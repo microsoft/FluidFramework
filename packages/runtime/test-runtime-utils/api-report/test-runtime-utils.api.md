@@ -26,9 +26,10 @@ import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-
 import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
-import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
+import { IDeltaManagerErased } from '@fluidframework/datastore-definitions';
+import { IDeltaManagerEvents } from '@fluidframework/container-definitions/internal';
+import { IDeltaQueue } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
@@ -60,7 +61,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
-import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ReadOnlyInfo } from '@fluidframework/container-definitions/internal';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
@@ -485,7 +486,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
-    deltaManager: MockDeltaManager;
+    get deltaManager(): IDeltaManagerErased;
+    // (undocumented)
+    deltaManagerInternal: MockDeltaManager;
     // (undocumented)
     dispose(): void;
     // (undocumented)
