@@ -1,5 +1,26 @@
 # @fluidframework/container-runtime-definitions
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Type Erase IFluidDataStoreRuntime.deltaManager [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Make IFluidDataStoreRuntime.deltaManager have an opaque type.
+    Marks the following types which were reachable from it as alpha:
+
+    -   IConnectionDetails
+    -   IDeltaSender
+    -   IDeltaManagerEvents
+    -   IDeltaManager
+    -   IDeltaQueueEvents
+    -   IDeltaQueue
+    -   ReadOnlyInfo
+
+    As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
+
+    Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

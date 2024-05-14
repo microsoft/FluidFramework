@@ -3,27 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
 	 */
 	public readonly absolutePath: string;
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
-	 */
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.isAttached}
@@ -69,6 +63,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
+		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
@@ -99,7 +94,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
 	 */
-	public bind(handle: IFluidHandle) {
+	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

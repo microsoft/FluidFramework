@@ -16,6 +16,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -23,9 +24,10 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import { Deferred } from "@fluidframework/core-utils/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type IPendingContainerState,
 	SerializedStateManager,
@@ -166,6 +168,13 @@ function generateSavedOp(seq: number): ISequencedDocumentMessage {
 	} as any as ISequencedDocumentMessage;
 }
 
+function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger) {
+	return mixinMonitoringContext(logger, {
+		getRawConfig: (name) =>
+			name === "Fluid.Container.enableOfflineSnapshotRefresh" ? true : undefined,
+	}).logger;
+}
+
 describe("serializedStateManager", () => {
 	let logger: MockLogger;
 
@@ -177,7 +186,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			false,
 			eventEmitter,
@@ -186,7 +195,7 @@ describe("serializedStateManager", () => {
 
 		await assert.rejects(
 			async () =>
-				serializedStateManager.getPendingLocalStateCore(
+				serializedStateManager.getPendingLocalState(
 					{
 						notifyImminentClosure: false,
 					},
@@ -203,7 +212,7 @@ describe("serializedStateManager", () => {
 	it("can get pending local state after attach", async () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			failSometimeProxy<ISerializedStateManagerDocumentStorageService>({
 				loadedGroupIdSnapshots: {},
 			}),
@@ -216,7 +225,7 @@ describe("serializedStateManager", () => {
 			baseSnapshot: snapshot,
 			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 		});
-		await serializedStateManager.getPendingLocalStateCore(
+		await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -232,7 +241,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			true,
 			eventEmitter,
@@ -244,7 +253,7 @@ describe("serializedStateManager", () => {
 		);
 		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
-		const state = await serializedStateManager.getPendingLocalStateCore(
+		const state = await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -257,7 +266,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			true,
 			eventEmitter,
@@ -270,7 +279,7 @@ describe("serializedStateManager", () => {
 		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "fromStorage");
 		assert.strictEqual(version.treeId, "fromStorage");
-		const state = await serializedStateManager.getPendingLocalStateCore(
+		const state = await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -292,7 +301,7 @@ describe("serializedStateManager", () => {
 		const getLatestSnapshotInfoP = new Deferred<void>();
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			true,
 			eventEmitter,
@@ -316,7 +325,7 @@ describe("serializedStateManager", () => {
 		}
 		// getting pending state without waiting for fetching new snapshot.
 		assert.strictEqual(getLatestSnapshotInfoP.isCompleted, false);
-		const state = await serializedStateManager.getPendingLocalStateCore(
+		const state = await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -342,7 +351,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			true,
 			eventEmitter,
@@ -366,7 +375,7 @@ describe("serializedStateManager", () => {
 			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 
-		const state = await serializedStateManager.getPendingLocalStateCore(
+		const state = await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -405,7 +414,7 @@ describe("serializedStateManager", () => {
 		});
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger.toTelemetryLogger(),
+			enableOfflineSnapshotRefresh(logger),
 			storageAdapter,
 			true,
 			eventEmitter,
@@ -423,7 +432,7 @@ describe("serializedStateManager", () => {
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		await serializedStateManager.waitForInitialRefresh;
 
-		const state = await serializedStateManager.getPendingLocalStateCore(
+		const state = await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
 			new MockRuntime(),
@@ -444,7 +453,7 @@ describe("serializedStateManager", () => {
 			const isDirtyF = () => (saved ? false : isDirty);
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -456,7 +465,8 @@ describe("serializedStateManager", () => {
 				undefined,
 				false,
 			);
-			assert.strictEqual(baseSnapshot.id, "fromPending");
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
+			assert.strictEqual(baseSnapshotTree.id, "fromPending");
 			assert.strictEqual(version, undefined);
 			// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
 			// serializedStateManager.snapshot
@@ -475,7 +485,7 @@ describe("serializedStateManager", () => {
 					firstProcessedOpSequenceNumber: 1,
 				},
 			]);
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -500,7 +510,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -533,7 +543,7 @@ describe("serializedStateManager", () => {
 					stashedSnapshotSequenceNumber: snapshotSequenceNumber,
 				},
 			]);
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -553,7 +563,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -581,7 +591,7 @@ describe("serializedStateManager", () => {
 				saved = true;
 				eventEmitter.emit("saved");
 			}
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -616,7 +626,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -627,7 +637,7 @@ describe("serializedStateManager", () => {
 
 			await serializedStateManager.fetchSnapshot(undefined, false);
 			await serializedStateManager.waitForInitialRefresh;
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -648,7 +658,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -681,7 +691,7 @@ describe("serializedStateManager", () => {
 				eventEmitter.emit("saved");
 			}
 
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -719,7 +729,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
-				logger.toTelemetryLogger(),
+				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -747,7 +757,7 @@ describe("serializedStateManager", () => {
 				eventEmitter.emit("saved");
 			}
 
-			const state = await serializedStateManager.getPendingLocalStateCore(
+			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
@@ -768,7 +778,7 @@ describe("serializedStateManager", () => {
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
-					logger.toTelemetryLogger(),
+					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -783,7 +793,7 @@ describe("serializedStateManager", () => {
 						return props;
 					},
 				};
-				const state = await serializedStateManager.getPendingLocalStateCore(
+				const state = await serializedStateManager.getPendingLocalState(
 					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,
@@ -801,7 +811,7 @@ describe("serializedStateManager", () => {
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
-					logger.toTelemetryLogger(),
+					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -824,7 +834,7 @@ describe("serializedStateManager", () => {
 						return props;
 					},
 				};
-				const state = await serializedStateManager.getPendingLocalStateCore(
+				const state = await serializedStateManager.getPendingLocalState(
 					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,
@@ -853,7 +863,7 @@ describe("serializedStateManager", () => {
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
-					logger.toTelemetryLogger(),
+					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -879,7 +889,7 @@ describe("serializedStateManager", () => {
 						return props;
 					},
 				};
-				const state = await serializedStateManager.getPendingLocalStateCore(
+				const state = await serializedStateManager.getPendingLocalState(
 					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,

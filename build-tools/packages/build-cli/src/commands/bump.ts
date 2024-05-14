@@ -24,9 +24,9 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
+	BaseCommand,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	setVersion,
@@ -40,7 +40,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		`The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
 
 	static readonly args = {
-		package_or_release_group: packageOrReleaseGroupArg,
+		package_or_release_group: packageOrReleaseGroupArg(),
 	} as const;
 
 	static readonly flags = {

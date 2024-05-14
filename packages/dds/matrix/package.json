@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -82,7 +82,7 @@
 		"test:mocha:esm": "mocha  --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -124,14 +124,14 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.0.0-internal.8.0.0",
+		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.0.0-rc.3.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^9.1.1",
@@ -154,8 +154,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_ISharedMatrix": {
+				"forwardCompat": false
+			},
 			"RemovedClassDeclaration_SharedMatrix": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

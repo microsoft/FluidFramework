@@ -46,7 +46,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024 });
+			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -293,13 +293,13 @@ describe("Pending State Manager", () => {
 		});
 
 		describe("getLocalState", () => {
-			it("removes ops with rsn lower than snapshot", () => {
+			it("removes ops with seq num lower than snapshot", () => {
 				const messages = Array.from({ length: 10 }, (_, i) => ({
 					clientId: "clientId",
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					referenceSequenceNumber: i,
+					sequenceNumber: i,
 				}));
 				submitBatch(messages);
 				process(messages);
@@ -360,10 +360,15 @@ describe("Pending State Manager", () => {
 
 			it("New format", () => {
 				const messages = [
-					{ type: "message", content: '{"type":"component"}' },
+					{
+						type: "message",
+						content: '{"type":"component"}',
+						referenceSequenceNumber: 10,
+					},
 					{
 						type: "message",
 						content: '{"type": "component", "contents": {"prop1": "value"}}',
+						referenceSequenceNumber: 10,
 					},
 				];
 				const pendingStateManager = createPendingStateManager(messages);
@@ -397,10 +402,11 @@ describe("Pending State Manager", () => {
 
 	describe("Pending messages state", () => {
 		const messages = [
-			{ type: "message", content: '{"type":"component"}' },
+			{ type: "message", content: '{"type":"component"}', referenceSequenceNumber: 10 },
 			{
 				type: "message",
 				content: '{"type": "component", "contents": {"prop1": "value"}}',
+				referenceSequenceNumber: 10,
 			},
 		];
 
@@ -491,6 +497,106 @@ describe("Pending State Manager", () => {
 				pendingStateManager.pendingMessagesCount,
 				messages.length * 2,
 				"Pending messages count should be same as pending + initial messages",
+			);
+		});
+	});
+
+	describe("Minimum sequence number", () => {
+		const messages: IPendingMessage[] = [
+			{
+				type: "message",
+				content: '{"type":"component"}',
+				referenceSequenceNumber: 10,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+			},
+			{
+				type: "message",
+				content: '{"type": "component", "contents": {"prop1": "value"}}',
+				referenceSequenceNumber: 11,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+			},
+			{
+				type: "message",
+				content: '{"type": "component", "contents": {"prop2": "value"}}',
+				referenceSequenceNumber: 12,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+			},
+			{
+				type: "message",
+				content: '{"type": "component", "contents": {"prop3": "value"}}',
+				referenceSequenceNumber: 12,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+			},
+		];
+
+		function createPendingStateManager(pendingStates?: IPendingMessage[]): PendingStateManager {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "123",
+					close: () => {},
+					connected: () => true,
+					reSubmit: () => {},
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
+				undefined /* logger */,
+			) as any;
+		}
+
+		it("minimum sequence number can be retrieved from initial messages", async () => {
+			const pendingStateManager = createPendingStateManager(messages);
+			await pendingStateManager.applyStashedOpsAt();
+
+			assert.strictEqual(
+				pendingStateManager.minimumPendingMessageSequenceNumber,
+				10,
+				"minimum sequence number should be the first message",
+			);
+
+			pendingStateManager.replayPendingStates();
+
+			assert.strictEqual(
+				pendingStateManager.minimumPendingMessageSequenceNumber,
+				undefined,
+				"Should have processed messages and thus have no min seq number",
+			);
+		});
+
+		it("minimum sequence number can be retrieved from pending messages", async () => {
+			const pendingStateManager = createPendingStateManager();
+			assert.strictEqual(
+				pendingStateManager.minimumPendingMessageSequenceNumber,
+				undefined,
+				"No pending messages should mean no minimum seq number",
+			);
+			for (const message of messages) {
+				pendingStateManager.onSubmitMessage(
+					message.content,
+					message.referenceSequenceNumber,
+					message.localOpMetadata,
+					message.opMetadata,
+				);
+			}
+
+			assert.strictEqual(
+				pendingStateManager.minimumPendingMessageSequenceNumber,
+				10,
+				"has pending messages and thus a minimum seq number",
+			);
+
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(
+				pendingStateManager.minimumPendingMessageSequenceNumber,
+				undefined,
+				"Should no minimum sequence number as there are no messages",
 			);
 		});
 	});

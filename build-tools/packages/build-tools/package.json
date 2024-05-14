@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.38.0",
+	"version": "0.39.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -62,7 +62,7 @@
 		"rimraf": "^4.4.1",
 		"semver": "^7.5.4",
 		"sort-package-json": "1.57.0",
-		"ts-morph": "^21.0.1",
+		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.1.6",
 		"yaml": "^2.3.1"
@@ -73,7 +73,6 @@
 		"@types/async": "^3.2.20",
 		"@types/fs-extra": "^8.1.2",
 		"@types/glob": "^7.2.0",
-		"@types/json5": "^2.2.0",
 		"@types/lodash": "^4.14.195",
 		"@types/lodash.isequal": "^4.5.6",
 		"@types/mocha": "^9.1.1",

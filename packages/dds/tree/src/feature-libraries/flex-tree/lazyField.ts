@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { StableId } from "@fluidframework/id-compressor";
 
 import {
 	CursorLocationType,
@@ -22,7 +21,6 @@ import {
 import {
 	assertValidIndex,
 	assertValidRangeIndices,
-	brand,
 	disposeSymbol,
 	fail,
 } from "../../util/index.js";
@@ -36,7 +34,6 @@ import {
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
-import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
 import { Context } from "./context.js";
@@ -44,7 +41,6 @@ import {
 	FlexTreeEntityKind,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeNodeKeyField,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
@@ -140,7 +136,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
 		if (fieldAnchor.parent !== undefined) {
 			const anchorNode =
-				context.forest.anchors.locate(fieldAnchor.parent) ??
+				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
 				fail("parent anchor node should always exist since field is under a node");
 			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
 				this[disposeSymbol]();
@@ -182,13 +178,13 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
 		this.offAfterDestroy?.();
 		if (this[anchorSymbol].parent === undefined) return;
-		this.context.forest.anchors.forget(this[anchorSymbol].parent);
+		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
 	}
 
 	public get length(): number {
@@ -246,11 +242,11 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		if (parentAnchor === undefined) {
 			return treeStatusFromDetachedField(keyAsDetachedField(fieldAnchor.fieldKey));
 		}
-		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
+		const parentAnchorNode = this.context.checkout.forest.anchors.locate(parentAnchor);
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
+		return treeStatusFromAnchorCache(parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {
@@ -298,9 +294,9 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		return this.map((x) => x);
 	}
 
-	private sequenceEditor(): SequenceFieldEditBuilder {
+	public sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.sequenceField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -329,15 +325,6 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.remove(index, 1);
-	}
-
-	public removeRange(start?: number, end?: number): void {
-		const fieldEditor = this.sequenceEditor();
-		const { length } = this;
-		const removeStart = start ?? 0;
-		const removeEnd = Math.min(length, end ?? length);
-		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;
@@ -438,7 +425,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		assertValidIndex(index, this, true);
 		const sourceFieldPath = sourceField.getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
-		this.context.editor.move(
+		this.context.checkout.editor.move(
 			sourceFieldPath,
 			sourceStart,
 			movedCount,
@@ -489,7 +476,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.valueField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -540,7 +527,7 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 
 	private optionalEditor(): OptionalFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = this.context.editor.optionalField(fieldPath);
+		const fieldEditor = this.context.checkout.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}
 
@@ -568,36 +555,6 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class LazyNodeKeyField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
-	implements FlexTreeNodeKeyField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.nodeKey, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
-	public get localNodeKey(): LocalNodeKey {
-		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
-		// forest rather than getting the StableNodeKey and the compressing it.
-		return this.context.nodeKeyManager.localizeNodeKey(this.stableNodeKey);
-	}
-
-	public get stableNodeKey(): StableNodeKey {
-		const cursor = this[cursorSymbol];
-		cursor.enterNode(0);
-		assert(cursor.type === nodeKeyTreeIdentifier, 0x7b2 /* invalid node key type */);
-		const stableKey = cursor.value;
-		assert(typeof stableKey === "string", 0x7b3 /* invalid node key type */);
-		cursor.exitNode();
-		return brand(stableKey as StableId);
-	}
-}
-
 export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.forbidden,
 	TTypes
@@ -612,7 +569,6 @@ type Builder = new <TTypes extends FlexAllowedTypes>(
 
 const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],

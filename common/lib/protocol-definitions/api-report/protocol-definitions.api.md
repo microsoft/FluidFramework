@@ -65,7 +65,7 @@ export interface IClient {
     user: IUser;
 }
 
-// @public
+// @alpha
 export interface IClientConfiguration {
     blockSize: number;
     maxMessageSize: number;
@@ -142,7 +142,7 @@ export interface IDocumentAttributes {
     sequenceNumber: number;
 }
 
-// @public
+// @alpha
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
@@ -361,7 +361,6 @@ export interface ISnapshotTree {
     groupId?: string;
     // (undocumented)
     id?: string;
-    omitted?: boolean;
     // (undocumented)
     trees: {
         [path: string]: ISnapshotTree;
@@ -456,7 +455,7 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public
+// @alpha
 export interface ITokenClaims {
     documentId: string;
     exp: number;

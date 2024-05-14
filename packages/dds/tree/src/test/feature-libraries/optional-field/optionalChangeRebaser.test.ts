@@ -104,15 +104,14 @@ const failCrossFieldManager: CrossFieldManager = {
 
 function toDelta(
 	change: OptionalChangeset,
-	revision?: RevisionTag,
 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
 ): DeltaFieldChanges {
-	return optionalFieldIntoDelta(tagChange(change, revision), deltaFromChild);
+	return optionalFieldIntoDelta(change, deltaFromChild);
 }
 
 function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
 	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
-		toDelta(c, change.revision, deltaFromChild),
+		toDelta(c, deltaFromChild),
 	);
 }
 
@@ -151,7 +150,7 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 
 function invert(change: TaggedChange<OptionalChangeset>, isRollback: boolean): OptionalChangeset {
 	const inverted = optionalChangeRebaser.invert(
-		change,
+		change.change,
 		isRollback,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
@@ -179,12 +178,14 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
 		change,
-		base,
+		base.change,
 		rebaseChild,
 		idAllocator,
 		moveEffects,
@@ -196,12 +197,12 @@ function rebase(
 }
 
 function rebaseWrapped(
-	change: WrappedChangeset,
+	change: TaggedChange<WrappedChangeset>,
 	base: TaggedChange<WrappedChangeset>,
 	metadataArg?: RebaseRevisionMetadata,
 ): WrappedChangeset {
 	return ChangesetWrapper.rebase(change, base, (c, b, rebaseChild) =>
-		rebase(c, b, metadataArg, rebaseChild),
+		rebase(c.change, b, metadataArg, rebaseChild),
 	);
 }
 
@@ -209,12 +210,12 @@ function rebaseWrappedTagged(
 	change: TaggedChange<WrappedChangeset>,
 	base: TaggedChange<WrappedChangeset>,
 ): TaggedChange<WrappedChangeset> {
-	return tagChange(rebaseWrapped(change.change, base), change.revision);
+	return tagChange(rebaseWrapped(change, base), change.revision);
 }
 
 function rebaseComposedWrapped(
 	metadata: RebaseRevisionMetadata,
-	change: WrappedChangeset,
+	change: TaggedChange<WrappedChangeset>,
 	...baseChanges: TaggedChange<WrappedChangeset>[]
 ): WrappedChangeset {
 	const composed = baseChanges.reduce(
@@ -235,8 +236,8 @@ function compose(
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
 	return optionalChangeRebaser.compose(
-		change1,
-		change2,
+		change1.change,
+		change2.change,
 		composeChild,
 		idAllocator,
 		moveEffects,
@@ -313,7 +314,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		yield {
 			content: state.content,
 			mostRecentEdit: {
-				changeset: tagChange(
+				changeset: tagWrappedChangeInline(
 					ChangesetWrapper.create(OptionalChange.buildChildChange(nodeId), [
 						nodeId,
 						TestChange.mint(
@@ -333,7 +334,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		yield {
 			content: undefined,
 			mostRecentEdit: {
-				changeset: tagChange(
+				changeset: tagWrappedChangeInline(
 					ChangesetWrapper.create(OptionalChange.clear(false, mintId())),
 					tagFromIntention(setUndefinedIntention),
 				),
@@ -349,7 +350,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		yield {
 			content: undefined,
 			mostRecentEdit: {
-				changeset: tagChange(
+				changeset: tagWrappedChangeInline(
 					ChangesetWrapper.create(OptionalChange.clear(true, mintId())),
 					tagFromIntention(setUndefinedIntention),
 				),
@@ -370,7 +371,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		yield {
 			content: newContents,
 			mostRecentEdit: {
-				changeset: tagChange(
+				changeset: tagWrappedChangeInline(
 					ChangesetWrapper.create(
 						OptionalChange.set(newContents, state.content === undefined, {
 							fill,
@@ -422,7 +423,10 @@ const generateChildStates: ChildStateGenerator<string | undefined, WrappedChange
 		yield {
 			content: state.parent?.content,
 			mostRecentEdit: {
-				changeset: tagChange(inverseChangeset, tagFromIntention(undoIntention)),
+				changeset: tagWrappedChangeInline(
+					inverseChangeset,
+					tagFromIntention(undoIntention),
+				),
 				intention: undoIntention,
 				description: `Undo:${state.mostRecentEdit.description}`,
 			},
@@ -470,7 +474,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
 				it(title, () => {
-					const inv = tagChange(invertWrapped(change2, false), tag1);
+					const inv = tagWrappedChangeInline(invertWrapped(change2, false), tag1);
 					const r1 = rebaseWrappedTagged(change1, change2);
 					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
@@ -551,6 +555,7 @@ export function testRebaserAxioms() {
 					rebaseComposed: rebaseComposedWrapped,
 					compose: composeWrapped,
 					invert: invertWrapped,
+					inlineRevision: inlineRevisionWrapped,
 					assertEqual: assertWrappedEqual,
 					createEmpty: () => ChangesetWrapper.create(Change.empty()),
 					isEmpty: isWrappedChangeEmpty,
@@ -578,4 +583,23 @@ function assertWrappedEqual(
 	ChangesetWrapper.assertEqual(a.change, b.change, (fieldA, fieldB) =>
 		assertTaggedEqual({ ...a, change: fieldA }, { ...b, change: fieldB }),
 	);
+}
+
+function inlineRevisionWrapped(change: WrappedChangeset, revision: RevisionTag): WrappedChangeset {
+	return ChangesetWrapper.inlineRevision(change, revision, inlineRevision);
+}
+
+function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+}
+
+function tagWrappedChangeInline(
+	change: WrappedChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<WrappedChangeset> {
+	const inlined = inlineRevisionWrapped(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
 }

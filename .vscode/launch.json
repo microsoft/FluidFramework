@@ -181,6 +181,33 @@
 			],
 		},
 		{
+			"name": "flub generate typetests",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"generate",
+				"typetests",
+				"--dir",
+				".",
+			],
+		},
+		{
+			"name": "fluid-type-test-generator",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-type-test-generator",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [],
+		},
+		{
 			"type": "node",
 			"request": "attach",
 			"name": "Attach by Process ID",

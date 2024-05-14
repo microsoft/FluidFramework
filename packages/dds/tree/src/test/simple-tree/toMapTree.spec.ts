@@ -7,24 +7,31 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
+import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import {
+	nodeDataToMapTree as nodeDataToMapTreeBase,
+	objectToMapTree,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
+import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 
 /**
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
  * convenience.
  */
 function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
-	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
+	return nodeDataToMapTreeBase(
+		tree,
+		normalizeAllowedTypes(allowedTypes),
+		createMockNodeKeyManager(),
+	);
 }
 
 describe("toMapTree", () => {
@@ -329,6 +336,56 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
+		describe("objectToMapTree", () => {
+			it("Populates identifier field with the default identifier provider", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.identifier,
+				});
+
+				const tree = {};
+				const nodeKeyManager = createMockNodeKeyManager();
+
+				const actual = objectToMapTree(tree, schema, nodeKeyManager);
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>([
+						[
+							brand("a"),
+							[
+								{
+									type: leaf.string.name,
+									value: nodeKeyManager.getId(0),
+									fields: new Map(),
+								},
+							],
+						],
+					]),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+
+			it("Populates optional field with the default optional provider.", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.optional(schemaFactory.string),
+				});
+
+				const tree = {};
+
+				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>(),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+		});
+
 		it("Empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {

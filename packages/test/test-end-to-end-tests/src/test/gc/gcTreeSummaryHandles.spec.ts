@@ -46,7 +46,6 @@ import { wrapObjectAndOverride } from "../../mocking.js";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -58,10 +57,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -130,7 +125,6 @@ async function submitFailingSummary(
 	// Submit a summary with a fail token on generate
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
 		latestSummaryRefSeqNum,
@@ -166,7 +160,6 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
@@ -237,12 +230,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**

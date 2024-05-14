@@ -2,6 +2,13 @@
 
 The `fluid-framework` package bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
 
+This package reexports these APIs from other Fluid client packages reducing the number of direct package dependencies needed.
+There are some packages there are not included as part of this `fluid-framework` package which users may want to use with this package:
+
+-   A service client (e.g. `@fluidframework/azure-client`, `@fluid-experimental/osdp-client (BETA)`, or `@fluidframework/tinylicious-client` for local development) to allow connecting to a Fluid service.
+-   Fluid Framework [developer tools](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
+-   `@fluidframework/app-insights-logger`: to route Fluid telemetry to Azure App Insights.
+
 ## Contents
 
 The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` and a selection of distributed data structures (DDSes).
