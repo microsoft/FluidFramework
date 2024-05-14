@@ -57,6 +57,7 @@ declare function get_old_ClassDeclaration_BaseSegment():
 declare function use_current_ClassDeclaration_BaseSegment(
     use: TypeOnly<current.BaseSegment>): void;
 use_current_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BaseSegment());
 
 /*
@@ -202,6 +203,7 @@ declare function get_old_InterfaceDeclaration_IAttributionCollection():
 declare function use_current_InterfaceDeclaration_IAttributionCollection(
     use: TypeOnly<current.IAttributionCollection<any>>): void;
 use_current_InterfaceDeclaration_IAttributionCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAttributionCollection());
 
 /*
@@ -1090,6 +1092,7 @@ declare function get_old_ClassDeclaration_Marker():
 declare function use_current_ClassDeclaration_Marker(
     use: TypeOnly<current.Marker>): void;
 use_current_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Marker());
 
 /*
@@ -1642,6 +1645,7 @@ declare function get_old_InterfaceDeclaration_SegmentGroup():
 declare function use_current_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<current.SegmentGroup>): void;
 use_current_InterfaceDeclaration_SegmentGroup(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentGroup());
 
 /*
@@ -1882,6 +1886,7 @@ declare function get_old_ClassDeclaration_TextSegment():
 declare function use_current_ClassDeclaration_TextSegment(
     use: TypeOnly<current.TextSegment>): void;
 use_current_ClassDeclaration_TextSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TextSegment());
 
 /*

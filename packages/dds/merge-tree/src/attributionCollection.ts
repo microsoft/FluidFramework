@@ -86,6 +86,18 @@ export interface IAttributionCollection<T> {
 	getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
 
 	/**
+	 * Retrieves all the [offset, attribution key] pairs for the provided offset range.
+	 * @param channel - When specified, gets attribution keys associated with a particular channel.
+	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
+	 * the corresponding offsets.
+	 */
+	getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): [number, AttributionKey][] | undefined;
+
+	/**
 	 * Total length of all attribution keys in this collection.
 	 */
 	readonly length: number;
@@ -176,8 +188,6 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.keys(this.channels ?? {});
 	}
 
-	public getAtOffset(offset: number): AttributionKey;
-	public getAtOffset(offset: number, channel: string): AttributionKey | undefined;
 	public getAtOffset(offset: number, channel?: string): AttributionKey | undefined {
 		if (channel !== undefined) {
 			const subCollection = this.channels?.[channel];
@@ -185,6 +195,40 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}
 		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
 		return this.get(this.findIndex(offset));
+	}
+
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): [number, AttributionKey][] | undefined {
+		assert(startOffset >= 0 && startOffset < this._length, "startOffset should be valid");
+		assert(
+			endOffset === undefined ||
+				(endOffset >= 0 && endOffset < this._length && startOffset <= endOffset),
+			"endOffset should be valid",
+		);
+
+		if (channel !== undefined) {
+			const subCollection = this.channels?.[channel];
+			return subCollection?.getKeysInOffsetRange(startOffset, endOffset);
+		}
+		const result: [number, AttributionKey][] = [];
+		let index = this.findIndex(startOffset);
+		let attributionKey = this.get(index);
+		if (attributionKey !== undefined) {
+			result.push([this.offsets[index], attributionKey]);
+		}
+		index++;
+		const endOffsetVal = endOffset ?? Number.MAX_SAFE_INTEGER;
+		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]) {
+			attributionKey = this.get(index);
+			if (attributionKey !== undefined) {
+				result.push([this.offsets[index], attributionKey]);
+			}
+			index++;
+		}
+		return result;
 	}
 
 	private findIndex(offset: number): number {

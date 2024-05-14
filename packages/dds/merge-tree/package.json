@@ -162,8 +162,23 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
 			"ClassDeclaration_Client": {
 				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttributionCollection": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SegmentGroup": {
+				"forwardCompat": false
 			}
 		}
 	}
