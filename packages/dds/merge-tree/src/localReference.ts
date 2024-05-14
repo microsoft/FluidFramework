@@ -153,8 +153,8 @@ class LocalReference implements LocalReferencePosition {
  * @internal
  */
 export function createDetachedLocalReferencePosition(
-	refType?: ReferenceType,
 	slidingPreference: SlidingPreference | undefined,
+	refType?: ReferenceType,
 ): LocalReferencePosition {
 	return new LocalReference(refType, undefined, slidingPreference);
 }
