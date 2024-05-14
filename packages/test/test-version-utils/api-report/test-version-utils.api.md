@@ -89,10 +89,10 @@ export const DataRuntimeApi: {
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
-        ConsensusQueue: typeof orderedCollection.ConsensusQueue;
+        ConsensusQueue: ISharedObjectKind<orderedCollection.IConsensusOrderedCollection<any>>;
         ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
         SharedString: ISharedObjectKind<sequence.ISharedString>;
-        SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
+        SparseMatrix: ISharedObjectKind<sequenceDeprecated.SparseMatrixClass>;
     };
     packages: {
         cell: typeof cell;

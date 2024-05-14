@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -17,19 +18,21 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { IDirectoryNewStorageFormat } from "../../directory.js";
+import type { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
-	IDirectory,
-	IDirectoryValueChanged,
+	type IDirectory,
+	type IDirectoryValueChanged,
 	type ISharedDirectory,
 	SharedDirectory,
 	SharedMap,
 } from "../../index.js";
-import { SharedMap as SharedMapInternal } from "../../map.js";
+import type { SharedMap as SharedMapInternal } from "../../map.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
+/**
+ * Creates and connects a new {@link ISharedDirectory}.
+ */
 export function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,

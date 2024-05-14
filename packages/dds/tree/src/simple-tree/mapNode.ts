@@ -127,6 +127,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const cursor = cursorFromNodeData(
 			content,
 			classSchema.info as ImplicitAllowedTypes,
+			node.context.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 

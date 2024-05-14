@@ -6,22 +6,22 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	DirectoryLocalOpMetadata,
-	IDirectoryOperation,
+	type DirectoryLocalOpMetadata,
+	type IDirectoryOperation,
 	SharedDirectory as SharedDirectoryInternal,
 } from "../../directory.js";
-import { DirectoryFactory, ISharedDirectory, SharedDirectory } from "../../index.js";
+import { DirectoryFactory, type ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createConnectedDirectory(
 	id: string,

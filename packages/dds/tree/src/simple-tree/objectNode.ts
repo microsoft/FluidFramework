@@ -16,8 +16,8 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
-	LocalNodeKey,
 	getSchemaAndPolicy,
+	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -44,7 +44,7 @@ import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
+import { RawTreeNode } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -154,7 +154,7 @@ function createProxyHandler(
 
 			const flexNode = getFlexNode(proxy);
 			const field = flexNode.getBoxed(fieldInfo.storedKey);
-			setField(field, fieldInfo.schema, value);
+			setField(field, fieldInfo.schema, value, flexNode.context.nodeKeyManager);
 
 			return true;
 		},
@@ -205,6 +205,7 @@ export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent,
+	nodeKeyManager: NodeKeyManager,
 ): void {
 	switch (field.schema.kind) {
 		case FieldKinds.required:
@@ -217,6 +218,7 @@ export function setField(
 			const cursor = cursorFromNodeData(
 				content,
 				simpleFieldSchema.allowedTypes,
+				nodeKeyManager,
 				getSchemaAndPolicy(field),
 			);
 			typedField.content = cursor;
@@ -360,12 +362,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
 	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
+	implements FlexTreeObjectNode {}
 
 /**
  * Ensures that the set of view keys in the schema is unique.

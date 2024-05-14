@@ -33,6 +33,7 @@ import {
 } from "../index.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
+import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import {
 	FinalCompressedId,
 	ReadonlyIdCompressor,
@@ -286,8 +287,7 @@ export class IdCompressorTestNetwork {
 	 * Changes the capacity request amount for a client. It will take effect immediately.
 	 */
 	public changeCapacity(client: Client, newClusterCapacity: number): void {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		this.compressors.get(client)["nextRequestedClusterSize"] = newClusterCapacity;
+		changeCapacity(this.compressors.get(client), newClusterCapacity);
 	}
 
 	private addNewId(
@@ -427,26 +427,89 @@ export class IdCompressorTestNetwork {
 			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const,
 		);
 
-		// Ensure creation ranges for clients we track contain the correct local ID ranges
-		this.serverOperations.forEach(([range, opSpaceIds, clientFrom]) => {
+		const getLocalIdsInRange = (
+			range: IdCreationRange,
+			opSpaceIds?: OpSpaceCompressedId[],
+		): Set<SessionSpaceCompressedId> => {
 			const localIdsInCreationRange = new Set<SessionSpaceCompressedId>();
-			if (clientFrom !== OriginatingClient.Remote) {
-				const ids = range.ids;
-				if (ids !== undefined) {
-					const { firstGenCount, localIdRanges } = ids;
-					for (const [genCount, count] of localIdRanges) {
-						for (let g = genCount; g < genCount + count; g++) {
-							const local = localIdFromGenCount(g);
+			const ids = range.ids;
+			if (ids !== undefined) {
+				const { firstGenCount, localIdRanges } = ids;
+				for (const [genCount, count] of localIdRanges) {
+					for (let g = genCount; g < genCount + count; g++) {
+						const local = localIdFromGenCount(g);
+						if (opSpaceIds) {
 							assert.strictEqual(opSpaceIds[g - firstGenCount], local);
-							localIdsInCreationRange.add(local);
 						}
+						localIdsInCreationRange.add(local);
 					}
 				}
+			}
+			return localIdsInCreationRange;
+		};
+
+		// Ensure creation ranges for clients we track contain the correct local ID ranges
+		this.serverOperations.forEach(([range, opSpaceIds, clientFrom]) => {
+			if (clientFrom !== OriginatingClient.Remote) {
+				const localIdsInCreationRange = getLocalIdsInRange(range, opSpaceIds);
+				let localCount = 0;
 				opSpaceIds.forEach((id) => {
 					if (isLocalId(id)) {
+						localCount++;
 						assert(localIdsInCreationRange.has(id), "Local ID not in creation range");
 					}
 				});
+				assert.strictEqual(
+					localCount,
+					localIdsInCreationRange.size,
+					"Local ID count mismatch",
+				);
+			}
+		});
+
+		const undeliveredRanges = new Map<Client, IdCreationRange[]>();
+		this.clientProgress.forEach((progress, client) => {
+			const ranges = this.serverOperations
+				.slice(progress)
+				.filter((op) => op[2] === client)
+				.map(([range]) => range);
+			undeliveredRanges.set(client, ranges);
+		});
+		undeliveredRanges.forEach((ranges, client) => {
+			const compressor = this.compressors.get(client);
+			let firstGenCount: number | undefined;
+			let totalCount = 0;
+			const unionedLocalRanges = new SessionSpaceNormalizer();
+			ranges.forEach((range) => {
+				assert(range.sessionId === compressor.localSessionId);
+				if (range.ids !== undefined) {
+					// initialize firstGenCount if not set
+					if (firstGenCount === undefined) {
+						firstGenCount = range.ids.firstGenCount;
+					}
+					totalCount += range.ids.count;
+					range.ids.localIdRanges.forEach(([genCount, count]) => {
+						unionedLocalRanges.addLocalRange(genCount, count);
+					});
+				}
+			});
+
+			const retakenRange = compressor.takeUnfinalizedCreationRange();
+			if (retakenRange.ids !== undefined) {
+				const retakenLocalIds = new SessionSpaceNormalizer();
+				retakenRange.ids.localIdRanges.forEach(([genCount, count]) => {
+					retakenLocalIds.addLocalRange(genCount, count);
+				});
+				assert.strictEqual(
+					retakenLocalIds.equals(unionedLocalRanges),
+					true,
+					"Local ID ranges mismatch",
+				);
+				assert.strictEqual(retakenRange.ids.count, totalCount, "Count mismatch");
+				assert.strictEqual(retakenRange.ids.firstGenCount, firstGenCount, "Count mismatch");
+			} else {
+				assert.strictEqual(totalCount, 0);
+				assert.strictEqual(unionedLocalRanges.idRanges.size, 0);
 			}
 		});
 
@@ -588,6 +651,11 @@ export class IdCompressorTestNetwork {
 	}
 }
 
+function changeCapacity(compressor: IdCompressor, newClusterCapacity: number): void {
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	compressor["nextRequestedClusterSize"] = newClusterCapacity;
+}
+
 /**
  * Roundtrips the supplied compressor through serialization and deserialization.
  */
@@ -608,13 +676,21 @@ export function roundtrip(
 	compressor: ReadonlyIdCompressor,
 	withSession: boolean,
 ): [SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession, IdCompressor] {
+	// preserve the capacity request as this property is normally private and resets
+	// to a default on construction (deserialization)
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const capacity = compressor["nextRequestedClusterSize"];
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		return [serialized, IdCompressor.deserialize(serialized)];
+		const roundtripped = IdCompressor.deserialize(serialized);
+		changeCapacity(roundtripped, capacity);
+		return [serialized, roundtripped];
+	} else {
+		const nonLocalSerialized = compressor.serialize(withSession);
+		const roundtripped = IdCompressor.deserialize(nonLocalSerialized, createSessionId());
+		changeCapacity(roundtripped, capacity);
+		return [nonLocalSerialized, roundtripped];
 	}
-
-	const nonLocalSerialized = compressor.serialize(withSession);
-	return [nonLocalSerialized, IdCompressor.deserialize(nonLocalSerialized, createSessionId())];
 }
 
 /**
@@ -811,13 +887,13 @@ export function makeOpGenerator(
 		return { type: "reconnect", client: random.pick(activeClients) };
 	}
 
-	const allocationWeight = 16;
+	const allocationWeight = 20;
 	return interleave(
 		createWeightedGenerator<Operation, FuzzTestState>([
 			[changeCapacityGenerator, 1],
 			[allocateIdsGenerator, Math.round(allocationWeight * (1 - outsideAllocationFraction))],
 			[allocateOutsideIdsGenerator, Math.round(allocationWeight * outsideAllocationFraction)],
-			[deliverAllOperationsGenerator, 2],
+			[deliverAllOperationsGenerator, 1],
 			[deliverSomeOperationsGenerator, 6],
 			[reconnectGenerator, 1],
 		]),
@@ -889,7 +965,6 @@ export function performFuzzActions(
 				return state;
 			},
 			validate: (state) => {
-				network.deliverOperations(DestinationClient.All);
 				validator?.(network);
 				return state;
 			},

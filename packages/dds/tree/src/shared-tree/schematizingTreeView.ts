@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, Compatibility, FieldKey } from "../core/index.js";
+import { AllowedUpdateType, Compatibility } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
@@ -65,14 +65,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
 		const policy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.options.enableSchemaValidation,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, {
+		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
 			schema: checkout.storedSchema,
 			policy,
 		});
@@ -157,7 +156,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 						}
 					},
 					this.nodeKeyManager,
-					this.nodeKeyFieldKey,
 				);
 
 				// Trigger "rootChanged" if the root changes in the future.
@@ -231,7 +229,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 
-		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
+		setField(
+			view.context.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent,
+			view.context.nodeKeyManager,
+		);
 	}
 }
 
@@ -260,7 +263,6 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	viewSchema: ViewSchema<TRoot>,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const slots = checkout.forest.anchors.slots;
 	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
@@ -274,13 +276,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		nodeKeyFieldKey,
-		onDispose,
-	);
+	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {

@@ -21,6 +21,7 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
@@ -60,19 +61,25 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
 	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes, schemaAndPolicy) ??
-		fail("failed to decode tree")
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			schemaAndPolicy,
+		) ?? fail("failed to decode tree")
 	);
 }
 
 /**
  *
  * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * @param nodeKeyManager -
  * @param schemaAndPolicy - Stored schema and policy for the tree. If the policy specifies
  * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
  * object.
@@ -83,13 +90,21 @@ function cursorFromUnhydratedRoot(
  */
 export function toFlexConfig(
 	config: TreeConfiguration,
+	nodeKeyManager: NodeKeyManager,
 	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): TreeContent {
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated, schemaAndPolicy)];
+			: [
+					cursorFromUnhydratedRoot(
+						config.schema,
+						unhydrated,
+						nodeKeyManager,
+						schemaAndPolicy,
+					),
+			  ];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,

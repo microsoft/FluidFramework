@@ -34,9 +34,11 @@ import {
 	cursorFromFieldData,
 	cursorFromNodeData,
 	nodeDataToMapTree as nodeDataToMapTreeBase,
+	objectToMapTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
+import { createMockNodeKeyManager, createNodeKeyManager } from "../../feature-libraries/index.js";
 
 /**
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
@@ -47,7 +49,12 @@ function nodeDataToMapTree(
 	allowedTypes: ImplicitAllowedTypes,
 	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
-	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes), schemaAndPolicy);
+	return nodeDataToMapTreeBase(
+		tree,
+		normalizeAllowedTypes(allowedTypes),
+		createMockNodeKeyManager(),
+		schemaAndPolicy,
+	);
 }
 
 describe("toMapTree", () => {
@@ -352,6 +359,56 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
+		describe("objectToMapTree", () => {
+			it("Populates identifier field with the default identifier provider", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.identifier,
+				});
+
+				const tree = {};
+				const nodeKeyManager = createMockNodeKeyManager();
+
+				const actual = objectToMapTree(tree, schema, nodeKeyManager);
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>([
+						[
+							brand("a"),
+							[
+								{
+									type: leaf.string.name,
+									value: nodeKeyManager.getId(0),
+									fields: new Map(),
+								},
+							],
+						],
+					]),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+
+			it("Populates optional field with the default optional provider.", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.optional(schemaFactory.string),
+				});
+
+				const tree = {};
+
+				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>(),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+		});
+
 		it("Empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
@@ -815,7 +872,12 @@ describe("toMapTree", () => {
 		describe("cursorFromNodeData", () => {
 			it("Success", () => {
 				const nodeData = "Hello world";
-				cursorFromNodeData(nodeData, [schemaFactory.string], schemaAndPolicyForSuccess);
+				cursorFromNodeData(
+					nodeData,
+					[schemaFactory.string],
+					createNodeKeyManager(),
+					schemaAndPolicyForSuccess,
+				);
 			});
 
 			it("Failure", () => {
@@ -825,6 +887,7 @@ describe("toMapTree", () => {
 						cursorFromNodeData(
 							content,
 							[schemaFactory.string],
+							createNodeKeyManager(),
 							schemaAndPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
@@ -836,14 +899,25 @@ describe("toMapTree", () => {
 			it("Success", () => {
 				const content = "Hello world";
 				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
-				cursorFromFieldData(content, fieldSchema, schemaAndPolicyForSuccess);
+				cursorFromFieldData(
+					content,
+					fieldSchema,
+					createNodeKeyManager(),
+					schemaAndPolicyForSuccess,
+				);
 			});
 
 			it("Failure", () => {
 				const content = "Hello world";
 				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
 				assert.throws(
-					() => cursorFromFieldData(content, fieldSchema, schemaAndPolicyForFailure),
+					() =>
+						cursorFromFieldData(
+							content,
+							fieldSchema,
+							createNodeKeyManager(),
+							schemaAndPolicyForFailure,
+						),
 					outOfSchemaExpectedError,
 				);
 			});

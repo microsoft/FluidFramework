@@ -35,7 +35,7 @@ import { attributesMatch } from './utils.js';
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
 		private readonly oldFactory: LegacySharedTreeFactory,
-		private readonly newFactory: IChannelFactory,
+		private readonly newFactory: IChannelFactory<ITree>,
 		private readonly populateNewChannelFn: (oldChannel: LegacySharedTree, newChannel: ITree) => void
 	) {}
 
