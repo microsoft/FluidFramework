@@ -151,7 +151,8 @@
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
-				"build:genver"
+				"build:genver",
+				"^tsc"
 			]
 		}
 	},
