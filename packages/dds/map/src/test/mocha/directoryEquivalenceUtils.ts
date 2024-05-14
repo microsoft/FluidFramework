@@ -5,10 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
-import { IDirectory } from "../../interfaces.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
+import type { IDirectory } from "../../interfaces.js";
+
+/**
+ * Asserts that the 2 provided directories have equivalent contents.
+ */
 export async function assertEquivalentDirectories(
 	first: IDirectory,
 	second: IDirectory,
@@ -39,18 +43,12 @@ async function assertEventualConsistencyCore(
 		const firstVal: unknown = first.get(key);
 		const secondVal: unknown = second.get(key);
 		if (isObject(firstVal) === true) {
-			const firstObj: FluidObject<IFluidHandle> = firstVal as FluidObject<IFluidHandle>;
 			assert(
 				isObject(secondVal),
 				`Values differ at key ${key}: first is an object, second is not`,
 			);
-			const secondObj: FluidObject<IFluidHandle> = secondVal as FluidObject<IFluidHandle>;
-			const firstHandle = firstObj.IFluidHandle
-				? await firstObj.IFluidHandle?.get()
-				: firstObj;
-			const secondHandle = secondObj.IFluidHandle
-				? await secondObj.IFluidHandle?.get()
-				: secondObj;
+			const firstHandle = isFluidHandle(firstVal) ? await firstVal.get() : firstVal;
+			const secondHandle = isFluidHandle(secondVal) ? await secondVal.get() : secondVal;
 			assert.equal(
 				firstHandle,
 				secondHandle,

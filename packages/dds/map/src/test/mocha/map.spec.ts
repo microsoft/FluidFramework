@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -16,8 +16,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
-import {
+import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
+import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
@@ -27,26 +27,30 @@ import {
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
-import { IMapOperation } from "../../mapKernel.js";
+import type { IMapOperation } from "../../mapKernel.js";
 
+/**
+ * Creates and connects a new {@link ISharedMap}.
+ */
 export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedMap {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = SharedMap.getFactory().create(dataStoreRuntime, id);
+	const map = SharedMap.create(dataStoreRuntime, id);
 	map.connect(services);
 	return map;
 }
 
-function createLocalMap(id: string): ISharedMap {
-	const map = SharedMap.getFactory().create(new MockFluidDataStoreRuntime(), id);
-	return map;
+function createLocalMap(id: string): SharedMapInternal {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
+	const map = SharedMap.create(dataStoreRuntime, id);
+	return map as SharedMapInternal;
 }
 
 class TestSharedMap extends SharedMapInternal {
@@ -541,7 +545,7 @@ describe("Map", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					// Verify the local SharedMap
-					const localSubMap = map1.get<IFluidHandle>("test");
+					const localSubMap = map1.get<IFluidHandleInternal>("test");
 					assert(localSubMap);
 					assert.equal(
 						localSubMap.absolutePath,
@@ -550,7 +554,7 @@ describe("Map", () => {
 					);
 
 					// Verify the remote SharedMap
-					const remoteSubMap = map2.get<IFluidHandle>("test");
+					const remoteSubMap = map2.get<IFluidHandleInternal>("test");
 					assert(remoteSubMap);
 					assert.equal(
 						remoteSubMap.absolutePath,
@@ -947,7 +951,7 @@ describe("Map", () => {
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
 				const subMapId = `subMap-${this.subMapCount}`;
-				const deletedHandle = this.map1.get<IFluidHandle>(subMapId);
+				const deletedHandle = this.map1.get<IFluidHandleInternal>(subMapId);
 				assert(deletedHandle, "Route must be added before deleting");
 
 				this.map1.delete(subMapId);

@@ -10,6 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
+	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -220,10 +221,16 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				// Remove join session information from cache only if it is an error related to connect_document and not a socket related error.
+				// Remove join session information from cache only if it is an error is from socket event connect_document_error.
 				// Otherwise keep it in cache so that this session can be re-used after disconnection.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				if ((error as any).errorFrom === "connect_document_error") {
+				// Also keeping an undefined check here to account for any unknown code path that is unable to stamp the value as in that case also
+				// it is safer to clear join session cache and start over.
+				if (
+					error &&
+					typeof error === "object" &&
+					((error as IAnyDriverError).scenarioName === "connect_document_error" ||
+						(error as IAnyDriverError).scenarioName === undefined)
+				) {
 					this.clearJoinSessionTimer();
 					this.cache.sessionJoinCache.remove(this.joinSessionKey);
 				}

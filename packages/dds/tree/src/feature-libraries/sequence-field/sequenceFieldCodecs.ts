@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
@@ -60,15 +60,22 @@ function makeV1Codec(
 		ChangeEncodingContext
 	> = {
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
+			function encodeRevision(
+				revision: RevisionTag | undefined,
+			): EncodedRevisionTag | undefined {
+				if (revision === undefined || revision === context.revision) {
+					return undefined;
+				}
+
+				return revisionTagCodec.encode(revision, context);
+			}
+
 			const type = effect.type;
 			switch (type) {
 				case "MoveIn":
 					return {
 						moveIn: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
@@ -79,20 +86,14 @@ function makeV1Codec(
 				case "Insert":
 					return {
 						insert: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							id: effect.id,
 						},
 					};
 				case "Remove":
 					return {
 						delete: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
@@ -106,10 +107,7 @@ function makeV1Codec(
 				case "MoveOut":
 					return {
 						moveOut: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
@@ -148,6 +146,21 @@ function makeV1Codec(
 		},
 	};
 
+	function decodeRevision(
+		encodedRevision: EncodedRevisionTag | undefined,
+		context: ChangeEncodingContext,
+	): RevisionTag {
+		if (encodedRevision === undefined) {
+			assert(
+				context.revision !== undefined,
+				0x965 /* Implicit revision should be provided */,
+			);
+			return context.revision;
+		}
+
+		return revisionTagCodec.decode(encodedRevision, context);
+	}
+
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
 		/* args */ [context: ChangeEncodingContext],
@@ -159,9 +172,8 @@ function makeV1Codec(
 				type: "MoveIn",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
@@ -173,9 +185,8 @@ function makeV1Codec(
 				type: "Insert",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
 		delete(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
@@ -184,9 +195,8 @@ function makeV1Codec(
 				type: "Remove",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
 				mark.idOverride = {
 					type: idOverride.type,
@@ -201,9 +211,8 @@ function makeV1Codec(
 				type: "MoveOut",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
@@ -255,9 +264,8 @@ function makeV1Codec(
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
 			const decoded: Mutable<CellId> = { localId };
-			if (revision !== undefined) {
-				decoded.revision = revision;
-			}
+			decoded.revision = revision;
+
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
 					id,

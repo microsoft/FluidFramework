@@ -198,7 +198,7 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 
 		return serializedInterval;
@@ -473,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(

@@ -10,6 +10,11 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
 	readonly compressionOptions?: ICompressionRuntimeOptions;
+
+	/**
+	 * If true, the outbox is allowed to rebase the batch during flushing.
+	 */
+	readonly canRebase: boolean;
 }
 
 export interface BatchSequenceNumbers {

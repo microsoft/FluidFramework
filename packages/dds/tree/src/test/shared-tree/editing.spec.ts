@@ -573,7 +573,7 @@ describe("Editing", () => {
 			});
 			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
-			// Move A after B.
+			// Move object from foo list to bar list
 			tree2.editor.move(
 				{ parent: fooList, field: brand("") },
 				0,

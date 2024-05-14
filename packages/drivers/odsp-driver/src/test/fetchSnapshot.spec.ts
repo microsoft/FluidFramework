@@ -11,9 +11,9 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	MockLogger,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -31,7 +31,13 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
 
-import { createResponse } from "./mockFetch.js";
+import {
+	createResponse,
+	mockFetchMultiple,
+	notFound,
+	okResponse,
+	type MockResponse,
+} from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -166,6 +172,51 @@ describe("Tests1 for snapshot fetch", () => {
 			// Drop error
 		}
 		assert(success, "mds limit should not be set!!");
+	});
+
+	it("Check error in empty response", async () => {
+		async function mockDownloadSnapshot<T>(
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
+			callback: () => Promise<T>,
+		): Promise<T> {
+			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			getDownloadSnapshotStub.returns(_response);
+			try {
+				return await callback();
+			} finally {
+				getDownloadSnapshotStub.restore();
+			}
+		}
+		const odspResponse: IOdspResponse<Response> = {
+			content: (await createResponse(
+				{},
+				new Uint8Array().buffer,
+				200,
+			)) as unknown as Response,
+			duration: 10,
+			headers: new Map([
+				["x-fluid-epoch", "epoch1"],
+				["content-type", "application/ms-fluid"],
+			]),
+			propsToLog: {},
+		};
+		const response: ISnapshotRequestAndResponseOptions = {
+			odspResponse,
+			requestHeaders: {},
+			requestUrl: siteUrl,
+		};
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getVersions(null, 1),
+			);
+			assert.fail("should throw incorrectServerResponse error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				OdspErrorTypes.incorrectServerResponse,
+				"incorrectServerResponse should be received",
+			);
+		}
 	});
 
 	it("Check error in snapshot content type", async () => {
@@ -467,6 +518,96 @@ describe("Tests1 for snapshot fetch", () => {
 				},
 			]),
 			"unexpected events",
+		);
+	});
+
+	it("RedeemFallback behavior when fallback succeeds with using tenant domain", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await assert.doesNotReject(
+			async () =>
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[
+						notFound,
+						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (): Promise<Response> => {
+							return response;
+						},
+					],
+				),
+			"Should succeed",
+		);
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
+				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
+				{ eventName: "TreesLatest_end" },
+			]),
+		);
+	});
+
+	it("RedeemFallback behavior when fallback succeeds with using siteUrl", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await assert.doesNotReject(
+			async () =>
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[
+						notFound,
+						notFound,
+						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (): Promise<Response> => {
+							return response;
+						},
+					],
+				),
+			"Should succeed",
+		);
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
+				{ eventName: "ShareLinkRedeemFailedWithTenantDomain", statusCode: 404 },
+				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
+				{ eventName: "TreesLatest_end" },
+			]),
 		);
 	});
 });

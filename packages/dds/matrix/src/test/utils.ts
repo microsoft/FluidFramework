@@ -9,6 +9,11 @@ import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "
 
 import { SharedMatrix } from "../index.js";
 
+/**
+ * Convenience export of SharedMatrix's factory for usage in tests.
+ */
+export const matrixFactory = SharedMatrix.getFactory();
+
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
 class NullMatrixConsumer implements IMatrixConsumer<any> {

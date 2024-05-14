@@ -6,34 +6,36 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	DirectoryLocalOpMetadata,
-	IDirectoryOperation,
+	type DirectoryLocalOpMetadata,
+	type IDirectoryOperation,
 	SharedDirectory as SharedDirectoryInternal,
 } from "../../directory.js";
-import { DirectoryFactory, ISharedDirectory, SharedDirectory } from "../../index.js";
+import { DirectoryFactory, type ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedDirectory {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedDirectory.getFactory()],
+	});
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const directory = SharedDirectory.getFactory().create(dataStoreRuntime, id);
+	const directory = SharedDirectory.create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
 }
@@ -87,8 +89,11 @@ describe("Directory Iteration Order", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			directory = SharedDirectory.getFactory().create(dataStoreRuntime, "directory");
+			dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+				registry: [SharedDirectory.getFactory()],
+			});
+			directory = SharedDirectory.create(dataStoreRuntime, "directory");
 		});
 
 		it("create subdirectories", () => {

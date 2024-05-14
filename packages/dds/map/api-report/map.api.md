@@ -7,13 +7,13 @@
 import type { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import type { ISharedObject } from '@fluidframework/shared-object-base';
+import type { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @alpha @sealed
@@ -24,6 +24,12 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
     static readonly Type = "https://graph.microsoft.com/types/directory";
     get type(): string;
+}
+
+// @alpha @deprecated
+export interface ICreateInfo {
+    ccIds: string[];
+    csn: number;
 }
 
 // @alpha
@@ -40,6 +46,13 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
+// @alpha @deprecated
+export interface IDirectoryDataObject {
+    ci?: ICreateInfo;
+    storage?: Record<string, ISerializableValue>;
+    subdirectories?: Record<string, IDirectoryDataObject>;
+}
+
 // @alpha
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -49,9 +62,21 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
+// @alpha @deprecated
+export interface IDirectoryNewStorageFormat {
+    blobs: string[];
+    content: IDirectoryDataObject;
+}
+
 // @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
+}
+
+// @alpha @deprecated
+export interface ISerializableValue {
+    type: string;
+    value: any;
 }
 
 // @alpha
@@ -98,7 +123,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
     get type(): string;
 }
 
-// @alpha @sealed
+// @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated

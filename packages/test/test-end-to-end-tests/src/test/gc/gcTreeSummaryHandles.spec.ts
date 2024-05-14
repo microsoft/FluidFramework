@@ -29,8 +29,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -47,7 +46,6 @@ import { wrapObjectAndOverride } from "../../mocking.js";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -59,10 +57,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -238,12 +232,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**

@@ -35,7 +35,7 @@ import {
 	type IQuorumClients,
 	type ISequencedClient,
 } from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -43,6 +43,7 @@ import {
 	MockStorage,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
@@ -249,19 +250,20 @@ function createSharedString(
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				clientId,
+				registry: [SharedString.getFactory()],
+			});
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			};
-			const { deltaManager } = dataStoreRuntime;
-			const sharedString = new SharedString(
-				dataStoreRuntime,
-				// eslint-disable-next-line unicorn/prefer-code-point
+			const deltaManager = dataStoreRuntime.deltaManagerInternal;
+			const sharedString = SharedString.create(
+				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
-				SharedStringFactory.Attributes,
 			);
 
 			if (index === 0 && makeSerializer !== undefined) {
@@ -631,7 +633,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -650,7 +652,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -669,7 +671,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
