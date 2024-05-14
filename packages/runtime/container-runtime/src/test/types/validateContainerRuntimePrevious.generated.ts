@@ -432,6 +432,7 @@ declare function get_old_ClassDeclaration_FluidDataStoreContext():
 declare function use_current_ClassDeclaration_FluidDataStoreContext(
     use: TypeOnly<current.FluidDataStoreContext>): void;
 use_current_ClassDeclaration_FluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_FluidDataStoreContext());
 
 /*
@@ -446,6 +447,7 @@ declare function get_current_ClassDeclaration_FluidDataStoreContext():
 declare function use_old_ClassDeclaration_FluidDataStoreContext(
     use: TypeOnly<old.FluidDataStoreContext>): void;
 use_old_ClassDeclaration_FluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidDataStoreContext());
 
 /*
@@ -1188,6 +1190,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextInternal():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextInternal(
     use: TypeOnly<current.IFluidDataStoreContextInternal>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextInternal(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextInternal());
 
 /*
@@ -1202,6 +1205,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextInternal
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
     use: TypeOnly<old.IFluidDataStoreContextInternal>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextInternal());
 
 /*
@@ -1216,6 +1220,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextProps():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextProps(
     use: TypeOnly<current.IFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextProps());
 
 /*
@@ -1230,6 +1235,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextProps():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextProps(
     use: TypeOnly<old.IFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextProps());
 
 /*
@@ -1384,6 +1390,7 @@ declare function get_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContex
 declare function use_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
     use: TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps());
 
 /*
@@ -1398,6 +1405,7 @@ declare function get_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreCo
 declare function use_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
     use: TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps());
 
 /*
@@ -1412,6 +1420,7 @@ declare function get_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps()
 declare function use_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
     use: TypeOnly<current.ILocalFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps());
 
 /*
@@ -1426,6 +1435,7 @@ declare function get_current_InterfaceDeclaration_ILocalFluidDataStoreContextPro
 declare function use_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
     use: TypeOnly<old.ILocalFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps());
 
 /*
@@ -1860,6 +1870,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_current_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<current.ISummarizerRuntime>): void;
 use_current_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1874,6 +1885,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>): void;
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -2392,6 +2404,7 @@ declare function get_old_ClassDeclaration_LocalFluidDataStoreContext():
 declare function use_current_ClassDeclaration_LocalFluidDataStoreContext(
     use: TypeOnly<current.LocalFluidDataStoreContext>): void;
 use_current_ClassDeclaration_LocalFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalFluidDataStoreContext());
 
 /*
@@ -2406,6 +2419,7 @@ declare function get_current_ClassDeclaration_LocalFluidDataStoreContext():
 declare function use_old_ClassDeclaration_LocalFluidDataStoreContext(
     use: TypeOnly<old.LocalFluidDataStoreContext>): void;
 use_old_ClassDeclaration_LocalFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalFluidDataStoreContext());
 
 /*
@@ -2420,6 +2434,7 @@ declare function get_old_ClassDeclaration_LocalFluidDataStoreContextBase():
 declare function use_current_ClassDeclaration_LocalFluidDataStoreContextBase(
     use: TypeOnly<current.LocalFluidDataStoreContextBase>): void;
 use_current_ClassDeclaration_LocalFluidDataStoreContextBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalFluidDataStoreContextBase());
 
 /*
@@ -2434,6 +2449,7 @@ declare function get_current_ClassDeclaration_LocalFluidDataStoreContextBase():
 declare function use_old_ClassDeclaration_LocalFluidDataStoreContextBase(
     use: TypeOnly<old.LocalFluidDataStoreContextBase>): void;
 use_old_ClassDeclaration_LocalFluidDataStoreContextBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalFluidDataStoreContextBase());
 
 /*

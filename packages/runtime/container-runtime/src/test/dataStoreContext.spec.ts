@@ -103,7 +103,7 @@ describe("Data Store Context Tests", () => {
 			return {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger,
+				baseLogger: logger,
 				clientDetails,
 				submitMessage,
 			} as ContainerRuntime;
@@ -1031,7 +1031,12 @@ describe("Data Store Context Tests", () => {
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
 		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
-			channelToDataStore(fluidDataStore, "id", channelCollection, containerRuntime.logger);
+			channelToDataStore(
+				fluidDataStore,
+				"id",
+				channelCollection,
+				createChildLogger({ logger: containerRuntime.baseLogger }),
+			);
 		let containerRuntime: ContainerRuntime;
 		let channelCollection: ChannelCollection;
 		let provideDsRuntimeWithFailingEntrypoint = false;
@@ -1085,9 +1090,9 @@ describe("Data Store Context Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				baseLogger: createChildLogger(),
 				clientDetails: {},
-			} as ContainerRuntime;
+			} as unknown as ContainerRuntime;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			channelCollection = {
