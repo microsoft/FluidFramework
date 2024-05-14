@@ -12,6 +12,10 @@ module.exports = {
 		// TODO: remove these overrides and fix violations
 		"@typescript-eslint/ban-ts-comment": "off",
 		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
 
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
