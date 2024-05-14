@@ -4,21 +4,19 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IMember } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
-export const waitForMember = async (
-	audience: IAzureAudience,
-	userId: string,
-): Promise<AzureMember> => {
+export const waitForMember = async (audience: IAzureAudience, id: string): Promise<AzureMember> => {
 	const allMembers = audience.getMembers();
-	const member = allMembers.get(userId);
+	const member = allMembers.get(id);
 	if (member !== undefined) {
 		return member;
 	}
 	return new Promise((resolve) => {
 		const handler = (clientId: string, newMember: IMember): void => {
-			if (newMember.userId === userId) {
+			if (newMember.id === id) {
 				resolve(newMember as AzureMember);
 			}
 		};
@@ -46,3 +44,7 @@ export const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
 		map.on("valueChanged", handler);
 	});
 };
+
+export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});

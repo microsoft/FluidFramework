@@ -1,14 +1,12 @@
-<!-- Front Matter! -->
-
 # TestModule
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestModule](./simple-suite-test/testmodule-namespace)
 
 ## Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [foo](./simple-suite-test/testmodule-namespace#foo-variable) | `readonly` | Test constant in module. |
+| Variable | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| [foo](./simple-suite-test/testmodule-namespace#foo-variable) | `readonly` |  | Test constant in module. |
 
 ## Variable Details
 

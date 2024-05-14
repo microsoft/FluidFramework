@@ -73,12 +73,12 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@4.0.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/debug": "^4.1.5",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
@@ -92,7 +92,7 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
 	FluidObject,
 	IDisposable,
@@ -12,10 +12,10 @@ import type {
 	IFluidHandle,
 	IFluidHandleContext,
 	ITelemetryBaseLogger,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -35,7 +35,15 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 }
 
 /**
+ * Manages the transmission of ops between the runtime and storage.
+ * @public
+ */
+export type IDeltaManagerErased =
+	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+/**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
+ * @sealed
  * @public
  */
 export interface IFluidDataStoreRuntime
@@ -52,7 +60,7 @@ export interface IFluidDataStoreRuntime
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManagerErased;
 
 	readonly clientId: string | undefined;
 
@@ -71,16 +79,6 @@ export interface IFluidDataStoreRuntime
 	 * Returns the channel with the given id
 	 */
 	getChannel(id: string): Promise<IChannel>;
-
-	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
 
 	/**
 	 * Creates a new channel of the given type.

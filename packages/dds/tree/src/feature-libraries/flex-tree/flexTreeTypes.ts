@@ -11,7 +11,7 @@ import {
 	anchorSlot,
 } from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
-import { FieldKinds } from "../default-schema/index.js";
+import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
@@ -600,7 +600,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"tryGetField",
 	"type",
 	"value",
-	"localNodeKey",
 	"boxedIterator",
 	"iterator",
 	"getBoxed",
@@ -759,6 +758,22 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	readonly length: number;
 
 	/**
+	 * Get an editor for this sequence.
+	 */
+	sequenceEditor(): SequenceFieldEditBuilder;
+
+	/*
+	 * TODO:
+	 * Remove these editing methods and replace their use with use of `sequenceEditor`.
+	 * These editing methods replicate the API exposed by simple-tree, but using flex-tree types.
+	 * As these methods just re-abstract the lower level SequenceFieldEditBuilder API, they add little value.
+	 * Migrating the logic implementing them to simple-tree (and having it just use `sequenceEditor` directly)
+	 * avoids duplicating the API surface (and documentation), as well as makes it simpler to implement the desired user facing validation and errors
+	 * since simple-tree becomes responsible for all the validation and can produce usage errors in terms of the public package API.
+	 */
+	// #region Editing Methods
+
+	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
@@ -784,16 +799,6 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	removeAt(index: number): void;
-
-	/**
-	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
-	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if `start` is not in the range [0, `list.length`).
-	 * @throws Throws if `end` is less than `start`.
-	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
-	 */
-	removeRange(start?: number, end?: number): void;
 
 	/**
 	 * Moves the specified item to the start of the sequence.
@@ -917,6 +922,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 
+	// #endregion
+
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
 	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
@@ -994,8 +1001,6 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeRequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeOptionalField<Types>
-	: Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: FlexTreeField;
 
 /**
@@ -1052,9 +1057,6 @@ export type FlexTreeUnboxFieldInner<
 	? FlexTreeUnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
-	Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: // TODO: forbidden
 	  unknown;
 

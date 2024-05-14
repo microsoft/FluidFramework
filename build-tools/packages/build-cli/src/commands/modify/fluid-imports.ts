@@ -9,16 +9,38 @@ import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
-import { BaseCommand } from "../../base";
-import { ApiLevel, getApiExports, isKnownApiLevel, knownApiLevels } from "../../library";
+import {
+	ApiLevel,
+	BaseCommand,
+	getApiExports,
+	isKnownApiLevel,
+	knownApiLevels,
+} from "../../library";
 import type { CommandLogger } from "../../logging";
 
 const maxConcurrency = 4;
 
 /**
+ * Known scopes of Fluid Framework packages.
+ *
+ * @remarks
+ *
+ * The allowed scopes are actually configurable in the root fluidBuild config, so this list will need to be updated if
+ * new Fluid Framework scopes are used.
+ */
+const knownFFScopes = [
+	"@fluidframework",
+	"@fluid-example",
+	"@fluid-experimental",
+	"@fluid-internal",
+	"@fluid-private",
+	"@fluid-tools",
+] as const;
+
+/**
  * FF packages that exist outside of a scope that starts with `@fluid`.
  */
-const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
+const unscopedFFPackages: ReadonlySet<string> = new Set(["fluid-framework", "tinylicious"]);
 
 /**
  * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/beta, /legacy, etc.).
@@ -516,8 +538,17 @@ function parseFluidImports(
 		) /* no undefined elements remain */ as FluidImportDataPresent[];
 }
 
+/**
+ * Returns true if an import is from a known Fluid Framework package or scope.
+ *
+ * @param packageName - The name of the package to check.
+ * @returns True if the package is a Fluid Framework package; false otherwise.
+ */
 function isFluidImport(packageName: PackageName): boolean {
-	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
+	return (
+		knownFFScopes.some((scope) => packageName.startsWith(`${scope}/`)) ||
+		unscopedFFPackages.has(packageName)
+	);
 }
 
 function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {

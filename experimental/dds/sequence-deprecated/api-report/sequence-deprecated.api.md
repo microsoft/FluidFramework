@@ -14,6 +14,9 @@ import { IJSONRunSegment } from '@fluidframework/sequence/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind as ISharedObjectKind_2 } from '@fluidframework/shared-object-base';
 import { Jsonable } from '@fluidframework/datastore-definitions/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
@@ -107,14 +110,16 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     static readonly typeString = "RunSegment";
 }
 
+// @internal
+export const SharedNumberSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
+
+// @internal
+export type SharedNumberSequence = SharedNumberSequenceClass;
+
 // @internal @deprecated
-export class SharedNumberSequence extends SharedSequence<number> {
+export class SharedNumberSequenceClass extends SharedSequence<number> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    // @deprecated
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
-    // @deprecated
-    static getFactory(): SharedNumberSequenceFactory;
     // @deprecated (undocumented)
     getRange(start: number, end?: number): number[];
     // (undocumented)
@@ -139,14 +144,16 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     get type(): string;
 }
 
+// @internal
+export const SharedObjectSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
+
+// @internal
+export type SharedObjectSequence<T> = SharedObjectSequenceClass<T>;
+
 // @internal @deprecated
-export class SharedObjectSequence<T> extends SharedSequence<T> {
+export class SharedObjectSequenceClass<T> extends SharedSequence<T> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    // @deprecated
-    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedObjectSequence<T>;
-    // @deprecated
-    static getFactory(): SharedObjectSequenceFactory;
     // @deprecated (undocumented)
     getRange(start: number, end?: number): Serializable<T>[];
     // (undocumented)
@@ -174,12 +181,16 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 export { SharedSequence }
 
 // @internal @deprecated (undocumented)
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+export const SparseMatrix: ISharedObjectKind<SparseMatrixClass>;
+
+// @internal (undocumented)
+export type SparseMatrix = SparseMatrixClass;
+
+// @internal (undocumented)
+export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
     annotatePosition(row: number, col: number, props: PropertySet): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
-    static getFactory(): IChannelFactory;
     // (undocumented)
     getItem(row: number, col: number): // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
     Jsonable<string | number | boolean | IFluidHandle> | undefined;
@@ -206,14 +217,14 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 }
 
 // @internal @deprecated (undocumented)
-export class SparseMatrixFactory implements IChannelFactory {
+export class SparseMatrixFactory implements IChannelFactory<SparseMatrix> {
     // (undocumented)
     static Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    create(document: IFluidDataStoreRuntime, id: string): SparseMatrix;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SparseMatrix>;
     // (undocumented)
     static segmentFromSpec(spec: IJSONSegment): ISegment;
     // (undocumented)

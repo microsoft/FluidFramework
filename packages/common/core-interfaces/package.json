@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,20 +72,21 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "tsc --watch",
-		"typetests:gen": "fluid-type-test-generator",
+		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
+		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.8.0.0",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-rc.3.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
@@ -95,73 +96,24 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedInterfaceDeclaration_ITelemetryLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryProperties": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetails": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedVariableDeclaration_IFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidPackage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidPackageEnvironment": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedVariableDeclaration_isFluidCodeDetails": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
 			"RemovedVariableDeclaration_isFluidPackage": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidHandle": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideFluidHandle": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IProvideFluidLoadable": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidLoadable": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

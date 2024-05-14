@@ -27,7 +27,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+		"perf": "mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 -r node_modules/@fluid-internal/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
@@ -45,10 +45,10 @@
 		"moment": "^2.21.0"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": "~2.0.0-rc.3.0.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/benchmark": "^2.1.0",
 		"@types/chai": "^4.3.4",
 		"@types/easy-table": "^0.0.32",

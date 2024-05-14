@@ -210,7 +210,6 @@ describe("MergeTree", () => {
 			);
 
 			assert.deepStrictEqual(count, {
-				[MergeTreeDeltaType.ANNOTATE]: 1,
 				[MergeTreeMaintenanceType.SPLIT]: 2,
 			});
 		});

@@ -24,11 +24,16 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
+import type {
+	ISerializedStateManagerDocumentStorageService,
+	ISnapshotInfo,
+} from "./serializedStateManager.js";
+import { convertSnapshotInfoToSnapshot, getDocumentAttributes } from "./utils.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -42,7 +47,9 @@ export interface ISerializableBlobContents {
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
-export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
+export class ContainerStorageAdapter
+	implements ISerializedStateManagerDocumentStorageService, IDocumentStorageService, IDisposable
+{
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
 	private _summarizeProtocolTree: boolean | undefined;
@@ -53,11 +60,20 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return this._summarizeProtocolTree === true;
 	}
 
+	private _loadedGroupIdSnapshots: Record<string, ISnapshot> = {};
+	/**
+	 * Any loading group id (virtualized) snapshot download from storage will be stored here.
+	 */
+	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
+		return this._loadedGroupIdSnapshots;
+	}
+
 	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
 	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
 	 * @param logger - Telemetry logger
+	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
 	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
@@ -69,6 +85,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
+		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -110,6 +127,10 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
+	public clearPendingState() {
+		this.loadingGroupIdSnapshotsFromPendingState = undefined;
+	}
+
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		// back-compat 0.40 containerRuntime requests policies even in detached container if storage is present
 		// and storage is always present in >=0.41.
@@ -127,12 +148,46 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
-		if (this._storageService.getSnapshot !== undefined) {
-			return this._storageService.getSnapshot(snapshotFetchOptions);
+		let snapshot: ISnapshot;
+		if (
+			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
+			snapshotFetchOptions?.loadingGroupIds !== undefined
+		) {
+			const localSnapshot =
+				this.loadingGroupIdSnapshotsFromPendingState[
+					snapshotFetchOptions.loadingGroupIds[0]
+				];
+			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
+			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
+		} else {
+			if (this._storageService.getSnapshot === undefined) {
+				throw new UsageError(
+					"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+				);
+			}
+			snapshot = await this._storageService.getSnapshot(snapshotFetchOptions);
 		}
-		throw new UsageError(
-			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+
+		// Track the latest snapshot for each loading group id
+		const loadingGroupIds = snapshotFetchOptions?.loadingGroupIds;
+		assert(
+			snapshot.sequenceNumber !== undefined,
+			0x971 /* Snapshot must have sequence number */,
 		);
+		if (loadingGroupIds !== undefined) {
+			for (const loadingGroupId of loadingGroupIds) {
+				// Do we actually want to update the stored snapshot?
+				// What if the incoming snapshot is way newer than the stored snapshot?
+				// We only want to update the stored snapshot if the incoming snapshot is newer (stored sequence number < incoming sequence number)
+				const storedSeqNum =
+					this._loadedGroupIdSnapshots[loadingGroupId]?.sequenceNumber ?? -1;
+				if (storedSeqNum < snapshot.sequenceNumber) {
+					this._loadedGroupIdSnapshots[loadingGroupId] = snapshot;
+				}
+			}
+		}
+		return snapshot;
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
