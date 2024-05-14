@@ -148,6 +148,8 @@ function filterRuntimeOptionsForVersion(
  * @internal
  */
 export interface ITestDataObject extends IFluidLoadable {
+	get ITestDataObject(): ITestDataObject;
+
 	_context: IFluidDataStoreContext;
 	_runtime: IFluidDataStoreRuntime;
 	_root: ISharedDirectory;
@@ -155,6 +157,10 @@ export interface ITestDataObject extends IFluidLoadable {
 
 function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntimeApi>) {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
+		get ITestDataObject() {
+			return this;
+		}
+
 		public get _context() {
 			return this.context;
 		}

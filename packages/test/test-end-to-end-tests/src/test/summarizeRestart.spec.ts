@@ -5,12 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects, type ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import {
 	ITestContainerConfig,
-	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
@@ -196,12 +195,12 @@ describeCompat(
 			],
 			async () => {
 				const container = await createContainer();
-				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				const maybeTestFluidObject: FluidObject<ITestDataObject> | undefined =
 					await container.getEntryPoint();
-				const dataObject = maybeTestFluidObject.ITestFluidObject;
-				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
-				const counter = SharedCounter.create(dataObject.runtime, "counter");
-				dataObject.root.set("counter", counter.handle);
+				const dataObject = maybeTestFluidObject.ITestDataObject;
+				assert(dataObject !== undefined, "dataObject not a ITestDataObject");
+				const counter = SharedCounter.create(dataObject._runtime, "counter");
+				dataObject._root.set("counter", counter.handle);
 
 				// summary1
 				await provider.ensureSynchronized();

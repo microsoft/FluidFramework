@@ -294,6 +294,8 @@ export interface ITestDataObject extends IFluidLoadable {
     // (undocumented)
     _context: IFluidDataStoreContext;
     // (undocumented)
+    get ITestDataObject(): ITestDataObject;
+    // (undocumented)
     _root: ISharedDirectory;
     // (undocumented)
     _runtime: IFluidDataStoreRuntime;

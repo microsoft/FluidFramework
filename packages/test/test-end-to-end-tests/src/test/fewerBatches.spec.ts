@@ -90,9 +90,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 			await remoteContainer.getEntryPoint();
 		assert(
 			maybeTestFluidObject2.ITestFluidObject !== undefined,
-			"maybeTestFluidObject not a ITestFluidObject",
+			"maybeTestFluidObject2 not a ITestFluidObject",
 		);
-		dataObject2 = maybeTestFluidObject.ITestFluidObject;
+		dataObject2 = maybeTestFluidObject2.ITestFluidObject;
 		dataObject2map = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);

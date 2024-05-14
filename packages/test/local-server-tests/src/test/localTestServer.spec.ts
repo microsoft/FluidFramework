@@ -110,9 +110,9 @@ describe("LocalTestServer", () => {
 			await container2.getEntryPoint();
 		assert(
 			maybeTestFluidObject2.ITestFluidObject !== undefined,
-			"maybeTestFluidObject not a ITestFluidObject",
+			"maybeTestFluidObject2 not a ITestFluidObject",
 		);
-		dataObject2 = maybeTestFluidObject.ITestFluidObject;
+		dataObject2 = maybeTestFluidObject2.ITestFluidObject;
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 

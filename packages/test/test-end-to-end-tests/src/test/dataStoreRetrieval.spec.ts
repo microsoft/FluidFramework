@@ -29,6 +29,10 @@ describeCompat(
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 		} = apis;
 		class InnerDataObject extends DataObject implements ITestDataObject {
+			get ITestDataObject() {
+				return this;
+			}
+
 			public get _root() {
 				return this.root;
 			}
@@ -49,6 +53,10 @@ describeCompat(
 		);
 
 		class OuterDataObject extends DataObject implements ITestDataObject {
+			get ITestDataObject() {
+				return this;
+			}
+
 			public get _root() {
 				return this.root;
 			}

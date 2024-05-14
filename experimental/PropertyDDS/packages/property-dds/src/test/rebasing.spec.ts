@@ -209,9 +209,9 @@ describe("PropertyDDS", () => {
 			await container2.getEntryPoint();
 		assert(
 			maybeTestFluidObject2.ITestFluidObject !== undefined,
-			"maybeTestFluidObject not a ITestFluidObject",
+			"maybeTestFluidObject2 not a ITestFluidObject",
 		);
-		dataObject2 = maybeTestFluidObject.ITestFluidObject;
+		dataObject2 = maybeTestFluidObject2.ITestFluidObject;
 		sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
