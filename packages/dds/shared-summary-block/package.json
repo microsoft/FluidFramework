@@ -146,6 +146,14 @@
 			},
 			"ClassDeclaration_SharedSummaryBlock": {
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedSummaryBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_SharedSummaryBlockFactory": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

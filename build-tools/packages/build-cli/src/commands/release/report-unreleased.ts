@@ -9,8 +9,7 @@ import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/ve
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
-import { BaseCommand } from "../../base";
-import { type ReleaseReport, toReportKind } from "../../library";
+import { BaseCommand, type ReleaseReport, toReportKind } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =

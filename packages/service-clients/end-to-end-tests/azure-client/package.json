@@ -104,6 +104,14 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test": [
+				"^api-extractor:esnext",
+				"^build:esnext"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
