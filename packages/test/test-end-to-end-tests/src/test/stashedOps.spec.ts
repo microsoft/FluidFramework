@@ -1876,6 +1876,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				counter.increment(duplicatedIncrementValue);
 			});
 
+			//* Do I need to use the loadOffline helper here? I think so.
 			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 			const container2 = await loader.resolve({ url }, pendingLocalState);
 			const container3 = await loader.resolve({ url }, pendingLocalState);
@@ -1896,6 +1897,34 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(counter1.value, 2 * duplicatedIncrementValue);
 			assert.strictEqual(counter2.value, 2 * duplicatedIncrementValue);
 			assert.strictEqual(counter3.value, 2 * duplicatedIncrementValue);
+		});
+
+		it.only(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(incrementValue);
+			});
+
+			// Rehydrate the first time - counter increment will be resubmitted on container2's new clientId
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+			assert.strictEqual(counter1.value, incrementValue);
+			assert.strictEqual(counter2.value, incrementValue);
+
+			// Rehydrate the first time - first counter increment is unrecognizable,
+			// so it will be resubmitted again here on container3's new clientId
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+
+			assert.strictEqual(counter1.value, 2 * incrementValue);
+			assert.strictEqual(counter2.value, 2 * incrementValue);
+			assert.strictEqual(counter3.value, 2 * incrementValue);
 		});
 	});
 });
