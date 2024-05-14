@@ -8,6 +8,7 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import {
 	MonitoringContext,
 	UsageError,
@@ -38,7 +39,6 @@ import {
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	SummarizerStopReason,
-	type IRetriableSummaryError,
 } from "./summarizerTypes.js";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
@@ -685,7 +685,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
-		let error: IRetriableSummaryError | undefined;
+		let error: Error | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -723,7 +723,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			error = ackNackResult.error;
 			// If retryAfterSeconds is available in the failure results, use it. Otherwise, attempt to get
 			// it from the error.
-			retryAfterSeconds = retryAfterSeconds ?? error?.retryAfterSeconds;
+			retryAfterSeconds = retryAfterSeconds ?? getRetryDelaySecondsFromError(error);
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,

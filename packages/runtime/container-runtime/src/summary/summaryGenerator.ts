@@ -35,7 +35,6 @@ import {
 	SubmitSummaryResult,
 	SummarizeResultPart,
 	SummaryGeneratorTelemetry,
-	type IRetriableSummaryError,
 } from "./summarizerTypes.js";
 import { IClientSummaryWatcher } from "./summaryCollection.js";
 
@@ -185,7 +184,7 @@ export class SummarizeResultBuilder {
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
-export class RetriableSummaryError extends LoggingError implements IRetriableSummaryError {
+export class RetriableSummaryError extends LoggingError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,
@@ -273,7 +272,7 @@ export class SummaryGenerator {
 		 */
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
-			error?: IRetriableSummaryError,
+			error?: Error,
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
@@ -296,7 +295,7 @@ export class SummaryGenerator {
 					retryAfterSeconds:
 						submitFailureResult?.retryAfterSeconds ??
 						nackSummaryResult?.retryAfterSeconds ??
-						error?.retryAfterSeconds,
+						getRetryDelaySecondsFromError(error),
 				},
 				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.

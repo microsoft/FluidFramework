@@ -112,7 +112,6 @@ export {
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
-	IRetriableSummaryError,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

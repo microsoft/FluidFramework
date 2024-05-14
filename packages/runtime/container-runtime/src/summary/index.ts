@@ -65,7 +65,6 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 	ISummarizeEventProps,
-	IRetriableSummaryError,
 } from "./summarizerTypes.js";
 export {
 	IAckedSummary,
