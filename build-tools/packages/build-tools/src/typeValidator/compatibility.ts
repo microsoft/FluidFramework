@@ -17,7 +17,7 @@ type requireAssignableTo<_A extends B, B> = true;
  * Type meta-function which takes in a type, and removes some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
- * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes].
+ * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes).
  * A mapped type (for example `{ [P in keyof T]: T[P]; }`) is used preserve only the list of members, and discard the fact that it is a class.
  *
  * Another case is with `const enum`. The [docs for enum compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#enums) seems to be only partly accurate, so tests for their behavior are included below.
