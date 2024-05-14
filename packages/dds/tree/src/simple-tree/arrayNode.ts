@@ -790,7 +790,7 @@ export function arraySchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
 		}
 

@@ -20,6 +20,8 @@ import { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./obje
  * Enums are a common example of this pattern.
  * @internal
  */
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function singletonSchema<TScope extends string, TName extends string | number>(
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
