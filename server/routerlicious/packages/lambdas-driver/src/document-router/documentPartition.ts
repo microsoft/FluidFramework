@@ -164,7 +164,10 @@ export class DocumentPartition {
 		if (this.closed) {
 			Lumberjack.info(
 				"Skipping marking document as corrupt since the document partition is already closed",
-				{ ...getLumberBaseProperties(this.documentId, this.tenantId), error },
+				{
+					...getLumberBaseProperties(this.documentId, this.tenantId),
+					error: error.toString(),
+				},
 			);
 			return;
 		}
