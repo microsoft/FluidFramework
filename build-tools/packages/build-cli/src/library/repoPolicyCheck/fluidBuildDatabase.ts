@@ -251,6 +251,8 @@ export class FluidBuildDatabase {
 
 		const predecessors: BuildScript[][] = [];
 
+		// Note that combinedDependencies (as of 2024-05-13) does not consider peer
+		// dependencies that could be linked.
 		for (const dep of pkg.combinedDependencies) {
 			const depPackageName = dep.name;
 			const depBuildScripts = this.packageBuildScripts.get(depPackageName);
@@ -361,7 +363,7 @@ export class FluidBuildDatabase {
 			}
 		}
 
-		// Load dependencies outputs too
+		// Load dependencies' outputs too
 		for (const directDependency of pkg.combinedDependencies) {
 			this.loadPackageAndDependencies(packageGroup, directDependency.name);
 		}

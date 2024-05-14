@@ -92,7 +92,7 @@ const fluidBuildDatabaseCache = new FluidBuildDatabase();
  * @param command - the command to find the script name for
  * @returns best script name found to match the command
  */
-function findScript(json: PackageJson, command: string): string | undefined {
+function findScript(json: Readonly<PackageJson>, command: string): string | undefined {
 	if (json.scripts === undefined) {
 		return undefined;
 	}
@@ -156,7 +156,7 @@ function findTscMultiScript(json: PackageJson, config: string): string | undefin
  * @remarks
  */
 function findFluidTscScript(
-	json: PackageJson,
+	json: Readonly<PackageJson>,
 	project: string | undefined,
 ): string | undefined {
 	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
@@ -187,7 +187,7 @@ function findFluidTscScript(
  * @param json - packages build dependencies to get.
  * @returns an array of build task dependencies name expected
  */
-function getDefaultTscTaskDependencies(root: string, json: PackageJson): string[] {
+function getDefaultTscTaskDependencies(root: string, json: Readonly<PackageJson>): string[] {
 	const packageMap = getFluidPackageMap(root);
 	const pkg = packageMap.get(json.name);
 	if (pkg === undefined) {
@@ -233,7 +233,7 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson): string[
  * @param project - the tsc project to search for
  * @returns set of script names found to use the project
  */
-function findTscScripts(json: PackageJson, project: string): string[] | undefined {
+function findTscScripts(json: Readonly<PackageJson>, project: string): string[] | undefined {
 	const tscScripts: string[] = [];
 	function addIfDefined(script: string | undefined): void {
 		if (script !== undefined) {
@@ -271,7 +271,7 @@ interface EslintConfig {
 function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
-	json: PackageJson,
+	json: Readonly<PackageJson>,
 ): (string | string[])[] {
 	if (json.scripts?.eslint === undefined) {
 		return [];
@@ -336,7 +336,7 @@ function eslintGetScriptDependencies(
  * @param json - package.json content for the package
  * @returns true if FluidRepo includes the package, false otherwise
  */
-function isFluidBuildEnabled(root: string, json: PackageJson): boolean {
+function isFluidBuildEnabled(root: string, json: Readonly<PackageJson>): boolean {
 	return getFluidPackageMap(root).get(json.name) !== undefined;
 }
 
@@ -350,9 +350,9 @@ function isFluidBuildEnabled(root: string, json: PackageJson): boolean {
  */
 function hasTaskDependency(
 	root: string,
-	json: PackageJson,
+	json: Readonly<PackageJson>,
 	taskName: string,
-	searchDeps: string[],
+	searchDeps: readonly string[],
 ): boolean {
 	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
@@ -362,7 +362,14 @@ function hasTaskDependency(
 	// given package's name (json.name) will alway return false as package is
 	// not a dependency of itself. Skip "name# prefix for self dependencies.
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
-	// Set of package dependencies
+	/**
+	 * Set of package dependencies
+	 * True dependencies would include peer dependencies as well. Here we are
+	 * matching {@link Package.combinedDependencies} that is used in
+	 * {@link @fluidframework/build-tools/src/fluidBuild/buildGraph.ts#BuildGraph.initializePackages}
+	 * Being more conservative is not terrible as it would just look like a miss
+	 * from ^ specification and could be fixed with an explicit dependency.
+	 */
 	const packageDependencies = new Set([
 		...Object.keys(json.dependencies ?? {}),
 		// devDeps are not regular task deps, but might happen for internal type only packages.
@@ -427,9 +434,9 @@ function hasTaskDependency(
  */
 function checkTaskDeps(
 	root: string,
-	json: PackageJson,
+	json: Readonly<PackageJson>,
 	taskName: string,
-	taskDeps: (string | string[])[],
+	taskDeps: readonly (string | string[])[],
 ): string | undefined {
 	const missingTaskDependencies = taskDeps
 		.filter(
@@ -457,7 +464,7 @@ function patchTaskDeps(
 	root: string,
 	json: PackageJson,
 	taskName: string,
-	taskDeps: (string | string[])[],
+	taskDeps: readonly (string | string[])[],
 ): void {
 	const missingTaskDependencies = taskDeps.filter(
 		(taskDep) =>
@@ -517,10 +524,10 @@ function patchTaskDeps(
 
 function getTscCommandDependencies(
 	packageDir: string,
-	json: PackageJson,
+	json: Readonly<PackageJson>,
 	script: string,
 	command: string,
-	packageMap: Map<string, Package>,
+	packageMap: ReadonlyMap<string, Package>,
 ): (string | string[])[] {
 	// If the project has a referenced project, depend on that instead of the default
 	const parsedCommand = TscUtils.parseCommandLine(command);
@@ -594,7 +601,7 @@ interface BuildDepsCallbackContext {
 	json: PackageJson;
 	script: string;
 	command: string;
-	packageMap: Map<string, Package>;
+	packageMap: ReadonlyMap<string, Package>;
 	root: string;
 }
 
