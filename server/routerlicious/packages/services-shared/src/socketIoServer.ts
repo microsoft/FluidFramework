@@ -216,6 +216,32 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 }
 
+function getRedisAdapter(
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+	socketIoAdapterConfig?: any,
+): typeof Adapter | ((nsp: Namespace) => Adapter) {
+	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
+		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
+			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
+			subConnection: new SocketIoRedisSubscriptionConnection(
+				redisClientConnectionManagerForSub,
+			),
+		};
+
+		redisSocketIoAdapter.RedisSocketIoAdapter.setup(
+			socketIoRedisOptions,
+			socketIoAdapterConfig?.shouldDisableDefaultNamespace,
+		);
+
+		return redisSocketIoAdapter.RedisSocketIoAdapter;
+	}
+	return createAdapter(
+		redisClientConnectionManagerForPub.getRedisClient(),
+		redisClientConnectionManagerForSub.getRedisClient(),
+	);
+}
+
 export function create(
 	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
@@ -234,27 +260,11 @@ export function create(
 		"Error with Redis sub connection", // error message
 	);
 
-	let adapter: (nsp: Namespace) => Adapter;
-	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
-		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
-			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
-			subConnection: new SocketIoRedisSubscriptionConnection(
-				redisClientConnectionManagerForSub,
-			),
-		};
-
-		redisSocketIoAdapter.RedisSocketIoAdapter.setup(
-			socketIoRedisOptions,
-			socketIoAdapterConfig?.shouldDisableDefaultNamespace,
-		);
-
-		adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
-	} else {
-		adapter = createAdapter(
-			redisClientConnectionManagerForPub.getRedisClient(),
-			redisClientConnectionManagerForSub.getRedisClient(),
-		);
-	}
+	const adapter = getRedisAdapter(
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+		socketIoAdapterConfig,
+	);
 
 	// Create and register a socket.io connection on the server
 	const io = new Server(server, {
