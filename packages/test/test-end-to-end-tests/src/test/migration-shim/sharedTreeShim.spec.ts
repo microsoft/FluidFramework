@@ -22,7 +22,7 @@ import {
 	SharedTree,
 	TreeConfiguration,
 	type TreeView,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
 

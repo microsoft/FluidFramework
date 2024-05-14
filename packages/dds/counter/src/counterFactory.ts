@@ -9,7 +9,6 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedCounter as SharedCounterClass } from "./counter.js";
@@ -78,8 +77,7 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
  * Entrypoint for {@link ISharedCounter} creation.
  * @alpha
  */
-export const SharedCounter: ISharedObjectKind<ISharedCounter> =
-	createSharedObjectKind(CounterFactory);
+export const SharedCounter = createSharedObjectKind<ISharedCounter>(CounterFactory);
 
 /**
  * Alias for {@link ISharedCounter} for compatibility.

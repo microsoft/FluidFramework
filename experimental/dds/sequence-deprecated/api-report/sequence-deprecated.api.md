@@ -20,6 +20,8 @@ import { ISharedObjectKind as ISharedObjectKind_2 } from '@fluidframework/shared
 import { Jsonable } from '@fluidframework/datastore-definitions/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base';
 import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
 import { SharedSequence } from '@fluidframework/sequence/internal';
 import { SubSequence } from '@fluidframework/sequence/internal';
@@ -111,7 +113,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 }
 
 // @internal
-export const SharedNumberSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
+export const SharedNumberSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>> & SharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
 
 // @internal
 export type SharedNumberSequence = SharedNumberSequenceClass;
@@ -145,7 +147,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 }
 
 // @internal
-export const SharedObjectSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
+export const SharedObjectSequence: ISharedObjectKind_2<ISharedObject<ISharedObjectEvents>> & SharedObjectKind_2<ISharedObject<ISharedObjectEvents>>;
 
 // @internal
 export type SharedObjectSequence<T> = SharedObjectSequenceClass<T>;
@@ -181,7 +183,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 export { SharedSequence }
 
 // @internal @deprecated (undocumented)
-export const SparseMatrix: ISharedObjectKind<SparseMatrixClass>;
+export const SparseMatrix: ISharedObjectKind<SparseMatrixClass> & SharedObjectKind<SparseMatrixClass>;
 
 // @internal (undocumented)
 export type SparseMatrix = SparseMatrixClass;

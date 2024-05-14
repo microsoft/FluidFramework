@@ -16,9 +16,10 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
-export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>>;
+export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>> & SharedObjectKind<IConsensusRegisterCollection<any>>;
 
 // @alpha
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;

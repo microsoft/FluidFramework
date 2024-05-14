@@ -36,7 +36,7 @@ import {
 	TreeConfiguration,
 	type TreeView,
 	disposeSymbol,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

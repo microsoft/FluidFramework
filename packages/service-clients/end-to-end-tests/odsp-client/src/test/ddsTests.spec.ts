@@ -199,15 +199,15 @@ describe("Fluid data updates", () => {
 	 * Expected behavior: DataObject changes are correctly reflected on original and loaded containers
 	 */
 	it("can change DataObjects within initialObjects value", async () => {
-		const doSchema: ContainerSchema = {
+		const doSchema = {
 			initialObjects: {
 				mdo1: TestDataObject,
 				mdo2: CounterTestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 		const { container } = await client.createContainer(doSchema);
 		const initialObjectsCreate = container.initialObjects;
-		const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
+		const mdo2: CounterTestDataObject = initialObjectsCreate.mdo2;
 		mdo2.increment();
 		mdo2.increment();
 		mdo2.increment();
@@ -225,7 +225,7 @@ describe("Fluid data updates", () => {
 
 		const { container: containerGet } = await client.getContainer(itemId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
-		const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
+		const mdo2get: CounterTestDataObject = initialObjectsGet.mdo2;
 
 		assert.strictEqual(mdo2get.value, 3);
 

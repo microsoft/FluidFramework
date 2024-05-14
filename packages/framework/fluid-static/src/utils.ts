@@ -96,7 +96,7 @@ export const parseDataObjectsFromSharedObjects = (
 		...(schema.dynamicObjectTypes ?? []),
 	]);
 	for (const obj of dedupedObjects) {
-		tryAddObject(obj);
+		tryAddObject(obj as unknown as LoadableObjectClass);
 	}
 
 	if (registryEntries.size === 0 && sharedObjects.size === 0) {

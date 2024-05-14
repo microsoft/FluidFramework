@@ -34,6 +34,7 @@ import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-defi
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils/internal';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
@@ -83,6 +84,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     requestHandlers?: RuntimeRequestHandler[];
     runtimeOptions?: IContainerRuntimeOptions;
 }
+
+// @internal
+export function createDataObjectKind<T extends new (...any: any[]) => DataObject>(factory: T): T & SharedObjectKind<InstanceType<T>>;
 
 // @alpha
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {

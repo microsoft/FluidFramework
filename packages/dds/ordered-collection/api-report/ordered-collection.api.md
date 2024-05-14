@@ -16,6 +16,7 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal
 export function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined>;
@@ -51,7 +52,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 }
 
 // @alpha
-export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>>;
+export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
 
 // @alpha
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

@@ -8,8 +8,9 @@ import { ErasedType } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
@@ -242,7 +243,7 @@ export interface CommitMetadata {
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
 
 // @internal
-export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree>;
+export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
 // @internal
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
@@ -1691,8 +1692,8 @@ export interface SequenceFieldEditBuilder {
     remove(index: number, count: number): void;
 }
 
-// @public
-export const SharedTree: ISharedObjectKind<ITree>;
+// @alpha
+export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
 // @internal
 export interface SharedTreeContentSnapshot {

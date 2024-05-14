@@ -28,7 +28,7 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree/internal";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles

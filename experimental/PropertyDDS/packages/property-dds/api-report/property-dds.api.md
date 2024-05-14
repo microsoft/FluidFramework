@@ -16,6 +16,7 @@ import { IsoBuffer } from '@fluid-internal/client-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { NodeProperty } from '@fluid-experimental/property-properties';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal (undocumented)
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
@@ -260,7 +261,7 @@ export class SharedPropertyTree extends SharedObject {
 }
 
 // @internal
-export const SharedPropertyTreeKind: ISharedObjectKind<SharedPropertyTree>;
+export const SharedPropertyTreeKind: ISharedObjectKind<SharedPropertyTree> & SharedObjectKind<SharedPropertyTree>;
 
 // @internal (undocumented)
 export interface SharedPropertyTreeOptions {

@@ -8,7 +8,7 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { type ISharedObjectKind, type SharedObjectKind } from "@fluidframework/shared-object-base";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -19,15 +19,13 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
- * @public
  */
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
+export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
 
 /**
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
- * @public
  *
  * @privateRemarks
  * There are some edge cases in TypeScript where the order of the members in a union matter.
@@ -48,7 +46,6 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * @privateRemarks
  * Having both `factory` and `LoadableObjectCtor` is redundant.
  * TODO: It appears the factory is what's used, so the constructor should be removed.
- * @public
  */
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 	/**
@@ -59,7 +56,6 @@ export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 	readonly factory: { readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & (new (...args: any[]) => T);
-
 /**
  * Represents properties that can be attached to a container.
  * @public
@@ -94,7 +90,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	readonly initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: Record<string, SharedObjectKind>;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -106,7 +102,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
 /**
@@ -134,7 +130,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
 /**

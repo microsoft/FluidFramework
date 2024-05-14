@@ -11,8 +11,9 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal @sealed
 export class CellFactory implements IChannelFactory<ISharedCell> {
@@ -55,6 +56,6 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 }
 
 // @internal
-export const SharedCell: ISharedObjectKind<ISharedCell>;
+export const SharedCell: ISharedObjectKind<ISharedCell<any>> & SharedObjectKind<ISharedCell<any>>;
 
 ```

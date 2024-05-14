@@ -94,7 +94,7 @@ import { ISharedObjectKind } from "@fluidframework/shared-object-base";
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-}) as ISharedObjectKind<SharedTree>;
+}) as unknown as ISharedObjectKind<SharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {

@@ -11,9 +11,10 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { SharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @internal
-export const AttributableMap: ISharedObjectKind<ISharedMap>;
+export const AttributableMap: ISharedObjectKind<ISharedMap> & SharedObjectKind<ISharedMap>;
 
 // @internal
 export interface ILocalValue {

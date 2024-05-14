@@ -9,6 +9,7 @@ import {
 	IFluidHandle,
 	type IFluidHandleInternal,
 	ITelemetryBaseProperties,
+	type ErasedType,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -786,6 +787,11 @@ export abstract class SharedObject<
 /**
  * Defines a kind of shared object.
  * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
+ *
+ * @remarks
+ * For use internally and in the "encapsulated API".
+ * See {@link SharedObjectKind} for the type erased version for use in the public declarative API.
+ *
  * @public
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -824,13 +830,25 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 /**
+ * Defines a kind of shared object.
+ * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
+ * @privateRemarks
+ * Type erased reference to an {@link ISharedObjectKind} or a DataObject class.
+ * For use by the declarative API only.
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SharedObjectKind<out TSharedObject = unknown>
+	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {}
+
+/**
  * Utility for creating ISharedObjectKind instances.
  * @internal
  */
 export function createSharedObjectKind<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { Type: string },
-): ISharedObjectKind<TSharedObject> {
-	return {
+): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
+	const result: ISharedObjectKind<TSharedObject> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -839,4 +857,6 @@ export function createSharedObjectKind<TSharedObject>(
 			return runtime.createChannel(id, factory.Type) as TSharedObject;
 		},
 	};
+
+	return result as typeof result & SharedObjectKind<TSharedObject>;
 }

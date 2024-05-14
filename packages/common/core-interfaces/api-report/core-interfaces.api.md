@@ -279,7 +279,7 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 // @public
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
-    handle: IFluidHandle;
+    readonly handle: IFluidHandle;
 }
 
 // @internal (undocumented)

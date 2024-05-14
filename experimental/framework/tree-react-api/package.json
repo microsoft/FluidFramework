@@ -96,6 +96,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^17.0.1"
 	},

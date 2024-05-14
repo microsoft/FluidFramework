@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedTree, TreeConfiguration, SchemaFactory } from "@fluidframework/tree";
+import { SharedTree, TreeConfiguration, SchemaFactory } from "@fluidframework/tree/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureClient } from "./AzureClientFactory.js";

@@ -36,7 +36,7 @@ import {
 	SharedTree,
 	TreeConfiguration,
 	disposeSymbol,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

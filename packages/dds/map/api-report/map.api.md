@@ -14,7 +14,8 @@ import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { ISharedObject } from '@fluidframework/shared-object-base';
 import type { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha @sealed
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
@@ -124,13 +125,13 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 }
 
 // @alpha
-export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
-export const SharedMap: ISharedObjectKind<ISharedMap>;
+export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind<ISharedMap>;
 
 // @alpha
 export type SharedMap = ISharedMap;
