@@ -226,6 +226,42 @@
 			},
 			"ClassDeclaration_DataStoreContexts": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_FluidDataStoreContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_LocalFluidDataStoreContextBase": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_LocalFluidDataStoreContext": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_RuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextInternal": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ILocalFluidDataStoreContextProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
