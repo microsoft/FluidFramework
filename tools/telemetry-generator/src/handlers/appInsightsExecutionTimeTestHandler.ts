@@ -11,7 +11,7 @@ import { TelemetryClient } from "applicationinsights";
  */
 module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
-	fileData.benchmarks.forEach(async (testData) => {
+	for (const testData of fileData.benchmarks) {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
 			console.log(
@@ -58,5 +58,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		} catch (error) {
 			console.error(`failed to emit metric ${marginOfErrorMetricName}`, error);
 		}
-	});
+	}
 };

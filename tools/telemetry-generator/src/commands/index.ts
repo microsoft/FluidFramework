@@ -67,6 +67,7 @@ export class EntryPoint extends Command {
 			// Note: we expect the path to the handler module to be absolute. Relative paths technically work, but
 			// one needs to be very familiar with Node's module resolution strategy and understand exactly which file
 			// is the one getting executed at runtime (since that's where the relative path will be resolved from).
+			// eslint-disable-next-line unicorn/no-await-expression-member
 			handler = (await import(flags.handlerModule)).default;
 		} catch (error) {
 			exitWithError(`Unexpected error importing specified handler module.\n${error}`);
@@ -111,7 +112,9 @@ export class EntryPoint extends Command {
 				handler(data, logger);
 			} catch (error: unknown) {
 				console.error(
-					`Unexpected error processing file '${fullPath}'.\n${(error as Error).stack}`,
+					`Unexpected error processing file '${fullPath}'.\n${
+						(error as Partial<Error>).stack
+					}`,
 				);
 			}
 		}

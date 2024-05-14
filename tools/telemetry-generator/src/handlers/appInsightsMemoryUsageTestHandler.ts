@@ -11,7 +11,7 @@ import { TelemetryClient } from "applicationinsights";
  */
 module.exports = function handler(fileData, telemetryClient: TelemetryClient): void {
 	console.log(`Found ${fileData.tests.length} total benchmark tests to emit`);
-	fileData.tests.forEach(async (testData) => {
+	for (const testData of fileData.tests) {
 		const heapUsedAvgMetricName = `${fileData.suiteName}_${testData.testName}_heapUsedAvg`;
 		try {
 			console.log(
@@ -57,5 +57,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient): v
 		} catch (error) {
 			console.error(`failed to emit metric ${heapUsedStdDevMetricName}`, error);
 		}
-	});
+	}
 };
