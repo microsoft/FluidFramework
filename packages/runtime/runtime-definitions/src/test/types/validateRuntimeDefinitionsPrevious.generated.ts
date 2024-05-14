@@ -343,6 +343,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<current.IContainerRuntimeBase>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -514,6 +515,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -528,6 +530,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -542,6 +545,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -556,6 +560,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -682,6 +687,7 @@ declare function get_old_InterfaceDeclaration_IFluidParentContext():
 declare function use_current_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<current.IFluidParentContext>): void;
 use_current_InterfaceDeclaration_IFluidParentContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidParentContext());
 
 /*
@@ -696,6 +702,7 @@ declare function get_current_InterfaceDeclaration_IFluidParentContext():
 declare function use_old_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<old.IFluidParentContext>): void;
 use_old_InterfaceDeclaration_IFluidParentContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidParentContext());
 
 /*

@@ -65,6 +65,7 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger as ITelemetryBaseLogger_2 } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -214,7 +215,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger_2, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
@@ -225,7 +226,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
-    readonly baseLogger: ITelemetryBaseLogger;
+    readonly baseLogger: ITelemetryBaseLogger_2;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
