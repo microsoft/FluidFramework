@@ -146,6 +146,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					res.status(503).send("Graceful Shutdown");
 				});
 
+				// Fetch local sockets that need to be drained.
 				const connections = await this.io.local.fetchSockets();
 				const connectionCount = connections.length;
 				const telemetryProperties = {
@@ -199,6 +200,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
+					// Fetch local sockets that reconnected.
 					const reconnections = await this.io.local.fetchSockets();
 					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
 						connectionsCount: reconnections.length,

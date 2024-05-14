@@ -8,6 +8,8 @@ import type { IWebSocket, IWebSocketServer } from "@fluidframework/server-servic
 import type { Server as SocketIoServer, Socket as SocketIoSocket } from "socket.io";
 import type { IRoom } from "./interfaces";
 import { getRoomId } from "./utils";
+import { EventEmitter } from "stream";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Checks if a generic {@link IWebSocketServer} has an internalServerInstance that is specifically a {@link SocketIoServer}.
@@ -20,8 +22,7 @@ function isSocketIoServer(
 		typeof (internalServerInstance as SocketIoServer).in === "function" &&
 		typeof (internalServerInstance as SocketIoServer).to === "function" &&
 		typeof (internalServerInstance as SocketIoServer).fetchSockets === "function" &&
-		typeof (internalServerInstance as SocketIoServer).serverSideEmitWithAck === "function" &&
-		typeof (internalServerInstance as SocketIoServer).emitWithAck === "function"
+		typeof (internalServerInstance as SocketIoServer).serverSideEmitWithAck === "function"
 	);
 }
 
@@ -86,13 +87,18 @@ function isSocketMetadata(data: unknown): data is ISocketIoSocketMetadata {
 /**
  * Utilize built-in Socket.io functionality to track socket metadata.
  */
-export class SocketIoSocketHelper {
+export class SocketIoSocketHelper extends EventEmitter {
 	public isValid: boolean = false;
 	private readonly socket: SocketIoSocket | undefined;
 
 	constructor(webSocket: IWebSocket) {
+		super();
 		this.socket = getInternalSocketIoSocket(webSocket);
 		this.isValid = this.socket !== undefined;
+		this.initializeEventTrackersAndEmitters();
+		this.socket?.conn.on("close", () => {
+			this.emit("close");
+		});
 	}
 
 	public get data(): ISocketIoSocketMetadata {
@@ -110,6 +116,29 @@ export class SocketIoSocketHelper {
 			...this.socket.data,
 			...data,
 		};
+	}
+
+	private initializeEventTrackersAndEmitters() {
+		let lastPingStartTime: number | undefined;
+		const packetCreateHandler = (packet: any) => {
+			if (packet.type === "ping") {
+				lastPingStartTime = Date.now();
+			}
+		};
+		this.socket?.conn.on("packetCreate", packetCreateHandler);
+		const packetReceivedHandler = (packet: any) => {
+			if (packet.type === "pong") {
+				if (lastPingStartTime !== undefined) {
+					this.emit("pingpong", Date.now() - lastPingStartTime);
+					lastPingStartTime = undefined;
+				}
+			}
+		};
+		this.socket?.conn.on("packet", packetReceivedHandler);
+		this.socket?.conn.on("close", () => {
+			this.socket?.conn.off("packetCreate", packetCreateHandler);
+			this.socket?.conn.off("packet", packetReceivedHandler);
+		});
 	}
 }
 
@@ -135,5 +164,52 @@ export class SocketIoServerHelper {
 			socketMetadataForRoom.set(socket.id, socket.data ?? {});
 		}
 		return socketMetadataForRoom;
+	}
+}
+
+/**
+ * Logs the average of all data points added to the aggregator over a given interval.
+ */
+export class SocketIoPingPongLatencyTracker {
+	private count: number = 0;
+	private sumMs: number = 0;
+
+	constructor(
+		private readonly metricProperties: Map<string, any> | Record<string, any> = {},
+		metricLoggingIntervalMs: number = 60_000,
+		private readonly logAsLumberMetric: boolean = false,
+	) {
+		if (metricLoggingIntervalMs > 0) {
+			setInterval(() => {
+				this.logMetric();
+			}, metricLoggingIntervalMs);
+		}
+	}
+
+	public trackSocket(socketHelper: SocketIoSocketHelper): void {
+		const pingpongHandler = (latencyMs: number) => {
+			this.count++;
+			this.sumMs += latencyMs;
+		};
+		socketHelper.on("pingpong", pingpongHandler);
+		socketHelper.on("close", () => {
+			socketHelper.off("pingpong", pingpongHandler);
+		});
+	}
+
+	private logMetric(): void {
+		const averageMS = this.sumMs / this.count;
+		if (this.logAsLumberMetric) {
+			const metric = Lumberjack.newLumberMetric(LumberEventName.SocketPingPong, {
+				...this.metricProperties,
+				metricValue: averageMS,
+			});
+			metric.success("Socket ping pong average latency");
+		} else {
+			Lumberjack.info(`${LumberEventName.SocketPingPong}`, {
+				...this.metricProperties,
+				durationInMs: averageMS,
+			});
+		}
 	}
 }

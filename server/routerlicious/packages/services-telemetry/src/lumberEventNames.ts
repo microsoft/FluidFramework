@@ -59,4 +59,5 @@ export enum LumberEventName {
 	GlobalCheckpointError = "GlobalCheckpointError",
 	ReprocessOps = "ReprocessOps",
 	MongoMonitoring = "MongoMonitoring",
+	SocketPingPong = "SocketPingPong",
 }
