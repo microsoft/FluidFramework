@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel } from "@fluidframework/datastore-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { CommitMetadata } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
@@ -22,7 +22,7 @@ import {
  * Allows storing and collaboratively editing schema-aware hierarchial data.
  * @public
  */
-export interface ITree extends IChannel {
+export interface ITree extends IFluidLoadable {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
 	 * If the tree's stored schema is compatible, this will provide a schema-aware API for accessing the tree's content.
