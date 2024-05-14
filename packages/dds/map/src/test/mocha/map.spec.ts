@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import type { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -16,8 +16,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
-import {
+import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
+import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
@@ -27,8 +27,11 @@ import {
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
-import { IMapOperation } from "../../mapKernel.js";
+import type { IMapOperation } from "../../mapKernel.js";
 
+/**
+ * Creates and connects a new {@link ISharedMap}.
+ */
 export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,

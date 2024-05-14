@@ -101,7 +101,7 @@ export class ChunkedForest implements IEditableForest {
 			// Start above root detached sequences.
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
-			getParent() {
+			getParent(): StackNode {
 				assert(
 					this.mutableChunkStack.length > 0,
 					0x532 /* invalid access to root's parent */,

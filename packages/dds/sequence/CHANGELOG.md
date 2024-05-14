@@ -1,5 +1,23 @@
 # @fluidframework/sequence
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   SharedString now uses ISharedObjectKind and does not export the factory [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Most users of `SharedString` should be unaffected as long as they stick to the factory patterns supported by ISharedObjectKind.
+    If the actual class type is needed it can be found as `SharedStringClass`.
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

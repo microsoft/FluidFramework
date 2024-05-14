@@ -59,6 +59,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -128,6 +129,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			configProvider: configProvider({
 				"Fluid.Container.enableOfflineLoad": true,
 			}),
+			options: {
+				// Smuggle in this option to pass down to DataStoreRuntime and IntervalCollection DDS
+				...({ intervalStickinessEnabled: true } as any),
+			},
 		},
 	};
 
@@ -147,7 +152,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		await cb(container, dataStore);
 
@@ -330,9 +335,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
 			const string = await d.getSharedObject<SharedString>(stringId);
-			// todo re-enable after AB#7145
-			// const collection = string.getIntervalCollection(collectionId);
-			// collection.add({ start: testStart, end: testEnd });
+			const collection = string.getIntervalCollection(collectionId);
+			collection.add({ start: testStart, end: testEnd });
 			// Submit a message with an unrecognized type
 			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 			(
@@ -357,8 +361,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-		// todo re-enable after AB#7145
-		// const collection2 = string2.getIntervalCollection(collectionId);
+		const collection2 = string2.getIntervalCollection(collectionId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -369,8 +372,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
 		assert.strictEqual(directory2.get(testKey), testValue);
-		// asertIntervals(string1, collection1, [{ start: testStart, end: testEnd }]);
-		// assertIntervals(string2, collection2, [{ start: testStart, end: testEnd }]);
+		assertIntervals(string1, collection1, [{ start: testStart, end: testEnd }]);
+		assertIntervals(string2, collection2, [{ start: testStart, end: testEnd }]);
 	});
 
 	it("resends compressed Ids and correctly assumes session", async function () {
@@ -412,7 +415,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
-		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+		const directory2 = await dataStore2.getSharedObject<ISharedDirectory>(directoryId);
 		assert((map2 as any).runtime.idCompressor !== undefined);
 		assert((cell2 as any).runtime.idCompressor !== undefined);
 		assert((directory2 as any).runtime.idCompressor !== undefined);
@@ -1138,7 +1141,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(dataStore.runtime.deltaManager.outbound.paused);
+			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1314,7 +1317,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(dataStore2.runtime.deltaManager.outbound.paused);
+			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1773,6 +1776,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
+		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// wait for summary
 		await new Promise<void>((resolve) =>
 			container1.on("op", (op) => {

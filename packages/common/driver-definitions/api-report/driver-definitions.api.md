@@ -28,7 +28,7 @@ import type { IVersion } from '@fluidframework/protocol-definitions';
 // @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
-// @public
+// @alpha
 export const DriverErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
@@ -50,7 +50,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public
+// @alpha
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @alpha
@@ -78,10 +78,11 @@ export enum FetchSource {
 // @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
-// @public
+// @alpha
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
+    scenarioName?: string;
 }
 
 // @alpha (undocumented)
@@ -205,7 +206,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-// @public
+// @alpha
 export interface IDriverErrorBase {
     canRetry: boolean;
     endpointReached?: boolean;
@@ -255,7 +256,7 @@ export interface IResolvedUrl {
     url: string;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface ISnapshot {
     // (undocumented)
     blobContents: Map<string, ArrayBuffer>;

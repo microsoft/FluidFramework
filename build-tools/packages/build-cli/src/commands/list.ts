@@ -8,10 +8,9 @@ import { MonoRepo, Package, PackageNamePolicyConfig } from "@fluidframework/buil
 import { Flags } from "@oclif/core";
 import { mkdirpSync, writeFileSync } from "fs-extra";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
-import { getTarballName } from "../library";
+import { BaseCommand, getTarballName } from "../library";
 import {
 	type Feed,
 	feeds,

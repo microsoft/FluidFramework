@@ -9,7 +9,6 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
-	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -19,6 +18,7 @@ import {
 	IRuntime,
 	LoaderHeader,
 	type IAudienceEvents,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -466,10 +466,7 @@ export interface IContainerRuntimeOptions {
 	 * message to be sent to the service.
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
-	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
-	 * flag can be used to disable it at runtime.
-	 *
-	 * @experimental Not ready for use.
+	 * By default, the feature is enabled.
 	 */
 	readonly enableGroupedBatching?: boolean;
 
@@ -802,7 +799,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableGroupedBatching = false,
+			enableGroupedBatching = true,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -963,9 +960,6 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableGroupedBatching = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
-		);
 		const disableCompression = mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionDisabled",
 		);
@@ -973,8 +967,6 @@ export class ContainerRuntime
 			disableCompression !== true &&
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
-
-		const opGroupingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
@@ -984,7 +976,7 @@ export class ContainerRuntime
 				explicitSchemaControl,
 				compressionLz4,
 				idCompressorMode,
-				opGroupingEnabled,
+				opGroupingEnabled: enableGroupedBatching,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -993,7 +985,6 @@ export class ContainerRuntime
 		);
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableGroupedBatching,
 			disableCompression,
 		};
 
@@ -1759,7 +1750,7 @@ export class ContainerRuntime
 			let oldClientId = this.clientId;
 			this.on("connected", () => {
 				const clientId = this.clientId;
-				assert(clientId !== undefined, "can't be undefined");
+				assert(clientId !== undefined, 0x975 /* can't be undefined */);
 				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
 					"selfChanged",
 					{ clientId: oldClientId },
@@ -2351,6 +2342,7 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
+			this.submitIdAllocationOpIfNeeded(true);
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -2448,7 +2440,7 @@ export class ContainerRuntime
 					for (const range of ops) {
 						compressor.finalizeCreationRange(range);
 					}
-					assert(this.pendingIdCompressorOps.length === 0, "No new ops added");
+					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 					this._idCompressor = compressor;
 				})
 				.catch((error) => {
@@ -2462,8 +2454,11 @@ export class ContainerRuntime
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
-		assert(clientId === currentClientId, "input clientId does not match Audience");
-		assert(this.clientId === currentClientId, "this.clientId does not match Audience");
+		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
+		assert(
+			this.clientId === currentClientId,
+			0x978 /* this.clientId does not match Audience */,
+		);
 
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -2711,7 +2706,7 @@ export class ContainerRuntime
 					} else {
 						assert(
 							this.pendingIdCompressorOps.length === 0,
-							"there should be no pending ops!",
+							0x979 /* there should be no pending ops! */,
 						);
 						this._idCompressor.finalizeCreationRange(range);
 					}
@@ -3243,7 +3238,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.mc.logger.sendTelemetryEvent({
+			summaryLogger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -3924,9 +3919,11 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
 		if (this._idCompressor) {
-			const idRange = this._idCompressor.takeNextCreationRange();
+			const idRange = resubmitOutstandingRanges
+				? this.idCompressor?.takeUnfinalizedCreationRange()
+				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4142,7 +4139,13 @@ export class ContainerRuntime
 				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation: {
-				this.submit(message, localOpMetadata);
+				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
+				// avoid being submitted out of order. For example, if the pending state manager contained
+				// [idOp1, dataOp1, idOp2, dataOp2] and the resubmission of dataOp1 generated idOp3, that would be
+				// placed into the outbox in the same batch as idOp1, but before idOp2 is resubmitted.
+				// To avoid this, allocation ops are simply never resubmitted. Prior to invoking the pending state
+				// manager to replay pending ops, the runtime will always submit a new allocation range that includes
+				// all pending IDs. The resubmitted allocation ops are then ignored here.
 				break;
 			}
 			case ContainerMessageType.BlobAttach:
