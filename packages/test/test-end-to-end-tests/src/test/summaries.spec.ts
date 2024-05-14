@@ -865,7 +865,6 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		// Summarize third time
 		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({
 			reason: "test3",
-			refreshLatestAck: true,
 		});
 		const submitResult3 = await result3.summarySubmitted;
 		assert(submitResult3.success, "on-demand summary3 should submit");

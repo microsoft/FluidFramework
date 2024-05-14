@@ -118,13 +118,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 export interface ISummarizeOptions {
 	/** True to generate the full tree with no handle reuse optimizations; defaults to false */
 	readonly fullTree?: boolean;
-	/**
-	 * True to ask the server what the latest summary is first; defaults to false
-	 *
-	 * @deprecated Summarize will not refresh latest snapshot state anymore. Instead it updates the cache and closes.
-	 * It's expected a new summarizer client will be created, likely by the same parent.
-	 */
-	readonly refreshLatestAck?: boolean;
 }
 
 /**
@@ -540,10 +533,6 @@ type ISummarizeTelemetryRequiredProperties =
 type ISummarizeTelemetryOptionalProperties =
 	/** Number of attempts within the last time window, used for calculating the throttle delay. */
 	| "summaryAttempts"
-	/** Number of attempts within the current phase (currently capped at 2 ) */
-	| "summaryAttemptsPerPhase"
-	/** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
-	| "summaryAttemptPhase"
 	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt */
 	| "finalAttempt"
 	| keyof ISummarizeOptions;
