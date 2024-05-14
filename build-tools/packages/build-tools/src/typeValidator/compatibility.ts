@@ -26,26 +26,49 @@ type requireAssignableTo<_A extends B, B> = true;
  * This will strip some type branding information which ideally would be kept for stricter checking, but without it, const enums show up as breaking when unchanged.
  */
 export const typeOnly = `
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
-type TypeOnly<T> = T extends number
-	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
-`;
-
+// See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+type OnlySymbols<T> = T extends symbol ? T : never;
+// Omit (replace with never) a key if it is a symbol thats not a well known symbol from global Symbol.
+type FilterKey<P> = symbol extends P
+	? P
+	: P extends symbol
+		? P extends WellKnownSymbols
+			? P
+			: never
+		: P;
 type TypeOnly<T> = T extends number
 	? number
 	: T extends string
 		? string
 		: T extends boolean | bigint | symbol
-			? T
+			? FilterKey<T>
 			: {
-					[P in keyof T]: TypeOnly<T[P]>;
+					[P in keyof T as FilterKey<P>]: TypeOnly<T[P]>;
+				};
+`;
+
+// See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+type OnlySymbols<T> = T extends symbol ? T : never;
+// Omit (replace with never) a key if it is a symbol thats not a well known symbol from global Symbol.
+type FilterKey<P> = symbol extends P
+	? P
+	: P extends symbol
+		? P extends WellKnownSymbols
+			? P
+			: never
+		: P;
+type TypeOnly<T> = T extends number
+	? number
+	: T extends string
+		? string
+		: T extends boolean | bigint | symbol
+			? FilterKey<T>
+			: {
+					[P in keyof T as FilterKey<P>]: TypeOnly<T[P]>;
 				};
 
 // Checks //
@@ -217,9 +240,33 @@ namespace Test_TypeOnly_Preserves_Primitives {
 
 	// Branded unions of primitive types are preserved, except for string and number,
 	// which are stripped to just 'string | number'.
-	type brandedUnion = (undefined | null | boolean | bigint | symbol) & {
+	// Symbols are excluded from this as they are more aggressively omitted to handle unique symbols.
+	type brandedUnion = (undefined | null | boolean | bigint) & {
 		brand: "Union";
 	};
 	type _check_union3 = requireAssignableTo<TypeOnly<brandedUnion>, brandedUnion>;
 	type _check_union4 = requireAssignableTo<brandedUnion, TypeOnly<brandedUnion>>;
+}
+
+namespace Test_TypeOnly_Symbols {
+	interface A {
+		[Symbol.iterator]: number;
+	}
+
+	// Ensure well known symbols are preserved
+	type _check1 = requireAssignableTo<TypeOnly<A>, A>;
+	type _check2 = requireAssignableTo<A, TypeOnly<A>>;
+
+	// Custom symbols are skipped, since they are likely from the package in question,
+	// and thus will not be considered equal to the version from the other copy of the package.
+	const X: unique symbol = Symbol();
+	interface B {
+		[X]: number;
+	}
+
+	// @ts-expect-error Symbol is skipped
+	type _check = requireAssignableTo<TypeOnly<B>, B>;
+
+	type _check3 = requireAssignableTo<TypeOnly<B>, object>;
+	type _check4 = requireAssignableTo<object, TypeOnly<B>>;
 }
