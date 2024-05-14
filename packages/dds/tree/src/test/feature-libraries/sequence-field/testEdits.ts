@@ -105,16 +105,17 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id);
+	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id, brand(id + count));
 }
 
 function createReturnChangeset(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detachEvent: SF.CellId,
+	destination: SF.CellId,
+	moveId: ChangesetLocalId = brand(0),
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachEvent);
+	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, moveId, destination);
 }
 
 function createModifyChangeset(index: number, change: NodeId): SF.Changeset {

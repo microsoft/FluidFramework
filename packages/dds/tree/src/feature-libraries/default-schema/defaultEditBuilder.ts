@@ -242,13 +242,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId(count);
+		const detachId = this.modularBuilder.generateId(count);
+		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
 				count,
 				destIndex,
-				moveId,
+				detachId,
+				attachId,
 			);
 			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
 		} else {
@@ -291,8 +293,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, moveId);
-			const moveIn = sequence.changeHandler.editor.moveIn(destIndex, count, moveId);
+			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, detachId);
+			const moveIn = sequence.changeHandler.editor.moveIn(
+				destIndex,
+				count,
+				detachId,
+				attachId,
+			);
 			this.modularBuilder.submitChanges([
 				{
 					type: "field",
@@ -345,12 +352,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId(count);
+				const detachId = this.modularBuilder.generateId(count);
+				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
-					moveId,
+					detachId,
+					attachId,
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
 			},
