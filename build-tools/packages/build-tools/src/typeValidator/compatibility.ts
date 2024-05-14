@@ -34,7 +34,8 @@ type ValueOf<T> = T[keyof T];
 type OnlySymbols<T> = T extends symbol ? T : never;
 type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
 /**
- * Omit (replace with never) a key if it is a custom symbol, not just symbol or a well known symbol from the global Symbol.
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
  */
 type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
@@ -50,9 +51,9 @@ type SkipUniqueSymbols<Key> = symbol extends Key
  */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-		? string
-		: T extends boolean | bigint | symbol
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
 			? SkipUniqueSymbols<T>
 			: {
 					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
@@ -63,7 +64,8 @@ type ValueOf<T> = T[keyof T];
 type OnlySymbols<T> = T extends symbol ? T : never;
 type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
 /**
- * Omit (replace with never) a key if it is a custom symbol, not just symbol or a well known symbol from the global Symbol.
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
  */
 type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
@@ -79,9 +81,9 @@ type SkipUniqueSymbols<Key> = symbol extends Key
  */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-		? string
-		: T extends boolean | bigint | symbol
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
 			? SkipUniqueSymbols<T>
 			: {
 					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
