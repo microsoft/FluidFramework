@@ -3242,7 +3242,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.mc.logger.sendTelemetryEvent({
+			summaryLogger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
