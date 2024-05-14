@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import os from "os";
-import path from "path";
-import util from "util";
-import child_process from "child_process";
+import child_process from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import util from "node:util";
+
 import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
 const appendFile = util.promisify(fs.appendFile);
@@ -44,15 +45,17 @@ async function saveEnv(env) {
 	const shellName = shell && path.basename(shell, path.extname(shell));
 	switch (shellName) {
 		// Gitbash on windows will appear as bash.exe
-		case "bash":
+		case "bash": {
 			return exportToShellRc(
 				// '.bash_profile' is used for the "login shell" ('bash -l').
 				process.env.TERM_PROGRAM === "Apple_Terminal" ? ".bash_profile" : ".bashrc",
 				entries,
 			);
-		case "zsh":
+		}
+		case "zsh": {
 			return exportToShellRc(".zshrc", entries);
-		case "fish":
+		}
+		case "fish": {
 			console.log("Writing '~/.config/fish/fish_variables'.");
 
 			// For 'fish' we use 'set -xU', which dedupes and performs its own escaping.
@@ -62,7 +65,8 @@ async function saveEnv(env) {
 					execAsync(`set -xU '${key}' '${value}'`, { shell }),
 				),
 			);
-		default:
+		}
+		default: {
 			if (!process.platform === "win32") {
 				throw new Error(`Unsupported shell: '${shellName}'.`);
 			} else {
@@ -73,6 +77,7 @@ async function saveEnv(env) {
 					entries.map(async ([key, value]) => execAsync(`setx ${key} ${quote(value)}`)),
 				);
 			}
+		}
 	}
 }
 
@@ -120,17 +125,18 @@ class AzCliKeyVaultClient {
 		// We use this to validate that the user is logged in (already ran `az login`).
 		try {
 			await execAsync("az ad signed-in-user show");
-		} catch (e) {
+		} catch (error) {
 			// Depending on how az login was performed, the above command may fail with a variety of errors.
 			// I've seen the one below in WSL2, but there are probably others.
 			// FATAL ERROR: Error: Command failed: az ad signed-in-user show
 			// ERROR: AADSTS530003: Your device is required to be managed to access this resource.
-			if (e.message.includes("AADSTS530003")) {
+			if (error.message.includes("AADSTS530003")) {
 				console.log(
 					`\nAn error occurred running \`az ad signed-in-user show\` that suggests you might need to \`az logout\` and ` +
 						`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. Error:\n\n` +
-						`${e.message}`,
+						`${error.message}`,
 				);
+				// eslint-disable-next-line unicorn/no-process-exit
 				process.exit(1);
 			}
 		}
@@ -140,12 +146,10 @@ class AzCliKeyVaultClient {
 	}
 
 	async getSecrets(vaultName) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return JSON.parse(await execAsync(`az keyvault secret list --vault-name ${vaultName}`));
 	}
 
 	async getSecret(vaultName, secretName) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return JSON.parse(
 			await execAsync(
 				`az keyvault secret show --vault-name ${vaultName} --name ${secretName}`,
@@ -158,7 +162,7 @@ async function getClient() {
 	return AzCliKeyVaultClient.get();
 }
 
-(async () => {
+try {
 	const rc = await loadRC();
 
 	if (rc.secrets === undefined) {
@@ -179,7 +183,7 @@ async function getClient() {
 		console.log(
 			"\nNote: Default dev/test secrets overwritten with values from internal key vault.",
 		);
-	} catch (error) {
+	} catch {
 		// Drop the error
 	}
 	// }
@@ -189,8 +193,8 @@ async function getClient() {
 	await saveEnv(rc.secrets);
 
 	console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`);
-})().catch((e) => {
-	if (e.message.includes("'az' is not recognized as an internal or external command")) {
+} catch (error) {
+	if (error.message.includes("'az' is not recognized as an internal or external command")) {
 		console.error(
 			`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`,
 		);
@@ -198,7 +202,7 @@ async function getClient() {
 		exit(0);
 	}
 
-	console.error(`FATAL ERROR: ${e.stack}`);
+	console.error(`FATAL ERROR: ${error.stack}`);
 	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(-1);
-});
+}
