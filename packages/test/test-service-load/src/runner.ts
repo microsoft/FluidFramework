@@ -256,6 +256,7 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
+			await waitForContainerConnectionWithTimeout(container);
 			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
@@ -659,6 +660,22 @@ async function setupOpsMetrics(
 			clearTimeout(t);
 		}
 	};
+}
+
+async function waitForContainerConnectionWithTimeout(container: IContainer, timeout = 5000): Promise<void> {
+	if (container.connectionState !== ConnectionState.Connected) {
+		let timer: NodeJS.Timeout;
+		const timeoutP = new Promise<void>((resolve) => {
+			timer = setTimeout(resolve, timeout);
+		});
+		return Promise.race([
+			timeoutP,
+			new Promise<void>((resolve, reject) => {
+				container.once("connected", () => resolve());
+				container.once("closed", (error) => reject(error));
+			}).finally(() => clearTimeout(timer)),
+		]);
+	}
 }
 
 main().catch((error) => {
