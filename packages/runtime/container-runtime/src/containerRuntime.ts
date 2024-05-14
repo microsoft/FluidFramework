@@ -2320,6 +2320,7 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
+			this.submitIdAllocationOpIfNeeded(true);
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -3854,9 +3855,11 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
 		if (this._idCompressor) {
-			const idRange = this._idCompressor.takeNextCreationRange();
+			const idRange = resubmitOutstandingRanges
+				? this.idCompressor?.takeUnfinalizedCreationRange()
+				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4096,7 +4099,13 @@ export class ContainerRuntime
 				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation: {
-				this.submit(message, localOpMetadata);
+				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
+				// avoid being submitted out of order. For example, if the pending state manager contained
+				// [idOp1, dataOp1, idOp2, dataOp2] and the resubmission of dataOp1 generated idOp3, that would be
+				// placed into the outbox in the same batch as idOp1, but before idOp2 is resubmitted.
+				// To avoid this, allocation ops are simply never resubmitted. Prior to invoking the pending state
+				// manager to replay pending ops, the runtime will always submit a new allocation range that includes
+				// all pending IDs. The resubmitted allocation ops are then ignored here.
 				break;
 			}
 			case ContainerMessageType.ChunkedOp:
