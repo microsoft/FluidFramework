@@ -1,5 +1,45 @@
 # fluid-framework
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   SharedString now uses ISharedObjectKind and does not export the factory [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Most users of `SharedString` should be unaffected as long as they stick to the factory patterns supported by ISharedObjectKind.
+    If the actual class type is needed it can be found as `SharedStringClass`.
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
+-   Minor API fixes for "@fluidframework/tree" package. [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Changes constructor for `FieldSchema` from public to private. Users should call `makeFieldSchema` to create instance of `FieldSchema`.
+
+-   Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
+
+    Move the following types from `@public` to `@alpha`:
+
+    -   ITokenClaims
+    -   IDocumentMessage
+    -   IClientConfiguration
+    -   IAnyDriverError
+    -   IDriverErrorBase
+    -   DriverErrorTypes
+
+    `DriverErrorTypes` is no longer exported from the `fluid-framework` package.
+
+-   Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
+    2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

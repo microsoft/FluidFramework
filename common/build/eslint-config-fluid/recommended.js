@@ -36,7 +36,7 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": [
 			"error",
 			{
-				allowExpressions: false,
+				allowExpressions: true,
 				allowTypedFunctionExpressions: true,
 				allowHigherOrderFunctions: true,
 				allowDirectConstAssertionInArrowFunctions: true,
@@ -90,6 +90,11 @@ module.exports = {
 		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
 		 */
 		"unicorn/template-indent": "off",
+
+		/**
+		 * Disabled because it is incompatible with prettier.
+		 */
+		"unicorn/number-literal-case": "off",
 
 		/**
 		 * The rule seems to crash on some of our code

@@ -5,13 +5,13 @@
 
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
-import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
+import type { PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { rootPathFlag } from "./flags";
-import { Context, indentString } from "./library";
-import { CommandLogger } from "./logging";
+import { CommandLogger } from "../../logging";
+import { Context } from "../context";
+import { indentString } from "../text";
 
 /**
  * A type representing all the flags of the base commands and subclasses.
@@ -20,6 +20,15 @@ export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 	(typeof BaseCommand)["baseFlags"] & T["flags"]
 >;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
+
+/**
+ * A CLI flag to parse the root directory of the Fluid repo.
+ */
+const rootPathFlag = Flags.custom({
+	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
+	env: "_FLUID_ROOT_",
+	hidden: true,
+});
 
 /**
  * A base command that sets up common flags that all commands should have. Most commands should have this class in their

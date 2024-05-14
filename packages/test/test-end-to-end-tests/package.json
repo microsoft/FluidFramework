@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -149,27 +149,8 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"compile": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"ci:build": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"build:test": [
-				"...",
-				"^build:esnext"
-			],
 			"build:test:esm": [
-				"...",
-				"^tsc",
+				"^build:esnext",
 				"build:genver"
 			]
 		}

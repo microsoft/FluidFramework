@@ -12,7 +12,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -104,16 +104,12 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger(
-		{
-			runId,
-			driverType: driver,
-			driverEndpointName: endpoint,
-			profile: profileName,
-		},
-		// Turn on verbose events for ALL stress test runs.
-		random.pick([LogLevel.verbose]),
-	);
+	const logger = await createLogger({
+		runId,
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: profileName,
+	});
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it

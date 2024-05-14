@@ -246,10 +246,6 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
 /**
  * @internal
  */
-export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
-/**
- * @internal
- */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
  * @internal
@@ -266,7 +262,6 @@ export const FieldKinds: {
 	readonly required: Required;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeKey: NodeKeyFieldKind;
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, identifier, forbidden };
+} = { required, optional, sequence, identifier, forbidden };

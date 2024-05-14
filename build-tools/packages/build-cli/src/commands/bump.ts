@@ -24,9 +24,9 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
+	BaseCommand,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	setVersion,

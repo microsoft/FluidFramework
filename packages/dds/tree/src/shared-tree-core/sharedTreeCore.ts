@@ -250,7 +250,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
-			"Detached revision should only be set when not attached",
+			0x95a /* Detached revision should only be set when not attached */,
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -272,12 +272,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			if (isResubmit) {
 				assert(
 					this.commitEnricher.isInResubmitPhase,
-					"Invalid resubmit outside of resubmit phase",
+					0x95b /* Invalid resubmit outside of resubmit phase */,
 				);
 			} else {
 				assert(
 					!this.commitEnricher.isInResubmitPhase,
-					"Invalid enrichment call during resubmit phase",
+					0x95c /* Invalid enrichment call during resubmit phase */,
 				);
 			}
 			enrichedCommit = this.commitEnricher.enrichCommit(commit);
@@ -345,13 +345,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const toResubmit = this.editManager.getLocalCommits();
 			assert(
 				commit === toResubmit[0],
-				"Resubmit phase should start with the oldest local commit",
+				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
 			this.commitEnricher.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
-			"Local metadata must contain schema and policy.",
+			0x95e /* Local metadata must contain schema and policy. */,
 		);
 		this.submitCommit(commit, localOpMetadata, true);
 	}
