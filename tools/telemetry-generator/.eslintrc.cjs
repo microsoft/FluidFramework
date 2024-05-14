@@ -16,6 +16,7 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 		"@typescript-eslint/no-unsafe-argument": "off",
+		"unicorn/prefer-module": "off",
 
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",
