@@ -47,13 +47,13 @@ import { createMockNodeKeyManager, createNodeKeyManager } from "../../feature-li
 function nodeDataToMapTree(
 	tree: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
 	return nodeDataToMapTreeBase(
 		tree,
 		normalizeAllowedTypes(allowedTypes),
 		createMockNodeKeyManager(),
-		schemaAndPolicy,
+		schemaValidationPolicy,
 	);
 }
 
@@ -829,7 +829,7 @@ describe("toMapTree", () => {
 		};
 
 		const schemaFactory = new SchemaFactory("test");
-		const schemaAndPolicyForSuccess = createSchemaAndPolicy(
+		const schemaValidationPolicyForSuccess = createSchemaAndPolicy(
 			new Map([
 				[
 					brand(schemaFactory.string.identifier),
@@ -838,7 +838,7 @@ describe("toMapTree", () => {
 			]),
 			new Map(),
 		);
-		const schemaAndPolicyForFailure = createSchemaAndPolicy(
+		const schemaValidationPolicyForFailure = createSchemaAndPolicy(
 			new Map([
 				[
 					// Fake a stored schema that associates the string identifier to a number schema
@@ -852,7 +852,11 @@ describe("toMapTree", () => {
 		describe("nodeDataToMapTree", () => {
 			it("Success", () => {
 				const content = "Hello world";
-				nodeDataToMapTree(content, [schemaFactory.string], schemaAndPolicyForSuccess);
+				nodeDataToMapTree(
+					content,
+					[schemaFactory.string],
+					schemaValidationPolicyForSuccess,
+				);
 			});
 
 			it("Failure", () => {
@@ -862,7 +866,7 @@ describe("toMapTree", () => {
 						nodeDataToMapTree(
 							content,
 							[schemaFactory.string],
-							schemaAndPolicyForFailure,
+							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
 				);
@@ -876,7 +880,7 @@ describe("toMapTree", () => {
 					nodeData,
 					[schemaFactory.string],
 					createNodeKeyManager(),
-					schemaAndPolicyForSuccess,
+					schemaValidationPolicyForSuccess,
 				);
 			});
 
@@ -888,7 +892,7 @@ describe("toMapTree", () => {
 							content,
 							[schemaFactory.string],
 							createNodeKeyManager(),
-							schemaAndPolicyForFailure,
+							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
 				);
@@ -903,7 +907,7 @@ describe("toMapTree", () => {
 					content,
 					fieldSchema,
 					createNodeKeyManager(),
-					schemaAndPolicyForSuccess,
+					schemaValidationPolicyForSuccess,
 				);
 			});
 
@@ -916,7 +920,7 @@ describe("toMapTree", () => {
 							content,
 							fieldSchema,
 							createNodeKeyManager(),
-							schemaAndPolicyForFailure,
+							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
 				);

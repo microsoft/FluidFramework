@@ -62,7 +62,7 @@ function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 	nodeKeyManager: NodeKeyManager,
-	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
@@ -71,7 +71,7 @@ function cursorFromUnhydratedRoot(
 			data,
 			normalizedFieldSchema.allowedTypes,
 			nodeKeyManager,
-			schemaAndPolicy,
+			schemaValidationPolicy,
 		) ?? fail("failed to decode tree")
 	);
 }
@@ -80,7 +80,7 @@ function cursorFromUnhydratedRoot(
  *
  * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
  * @param nodeKeyManager -
- * @param schemaAndPolicy - Stored schema and policy for the tree. If the policy specifies
+ * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
  * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
  * object.
  * @returns A configuration object for a FlexTree.
@@ -91,7 +91,7 @@ function cursorFromUnhydratedRoot(
 export function toFlexConfig(
 	config: TreeConfiguration,
 	nodeKeyManager: NodeKeyManager,
-	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): TreeContent {
 	const unhydrated = config.initialTree();
 	const initialTree =
@@ -102,7 +102,7 @@ export function toFlexConfig(
 						config.schema,
 						unhydrated,
 						nodeKeyManager,
-						schemaAndPolicy,
+						schemaValidationPolicy,
 					),
 			  ];
 	return {
