@@ -434,7 +434,7 @@ export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boo
 }[Kind];
 
 /**
- * Type of of tree node for a field of the given schema.
+ * Type of tree node for a field of the given schema.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
