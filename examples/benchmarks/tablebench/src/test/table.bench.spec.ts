@@ -71,7 +71,7 @@ describe("Table", () => {
 			title: `SharedTree`,
 			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as ITree;
+				const tree = channel as unknown as ITree;
 
 				const view = tree.schematize({
 					schema: Table,
@@ -187,7 +187,7 @@ describe("Table", () => {
 
 			it("SharedTree", () => {
 				const { channel, processAllMessages } = create(SharedTree.getFactory());
-				tree = channel as ITree;
+				tree = channel;
 
 				tree.schematize({
 					schema: Table,

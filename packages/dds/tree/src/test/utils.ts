@@ -506,13 +506,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<SharedTree> {
-		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
+		const tree = await super.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = super.create(runtime, id) as SharedTree;
+		const tree = super.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}

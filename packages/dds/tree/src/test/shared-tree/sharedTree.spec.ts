@@ -220,7 +220,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
-			) as SharedTree;
+			);
 			const view = assertSchema(tree, schemaEmpty);
 			assert.deepEqual([...view.flexTree.boxedIterator()], []);
 		});
@@ -229,7 +229,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
-			) as SharedTree;
+			);
 			const builder = new SchemaBuilderBase(FieldKinds.optional, {
 				scope: "test",
 				libraries: [leaf.library],

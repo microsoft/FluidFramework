@@ -7,7 +7,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import type { DataObjectClass } from "@fluidframework/fluid-static";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -29,12 +28,6 @@ import * as React from "react";
 const SharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 });
-
-/**
- * TODO: once we add options to factory (for example controlling the write format),
- * apps will need a way to provide those.
- */
-export const factory: IChannelFactory = SharedTree.getFactory();
 
 /**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
@@ -161,7 +154,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 	}
 
 	protected override async initializingFirstTime(): Promise<void> {
-		const tree = this.runtime.createChannel(undefined, factory.type) as ITree;
+		const tree = SharedTree.create(this.runtime);
 		this.#tree = tree.schematize(this.config);
 		// Initialize the tree content and schema.
 		this.#tree.upgradeSchema();
