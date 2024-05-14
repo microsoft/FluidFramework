@@ -1,0 +1,247 @@
+# Framework API Guidelines
+
+This document provides a set of guidelines for crafting framework APIs that are likely to be well-received by TypeScript and JavaScript application developers. The purpose of this document is to accelerate the API design and review process by helping framework engineers build a common understanding of the needs of the typical frontend developer.
+
+The primary audience for this document is engineers and PMs designing client-side frameworks that interoperate with other modern frontend technologies. It assumes the framework targets Evergreen Browsers and PWAs. This document does not consider limitations of older browsers or the differing conventions of alternative environments like Node.js and React Native.
+
+This document is intended to complement a healthy API design and review process. It is not a substitute for customer profiling, scenario driven design or customer feedback. However, the reality is often that the budget for user research is limited, and it can be challenging to get users to evaluate alpha and beta releases.
+
+As a result, it is often only late in the development cycle that framework engineers begin to get a trickle of feedback regarding their API choices. Adopting the guidelines in this document will help avoid wasting this trickle addressing predictable ergonomics issues.
+
+## Status
+
+We are now putting these guidelines into practice in the Fluid Framework codebase, while at the same time continuing to grow this document based on feedback and specific cases encountered in the product.
+
+## Pitfalls
+
+### Designing For Yourself
+
+The most common pitfall is for framework engineers to assume that their preferences accurately mirror the needs of their end user.
+The optimal balance of perfection vs. rapid release vs. overall engineering cost is different for frameworks and applications.
+Consequently, framework engineers often mis-calibrate when it comes to tradeoffs such as:
+
+-   flexible vs. simple
+-   elegant vs. obvious
+-   strict vs. agile
+-   general vs. familiar
+-   explicit vs. concise
+-   high-control vs. low-friction
+
+If the qualities listed on the left resonate most strongly with you, you’re likely a framework engineer.
+One technique for counter-balancing the natural tendency to over-engineer is to recognize that most user requests begin in the form “I just want X so I can Y."
+
+### Fixation on Potential User Error
+
+A common pitfall that framework engineers fall into is requiring the end user to jump through unnecessary hoops for the sake of user education.
+Most engineers understand that a learning curve implies that users will not initially be experts.
+However, it is often overlooked that this implies that users must be allowed to use the framework without fully understanding what they are doing.
+This includes allowing the user to use the framework in suboptimal ways.
+
+For example, a framework engineer might argue that ‘Array.indexOf’ has a non-obvious O(n) cost.
+They might argue that it’s better to omit this convenience as to encourage users to think carefully about alternatives (binary search, a more suitable data structure, etc.) as they hand code a for-loop.
+
+What this argument fails to consider is that even if suboptimal, users find ‘indexOf’ to be convenient and the results are often “good enough” for the user’s scenario.
+When considering forbidding common practices (such as linear search or using strings to represent UUIDs), think carefully about whether the user is likely to understand the motivation for the friction and agree that the loss of convenience is justified by the potential for error.
+
+## Guidance
+
+### General
+
+#### ✔ DO play well with others
+
+The most successful technologies are those that can be adopted incrementally, are reasonable to retrofit into existing architectures, and build on familiar patterns and concepts.
+
+Front-end developers prefer frameworks that interoperate via plain data and callbacks as opposed to formal contracts (see the data and eventing guidelines). Even for greenfield projects, developers (and companies) are averse to tying themselves foundationally to a specific technology, architecture, or pattern.
+
+#### ✘ AVOID terminology, patterns, or concepts that require explanation
+
+Clever patterns and elegant generalizations initially have negative value if they need to be explained. To be net positive, the return on investment of learning a new pattern or concept needs to be immediate and obvious to the end user.
+
+Remember that a frontend developer's attention is divided among the dozens of packages they are weaving together to ship a product. Their goal is to learn "just enough" about your framework to understand if it solves their current problem.
+
+#### ✔ DO align with JavaScript and DOM APIs
+
+When crafting a new API, look to the standard built-in types and DOM for inspiration, as these are ubiquitous and likely familiar to your user.
+You should give more weight to recent API additions as these better reflect modern practices.
+
+#### ✔ DO provide reasonable default behaviors for boundary cases
+
+Avoid throwing runtime errors when there is a reasonable default behavior. This is especially true if there is precedent in the standard built-in types or DOM.
+
+The JavaScript ecosystem relies on developers to provide snippets of glue code to connect packages authored by different parties. This is how JavaScript achieves a high degree of code reuse without requiring prearranged contracts.
+
+Developers expect this glue code to be concise and do not appreciate being required to anticipate, check for, and explicitly handle boundary conditions. It is rare that a front-end developer complains about an API “swallowing errors” and generally views helpful coercion as part of the framework’s value.
+
+```typescript
+// Not an error: non-existent items in requested slice are elided
+[].slice(0, 10); // -> []
+// Not an error: slicing zero items returns an empty array
+[0, 1, 2, 3].slice(0, 0); // -> []
+```
+
+#### ✘ AVOID exposing advanced or complex types
+
+With each release, the TypeScript type system becomes more expressive, and we should leverage the capabilities of the type system to enhance developer productivity with accurate IntelliSense and helpful compiler errors.
+
+However, it is important to remember that the purpose of TypeScript type checking in public APIs is to be helpful to the end developer.
+“Being helpful” is slightly different than “enforcing correctness”.
+Typing that creates friction, clutters imports, or degrades readability in IntelliSense or compiler errors is not perceived by developers as helpful, even if it is strictly “more correct”.
+
+This is simple:
+
+```typescript
+from<T>(array: ArrayLike<T>): T[];
+```
+
+This is a little advanced, but still okay:
+
+```typescript
+from<T, U>(array: ArrayLike<T>, mapFn: (v: T, k: number) => U, thisArg?: any): U[];
+```
+
+This complex/advanced:
+
+```typescript
+type CopyablePrimitives = null | boolean | number | string
+
+type Copyable<T> = T extends CopyablePrimitives | { [brand]: "Copyable<T>" } ?
+    T : never;
+
+type Copied<T> = T extends CopyablePrimitives | { [brand]: "Copied<T>" };
+
+from<TType, TIn extends Copyable<TType>, TOut extends Copied<TType>>(
+    array: ArrayLike<TIn>,
+    mapFn: (v: TIn, k: number): {
+        action: "skip" | "stop"
+    } | {
+        action: "continue"
+        value: TOut
+    }, thisArg?: any): TOut[];
+```
+
+#### ✔ DO use function overloading
+
+Because function overloading is inconvenient to implement in the JavaScript language, framework engineers often avoid it.
+However, overloading is a powerful tool for reducing IntelliSense clutter and helping developers discover alternative ways to express the same operation.
+
+### Modules
+
+#### ✔ DO minimize the number of required packages
+
+There are many boundaries along which a framework engineer might partition packages: layering, ownership, release group, etc. All of these are generally for the convenience of the framework engineer, not the end user. When publishing for the end user, the ideal number of packages is usually one.
+
+There are two exceptions:
+
+The first exception is either-or scenarios where an application will import 1 of n packages. Examples include:
+
+Choosing between a production or development version of the framework
+
+Choosing between React or Svelt interoperability
+
+Choosing between Azure or Syntex as a backend
+
+The second is packages that are versioned separately for the end user’s convenience. [Need an example.]
+
+Note that if the incentive for partitioning into multiple packages is bundle size or IntelliSense clutter, you probably have a different problem.
+
+[TODO: patterns for minimizing import.]
+
+### Data
+
+#### ✔ PREFER data transparency
+
+The JavaScript ecosystem interoperates primarily through trees of plain data. Encapsulating data within an opaque object model creates friction when interfacing with 3rd party packages. When possible, favor consuming and produce trees of JSON-compatible types (see next guideline).
+
+#### ✔ DO express data as a tree of JSON-compatible types
+
+To interoperate with existing backend and frontend technologies, data contracts should be defined using JSON-compatible types.
+These are:
+
+-   Plain objects (no prototypes, string keys only, single reference)
+-   Dense arrays using keys 0..length-1 (no buffers, views, or typed arrays)
+-   Strings (valid Unicode only)
+-   Finite Float64 numbers (no Infinity, NaN, -0, or BigInt)
+    \*Booleans
+-   Implicit undefined (optional properties elided by JSON serialization)
+-   Null (as empty root or placeholder in arrays – see next guideline.)
+
+This subset of JavaScript types forms a minimal but complete data model that is well supported across data stores and transport protocols.
+
+[GraphQL](https://graphql.org/) is a good example of a framework that embraces JSON as the “lowest common denominator” and is worth studying if you’re interested in applying this principle in a cross-language environment.
+
+#### ✔ PREFER `undefined` over `null`
+
+`undefined` is the preferred type for uninitialized variables, missing keys, or a sentinel representing an empty state.
+Optional properties and arguments, which are implicitly `undefined`, are generally preferred over explicit `undefined`.
+
+There are, however, a few cases where `null` continues to be appropriate.
+The primary use case is JSON serializable data where "implicit undefined" is not an option.
+These are:
+
+-   The root of an empty tree ("null”)
+-   An empty placeholder in arrays ("[null, 3]")
+
+#### ✔ AVOID distinguishing between implicit and explicit undefined values
+
+In the JavaScript language it is possible to distinguish between a non-existing property and a property that has been explicitly set to the `undefined` value.
+You should interpret these identically when reading.
+
+Do not go out of your way elide explicit `undefine`s, except in cases where it improves efficiency, such as serialization.
+Otherwise, you should follow the natural behavior of `Object.keys()`, `foo = bar`, etc. which will preserve the explicit undefined.
+
+#### ✔ DO align copy/iteration behavior with Object.keys()
+
+The prevailing convention is to use `Object.keys()` when iterating or copying data, which includes only string-keyed enumerable properties that are owned by the object (not inherited).
+
+Note that it is expected that private metadata attached via `symbol` keys will be elided when iterated, copied, transmitted, or persisted.
+
+### Errors
+
+#### ✔ DO limit runtime error checking to non-obvious/hard to diagnose errors
+
+Runtime error checking is reserved for non-obvious errors that are difficult to diagnose without runtime assistance.
+You should assume that developers have common sense and do not exploit quirks or intentionally circumvent the type system.
+
+#### ✘ DO NOT use assertions for validating user input
+
+Assertion failures indicates a bug in the Fluid Framework itself, not the user's code.
+User errors should by signaled by throwing an instance of `Error`, `TypeError`, `ReferenceError`, `RangeError`, `AggregateError` or an appropriate subclass (other built-in error types are reserved for language parsing errors).
+
+### Documentation
+
+We leverage TSDoc syntax for TypeScript API-level source code documentation.
+See our [TSDoc guidelines](https://github.com/microsoft/FluidFramework/wiki/TSDoc-Guidelines) for helpful tips leveraging the syntax.
+
+#### ✔ DO use complete sentences in API documentation
+
+Remember that many of our APIs are or will be visible by other developers, including developers external to our team.
+To ensure our documentation is useful and accessible to the widest audience, our documentation should be written in such a way that it is easily readable by any English reader.
+
+#### ✔ DO document contracts not captured by the type-system
+
+As a general rule, if an API contract cannot be captured by the type-system, then it MUST be documented.
+For example:
+
+```typescript
+/**
+ * Gets the element at the provided index.
+ */
+public getAtIndex(index: number): Foo;
+```
+
+At the type-system level, the input `index` can potentially be negative, infinite, etc.
+What our method does in these cases is unclear.
+Does it throw?
+Does it return some default value?
+
+There are a few syntactic options for conveying this sort of information - use your best judgment when determining what to use.
+An option our example method might look something like:
+
+```typescript
+/**
+ * Gets the element at the provided index.
+ * @param index - The index being queried. Must be on [0, {@link Bar.length}).
+ * @throws Throws an error if the provided index is out of range.
+ */
+public getAtIndex(index: number): Foo;
+```
