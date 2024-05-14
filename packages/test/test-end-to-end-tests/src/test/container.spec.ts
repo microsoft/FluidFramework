@@ -35,7 +35,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	FiveDaysMs,
 	IDocumentServiceFactory,

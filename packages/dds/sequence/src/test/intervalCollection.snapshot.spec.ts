@@ -28,7 +28,8 @@ async function loadSharedString(
 ): Promise<ISharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
+	dataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+		containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
@@ -39,7 +40,6 @@ async function loadSharedString(
 		SharedStringFactory.Attributes,
 	);
 	await sharedString.load(services);
-	await sharedString.loaded;
 	return sharedString;
 }
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/agent-scheduler",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Built in runtime object for distributing agents across instances of a container",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -95,7 +95,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",
