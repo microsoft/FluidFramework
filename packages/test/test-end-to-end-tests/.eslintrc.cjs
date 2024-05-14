@@ -40,9 +40,6 @@ module.exports = {
 			},
 		],
 
-		// This rule causes linting to crash with a "Error: Circularity detected while resolving configuration: /common/build/build-common/tsconfig.base.json"
-		"import/namespace": "off",
-
 		/*
 			This rule causes the following errors, so is temporarily disabled.
 

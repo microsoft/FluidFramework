@@ -245,7 +245,7 @@ export const GCNodeType = {
 	Blob: "Blob",
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
-};
+} as const;
 
 /**
  * @alpha
@@ -370,14 +370,7 @@ export interface IGarbageCollector {
 	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
 	 */
-	nodeUpdated(
-		nodePath: string,
-		reason: "Loaded" | "Changed",
-		timestampMs?: number,
-		packagePath?: readonly string[],
-		request?: IRequest,
-		headerData?: RuntimeHeaderData,
-	): void;
+	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
 	/** Called to process a garbage collection message. */
@@ -386,6 +379,25 @@ export interface IGarbageCollector {
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
 	dispose(): void;
+}
+
+/**
+ * Info needed by GC when notified that a node was updated (loaded or changed)
+ * @internal
+ */
+export interface IGCNodeUpdatedProps {
+	/** Type and path of the updated node */
+	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
+	/** Whether the node (or a subpath) was loaded or changed. */
+	reason: "Loaded" | "Changed";
+	/** The op-based timestamp when the node changed, if applicable */
+	timestampMs?: number;
+	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	packagePath?: readonly string[];
+	/** The original request for loads to preserve it in telemetry */
+	request?: IRequest;
+	/** If the node was loaded via request path, the header data. May be modified from the original request */
+	headerData?: RuntimeHeaderData;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */

@@ -20,6 +20,7 @@ import {
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
@@ -69,7 +70,8 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+// eslint-disable-next-line import/no-deprecated
+import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -773,7 +775,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE:
 					assert(
-						segment.propertyManager?.hasPendingProperties() === true,
+						segment.propertyManager?.hasPendingProperties(resetOp.props) === true,
 						0x036 /* "Segment has no pending properties" */,
 					);
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -803,7 +805,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					let segInsertOp = segment;
 					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
-						segInsertOp.properties = resetOp.seg.props;
+						// eslint-disable-next-line import/no-deprecated
+						segInsertOp.properties = createMap();
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);
@@ -1080,7 +1084,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		serializer: IFluidSerializer,
 		catchUpMsgs: ISequencedDocumentMessage[],
 	): ISummaryTreeWithStats {
-		const deltaManager = runtime.deltaManager;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
 		const minSeq = deltaManager.minimumSequenceNumber;
 
 		// Catch up to latest MSN, if we have not had a chance to do it.

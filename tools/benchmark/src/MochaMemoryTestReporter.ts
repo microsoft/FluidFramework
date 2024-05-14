@@ -7,11 +7,13 @@
 /* eslint-disable import/no-nodejs-modules */
 /* eslint-disable unicorn/prefer-module */
 
-import * as path from "node:path";
 import * as fs from "node:fs";
+import * as path from "node:path";
+
+import chalk from "chalk";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
-import chalk from "chalk";
+
 import { isChildProcess } from "./Configuration";
 import { pad, prettyNumber, getName } from "./ReporterUtilities";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.

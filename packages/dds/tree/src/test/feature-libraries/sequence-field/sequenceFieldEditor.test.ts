@@ -10,8 +10,8 @@ import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { MarkMaker as Mark } from "./testEdits.js";
-import { deepFreeze } from "../../utils.js";
 
 const id: ChangesetLocalId = brand(0);
 

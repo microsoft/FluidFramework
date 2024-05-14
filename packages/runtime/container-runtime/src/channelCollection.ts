@@ -7,14 +7,19 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IDisposable,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import {
+	buildSnapshotTree,
+	getSnapshotTree,
+	isInstanceOfISnapshot,
+} from "@fluidframework/driver-utils/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -87,7 +92,8 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
 	GCNodeType,
 	detectOutboundRoutesViaDDSKey,
-	trimLeadingAndTrailingSlashes,
+	IGCNodeUpdatedProps,
+	urlToGCNodePath,
 } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
@@ -167,6 +173,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		getAudience: (...args) => {
 			return context.getAudience(...args);
 		},
+		// back-compat, to be removed in 2.0
 		ensureNoDataModelChanges: (...args) => {
 			return context.ensureNoDataModelChanges(...args);
 		},
@@ -238,11 +245,6 @@ export function wrapContextForInnerChannel(
 	return context;
 }
 
-/** Reformats a request URL to match expected format for a GC node path */
-function urlToGCNodePath(url: string): string {
-	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
-}
-
 /**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
@@ -258,7 +260,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public readonly containerLoadStats: {
 		// number of dataStores during loadContainer
@@ -272,7 +274,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	private dataStoresSinceLastGC: string[] = [];
 	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
 	// the container runtime to other nodes.
-	private readonly containerRuntimeHandle: IFluidHandle;
+	private readonly containerRuntimeHandle: IFluidHandleInternal;
 	private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<
 		string,
 		Promise<AliasResult>
@@ -282,17 +284,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	private readonly aliasedDataStores: Set<string>;
 
 	constructor(
-		protected readonly baseSnapshot: ISnapshotTree | undefined,
+		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
 		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
-		private readonly gcNodeUpdated: (
-			nodePath: string,
-			reason: "Loaded" | "Changed",
-			timestampMs?: number,
-			packagePath?: readonly string[],
-			request?: IRequest,
-			headerData?: RuntimeHeaderData,
-		) => void,
+		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>,
@@ -314,7 +309,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
 		if (baseSnapshot) {
-			for (const [key, value] of Object.entries(baseSnapshot.trees)) {
+			const baseSnapshotTree = getSnapshotTree(baseSnapshot);
+			for (const [key, value] of Object.entries(baseSnapshotTree.trees)) {
 				fluidDataStores.set(key, value);
 			}
 		}
@@ -330,9 +326,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 			// If we have a detached container, then create local data store contexts.
 			if (this.parentContext.attachState !== AttachState.Detached) {
+				let snapshotForRemoteFluidDatastoreContext: ISnapshot | ISnapshotTree = value;
+				if (isInstanceOfISnapshot(baseSnapshot)) {
+					snapshotForRemoteFluidDatastoreContext = {
+						...baseSnapshot,
+						snapshotTree: value,
+					};
+				}
 				dataStoreContext = new RemoteFluidDataStoreContext({
 					id: key,
-					snapshotTree: value,
+					snapshot: snapshotForRemoteFluidDatastoreContext,
 					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
 					scope: this.parentContext.scope,
@@ -453,9 +456,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 
 		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
-		let snapshotTree: ISnapshotTree | undefined;
+		let snapshot: ISnapshotTree | ISnapshot | undefined;
 		if (attachMessage.snapshot) {
-			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+			snapshot = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+			if (isInstanceOfISnapshot(this.baseSnapshot)) {
+				snapshot = { ...this.baseSnapshot, snapshotTree: snapshot };
+			}
 		}
 
 		// Include the type of attach message which is the pkg of the store to be
@@ -463,7 +469,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const pkg = [attachMessage.type];
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
-			snapshotTree,
+			snapshot,
 			parentContext: this.wrapContextForInnerChannel(attachMessage.id),
 			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
 			scope: this.parentContext.scope,
@@ -573,8 +579,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
-			localContext.setAttachState(AttachState.Attaching);
 			this.submitAttachChannelOp(localContext);
+			localContext.setAttachState(AttachState.Attaching);
 		}
 
 		this.contexts.bind(id);
@@ -654,7 +660,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		createProps?: any,
 		loadingGroupId?: string,
 	) {
-		assert(loadingGroupId !== "", "loadingGroupId should not be the empty string");
+		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
 			id,
 			pkg,
@@ -886,12 +892,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
-		this.gcNodeUpdated(
-			`/${address}`,
-			"Changed",
-			message.timestamp,
-			context.isLoaded ? context.packagePath : undefined,
-		);
+		this.gcNodeUpdated({
+			node: { type: "DataStore", path: `/${address}` },
+			reason: "Changed",
+			timestampMs: message.timestamp,
+			packagePath: context.isLoaded ? context.packagePath : undefined,
+		});
 	}
 
 	private async getDataStore(
@@ -1164,7 +1170,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 							0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 						);
 						dataStoreSummary = convertSnapshotTreeToSummaryTree(
-							this.baseSnapshot.trees[key],
+							getSnapshotTree(this.baseSnapshot).trees[key],
 						);
 					}
 					builder.addWithStats(key, dataStoreSummary);
@@ -1419,9 +1425,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
 		}
 
-		// We allow Tombstone requests for sub-DataStore objects
+		// We allow Tombstone/Inactive requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
+			headerData.allowInactive = true;
 		}
 
 		await this.waitIfPendingAlias(id);
@@ -1431,16 +1438,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
 
-		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
-		// is configured.
-		this.gcNodeUpdated(
-			urlToGCNodePath(request.url),
-			"Loaded",
-			undefined /* timestampMs */,
-			details.pkg,
+		// When notifying GC of this node being loaded, we only indicate the DataStore itself, not the full subDataStore url if applicable.
+		// This is in case the url is to a route that Fluid doesn't understand or track for GC (e.g. if suited for a custom request handler)
+		this.gcNodeUpdated({
+			node: { type: "DataStore", path: `/${id}` },
+			reason: "Loaded",
+			packagePath: details.pkg,
 			request,
 			headerData,
-		);
+		});
+
 		const dataStore = await dataStoreContext.realize();
 
 		const subRequest = requestParser.createSubRequest(1);

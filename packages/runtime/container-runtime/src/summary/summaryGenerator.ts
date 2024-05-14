@@ -11,13 +11,15 @@ import {
 	IPromiseTimerResult,
 	Timer,
 } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import {
+	isFluidError,
 	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
+	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -272,7 +274,7 @@ export class SummaryGenerator {
 		 */
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
-			error?: any,
+			error?: Error,
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
@@ -281,7 +283,8 @@ export class SummaryGenerator {
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
 			const category =
-				cancellationToken.cancelled || error?.errorType === DriverErrorTypes.offlineError
+				cancellationToken.cancelled ||
+				(isFluidError(error) && error?.errorType === DriverErrorTypes.offlineError)
 					? "generic"
 					: "error";
 
@@ -363,10 +366,15 @@ export class SummaryGenerator {
 			summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
 			resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 		} catch (error) {
-			return fail("submitSummaryFailure", error, undefined /* properties */, {
-				stage: "unknown",
-				retryAfterSeconds: getRetryDelaySecondsFromError(error),
-			});
+			return fail(
+				"submitSummaryFailure",
+				wrapError(error, (message) => new LoggingError(message)),
+				undefined /* properties */,
+				{
+					stage: "unknown",
+					retryAfterSeconds: getRetryDelaySecondsFromError(error),
+				},
+			);
 		} finally {
 			if (summaryData === undefined) {
 				this.heuristicData.recordAttempt();

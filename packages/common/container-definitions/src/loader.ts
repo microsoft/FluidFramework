@@ -644,7 +644,7 @@ export enum LoaderHeader {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
@@ -652,11 +652,6 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 	| undefined
-		/*
-		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
-		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
-		 */
-		| "sequenceNumber"
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -669,6 +664,8 @@ export interface IContainerLoadMode {
 		 * This mode might have significant impact on boot speed (depends on storage perf characteristics)
 		 * Also there might be a lot of trailing ops and applying them might take time, so hosts are
 		 * recommended to have some progress UX / cancellation built into loading flow when using this option.
+		 * WARNING: This is the only option that may result in unbound wait. If machine is offline or hits some other
+		 * errors (like 429s), it may get into inifinite retry loop, with no ability to observe or cancel that process.
 		 */
 		| "all";
 
@@ -690,11 +687,6 @@ export interface IContainerLoadMode {
 		 * Default value.
 		 */
 		| undefined;
-
-	/**
-	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
-	 */
-	pauseAfterLoad?: boolean;
 }
 
 /**
@@ -708,11 +700,6 @@ export interface ILoaderHeader {
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
-	/**
-	 * Loads the container to at least the specified sequence number.
-	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
-	 */
-	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;
 }

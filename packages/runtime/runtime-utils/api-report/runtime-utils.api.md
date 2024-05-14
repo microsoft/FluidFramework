@@ -4,13 +4,19 @@
 
 ```ts
 
+import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
+import type { IDeltaManagerErased } from '@fluidframework/datastore-definitions';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -18,6 +24,7 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
@@ -72,6 +79,23 @@ export function exceptionToResponse(err: any): IResponse;
 // @internal (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
+// @alpha
+export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
+    // (undocumented)
+    get [fluidHandleSymbol](): IFluidHandleErased<T>;
+    // (undocumented)
+    abstract absolutePath: string;
+    // (undocumented)
+    abstract attachGraph(): void;
+    // (undocumented)
+    abstract bind(handle: IFluidHandleInternal): void;
+    // (undocumented)
+    abstract get(): Promise<T>;
+    get IFluidHandle(): IFluidHandleInternal;
+    // (undocumented)
+    abstract readonly isAttached: boolean;
+}
+
 // @internal
 export class GCDataBuilder implements IGarbageCollectionData {
     // (undocumented)
@@ -114,6 +138,9 @@ export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @internal
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;
+
+// @internal
+export function isSnapshotFetchRequiredForLoadingGroupId(snapshotTree: ISnapshotTree, blobContents: Map<string, ArrayBuffer>): boolean;
 
 // @internal (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
@@ -203,6 +230,18 @@ export class TelemetryContext implements ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
+
+// @internal
+export function toDeltaManagerErased(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>): IDeltaManagerErased;
+
+// @alpha
+export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+
+// @alpha
+export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
+
+// @alpha
+export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // @internal
 export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;

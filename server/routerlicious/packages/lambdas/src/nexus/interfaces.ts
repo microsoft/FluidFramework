@@ -132,4 +132,5 @@ export interface INexusLambdaConnectionStateTrackers {
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;
 	socketIoSocketHelper: SocketIoSocketHelper;
+	supportedFeaturesMap: Map<string, Record<string, unknown>>;
 }

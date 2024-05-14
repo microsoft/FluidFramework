@@ -1,6 +1,6 @@
 {
 	"name": "@types/jest-environment-puppeteer",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"private": true,
 	"description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
 	"homepage": "https://fluidframework.com",
@@ -15,5 +15,9 @@
 	"types": "index.d.ts",
 	"devDependencies": {
 		"jest-environment-puppeteer": "^9.0.2"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }

@@ -7,17 +7,21 @@ import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { ConsensusRegisterCollection } from "./consensusRegisterCollection.js";
-import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces.js";
+import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
+import { IConsensusRegisterCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue.
  * @alpha
  */
-export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
+export class ConsensusRegisterCollectionFactory
+	implements IChannelFactory<IConsensusRegisterCollection>
+{
 	public static Type = "https://graph.microsoft.com/types/consensus-register-collection";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -43,13 +47,13 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusRegisterCollection> {
-		const collection = new ConsensusRegisterCollection(id, runtime, attributes);
+		const collection = new ConsensusRegisterCollectionClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
-		const collection = new ConsensusRegisterCollection(
+		const collection = new ConsensusRegisterCollectionClass(
 			id,
 			document,
 			ConsensusRegisterCollectionFactory.Attributes,
@@ -58,3 +62,16 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
 		return collection;
 	}
 }
+
+/**
+ * {@inheritDoc IConsensusRegisterCollection}
+ * @alpha
+ */
+export const ConsensusRegisterCollection = createSharedObjectKind(
+	ConsensusRegisterCollectionFactory,
+);
+/**
+ * Compatibility alias for {@link IConsensusRegisterCollection}.
+ * @alpha
+ */
+export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;

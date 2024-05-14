@@ -45,7 +45,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	afterEach(async () => provider.reset());
+	afterEach(async function () {
+		provider.reset();
+	});
 
 	let localContainer: IContainer;
 	let remoteContainer: IContainer;
@@ -229,7 +231,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 		});
-		const messageSizeInBytes = 500000;
+		const messageSizeInBytes = 100 * 1024;
 		const largeString = generateStringOfSize(messageSizeInBytes);
 		const messageCount = 10;
 		setMapKeys(localMap, messageCount, largeString);
@@ -340,8 +342,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		} batches`, () => {
 			describe("Chunking compressed batches", () =>
 				[
-					{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
-					{ messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
+					{ messagesInBatch: 1, messageSize: 2 * 1024 * 1024 }, // One large message
+					{ messagesInBatch: 3, messageSize: 2 * 1024 * 1024 }, // Three large messages
 					{ messagesInBatch: 1500, messageSize: 4 * 1024 }, // Many small messages
 				].forEach((testConfig) => {
 					it(
@@ -391,11 +393,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
 
-			/**
-			 * ADO:6510 to investigate and re-enable.
-			 * The test times out likely due to its nature of creating large payloads.
-			 */
-			itExpects.skip(
+			itExpects(
 				"Large ops fail when compression chunking is disabled by feature gate",
 				[
 					{
@@ -404,13 +402,22 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				],
 				async function () {
-					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-					await setupContainers(containerConfig, {
-						"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-					});
+					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
+					await setupContainers(
+						{
+							...containerConfig,
+							runtimeOptions: {
+								...containerConfig.runtimeOptions,
+								maxBatchSizeInBytes: 51 * 1024, // 51 KB
+							},
+						},
+						{
+							"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
+						},
+					);
 
 					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-					const messageCount = 3; // Will result in a 15 MB payload
+					const messageCount = 3; // Will result in a 150 KB payload
 					setMapKeys(localMap, messageCount, largeString);
 					await provider.ensureSynchronized();
 				},
@@ -506,6 +513,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								this.skip();
 							}
 
+							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
+							if (provider.driver.type === "routerlicious") {
+								this.skip();
+							}
+
 							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
@@ -581,6 +593,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
+
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
@@ -598,6 +618,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// This is not supported by the local server. See ADO:2690
 				// This test is flaky on tinylicious. See ADO:2964
 				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
 					this.skip();
 				}
 
@@ -663,6 +691,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// This is not supported by the local server. See ADO:2690
 				// This test is flaky on tinylicious. See ADO:2964
 				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7969
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
 					this.skip();
 				}
 

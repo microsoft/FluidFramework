@@ -161,7 +161,6 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				return response;
 			},
 			undefined, // workers
-			undefined, // recordHeapSize
 			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		this.blobsShaCache.set(value.sha, "");

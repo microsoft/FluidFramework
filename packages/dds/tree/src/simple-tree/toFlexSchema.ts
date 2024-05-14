@@ -17,6 +17,7 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
@@ -56,21 +57,25 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
+		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes, nodeKeyManager) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
+export function toFlexConfig(
+	config: TreeConfiguration,
+	nodeKeyManager: NodeKeyManager,
+): TreeContent {
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
+			: [cursorFromUnhydratedRoot(config.schema, unhydrated, nodeKeyManager)];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,

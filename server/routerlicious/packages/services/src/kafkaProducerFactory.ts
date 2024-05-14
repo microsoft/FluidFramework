@@ -31,6 +31,7 @@ export function createProducer(
 	maxBatchSize?: number,
 	sslCACertFilePath?: string,
 	eventHubConnString?: string,
+	additionalOptions?: object,
 ): IProducer {
 	let producer: IProducer;
 
@@ -43,6 +44,7 @@ export function createProducer(
 			maxMessageSize: MaxKafkaMessageSize,
 			sslCACertFilePath,
 			eventHubConnString,
+			additionalOptions,
 		});
 
 		producer.on("error", (error, errorData: IContextErrorData) => {

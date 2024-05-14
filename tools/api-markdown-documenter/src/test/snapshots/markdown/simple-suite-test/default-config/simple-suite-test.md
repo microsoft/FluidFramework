@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # simple-suite-test
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test)
@@ -81,10 +79,10 @@ const foo = bar;
 
 ## Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) | `BETA` | `readonly` | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [testConst](./simple-suite-test#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
 
@@ -332,5 +330,7 @@ I have a `@deprecated` tag with an empty comment block.
 #### Signature {#testconstwithemptydeprecatedblock-signature}
 
 ```typescript
-testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
+testConstWithEmptyDeprecatedBlock: string
 ```
+
+**Type:** string

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,9 +68,10 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "tsc --watch",
-		"typetests:gen": "fluid-type-test-generator",
+		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
+		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -80,12 +81,12 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.8.0.0",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-rc.3.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
@@ -95,23 +96,11 @@
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
-				"...",
 				"typetests:gen"
 			]
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedEnumDeclaration_DriverErrorType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDocumentService": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDocumentStorageService": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

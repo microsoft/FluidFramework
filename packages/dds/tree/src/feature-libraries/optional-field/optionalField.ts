@@ -14,11 +14,10 @@ import {
 	DeltaFieldChanges,
 	DeltaMark,
 	RevisionTag,
-	TaggedChange,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	replaceAtomRevisions,
 	taggedAtomId,
-	taggedOptAtomId,
 } from "../../core/index.js";
 import {
 	IdAllocator,
@@ -150,15 +149,15 @@ export class RegisterMap<T> implements IRegisterMap<T> {
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
-		{ change: change1, revision: revision1 }: TaggedChange<OptionalChangeset>,
-		{ change: change2, revision: revision2 }: TaggedChange<OptionalChangeset>,
+		change1: OptionalChangeset,
+		change2: OptionalChangeset,
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
-		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
-		const change1FieldSrc = taggedOptRegister(change1.valueReplace?.src, revision1);
-		const change1FieldDst = taggedOptAtomId(getEffectfulDst(change1.valueReplace), revision1);
+		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves);
+		const change1FieldSrc = change1.valueReplace?.src;
+		const change1FieldDst = getEffectfulDst(change1.valueReplace);
 
-		const change2FieldSrc = taggedOptRegister(change2.valueReplace?.src, revision2);
+		const change2FieldSrc = change2.valueReplace?.src;
 		let composedFieldSrc: RegisterId | undefined;
 		if (change2FieldSrc !== undefined) {
 			if (change2FieldSrc === "self") {
@@ -189,19 +188,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					childChanges2ByOriginalId.set("self", change);
 				}
 			} else {
-				const idWithRevision = taggedAtomId(id, revision2);
-				if (
-					change1FieldDst !== undefined &&
-					areEqualChangeAtomIds(change1FieldDst, idWithRevision)
-				) {
+				if (change1FieldDst !== undefined && areEqualChangeAtomIds(change1FieldDst, id)) {
 					childChanges2ByOriginalId.set("self", change);
 				} else {
-					const originalId = tryGetFromNestedMap(
-						dstToSrc,
-						idWithRevision.revision,
-						idWithRevision.localId,
-					);
-					childChanges2ByOriginalId.set(originalId ?? idWithRevision, change);
+					const originalId = tryGetFromNestedMap(dstToSrc, id.revision, id.localId);
+					childChanges2ByOriginalId.set(originalId ?? id, change);
 				}
 			}
 		}
@@ -214,19 +205,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		};
 
 		for (const [id, childChange1] of change1.childChanges) {
-			const idWithRevision = taggedRegister(id, revision1);
-			const childChange2 = childChanges2ByOriginalId.get(idWithRevision);
-			composedChildChanges.push([idWithRevision, composeChild(childChange1, childChange2)]);
-			childChanges2ByOriginalId.delete(idWithRevision);
+			const childChange2 = childChanges2ByOriginalId.get(id);
+			composedChildChanges.push([id, composeChild(childChange1, childChange2)]);
+			childChanges2ByOriginalId.delete(id);
 		}
 
 		for (const [id, childChange2] of childChanges2ByOriginalId.entries()) {
 			composedChildChanges.push([id, composeChild(undefined, childChange2)]);
 		}
 
-		for (const [src, dst] of change2.moves) {
-			const leg2Src = taggedAtomId(src, revision2);
-			const leg2Dst = taggedAtomId(dst, revision2);
+		for (const [leg2Src, leg2Dst] of change2.moves) {
 			const leg1Src = tryGetFromNestedMap(dstToSrc, leg2Src.revision, leg2Src.localId);
 			if (leg1Src !== undefined) {
 				composedMoves.push([leg1Src, leg2Dst]);
@@ -254,7 +242,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			change1FieldSrc !== "self" &&
 			change2.valueReplace !== undefined
 		) {
-			const change2FieldDst = taggedAtomId(change2.valueReplace.dst, revision2);
+			const change2FieldDst = change2.valueReplace.dst;
 			if (
 				isReplaceEffectful(change2.valueReplace) &&
 				!areEqualChangeAtomIds(change1FieldSrc, change2FieldDst)
@@ -270,7 +258,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const replace: Mutable<Replace> = {
 			isEmpty: firstChange.isEmpty,
-			dst: getComposedReplaceDst(change1.valueReplace, revision1, change2, revision2),
+			dst: getComposedReplaceDst(change1.valueReplace, change2),
 		};
 		if (composedFieldSrc !== undefined) {
 			replace.src = composedFieldSrc;
@@ -280,37 +268,32 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	invert: (
-		{ revision, change }: TaggedChange<OptionalChangeset>,
+		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
-		const tagAtomId = (id: ChangeAtomId): ChangeAtomId => taggedAtomId(id, revision);
-		const tagRegister = (id: RegisterId): RegisterId => (id === "self" ? id : tagAtomId(id));
 
 		const invertIdMap = new RegisterMap<RegisterId>();
 		const invertedMoves: Move[] = [];
 		for (const [src, dst] of moves) {
-			const taggedSrc = tagAtomId(src);
-			const taggedDst = tagAtomId(dst);
-			invertIdMap.set(taggedSrc, taggedDst);
-			invertedMoves.push([taggedDst, taggedSrc]);
+			invertIdMap.set(src, dst);
+			invertedMoves.push([dst, src]);
 		}
 		if (change.valueReplace !== undefined) {
 			const effectfulDst = getEffectfulDst(change.valueReplace);
 			if (effectfulDst !== undefined) {
-				invertIdMap.set("self", tagAtomId(change.valueReplace.dst));
+				invertIdMap.set("self", change.valueReplace.dst);
 			}
 			if (change.valueReplace.src !== undefined) {
-				invertIdMap.set(tagRegister(change.valueReplace.src), "self");
+				invertIdMap.set(change.valueReplace.src, "self");
 			}
 		}
 
 		const inverted: Mutable<OptionalChangeset> = {
 			moves: invertedMoves,
 			childChanges: childChanges.map(([id, childChange]) => {
-				const taggedId = tagRegister(id);
-				return [invertIdMap.get(taggedId) ?? taggedId, childChange];
+				return [invertIdMap.get(id) ?? id, childChange];
 			}),
 		};
 
@@ -325,11 +308,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						: {
 								isEmpty: false,
 								dst: isRollback
-									? tagAtomId(change.valueReplace.src)
+									? change.valueReplace.src
 									: makeChangeAtomId(genId.allocate()),
 						  };
 				if (change.valueReplace.isEmpty === false) {
-					replace.src = tagAtomId(change.valueReplace.dst);
+					replace.src = change.valueReplace.dst;
 				}
 				inverted.valueReplace = replace;
 			} else if (!isRollback && change.valueReplace.src === "self") {
@@ -345,33 +328,26 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	rebase: (
 		change: OptionalChangeset,
-		overTagged: TaggedChange<OptionalChangeset>,
+		overChange: OptionalChangeset,
 		rebaseChild: NodeChangeRebaser,
 	): OptionalChangeset => {
-		const tagAtomId = (id: ChangeAtomId): ChangeAtomId => taggedAtomId(id, overTagged.revision);
-		const tagRegister = (id: RegisterId): RegisterId => (id === "self" ? id : tagAtomId(id));
-
 		const { moves, childChanges, valueReplace: field } = change;
-		const { change: overChange } = overTagged;
 
 		// TODO: avoid computing the dstToSrc map if it's not needed.
 		// TODO: de-dupe overSrcToDst and forwardMap
-		const { srcToDst: overSrcToDst } = getBidirectionalMaps(
-			overChange.moves,
-			overTagged.revision,
-		);
+		const { srcToDst: overSrcToDst } = getBidirectionalMaps(overChange.moves);
 
 		const forwardMap = new RegisterMap<RegisterId>();
 		for (const [src, dst] of overChange.moves) {
-			forwardMap.set(tagAtomId(src), tagAtomId(dst));
+			forwardMap.set(src, dst);
 		}
 		if (overChange.valueReplace !== undefined) {
 			const effectfulDst = getEffectfulDst(overChange.valueReplace);
 			if (effectfulDst !== undefined) {
-				forwardMap.set("self", tagAtomId(overChange.valueReplace.dst));
+				forwardMap.set("self", overChange.valueReplace.dst);
 			}
 			if (overChange.valueReplace.src !== undefined) {
-				forwardMap.set(tagRegister(overChange.valueReplace.src), "self");
+				forwardMap.set(overChange.valueReplace.src, "self");
 			}
 		}
 
@@ -383,7 +359,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const overChildChangesBySrc = new RegisterMap<NodeId>();
 		for (const [id, childChange] of overChange.childChanges) {
-			overChildChangesBySrc.set(tagRegister(id) ?? id, childChange);
+			overChildChangesBySrc.set(id, childChange);
 		}
 
 		const rebasedChildChanges: ChildChange[] = [];
@@ -442,15 +418,79 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return prunedChange;
 	},
+
+	replaceRevisions: (
+		change: OptionalChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag | undefined,
+	): OptionalChangeset => {
+		const valueReplace = replaceReplaceRevisions(
+			change.valueReplace,
+			oldRevisions,
+			newRevision,
+		);
+
+		const childChanges: ChildChange[] = [];
+		for (const [id, childChange] of change.childChanges) {
+			childChanges.push([
+				replaceRegisterRevisions(id, oldRevisions, newRevision),
+				replaceAtomRevisions(childChange, oldRevisions, newRevision),
+			]);
+		}
+
+		const moves: Move[] = [];
+		for (const [src, dst] of change.moves) {
+			moves.push([
+				replaceAtomRevisions(src, oldRevisions, newRevision),
+				replaceAtomRevisions(dst, oldRevisions, newRevision),
+			]);
+		}
+
+		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
+		if (valueReplace !== undefined) {
+			updated.valueReplace = valueReplace;
+		}
+
+		return updated;
+	},
 };
+
+function replaceReplaceRevisions(
+	replace: Replace | undefined,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): Replace | undefined {
+	if (replace === undefined) {
+		return undefined;
+	}
+
+	const updated: Mutable<Replace> = {
+		...replace,
+		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+	};
+
+	if (replace.src !== undefined) {
+		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+	}
+
+	return updated;
+}
+
+function replaceRegisterRevisions(
+	register: RegisterId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): RegisterId {
+	return register === "self"
+		? register
+		: replaceAtomRevisions(register, oldRevisions, newRevision);
+}
 
 function getComposedReplaceDst(
 	change1: Replace | undefined,
-	revision1: RevisionTag | undefined,
 	change2: OptionalChangeset,
-	revision2: RevisionTag | undefined,
 ): ChangeAtomId {
-	const dst1 = taggedOptAtomId(change1?.dst, revision1);
+	const dst1 = change1?.dst;
 	if (change2.valueReplace === undefined) {
 		assert(dst1 !== undefined, 0x8ce /* Both replace replaces should not be undefined */);
 		return getIdAfterMoves(dst1, change2.moves);
@@ -460,13 +500,13 @@ function getComposedReplaceDst(
 		dst1 === undefined ||
 		change1?.src === "self" ||
 		(change2.valueReplace.src !== undefined &&
-			areEqualRegisterIds(taggedRegister(change2.valueReplace.src, revision2), dst1))
+			areEqualRegisterIds(change2.valueReplace.src, dst1))
 	) {
 		assert(
 			change2.valueReplace !== undefined,
 			0x8cf /* Both replace replaces should not be undefined */,
 		);
-		return taggedAtomId(change2.valueReplace.dst, revision2);
+		return change2.valueReplace.dst;
 	} else {
 		return getIdAfterMoves(dst1, change2.moves);
 	}
@@ -485,30 +525,15 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
-function getBidirectionalMaps(
-	moves: OptionalChangeset["moves"],
-	revision: RevisionTag | undefined,
-): {
+function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
 } {
 	const srcToDst: ChangeAtomIdMap<ChangeAtomId> = new Map();
 	const dstToSrc: ChangeAtomIdMap<ChangeAtomId> = new Map();
 	for (const [src, dst] of moves) {
-		const srcWithRevision = taggedAtomId(src, revision);
-		const dstWithRevision = taggedAtomId(dst, revision);
-		setInNestedMap(
-			srcToDst,
-			srcWithRevision.revision,
-			srcWithRevision.localId,
-			dstWithRevision,
-		);
-		setInNestedMap(
-			dstToSrc,
-			dstWithRevision.revision,
-			dstWithRevision.localId,
-			srcWithRevision,
-		);
+		setInNestedMap(srcToDst, src.revision, src.localId, dst);
+		setInNestedMap(dstToSrc, dst.revision, dst.localId, src);
 	}
 	return { srcToDst, dstToSrc };
 }
@@ -536,13 +561,6 @@ function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined
 	return replace === undefined || replace.isEmpty || replace.src === "self"
 		? undefined
 		: replace.dst;
-}
-
-function taggedOptRegister(
-	id: RegisterId | undefined,
-	revision: RevisionTag | undefined,
-): RegisterId | undefined {
-	return id !== undefined ? taggedRegister(id, revision) : undefined;
 }
 
 export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
@@ -614,7 +632,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 };
 
 export function optionalFieldIntoDelta(
-	{ change, revision }: TaggedChange<OptionalChangeset>,
+	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
 	const delta: Mutable<DeltaFieldChanges> = {};
@@ -624,10 +642,10 @@ export function optionalFieldIntoDelta(
 
 	if (change.valueReplace !== undefined && isReplaceEffectful(change.valueReplace)) {
 		if (!change.valueReplace.isEmpty) {
-			mark.detach = nodeIdFromChangeAtom(change.valueReplace.dst, revision);
+			mark.detach = nodeIdFromChangeAtom(change.valueReplace.dst);
 		}
 		if (change.valueReplace.src !== undefined) {
-			mark.attach = nodeIdFromChangeAtom(change.valueReplace.src, revision);
+			mark.attach = nodeIdFromChangeAtom(change.valueReplace.src);
 		}
 		markIsANoop = false;
 	}
@@ -635,8 +653,8 @@ export function optionalFieldIntoDelta(
 	if (change.moves.length > 0) {
 		delta.rename = change.moves.map(([src, dst]) => ({
 			count: 1,
-			oldId: nodeIdFromChangeAtom(src, revision),
-			newId: nodeIdFromChangeAtom(dst, revision),
+			oldId: nodeIdFromChangeAtom(src),
+			newId: nodeIdFromChangeAtom(dst),
 		}));
 	}
 
@@ -647,7 +665,7 @@ export function optionalFieldIntoDelta(
 			if (id !== "self") {
 				const fields = childDelta;
 				globals.push({
-					id: { major: id.revision ?? revision, minor: id.localId },
+					id: { major: id.revision, minor: id.localId },
 					fields,
 				});
 			} else {
@@ -685,7 +703,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 };
 
 function* relevantRemovedRoots(
-	{ change, revision }: TaggedChange<OptionalChangeset>,
+	change: OptionalChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	const alreadyYielded = new RegisterMap<boolean>();
@@ -693,7 +711,7 @@ function* relevantRemovedRoots(
 	for (const [src] of change.moves) {
 		if (!alreadyYielded.has(src)) {
 			alreadyYielded.set(src, true);
-			yield nodeIdFromChangeAtom(src, revision);
+			yield nodeIdFromChangeAtom(src);
 		}
 	}
 
@@ -702,13 +720,13 @@ function* relevantRemovedRoots(
 		// of this change.
 		if (id !== "self" && !alreadyYielded.has(id)) {
 			alreadyYielded.set(id, true);
-			yield nodeIdFromChangeAtom(id, revision);
+			yield nodeIdFromChangeAtom(id);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}
 
 	const selfSrc = change.valueReplace?.src;
 	if (selfSrc !== undefined && selfSrc !== "self" && !alreadyYielded.has(selfSrc)) {
-		yield nodeIdFromChangeAtom(selfSrc, revision);
+		yield nodeIdFromChangeAtom(selfSrc);
 	}
 }

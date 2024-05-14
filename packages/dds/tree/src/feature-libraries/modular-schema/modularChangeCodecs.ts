@@ -235,7 +235,10 @@ function makeModularChangeCodec(
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
-				const nodeId: NodeId = { localId: brand(idAllocator.allocate()) };
+				const nodeId: NodeId = {
+					revision: context.revision,
+					localId: brand(idAllocator.allocate()),
+				};
 				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
 				return nodeId;
 			},
@@ -307,9 +310,9 @@ function makeModularChangeCodec(
 				// `undefined` does not round-trip through JSON strings, so it needs special handling.
 				// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 				// We therefore optimize for the common case by omitting the revision when it is undefined.
-				return r !== undefined
-					? [commitBuildsEncoded, revisionTagCodec.encode(r, context)]
-					: [commitBuildsEncoded];
+				return r === undefined || r === context.revision
+					? [commitBuildsEncoded]
+					: [commitBuildsEncoded, revisionTagCodec.encode(r, context)];
 			},
 		);
 		return buildsArray.length === 0
@@ -343,7 +346,9 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? undefined : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 
@@ -353,7 +358,18 @@ function makeModularChangeCodec(
 	function encodeRevisionInfos(
 		revisions: readonly RevisionInfo[],
 		context: ChangeEncodingContext,
-	): EncodedRevisionInfo[] {
+	): EncodedRevisionInfo[] | undefined {
+		if (context.revision !== undefined) {
+			assert(
+				revisions.length === 1 &&
+					revisions[0].revision === context.revision &&
+					revisions[0].rollbackOf === undefined,
+				0x964 /* A tagged change should only contain the tagged revision */,
+			);
+
+			return undefined;
+		}
+
 		const encodedRevisions = [];
 		for (const revision of revisions) {
 			const encodedRevision: Mutable<EncodedRevisionInfo> = {
@@ -371,9 +387,13 @@ function makeModularChangeCodec(
 	}
 
 	function decodeRevisionInfos(
-		revisions: readonly EncodedRevisionInfo[],
+		revisions: readonly EncodedRevisionInfo[] | undefined,
 		context: ChangeEncodingContext,
-	): RevisionInfo[] {
+	): RevisionInfo[] | undefined {
+		if (revisions === undefined) {
+			return context.revision !== undefined ? [{ revision: context.revision }] : undefined;
+		}
+
 		const decodedRevisions = [];
 		for (const revision of revisions) {
 			const decodedRevision: Mutable<RevisionInfo> = {
@@ -398,7 +418,7 @@ function makeModularChangeCodec(
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
-						? change.revisions
+						? undefined
 						: encodeRevisionInfos(change.revisions, context),
 				changes: encodeFieldChangesForJson(
 					change.fieldChanges,
@@ -427,8 +447,10 @@ function makeModularChangeCodec(
 			if (encodedChange.refreshers !== undefined) {
 				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
 			}
-			if (encodedChange.revisions !== undefined) {
-				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
+
+			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);
+			if (decodedRevInfos !== undefined) {
+				decoded.revisions = decodedRevInfos;
 			}
 			if (encodedChange.maxId !== undefined) {
 				decoded.maxId = encodedChange.maxId;
