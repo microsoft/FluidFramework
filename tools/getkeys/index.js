@@ -4,14 +4,11 @@
  */
 
 import child_process from "node:child_process";
-import fs from "node:fs";
+import { appendFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import util from "node:util";
 
 import { loadRC, saveRC } from "@fluidframework/tool-utils";
-
-const appendFile = util.promisify(fs.appendFile);
 
 // Wraps the given string in quotes, escaping any quotes already present in the string
 // with '\"', which is compatible with cmd, bash, and zsh.
