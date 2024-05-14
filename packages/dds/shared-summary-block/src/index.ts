@@ -4,5 +4,4 @@
  */
 
 export { ISharedSummaryBlock } from "./interfaces.js";
-export { SharedSummaryBlock } from "./sharedSummaryBlock.js";
-export { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
+export { SharedSummaryBlock } from "./sharedSummaryBlockFactory.js";

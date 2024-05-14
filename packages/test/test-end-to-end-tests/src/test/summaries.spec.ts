@@ -596,13 +596,12 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: createChildLogger(),
+					summaryLogger: createChildLogger({ logger: mockLogger }),
 				})
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) =>
-					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
+				(event) => event.eventName === "SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,

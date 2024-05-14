@@ -5,8 +5,8 @@
 ```ts
 
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
@@ -1083,7 +1083,7 @@ export interface ITransaction {
 }
 
 // @public
-export interface ITree extends IChannel {
+export interface ITree extends IFluidLoadable {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
