@@ -28,8 +28,7 @@ async function exportToShellRc(shellRc, entries) {
 		.map(([key, value]) => `export ${key}=${quote(value)}`)
 		.join("\n")}\n`;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return appendFile(rcPath, stmts, "utf-8");
+	return appendFile(rcPath, stmts, "utf8");
 }
 
 // Persists the given 'env' map to the users environment.  The method used depends
@@ -180,7 +179,9 @@ async function getClient() {
 		console.log(
 			"\nNote: Default dev/test secrets overwritten with values from internal key vault.",
 		);
-	} catch (e) {}
+	} catch (error) {
+		// Drop the error
+	}
 	// }
 
 	console.log(`\nWriting '${path.join(os.homedir(), ".fluidtoolrc")}'.`);
@@ -198,5 +199,6 @@ async function getClient() {
 	}
 
 	console.error(`FATAL ERROR: ${e.stack}`);
+	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(-1);
 });
