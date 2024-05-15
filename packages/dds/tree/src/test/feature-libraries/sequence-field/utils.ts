@@ -525,7 +525,7 @@ function normalizedLineage(lineage: SF.LineageEvent[]): SF.LineageEvent[] {
 	return normalized;
 }
 
-function cmp(a: any, b: any): number {
+function cmp<T>(a: T, b: T): number {
 	if (a === b) {
 		return 0;
 	}

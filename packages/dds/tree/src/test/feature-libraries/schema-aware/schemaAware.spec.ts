@@ -17,6 +17,7 @@ import {
 	FlexTreeNodeSchema,
 	typeNameSymbol,
 	valueSymbol,
+	type FlexFieldKind,
 } from "../../../feature-libraries/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
@@ -205,7 +206,7 @@ import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../
 		// Check child handling
 		{
 			type ChildSchema = typeof parentField;
-			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<FlexFieldKind, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
@@ -288,7 +289,7 @@ import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../
 		// Check child handling
 		{
 			type ChildSchema = typeof boxSchema.objectNodeFieldsObject.children;
-			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<FlexFieldKind, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
