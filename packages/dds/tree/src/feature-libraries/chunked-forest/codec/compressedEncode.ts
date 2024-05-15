@@ -177,7 +177,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: FieldEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeField(cursor, cache, outputBuffer);
 	}
@@ -187,7 +187,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: NodeEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeNode(cursor, cache, outputBuffer);
 	}
@@ -197,7 +197,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: NodesEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeNodes(cursor, cache, outputBuffer);
 	}
@@ -328,7 +328,7 @@ export class InlineArrayShape
 		shapes(this.inner.shape);
 	}
 
-	public get shape() {
+	public get shape(): this {
 		return this;
 	}
 }
