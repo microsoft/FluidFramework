@@ -1562,6 +1562,7 @@ declare function get_old_InterfaceDeclaration_IRetriableFailureResult():
 declare function use_current_InterfaceDeclaration_IRetriableFailureResult(
     use: TypeOnly<current.IRetriableFailureResult>): void;
 use_current_InterfaceDeclaration_IRetriableFailureResult(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
