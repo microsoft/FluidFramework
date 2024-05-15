@@ -1816,12 +1816,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("Negative tests for Offline Phase 3 - serializing without closing", () => {
+	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
 		it(`WRONGLY resend successful op (SharedMap)`, async function () {
 			const duplicatedIncrementValue = 3;
 			const getMap = getMapBackedMap;
@@ -1899,7 +1894,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(counter3.value, 2 * duplicatedIncrementValue);
 		});
 
-		it.only(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
 			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
 				const counter = await d.getSharedObject<SharedCounter>(counterId);
