@@ -188,6 +188,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.keys(this.channels ?? {});
 	}
 
+	public getAtOffset(offset: number): AttributionKey;
+	public getAtOffset(offset: number, channel: string): AttributionKey | undefined;
 	public getAtOffset(offset: number, channel?: string): AttributionKey | undefined {
 		if (channel !== undefined) {
 			const subCollection = this.channels?.[channel];
