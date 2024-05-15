@@ -364,7 +364,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: unknown,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		thisArg?: any,
 	): void;
 
 	/**
