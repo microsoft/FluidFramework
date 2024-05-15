@@ -396,12 +396,17 @@ describe("Op Size", () => {
 
 	function registerOpListener(tree: ISharedTree, resultArray: ISequencedDocumentMessage[]): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+		function submitLocalMessage(
+			content: ISequencedDocumentMessage,
+			localOpMetadata: unknown = undefined,
+		): void {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
 		(tree as any).submitLocalMessage = submitLocalMessage;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}
 
 	const getOperationsStats = (operations: ISequencedDocumentMessage[]) => {
@@ -449,7 +454,7 @@ describe("Op Size", () => {
 	});
 
 	after(() => {
-		const allBenchmarkOpStats: any[] = [];
+		const allBenchmarkOpStats: Record<string, unknown>[] = [];
 		for (const [benchmarkName, ops] of opsByBenchmarkName) {
 			allBenchmarkOpStats.push({
 				"Test name": benchmarkName,
