@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import type { IClient } from "@fluidframework/protocol-definitions";
 import type { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { Server as SocketIoServer, Socket as SocketIoSocket } from "socket.io";
 import type { IRoom } from "./interfaces";
 import { getRoomId } from "./utils";
-import { EventEmitter } from "stream";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IEvent } from "../events";
 
 /**
  * Checks if a generic {@link IWebSocketServer} has an internalServerInstance that is specifically a {@link SocketIoServer}.
@@ -84,10 +85,15 @@ function isSocketMetadata(data: unknown): data is ISocketIoSocketMetadata {
 	);
 }
 
+interface ISocketIoSocketHelperEvent extends IEvent {
+	(event: "pingpong", listener: (latencyMs: number) => void): void;
+	(event: "close", listener: () => void): void;
+}
+
 /**
  * Utilize built-in Socket.io functionality to track socket metadata.
  */
-export class SocketIoSocketHelper extends EventEmitter {
+export class SocketIoSocketHelper extends TypedEventEmitter<ISocketIoSocketHelperEvent> {
 	public isValid: boolean = false;
 	private readonly socket: SocketIoSocket | undefined;
 
