@@ -1916,8 +1916,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	//* Check how this test relates to O3
-	it("get pending state without close doesn't duplicate ops", async () => {
+	it("repeated getPendingLocalState across multiple connections doesn't duplicate ops", async () => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
@@ -2093,7 +2092,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(counter1.value, incrementValue);
 			assert.strictEqual(counter2.value, incrementValue);
 
-			// Rehydrate the first time - first counter increment is unrecognizable,
+			// Rehydrate the second time - first counter increment is unrecognizable,
 			// so it will be resubmitted again here on container3's new clientId
 			const container3 = await loader.resolve({ url }, pendingLocalState);
 			await provider.ensureSynchronized();
