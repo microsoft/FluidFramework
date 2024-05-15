@@ -273,7 +273,7 @@ You should assume that developers have common sense and do not exploit quirks or
 
 #### ✘ DO NOT use assertions for validating user input
 
-Assertion failures indicates a bug in the Fluid Framework itself, not the user's code.
+An assertion failure indicates a bug in the Fluid Framework itself, not the user's code.
 User errors should by signaled by throwing an instance of `Error`, `TypeError`, `ReferenceError`, `RangeError`, `AggregateError` or an appropriate subclass (other built-in error types are reserved for language parsing errors).
 
 ### Documentation
