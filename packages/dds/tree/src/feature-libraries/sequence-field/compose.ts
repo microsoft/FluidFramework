@@ -5,7 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import {
+	ChangeAtomId,
+	RevisionMetadataSource,
+	RevisionTag,
+	offsetChangeAtomId,
+} from "../../core/index.js";
 import { IdAllocator, brand, fail } from "../../util/index.js";
 import {
 	CrossFieldManager,
@@ -916,8 +921,4 @@ function getTruncatedEndpointForInner(
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 	assert(effect.length === count, 0x934 /* Expected effect to cover entire mark */);
 	return effect.value?.truncatedEndpointForInner;
-}
-
-function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
-	return { ...id, localId: brand(id.localId + offset) };
 }

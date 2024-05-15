@@ -9,7 +9,17 @@ import { ChangesetLocalId } from "../../core/index.js";
 import { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
-import { CellId, CellMark, Changeset, Insert, Mark, MarkList, MoveIn, MoveOut } from "./types.js";
+import {
+	CellId,
+	CellMark,
+	Changeset,
+	DetachIdOverride,
+	Insert,
+	Mark,
+	MarkList,
+	MoveIn,
+	MoveOut,
+} from "./types.js";
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -45,7 +55,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachCellId: ChangesetLocalId,
+		detachCellId: DetachIdOverride,
 		attachCellId: CellId,
 	): Changeset;
 }
@@ -125,18 +135,19 @@ export const sequenceFieldEditor = {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachCellId: ChangesetLocalId,
+		detachCellId: DetachIdOverride,
 		attachCellId: CellId,
 	): Changeset {
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",
-			id: detachCellId,
+			id: attachCellId.localId,
+			idOverride: detachCellId,
 			count,
 		};
 
 		const returnTo: CellMark<MoveIn> = {
 			type: "MoveIn",
-			id: detachCellId,
+			id: attachCellId.localId,
 			count,
 			cellId: attachCellId,
 		};

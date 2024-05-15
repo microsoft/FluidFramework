@@ -942,23 +942,24 @@ export function testRebase() {
 
 		it("move ↷ move and remove", () =>
 			withConfig(() => {
+				const [moveOut, moveIn] = Mark.move(1, brand(0));
 				const moveAndRemove = [
 					{ count: 1 },
-					Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
+					Mark.attachAndDetach(moveIn, Mark.remove(1, brand(2))),
 					{ count: 1 },
-					Mark.moveOut(1, brand(0)),
+					moveOut,
 				];
 
 				const move = Change.move(2, 1, 0);
 				const rebased = rebase(move, moveAndRemove);
 				const expected = [
-					Mark.moveIn(1, brand(0)),
+					moveIn,
 					{ count: 1 },
 					Mark.moveOut(1, brand(0), {
 						cellId: {
 							revision: tag1,
-							localId: brand(1),
-							adjacentCells: [{ id: brand(1), count: 1 }],
+							localId: brand(2),
+							adjacentCells: [{ id: brand(2), count: 1 }],
 						},
 					}),
 					{ count: 1 },

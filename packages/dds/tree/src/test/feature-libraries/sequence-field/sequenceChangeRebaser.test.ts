@@ -202,11 +202,20 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 			(i, max) =>
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
-						Change.return(i, 2, 1, {
-							revision: tag3,
-							localId: brand(i),
-							adjacentCells: generateAdjacentCells(max),
-						}),
+						Change.return(
+							i,
+							2,
+							1,
+							{
+								type: SF.DetachIdOverrideType.Unattach,
+								id: { revision: tag3, localId: brand(i + 2) },
+							},
+							{
+								revision: tag3,
+								localId: brand(i),
+								adjacentCells: generateAdjacentCells(max),
+							},
+						),
 					),
 				),
 		],
@@ -215,11 +224,20 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 			(i, max) =>
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
-						Change.return(1, 2, i, {
-							revision: tag3,
-							localId: brand(i),
-							adjacentCells: generateAdjacentCells(max),
-						}),
+						Change.return(
+							1,
+							2,
+							i,
+							{
+								type: SF.DetachIdOverrideType.Unattach,
+								id: { revision: tag3, localId: brand(i + 2) },
+							},
+							{
+								revision: tag3,
+								localId: brand(i),
+								adjacentCells: generateAdjacentCells(max),
+							},
+						),
 					),
 				),
 		],
