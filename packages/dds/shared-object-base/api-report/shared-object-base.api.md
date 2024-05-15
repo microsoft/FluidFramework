@@ -34,7 +34,7 @@ export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFlu
 
 // @internal
 export function createSharedObjectKind<TSharedObject>(factory: (new () => IChannelFactory<TSharedObject>) & {
-    Type: string;
+    readonly Type: string;
 }): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject>;
 
 // @internal

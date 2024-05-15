@@ -790,6 +790,10 @@ export abstract class SharedObject<
  * For use internally and in the "encapsulated API".
  * See {@link SharedObjectKind} for the type erased version for use in the public declarative API.
  *
+ * @privateRemarks
+ * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
+ * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
+ * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
  * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -829,10 +833,14 @@ export interface ISharedObjectKind<TSharedObject> {
 
 /**
  * Defines a kind of shared object.
+ * @remarks
  * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
+ * See {@link @fluidframework/fluid-static#IFluidContainer.create} and {@link @fluidframework/fluid-static#ContainerSchema} for details.
  * @privateRemarks
- * Type erased reference to an {@link ISharedObjectKind} or a DataObject class.
- * For use by the declarative API only.
+ * Part of the "declarative API".
+ * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
+ * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
+ * Use {@link createSharedObjectKind} to creating an instance of this type.
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -841,10 +849,15 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 
 /**
  * Utility for creating ISharedObjectKind instances.
+ * @remarks
+ * This takes in a class which implements IChannelFactory,
+ * and uses it to return a a single value which is intended to be used as the APi entry point for the corresponding shared object type.
+ * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
+ * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal
  */
 export function createSharedObjectKind<TSharedObject>(
-	factory: (new () => IChannelFactory<TSharedObject>) & { Type: string },
+	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> = {
 		getFactory(): IChannelFactory<TSharedObject> {
