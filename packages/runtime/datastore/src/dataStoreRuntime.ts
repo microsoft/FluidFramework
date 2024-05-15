@@ -233,7 +233,7 @@ export class FluidDataStoreRuntime
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.logger,
+			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },

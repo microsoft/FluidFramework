@@ -458,7 +458,6 @@ export class ModularChangeFamily
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
-	 * @param repairStore - The store to query for repair data.
 	 */
 	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
@@ -1057,7 +1056,7 @@ function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChanges
 				);
 				for (const [id, chunk] of innerMap) {
 					// Check for duplicate builds and prefer earlier ones.
-					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
+					// This can happen in compositions of commits that needed to include detached tree refreshers (e.g., undos):
 					// In that case, it's possible for the refreshers to contain different trees because the latter
 					// refresher may already reflect the changes made by the commit that includes the earlier
 					// refresher. This composition includes the changes made by the commit that includes the
@@ -1322,9 +1321,6 @@ function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>) {
 
 /**
  * @param change - The change to convert into a delta.
- * @param repairStore - The store to query for repair data.
- * @param path - The path of the node being altered by the change as defined by the input context.
- * Undefined for the root and for nodes that do not exist in the input context.
  */
 function intoDeltaImpl(
 	change: FieldChangeMap,

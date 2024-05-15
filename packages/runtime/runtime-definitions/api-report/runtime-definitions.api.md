@@ -121,6 +121,8 @@ export interface IAttachMessage {
 // @alpha
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger;
+    // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
@@ -136,8 +138,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    // (undocumented)
-    readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -247,6 +247,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     }): void;
     readonly attachState: AttachState;
     // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger;
+    // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
     readonly clientId: string | undefined;
@@ -274,8 +276,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly loadingGroupId?: string;
-    // (undocumented)
-    readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
     readonly options: Record<string | number, any>;

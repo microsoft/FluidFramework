@@ -371,8 +371,10 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 // @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
+    constructor(id?: string, existing?: boolean, baseLogger?: ITelemetryLoggerExt, interactive?: boolean);
     attachState: AttachState;
+    // (undocumented)
+    readonly baseLogger: ITelemetryLoggerExt;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
@@ -417,8 +419,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     isLocalDataStore: boolean;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     makeLocallyVisible(): void;
     // (undocumented)
