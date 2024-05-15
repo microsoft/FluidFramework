@@ -170,7 +170,7 @@ export interface IDataStore {
  * @alpha
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
 
@@ -399,7 +399,7 @@ export interface IFluidParentContext
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
 	/**

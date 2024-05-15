@@ -114,7 +114,7 @@ describe("Garbage Collection", () => {
 
 			// TODO: ADO#4700 Currently deleted handles will never leave
 			// the summary of a tree because they will be persisted forever
-			// in the repair data. Eventually, repair data should be
+			// in as detached trees. Eventually, detached trees should be
 			// automatically cleaned up after some condition, and this test
 			// should be updated to hit that condition.
 			if (!skip) {

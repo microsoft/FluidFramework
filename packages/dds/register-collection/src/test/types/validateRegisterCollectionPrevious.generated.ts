@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/register-collection-previous/internal
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -35,7 +53,6 @@ declare function get_old_ClassDeclaration_ConsensusRegisterCollection():
 declare function use_current_ClassDeclaration_ConsensusRegisterCollection(
     use: TypeOnly<current.ConsensusRegisterCollection<any>>): void;
 use_current_ClassDeclaration_ConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusRegisterCollection());
 
 /*
@@ -50,8 +67,63 @@ declare function get_current_ClassDeclaration_ConsensusRegisterCollection():
 declare function use_old_ClassDeclaration_ConsensusRegisterCollection(
     use: TypeOnly<old.ConsensusRegisterCollection<any>>): void;
 use_old_ClassDeclaration_ConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ConsensusRegisterCollection());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_ConsensusRegisterCollection": {"forwardCompat": false}
+ */
+declare function get_old_VariableDeclaration_ConsensusRegisterCollection():
+    TypeOnly<typeof old.ConsensusRegisterCollection>;
+declare function use_current_VariableDeclaration_ConsensusRegisterCollection(
+    use: TypeOnly<typeof current.ConsensusRegisterCollection>): void;
+use_current_VariableDeclaration_ConsensusRegisterCollection(
+    get_old_VariableDeclaration_ConsensusRegisterCollection());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_ConsensusRegisterCollection": {"backCompat": false}
+ */
+declare function get_current_VariableDeclaration_ConsensusRegisterCollection():
+    TypeOnly<typeof current.ConsensusRegisterCollection>;
+declare function use_old_VariableDeclaration_ConsensusRegisterCollection(
+    use: TypeOnly<typeof old.ConsensusRegisterCollection>): void;
+use_old_VariableDeclaration_ConsensusRegisterCollection(
+    get_current_VariableDeclaration_ConsensusRegisterCollection());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ConsensusRegisterCollection": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_ConsensusRegisterCollection():
+    TypeOnly<old.ConsensusRegisterCollection<any>>;
+declare function use_current_TypeAliasDeclaration_ConsensusRegisterCollection(
+    use: TypeOnly<current.ConsensusRegisterCollection<any>>): void;
+use_current_TypeAliasDeclaration_ConsensusRegisterCollection(
+    get_old_TypeAliasDeclaration_ConsensusRegisterCollection());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ConsensusRegisterCollection": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_ConsensusRegisterCollection():
+    TypeOnly<current.ConsensusRegisterCollection<any>>;
+declare function use_old_TypeAliasDeclaration_ConsensusRegisterCollection(
+    use: TypeOnly<old.ConsensusRegisterCollection<any>>): void;
+use_old_TypeAliasDeclaration_ConsensusRegisterCollection(
+    get_current_TypeAliasDeclaration_ConsensusRegisterCollection());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -93,7 +165,6 @@ declare function get_old_InterfaceDeclaration_IConsensusRegisterCollection():
 declare function use_current_InterfaceDeclaration_IConsensusRegisterCollection(
     use: TypeOnly<current.IConsensusRegisterCollection>): void;
 use_current_InterfaceDeclaration_IConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusRegisterCollection());
 
 /*
@@ -108,7 +179,6 @@ declare function get_current_InterfaceDeclaration_IConsensusRegisterCollection()
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollection(
     use: TypeOnly<old.IConsensusRegisterCollection>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusRegisterCollection());
 
 /*
@@ -144,28 +214,28 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
+ * "TypeAliasDeclaration_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
+declare function get_old_TypeAliasDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<old.IConsensusRegisterCollectionFactory>;
-declare function use_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory(
+declare function use_current_TypeAliasDeclaration_IConsensusRegisterCollectionFactory(
     use: TypeOnly<current.IConsensusRegisterCollectionFactory>): void;
-use_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory(
-    get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory());
+use_current_TypeAliasDeclaration_IConsensusRegisterCollectionFactory(
+    get_old_TypeAliasDeclaration_IConsensusRegisterCollectionFactory());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory": {"backCompat": false}
+ * "TypeAliasDeclaration_IConsensusRegisterCollectionFactory": {"backCompat": false}
  */
-declare function get_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory():
+declare function get_current_TypeAliasDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<current.IConsensusRegisterCollectionFactory>;
-declare function use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
+declare function use_old_TypeAliasDeclaration_IConsensusRegisterCollectionFactory(
     use: TypeOnly<old.IConsensusRegisterCollectionFactory>): void;
-use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
-    get_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory());
+use_old_TypeAliasDeclaration_IConsensusRegisterCollectionFactory(
+    get_current_TypeAliasDeclaration_IConsensusRegisterCollectionFactory());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
