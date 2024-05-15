@@ -1188,6 +1188,8 @@ export class ContainerRuntime
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	private readonly maxConsecutiveReconnects: number;
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
@@ -1348,7 +1350,8 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLoggerExt,
+		// Create a custom ITelemetryBaseLogger to output telemetry events.
+		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -1389,6 +1392,7 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
+		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,
 			namespace: "ContainerRuntime",
@@ -1859,7 +1863,7 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		logger.sendTelemetryEvent({
+		this.logger.sendTelemetryEvent({
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});
@@ -3435,7 +3439,6 @@ export class ContainerRuntime
 		const {
 			fullTree = false,
 			finalAttempt = false,
-			refreshLatestAck,
 			summaryLogger,
 			latestSummaryRefSeqNum,
 		} = options;
@@ -3454,16 +3457,6 @@ export class ContainerRuntime
 		});
 
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
-
-		// We close the summarizer and download a new snapshot and reload the container
-		if (refreshLatestAck === true) {
-			return this.prefetchLatestSummaryThenClose(
-				createChildLogger({
-					logger: summaryNumberLogger,
-					properties: { all: { safeSummary: true } },
-				}),
-			);
-		}
 
 		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
 		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
@@ -3560,7 +3553,7 @@ export class ContainerRuntime
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
-						error: new LoggingError(
+						error: new RetriableSummaryError(
 							`Summarizer node state inconsistent with summarizer state.`,
 						),
 					};
@@ -3612,7 +3605,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3633,7 +3626,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3708,7 +3701,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3735,7 +3728,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3758,7 +3751,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3769,7 +3762,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3786,7 +3779,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 			return submitData;
@@ -4224,7 +4217,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			await this.fetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotAndClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -4233,8 +4226,6 @@ export class ContainerRuntime
 				},
 				readAndParseBlob,
 			);
-
-			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -4243,54 +4234,16 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage to refresh the cache as a performance optimization and closes the
-	 * summarizer to reload from new state.
-	 * @param summaryLogger - logger to use when fetching snapshot from storage
-	 * @returns a generic summarization error
+	 * Fetches the latest snapshot from storage and closes the container. This is done in cases where
+	 * the last known snapshot is older than the latest one. This will ensure that the latest snapshot
+	 * is downloaded and we don't end up loading snapshot from cache.
 	 */
-	private async prefetchLatestSummaryThenClose(
-		summaryLogger: ITelemetryLoggerExt,
-	): Promise<IBaseSummarizeResult> {
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-
-		// This is a performance optimization as the same parent is likely to be elected again, and would use its
-		// cache to fetch the snapshot instead of the network.
-		await this.fetchLatestSnapshotFromStorage(
-			summaryLogger,
-			{
-				eventName: "RefreshLatestSummaryFromServerFetch",
-			},
-			readAndParseBlob,
-		);
-
-		await this.closeStaleSummarizer();
-
-		return {
-			stage: "base",
-			error: new LoggingError("summary state stale - Unsupported option 'refreshLatestAck'"),
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
-		};
-	}
-
-	private async closeStaleSummarizer(): Promise<void> {
-		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-		await delay(this.closeSummarizerDelayMs);
-		this._summarizer?.stop("latestSummaryStateStale");
-		this.disposeFn();
-	}
-
-	/**
-	 * Downloads the latest snapshot from storage.
-	 * By default, it also closes the container after downloading the snapshot. However, this may be
-	 * overridden via options.
-	 */
-	private async fetchLatestSnapshotFromStorage(
+	private async fetchLatestSnapshotAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return PerformanceEvent.timedExecAsync(
+	) {
+		await PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -4329,13 +4282,12 @@ export class ContainerRuntime
 				stats.snapshotVersion = versions[0].id;
 
 				perfEvent.end(stats);
-				return {
-					snapshotTree: maybeSnapshot,
-					versionId: versions[0].id,
-					latestSnapshotRefSeq,
-				};
 			},
 		);
+
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {

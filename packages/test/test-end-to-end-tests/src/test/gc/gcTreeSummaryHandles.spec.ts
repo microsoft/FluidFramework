@@ -126,7 +126,6 @@ async function submitFailingSummary(
 	// Submit a summary with a fail token on generate
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
 		latestSummaryRefSeqNum,
@@ -162,7 +161,6 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
