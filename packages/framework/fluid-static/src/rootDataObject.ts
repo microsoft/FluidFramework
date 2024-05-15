@@ -26,6 +26,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 
 import {
+	type DataObjectClass,
 	type ContainerSchema,
 	type IRootDataObject,
 	type LoadableObjectClass,
@@ -33,7 +34,6 @@ import {
 	type LoadableObjectRecord,
 } from "./types.js";
 import {
-	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
@@ -143,13 +143,13 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: InternalDataObjectClass<T>,
+		dataObjectClass: DataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as unknown as T;
+		return entryPoint as T;
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
