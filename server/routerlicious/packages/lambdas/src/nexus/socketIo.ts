@@ -187,6 +187,9 @@ export class SocketIoPingPongLatencyTracker {
 	}
 
 	public trackSocket(socketHelper: SocketIoSocketHelper): void {
+		if (!socketHelper.isValid) {
+			return;
+		}
 		const pingpongHandler = (latencyMs: number) => {
 			this.count++;
 			this.sumMs += latencyMs;

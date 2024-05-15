@@ -45,7 +45,11 @@ import {
 import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
-import { SocketIoServerHelper, SocketIoSocketHelper } from "./socketIo";
+import {
+	SocketIoServerHelper,
+	SocketIoSocketHelper,
+	SocketIoPingPongLatencyTracker,
+} from "./socketIo";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -111,6 +115,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	enablePingLatencyTracking?: boolean,
 ) {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -130,6 +135,10 @@ export function configureWebSocketServices(
 		collaborationSessionEventEmitter,
 		socketIoServerHelper: new SocketIoServerHelper(webSocketServer),
 	};
+	const pingLatencyTracker =
+		lambdaDependencies.socketIoServerHelper.isValid && enablePingLatencyTracking
+			? new SocketIoPingPongLatencyTracker()
+			: undefined;
 	const lambdaSettings: INexusLambdaSettings = {
 		maxTokenLifetimeSec,
 		isTokenExpiryEnabled,
@@ -178,6 +187,8 @@ export function configureWebSocketServices(
 			socketIoSocketHelper: new SocketIoSocketHelper(socket),
 			supportedFeaturesMap,
 		};
+
+		pingLatencyTracker?.trackSocket(lambdaConnectionStateTrackers.socketIoSocketHelper);
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
