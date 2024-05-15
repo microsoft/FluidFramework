@@ -1,5 +1,13 @@
 # @fluidframework/cell
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   cell: SharedCell now uses ISharedObjectKind and does not export class [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Most users of SharedCell just need to replace usages of the `SharedCell` type with `ISharedCell`.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

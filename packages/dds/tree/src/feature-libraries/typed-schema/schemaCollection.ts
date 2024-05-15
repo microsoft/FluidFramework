@@ -176,12 +176,12 @@ export function validateSchemaCollection(
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
 		} else if (tree instanceof FlexFieldNodeSchema) {
-			const description = () =>
+			const description = (): string =>
 				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, tree.info, description, errors);
 		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
-				const description = () =>
+				const description = (): string =>
 					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 				validateField(lintConfiguration, collection, field, description, errors);
 			}
@@ -201,7 +201,7 @@ export function validateRootField(
 	field: FlexFieldSchema,
 	errors: string[],
 ): void {
-	const describeField = () => `Root field schema`;
+	const describeField = (): string => `Root field schema`;
 	validateField(lintConfiguration, collection, field, describeField, errors);
 }
 

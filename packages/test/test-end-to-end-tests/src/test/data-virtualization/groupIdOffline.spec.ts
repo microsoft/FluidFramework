@@ -257,7 +257,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	it.skip("GroupId offline with refresh", async () => {
+	it("GroupId offline with refresh", async () => {
 		if (provider.driver.type !== "local") {
 			return;
 		}

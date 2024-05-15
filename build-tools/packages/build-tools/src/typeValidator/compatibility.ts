@@ -17,35 +17,76 @@ type requireAssignableTo<_A extends B, B> = true;
  * Type meta-function which takes in a type, and removes some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
- * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes].
- * The `{ [P in keyof T]: TypeOnly<T[P]>; }` logic handles this by only preserving the list of members, and not fact that its a class.
+ * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes).
+ * A mapped type (for example `{ [P in keyof T]: T[P]; }`) is used preserve only the list of members, and discard the fact that it is a class.
  *
  * Another case is with `const enum`. The [docs for enum compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#enums) seems to be only partly accurate, so tests for their behavior are included below.
  *
  * The `T extends number ? number :` included here is a workaround for how const enums behave (that fixes the case where the value is a number).
  * This will strip some type branding information which ideally would be kept for stricter checking, but without it, const enums show up as breaking when unchanged.
+ *
+ * Another case is custom symbols.
+ * To mitigate this, symbols which are not either `symbol` or a [well known symbol (like Symbols.iterator)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#static_properties),
+ * are replaced with `never`.
  */
 export const typeOnly = `
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 `;
 
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-		? string
-		: T extends boolean | bigint | symbol
-			? T
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
 			: {
-					[P in keyof T]: TypeOnly<T[P]>;
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
 				};
 
 // Checks //
@@ -217,9 +258,33 @@ namespace Test_TypeOnly_Preserves_Primitives {
 
 	// Branded unions of primitive types are preserved, except for string and number,
 	// which are stripped to just 'string | number'.
-	type brandedUnion = (undefined | null | boolean | bigint | symbol) & {
+	// Symbols are excluded from this as they are more aggressively omitted to handle unique symbols.
+	type brandedUnion = (undefined | null | boolean | bigint) & {
 		brand: "Union";
 	};
 	type _check_union3 = requireAssignableTo<TypeOnly<brandedUnion>, brandedUnion>;
 	type _check_union4 = requireAssignableTo<brandedUnion, TypeOnly<brandedUnion>>;
+}
+
+namespace Test_TypeOnly_Symbols {
+	interface A {
+		[Symbol.iterator]: number;
+	}
+
+	// Ensure well known symbols are preserved
+	type _check1 = requireAssignableTo<TypeOnly<A>, A>;
+	type _check2 = requireAssignableTo<A, TypeOnly<A>>;
+
+	// Custom symbols are skipped, since they are likely from the package in question,
+	// and thus will not be considered equal to the version from the other copy of the package.
+	const X: unique symbol = Symbol();
+	interface B {
+		[X]: number;
+	}
+
+	// @ts-expect-error Symbol is skipped
+	type _check = requireAssignableTo<TypeOnly<B>, B>;
+
+	type _check3 = requireAssignableTo<TypeOnly<B>, object>;
+	type _check4 = requireAssignableTo<object, TypeOnly<B>>;
 }

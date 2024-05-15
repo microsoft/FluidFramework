@@ -5,9 +5,7 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { Deferred } from '@fluidframework/core-utils/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -147,31 +145,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 // @public
 export const disposeSymbol: unique symbol;
-
-// @public
-export const DriverErrorTypes: {
-    readonly genericNetworkError: "genericNetworkError";
-    readonly authorizationError: "authorizationError";
-    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
-    readonly offlineError: "offlineError";
-    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
-    readonly writeError: "writeError";
-    readonly fetchFailure: "fetchFailure";
-    readonly fetchTokenError: "fetchTokenError";
-    readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
-    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection";
-    readonly fluidInvalidSchema: "fluidInvalidSchema";
-    readonly fileIsLocked: "fileIsLocked";
-    readonly outOfStorageError: "outOfStorageError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly usageError: "usageError";
-};
-
-// @public
-export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -555,7 +528,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public
-export interface ITree extends IChannel {
+export interface ITree extends IFluidLoadable {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -686,7 +659,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
-    get identifier(): FieldSchema<FieldKind.Identifier>;
+    get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
@@ -833,9 +806,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @deprecated
     get loaded(): Promise<void>;
-    protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     obliterateRange(start: number, end: number): void;
     protected onConnect(): void;
