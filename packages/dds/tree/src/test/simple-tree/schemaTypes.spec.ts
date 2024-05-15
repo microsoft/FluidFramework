@@ -18,6 +18,7 @@ import {
 	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
+	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
@@ -184,9 +185,8 @@ describe("schemaTypes", () => {
 		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
 			const schemaFactory = new SchemaFactory("test");
 
-			let Bar: any;
+			let Bar: TreeNodeSchema;
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				x: () => Bar,
 			}) {}
 

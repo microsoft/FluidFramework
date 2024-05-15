@@ -380,6 +380,7 @@ describe("Object-like-2", () => {
 			const root = hydrate(schemaFactory.object("no fields", {}), {});
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
 		});

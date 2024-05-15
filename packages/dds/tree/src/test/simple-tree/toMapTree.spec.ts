@@ -13,7 +13,11 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import {
+	ImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	type TreeNodeSchema,
+} from "../../simple-tree/schemaTypes.js";
 import {
 	nodeDataToMapTree as nodeDataToMapTreeBase,
 	objectToMapTree,
@@ -133,9 +137,8 @@ describe("toMapTree", () => {
 	it("Fails when referenced schema has not yet been instantiated", () => {
 		const schemaFactory = new SchemaFactory("test");
 
-		let Bar: any;
+		let Bar: TreeNodeSchema;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			x: schemaFactory.optionalRecursive(() => Bar),
 		}) {}
 
