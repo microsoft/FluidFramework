@@ -55,7 +55,6 @@ import {
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
-	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
