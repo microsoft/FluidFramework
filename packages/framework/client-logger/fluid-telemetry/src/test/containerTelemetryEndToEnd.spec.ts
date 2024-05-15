@@ -8,7 +8,7 @@ import { SharedTree } from "@fluid-experimental/tree";
 import * as AppInsights from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
 import { spy } from "sinon";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import { startTelemetry } from "../factory/index.js";
 import {
 	AppInsightsTelemetryConsumer,
@@ -61,56 +61,58 @@ describe("container telemetry E2E", () => {
 			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		});
 
-		// We Capture and analyze telemetry after the container connected event
-		let didTestPass = false;
-		container.on("connected", () => {
-			// Obtain the calls made to the appInsights trackEvent method
-			const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-				appInsightsTrackEventSpy
-					.getCalls()
-					.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
-					.filter(
-						(telemetry) => telemetry.name === ContainerTelemetryEventNames.CONNECTED,
+		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
+		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
+		const testCompletePromise = new Promise<void>((resolve, reject) => {
+			// We Capture and analyze telemetry after the container connected event
+			container.on("connected", () => {
+				// Obtain the calls made to the appInsights trackEvent method
+				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
+					appInsightsTrackEventSpy
+						.getCalls()
+						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.filter(
+							(telemetry) =>
+								telemetry.name === ContainerTelemetryEventNames.CONNECTED,
+						);
+
+				if (actualEmittedAppInsightsTelemetry.length === 0) {
+					console.log("Failed to find expected telemetry");
+					reject(
+						new Error(
+							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+						),
 					);
+				}
+				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
+				const actualContainerTelemetry =
+					actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
-			if (actualEmittedAppInsightsTelemetry.length === 0) {
-				assert.fail(
-					"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
-				);
-			}
-			const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-			const actualContainerTelemetry =
-				actualAppInsightsTelemetry.properties as IContainerTelemetry;
+				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
+					name: ContainerTelemetryEventNames.CONNECTED,
+					properties: {
+						eventName: ContainerTelemetryEventNames.CONNECTED,
+						containerId,
+						containerInstanceId: actualContainerTelemetry.containerInstanceId,
+					} satisfies ContainerConnectedTelemetry,
+				};
 
-			const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-				name: ContainerTelemetryEventNames.CONNECTED,
-				properties: {
-					eventName: ContainerTelemetryEventNames.CONNECTED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				} satisfies ContainerConnectedTelemetry,
-			};
-
-			expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
-			// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-			expect(actualContainerTelemetry.containerInstanceId)
-				.to.be.a("string")
-				.with.length.above(0);
-
-			// This will enable the while loop at the end of this test to finally complete,
-			// We  want the test to complete as soon as we recieve the container event and complete our testing
-			didTestPass = true;
+				try {
+					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+					expect(actualContainerTelemetry.containerInstanceId)
+						.to.be.a("string")
+						.with.length.above(0);
+					// This will enable the test to finally complete.
+					resolve();
+				} catch (error) {
+					reject(error); // Reject the promise with the assertion error
+				}
+			});
 		});
 
-		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
-		// have a while loop that keeps the test alive until the container notifies us with its event handlers.
-		while (!didTestPass) {
-			const timeout = async (ms: number): Promise<void> => {
-				return new Promise((resolve) => setTimeout(resolve, ms));
-			};
-			await timeout(25);
-		}
-	}).timeout(5000);
+		await testCompletePromise;
+	});
 
 	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using AppInsightsTelemetryConsumer", async () => {
 		const { container } = await tinyliciousClient.createContainer(schema);
@@ -122,61 +124,61 @@ describe("container telemetry E2E", () => {
 			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		});
 
-		// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-		container.on("connected", () => {
-			container.disconnect();
-		});
-
-		// Event handler 2: capturing and analyzing telemetry after the container disconnected event
-		let didTestPass = false;
-		container.on("disconnected", () => {
-			// Obtain the calls made to the appInsights trackEvent method
-			const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-				appInsightsTrackEventSpy
-					.getCalls()
-					.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
-					.filter(
-						(telemetry) => telemetry.name === ContainerTelemetryEventNames.DISCONNECTED,
-					);
-
-			if (actualEmittedAppInsightsTelemetry.length === 0) {
-				assert.fail(
-					"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
-				);
-			}
-			const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-			const actualContainerTelemetry =
-				actualAppInsightsTelemetry.properties as IContainerTelemetry;
-
-			const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-				name: ContainerTelemetryEventNames.DISCONNECTED,
-				properties: {
-					eventName: ContainerTelemetryEventNames.DISCONNECTED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				} satisfies ContainerDisconnectedTelemetry,
-			};
-
-			expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
-			// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-			expect(actualContainerTelemetry.containerInstanceId)
-				.to.be.a("string")
-				.with.length.above(0);
-
-			// This will enable the while loop at the end of this test to finally complete,
-			// We  want the test to complete as soon as we recieve the container event and complete our testing
-			didTestPass = true;
-		});
-
 		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
-		// have a while loop that keeps the test alive until the container notifies us with its event handlers.
-		while (!didTestPass) {
-			const timeout = async (ms: number): Promise<void> => {
-				return new Promise((resolve) => setTimeout(resolve, ms));
-			};
-			await timeout(25);
-		}
-	}).timeout(5000);
+		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
+		const testCompletePromise = new Promise<void>((resolve, reject) => {
+			// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+			container.on("connected", () => {
+				container.disconnect();
+			});
+
+			container.on("disconnected", () => {
+				// Obtain the calls made to the appInsights trackEvent method
+				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
+					appInsightsTrackEventSpy
+						.getCalls()
+						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.filter(
+							(telemetry) =>
+								telemetry.name === ContainerTelemetryEventNames.DISCONNECTED,
+						);
+
+				if (actualEmittedAppInsightsTelemetry.length === 0) {
+					reject(
+						new Error(
+							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+						),
+					);
+				}
+				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
+				const actualContainerTelemetry =
+					actualAppInsightsTelemetry.properties as IContainerTelemetry;
+
+				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
+					name: ContainerTelemetryEventNames.DISCONNECTED,
+					properties: {
+						eventName: ContainerTelemetryEventNames.DISCONNECTED,
+						containerId,
+						containerInstanceId: actualContainerTelemetry.containerInstanceId,
+					} satisfies ContainerDisconnectedTelemetry,
+				};
+				try {
+					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+					expect(actualContainerTelemetry.containerInstanceId)
+						.to.be.a("string")
+						.with.length.above(0);
+
+					// This will enable the test to finally complete.
+					resolve();
+				} catch (error) {
+					reject(error); // Reject the promise with the assertion error
+				}
+			});
+		});
+
+		await testCompletePromise;
+	});
 
 	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using AppInsightsTelemetryConsumer", async () => {
 		const { container } = await tinyliciousClient.createContainer(schema);
@@ -188,64 +190,64 @@ describe("container telemetry E2E", () => {
 			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		});
 
-		// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-		container.on("connected", () => {
-			container.disconnect();
-		});
-
-		// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
-		container.on("disconnected", () => {
-			container.dispose();
-		});
-
-		// Event handler 3: capturing and analyzing telemetry after the container disposed event
-		let didTestPass = false;
-		container.on("disposed", () => {
-			// Obtain the calls made to the appInsights trackEvent method
-			const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-				appInsightsTrackEventSpy
-					.getCalls()
-					.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
-					.filter(
-						(telemetry) => telemetry.name === ContainerTelemetryEventNames.DISPOSED,
-					);
-
-			if (actualEmittedAppInsightsTelemetry.length === 0) {
-				assert.fail(
-					"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
-				);
-			}
-			const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-			const actualContainerTelemetry =
-				actualAppInsightsTelemetry.properties as IContainerTelemetry;
-
-			const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-				name: ContainerTelemetryEventNames.DISPOSED,
-				properties: {
-					eventName: ContainerTelemetryEventNames.DISPOSED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				} satisfies ContainerDisposedTelemetry,
-			};
-
-			expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
-			// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-			expect(actualContainerTelemetry.containerInstanceId)
-				.to.be.a("string")
-				.with.length.above(0);
-
-			// This will enable the while loop at the end of this test to finally complete,
-			// We  want the test to complete as soon as we recieve the container event and complete our testing
-			didTestPass = true;
-		});
-
 		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
-		// have a while loop that keeps the test alive until the container notifies us with its event handlers.
-		while (!didTestPass) {
-			const timeout = async (ms: number): Promise<void> => {
-				return new Promise((resolve) => setTimeout(resolve, ms));
-			};
-			await timeout(25);
-		}
-	}).timeout(5000);
+		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
+		const testCompletePromise = new Promise<void>((resolve, reject) => {
+			// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+			container.on("connected", () => {
+				container.disconnect();
+			});
+
+			// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
+			container.on("disconnected", () => {
+				container.dispose();
+			});
+
+			container.on("disposed", () => {
+				// Obtain the calls made to the appInsights trackEvent method
+				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
+					appInsightsTrackEventSpy
+						.getCalls()
+						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.filter(
+							(telemetry) => telemetry.name === ContainerTelemetryEventNames.DISPOSED,
+						);
+
+				if (actualEmittedAppInsightsTelemetry.length === 0) {
+					reject(
+						new Error(
+							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+						),
+					);
+				}
+				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
+				const actualContainerTelemetry =
+					actualAppInsightsTelemetry.properties as IContainerTelemetry;
+
+				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
+					name: ContainerTelemetryEventNames.DISPOSED,
+					properties: {
+						eventName: ContainerTelemetryEventNames.DISPOSED,
+						containerId,
+						containerInstanceId: actualContainerTelemetry.containerInstanceId,
+					} satisfies ContainerDisposedTelemetry,
+				};
+
+				try {
+					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+					expect(actualContainerTelemetry.containerInstanceId)
+						.to.be.a("string")
+						.with.length.above(0);
+
+					// This will enable the test to finally complete.
+					resolve();
+				} catch (error) {
+					reject(error); // Reject the promise with the assertion error
+				}
+			});
+		});
+
+		await testCompletePromise;
+	});
 });
