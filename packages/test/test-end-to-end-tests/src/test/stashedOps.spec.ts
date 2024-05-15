@@ -31,7 +31,7 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
@@ -55,6 +55,7 @@ import {
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
+	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
@@ -1852,21 +1853,27 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await container2.deltaManager.inbound.pause();
+			await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
 			const container3 = await loader.resolve({ url }, pendingLocalState);
-			// (There is technically a race condition that would break this test, if container2 managed to reach connected state
-			// and submit its ops before this "processOutgoing" call (which pauses inbound for both containers).
-			// But in practice, we'll move through these awaits before container2 can reach connected state, even on Local Server)
-			await provider.opProcessingController.processOutgoing(container2, container3);
+			await container3.deltaManager.inbound.pause();
+			container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+
+			container2.deltaManager.flush();
+			container3.deltaManager.flush();
+			await delay(0); // Yield to allow the ops to be submitted before resuming
+			container2.deltaManager.inbound.resume();
+			container3.deltaManager.inbound.resume();
 
 			// At this point, both rehydrated containers should have submitted the same Counter op.
-			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt.
-			provider.opProcessingController.resumeProcessing(container2, container3);
+			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,
+			// but that is not yet implemented.
+			await provider.ensureSynchronized();
 
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
-			await provider.ensureSynchronized();
 
 			assert.strictEqual(counter1.value, 2 * incrementValue);
 			assert.strictEqual(counter2.value, 2 * incrementValue);
