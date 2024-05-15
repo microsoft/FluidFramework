@@ -21,7 +21,7 @@ import {
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
-import { configProvider } from "./utils.js";
+import { configProvider, getTestMatrix } from "./utils.js";
 
 async function createSignalListenerPromise<T>(
 	signaler: SignalerTestDataObject,
@@ -49,21 +49,7 @@ async function createSignalListenerPromise<T>(
 	);
 }
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`Fluid Signals (${testOpts.variant})`, () => {
 		const connectedContainers: IFluidContainer[] = [];

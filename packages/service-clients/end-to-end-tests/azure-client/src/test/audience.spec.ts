@@ -19,24 +19,10 @@ import {
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
-import { configProvider, waitForMember } from "./utils.js";
+import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`Fluid audience (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;

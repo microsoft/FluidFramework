@@ -25,6 +25,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { getTestMatrix } from "./utils.js";
 
 const sf = new SchemaFactory("d302b84c-75f6-4ecd-9663-524f467013e3");
 
@@ -58,21 +59,7 @@ const treeConfiguration = new TreeConfiguration(
 	() => new StringArray([]),
 );
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`SharedTree with AzureClient (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;

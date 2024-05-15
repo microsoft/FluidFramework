@@ -20,23 +20,9 @@ import {
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
-import { mapWait } from "./utils.js";
+import { getTestMatrix, mapWait } from "./utils.js";
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`Fluid data updates (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;

@@ -18,22 +18,9 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { getTestMatrix } from "./utils.js";
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`viewContainerVersion scenarios (${testOpts.variant})`, () => {
 		const isEphemeral: boolean = testOpts.options.isEphemeral;

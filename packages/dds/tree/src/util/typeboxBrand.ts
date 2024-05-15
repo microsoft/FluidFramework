@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NumberOptions, TUnsafe, Type } from "@sinclair/typebox";
+import { NumericOptions, TUnsafe, Type } from "@sinclair/typebox";
 
 /**
  * Create a TypeBox string schema for a branded string type.
@@ -24,7 +24,7 @@ export function brandedStringType<T extends string>(): TUnsafe<T> {
  * {@link brandedStringType} but for numbers.
  */
 export function brandedNumberType<T extends number>(
-	options?: NumberOptions | undefined,
+	options?: NumericOptions<number> | undefined,
 ): TUnsafe<T> {
 	// See comments on `brandedStringType`.
 	return Type.Number(options) as unknown as TUnsafe<T>;

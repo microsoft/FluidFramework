@@ -21,26 +21,13 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { getTestMatrix } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-const testMatrix = [
-	{
-		variant: "Durable Container",
-		options: {
-			isEphemeral: false,
-		},
-	},
-	{
-		variant: "Ephemeral Container",
-		options: {
-			isEphemeral: true,
-		},
-	},
-];
-
+const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
 	describe(`Container create scenarios (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;
