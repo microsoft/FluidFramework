@@ -202,6 +202,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public getKeysInOffsetRange(
 		startOffset: number,
 		endOffset?: number,
+	): [number, AttributionKey][];
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): [number, AttributionKey][] | undefined;
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
 		channel?: string,
 	): [number, AttributionKey][] | undefined {
 		assert(startOffset >= 0 && startOffset < this._length, "startOffset should be valid");
