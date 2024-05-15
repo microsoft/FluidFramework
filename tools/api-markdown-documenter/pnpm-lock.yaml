@@ -10,7 +10,7 @@ importers:
       '@fluid-internal/mocha-test-setup': ~2.0.0-rc.3.0.3
       '@fluid-tools/markdown-magic': file:../markdown-magic
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.38.0
+      '@fluidframework/build-tools': ^0.39.0-264124
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.43.1
       '@microsoft/api-extractor-model': ~7.28.2
@@ -52,7 +52,7 @@ importers:
       '@fluid-internal/mocha-test-setup': 2.0.0-rc.3.0.3
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.38.0_@types+node@18.15.11
+      '@fluidframework/build-tools': 0.39.0-264124_@types+node@18.15.11
       '@fluidframework/eslint-config-fluid': 5.2.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.43.1_@types+node@18.15.11
       '@types/chai': 4.3.4
@@ -192,8 +192,8 @@ packages:
       '@fluidframework/protocol-definitions': 3.2.0
     dev: true
 
-  /@fluid-tools/version-tools/0.38.0:
-    resolution: {integrity: sha512-sPGkM+2BMv0/QSSXwGEl8y+/cprookyS7mKQFdk3UiBlLBPr8uQcNxG1xPxpmM9JwZH63Q55dy56u4TnjuNoNQ==}
+  /@fluid-tools/version-tools/0.39.0-264124:
+    resolution: {integrity: sha512-CVq50WXgAH4gJUu2Ghzq7x3//gWCEZc8cPC5qD6CT5eiFOg5GLEf35bKjOSMj+fqIUigtoWj1j+uIUhnddwYLQ==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -214,13 +214,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.38.0_@types+node@18.15.11:
-    resolution: {integrity: sha512-ZEUnUmaPDGhKRHQBjFwDW1YEHk1twDMqcB7Bj5fSfDheQyxbBGAOyKDIST7zTn/NB3zpARC3rE3R5/3NFnCCcA==}
+  /@fluidframework/build-tools/0.39.0-264124_@types+node@18.15.11:
+    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/bundle-size-tools': 0.38.0
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.63.0_@types+node@18.15.11
@@ -256,8 +256,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.38.0:
-    resolution: {integrity: sha512-OaevKCCZKwnSI1iF3wnSgKR52xwtI74AVJsO1o9rjVyZMd78cdBK2KIZjqv7rIDINaqVlsZnulvrEx+AbBrg/g==}
+  /@fluidframework/bundle-size-tools/0.39.0-264124:
+    resolution: {integrity: sha512-nVRbK5X1SnRoZRA6jkxKYtDQ5cRZ1oH6XBJxkvwoPEUsjPNHaco+juwsMDucu0oBA/FnMhOZEz5DtiQz4sBbgQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
