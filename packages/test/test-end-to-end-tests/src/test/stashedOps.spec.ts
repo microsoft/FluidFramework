@@ -1817,70 +1817,49 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
-		it(`WRONGLY resend successful op (SharedMap)`, async function () {
-			const duplicatedIncrementValue = 3;
-			const getMap = getMapBackedMap;
-			const map = await getMapFromProvider(getMap);
+		it(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
+			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(provider, true, async (c, d) => {
-				const mapPre = await getMap(d);
-				mapPre.set(testKey, "Duplication Threat");
-				const cell = await d.getSharedObject<ISharedCell>(cellId);
-				cell.set("Duplication Threat");
 				const counter = await d.getSharedObject<SharedCounter>(counterId);
-				counter.increment(duplicatedIncrementValue);
-				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-				directory.set(testKey, "Duplication Threat");
+				counter.increment(incrementValue);
 			});
-			//* Consider actually doing the stash-then-reconnect-then-send dance
-			// If the container doesn't close, clientId could have changed (i.e. the ops could have been resubmitted).
-			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState
+
+			// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
+			// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+			// 2. container2 - load with pendingLocalState. There's no way to correlate the local ops from container1 (clientId A) with the remote ops from container1 (clientId B).
+			//
+			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
 			const obj = JSON.parse(pendingLocalState);
 			obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
 			const pendingLocalStateAdjusted = JSON.stringify(obj);
 
-			// These will WRONGLY get overwritten
-			map.set(testKey, testValue);
-			cell1.set(testValue);
-			counter1.increment(testIncrementValue);
-			directory1.set(testKey, testValue);
-			await provider.ensureSynchronized();
-
 			// load with pending ops with bogus clientId, which makes it impossible (today) to correlate the local ops and they're resent
 			const container2 = await loader.resolve({ url }, pendingLocalStateAdjusted);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const map2 = await getMap(dataStore2);
-			const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 
 			await provider.ensureSynchronized();
-			assert.strictEqual(map.get(testKey), "Duplication Threat");
-			assert.strictEqual(map2.get(testKey), "Duplication Threat");
-			assert.strictEqual(cell1.get(), "Duplication Threat");
-			assert.strictEqual(cell2.get(), "Duplication Threat");
-			assert.strictEqual(counter1.value, testIncrementValue + 2 * duplicatedIncrementValue);
-			assert.strictEqual(counter2.value, testIncrementValue + 2 * duplicatedIncrementValue);
-			assert.strictEqual(directory1.get(testKey), "Duplication Threat");
-			assert.strictEqual(directory2.get(testKey), "Duplication Threat");
+			assert.strictEqual(counter1.value, 2 * incrementValue);
+			assert.strictEqual(counter2.value, 2 * incrementValue);
 		});
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
-			const duplicatedIncrementValue = 3;
+			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
 				const counter = await d.getSharedObject<SharedCounter>(counterId);
-				counter.increment(duplicatedIncrementValue);
+				counter.increment(incrementValue);
 			});
 
-			//* Do I need to use the loadOffline helper here? I think so.
 			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 			const container2 = await loader.resolve({ url }, pendingLocalState);
 			const container3 = await loader.resolve({ url }, pendingLocalState);
+			// (There is technically a race condition that would break this test, if container2 managed to reach connected state
+			// and submit its ops before this "processOutgoing" call (which pauses inbound for both containers).
+			// But in practice, we'll move through these awaits before container2 can reach connected state, even on Local Server)
 			await provider.opProcessingController.processOutgoing(container2, container3);
 
-			//* unnecessary?
-			await Promise.resolve();
-
-			//* how does pendingStateManager deal with the extra ops? Shouldn't it consider them local since the clientId matches?
+			// At this point, both rehydrated containers should have submitted the same Counter op.
+			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt.
 			provider.opProcessingController.resumeProcessing(container2, container3);
 
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
@@ -1889,9 +1868,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 			await provider.ensureSynchronized();
 
-			assert.strictEqual(counter1.value, 2 * duplicatedIncrementValue);
-			assert.strictEqual(counter2.value, 2 * duplicatedIncrementValue);
-			assert.strictEqual(counter3.value, 2 * duplicatedIncrementValue);
+			assert.strictEqual(counter1.value, 2 * incrementValue);
+			assert.strictEqual(counter2.value, 2 * incrementValue);
+			assert.strictEqual(counter3.value, 2 * incrementValue);
 		});
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
