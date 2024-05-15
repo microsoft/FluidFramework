@@ -221,8 +221,7 @@ export const testTrees: readonly TestTree[] = [
 	testTree("numericMap-full", library, numericMap, {
 		a: 5,
 		b: 6,
-		// TODO: SchemaAware API for map nodes, and remove this cast
-	} as any),
+	}),
 
 	testTree("anyMap-full", library, anyMap, {
 		a: [
@@ -230,8 +229,7 @@ export const testTrees: readonly TestTree[] = [
 			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 2 },
 		],
 		b: [{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 3 }],
-		// TODO: SchemaAware API for map nodes, and remove this cast
-	} as any),
+	}),
 
 	testTree("recursiveType-empty", library, recursiveType, { field: undefined }),
 	testTree("recursiveType-recursive", library, recursiveType, { field: { field: undefined } }),

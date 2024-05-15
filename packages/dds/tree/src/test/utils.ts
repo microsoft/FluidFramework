@@ -655,11 +655,11 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 			? { Handle: toFluidHandleInternal(inputValue).absolutePath }
 			: inputValue;
 
-		const output: Record<string, any> = { ...node, value, fields };
+		const output: Record<string, unknown> = { ...node, value, fields };
 
 		// Normalize optional values to be omitted for cleaner diffs:
 		if (output.value === undefined) delete output.value;
-		if (Reflect.ownKeys(output.fields).length === 0) delete output.fields;
+		if (Reflect.ownKeys(output.fields as object).length === 0) delete output.fields;
 
 		return output as object;
 	});
@@ -870,7 +870,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: any, b: any): void => assert.deepEqual(a, b);
+const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
