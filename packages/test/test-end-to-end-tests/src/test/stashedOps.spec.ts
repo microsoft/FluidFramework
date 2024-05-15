@@ -2002,10 +2002,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
 		it(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
 			const incrementValue = 3;
-			const pendingLocalState = await getPendingOps(provider, true, async (c, d) => {
-				const counter = await d.getSharedObject<SharedCounter>(counterId);
-				counter.increment(incrementValue);
-			});
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				true, // Do send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
 
 			// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
 			// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
@@ -2028,10 +2033,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
 			const incrementValue = 3;
-			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
-				const counter = await d.getSharedObject<SharedCounter>(counterId);
-				counter.increment(incrementValue);
-			});
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
 
 			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 			const container2 = await loader.resolve({ url }, pendingLocalState);
@@ -2064,10 +2074,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
 			const incrementValue = 3;
-			const pendingLocalState = await getPendingOps(provider, false, async (c, d) => {
-				const counter = await d.getSharedObject<SharedCounter>(counterId);
-				counter.increment(incrementValue);
-			});
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
 
 			// Rehydrate the first time - counter increment will be resubmitted on container2's new clientId
 			const container2 = await loader.resolve({ url }, pendingLocalState);
