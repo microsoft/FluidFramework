@@ -769,7 +769,7 @@ function setModifyAfter(
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
 	modifyAfter: NodeId,
-) {
+): void {
 	const target = CrossFieldTarget.Source;
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
@@ -784,7 +784,7 @@ function setEndpoint(
 	id: ChangeAtomId,
 	count: number,
 	endpoint: ChangeAtomId,
-) {
+): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
@@ -807,7 +807,7 @@ function setTruncatedEndpoint(
 	id: ChangeAtomId,
 	count: number,
 	truncatedEndpoint: ChangeAtomId,
-) {
+): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
 		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
@@ -832,7 +832,7 @@ function setTruncatedEndpointForInner(
 	id: ChangeAtomId,
 	count: number,
 	truncatedEndpointForInner: ChangeAtomId,
-) {
+): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
 		effect.value !== undefined
@@ -886,7 +886,7 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	return output;
 }
 
-function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId) {
+function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId): void {
 	if (areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })) {
 		delete mark.finalEndpoint;
 	} else {

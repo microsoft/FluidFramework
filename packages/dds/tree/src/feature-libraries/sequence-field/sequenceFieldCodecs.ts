@@ -6,7 +6,12 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	IJsonCodec,
+	makeCodecFamily,
+	type ICodecFamily,
+} from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -25,6 +30,7 @@ import {
 	MoveOut,
 	NoopMarkType,
 	Remove,
+	type MarkList,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
 import { FieldChangeEncodingContext } from "../index.js";
@@ -37,7 +43,8 @@ export const sequenceFieldChangeCodecFactory = (
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
+): ICodecFamily<MarkList, FieldChangeEncodingContext> =>
+	makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
 
 function makeV1Codec(
 	revisionTagCodec: IJsonCodec<

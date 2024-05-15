@@ -612,7 +612,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	 * @param offset - the offset to apply to the children.
 	 *
 	 */
-	private offsetChildren(firstSiblingToOffset: UpPath, offset: number) {
+	private offsetChildren(firstSiblingToOffset: UpPath, offset: number): void {
 		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
 		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {

@@ -37,6 +37,7 @@ import {
 	makeDetachedNodeId,
 	mapCursorField,
 	revisionMetadataSourceFromInfo,
+	type ChangeAtomId,
 } from "../../core/index.js";
 import {
 	IdAllocationState,
@@ -620,7 +621,7 @@ export class ModularChangeFamily
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 
-		const getBaseRevisions = () =>
+		const getBaseRevisions = (): RevisionTag[] =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
 
 		const rebaseMetadata: RebaseRevisionMetadata = {
@@ -739,7 +740,7 @@ export class ModularChangeFamily
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
-			) => {
+			): ChangeAtomId => {
 				crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
 				return (
 					child ??
@@ -1039,7 +1040,15 @@ function replaceIdMapRevisions<T>(
 	);
 }
 
-function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
+interface BuildsDestroysAndRefreshers {
+	readonly allBuilds: ChangeAtomIdMap<TreeChunk>;
+	readonly allDestroys: ChangeAtomIdMap<number>;
+	readonly allRefreshers: ChangeAtomIdMap<TreeChunk>;
+}
+
+function composeBuildsDestroysAndRefreshers(
+	changes: TaggedChange<ModularChangeset>[],
+): BuildsDestroysAndRefreshers {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 	const allDestroys: ChangeAtomIdMap<number> = new Map();
 	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
@@ -1303,7 +1312,9 @@ export function intoDelta(
 	return rootDelta;
 }
 
-function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>) {
+function copyDetachedNodes(
+	detachedNodes: ChangeAtomIdMap<TreeChunk>,
+): DeltaDetachedNodeBuild[] | undefined {
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	forEachInNestedMap(detachedNodes, (chunk, major, minor) => {
 		if (chunk.topLevelLength > 0) {
@@ -1389,7 +1400,7 @@ export function rebaseRevisionMetadataFromInfo(
 		}
 	}
 
-	const getBaseRevisions = () => filteredRevisions;
+	const getBaseRevisions = (): RevisionTag[] => filteredRevisions;
 	return {
 		...revisionMetadataSourceFromInfo(revInfos),
 		getRevisionToRebase: () => revisionToRebase,
@@ -1534,10 +1545,10 @@ function newCrossFieldManager<T>(
 	currentFieldKey: T,
 	allowInval = true,
 ): CrossFieldManagerI<T> {
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): CrossFieldMap<unknown> =>
 		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
 
-	const getDependents = (target: CrossFieldTarget) =>
+	const getDependents = (target: CrossFieldTarget): CrossFieldMap<T> =>
 		target === CrossFieldTarget.Source
 			? crossFieldTable.srcDependents
 			: crossFieldTable.dstDependents;
@@ -1703,7 +1714,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(modularChange);
 	}
 
-	public submitChanges(changes: EditDescription[]) {
+	public submitChanges(changes: EditDescription[]): void {
 		const modularChange = this.buildChanges(changes);
 		this.applyChange(modularChange);
 	}

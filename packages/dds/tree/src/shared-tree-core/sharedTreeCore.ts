@@ -305,7 +305,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
 
@@ -326,7 +326,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
@@ -334,7 +334,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },

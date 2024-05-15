@@ -521,7 +521,7 @@ function sendEffectToDest(
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
 	count: number,
-) {
+): void {
 	const effect = getMoveEffect(
 		moveEffects,
 		CrossFieldTarget.Destination,
@@ -563,7 +563,7 @@ function moveRebasedChanges(
 	nodeChange: NodeId,
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
-) {
+): void {
 	const effect = getMoveEffect(
 		moveEffects,
 		CrossFieldTarget.Destination,
@@ -692,7 +692,7 @@ function handleLineage(
 	cellId: CellId,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	metadata: RebaseRevisionMetadata,
-) {
+): void {
 	const baseRevisions = metadata
 		.getBaseRevisions()
 		.map((r) => getIntention(r, metadata) ?? fail("Intention should be defined"));
@@ -725,7 +725,7 @@ function updateLineageState(
 	baseMark: Mark,
 	rebasedMark: Mark,
 	metadata: RevisionMetadataSource,
-) {
+): void {
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark);
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark);
 	for (const revision of detachBlocks.keys()) {
@@ -793,7 +793,7 @@ function addLineageToRecipients(
 	id: ChangesetLocalId,
 	count: number,
 	metadata: RebaseRevisionMetadata,
-) {
+): void {
 	const rollbackOf = metadata.tryGetInfo(revision)?.rollbackOf;
 	const intention = rollbackOf ?? revision;
 	const intentionIndex = getRevisionIndex(metadata, intention);
@@ -825,7 +825,7 @@ function addLineageEntry(
 	id: ChangesetLocalId,
 	count: number,
 	offset: number,
-) {
+): void {
 	if (lineageHolder.lineage === undefined) {
 		lineageHolder.lineage = [];
 	}
@@ -853,7 +853,7 @@ function addLineageEntry(
 	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function removeLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<RevisionTag>) {
+function removeLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<RevisionTag>): void {
 	if (lineageHolder.lineage === undefined) {
 		return;
 	}
