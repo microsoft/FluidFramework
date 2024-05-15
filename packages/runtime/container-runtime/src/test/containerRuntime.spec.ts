@@ -30,8 +30,8 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,

@@ -20,12 +20,10 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ISummaryTreeWithStats as ISummaryTreeWithStats_2 } from '@fluidframework/runtime-definitions/internal';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext as ITelemetryContext_2 } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITree } from '@fluidframework/tree';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
@@ -631,7 +629,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
     // (undocumented)
     get currentTree(): IChannel & (SharedTree | ITree);
     // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext_2 | undefined): ISummaryTreeWithStats_2;
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -647,7 +645,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
     // (undocumented)
     submitMigrateOp(): void;
     // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext_2 | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats_2>;
+    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed
@@ -1022,7 +1020,7 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     get currentTree(): ITree & IChannel;
     // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext_2 | undefined): ISummaryTreeWithStats_2;
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -1040,7 +1038,7 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     readonly sharedTreeFactory: IChannelFactory<ITree>;
     // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext_2 | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats_2>;
+    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed

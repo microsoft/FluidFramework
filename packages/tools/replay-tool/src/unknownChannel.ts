@@ -13,8 +13,8 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
-import { ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
+	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IFluidDataStoreContext,

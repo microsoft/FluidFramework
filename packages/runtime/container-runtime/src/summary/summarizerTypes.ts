@@ -10,7 +10,7 @@ import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats } from "@fluidframework/runtime-definitions";
+import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,

@@ -53,7 +53,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';

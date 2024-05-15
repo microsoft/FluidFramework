@@ -13,7 +13,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { NodeProperty } from '@fluid-experimental/property-properties';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';

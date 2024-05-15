@@ -15,7 +15,7 @@ import {
 	IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
 import {

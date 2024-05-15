@@ -27,8 +27,6 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,

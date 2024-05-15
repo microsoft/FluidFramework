@@ -39,12 +39,10 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,

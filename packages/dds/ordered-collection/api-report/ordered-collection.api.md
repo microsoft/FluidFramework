@@ -14,7 +14,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 

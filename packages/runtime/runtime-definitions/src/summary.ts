@@ -19,7 +19,7 @@ import type {
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
- * @public
+ * @alpha
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -35,7 +35,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @public
+ * @alpha
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -85,7 +85,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
- * @public
+ * @alpha
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -323,7 +323,7 @@ export const channelsTreeName = ".channels";
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
- * @public
+ * @alpha
  */
 export interface ITelemetryContext {
 	/**

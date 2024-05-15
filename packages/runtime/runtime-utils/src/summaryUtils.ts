@@ -30,8 +30,6 @@ import {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	IGarbageCollectionData,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";

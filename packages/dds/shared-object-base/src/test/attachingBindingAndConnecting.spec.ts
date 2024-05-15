@@ -21,7 +21,7 @@ import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IFluidSerializer } from "../serializer.js";

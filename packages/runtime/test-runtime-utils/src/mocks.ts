@@ -44,8 +44,8 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,

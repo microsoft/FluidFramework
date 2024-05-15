@@ -8,8 +8,6 @@ import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,

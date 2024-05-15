@@ -12,8 +12,6 @@ import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protoc
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,

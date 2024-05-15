@@ -61,11 +61,11 @@ import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions/inter
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
-import { ISummaryStats } from '@fluidframework/runtime-definitions';
+import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';

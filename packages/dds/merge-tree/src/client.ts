@@ -13,7 +13,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import {
 	ITelemetryLoggerExt,

@@ -23,7 +23,7 @@ import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
+import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
@@ -41,8 +41,8 @@ import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import type { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
@@ -1000,7 +1000,14 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     getRangeExtentsOfPosition(pos: number): {
         posStart: number | undefined;
-        posAfterEnd: number | undefined;
+        posAfterEnd: number | undefined; /**
+        * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
+        * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
+        * @param segment - Segment to add the local reference on
+        * @param offset - Offset on the segment at which to place the local reference
+        * @param refType - ReferenceType for the created local reference
+        * @param properties - PropertySet to place on the created local reference
+        */
     };
     // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;

@@ -9,8 +9,8 @@ import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
+	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,

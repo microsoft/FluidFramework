@@ -26,8 +26,8 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
