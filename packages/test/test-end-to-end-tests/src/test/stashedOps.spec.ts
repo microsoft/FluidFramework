@@ -108,7 +108,7 @@ const getPendingOps = async (
 
 	await testObjectProvider.ensureSynchronized();
 	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	assert(dataStore.runtime.deltaManager.outbound.paused);
+	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 	await cb(container, dataStore);
 
