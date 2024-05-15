@@ -165,9 +165,6 @@
 			"ClassDeclaration_BaseSegment": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_Client": {
-				"backCompat": false
-			},
 			"ClassDeclaration_Marker": {
 				"forwardCompat": false
 			},
@@ -175,9 +172,6 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IAttributionCollection": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_SegmentGroup": {
 				"forwardCompat": false
 			}
 		}
