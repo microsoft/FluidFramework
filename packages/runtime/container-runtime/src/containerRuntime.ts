@@ -3923,7 +3923,7 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
 				? this._idCompressor.takeUnfinalizedCreationRange()
