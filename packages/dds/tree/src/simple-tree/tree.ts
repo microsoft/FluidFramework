@@ -71,7 +71,9 @@ export interface ITree extends IFluidLoadable {
 export interface ITreeConfigurationOptions {
 	/**
 	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema. Defaults to `false`.
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
 	 *
 	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
 	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a

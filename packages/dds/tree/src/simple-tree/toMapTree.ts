@@ -56,7 +56,7 @@ import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/ind
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -67,7 +67,7 @@ export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy?: SchemaAndPolicy,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
@@ -85,7 +85,7 @@ export function cursorFromNodeData(
  * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param schema - Schema of the field with which the input `data` is associated.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -118,7 +118,7 @@ export function cursorFromFieldData(
  * * `-0` =\> `+0`
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -233,8 +233,8 @@ function mapValueWithFallbacks(
 /**
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed.
- * @param allowedTypes -
- * @param nodeKeyManager -
+ * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -273,7 +273,7 @@ function arrayToMapTreeFields(
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed. Must be an array.
  * @param schema - The schema associated with the value.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -313,6 +313,7 @@ function arrayToMapTree(
  * Transforms data under a Map schema.
  * @param data - The tree data to be transformed. Must be a TypeScript Map.
  * @param schema - The schema associated with the value.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
@@ -356,7 +357,7 @@ function mapToMapTree(
  * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  */
 export function objectToMapTree(
 	data: InsertableContent,

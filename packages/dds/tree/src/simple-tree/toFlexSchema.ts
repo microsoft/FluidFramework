@@ -77,16 +77,16 @@ function cursorFromUnhydratedRoot(
 }
 
 /**
- *
+ * Generates a configuration object (schema + initial tree) for a FlexTree.
  * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
- * @param nodeKeyManager -
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
  * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
  * object.
  * @returns A configuration object for a FlexTree.
  *
  * @privateremarks
- * TODO: Improve docs
+ * I wrote these docs without a ton of context, they can probably be improved.
  */
 export function toFlexConfig(
 	config: TreeConfiguration,
