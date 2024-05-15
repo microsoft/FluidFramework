@@ -124,6 +124,56 @@ from<TType, TIn extends Copyable<TType>, TOut extends Copied<TType>>(
 Because function overloading is inconvenient to implement in the JavaScript language, framework engineers often avoid it.
 However, overloading is a powerful tool for reducing IntelliSense clutter and helping developers discover alternative ways to express the same operation.
 
+### Naming
+
+#### ✔ DO follow the style conventions used in the TypeScript documentation
+
+This document is not intended to be a style guide, but when questions of style arise, the style used by examples in The TypeScript Handbook is a good representation of the prevailing conventions used by TypeScript developers:
+
+-   Use `PascalCase` for type names.
+-   Use `PascalCase` for enum values.
+-   Use `camelCase` for function, property, and variable names.
+
+#### ✔ DO optimize discoverability in IntelliSense
+
+Think hard about the first word people will try typing in the code editor when they explore the feature area.
+Try to make the first response in IntelliSense the correct entry point to the corresponding feature.
+
+#### ✔ DO use concise names for frequently used APIs
+
+Favor short and memorable names over longSelfDocumentingNames for important and frequently used APIs.
+In the JavaScript community, developers assume the shorter the name the more important the API.
+Long multi-word names are assumed to be rarely used or semi-internal.
+
+-   But remember to document any aspects that are not captured by the short name in the API documentation!
+
+Make use of well-known abbreviations (but _only_ well-known abbreviations).
+A good rule of thumb is to use the abbreviated form if it’s what you would say out loud (HTML, JSON, min/max, etc.).
+
+-   Remember to think in terms of accessibility. Would a someone who is not a native English speaker understand the abbreviation? Would someone outside of Microsoft understand it?
+
+A good example is EventEmitter’s `on()` and `off()` pattern, which has largely become the de-facto standard among frameworks. An anti-example is the DOM’s built-in `addEventListener()` and `removeEventListener()`, which frameworks rarely emulate.
+
+Another anti-pattern is function/property names that unnecessarily echo return types or argument types/names. For example, prefer “insert(item: Node)” to “insertItem(itemNode: Node)”.
+
+#### ✔ DO use well-known prefixes/suffixes
+
+Examples:
+
+| Prefix  | Examples                           | Meaning                                                                                                                                                                                                                                                                   |
+| ------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| as      | asNode                             | Casts the subject to a different interface, preforming a type check if necessary. Differs from 'to' in that no data is copied. The returned object is a different facet of the original.                                                                                  |
+| Default | DefaultRuntime                     | Designates the built-in/commonly used implementation of an interface.                                                                                                                                                                                                     |
+| is/has  | isObject, isConnected, hasChildren | Returns a Boolean indicating if the subject is an instance of a type, implements an interface, or is currently in specific state. Prefer 'is' except when unnatural. For example, prefer 'isConnected' to 'hasConnection' and prefer 'isInitialized' to 'hasInitialized'. |
+| to      | Object.toString()                  | Constructs a new instance from the given argument(s) via a shallow or deep copy (contrast with ‘as’). Same as ‘from’, but resides as a static method on the type being constructed.                                                                                       |
+| from    | Array.from()                       | Constructs a new instance from the given argument(s) via a shallow or deep copy (contrast with ‘as’). Similar to a constructor, but implies a conversion of one type to another. Same as ‘to’, but resides as a static method on the type being constructed.              |
+
+#### ✔ DO use verb expressions when naming functions/methods
+
+Naming functions using verb expressions helps differentiate them at a glance from other kinds of entities (typically named using nouns).
+
+For example, prefer `create` over `foo` for a function that creates an `Foo` object.
+
 ### Modules
 
 #### ✔ DO minimize the number of required packages
