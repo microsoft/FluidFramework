@@ -23,9 +23,9 @@ We are now putting these guidelines into practice in the Fluid Framework codebas
 
 ### Designing For Yourself
 
-The most common pitfall is for framework engineers to assume that their preferences accurately mirror the needs of their end user.
+A common pitfall for framework engineers is to assume that their preferences accurately mirror the needs of their end user.
 The optimal balance of perfection vs. rapid release vs. overall engineering cost is different for frameworks and applications.
-Consequently, framework engineers often mis-calibrate when it comes to tradeoffs such as:
+Consequently, framework engineers often mis-calibrate when it comes to API tradeoffs such as:
 
 -   flexible vs. simple
 -   elegant vs. obvious
@@ -44,10 +44,10 @@ Most engineers understand that a learning curve implies that users will not init
 However, it is often overlooked that this implies that users must be allowed to use the framework without fully understanding what they are doing.
 This includes allowing the user to use the framework in suboptimal ways.
 
-For example, a framework engineer might argue that ‘Array.indexOf’ has a non-obvious O(n) cost.
+For example, a framework engineer might argue that `Array.indexOf` has a non-obvious `O(n)` cost.
 They might argue that it’s better to omit this convenience as to encourage users to think carefully about alternatives (binary search, a more suitable data structure, etc.) as they hand code a for-loop.
 
-What this argument fails to consider is that even if suboptimal, users find ‘indexOf’ to be convenient and the results are often “good enough” for the user’s scenario.
+What this argument fails to consider is that even if suboptimal, users find `indexOf` to be convenient and the results are often “good enough” for the user’s scenario.
 When considering forbidding common practices (such as linear search or using strings to represent UUIDs), think carefully about whether the user is likely to understand the motivation for the friction and agree that the loss of convenience is justified by the potential for error.
 
 ## Guidance
