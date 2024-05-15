@@ -5,7 +5,10 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	IPublicClientConfig,
+	IOdspAuthRequestInfo,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver/internal";
 import {
 	IOdspResolvedUrl,
@@ -28,7 +31,7 @@ export let connectionInfo: any;
 async function initializeODSPCore(
 	odspResolvedUrl: IOdspResolvedUrl,
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 ) {
 	const { driveId, itemId } = odspResolvedUrl;
 
