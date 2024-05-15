@@ -86,10 +86,16 @@ export interface IAttributionCollection<T> {
 	getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
 
 	/**
-	 * Retrieves all the [offset, attribution key] pairs for the provided offset range.
+	 * Retrieves all the [Offset, Attribution key] pairs for the provided offset range. Note:
+	 * The returned array is sorted by offset.
+	 * The first offset in response could be lower than the startOffset as the Attribution Key for the startOffset
+	 * could start at a lower offset than the startOffset in case where Attribution key offset boundaries don't
+	 * align exactly with startOffset.
+	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
+	 * then result would be [[0, key1], [10, key2], [20, key3]].
 	 * @param channel - When specified, gets attribution keys associated with a particular channel.
 	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
-	 * the corresponding offsets.
+	 * the corresponding offset start boundary.
 	 */
 	getKeysInOffsetRange(
 		startOffset: number,
