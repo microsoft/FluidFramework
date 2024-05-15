@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles, mergeClasses, shorthands, tokens } from "@fluentui/react-components";
+import {
+	Button,
+	makeStyles,
+	mergeClasses,
+	shorthands,
+	tokens,
+	Tooltip,
+} from "@fluentui/react-components";
 import {
 	type HasContainerKey,
 	type DevtoolsFeatureFlags,
 	type ContainerKey,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
+import { GetContainerList } from "@fluidframework/devtools-core/internal";
+import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
-import { RefreshButton, Waiting } from "./index.js";
+import { Waiting } from "./index.js";
 
 /**
  * Props for {@link MenuSection}
@@ -145,6 +155,42 @@ type MenuSelection =
 	| SettingsMenuSelection
 	| HomeMenuSelection
 	| OpLatencyMenuSelection;
+
+/**
+ * Message sent to the webpage to query for the full container list.
+ */
+const getContainerListMessage = GetContainerList.createMessage();
+
+/**
+ * A refresh button to retrieve the latest list of containers.
+ */
+function RefreshButton(): React.ReactElement {
+	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
+
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	function handleRefreshClick(): void {
+		// Query for list of Containers
+		messageRelay.postMessage(getContainerListMessage);
+		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+	}
+
+	return (
+		<Tooltip content="Refresh Containers list" relationship="label">
+			<Button
+				icon={<ArrowSync24Regular />}
+				style={transparentButtonStyle}
+				onClick={handleRefreshClick}
+				aria-label="Refresh Containers list"
+			></Button>
+		</Tooltip>
+	);
+}
 
 /**
  * Generic component for a section of the menu.

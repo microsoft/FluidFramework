@@ -19,7 +19,6 @@ export * from "./Menu.js";
 export * from "./NoDevtoolsErrorBar.js";
 export * from "./OpLatencyView.js";
 export * from "./SettingsView.js";
-export * from "./RefreshButton.js";
 export * from "./TelemetryConsentModal.js";
 export * from "./TelemetryView.js";
 export * from "./Waiting.js";
