@@ -9292,6 +9292,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
+      axios: ^1.6.2
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
@@ -9327,6 +9328,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../test/test-utils
       '@fluidframework/tree': link:../../../dds/tree
+      axios: 1.6.2
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.30.1
@@ -26836,6 +26838,7 @@ packages:
   /commander/9.5.0:
     resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
+    requiresBuild: true
     dev: true
 
   /commandpost/1.4.0:
