@@ -662,7 +662,10 @@ async function setupOpsMetrics(
 	};
 }
 
-async function waitForContainerConnectionWithTimeout(container: IContainer, timeout = 5000): Promise<void> {
+async function waitForContainerConnectionWithTimeout(
+	container: IContainer,
+	timeout = 5000,
+): Promise<void> {
 	if (container.connectionState !== ConnectionState.Connected) {
 		let timer: NodeJS.Timeout;
 		const timeoutP = new Promise<void>((resolve) => {
