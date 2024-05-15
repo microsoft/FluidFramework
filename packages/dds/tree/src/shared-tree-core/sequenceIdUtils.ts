@@ -7,14 +7,15 @@ import { brand } from "../util/index.js";
 
 import { SequenceId } from "./editManagerFormat.js";
 
-export const sequenceIdComparator = (a: SequenceId, b: SequenceId) =>
+export const sequenceIdComparator = (a: SequenceId, b: SequenceId): number =>
 	a.sequenceNumber !== b.sequenceNumber
 		? a.sequenceNumber - b.sequenceNumber
 		: (a.indexInBatch ?? 0) - (b.indexInBatch ?? 0);
-export const equalSequenceIds = (a: SequenceId, b: SequenceId) => sequenceIdComparator(a, b) === 0;
-export const minSequenceId = (a: SequenceId, b: SequenceId) =>
+export const equalSequenceIds = (a: SequenceId, b: SequenceId): boolean =>
+	sequenceIdComparator(a, b) === 0;
+export const minSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>
 	sequenceIdComparator(a, b) < 0 ? a : b;
-export const maxSequenceId = (a: SequenceId, b: SequenceId) =>
+export const maxSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>
 	sequenceIdComparator(a, b) > 0 ? a : b;
 export const decrementSequenceId = (sequenceId: SequenceId): SequenceId => {
 	return sequenceId.indexInBatch !== undefined

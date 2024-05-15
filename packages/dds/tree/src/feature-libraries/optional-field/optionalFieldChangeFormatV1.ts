@@ -17,6 +17,8 @@ export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 export const EncodedBuild = Type.Tuple([EncodedChangeAtomId]);
 export type EncodedBuild = Static<typeof EncodedBuild>;
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
@@ -37,6 +39,8 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 	ReturnType<typeof EncodedOptionalChangeset<Schema>>
 >;
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 	// Changes to the children of the node that is in the specified register in the input context of this change.
 	Type.Optional(Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange])));
