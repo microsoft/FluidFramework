@@ -166,7 +166,8 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"enablePingLatencyTracking": false
 	},
 	"client": {
 		"type": "browser",

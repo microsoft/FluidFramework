@@ -149,8 +149,10 @@ data:
                 "shouldDisableDefaultNamespace": {{ .Values.nexus.socketIoAdapter.shouldDisableDefaultNamespace }}
             },
             "socketIo" : {
-                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}}
-            }
+                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}},
+                "gracefulShutdownEnabled": {{ .Values.nexus.socketIo.gracefulShutdownEnabled}}
+            },
+            "enablePingLatencyTracking": {{ .Values.nexus.enablePingLatencyTracking }}
         },
         "client": {
             "type": "browser",

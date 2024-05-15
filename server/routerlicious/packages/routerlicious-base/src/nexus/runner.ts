@@ -84,6 +84,7 @@ export class NexusRunner implements IRunner {
 			const isSignalUsageCountingEnabled = this.config.get(
 				"usage:signalUsageCountingEnabled",
 			);
+			const enablePingLatencyTracking = this.config.get("nexus:enablePingLatencyTracking");
 
 			// Register all the socket.io stuff
 			configureWebSocketServices(
@@ -111,6 +112,7 @@ export class NexusRunner implements IRunner {
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
+				enablePingLatencyTracking,
 			);
 
 			if (this.tokenRevocationManager) {
