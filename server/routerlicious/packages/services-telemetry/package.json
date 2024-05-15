@@ -59,9 +59,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@4.0.0",
 		"@types/mocha": "^10.0.1",
@@ -78,6 +78,16 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_CommonProperties": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Lumber": {
+				"backCompat": false
+			},
+			"EnumDeclaration_LumberEventName": {
+				"backCompat": false
+			}
+		}
 	}
 }

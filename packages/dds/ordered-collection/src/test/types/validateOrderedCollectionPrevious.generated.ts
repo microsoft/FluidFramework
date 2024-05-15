@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/ordered-collection-previous/internal"
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -63,7 +81,6 @@ declare function get_old_ClassDeclaration_ConsensusOrderedCollection():
 declare function use_current_ClassDeclaration_ConsensusOrderedCollection(
     use: TypeOnly<current.ConsensusOrderedCollection>): void;
 use_current_ClassDeclaration_ConsensusOrderedCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusOrderedCollection());
 
 /*
@@ -85,22 +102,84 @@ use_old_ClassDeclaration_ConsensusOrderedCollection(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_ConsensusQueue": {"forwardCompat": false}
+ * "VariableDeclaration_ConsensusQueue": {"forwardCompat": false}
  */
+declare function get_old_VariableDeclaration_ConsensusQueue():
+    TypeOnly<typeof old.ConsensusQueue>;
+declare function use_current_VariableDeclaration_ConsensusQueue(
+    use: TypeOnly<typeof current.ConsensusQueue>): void;
+use_current_VariableDeclaration_ConsensusQueue(
+    get_old_VariableDeclaration_ConsensusQueue());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_ConsensusQueue": {"backCompat": false}
+ * "VariableDeclaration_ConsensusQueue": {"backCompat": false}
  */
-declare function get_current_RemovedClassDeclaration_ConsensusQueue():
+declare function get_current_VariableDeclaration_ConsensusQueue():
+    TypeOnly<typeof current.ConsensusQueue>;
+declare function use_old_VariableDeclaration_ConsensusQueue(
+    use: TypeOnly<typeof old.ConsensusQueue>): void;
+use_old_VariableDeclaration_ConsensusQueue(
+    get_current_VariableDeclaration_ConsensusQueue());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ConsensusQueue": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_ConsensusQueue():
+    TypeOnly<old.ConsensusQueue>;
+declare function use_current_TypeAliasDeclaration_ConsensusQueue(
+    use: TypeOnly<current.ConsensusQueue>): void;
+use_current_TypeAliasDeclaration_ConsensusQueue(
+    get_old_TypeAliasDeclaration_ConsensusQueue());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ConsensusQueue": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_ConsensusQueue():
     TypeOnly<current.ConsensusQueue>;
-declare function use_old_ClassDeclaration_ConsensusQueue(
+declare function use_old_TypeAliasDeclaration_ConsensusQueue(
     use: TypeOnly<old.ConsensusQueue>): void;
-use_old_ClassDeclaration_ConsensusQueue(
-    get_current_RemovedClassDeclaration_ConsensusQueue());
+use_old_TypeAliasDeclaration_ConsensusQueue(
+    get_current_TypeAliasDeclaration_ConsensusQueue());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_ConsensusQueueClass": {"forwardCompat": false}
+ */
+declare function get_old_ClassDeclaration_ConsensusQueueClass():
+    TypeOnly<old.ConsensusQueueClass>;
+declare function use_current_ClassDeclaration_ConsensusQueueClass(
+    use: TypeOnly<current.ConsensusQueueClass>): void;
+use_current_ClassDeclaration_ConsensusQueueClass(
+    get_old_ClassDeclaration_ConsensusQueueClass());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_ConsensusQueueClass": {"backCompat": false}
+ */
+declare function get_current_ClassDeclaration_ConsensusQueueClass():
+    TypeOnly<current.ConsensusQueueClass>;
+declare function use_old_ClassDeclaration_ConsensusQueueClass(
+    use: TypeOnly<old.ConsensusQueueClass>): void;
+use_old_ClassDeclaration_ConsensusQueueClass(
+    get_current_ClassDeclaration_ConsensusQueueClass());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -170,7 +249,6 @@ declare function get_old_InterfaceDeclaration_IConsensusOrderedCollection():
 declare function use_current_InterfaceDeclaration_IConsensusOrderedCollection(
     use: TypeOnly<current.IConsensusOrderedCollection>): void;
 use_current_InterfaceDeclaration_IConsensusOrderedCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusOrderedCollection());
 
 /*
@@ -185,7 +263,6 @@ declare function get_current_InterfaceDeclaration_IConsensusOrderedCollection():
 declare function use_old_InterfaceDeclaration_IConsensusOrderedCollection(
     use: TypeOnly<old.IConsensusOrderedCollection>): void;
 use_old_InterfaceDeclaration_IConsensusOrderedCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusOrderedCollection());
 
 /*

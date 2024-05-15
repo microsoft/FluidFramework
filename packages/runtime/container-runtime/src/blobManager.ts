@@ -96,7 +96,7 @@ export interface IBlobManagerLoadInfo {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "logger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -233,7 +233,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.closeContainer = closeContainer;
 
 		this.mc = createChildMonitoringContext({
-			logger: this.runtime.logger,
+			logger: this.runtime.baseLogger,
 			namespace: "BlobManager",
 		});
 
