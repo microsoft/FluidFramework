@@ -77,7 +77,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 			key: LocalNodeKey,
 			map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
