@@ -42,6 +42,12 @@ for (const testOpts of testMatrix) {
 			}
 		});
 
+		beforeEach("skipForEphemeral", async function () {
+			if (isEphemeral) {
+				this.skip();
+			}
+		});
+
 		/**
 		 * Scenario: test if Azure Client can provide versions of the container.
 		 *
