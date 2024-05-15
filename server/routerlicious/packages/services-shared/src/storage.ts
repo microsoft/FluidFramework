@@ -225,7 +225,6 @@ export class DocumentStorage implements IDocumentStorage {
 			signalClientConnectionNumber: 0,
 			lastSentMSN: 0,
 			nackMessages: undefined,
-			successfullyStartedLambdas: [],
 			checkpointTimestamp: Date.now(),
 		};
 

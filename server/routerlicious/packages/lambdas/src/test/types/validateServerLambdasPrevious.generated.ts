@@ -165,6 +165,7 @@ declare function get_current_ClassDeclaration_DeliLambda():
 declare function use_old_ClassDeclaration_DeliLambda(
     use: TypeOnly<old.DeliLambda>): void;
 use_old_ClassDeclaration_DeliLambda(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeliLambda());
 
 /*
@@ -285,6 +286,7 @@ declare function get_current_InterfaceDeclaration_ICheckpointParams():
 declare function use_old_InterfaceDeclaration_ICheckpointParams(
     use: TypeOnly<old.ICheckpointParams>): void;
 use_old_InterfaceDeclaration_ICheckpointParams(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICheckpointParams());
 
 /*

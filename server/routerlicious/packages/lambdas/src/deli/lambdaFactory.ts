@@ -46,7 +46,6 @@ const getDefaultCheckpoint = (): IDeliState => {
 		signalClientConnectionNumber: 0,
 		lastSentMSN: 0,
 		nackMessages: undefined,
-		successfullyStartedLambdas: [],
 		checkpointTimestamp: Date.now(),
 	};
 };
@@ -223,7 +222,6 @@ export class DeliLambdaFactory
 			this.reverseProducer,
 			this.serviceConfiguration,
 			sessionMetric,
-			sessionStartMetric,
 			this.checkpointService,
 		);
 

@@ -45,12 +45,10 @@ import {
 	NackOperationType,
 	RawOperationType,
 	SequencedOperationType,
-	ILambdaStartControlMessageContents,
 	IQueuedMessage,
 	INackMessagesControlMessageContents,
 	IUpdateDSNControlMessageContents,
 	LambdaCloseType,
-	LambdaName,
 	SignalOperationType,
 	ITicketedMessage,
 	IExtendClientControlMessageContents,
@@ -64,7 +62,6 @@ import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
-	SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
@@ -283,9 +280,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	// Session level properties
 	private serviceSummaryGenerated: boolean = false;
-	private readonly isNewDocument: boolean = false;
-	private readonly successfullyStartedLambdas: LambdaName[] = [];
-	private readonly expectedSuccessfullyStartedLambdas: LambdaName[] = [LambdaName.Scribe];
 
 	constructor(
 		private readonly context: IContext,
@@ -299,7 +293,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly rawDeltasProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-		private readonly sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService | undefined,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
@@ -347,9 +340,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		} else {
 			this.nackMessages = new Map();
 		}
-
-		// Null coalescing for backward compatibility
-		this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
 		const msn = this.clientSeqManager.getMinimumSequenceNumber();
 		this.documentCheckpointManager.setNoActiveClients(msn === -1);
@@ -407,12 +397,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				this.opEvent.sequencedMessagesSinceLastOpEvent =
 					this.sequenceNumber - this.durableSequenceNumber;
 			}
-		}
-
-		this.isNewDocument = this.sequenceNumber === 0;
-
-		if (serviceConfiguration.enableLumberjack) {
-			this.logSessionStartMetrics();
 		}
 
 		if (this.serviceConfiguration.deli.checkForIdleClientsOnStartup) {
@@ -816,47 +800,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		});
 	}
 
-	private logSessionStartMetrics(failMetric: boolean = false) {
-		if (this.sessionStartMetric?.isCompleted()) {
-			return;
-		}
-
-		if (failMetric) {
-			this.sessionStartMetric?.setProperties({
-				[CommonProperties.sessionState]: SessionState.LambdaStartFailed,
-			});
-			this.sessionStartMetric?.error("Lambda start failed");
-			return;
-		}
-
-		if (this.verifyRequiredLambdaStarted()) {
-			if (this.isNewDocument) {
-				this.sessionStartMetric?.setProperties({
-					[CommonProperties.sessionState]: SessionState.started,
-				});
-				this.sessionStartMetric?.success("Session started successfully");
-			} else {
-				this.sessionStartMetric?.setProperties({
-					[CommonProperties.sessionState]: SessionState.resumed,
-				});
-				this.sessionStartMetric?.success("Session resumed successfully");
-			}
-		} else {
-			const lambdaStatusMsg = "Not all required lambdas started";
-			this.context.log?.info(lambdaStatusMsg);
-			Lumberjack.info(
-				lambdaStatusMsg,
-				getLumberBaseProperties(this.documentId, this.tenantId),
-			);
-		}
-	}
-
-	private verifyRequiredLambdaStarted() {
-		return this.expectedSuccessfullyStartedLambdas.every((val) =>
-			this.successfullyStartedLambdas.includes(val),
-		);
-	}
-
 	private logSessionEndMetrics(closeType: LambdaCloseType) {
 		if (this.sessionMetric?.isCompleted()) {
 			Lumberjack.info(
@@ -1226,18 +1169,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 							controlContents.content !== undefined ? controlContents : undefined,
 						);
 
-						break;
-					}
-
-					case ControlMessageType.LambdaStartResult: {
-						const controlContents =
-							controlMessage.contents as ILambdaStartControlMessageContents;
-
-						if (controlContents.success) {
-							this.successfullyStartedLambdas.push(controlContents.lambdaName);
-						}
-
-						this.logSessionStartMetrics(!controlContents.success);
 						break;
 					}
 
@@ -1728,7 +1659,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			signalClientConnectionNumber: this.signalClientConnectionNumber,
 			lastSentMSN: this.lastSentMSN,
 			nackMessages: Array.from(this.nackMessages),
-			successfullyStartedLambdas: this.successfullyStartedLambdas,
 			checkpointTimestamp: Date.now(),
 		};
 	}
