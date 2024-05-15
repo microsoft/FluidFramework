@@ -42,7 +42,7 @@ import {
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
 	oneDayMs,
-	runGCKey,
+	runGCTestKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
@@ -709,7 +709,7 @@ describe("Garbage Collection configurations", () => {
 			];
 			testCases.forEach((testCase) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
-					configProvider.set(runGCKey, testCase.runGC);
+					configProvider.set(runGCTestKey, testCase.runGC);
 					gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 					assert.equal(
 						gc.configs.shouldRunGC,
@@ -820,7 +820,7 @@ describe("Garbage Collection configurations", () => {
 			];
 			testCases.forEach((testCase, index) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
-					configProvider.set(runGCKey, testCase.shouldRunGC);
+					configProvider.set(runGCTestKey, testCase.shouldRunGC);
 					configProvider.set(runSweepKey, testCase.shouldRunSweep);
 					configProvider.set(
 						disableDatastoreSweepKey,

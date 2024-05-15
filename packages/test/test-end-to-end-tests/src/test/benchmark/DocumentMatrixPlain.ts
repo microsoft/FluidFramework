@@ -101,7 +101,7 @@ const featureGates = {
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 const featureGatesWithGcOff = {
-	"Fluid.GarbageCollection.RunGC": false,
+	"Fluid.GarbageCollection.Test.RunGC": false,
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 

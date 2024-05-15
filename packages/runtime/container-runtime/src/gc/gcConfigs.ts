@@ -28,7 +28,7 @@ import {
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
-	runGCKey,
+	runGCTestKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
@@ -121,9 +121,9 @@ export function generateGCConfigs(
 	 * 1. GC should not be disabled for this container.
 	 * 2. The current GC version should be greater or equal to the GC version in the base snapshot.
 	 *
-	 * These conditions can be overridden via the RunGC feature flag.
+	 * These conditions can be overridden via the RunGC feature flag for testing.
 	 */
-	const shouldRunGC = mc.config.getBoolean(runGCKey) ?? (!gcDisabled && isGCVersionUpToDate);
+	const shouldRunGC = mc.config.getBoolean(runGCTestKey) ?? (!gcDisabled && isGCVersionUpToDate);
 
 	/**
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether

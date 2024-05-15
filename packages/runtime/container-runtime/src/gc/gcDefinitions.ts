@@ -59,8 +59,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC on / off. */
-export const runGCKey = "Fluid.GarbageCollection.RunGC";
 /** Config key to turn GC sweep on / off. */
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
@@ -82,6 +80,8 @@ export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStor
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
+/** Config key to turn GC on / off for testing. */
+export const runGCTestKey = "Fluid.GarbageCollection.Test.RunGC";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
