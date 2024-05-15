@@ -15,27 +15,16 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	DefaultEditBuilder,
 	FlexAllowedTypes,
 	FlexFieldKind,
 	FlexTreeSchema,
 	createMockNodeKeyManager,
-	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { forestWithContent } from "../../utils.js";
+import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getTreeContext(
-		schema,
-		forest,
-		dummyEditor,
-		createMockNodeKeyManager(),
-		brand(nodeKeyFieldKey),
-	);
+	return getTreeContext(schema, new MockTreeCheckout(forest), createMockNodeKeyManager());
 }
 
 /**
@@ -54,8 +43,11 @@ export function contextWithContentReadonly(content: TreeContent): Context {
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 export function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	const cursor = context.checkout.forest.allocateCursor();
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 

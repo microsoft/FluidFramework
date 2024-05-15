@@ -85,7 +85,7 @@ export function setMoveEffect(
 	count: number,
 	effect: MoveEffect,
 	invalidate: boolean = true,
-) {
+): void {
 	(effect as MoveEffectWithBasis).basis = id;
 	moveEffects.set(target, revision, id, count, effect, invalidate);
 }

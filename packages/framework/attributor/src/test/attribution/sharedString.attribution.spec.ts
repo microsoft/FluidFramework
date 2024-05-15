@@ -43,6 +43,7 @@ import {
 	MockStorage,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
@@ -259,7 +260,7 @@ function createSharedString(
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			};
-			const { deltaManager } = dataStoreRuntime;
+			const deltaManager = dataStoreRuntime.deltaManagerInternal;
 			const sharedString = SharedString.create(
 				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
@@ -632,7 +633,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -651,7 +652,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),
@@ -670,7 +671,7 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
+										toDeltaManagerInternal(runtime.deltaManager),
 										runtime.getQuorum(),
 										entries,
 									),

@@ -102,7 +102,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
 	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
 		// Discard any sequenced ops that are now below the minimum sequence number.
-		const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
+		const minSeq = this.deltaManager.minimumSequenceNumber;
 		while (this.sequencedOps[0]?.seq < minSeq) {
 			this.sequencedOps.shift();
 		}

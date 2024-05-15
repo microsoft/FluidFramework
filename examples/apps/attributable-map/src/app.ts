@@ -14,7 +14,7 @@ import { renderHitCounter } from "./view.js";
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	/**
 	 * Manually enable the attribution config,
 	 */
@@ -35,16 +35,21 @@ async function start() {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
+	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	renderHitCounter(model.hitCounter, model.runtimeAttributor, contentDiv);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

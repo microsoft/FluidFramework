@@ -149,7 +149,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		},
 		deltaManager: context.deltaManager,
 		storage: context.storage,
-		logger: context.logger,
+		baseLogger: context.baseLogger,
 		get clientDetails() {
 			return context.clientDetails;
 		},
@@ -579,8 +579,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
-			localContext.setAttachState(AttachState.Attaching);
 			this.submitAttachChannelOp(localContext);
+			localContext.setAttachState(AttachState.Attaching);
 		}
 
 		this.contexts.bind(id);
@@ -660,7 +660,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		createProps?: any,
 		loadingGroupId?: string,
 	) {
-		assert(loadingGroupId !== "", "loadingGroupId should not be the empty string");
+		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
 			id,
 			pkg,
@@ -679,7 +679,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					channel,
 					id,
 					this,
-					createChildLogger({ logger: this.parentContext.logger }),
+					createChildLogger({ logger: this.parentContext.baseLogger }),
 				),
 		});
 
@@ -1561,7 +1561,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		const runtime = this.ctor(
 			context.baseSnapshot,
 			context, // parentContext
-			context.logger,
+			context.baseLogger,
 			() => {}, // gcNodeUpdated
 			(_nodePath: string) => false, // isDataStoreDeleted
 			new Map(), // aliasMap

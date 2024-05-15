@@ -174,7 +174,6 @@ export {
 	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	nodeKeyFieldKey,
 	SchemaLintConfiguration,
 	TreeStatus,
 	FlexTreeFieldNode,
@@ -274,6 +273,7 @@ export {
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
+	ITreeConfigurationOptions,
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
@@ -305,6 +305,7 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
+	DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
 
@@ -388,7 +389,6 @@ export {
 	// These names also are collision prone.
 	Required,
 	Optional,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	Sequence,

@@ -651,7 +651,7 @@ describe("sharedTreeView", () => {
 		});
 	});
 
-	it("schema edits do not cause clients to purge repair data or revertibles", () => {
+	it("schema edits do not cause clients to purge detached trees or revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
 		const checkout1 = provider.trees[0].checkout;
 		const checkout2 = provider.trees[1].checkout;

@@ -11,9 +11,9 @@ import type {
 	IDeltaQueue,
 	IDeltaSender,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfiguration,
 	IClientDetails,
