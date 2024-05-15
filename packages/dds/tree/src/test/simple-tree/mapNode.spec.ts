@@ -48,6 +48,39 @@ describe("MapNode", () => {
 			node.forEach(callback, thisArg);
 			assert.deepEqual(log, ["b"]);
 		});
+
+		// Ensure map enumeration respects insert ordering, in accordance with JavaScript map spec:
+		// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map>
+		it("Enumeration ordering", () => {
+			class Schema extends schemaFactory.map("x", schemaFactory.number) {}
+			const node = hydrate(
+				Schema,
+				new Map([
+					["b", 2],
+					["c", 1],
+				]),
+			);
+
+			node.set("a", 3);
+			node.set("d", -1);
+
+			const expectedEntries = [
+				["b", 2],
+				["c", 1],
+				["a", 3],
+				["d", -1],
+			];
+
+			assert.deepEqual([...node.entries()], expectedEntries);
+			assert.deepEqual([...node.keys()], ["b", "c", "a", "d"]);
+			assert.deepEqual([...node.values()], [2, 1, 3, -1]);
+
+			let i = 0;
+			for (const entry of node) {
+				assert.deepEqual(entry, expectedEntries[i]);
+				i++;
+			}
+		});
 	});
 
 	describe("prototype", () => {
