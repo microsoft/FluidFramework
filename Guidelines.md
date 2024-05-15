@@ -191,23 +191,26 @@ Examples:
 
 #### ✔ DO minimize the number of required packages
 
-There are many boundaries along which a framework engineer might partition packages: layering, ownership, release group, etc. All of these are generally for the convenience of the framework engineer, not the end user. When publishing for the end user, the ideal number of packages is usually one.
+There are many boundaries along which a framework engineer might partition packages: layering, ownership, release group, etc.
+All of these are generally for the convenience of the framework engineer, not the end user.
+When publishing for the end user, the ideal number of packages is usually one.
 
-There are two exceptions:
+There are a couple of exceptions:
 
-The first exception is either-or scenarios where an application will import 1 of n packages. Examples include:
+Either-or scenarios where an application will import 1 of n packages.
 
-Choosing between a production or development version of the framework
+Examples include:
 
-Choosing between React or Svelt interoperability
+-   Choosing between a production or development version of the framework
+-   Choosing between React or Svelt interoperability
+-   Choosing between Azure or Syntex as a backend
 
-Choosing between Azure or Syntex as a backend
+Packages that are versioned separately for the end user’s convenience.
 
-The second is packages that are versioned separately for the end user’s convenience. [Need an example.]
+For example, `eslint` is versioned independently from its various plugins.
+This helps to clearly differentiate architectural changes from content (i.e. rules) changes that might affect the user.
 
 Note that if the incentive for partitioning into multiple packages is bundle size or IntelliSense clutter, you probably have a different problem.
-
-[TODO: patterns for minimizing import.]
 
 ### Data
 
