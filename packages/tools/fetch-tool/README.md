@@ -1,7 +1,7 @@
 # @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
-In order to connect to ODSP, the clientID and clientSecret must be set as environment variables `login__microsoft__clientId` and `login__microsoft__secret`, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
+In order to connect to ODSP, the clientID must be set as the environment variable `login__microsoft__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
 ## Usage
