@@ -216,11 +216,13 @@ Note that if the incentive for partitioning into multiple packages is bundle siz
 
 #### ✔ PREFER data transparency
 
-The JavaScript ecosystem interoperates primarily through trees of plain data. Encapsulating data within an opaque object model creates friction when interfacing with 3rd party packages. When possible, favor consuming and produce trees of JSON-compatible types (see next guideline).
+The JavaScript ecosystem interoperates primarily through trees of plain data.
+Encapsulating data within an opaque object model creates friction when interfacing with 3rd party packages.
+When possible, favor consuming and produce trees of JSON-compatible types.
 
 #### ✔ DO express data as a tree of JSON-compatible types
 
-To interoperate with existing backend and frontend technologies, data contracts should be defined using JSON-compatible types.
+To interoperate with existing backend and frontend technologies, data contracts should be defined using [JSON-compatible types](https://en.wikipedia.org/wiki/JSON#Data_types).
 These are:
 
 -   Plain objects (no prototypes, string keys only, single reference)
@@ -233,7 +235,8 @@ These are:
 
 This subset of JavaScript types forms a minimal but complete data model that is well supported across data stores and transport protocols.
 
-[GraphQL](https://graphql.org/) is a good example of a framework that embraces JSON as the “lowest common denominator” and is worth studying if you’re interested in applying this principle in a cross-language environment.
+[GraphQL](https://graphql.org/) is a good example of a framework that embraces JSON as the “lowest common denominator”.
+It's worth studying if you’re interested in applying this principle in a cross-language environment.
 
 #### ✔ PREFER `undefined` over `null`
 
@@ -252,12 +255,12 @@ These are:
 In the JavaScript language it is possible to distinguish between a non-existing property and a property that has been explicitly set to the `undefined` value.
 You should interpret these identically when reading.
 
-Do not go out of your way elide explicit `undefine`s, except in cases where it improves efficiency, such as serialization.
+Do not go out of your way elide explicit `undefine`s, except in cases where it improves efficiency (such as serialization).
 Otherwise, you should follow the natural behavior of `Object.keys()`, `foo = bar`, etc. which will preserve the explicit undefined.
 
 #### ✔ DO align copy/iteration behavior with Object.keys()
 
-The prevailing convention is to use `Object.keys()` when iterating or copying data, which includes only string-keyed enumerable properties that are owned by the object (not inherited).
+The prevailing convention is to use `Object.keys()` when iterating or copying data, which includes only string-keyed [enumerable properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties) that are owned by the object (not inherited).
 
 Note that it is expected that private metadata attached via `symbol` keys will be elided when iterated, copied, transmitted, or persisted.
 
