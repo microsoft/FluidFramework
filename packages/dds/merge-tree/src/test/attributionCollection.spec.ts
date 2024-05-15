@@ -74,12 +74,24 @@ describe("AttributionCollection", () => {
 			const collection = new AttributionCollection(5, opKey(100));
 
 			it("returns the entry for offsets within the length range", () => {
-				assert.deepEqual(collection.getKeysInOffsetRange(1), [[0, opKey(100)]], "first");
-				assert.deepEqual(collection.getKeysInOffsetRange(4), [[0, opKey(100)]], "second");
-				assert.deepEqual(collection.getKeysInOffsetRange(1, 4), [[0, opKey(100)]], "third");
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(1),
+					[{ offset: 0, key: opKey(100) }],
+					"first",
+				);
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(4),
+					[{ offset: 0, key: opKey(100) }],
+					"second",
+				);
+				assert.deepEqual(
+					collection.getKeysInOffsetRange(1, 4),
+					[{ offset: 0, key: opKey(100) }],
+					"third",
+				);
 				assert.deepEqual(
 					collection.getKeysInOffsetRange(0, 4),
-					[[0, opKey(100)]],
+					[{ offset: 0, key: opKey(100) }],
 					"fourth",
 				);
 			});
@@ -102,30 +114,30 @@ describe("AttributionCollection", () => {
 
 			it("returns the correct entries", () => {
 				assert.deepEqual(collection.getKeysInOffsetRange(15, 25), [
-					[10, { type: "op", seq: 20 }],
-					[20, { type: "op", seq: 30 }],
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
 				]);
 				assert.deepEqual(collection.getKeysInOffsetRange(15, 19), [
-					[10, { type: "op", seq: 20 }],
+					{ offset: 10, key: { type: "op", seq: 20 } },
 				]);
 				assert.deepEqual(collection.getKeysInOffsetRange(15, 49), [
-					[10, { type: "op", seq: 20 }],
-					[20, { type: "op", seq: 30 }],
-					[30, { type: "op", seq: 40 }],
-					[40, { type: "op", seq: 50 }],
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
 				]);
 				assert.deepEqual(collection.getKeysInOffsetRange(15, 40), [
-					[10, { type: "op", seq: 20 }],
-					[20, { type: "op", seq: 30 }],
-					[30, { type: "op", seq: 40 }],
-					[40, { type: "op", seq: 50 }],
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
 				]);
 				assert.deepEqual(collection.getKeysInOffsetRange(0), [
-					[0, { type: "op", seq: 10 }],
-					[10, { type: "op", seq: 20 }],
-					[20, { type: "op", seq: 30 }],
-					[30, { type: "op", seq: 40 }],
-					[40, { type: "op", seq: 50 }],
+					{ offset: 0, key: { type: "op", seq: 10 } },
+					{ offset: 10, key: { type: "op", seq: 20 } },
+					{ offset: 20, key: { type: "op", seq: 30 } },
+					{ offset: 30, key: { type: "op", seq: 40 } },
+					{ offset: 40, key: { type: "op", seq: 50 } },
 				]);
 			});
 		});
@@ -133,7 +145,7 @@ describe("AttributionCollection", () => {
 		it("works on collections with entries in channels", () => {
 			const collection = makeCollectionWithChannel({ length: 3, seq: 300 });
 			assert.deepEqual(collection.getKeysInOffsetRange(1, undefined, "foo"), [
-				[0, opKey(300)],
+				{ offset: 0, key: opKey(300) },
 			]);
 		});
 	});

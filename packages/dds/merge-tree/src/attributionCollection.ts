@@ -92,7 +92,7 @@ export interface IAttributionCollection<T> {
 	 * could start at a lower offset than the startOffset in case where Attribution key offset boundaries don't
 	 * align exactly with startOffset.
 	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
-	 * then result would be [[0, key1], [10, key2], [20, key3]].
+	 * then result would be [(offset: 0, key: key1), (offset:10, key: key2), (offset:20, key: key3)].
 	 * @param channel - When specified, gets attribution keys associated with a particular channel.
 	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
 	 * the corresponding offset start boundary.
@@ -101,7 +101,7 @@ export interface IAttributionCollection<T> {
 		startOffset: number,
 		endOffset?: number,
 		channel?: string,
-	): [number, AttributionKey][] | undefined;
+	): { offset: number; key: AttributionKey }[] | undefined;
 
 	/**
 	 * Total length of all attribution keys in this collection.
@@ -208,17 +208,17 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public getKeysInOffsetRange(
 		startOffset: number,
 		endOffset?: number,
-	): [number, AttributionKey][];
+	): { offset: number; key: AttributionKey }[];
 	public getKeysInOffsetRange(
 		startOffset: number,
 		endOffset?: number,
 		channel?: string,
-	): [number, AttributionKey][] | undefined;
+	): { offset: number; key: AttributionKey }[] | undefined;
 	public getKeysInOffsetRange(
 		startOffset: number,
 		endOffset?: number,
 		channel?: string,
-	): [number, AttributionKey][] | undefined {
+	): { offset: number; key: AttributionKey }[] | undefined {
 		assert(startOffset >= 0 && startOffset < this._length, "startOffset should be valid");
 		assert(
 			endOffset === undefined ||
@@ -230,18 +230,18 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			const subCollection = this.channels?.[channel];
 			return subCollection?.getKeysInOffsetRange(startOffset, endOffset);
 		}
-		const result: [number, AttributionKey][] = [];
+		const result: { offset: number; key: AttributionKey }[] = [];
 		let index = this.findIndex(startOffset);
 		let attributionKey = this.get(index);
 		if (attributionKey !== undefined) {
-			result.push([this.offsets[index], attributionKey]);
+			result.push({ offset: this.offsets[index], key: attributionKey });
 		}
 		index++;
 		const endOffsetVal = endOffset ?? Number.MAX_SAFE_INTEGER;
 		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]) {
 			attributionKey = this.get(index);
 			if (attributionKey !== undefined) {
-				result.push([this.offsets[index], attributionKey]);
+				result.push({ offset: this.offsets[index], key: attributionKey });
 			}
 			index++;
 		}
