@@ -281,14 +281,17 @@ User errors should by signaled by throwing an instance of `Error`, `TypeError`, 
 We leverage TSDoc syntax for TypeScript API-level source code documentation.
 See our [TSDoc guidelines](https://github.com/microsoft/FluidFramework/wiki/TSDoc-Guidelines) for helpful tips leveraging the syntax.
 
+Documentation for our APIs is publicly available on [fluidframework.com](https://fluidframework.com/docs/apis).
+Remember that the documentation you write may be user-facing, so it needs to be accessible and useful!
+
 #### ✔ DO use complete sentences in API documentation
 
-Remember that many of our APIs are or will be visible by other developers, including developers external to our team.
+Remember that many of our APIs are or will be visible to other developers, including developers external users.
 To ensure our documentation is useful and accessible to the widest audience, our documentation should be written in such a way that it is easily readable by any English reader.
 
 #### ✔ DO document contracts not captured by the type-system
 
-As a general rule, if an API contract cannot be captured by the type-system, then it MUST be documented.
+As a general rule, if an API contract cannot be captured by the type-system, then it should be documented.
 For example:
 
 ```typescript
@@ -304,7 +307,7 @@ Does it throw?
 Does it return some default value?
 
 There are a few syntactic options for conveying this sort of information - use your best judgment when determining what to use.
-An option our example method might look something like:
+A better option for our example method might look something like:
 
 ```typescript
 /**
