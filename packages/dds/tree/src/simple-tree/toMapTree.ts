@@ -413,7 +413,7 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: ContextuallyTypedNodeData,
-) {
+): TreeNodeSchema[] {
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const schema of allowedTypes) {
 		if (shallowCompatibilityTest(schema, data)) {

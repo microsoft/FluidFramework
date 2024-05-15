@@ -9,7 +9,11 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	ISharedObjectKind,
+	SharedObjectKind,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
@@ -81,7 +85,9 @@ export const SharedTree = configuredSharedTree({});
  * Maybe as part of a test utils or dev-tool package?
  * @internal
  */
-export function configuredSharedTree(options: SharedTreeOptions) {
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	class ConfiguredFactory extends TreeFactory {
 		public constructor() {
 			super(options);

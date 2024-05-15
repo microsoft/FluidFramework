@@ -95,6 +95,7 @@ function makeV1CodecWithVersion<TChangeset>(
 	const encodeCommit = <T extends Commit<TChangeset>>(
 		commit: T,
 		context: ChangeEncodingContext,
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	) => ({
 		...commit,
 		revision: revisionTagCodec.encode(commit.revision, {
@@ -107,6 +108,7 @@ function makeV1CodecWithVersion<TChangeset>(
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
 		commit: T,
 		context: ChangeEncodingContext,
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	) => {
 		const revision = revisionTagCodec.decode(commit.revision, {
 			originatorId: commit.sessionId,

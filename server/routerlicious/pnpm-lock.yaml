@@ -964,7 +964,7 @@ importers:
       eslint: ~8.55.0
       events_pkg: npm:events@^3.1.0
       nconf: ^0.12.0
-      node-rdkafka: ^2.16.1
+      node-rdkafka: ^3.0.1
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -977,7 +977,7 @@ importers:
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       events_pkg: /events/3.3.0
       nconf: 0.12.0
-      node-rdkafka: 2.16.1
+      node-rdkafka: 3.0.1
       sillyname: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli': 0.39.0-264124_@types+node@18.17.6
@@ -12005,8 +12005,8 @@ packages:
   /nan/2.17.0:
     resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
 
-  /nan/2.18.0:
-    resolution: {integrity: sha512-W7tfG7vMOGtD30sHoZSSc/JVYiyDPEyQVso/Zz+/uQd0B0L46gtC+pHha5FFMRpil6fm/AoEcRWyOVi4+E/f8w==}
+  /nan/2.19.0:
+    resolution: {integrity: sha512-nO1xXxfh/RWNxfd/XPfbIfFk5vgLsAxUR9y5O0cHMJu/AW9U95JLXqthYHjEp+8gQ5p96K9jUp8nbVOxCdRbtw==}
 
   /nanoid/3.3.3:
     resolution: {integrity: sha512-p1sjXuopFs0xg+fPASzQ28agW1oHD7xDsd9Xkf3T15H3c/cifrFHVwrh74PdoklAPi+i7MdRsE47vm2r6JoB+w==}
@@ -12159,23 +12159,23 @@ packages:
       - supports-color
     dev: true
 
-  /node-rdkafka/2.16.1:
-    resolution: {integrity: sha512-fiZJGl/w9QnACLhfVTYuS4V4WxSmVSbxhXyxL+B0SgRWEa8kA1NpdiB+gHPG71C3CqjbvYEfTJWhjd/1y0OeSA==}
-    engines: {node: '>=6.0.0'}
-    requiresBuild: true
-    dependencies:
-      bindings: 1.5.0
-      nan: 2.17.0
-    dev: false
-
   /node-rdkafka/2.18.0:
     resolution: {integrity: sha512-jYkmO0sPvjesmzhv1WFOO4z7IMiAFpThR6/lcnFDWgSPkYL95CtcuVNo/R5PpjujmqSgS22GMkL1qvU4DTAvEQ==}
     engines: {node: '>=6.0.0'}
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
-      nan: 2.18.0
+      nan: 2.19.0
     dev: true
+
+  /node-rdkafka/3.0.1:
+    resolution: {integrity: sha512-USTFu7ylRj+fEiGz0hA92GWSqmX/hu/xSTqtgmInPPmh5zKhjauTciRjDEG3yK5m6yChwyHKQTIgmr56DfhiaQ==}
+    engines: {node: '>=16'}
+    requiresBuild: true
+    dependencies:
+      bindings: 1.5.0
+      nan: 2.19.0
+    dev: false
 
   /node-releases/2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
@@ -14210,7 +14210,7 @@ packages:
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
-      nan: 2.18.0
+      nan: 2.19.0
       prebuild-install: 5.3.0
     optional: true
 
