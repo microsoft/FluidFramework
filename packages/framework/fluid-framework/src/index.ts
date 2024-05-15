@@ -45,6 +45,11 @@ import { type ITree } from "@fluidframework/tree";
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
+ * @privateRemarks
+ * Here we reexport SharedTree, but with the `@alpha` types (`ISharedObjectKind`) removed, just keeping the `SharedObjectKind`.
+ * Doing this requires creating this new typed export rather than relying on a reexport directly from the tree package.
+ * The tree package itself does not do this because it's API needs to be usable from the encapsulated API which requires `ISharedObjectKind`.
+ * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
  * @public
  */
 // eslint-disable-next-line import/export
