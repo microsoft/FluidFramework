@@ -52,9 +52,6 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		summaryOptions: {
 			summaryConfigOverrides,
 		},
-		gcOptions: {
-			gcAllowed: true,
-		},
 	};
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,

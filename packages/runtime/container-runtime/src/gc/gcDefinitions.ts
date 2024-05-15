@@ -422,24 +422,6 @@ export interface IGarbageCollectorCreateParams {
  */
 export interface IGCRuntimeOptions {
 	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "enableGCSweep" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
 	 *
@@ -481,8 +463,8 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
+	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC or for
+	 * containers that are running GC version that is older that the one in base snapshot.
 	 */
 	readonly gcEnabled: boolean;
 	/**

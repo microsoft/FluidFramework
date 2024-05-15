@@ -1431,9 +1431,6 @@ describe("Runtime", () => {
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				chunkSizeInBytes: 800 * 1024,
-				gcOptions: {
-					gcAllowed: true,
-				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
 			};

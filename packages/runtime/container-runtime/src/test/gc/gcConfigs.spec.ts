@@ -384,17 +384,8 @@ describe("Garbage Collection configurations", () => {
 				"latestSummaryGCVersion incorrect",
 			);
 		});
-		it("gcAllowed true", () => {
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true });
-			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
-		});
-		it("gcAllowed false", () => {
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
-			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-		});
-		it("Sweep enabled via gcGeneration, gcAllowed true", () => {
+		it("Sweep enabled via gcGeneration", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				gcAllowed: true,
 				[gcGenerationOptionName]: 1,
 			});
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
@@ -405,10 +396,9 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 		});
-		it("Sweep enabled via gcGeneration, gcAllowed true, sessionExpiry off", () => {
+		it("Sweep enabled via gcGeneration, sessionExpiry off", () => {
 			configProvider.set(runSessionExpiryKey, false);
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				gcAllowed: true,
 				[gcGenerationOptionName]: 1,
 			});
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
@@ -549,18 +539,6 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimer incorrect",
 			);
 			assert.equal(gc.configs.tombstoneTimeoutMs, 7890, "tombstoneTimeoutMs incorrect");
-		});
-		it("gcAllowed off, session expiry off", () => {
-			gc = gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				gcAllowed: false,
-			});
-			assert.equal(
-				gc.configs.sessionExpiryTimeoutMs,
-				undefined,
-				"sessionExpiryTimeoutMs incorrect",
-			);
-			assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer incorrect");
-			assert.equal(gc.configs.tombstoneTimeoutMs, undefined, "tombstoneTimeoutMs incorrect");
 		});
 		it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
@@ -723,30 +701,16 @@ describe("Garbage Collection configurations", () => {
 
 		describe("shouldRunGC", () => {
 			const testCases: {
-				gcEnabled: boolean;
-				disableGC?: boolean;
 				runGC?: boolean;
 				expectedResult: boolean;
 			}[] = [
-				{ gcEnabled: false, disableGC: true, runGC: true, expectedResult: true },
-				{ gcEnabled: true, disableGC: false, runGC: false, expectedResult: false },
-				{ gcEnabled: true, disableGC: true, expectedResult: false },
-				{ gcEnabled: true, disableGC: false, expectedResult: true },
-				{ gcEnabled: true, expectedResult: true },
-				{ gcEnabled: false, expectedResult: false },
+				{ runGC: true, expectedResult: true },
+				{ runGC: false, expectedResult: false },
 			];
 			testCases.forEach((testCase) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					configProvider.set(runGCKey, testCase.runGC);
-					gc = createGcWithPrivateMembers(undefined /* metadata */, {
-						gcAllowed: testCase.gcEnabled,
-						disableGC: testCase.disableGC,
-					});
-					assert.equal(
-						gc.configs.gcEnabled,
-						testCase.gcEnabled,
-						"PRECONDITION: gcEnabled set incorrectly",
-					);
+					gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 					assert.equal(
 						gc.configs.shouldRunGC,
 						testCase.expectedResult,

@@ -85,7 +85,6 @@ describeCompat(
 									state: "disabled",
 								},
 						  },
-				gcOptions: { gcAllowed: true },
 			};
 			const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,

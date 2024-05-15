@@ -79,7 +79,6 @@ const runtimeOptions: IContainerRuntimeOptions = {
 			state: "disabled",
 		},
 	},
-	gcOptions: { gcEnabled: false, disableGC: true, runGC: false },
 	compressionOptions: {
 		minimumBatchSizeInBytes: 1024 * 1024,
 		compressionAlgorithm: CompressionAlgorithms.lz4,
