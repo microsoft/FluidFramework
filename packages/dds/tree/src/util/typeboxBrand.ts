@@ -20,7 +20,7 @@ export function brandedStringType<T extends string>(): TUnsafe<T> {
 }
 
 /**
- * Create a TypeBox number schema for a branded number type.
+ * Create a TypeBox number schema for a branded string type.
  * {@link brandedStringType} but for numbers.
  */
 export function brandedNumberType<T extends number>(
