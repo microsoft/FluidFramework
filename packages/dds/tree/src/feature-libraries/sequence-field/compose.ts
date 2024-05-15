@@ -11,7 +11,7 @@ import {
 	RevisionTag,
 	offsetChangeAtomId,
 } from "../../core/index.js";
-import { IdAllocator, brand, fail } from "../../util/index.js";
+import { IdAllocator, fail } from "../../util/index.js";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
