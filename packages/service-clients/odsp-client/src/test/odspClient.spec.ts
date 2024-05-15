@@ -19,7 +19,6 @@ import { OdspTestTokenProvider } from "./odspTestTokenProvider";
  */
 export interface OdspTestCredentials {
 	clientId: string;
-	clientSecret: string;
 	username: string;
 	password: string;
 }
@@ -29,7 +28,6 @@ export interface OdspTestCredentials {
  */
 const clientCreds: OdspTestCredentials = {
 	clientId: "<client_id>",
-	clientSecret: "<client_secret>",
 	username: "<email_id>",
 	password: "<password>",
 };
