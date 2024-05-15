@@ -12,11 +12,11 @@ import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeSchema,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
 	nodeDataToMapTree as nodeDataToMapTreeBase,
