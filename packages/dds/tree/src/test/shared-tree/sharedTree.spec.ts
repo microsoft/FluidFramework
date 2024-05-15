@@ -641,7 +641,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	it("can load a summary from a tree and receive edits that require repair data", async () => {
+	it("can load a summary from a tree and receive edits that require detached tree refreshers", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
@@ -990,7 +990,7 @@ describe("SharedTree", () => {
 		 * the collab window includes all sequenced edits after the minimum sequence number
 		 * these tests test that undoing edits behind (i.e., with a seq# less than) the minimum sequence number works
 		 */
-		it("refresher for repair data out of collab window", () => {
+		it("refresher for detached trees out of collab window", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
