@@ -23,7 +23,6 @@ export interface IOdspLoginCredentials {
  */
 export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
-	clientSecret: string;
 }
 
 /**
@@ -38,7 +37,6 @@ export function createOdspClient(
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
 	const clientId = process.env.odsp__client__clientId as string;
-	const clientSecret = process.env.odsp__client__clientSecret as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
@@ -50,17 +48,12 @@ export function createOdspClient(
 		throw new Error("client id is missing");
 	}
 
-	if (clientSecret === "" || clientSecret === undefined) {
-		throw new Error("client secret is missing");
-	}
-
 	if (creds.username === undefined || creds.password === undefined) {
 		throw new Error("username or password is missing for login account");
 	}
 
 	const credentials: IOdspCredentials = {
 		clientId,
-		clientSecret,
 		...creds,
 	};
 

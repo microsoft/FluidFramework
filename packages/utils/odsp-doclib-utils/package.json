@@ -135,6 +135,11 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IClientConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
