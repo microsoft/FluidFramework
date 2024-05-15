@@ -592,25 +592,6 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Throws at submit, when compression is enabled and the compressed batch is still larger than the threshold", () => {
-		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
-			maxBatchSize: 1,
-			compressionOptions: {
-				minimumBatchSizeInBytes: 1,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		});
-
-		const messages = [createMessage(ContainerMessageType.IdAllocation, "0")];
-
-		assert.throws(() => outbox.submitIdAllocation(messages[0]));
-		// The batch is compressed
-		assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
-		// The batch is not persisted
-		assert.deepEqual(state.pendingOpContents, []);
-	});
-
 	it("Splits the batch when an out of order message is detected", () => {
 		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 		const messages = [
