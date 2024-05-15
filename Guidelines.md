@@ -187,12 +187,6 @@ Examples:
 | to      | Object.toString()                  | Constructs a new instance from the given argument(s) via a shallow or deep copy (contrast with ‘as’). Same as ‘from’, but resides as a static method on the type being constructed.                                                                                       |
 | from    | Array.from()                       | Constructs a new instance from the given argument(s) via a shallow or deep copy (contrast with ‘as’). Similar to a constructor, but implies a conversion of one type to another. Same as ‘to’, but resides as a static method on the type being constructed.              |
 
-#### ✔ DO use verb expressions when naming functions/methods
-
-Naming functions using verb expressions helps differentiate them at a glance from other kinds of entities (typically named using nouns).
-
-For example, prefer `create` over `foo` for a function that creates an `Foo` object.
-
 ### Modules
 
 #### ✔ DO minimize the number of required packages
