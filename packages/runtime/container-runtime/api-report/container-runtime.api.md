@@ -36,7 +36,6 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandleContext as IFluidHandleContext_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
@@ -521,7 +520,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     // (undocumented)
-    get IFluidHandleContext(): IFluidHandleContext_2;
+    get IFluidHandleContext(): IFluidHandleContext;
     protected isInMemoryRoot(): boolean;
     // (undocumented)
     get isLoaded(): boolean;
@@ -1272,7 +1271,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext_2, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
     dispose(): void;

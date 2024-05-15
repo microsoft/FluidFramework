@@ -11,7 +11,7 @@ import {
 	concatGarbageCollectionStates,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,

@@ -15,7 +15,7 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
