@@ -351,6 +351,7 @@ export class OrderedClientElection
 		/** Serialized state from summary or current sequence number at time of load if new. */
 		initialState: ISerializedElection | number,
 		private readonly isEligibleFn: (c: ITrackedClient) => boolean,
+		private readonly recordPerformanceEvents: boolean = false,
 	) {
 		super();
 		let initialClient: ILinkedClient | undefined;
@@ -411,6 +412,7 @@ export class OrderedClientElection
 	 * we will set _electedClient, and we will set _electedParent if this is an interactive client.
 	 */
 	private tryElectingClient(client: ILinkedClient | undefined, sequenceNumber: number): void {
+		this.sendPerformanceEvent("TryElectingClient", client, sequenceNumber);
 		let change = false;
 		const isSummarizerClient = client?.client.details.type === summarizerClientType;
 		const prevClient = this._electedClient;
@@ -426,12 +428,15 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
+			this.sendPerformanceEvent("Election", client, sequenceNumber);
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
 
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
+		this.sendPerformanceEvent("TryElectingParent", client, sequenceNumber);
 		if (this._electedParent !== client) {
+			this.sendPerformanceEvent("Election", client, sequenceNumber);
 			this._electedParent = client;
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
@@ -462,6 +467,7 @@ export class OrderedClientElection
 	 * @param sequenceNumber - sequence number when client was added
 	 */
 	private addClient(client: ILinkedClient, sequenceNumber: number): void {
+		this.sendPerformanceEvent("AddClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount++;
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
@@ -487,6 +493,7 @@ export class OrderedClientElection
 	 * @param sequenceNumber - sequence number when client was removed
 	 */
 	private removeClient(client: ILinkedClient, sequenceNumber: number): void {
+		this.sendPerformanceEvent("RemoveClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount--;
 			if (this._electedClient === client) {
@@ -570,5 +577,23 @@ export class OrderedClientElection
 			electedClientId: this.electedClient?.clientId,
 			electedParentId: this.electedParent?.clientId,
 		};
+	}
+
+	private sendPerformanceEvent(
+		eventName: string,
+		client: ILinkedClient | undefined,
+		sequenceNumber: number,
+	) {
+		if (this.recordPerformanceEvents) {
+			this.logger.sendPerformanceEvent({
+				eventName,
+				clientId: client?.clientId,
+				sequenceNumber,
+				electedClientId: this.electedClient?.clientId,
+				electedParentId: this.electedParent?.clientId,
+				isEligible: client !== undefined ? this.isEligibleFn(client) : false,
+				isSummarizerClient: client?.client.details.type === summarizerClientType,
+			});
+		}
 	}
 }
