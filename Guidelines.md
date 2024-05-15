@@ -1,12 +1,19 @@
 # Framework API Guidelines
 
-This document provides a set of guidelines for crafting framework APIs that are likely to be well-received by TypeScript and JavaScript application developers. The purpose of this document is to accelerate the API design and review process by helping framework engineers build a common understanding of the needs of the typical frontend developer.
+This document provides a set of guidelines for crafting framework APIs that are likely to be well-received by TypeScript and JavaScript application developers.
+The purpose of this document is to accelerate the API design and review process by helping framework engineers build a common understanding of the needs of the typical frontend developer.
 
-The primary audience for this document is engineers and PMs designing client-side frameworks that interoperate with other modern frontend technologies. It assumes the framework targets Evergreen Browsers and PWAs. This document does not consider limitations of older browsers or the differing conventions of alternative environments like Node.js and React Native.
+The primary audience for this document is engineers and PMs designing client-side framework APIs that may interoperate with other modern frontend technologies.
+It assumes the framework targets Evergreen Browsers and Progressive Web Applications (PWAs).
+This document does not consider limitations of older browsers or the differing conventions of alternative environments like Node.js and React Native.
 
-This document is intended to complement a healthy API design and review process. It is not a substitute for customer profiling, scenario driven design or customer feedback. However, the reality is often that the budget for user research is limited, and it can be challenging to get users to evaluate alpha and beta releases.
+This document is intended to complement a healthy API design and review process.
+It is not a substitute for customer profiling, scenario-driven design or customer feedback.
+However, the reality is often that the budget for user research is limited, and it can be challenging to get users to evaluate alpha and beta releases.
 
-As a result, it is often only late in the development cycle that framework engineers begin to get a trickle of feedback regarding their API choices. Adopting the guidelines in this document will help avoid wasting this trickle addressing predictable ergonomics issues.
+As a result, it is often only late in the development cycle that framework engineers begin to get a trickle of feedback regarding their API choices.
+Adopting the guidelines in this document will help avoid wasting this trickle addressing predictable ergonomics issues.
+Additionally, adopting common API patterns makes our framework more accessible to both external and internal developers.
 
 ## Status
 
