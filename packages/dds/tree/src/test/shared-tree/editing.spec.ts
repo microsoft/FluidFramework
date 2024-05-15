@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	AnchorNode,
@@ -1755,14 +1756,16 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			assert.throws(() =>
-				tree.editor.move(
-					{ parent: rootNode, field: brand("foo") },
-					0,
-					1,
-					{ parent: fooPath, field: brand("bar") },
-					0,
-				),
+			assert.throws(
+				() =>
+					tree.editor.move(
+						{ parent: rootNode, field: brand("foo") },
+						0,
+						1,
+						{ parent: fooPath, field: brand("bar") },
+						0,
+					),
+				/Invalid move operation: the destination is located under one of the moved elements./,
 			);
 		});
 
