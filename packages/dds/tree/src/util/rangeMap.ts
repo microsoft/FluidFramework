@@ -81,6 +81,14 @@ export function getFirstEntryFromRangeMap<T>(
 	return undefined;
 }
 
+export function cloneRangeMap<T>(map: RangeMap<T>): RangeMap<T> {
+	const clonedRangeMap = [];
+	for (const entry of map) {
+		clonedRangeMap.push({ ...entry });
+	}
+	return clonedRangeMap;
+}
+
 /**
  * Sets the keys from `start` to `start + length - 1` to `value`.
  */
@@ -170,7 +178,7 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
  * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
  * document the API.  AB#7413
  */
-export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
+export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): boolean {
 	const end = start + length - 1;
 
 	let iBefore = -1;
@@ -190,11 +198,11 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	if (numOverlappingEntries === 0) {
 		// No entry will be removed
-		return;
+		return false;
 	}
 
 	const iFirst = iBefore + 1;
-	const iLast = iAfter - 1;
+	let iLast = iAfter - 1;
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
@@ -205,6 +213,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 		// If the entry lies within the range to be deleted, remove it
 		if (entry.start >= start && entryLastKey <= end) {
 			map.splice(i, 1);
+			iLast--;
 		} else {
 			// If the entry partially or completely overlaps with the range to be deleted
 			if (entry.start < start) {
@@ -226,4 +235,84 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 			}
 		}
 	}
+	return true;
+}
+
+/**
+ * Retrieve all range entries (except the entries with undefined values) from the map
+ * that intersect with the specified range.
+ */
+export function getAllValidEntriesFromMap<T>(
+	map: RangeMap<T>,
+	start: number,
+	length: number,
+): { value: T; start: number; length: number }[] {
+	const result = [];
+	let currentStart = start;
+
+	while (currentStart < start + length) {
+		// const remainedLength = length - (currentStart - start);
+		const nextResult = getFirstEntryFromRangeMap(
+			map,
+			currentStart,
+			length - (currentStart - start),
+		);
+
+		if (nextResult) {
+			const nextStart = Math.max(nextResult.start, currentStart);
+			const nextLength = Math.min(
+				nextResult.length - (nextStart - nextResult.start),
+				length - (nextStart - start),
+			);
+			if (nextResult.value !== undefined) {
+				result.push({
+					value: nextResult.value,
+					start: nextStart,
+					length: nextLength,
+				});
+			}
+
+			currentStart = nextStart + nextLength;
+		} else {
+			break;
+		}
+	}
+	return result;
+}
+
+/**
+ * Traverse all range entries within the map and merge adjacent entries under two conditions:
+ *
+ * 1. The end point of the first entry matches the start point of the second entry.
+ * 2. The values of the two entries are identical.
+ *
+ * If both conditions are met, the adjacent entries are merged into a single entry.
+ */
+export function mergeRangesWithinMap<T>(entries: RangeMap<T>): RangeMap<T> {
+	const result: RangeMap<T> = [];
+
+	for (const entry of entries) {
+		const lastIndex = result.length - 1;
+		if (lastIndex >= 0 && result[lastIndex].value === entry.value) {
+			// Check if the current entry can be merged with the last entry
+			const lastEntry = result[lastIndex];
+			if (
+				lastEntry.start + lastEntry.length === entry.start &&
+				lastEntry.value === entry.value
+			) {
+				// Merge the current entry with the last entry
+				result[lastIndex] = {
+					start: lastEntry.start,
+					length: lastEntry.length + entry.length,
+					value: lastEntry.value,
+				};
+				continue; // Skip adding the current entry separately
+			}
+		}
+
+		// If the current entry cannot be merged, add it to the result array
+		result.push(entry);
+	}
+
+	return result;
 }

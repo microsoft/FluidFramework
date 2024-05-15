@@ -11,9 +11,11 @@ import {
 	deleteFromRangeMap,
 	getFirstEntryFromRangeMap,
 	setInRangeMap,
+	mergeRangesWithinMap,
+	getAllValidEntriesFromMap,
 } from "../../../util/index.js";
 
-function newRangeMap(): RangeMap<string> {
+function newRangeMap(): RangeMap<string | undefined> {
 	return [];
 }
 
@@ -142,6 +144,66 @@ describe("RangeMap", () => {
 		const entry7 = getFirstEntryFromRangeMap(map, 7, 4);
 		const expectedA2: RangeEntry<string> = { start: 7, length: 4, value: "a" };
 		assert.deepEqual(entry7, expectedA2);
+	});
+
+	describe("getAllEntriesFromMap", () => {
+		it("get all entries within the given range", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 1, 3, "a");
+			setInRangeMap(map, 6, 2, "b");
+
+			const results = getAllValidEntriesFromMap(map, 0, 10);
+
+			assert.deepEqual(results, [
+				{ start: 1, length: 3, value: "a" },
+				{ start: 6, length: 2, value: "b" },
+			]);
+		});
+
+		it("get all entries within the given range but partially overlapped", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 1, 3, "a");
+			setInRangeMap(map, 6, 2, "b");
+
+			const results = getAllValidEntriesFromMap(map, 2, 5);
+
+			assert.deepEqual(results, [
+				{ start: 2, length: 2, value: "a" },
+				{ start: 6, length: 1, value: "b" },
+			]);
+		});
+
+		it("skip entries with undefined value", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 1, 3, "a");
+			setInRangeMap(map, 6, 2, undefined);
+
+			const results = getAllValidEntriesFromMap(map, 2, 8);
+
+			assert.deepEqual(results, [{ start: 2, length: 2, value: "a" }]);
+		});
+	});
+
+	describe("mergeRangesWithinMap", () => {
+		it("merge the `connected` ranges within the map", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 0, 1, "b");
+			setInRangeMap(map, 1, 2, "a");
+			setInRangeMap(map, 3, 2, "a");
+			setInRangeMap(map, 6, 1, "a");
+
+			const newMap = mergeRangesWithinMap(map);
+
+			assert.deepEqual(newMap, [
+				{ start: 0, length: 1, value: "b" },
+				{ start: 1, length: 4, value: "a" },
+				{ start: 6, length: 1, value: "a" },
+			]);
+		});
 	});
 
 	describe("deleteFromRangeMap", () => {

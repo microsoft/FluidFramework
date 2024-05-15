@@ -12,11 +12,14 @@ import {
 	JsonCompatibleReadOnly,
 	NestedMap,
 	brand,
-	deleteFromNestedMap,
+	deleteFromRangeMap,
 	idAllocatorFromMaxId,
-	populateNestedMap,
-	setInNestedMap,
-	tryGetFromNestedMap,
+	setInRangeMap,
+	type RangeMap,
+	getFirstEntryFromRangeMap,
+	getAllValidEntriesFromMap,
+	cloneRangeMap,
+	getOrAddEmptyToMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -39,7 +42,12 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	/**
+	 * For each `Major`, stores contiguous `ForestRootId`s block for contiguous `DetachedNodeId.minor`s block.
+	 * The value of each range entry represents the "rootId" of the first node within that range. A simple
+	 * offset calculation is required to obtain the rootId of the middle node.
+	 */
+	private readonly detachedNodeRangeMap: Map<Major, RangeMap<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
@@ -64,19 +72,28 @@ export class DetachedFieldIndex {
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
+		// populate the rangeMap of detached nodes
+		for (const [major, innerRangeMap] of this.detachedNodeRangeMap) {
+			clone.detachedNodeRangeMap.set(major, cloneRangeMap(innerRangeMap));
+		}
 		return clone;
 	}
 
+	/**
+	 * Returns the atomic detached node id instead of ranges
+	 */
 	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
-		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { major, minor }, root: entry };
-				}
-			} else {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { minor }, root: entry };
+		for (const [major, innerRangeMap] of this.detachedNodeRangeMap) {
+			for (const rangeEntry of innerRangeMap) {
+				const id =
+					major !== undefined
+						? { major, minor: rangeEntry.start }
+						: { minor: rangeEntry.start };
+				for (let offset = 0; offset < rangeEntry.length; offset++) {
+					yield {
+						id: { ...id, minor: id.minor + offset },
+						root: brand(rangeEntry.value + offset),
+					};
 				}
 			}
 		}
@@ -86,23 +103,21 @@ export class DetachedFieldIndex {
 	 * Removes all entries from the index.
 	 */
 	public purge() {
-		this.detachedNodeToField.clear();
+		this.detachedNodeRangeMap.clear();
 	}
 
 	public updateMajor(current: Major, updated: Major) {
-		const innerCurrent = this.detachedNodeToField.get(current);
-		if (innerCurrent !== undefined) {
-			this.detachedNodeToField.delete(current);
-			const innerUpdated = this.detachedNodeToField.get(updated);
-			if (innerUpdated === undefined) {
-				this.detachedNodeToField.set(updated, innerCurrent);
+		const innerRangeMap = this.detachedNodeRangeMap.get(current);
+		if (innerRangeMap !== undefined) {
+			this.detachedNodeRangeMap.delete(current);
+			const updatedRangeMap = this.detachedNodeRangeMap.get(updated);
+			if (updatedRangeMap === undefined) {
+				this.detachedNodeRangeMap.set(updated, innerRangeMap);
 			} else {
-				for (const [minor, entry] of innerCurrent) {
-					assert(
-						innerUpdated.get(minor) === undefined,
-						0x7a9 /* Collision during index update */,
-					);
-					innerUpdated.set(minor, entry);
+				// TODO: AB#7815, fix O(N^2) time complexity caused by the below implementation
+				for (const rangeEntry of innerRangeMap) {
+					const { start, length, value } = rangeEntry;
+					setInRangeMap(updatedRangeMap, start, length, value);
 				}
 			}
 		}
@@ -119,24 +134,42 @@ export class DetachedFieldIndex {
 	/**
 	 * Returns the FieldKey associated with the given id.
 	 * Returns undefined if no such id is known to the index.
+	 *
+	 * The "findFirst" parameter determines whether to find the rootId of the first node within this
+	 * range. In the current delta visit logic, the first root might "represent" the entire detached
+	 * nodes block in some scenarios. Therefore, we support the option to return either the first root
+	 * or the real root id of this node.
 	 */
-	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+	public tryGetEntry(id: Delta.DetachedNodeId, findFirst = false): ForestRootId | undefined {
+		const innerRangeMap = this.detachedNodeRangeMap.get(id.major);
+		if (innerRangeMap !== undefined) {
+			const targetRange = getFirstEntryFromRangeMap(innerRangeMap, id.minor, 1);
+			if (targetRange !== undefined) {
+				return findFirst
+					? targetRange.value
+					: brand(targetRange.value + (id.minor - targetRange.start));
+			}
+		}
+		return undefined;
 	}
 
 	/**
 	 * Returns the FieldKey associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
-	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
-		const key = this.tryGetEntry(id);
+	public getEntry(id: Delta.DetachedNodeId, findFirst = false): ForestRootId {
+		const key = this.tryGetEntry(id, findFirst);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
 	}
 
-	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		assert(found, 0x7ab /* Unable to delete unknown entry */);
+	public deleteEntry(nodeId: Delta.DetachedNodeId, count: number = 1): void {
+		if (this.detachedNodeRangeMap.has(nodeId.major)) {
+			const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major);
+			assert(innerRangeMap !== undefined, "The data is not found for the given major");
+			const found = deleteFromRangeMap(innerRangeMap, nodeId.minor, count);
+			assert(found, "Unable to delete an unexisting range");
+		}
 	}
 
 	/**
@@ -145,24 +178,82 @@ export class DetachedFieldIndex {
 	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): ForestRootId {
 		const root = this.rootIdAllocator.allocate(count);
 		if (nodeId !== undefined) {
-			for (let i = 0; i < count; i++) {
-				assert(
-					tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor + i,
-					) === undefined,
-					0x7ce /* Detached node ID already exists in index */,
-				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
-			}
+			this.setDetachedNodeRange(nodeId, count, root);
 		}
 		return root;
 	}
 
+	private setDetachedNodeRange(
+		nodeId: Delta.DetachedNodeId,
+		count: number,
+		root: ForestRootId,
+	): void {
+		const innerRangeMap = getOrAddEmptyToMap(this.detachedNodeRangeMap, nodeId.major);
+		assert(
+			getFirstEntryFromRangeMap(innerRangeMap, nodeId.minor, count) === undefined,
+			"The detached node range already exists in the index",
+		);
+		setInRangeMap(innerRangeMap, nodeId.minor, count, root);
+	}
+
+	/**
+	 * Given a query range, find and group all detached nodes within the range according to the following rules:
+	 *
+	 * 1. If a range entry overlaps with the query range, store the overlapping portion as a new range in the result.
+	 * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
+	 * of the first entry and the start of the second entry as a new range with an undefined value.
+	 *
+	 * The function only returns the length and value (root) of the range entry. Since consecutive ranges without gaps
+	 * are always returned, there's no need to include the start points of the ranges.
+	 */
+	public getAllDetachedNodeRanges(
+		nodeId: Delta.DetachedNodeId,
+		count: number,
+	): { length: number; root?: ForestRootId }[] {
+		const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major);
+		if (!innerRangeMap) {
+			return [{ length: count }];
+		}
+
+		const results = [];
+		let currentPos = nodeId.minor;
+		const validRanges = getAllValidEntriesFromMap(innerRangeMap, nodeId.minor, count);
+		for (const range of validRanges) {
+			if (currentPos < range.start) {
+				results.push({
+					length: range.start - currentPos,
+				});
+			}
+			results.push({ length: range.length, root: range.value });
+			currentPos = range.start + range.length;
+		}
+
+		if (currentPos < nodeId.minor + count) {
+			results.push({
+				length: nodeId.minor + count - currentPos,
+			});
+		}
+		return results;
+	}
+
 	public encode(): JsonCompatibleReadOnly {
+		// Since currently the codec only accepts the original NestedMap format data, so break the
+		// detached node ranges atomically into single nodeIds, and build a NestedMap from them.
+		const detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+		for (const [major, rangeMap] of this.detachedNodeRangeMap) {
+			const innerMap = new Map();
+			for (const rangeEntry of rangeMap) {
+				for (let offset = 0; offset < rangeEntry.length; offset++) {
+					innerMap.set(rangeEntry.start + offset, brand(rangeEntry.value + offset));
+				}
+			}
+			if (innerMap.size > 0) {
+				detachedNodeToField.set(major, innerMap);
+			}
+		}
+
 		return this.codec.encode({
-			data: this.detachedNodeToField,
+			data: detachedNodeToField,
 			maxId: this.rootIdAllocator.getMaxId(),
 		}) as JsonCompatibleReadOnly;
 	}
@@ -176,6 +267,64 @@ export class DetachedFieldIndex {
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
-		this.detachedNodeToField = detachedFieldIndex.data;
+
+		// Build the rangeMap for detached nodes according to the nestedMap
+		for (const [major, innerMap] of detachedFieldIndex.data) {
+			const innerRangeMap = [];
+			for (const [minor, root] of innerMap) {
+				innerRangeMap.push({ start: minor, length: 1, value: root });
+			}
+			this.detachedNodeRangeMap.set(
+				major,
+				this.mergeRangesWithIncrementalRootValue(innerRangeMap),
+			);
+		}
+	}
+
+	/**
+	 * Traverse all range entries within the map and merge adjacent entries under two conditions:
+	 *
+	 * 1. The end point of the first entry matches the start point of the second entry.
+	 * 2. The value of the second entry equals to the value of the first entry plus its length
+	 *
+	 * If both conditions are met, the adjacent entries are merged into a single entry, and its value
+	 * will be that of the first entry before combination (it is still treated the rootId of the first
+	 * node within the newly combined range entry).
+	 *
+	 * e.g. we have two entries [start: 1, length: 2, value: 3], [start: 3, length: 1, value: 5]
+	 * these two entries can be merged into [start: 1, length: 3, value: 3]
+	 *
+	 * Note: This function isn't placed in rangeMap.ts because the type of range entry value is specific
+	 * to ForestRootId, instead of the generic type in rangeMap.ts.
+	 */
+	private mergeRangesWithIncrementalRootValue(
+		entries: RangeMap<ForestRootId>,
+	): RangeMap<ForestRootId> {
+		const result: RangeMap<ForestRootId> = [];
+
+		for (const entry of entries) {
+			const lastIndex = result.length - 1;
+			if (lastIndex >= 0) {
+				// Check if the current entry can be merged with the last entry
+				const lastEntry = result[lastIndex];
+				if (
+					lastEntry.start + lastEntry.length === entry.start &&
+					lastEntry.value === entry.value - lastEntry.length
+				) {
+					// Merge the current entry with the last entry
+					result[lastIndex] = {
+						start: lastEntry.start,
+						length: lastEntry.length + entry.length,
+						value: lastEntry.value,
+					};
+					continue; // Skip adding the current entry separately
+				}
+			}
+
+			// If the current entry cannot be merged, add it to the result array
+			result.push(entry);
+		}
+
+		return result;
 	}
 }

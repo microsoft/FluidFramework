@@ -102,8 +102,11 @@ export {
 	RangeEntry,
 	RangeMap,
 	RangeQueryResult,
+	cloneRangeMap,
 	setInRangeMap,
 	deleteFromRangeMap,
+	getAllValidEntriesFromMap,
+	mergeRangesWithinMap,
 } from "./rangeMap.js";
 
 export {
