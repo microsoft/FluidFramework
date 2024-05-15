@@ -160,16 +160,20 @@ Favor short and memorable names over longSelfDocumentingNames for important and 
 In the JavaScript community, developers assume the shorter the name the more important the API.
 Long multi-word names are assumed to be rarely used or semi-internal.
 
--   But remember to document any aspects that are not captured by the short name in the API documentation!
+-   Remember to document any aspects that are not captured by the short name in the API documentation!
 
 Make use of well-known abbreviations (but _only_ well-known abbreviations).
-A good rule of thumb is to use the abbreviated form if it’s what you would say out loud (HTML, JSON, min/max, etc.).
+A good rule of thumb is to use the abbreviated form if it's what you would say out loud (HTML, JSON, min/max, etc.).
 
--   Remember to think in terms of accessibility. Would a someone who is not a native English speaker understand the abbreviation? Would someone outside of Microsoft understand it?
+-   Remember to think in terms of accessibility.
+    Would a someone who is not a native English speaker understand the abbreviation?
+    Would someone outside of Microsoft understand it?
 
-A good example is EventEmitter’s `on()` and `off()` pattern, which has largely become the de-facto standard among frameworks. An anti-example is the DOM’s built-in `addEventListener()` and `removeEventListener()`, which frameworks rarely emulate.
+A good example is EventEmitter’s `on()` and `off()` pattern, which has largely become the de-facto standard among frameworks.
+An anti-example is the DOM’s built-in `addEventListener()` and `removeEventListener()`, which frameworks rarely emulate.
 
-Another anti-pattern is function/property names that unnecessarily echo return types or argument types/names. For example, prefer “insert(item: Node)” to “insertItem(itemNode: Node)”.
+Another anti-pattern is function/property names that unnecessarily echo return types or argument types/names.
+For example, prefer `insert(item: Node)` to `insertItem(itemNode: Node)`.
 
 #### ✔ DO use well-known prefixes/suffixes
 
