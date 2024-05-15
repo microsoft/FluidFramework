@@ -145,6 +145,7 @@ import type { Client } from "@fluid-private/test-dds-utils";
  *
  * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodec: IJsonCodec<any, any, any, any> = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
@@ -153,6 +154,7 @@ export const failCodec: IJsonCodec<any, any, any, any> = {
 /**
  * A {@link ICodecFamily} implementation which fails to resolve any codec.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodecFamily: ICodecFamily<any, any> = {
 	resolve: () => assert.fail("Unexpected resolve"),
 	getSupportedFormats: () => [],
