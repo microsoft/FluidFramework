@@ -128,7 +128,9 @@ const getPendingOps = async (
 };
 
 /**
- * Load a Container using testContainerConfig and the given testObjectProvider
+ * Load a Container using testContainerConfig and the given testObjectProvider,
+ * Deferring connection to the service until the returned connect function is called
+ * (simulating returning from offline)
  *
  * @param testObjectProvider - For accessing Loader/Driver
  * @param request - Request to use when loading
@@ -352,9 +354,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 				directory.set(testKey, testValue);
 				const string = await d.getSharedObject<SharedString>(stringId);
-				// todo re-enable after AB#7145
-				// const collection = string.getIntervalCollection(collectionId);
-				// collection.add({ start: testStart, end: testEnd });
+				const collection = string.getIntervalCollection(collectionId);
+				collection.add({ start: testStart, end: testEnd });
 				// Submit a message with an unrecognized type
 				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 				(

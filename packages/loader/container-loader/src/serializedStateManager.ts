@@ -388,8 +388,9 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				details: {
-					...props,
-					stopBlobAttachingSignal: undefined, // Erase this, it's not suitable for logging
+					notifyImminentClosure: props.notifyImminentClosure,
+					sessionExpiryTimerStarted: props.sessionExpiryTimerStarted,
+					snapshotSequenceNumber: props.snapshotSequenceNumber,
 					processedOpsSize: this.processedOps.length,
 				},
 				clientId,
