@@ -63,7 +63,6 @@ describe("SharedString", () => {
 				SharedStringFactory.Attributes,
 			);
 			await sharedString2.load(services);
-			await sharedString2.loaded;
 
 			assert.equal(
 				sharedString.getText(),

@@ -36,6 +36,9 @@ export type EncodedCommit<TChangeset> = {
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
@@ -82,6 +85,7 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly base: EncodedRevisionTag;
 	readonly commits: Commit<TChangeset>[];
 }
+
 const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
@@ -106,3 +110,5 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 		},
 		noAdditionalProps,
 	);
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

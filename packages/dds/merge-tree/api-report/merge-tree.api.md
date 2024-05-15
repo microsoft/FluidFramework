@@ -210,7 +210,7 @@ export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TD
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg;
 
 // @internal (undocumented)
-export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
+export function createDetachedLocalReferencePosition(slidingPreference: SlidingPreference | undefined, refType?: ReferenceType): LocalReferencePosition;
 
 // @internal @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import { EncodedRevisionTag, RevisionTagCodec, type RevisionTag } from "../rebase/index.js";
 
 import { ForestRootId } from "./detachedFieldIndex.js";
 import {
@@ -23,7 +23,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		private readonly options: ICodecOptions,
 	) {}
 
-	public encode(major: Major) {
+	public encode(major: Major): EncodedRevisionTag {
 		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 		/**
@@ -46,7 +46,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		return id;
 	}
 
-	public decode(major: EncodedRevisionTag) {
+	public decode(major: EncodedRevisionTag): RevisionTag {
 		assert(
 			major === "root" || major >= 0,
 			0x890 /* Expected final id on decode of detached field index revision */,

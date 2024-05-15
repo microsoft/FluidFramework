@@ -28,8 +28,9 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
 ### Tips
 
 -   If not done already run `npm run build`
--   Example command - run `node bin/fluid-fetch --saveDir example 'URL'` in the `fetch-tool` directory
-    -   An example URL is something from office.com that looks like `https://www.office.com/launch/fluid/...`
+-   Example command - run `node lib/fluidFetch.js --saveDir example 'get-versions-fetch-url'` in the `fetch-tool` directory
+    -   Look at the `getVersions` call in the relevant driver to build the right url
+    -   If you have access to the document, you can also look at the standard browser devtools and look for the url there as well.
     -   This command creates an `example` directory (if it doesn't exist) in the `fetch-tool` folder.
     -   If run multiple times without clearing the `example` directory, the snapshot will overwrite any old folders or files.
 -   Looking at the `example` directory:

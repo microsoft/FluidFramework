@@ -252,7 +252,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Begin a transaction on this branch. If the transaction is committed via {@link commitTransaction},
 	 * all commits made since this call will be squashed into a single head commit.
-	 * @param repairStore - the repair store associated with this transaction
 	 */
 	public startTransaction(): void {
 		this.assertNotDisposed();
@@ -500,7 +499,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
-	) {
+	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;
 		if (head === upTo) {
 			return undefined;
