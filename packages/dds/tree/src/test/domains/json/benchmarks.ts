@@ -4,6 +4,7 @@
  */
 
 import { ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
+import type { JsonCompatible } from "../../../util/index.js";
 
 export function sum(cursor: ITreeCursor): number {
 	let total = 0;
@@ -37,7 +38,7 @@ export function sumMap(cursor: ITreeCursor): number {
 	return total;
 }
 
-export function sumDirect(jsonObj: any): number {
+export function sumDirect(jsonObj: object): number {
 	let total = 0;
 	for (const value of Object.values(jsonObj)) {
 		if (typeof value === "object" && value !== null) {
