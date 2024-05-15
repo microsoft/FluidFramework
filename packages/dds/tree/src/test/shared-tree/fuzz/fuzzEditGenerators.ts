@@ -142,7 +142,8 @@ export function viewFromState(
 }
 
 function isEmptyStoredSchema(tree: SharedTree): boolean {
-	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const rootFieldSchemaData = (tree.storedSchema as any).rootFieldSchemaData;
 	return rootFieldSchemaData.types.size === 0;
 }
 /**
