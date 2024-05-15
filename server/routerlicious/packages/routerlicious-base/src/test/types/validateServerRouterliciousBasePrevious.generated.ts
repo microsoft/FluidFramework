@@ -147,6 +147,7 @@ declare function get_old_VariableDeclaration_Constants():
 declare function use_current_VariableDeclaration_Constants(
     use: TypeOnly<typeof current.Constants>): void;
 use_current_VariableDeclaration_Constants(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_Constants());
 
 /*

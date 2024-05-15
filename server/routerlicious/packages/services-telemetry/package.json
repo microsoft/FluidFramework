@@ -78,6 +78,16 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_CommonProperties": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Lumber": {
+				"backCompat": false
+			},
+			"EnumDeclaration_LumberEventName": {
+				"backCompat": false
+			}
+		}
 	}
 }
