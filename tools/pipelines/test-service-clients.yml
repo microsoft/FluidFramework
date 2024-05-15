@@ -66,7 +66,7 @@ stages:
           # Disable colorization for tinylicious logs (not useful when printing to a file)
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
-  
+
   - stage: e2e_odsp_client_odsp_server
     displayName: e2e - odsp client with odsp service
     dependsOn: []
@@ -81,7 +81,6 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           odsp__client__clientId: $(odsp-client-clientId)
-          odsp__client__clientSecret: $(odsp-client-clientSecret)
           odsp__client__siteUrl: $(odsp-client-siteUrl)
           odsp__client__driveId: $(odsp-client-driveId)
           odsp__client__login__username: $(odsp-client-login-username)

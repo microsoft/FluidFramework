@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { UsernamePasswordCredential } from "@azure/identity";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	IOdspTokens,
 	TokenRequestCredentials,
 	fetchTokens,
@@ -13,6 +14,7 @@ import {
 	getOdspScope,
 	pushScope,
 	refreshTokens,
+	getAadTenant,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { Mutex } from "async-mutex";
 import { jwtDecode } from "jwt-decode";
@@ -25,23 +27,24 @@ const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
+// Leave a comment here saying a good way to debug auth issues is by setting AZURE_LOG_LEVEL env variable to 'verbose',
+// see https://www.npmjs.com/package/@azure/logger
+/**
+ // TODO: Make sure that tokens are being cached appropriately!
+ * Investigate this:
+ * azure:identity:info UsernamePasswordCredential => More than one account was found authenticated for this Client ID and Tenant ID.
+However, no "authenticationRecord" has been provided for this credential,
+therefore we're unable to pick between these accounts.
+ */
 /**
  * @internal
  */
-export const getMicrosoftConfiguration = (): IClientConfig => ({
+export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 	get clientId() {
 		if (!process.env.login__microsoft__clientId) {
 			throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
 		}
 		return process.env.login__microsoft__clientId;
-	},
-	get clientSecret() {
-		if (!process.env.login__microsoft__secret) {
-			throw new Error(
-				"Client Secret environment variable not set: login__microsoft__secret.",
-			);
-		}
-		return process.env.login__microsoft__secret;
 	},
 });
 
@@ -109,21 +112,23 @@ export class OdspTokenManager {
 
 	public async getOdspTokens(
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
+		debug("Getting odsp tokens");
 		return this.getTokens(false, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
+		debug("Getting push tokens");
 		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
 	}
 
@@ -157,11 +162,35 @@ export class OdspTokenManager {
 	private async getTokens(
 		isPush: boolean,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
+		if (process.env.USE_NEW_AUTH_METHOD) {
+			// const tenantId = process.env.TENANT_ID;
+			// if (!tenantId) {
+			// 	throw new Error("Expected TENANT_ID environment variable to be set.");
+			// }
+			if (tokenConfig.type === "password") {
+				const tenant = getAadTenant(server);
+				const { username, password } = tokenConfig;
+				debug(
+					`Tenant: ${tenant}, client id: ${clientConfig.clientId}, username: ${username}, Password: ${password}`,
+				);
+				const credential = new UsernamePasswordCredential(
+					tenant,
+					clientConfig.clientId,
+					username,
+					password,
+				);
+				const scope = isPush ? pushScope : getOdspScope(server);
+				const accessToken = await credential.getToken(scope);
+				debug(accessToken);
+				// TODO: Resolve refresh token stuff, check if expiry needs to be plumbed thru to places.
+				return { accessToken: accessToken.token, refreshToken: "" };
+			}
+		}
 		const invokeGetTokensCore = async () => {
 			// Don't solely rely on tokenCache lock, ensure serialized execution of
 			// cache update to avoid multiple fetch.
@@ -199,7 +228,7 @@ export class OdspTokenManager {
 	private async getTokensCore(
 		isPush: boolean,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh,
 		forceReauth,
@@ -262,7 +291,7 @@ export class OdspTokenManager {
 	private async acquireTokensWithPassword(
 		server: string,
 		scope: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		username: string,
 		password: string,
 	): Promise<IOdspTokens> {
@@ -277,7 +306,7 @@ export class OdspTokenManager {
 	private async acquireTokensViaBrowserLogin(
 		loginPageUrl: string,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		scope: string,
 		navigator: (url: string) => void,
 		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
