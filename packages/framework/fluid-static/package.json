@@ -132,6 +132,25 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_DataObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidContainer": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_InitialObjects": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
