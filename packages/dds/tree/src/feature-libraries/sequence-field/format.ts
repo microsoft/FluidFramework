@@ -136,6 +136,8 @@ const MarkEffect = Type.Object(
 const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 	tMark: TMark,
 	tNodeChange: TNodeChange,
+	// Return type is intentionally derived.
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
 	Type.Object(
 		{
@@ -148,8 +150,12 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 		noAdditionalProps,
 	);
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
 

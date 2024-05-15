@@ -195,7 +195,7 @@ export function convertNodeSchema(
 		return fromMap.toFlex;
 	}
 
-	const toFlex = () => {
+	const toFlex = (): FlexTreeNodeSchema => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {
