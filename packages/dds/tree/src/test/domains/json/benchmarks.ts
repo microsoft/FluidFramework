@@ -4,7 +4,6 @@
  */
 
 import { ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
-import type { JsonCompatible } from "../../../util/index.js";
 
 export function sum(cursor: ITreeCursor): number {
 	let total = 0;
