@@ -99,4 +99,6 @@ export class CheckoutFlexTreeView<
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
+// TODO: use something other than `any`
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();
