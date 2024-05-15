@@ -325,7 +325,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
 
 	/**
-	 * Returns an iterable of keys in the map.
+	 * Returns an iterable of keys in the map, preserving insertion order.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
@@ -333,7 +333,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	keys(): IterableIterator<FieldKey>;
 
 	/**
-	 * Returns an iterable of values in the map.
+	 * Returns an iterable of values in the map, preserving insertion order.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
@@ -341,7 +341,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
 
 	/**
-	 * Returns an iterable of key, value pairs for every entry in the map.
+	 * Returns an iterable of key, value pairs for every entry in the map, preserving insertion order.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
