@@ -52,7 +52,6 @@ import {
 	DeltaRoot,
 	DeltaVisitor,
 	DetachedFieldIndex,
-	FieldKey,
 	FieldUpPath,
 	IEditableForest,
 	IForestSubscription,
@@ -76,6 +75,10 @@ import {
 	moveToDetachedField,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type Anchor,
+	type AnchorNode,
+	type AnchorSetRootEvents,
+	type TreeStoredSchemaSubscription,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -97,14 +100,12 @@ import {
 	buildForest,
 	createMockNodeKeyManager,
 	cursorForMapTreeNode,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -122,6 +123,9 @@ import {
 	TreeCheckout,
 	TreeContent,
 	createTreeCheckout,
+	type ISharedTreeEditor,
+	type ITransaction,
+	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
@@ -130,13 +134,7 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import {
-	JsonCompatible,
-	Mutable,
-	brand,
-	disposeSymbol,
-	nestedMapFromFlatList,
-} from "../util/index.js";
+import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -508,13 +506,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<SharedTree> {
-		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
+		const tree = await super.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = super.create(runtime, id) as SharedTree;
+		const tree = super.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}
@@ -690,7 +688,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const view = checkoutWithContent(content, args);
@@ -698,7 +695,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -722,7 +718,6 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -735,12 +730,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(
-		branch,
-		content.schema,
-		manager,
-		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
-	);
+	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
 
@@ -1130,7 +1120,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	onDispose?: () => void,
 	nodeKeyManager?: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
 	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
@@ -1142,7 +1131,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		viewSchema,
 		onDispose ?? (() => {}),
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -1195,12 +1183,62 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		brand(defaultNodeKeyFieldKey),
 	);
+}
+
+/**
+ * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
+ */
+export class MockTreeCheckout implements ITreeCheckout {
+	private readonly _editor: ISharedTreeEditor | undefined;
+	public constructor(
+		public readonly forest: IForestSubscription,
+		editor?: ISharedTreeEditor,
+	) {
+		this._editor = editor;
+	}
+
+	public get storedSchema(): TreeStoredSchemaSubscription {
+		throw new Error("'storedSchema' property not implemented in MockTreeCheckout.");
+	}
+	public get editor(): ISharedTreeEditor {
+		if (this._editor === undefined) {
+			throw new Error("No editor provided to MockTreeCheckout.");
+		}
+		return this._editor;
+	}
+	public get transaction(): ITransaction {
+		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
+	}
+	public get events(): ISubscribable<CheckoutEvents> {
+		throw new Error("'events' property not implemented in MockTreeCheckout.");
+	}
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
+	}
+
+	public fork(): ITreeCheckoutFork {
+		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
+	}
+	public merge(view: unknown, disposeView?: unknown): void {
+		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
+	}
+	public rebase(view: ITreeCheckoutFork): void {
+		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
+	}
+	public updateSchema(newSchema: TreeStoredSchema): void {
+		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
+	}
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		throw new Error("Method 'getRemovedRoots' not implemented in MockTreeCheckout.");
+	}
+	public locate(anchor: Anchor): AnchorNode | undefined {
+		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
+	}
 }

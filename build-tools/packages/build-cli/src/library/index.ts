@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	ApiLevel,
-	knownApiLevels,
-	isKnownApiLevel,
-} from "./apiLevel";
+export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel";
 export { ApiTag } from "./apiTag";
 export {
 	generateBumpVersionBranchName,
@@ -22,6 +18,11 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
 export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
+export {
+	unscopedPackageNameString,
+	BaseCommand,
+	GenerateEntrypointsCommand,
+} from "./commands";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {

@@ -36,7 +36,7 @@ export class HitCounterContainerRuntimeFactory extends ModelContainerRuntimeFact
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const hitCounter = await runtime.createDataStore(HitCounter.getFactory().type);
 		await hitCounter.trySetAlias(hitCounterId);
 	}
@@ -44,7 +44,10 @@ export class HitCounterContainerRuntimeFactory extends ModelContainerRuntimeFact
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<HitCounterAppModel> {
 		const hitCounter = await getDataStoreEntryPoint<HitCounter>(runtime, hitCounterId);
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = runtime.scope;
 		const runtimeAttributor = maybeProvidesAttributor.IRuntimeAttributor;

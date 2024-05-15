@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

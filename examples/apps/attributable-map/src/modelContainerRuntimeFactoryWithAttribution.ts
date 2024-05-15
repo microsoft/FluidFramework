@@ -27,7 +27,7 @@ const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 	implements IRuntimeFactory
 {
-	public get IRuntimeFactory() {
+	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
 

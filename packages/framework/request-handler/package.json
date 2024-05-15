@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -115,7 +115,7 @@
 		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-rc.3.0.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

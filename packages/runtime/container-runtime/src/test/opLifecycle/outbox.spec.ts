@@ -5,8 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { ICriticalContainerError, IDeltaManager } from "@fluidframework/container-definitions";
-import { IBatchMessage, IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	IDeltaManager,
+	IBatchMessage,
+	IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

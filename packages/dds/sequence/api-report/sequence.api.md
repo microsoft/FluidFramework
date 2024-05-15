@@ -6,7 +6,6 @@
 
 import { BaseSegment } from '@fluidframework/merge-tree/internal';
 import { Client } from '@fluidframework/merge-tree/internal';
-import { Deferred } from '@fluidframework/core-utils/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -603,9 +602,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @deprecated
     get loaded(): Promise<void>;
-    protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     obliterateRange(start: number, end: number): void;
     protected onConnect(): void;

@@ -301,7 +301,7 @@ export class SizedNestedMap<Key1, Key2, Value> {
 		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
 	}
 
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {
 		return this.nestedMap[Symbol.iterator]();
 	}
 }

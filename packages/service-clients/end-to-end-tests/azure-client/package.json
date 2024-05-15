@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -101,6 +101,14 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test": [
+				"^api-extractor:esnext",
+				"^build:esnext"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,
