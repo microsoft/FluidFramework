@@ -618,6 +618,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(data);
@@ -679,6 +681,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(new Map(data));

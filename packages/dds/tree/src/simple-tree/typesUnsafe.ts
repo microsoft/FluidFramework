@@ -32,6 +32,7 @@ import { TreeNode, Unhydrated } from "./types.js";
  * 2. Deduplicate the safe and unsafe types (possibly by having the safe one call the unsafe ones, or some other trick).
  * 3. Add type tests that check that the two copies of these types produce identical results.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
@@ -190,3 +191,5 @@ export interface FieldSchemaUnsafe<
 	 */
 	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
