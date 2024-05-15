@@ -58,13 +58,16 @@ When considering forbidding common practices (such as linear search or using str
 
 The most successful technologies are those that can be adopted incrementally, are reasonable to retrofit into existing architectures, and build on familiar patterns and concepts.
 
-Front-end developers prefer frameworks that interoperate via plain data and callbacks as opposed to formal contracts (see the data and eventing guidelines). Even for greenfield projects, developers (and companies) are averse to tying themselves foundationally to a specific technology, architecture, or pattern.
+Front-end developers prefer frameworks that interoperate via plain data and callbacks as opposed to formal contracts.
+Even for [greenfield projects](https://en.wikipedia.org/wiki/Greenfield_project), developers (and companies) are averse to tying themselves foundationally to a specific technology, architecture, or pattern.
 
 #### ✘ AVOID terminology, patterns, or concepts that require explanation
 
-Clever patterns and elegant generalizations initially have negative value if they need to be explained. To be net positive, the return on investment of learning a new pattern or concept needs to be immediate and obvious to the end user.
+Clever patterns and elegant generalizations initially have negative value if they need to be explained.
+To be net positive, the return on investment of learning a new pattern or concept needs to be immediate and obvious to the end user.
 
-Remember that a frontend developer's attention is divided among the dozens of packages they are weaving together to ship a product. Their goal is to learn "just enough" about your framework to understand if it solves their current problem.
+Remember that a frontend developer's attention is divided among the dozens of packages they are weaving together to ship a product.
+Their goal is to learn "just enough" about your framework to understand if it solves their current problem.
 
 #### ✔ DO align with JavaScript and DOM APIs
 
@@ -73,11 +76,14 @@ You should give more weight to recent API additions as these better reflect mode
 
 #### ✔ DO provide reasonable default behaviors for boundary cases
 
-Avoid throwing runtime errors when there is a reasonable default behavior. This is especially true if there is precedent in the standard built-in types or DOM.
+Avoid throwing runtime errors when there is a reasonable and "obvious" default behavior.
+This is especially true if there is precedent in the standard built-in types or DOM.
 
-The JavaScript ecosystem relies on developers to provide snippets of glue code to connect packages authored by different parties. This is how JavaScript achieves a high degree of code reuse without requiring prearranged contracts.
+The JavaScript ecosystem relies on developers to provide snippets of glue code to connect packages authored by different parties.
+This is how JavaScript achieves a high degree of code reuse without requiring prearranged contracts.
 
-Developers expect this glue code to be concise and do not appreciate being required to anticipate, check for, and explicitly handle boundary conditions. It is rare that a front-end developer complains about an API “swallowing errors” and generally views helpful coercion as part of the framework’s value.
+Developers expect this glue code to be concise and do not appreciate being required to anticipate, check for, and explicitly handle boundary conditions.
+It is rare that a front-end developer complains about an API “swallowing errors” and generally views helpful coercion as part of the framework’s value.
 
 ```typescript
 // Not an error: non-existent items in requested slice are elided
@@ -85,6 +91,8 @@ Developers expect this glue code to be concise and do not appreciate being requi
 // Not an error: slicing zero items returns an empty array
 [0, 1, 2, 3].slice(0, 0); // -> []
 ```
+
+Any default behavior(s) should be clearly documented in the API's source-code documentation.
 
 #### ✘ AVOID exposing advanced or complex types
 
@@ -106,7 +114,7 @@ This is a little advanced, but still okay:
 from<T, U>(array: ArrayLike<T>, mapFn: (v: T, k: number) => U, thisArg?: any): U[];
 ```
 
-This complex/advanced:
+This complex/advanced and probably shouldn't appear in a user-facing API:
 
 ```typescript
 type CopyablePrimitives = null | boolean | number | string
@@ -128,7 +136,7 @@ from<TType, TIn extends Copyable<TType>, TOut extends Copied<TType>>(
 
 #### ✔ DO use function overloading
 
-Because function overloading is inconvenient to implement in the JavaScript language, framework engineers often avoid it.
+Because [function overloading](https://www.typescriptlang.org/docs/handbook/2/functions.html#function-overloads) is inconvenient to implement in the JavaScript language, framework engineers often avoid it.
 However, overloading is a powerful tool for reducing IntelliSense clutter and helping developers discover alternative ways to express the same operation.
 
 ### Naming
