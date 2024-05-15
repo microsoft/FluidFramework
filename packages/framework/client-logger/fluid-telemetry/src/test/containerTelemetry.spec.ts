@@ -13,12 +13,11 @@ import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/flu
 import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
 import {
+	AppInsightsTelemetryConsumer,
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
-	type IFluidTelemetry,
-	type ITelemetryConsumer,
 } from "../index.js";
 
 /**
@@ -57,17 +56,6 @@ describe("container telemetry via", () => {
 
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockFluidContainer = new MockFluidContainer();
-
-		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
-			public constructor(private readonly client: ApplicationInsights) {}
-
-			public consume(event: IFluidTelemetry): void {
-				this.client.trackEvent({
-					name: event.eventName,
-					properties: event,
-				});
-			}
-		}
 
 		telemetryConfig = {
 			container: mockFluidContainer as unknown as IFluidContainer,

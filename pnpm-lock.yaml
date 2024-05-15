@@ -7920,6 +7920,7 @@ importers:
   packages/framework/client-logger/fluid-telemetry:
     specifiers:
       '@arethetypeswrong/cli': ^0.15.2
+      '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.38.0
@@ -7927,6 +7928,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/tinylicious-client': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/chai': ^4.0.0
@@ -7940,6 +7942,8 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
+      start-server-and-test: ^2.0.3
+      tinylicious: ^4.0.0
       tslib: ^1.10.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7951,10 +7955,12 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
+      '@fluid-experimental/tree': link:../../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.38.0
       '@fluidframework/build-tools': 0.38.0
+      '@fluidframework/tinylicious-client': link:../../../service-clients/tinylicious-client
       '@microsoft/api-extractor': 7.43.1_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
@@ -7967,6 +7973,8 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
+      start-server-and-test: 2.0.3
+      tinylicious: 4.0.0
       tslib: 1.14.1
       typescript: 5.1.6
 
