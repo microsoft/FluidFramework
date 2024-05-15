@@ -36,6 +36,7 @@ import {
 	makeAnonChange,
 	makeDetachedNodeId,
 	mapCursorField,
+	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../core/index.js";
@@ -81,7 +82,7 @@ import {
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
-import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
+import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
 	CrossFieldKey,
@@ -89,6 +90,7 @@ import {
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
+	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
@@ -212,6 +214,7 @@ export class ModularChangeFamily
 			makeAnonChange({
 				fieldChanges: new Map(),
 				nodeChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 			}),
 		).change;
@@ -289,7 +292,7 @@ export class ModularChangeFamily
 					fieldChange2,
 					composeNodes,
 					genId,
-					newCrossFieldManager(crossFieldTable, fieldChange, false),
+					new CrossFieldManagerI(crossFieldTable, fieldChange, false),
 					revisionMetadata,
 				);
 				composedChange.change = brand(amendedChange);
@@ -317,6 +320,13 @@ export class ModularChangeFamily
 			change2,
 		]);
 
+		// XXX
+		const composedNodeToParent = nestedMapFromFlatList([
+			...nestedMapToFlatList(change1.change.nodeToParent),
+			...nestedMapToFlatList(change2.change.nodeToParent),
+		]);
+
+		// XXX
 		const composedCrossFieldKeys = mergeBTrees(
 			change1.change.crossFieldKeys,
 			change2.change.crossFieldKeys,
@@ -325,6 +335,7 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields, composedNodeChanges),
 			composedNodeChanges,
+			composedNodeToParent,
 			composedCrossFieldKeys,
 			idState.maxId,
 			revInfos,
@@ -362,7 +373,7 @@ export class ModularChangeFamily
 				change2: normalizedFieldChange2,
 			} = this.normalizeFieldChanges(fieldChange1, fieldChange2, genId, revisionMetadata);
 
-			const manager = newCrossFieldManager(crossFieldTable, fieldChange1 ?? fieldChange2);
+			const manager = new CrossFieldManagerI(crossFieldTable, fieldChange1 ?? fieldChange2);
 			const change1Normalized =
 				normalizedFieldChange1 ?? fieldKind.changeHandler.createEmpty();
 			const change2Normalized =
@@ -535,7 +546,7 @@ export class ModularChangeFamily
 					originalFieldChange,
 					isRollback,
 					genId,
-					newCrossFieldManager(crossFieldTable, fieldChange),
+					new CrossFieldManagerI(crossFieldTable, fieldChange),
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -556,7 +567,8 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			invertedFields,
 			invertedNodes,
-			change.change.crossFieldKeys,
+			change.change.nodeToParent,
+			change.change.crossFieldKeys, // XXX: Source/dest needs to be inverted
 			idState.maxId,
 			[],
 			change.change.constraintViolationCount,
@@ -575,7 +587,7 @@ export class ModularChangeFamily
 		const invertedFields: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of changes) {
-			const manager = newCrossFieldManager(crossFieldTable, fieldChange);
+			const manager = new CrossFieldManagerI(crossFieldTable, fieldChange);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
@@ -626,11 +638,16 @@ export class ModularChangeFamily
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
+
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
-			fieldToContext: new Map(),
-			rebasedNodeCache: new Map(),
+			newChange: change,
+			baseChange: over.change,
+			baseFieldToContext: new Map(),
+			rebasedFields: new Set(),
 			nodeIdPairs: [],
+			affectedNewFields: new BTree(),
+			affectedBaseFields: new BTree(),
 		};
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
@@ -644,45 +661,26 @@ export class ModularChangeFamily
 			getBaseRevisions,
 		};
 
-		const rebasedFields = this.rebaseFieldMap(
-			change.fieldChanges,
-			over.change.fieldChanges,
-			genId,
+		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
+		populateNestedMap(change.nodeChanges, rebasedNodes, true);
+
+		const rebasedFields = this.rebaseIntersectingFields(
 			crossFieldTable,
+			rebasedNodes,
+			genId,
+			constraintState,
 			rebaseMetadata,
 		);
 
-		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		for (const [newId, baseId, existenceState] of crossFieldTable.nodeIdPairs) {
-			const newNodeChange =
-				newId !== undefined
-					? tryGetFromNestedMap(change.nodeChanges, newId.revision, newId.localId)
-					: undefined;
+		this.rebaseFieldsWithoutBaseChanges(
+			rebasedFields,
+			rebasedNodes,
+			crossFieldTable,
+			genId,
+			rebaseMetadata,
+		);
 
-			const baseNodeChange =
-				baseId !== undefined
-					? tryGetFromNestedMap(
-							over.change.nodeChanges,
-							baseId.revision,
-							baseId.localId,
-					  ) ?? fail("Unknown node ID")
-					: {};
-
-			const rebasedNode = this.rebaseNodeChange(
-				newNodeChange,
-				baseNodeChange,
-				genId,
-				crossFieldTable,
-				rebaseMetadata,
-				constraintState,
-				existenceState,
-			);
-
-			if (rebasedNode !== undefined) {
-				const nodeId = newId ?? baseId ?? fail("Should not have two undefined IDs");
-				setInNestedMap(rebasedNodes, nodeId.revision, nodeId.localId, rebasedNode);
-			}
-		}
+		this.rebaseFieldsWithoutNewChanges();
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
@@ -690,7 +688,7 @@ export class ModularChangeFamily
 			constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 			for (const field of fieldsToUpdate) {
 				// TODO: Should we copy the context table out before this loop?
-				const context = crossFieldTable.fieldToContext.get(field);
+				const context = crossFieldTable.baseFieldToContext.get(field);
 				assert(context !== undefined, 0x852 /* Every field should have a context */);
 				const {
 					fieldKind,
@@ -708,7 +706,7 @@ export class ModularChangeFamily
 					baseChangeset,
 					(curr, base, existenceState) => curr,
 					genId,
-					newCrossFieldManager(crossFieldTable, field),
+					new RebaseManager(crossFieldTable, field),
 					rebaseMetadata,
 				);
 			}
@@ -717,6 +715,7 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			this.pruneFieldMap(rebasedFields, rebasedNodes),
 			rebasedNodes,
+			change.nodeToParent,
 			change.crossFieldKeys,
 			idState.maxId,
 			change.revisions,
@@ -727,45 +726,266 @@ export class ModularChangeFamily
 		);
 	}
 
+	// This performs a first pass on all fields which have both new and base changes.
+	// TODO: Can we also handle additional passes in this method?
+	private rebaseIntersectingFields(
+		crossFieldTable: RebaseTable,
+		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
+		genId: IdAllocator,
+		constraintState: ConstraintState,
+		metadata: RebaseRevisionMetadata,
+	): FieldChangeMap {
+		const change = crossFieldTable.newChange;
+		const baseChange = crossFieldTable.baseChange;
+		const rebasedFields = this.rebaseFieldMap(
+			change.fieldChanges,
+			baseChange.fieldChanges,
+			genId,
+			crossFieldTable,
+			metadata,
+		);
+
+		// This loop processes all fields which have both base and new changes.
+		// Note that the call to `rebaseNodeChanges` can add entries to `crossFieldTable.nodeIdPairs`.
+		for (const [newId, baseId, existenceState] of crossFieldTable.nodeIdPairs) {
+			const newNodeChange =
+				tryGetFromNestedMap(change.nodeChanges, newId.revision, newId.localId) ??
+				fail("Unknown node ID");
+
+			const baseNodeChange =
+				tryGetFromNestedMap(baseChange.nodeChanges, baseId.revision, baseId.localId) ??
+				fail("Unknown node ID");
+
+			const rebasedNode = this.rebaseNodeChange(
+				newNodeChange,
+				baseNodeChange,
+				genId,
+				crossFieldTable,
+				metadata,
+				constraintState,
+				existenceState,
+			);
+
+			if (rebasedNode !== undefined) {
+				setInNestedMap(rebasedNodes, newId.revision, newId.localId, rebasedNode);
+			}
+		}
+
+		return rebasedFields;
+	}
+
+	// This processes fields which have no base changes but have been invalidated by another field.
+	private rebaseFieldsWithoutBaseChanges(
+		rebasedFields: FieldChangeMap,
+		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
+		crossFieldTable: RebaseTable,
+		genId: IdAllocator,
+		metadata: RebaseRevisionMetadata,
+	) {
+		crossFieldTable.affectedNewFields.forEachPair(([revision, localId, fieldKey]) => {
+			const fieldMap = fieldMapFromNodeId(
+				rebasedFields,
+				rebasedNodes,
+				localId !== undefined ? { revision, localId } : undefined,
+			);
+
+			const fieldChange = fieldMap.get(fieldKey);
+			assert(fieldChange !== undefined, "Cross field key registered for empty field");
+
+			if (crossFieldTable.rebasedFields.has(fieldChange)) {
+				// This field has already been processed because there were base changes.
+				return;
+			}
+
+			// This field has no changes in the base changeset, otherwise it would have been added to `crossFieldTable.rebasedFields`
+			// when processing fields with both base and new changes.
+			const rebaseChild = (
+				child: NodeId | undefined,
+				baseChild: NodeId | undefined,
+				stateChange: NodeExistenceState | undefined,
+			) => {
+				assert(baseChild === undefined, "There should be no base changes in this field");
+				return child;
+			};
+
+			const handler = getFieldKind(this.fieldKinds, fieldChange.fieldKind).changeHandler;
+			const rebasedField = handler.rebaser.rebase(
+				fieldChange.change,
+				handler.createEmpty(),
+				rebaseChild,
+				genId,
+				new RebaseManager(crossFieldTable, fieldChange), // XXX: Is this the right field change?
+				metadata,
+			);
+
+			fieldMap.set(fieldKey, { ...fieldChange, change: rebasedField });
+		});
+	}
+
+	// This processes fields which have no new changes but have been invalidated by another field.
+	private rebaseFieldsWithoutNewChanges(
+		rebasedFields: FieldChangeMap,
+		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
+		crossFieldTable: RebaseTable,
+		genId: IdAllocator,
+		metadata: RebaseRevisionMetadata,
+	) {
+		const baseChange = crossFieldTable.baseChange;
+		crossFieldTable.affectedBaseFields.forEachPair(([revision, localId, fieldKey]) => {
+			const nodeId = localId !== undefined ? { revision, localId } : undefined;
+			const baseFieldChange = fieldMapFromNodeId(
+				baseChange.fieldChanges,
+				baseChange.nodeChanges,
+				nodeId,
+			).get(fieldKey);
+
+			assert(baseFieldChange !== undefined, "Cross field key registered for empty field");
+			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
+				// This field has already been processed because there were changes to rebase.
+				return;
+			}
+
+			// This field has no changes in the new changeset, otherwise it would have been added to
+			// `crossFieldTable.baseFieldToContext` when processing fields with both base and new changes.
+			const rebaseChild = (
+				child: NodeId | undefined,
+				baseChild: NodeId | undefined,
+				stateChange: NodeExistenceState | undefined,
+			) => {
+				assert(child === undefined, "There should be no new changes in this field");
+				return child;
+			};
+
+			const handler = getFieldKind(this.fieldKinds, baseFieldChange.fieldKind).changeHandler;
+			const rebasedField = handler.rebaser.rebase(
+				handler.createEmpty(),
+				baseFieldChange.change,
+				rebaseChild,
+				genId,
+				new RebaseManager(crossFieldTable, baseFieldChange),
+				metadata,
+			);
+
+			const rebasedFieldChange: FieldChange = { ...baseFieldChange, change: rebasedField };
+			this.attachRebasedField(
+				rebasedFields,
+				rebasedNodes,
+				crossFieldTable,
+				rebasedFieldChange,
+				{ nodeId, field: fieldKey },
+			);
+		});
+	}
+
+	private attachRebasedField(
+		rebasedFields: FieldChangeMap,
+		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
+		crossFieldTable: RebaseTable,
+		rebasedField: FieldChange,
+		{ nodeId: nodeId, field: fieldKey }: FieldId,
+	) {
+		if (nodeId === undefined) {
+			rebasedFields.set(fieldKey, rebasedField);
+			return;
+		}
+
+		const rebasedNode: NodeChangeset = rebasedNodeFromBaseNode(nodeId);
+		if (rebasedNode !== undefined) {
+			if (rebasedNode.fieldChanges === undefined) {
+				rebasedNode.fieldChanges = new Map([[fieldKey, rebasedField]]);
+				return;
+			}
+
+			assert(!rebasedNode.fieldChanges.has(fieldKey), "Expected an empty field");
+			rebasedNode.fieldChanges.set(fieldKey, rebasedField);
+			return;
+		}
+
+		const newNode: NodeChangeset = {
+			fieldChanges: new Map([[fieldKey, rebasedField]]),
+		};
+
+		setInNestedMap(rebasedNodes, nodeId.revision, nodeId.localId, newNode);
+
+		const parentFieldId = tryGetFromNestedMap(
+			crossFieldTable.baseChange.nodeToParent,
+			nodeId.revision,
+			nodeId.localId,
+		);
+
+		assert(parentFieldId !== undefined, "Parent field should be defined in map");
+		this.attachRebasedNode(nodeId, parentFieldId);
+	}
+
+	private attachRebasedNode(
+		rebasedFields: FieldChangeMap,
+		table: RebaseTable,
+		rebasedNode: NodeId,
+		baseFieldId: FieldId,
+	) {
+		if (baseFieldId.nodeId === undefined) {
+			table.addMovedNode(baseFieldId, rebasedNode, rebasedNode);
+			return;
+		}
+
+		const rebasedParentNode: NodeChangeset = rebasedNodeFromBaseNode(baseFieldId.nodeId);
+		if (rebasedParentNode !== undefined) {
+			return;
+		}
+
+		table.addMovedNode(baseFieldId, rebasedNode, rebasedNode);
+
+		const baseFieldChange: FieldChange = fieldChangeFromId(table.baseChange, baseFieldId);
+		const handler = getChangeHandler(this.fieldKinds, baseFieldChange.fieldKind);
+		const rebasedChangeset = handler.rebaser.rebase(
+			handler.createEmpty(),
+			baseFieldChange.change,
+			(id1, id2) => id1,
+			idAllocator,
+			new RebaseManager(table, baseFieldChange),
+			metadata,
+		);
+
+		const rebasedField: FieldChange = { ...baseFieldChange, change: brand(rebasedChangeset) };
+
+		this.attachRebasedField(rebasedFields, rebasedNodes, table, rebasedField, baseFieldId);
+	}
+
 	private rebaseFieldMap(
 		change: FieldChangeMap,
 		over: FieldChangeMap,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
-		existenceState: NodeExistenceState = NodeExistenceState.Alive,
+		existenceState: NodeExistenceState = NodeExistenceState.Alive, // XXX
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
-		// Rebase fields contained in the base changeset
-		for (const [field, baseChanges] of over) {
-			const fieldChange: FieldChange = change.get(field) ?? {
-				fieldKind: genericFieldKind.identifier,
-				change: brand(newGenericChangeset()),
-			};
+		for (const [field, fieldChange] of change) {
+			const baseChange = over.get(field);
+			if (baseChange === undefined) {
+				rebasedFields.set(field, fieldChange);
+				continue;
+			}
+
 			const {
 				fieldKind,
 				change1: fieldChangeset,
 				change2: baseChangeset,
-			} = this.normalizeFieldChanges(fieldChange, baseChanges, genId, revisionMetadata);
+			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
 
-			const manager = newCrossFieldManager(crossFieldTable, fieldChange);
+			// XXX: Is this the right field change? Should we use a field ID instead?
+			const manager = new RebaseManager(crossFieldTable, fieldChange);
 
 			const rebaseChild = (
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
 			) => {
-				crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
-				return (
-					child ??
-					// The fact `child` is undefined means that the changeset to rebase does not include changes for
-					// this node or its descendants. However, it's possible that it will after rebasing.
-					// In that case, we will need a NodeId to represent these changes under in the rebased changeset.
-					// We adopt `baseChild` for this purpose.
-					baseChild ??
-					fail("Should not have two undefined node IDs")
-				);
+				if (child !== undefined && baseChild !== undefined) {
+					crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
+				}
+				return child;
 			};
 
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
@@ -784,85 +1004,44 @@ export class ModularChangeFamily
 
 			rebasedFields.set(field, rebasedFieldChange);
 
-			crossFieldTable.fieldToContext.set(fieldChange, {
-				baseChange: baseChanges,
+			crossFieldTable.baseFieldToContext.set(baseChange, {
+				baseChange,
 				newChange: fieldChange,
 				rebasedChange: rebasedFieldChange,
 			});
-		}
 
-		// Rebase the fields of the new changeset which don't have a corresponding base field.
-		for (const [field, fieldChange] of change) {
-			if (!over?.has(field)) {
-				const baseChanges: FieldChange = {
-					fieldKind: genericFieldKind.identifier,
-					change: brand(newGenericChangeset()),
-				};
-
-				const {
-					fieldKind,
-					change1: fieldChangeset,
-					change2: baseChangeset,
-				} = this.normalizeFieldChanges(fieldChange, baseChanges, genId, revisionMetadata);
-
-				// TODO: Don't we need to add an entry in the context table?
-				const manager = newCrossFieldManager(crossFieldTable, fieldChange);
-				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(
-					fieldChangeset,
-					baseChangeset,
-					(child, baseChild) => {
-						assert(
-							baseChild === undefined,
-							0x5b6 /* This field should not have any base changes */,
-						);
-
-						crossFieldTable.nodeIdPairs.push([child, undefined, existenceState]);
-						return child;
-					},
-					genId,
-					manager,
-					revisionMetadata,
-					existenceState,
-				);
-				const rebasedFieldChange: FieldChange = {
-					fieldKind: fieldKind.identifier,
-					change: brand(rebasedChangeset),
-				};
-				rebasedFields.set(field, rebasedFieldChange);
-			}
+			crossFieldTable.rebasedFields.add(rebasedFieldChange);
 		}
 
 		return rebasedFields;
 	}
 
 	private rebaseNodeChange(
-		change: NodeChangeset | undefined,
-		over: NodeChangeset | undefined,
+		change: NodeChangeset,
+		over: NodeChangeset,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
-	): NodeChangeset | undefined {
-		const key = change ?? over;
-		if (key === undefined) {
-			return undefined;
-		}
-
+	): NodeChangeset {
 		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
 
-		const fieldChanges = this.rebaseFieldMap(
-			change?.fieldChanges ?? new Map(),
-			baseMap,
-			genId,
-			crossFieldTable,
-			revisionMetadata,
-			existenceState,
-		);
+		const fieldChanges =
+			change.fieldChanges !== undefined && over.fieldChanges !== undefined
+				? this.rebaseFieldMap(
+						change?.fieldChanges ?? new Map(),
+						baseMap,
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+						existenceState,
+				  )
+				: change.fieldChanges;
 
 		const rebasedChange: NodeChangeset = {};
 
-		if (fieldChanges.size > 0) {
+		if (fieldChanges !== undefined && fieldChanges.size > 0) {
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
@@ -883,7 +1062,6 @@ export class ModularChangeFamily
 			}
 		}
 
-		crossFieldTable.rebasedNodeCache.set(key, rebasedChange);
 		return rebasedChange;
 	}
 
@@ -957,11 +1135,15 @@ export class ModularChangeFamily
 			]),
 		);
 
-		// XXX: Update crossFieldKeys
 		const updated: Mutable<ModularChangeset> = {
 			...change,
 			fieldChanges: updatedFields,
 			nodeChanges: updatedNodes,
+			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
+				change.crossFieldKeys,
+				oldRevisions,
+				newRevision,
+			),
 		};
 
 		if (change.builds !== undefined) {
@@ -1032,6 +1214,35 @@ export class ModularChangeFamily
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+function replaceCrossFieldKeyTableRevisions(
+	table: CrossFieldKeyTable,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): CrossFieldKeyTable {
+	const updated: CrossFieldKeyTable = new BTree();
+	table.forEachPair(([target, revision, id], field) => {
+		const updatedKey: CrossFieldKey = [
+			target,
+			replaceRevision(revision, oldRevisions, newRevision),
+			id,
+		];
+
+		const updatedNodeId =
+			field.nodeId !== undefined
+				? replaceAtomRevisions(field.nodeId, oldRevisions, newRevision)
+				: undefined;
+
+		const updatedValue: FieldId = {
+			...field,
+			nodeId: updatedNodeId,
+		};
+
+		updated.set(updatedKey, updatedValue);
+	});
+
+	return updated;
 }
 
 function replaceRevision(
@@ -1270,6 +1481,7 @@ export function updateRefreshers(
 	return makeModularChangeset(
 		fieldChanges,
 		nodeChanges,
+		change.nodeToParent,
 		change.crossFieldKeys,
 		maxId,
 		revisions,
@@ -1463,33 +1675,27 @@ interface InvertContext {
 }
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
+	readonly baseChange: ModularChangeset;
+	readonly newChange: ModularChangeset;
+
 	/**
-	 * Maps from the FieldChange key used for the CrossFieldTable (which is the FieldChange being rebased)
-	 * to context for the field.
+	 * Maps from the FieldChange key used for the CrossFieldTable (which is the base FieldChange)
+	 * to the context for the field.
 	 */
-	fieldToContext: Map<FieldChange, RebaseFieldContext>;
-	/**
-	 * This map caches the output of a prior rebasing computation for a node, keyed on that computation's input.
-	 * The input for such a computation is characterized by a pair of node changesets:
-	 * - The node changeset from the input changeset being rebased
-	 * - The corresponding node changeset from the changeset being rebased over.
-	 *
-	 * Either of these may be undefined so we adopt the following convention:
-	 * - If the node changeset from the changeset being rebased is defined, then we use that as the key
-	 * - Otherwise, if the node changeset from the changeset being rebased over is defined, then we use that as the key
-	 * - Otherwise, we don't cache the output (which will be undefined anyway).
-	 *
-	 * This map is needed once we switch from the initial pass (which generates a new changeset) to the second pass which
-	 * performs surgery on the changeset generated in the first pass: we don't want to re-run the rebasing of nested
-	 * changes. Instead we want to keep using the objects generated in the first pass and mutate them where needed.
-	 */
-	rebasedNodeCache: Map<NodeChangeset, NodeChangeset>;
+	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
+
+	readonly rebasedFields: Set<FieldChange>;
 
 	/**
 	 * List of (newId, baseId) pairs encountered so far.
 	 */
-	nodeIdPairs: [NodeId | undefined, NodeId | undefined, NodeExistenceState | undefined][];
+	readonly nodeIdPairs: [NodeId, NodeId, NodeExistenceState | undefined][];
+
+	readonly affectedNewFields: BTree<FieldIdKey, boolean>;
+	readonly affectedBaseFields: BTree<FieldIdKey, boolean>;
 }
+
+type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
 
 interface RebaseFieldContext {
 	baseChange: FieldChange;
@@ -1549,77 +1755,128 @@ function newConstraintState(violationCount: number): ConstraintState {
 	};
 }
 
-interface CrossFieldManagerI<T> extends CrossFieldManager {
-	table: CrossFieldTable<T>;
+class CrossFieldManagerI<T> implements CrossFieldManager {
+	public constructor(
+		protected readonly crossFieldTable: CrossFieldTable<T>,
+		private readonly currentFieldKey: T,
+		protected readonly allowInval = true,
+	) {}
+
+	public set(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+		newValue: unknown,
+		invalidateDependents: boolean,
+	) {
+		if (invalidateDependents && this.allowInval) {
+			const lastChangedId = (id as number) + count - 1;
+			let firstId = id;
+			while (firstId <= lastChangedId) {
+				const dependentEntry = getFirstFromCrossFieldMap(
+					this.getDependents(target),
+					revision,
+					firstId,
+					lastChangedId - firstId + 1,
+				);
+				if (dependentEntry.value !== undefined) {
+					this.crossFieldTable.invalidatedFields.add(dependentEntry.value);
+				}
+
+				firstId = brand(firstId + dependentEntry.length);
+			}
+		}
+		setInCrossFieldMap(this.getMap(target), revision, id, count, newValue);
+	}
+
+	public get(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+		addDependency: boolean,
+	) {
+		if (addDependency) {
+			// We assume that if there is already an entry for this ID it is because
+			// a field handler has called compose on the same node multiple times.
+			// In this case we only want to update the latest version, so we overwrite the dependency.
+			setInCrossFieldMap(
+				this.getDependents(target),
+				revision,
+				id,
+				count,
+				this.currentFieldKey,
+			);
+		}
+		return getFirstFromCrossFieldMap(this.getMap(target), revision, id, count);
+	}
+
+	private getMap(target: CrossFieldTarget) {
+		return target === CrossFieldTarget.Source
+			? this.crossFieldTable.srcTable
+			: this.crossFieldTable.dstTable;
+	}
+
+	private getDependents(target: CrossFieldTarget) {
+		return target === CrossFieldTarget.Source
+			? this.crossFieldTable.srcDependents
+			: this.crossFieldTable.dstDependents;
+	}
 }
 
-function newCrossFieldManager<T>(
-	crossFieldTable: CrossFieldTable<T>,
-	currentFieldKey: T,
-	allowInval = true,
-): CrossFieldManagerI<T> {
-	const getMap = (target: CrossFieldTarget) =>
-		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
+class RebaseManager extends CrossFieldManagerI<FieldChange> {
+	public constructor(table: RebaseTable, currentField: FieldChange, allowInval = true) {
+		super(table, currentField, allowInval);
+	}
 
-	const getDependents = (target: CrossFieldTarget) =>
-		target === CrossFieldTarget.Source
-			? crossFieldTable.srcDependents
-			: crossFieldTable.dstDependents;
+	public override set(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+		newValue: unknown,
+		invalidateDependents: boolean,
+	) {
+		if (invalidateDependents && this.allowInval) {
+			const newFieldId = this.table.newChange.crossFieldKeys.get([target, revision, id]);
+			if (newFieldId !== undefined) {
+				this.table.affectedNewFields.set(
+					[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
+					true,
+				);
+			} else {
+				const baseFieldId = this.table.baseChange.crossFieldKeys.get([
+					target,
+					revision,
+					id,
+				]);
 
-	const manager = {
-		table: crossFieldTable,
-
-		set: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: ChangesetLocalId,
-			count: number,
-			newValue: unknown,
-			invalidateDependents: boolean,
-		) => {
-			if (invalidateDependents && allowInval) {
-				const lastChangedId = (id as number) + count - 1;
-				let firstId = id;
-				while (firstId <= lastChangedId) {
-					const dependentEntry = getFirstFromCrossFieldMap(
-						getDependents(target),
-						revision,
-						firstId,
-						lastChangedId - firstId + 1,
+				if (baseFieldId !== undefined) {
+					this.table.affectedBaseFields.set(
+						[
+							baseFieldId.nodeId?.revision,
+							baseFieldId.nodeId?.localId,
+							baseFieldId.field,
+						],
+						true,
 					);
-					if (dependentEntry.value !== undefined) {
-						crossFieldTable.invalidatedFields.add(dependentEntry.value);
-					}
-
-					firstId = brand(firstId + dependentEntry.length);
 				}
 			}
-			setInCrossFieldMap(getMap(target), revision, id, count, newValue);
-		},
+		}
 
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: ChangesetLocalId,
-			count: number,
-			addDependency: boolean,
-		) => {
-			if (addDependency) {
-				// We assume that if there is already an entry for this ID it is because
-				// a field handler has called compose on the same node multiple times.
-				// In this case we only want to update the latest version, so we overwrite the dependency.
-				setInCrossFieldMap(getDependents(target), revision, id, count, currentFieldKey);
-			}
-			return getFirstFromCrossFieldMap(getMap(target), revision, id, count);
-		},
-	};
+		super.set(target, revision, id, count, newValue, invalidateDependents);
+	}
 
-	return manager;
+	private get table(): RebaseTable {
+		return this.crossFieldTable as RebaseTable;
+	}
 }
 
 function makeModularChangeset(
 	fieldChanges: FieldChangeMap | undefined = undefined,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset> | undefined = undefined,
+	nodeToParent: ChangeAtomIdMap<FieldId> | undefined = undefined,
 	crossFieldKeys: CrossFieldKeyTable | undefined = undefined,
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
@@ -1631,6 +1888,7 @@ function makeModularChangeset(
 	const changeset: Mutable<ModularChangeset> = {
 		fieldChanges: fieldChanges ?? new Map(),
 		nodeChanges: nodeChanges ?? new Map(),
+		nodeToParent: nodeToParent ?? new Map(),
 		crossFieldKeys: crossFieldKeys ?? new BTree(),
 	};
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1725,6 +1983,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			field,
 			{ fieldKind, change },
 			new Map(),
+			new Map(),
 			new BTree(),
 			this.idAllocator,
 			crossFieldKeys,
@@ -1745,6 +2004,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined,
 							undefined,
 							undefined,
+							undefined,
 							this.idAllocator.getMaxId(),
 							undefined,
 							undefined,
@@ -1756,6 +2016,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 								fieldKind: change.fieldKind,
 								change: change.change,
 							},
+							new Map(),
 							new Map(),
 							new BTree(),
 							this.idAllocator,
@@ -1787,6 +2048,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				path,
 				nodeChange,
 				new Map(),
+				new Map(),
 				new BTree(),
 				this.idAllocator,
 			),
@@ -1798,9 +2060,11 @@ function buildModularChangesetFromField(
 	path: FieldUpPath,
 	fieldChange: FieldChange,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset>,
+	nodeToParent: ChangeAtomIdMap<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator = idAllocatorFromMaxId(),
 	localCrossFieldKeys: CrossFieldKey[] = [],
+	childNode: NodeId | undefined = undefined,
 ): ModularChangeset {
 	const fieldChanges: FieldChangeMap = new Map([[path.field, fieldChange]]);
 
@@ -1809,9 +2073,17 @@ function buildModularChangesetFromField(
 			crossFieldKeys.set(key, { nodeId: undefined, field: path.field });
 		}
 
+		if (childNode !== undefined) {
+			setInNestedMap(nodeToParent, childNode.revision, childNode.localId, {
+				nodeId: undefined,
+				field: path.field,
+			});
+		}
+
 		return makeModularChangeset(
 			fieldChanges,
 			nodeChanges,
+			nodeToParent,
 			crossFieldKeys,
 			idAllocator.getMaxId(),
 		);
@@ -1821,12 +2093,17 @@ function buildModularChangesetFromField(
 		fieldChanges,
 	};
 
+	const childData: [FieldKey, NodeId] | undefined =
+		childNode !== undefined ? [path.field, childNode] : undefined;
+
 	return buildModularChangesetFromNode(
 		path.parent,
 		nodeChangeset,
 		nodeChanges,
+		nodeToParent,
 		crossFieldKeys,
 		idAllocator,
+		childData,
 		localCrossFieldKeys,
 	);
 }
@@ -1835,8 +2112,10 @@ function buildModularChangesetFromNode(
 	path: UpPath,
 	nodeChange: NodeChangeset,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset>,
+	nodeToParent: ChangeAtomIdMap<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
+	childNode: [FieldKey, NodeId] | undefined = undefined,
 	localCrossFieldKeys: CrossFieldKey[] = [],
 ): ModularChangeset {
 	const nodeId: NodeId = { localId: brand(idAllocator.allocate()) };
@@ -1855,10 +2134,19 @@ function buildModularChangesetFromNode(
 		crossFieldKeys.set(key, { nodeId, field: path.parentField });
 	}
 
+	if (childNode !== undefined) {
+		const [childField, childId] = childNode;
+		setInNestedMap(nodeToParent, childId.revision, childId.localId, {
+			nodeId,
+			field: childField,
+		});
+	}
+
 	return buildModularChangesetFromField(
 		{ parent: path.parent, field: path.parentField },
 		fieldChange,
 		nodeChanges,
+		nodeToParent,
 		crossFieldKeys,
 		idAllocator,
 	);
@@ -1955,4 +2243,19 @@ function mergeBTrees<K, V>(tree1: BTree<K, V>, tree2: BTree<K, V>): BTree<K, V> 
 	});
 
 	return result;
+}
+
+function fieldMapFromNodeId(
+	rootFieldMap: FieldChangeMap,
+	nodes: ChangeAtomIdMap<NodeChangeset>,
+	nodeId: NodeId | undefined,
+): FieldChangeMap {
+	if (nodeId === undefined) {
+		return rootFieldMap;
+	}
+
+	const node = tryGetFromNestedMap(nodes, nodeId.revision, nodeId.localId);
+	assert(node !== undefined, "Unknown node ID");
+	assert(node.fieldChanges !== undefined, "Expected node to have field changes");
+	return node.fieldChanges;
 }

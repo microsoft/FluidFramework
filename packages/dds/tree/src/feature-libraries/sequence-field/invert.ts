@@ -201,7 +201,6 @@ function invertMark(
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {
-			// Which should get the child change? Don't want to invert twice
 			const attach: Mark = {
 				count: mark.count,
 				cellId: mark.cellId,
