@@ -1108,6 +1108,11 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
     rebaseOnto(view: ITreeCheckout): void;
 }
 
+// @public
+export interface ITreeConfigurationOptions {
+    enableSchemaValidation?: boolean;
+}
+
 // @internal
 export interface ITreeCursor {
     readonly [CursorMarker]: true;
@@ -1664,6 +1669,7 @@ export interface SchemaLintConfiguration {
 // @internal
 export interface SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
+    readonly validateSchema: boolean;
 }
 
 // @internal
@@ -1844,9 +1850,10 @@ export enum TreeCompressionStrategy {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }
