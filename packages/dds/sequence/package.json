@@ -191,18 +191,6 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedIntervalCollection": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSegmentSequence": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSequence": {
-				"forwardCompat": false
-			},
 			"RemovedClassDeclaration_SharedStringFactory": {
 				"backCompat": false,
 				"forwardCompat": false
@@ -217,15 +205,6 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_Marker": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceDeltaEvent": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceEvent": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceMaintenanceEvent": {
 				"forwardCompat": false
 			},
 			"TypeAliasDeclaration_SharedStringSegment": {

@@ -1149,7 +1149,6 @@ declare function get_old_ClassDeclaration_SequenceDeltaEvent():
 declare function use_current_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<current.SequenceDeltaEvent>): void;
 use_current_ClassDeclaration_SequenceDeltaEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -1178,7 +1177,6 @@ declare function get_old_ClassDeclaration_SequenceEvent():
 declare function use_current_ClassDeclaration_SequenceEvent(
     use: TypeOnly<current.SequenceEvent>): void;
 use_current_ClassDeclaration_SequenceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceEvent());
 
 /*
@@ -1235,7 +1233,6 @@ declare function get_old_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_current_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<current.SequenceMaintenanceEvent>): void;
 use_current_ClassDeclaration_SequenceMaintenanceEvent(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
