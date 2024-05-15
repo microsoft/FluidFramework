@@ -5,10 +5,11 @@
 
 import { strict as assert } from "assert";
 import { SchemaFactory } from "../../simple-tree/index.js";
-import { hydrate, validateUsageError } from "./utils.js";
+import { hydrate } from "./utils.js";
 import { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
+import { validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);

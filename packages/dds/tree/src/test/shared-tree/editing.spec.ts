@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	AnchorNode,
@@ -33,6 +32,7 @@ import {
 	insert,
 	makeTreeFromJson,
 	remove,
+	validateUsageError,
 } from "../utils.js";
 
 const rootField: FieldUpPath = {
@@ -1765,7 +1765,9 @@ describe("Editing", () => {
 						{ parent: fooPath, field: brand("bar") },
 						0,
 					),
-				/Invalid move operation: the destination is located under one of the moved elements./,
+				validateUsageError(
+					/Invalid move operation: the destination is located under one of the moved elements/,
+				),
 			);
 		});
 

@@ -286,7 +286,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						adjustedAttachField = { parent, field: destinationField.field };
 					} else {
 						throw new UsageError(
-							"Invalid move operation: the destination is located under one of the moved elements.",
+							"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
 						);
 					}
 				}
