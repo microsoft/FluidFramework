@@ -102,6 +102,13 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DeliLambda": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ICheckpointParams": {
+				"backCompat": false
+			}
+		}
 	}
 }
