@@ -15,7 +15,6 @@ import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
 	SummarizerStopReason,
@@ -193,15 +192,11 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		// TODO:#4670: Make this compat-version-specific.
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				runtimeOptions,
 			},
 		);
 		const logger = createChildLogger();

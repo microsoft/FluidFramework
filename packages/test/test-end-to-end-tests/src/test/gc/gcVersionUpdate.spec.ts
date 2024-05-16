@@ -48,7 +48,6 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 				state: "disabled",
 			},
 		},
-		gcOptions: { gcAllowed: true },
 	};
 
 	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
