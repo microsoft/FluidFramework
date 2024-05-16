@@ -234,9 +234,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
 				enableRuntimeIdCompressor: "on",
-				// For now this was set to false to allow 1.x/2.x testing with AzureClient.
-				// Long term, this config will be set dynamically. See https://github.com/microsoft/FluidFramework/pull/20997.
-				explicitSchemaControl: false,
+				explicitSchemaControl: true,
 			},
 			provideEntryPoint,
 		});
