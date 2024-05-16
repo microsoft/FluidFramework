@@ -24,7 +24,7 @@ import {
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
+import { DetachIdOverrideType } from "./formatV1.js";
 import {
 	CellRename,
 	DetachOfRemovedNodes,

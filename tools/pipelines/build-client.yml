@@ -156,7 +156,6 @@ extends:
     - webpack
     - ci:test:mocha
     - ci:test:jest
-    - ci:test:azureclient:tinylicious
     - ci:test:realsvc:local
     - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious

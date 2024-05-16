@@ -23,7 +23,7 @@ import {
 } from "../modular-schema/index.js";
 
 import { CellOrderingMethod, sequenceConfig } from "./config.js";
-import { DetachIdOverrideType } from "./format.js";
+import { DetachIdOverrideType } from "./formatV1.js";
 import { EmptyInputCellMark } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";

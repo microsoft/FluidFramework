@@ -1789,6 +1789,9 @@ export class ContainerRuntime
 				orderedClientCollection,
 				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
 			);
 
 			this.summarizerClientElection = new SummarizerClientElection(
