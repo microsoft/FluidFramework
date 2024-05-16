@@ -543,7 +543,11 @@ export class OrderedClientElection
 					if (this._electedClient.client.details.type !== summarizerClientType) {
 						throw new UsageError("Elected client should be a summarizer client 1");
 					}
-					this.tryElectingClient(this._electedParent, sequenceNumber, "RemoveSummarizerClient");
+					this.tryElectingClient(
+						this._electedParent,
+						sequenceNumber,
+						"RemoveSummarizerClient",
+					);
 				} else {
 					// 2. The _electedClient is an interactive client that has left the quorum.
 					// Automatically shift to next oldest client.
