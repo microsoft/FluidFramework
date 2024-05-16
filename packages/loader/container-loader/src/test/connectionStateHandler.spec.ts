@@ -63,6 +63,7 @@ describe("ConnectionStateHandler Tests", () => {
 		details: IConnectionDetailsInternal,
 	) => void;
 	let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
+	let connectionStateHandler_receivedLeaveSignalEvent: (id: string) => void;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -182,6 +183,9 @@ describe("ConnectionStateHandler Tests", () => {
 			protocolHandler.audience.addMember(details.clientId, {
 				mode: details.mode,
 			} as any as IClient);
+		};
+		connectionStateHandler_receivedLeaveSignalEvent = (id: string) => {
+			protocolHandler.audience.removeMember(id);
 		};
 	});
 
@@ -1138,6 +1142,48 @@ describe("ConnectionStateHandler Tests", () => {
 			await tickClock(expectedTimeout);
 		},
 	);
+
+	it("test 'read' reconnect & races ", async () => {
+		connectionStateHandler = createHandler(
+			false, // connectedRaisedWhenCaughtUp,
+			true, // readClientsWaitForJoinSignal
+		);
+
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 1 should be in connected state",
+		);
+
+		connectionStateHandler.receivedDisconnectEvent({ text: "disconnect" });
+
+		connectionDetails2.mode = "read";
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails2);
+
+		// Clear Audience
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// We connected to different front-end, it still things that first client is there!
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails2);
+
+		// It should not wait for leave of connectionDetails.clientId
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 2 should be in connected state",
+		);
+
+		// This shold not cause any trouble.
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// Timeout should not raise any error as timer should be cleared
+		await tickClock(expectedTimeout);
+	});
 
 	afterEach(() => {
 		clock.reset();
