@@ -463,8 +463,7 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC or for
-	 * containers that are running GC version that is older that the one in base snapshot.
+	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
 	 */
 	readonly gcEnabled: boolean;
 	/**

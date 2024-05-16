@@ -702,15 +702,30 @@ describe("Garbage Collection configurations", () => {
 		describe("shouldRunGC", () => {
 			const testCases: {
 				runGC?: boolean;
+				isGCVersionUptoDate?: boolean;
 				expectedResult: boolean;
 			}[] = [
 				{ runGC: true, expectedResult: true },
 				{ runGC: false, expectedResult: false },
+				{ isGCVersionUptoDate: true, expectedResult: true },
+				{ isGCVersionUptoDate: false, expectedResult: false },
+				{ isGCVersionUptoDate: false, runGC: true, expectedResult: true },
+				{ isGCVersionUptoDate: true, runGC: false, expectedResult: false },
 			];
 			testCases.forEach((testCase) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
+					// The GC version in configs is not up-to-date if loaded from a snapshot that was generated
+					// with a higher GC version that the current. So, if isGCVersionUptoDate is false, set the GC
+					// version in snapshot to higher than the stableGCVersion.
+					const gcVersionInBaseSnapshot = testCase.isGCVersionUptoDate
+						? stableGCVersion
+						: stableGCVersion + 1;
+					const metadata: IGCMetadata | undefined =
+						testCase.isGCVersionUptoDate === undefined
+							? undefined
+							: { gcFeature: gcVersionInBaseSnapshot };
 					configProvider.set(runGCTestKey, testCase.runGC);
-					gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+					gc = createGcWithPrivateMembers(metadata);
 					assert.equal(
 						gc.configs.shouldRunGC,
 						testCase.expectedResult,
