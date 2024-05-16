@@ -20,6 +20,11 @@ export interface IPublicClientConfig {
 	clientId: string;
 }
 
+export interface IClientConfig {
+    clientId: string;
+    clientSecret: string;
+}
+
 export interface IOdspAuthRequestInfo {
     accessToken: string;
     refreshTokenFn?: () => Promise<string>;
@@ -68,7 +73,12 @@ export const getOdspRefreshTokenFn = (server: string, clientConfig: IPublicClien
     getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
 export const getPushRefreshTokenFn = (server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
-export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
+export const getRefreshTokenFn = (
+    scope: string,
+    server: string,
+    clientConfig: IPublicClientConfig,
+    tokens: IOdspTokens,
+) =>
     async () => {
         const newTokens = await refreshTokens(server, scope, clientConfig, tokens);
         return newTokens.accessToken;
