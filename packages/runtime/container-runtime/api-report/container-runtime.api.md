@@ -884,9 +884,7 @@ export interface IGCNodeUpdatedProps {
 // @alpha (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
-    disableGC?: boolean;
     enableGCSweep?: true;
-    gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
     sweepGracePeriodMs?: number;

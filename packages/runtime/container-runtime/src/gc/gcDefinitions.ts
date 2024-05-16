@@ -59,8 +59,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC on / off. */
-export const runGCKey = "Fluid.GarbageCollection.RunGC";
 /** Config key to turn GC sweep on / off. */
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
@@ -82,6 +80,8 @@ export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStor
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
+/** Config key to turn GC on / off for testing. */
+export const runGCTestKey = "Fluid.GarbageCollection.Test.RunGC";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -422,24 +422,6 @@ export interface IGarbageCollectorCreateParams {
  */
 export interface IGCRuntimeOptions {
 	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "enableGCSweep" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
 	 *
@@ -481,8 +463,7 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
+	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
 	 */
 	readonly gcEnabled: boolean;
 	/**
