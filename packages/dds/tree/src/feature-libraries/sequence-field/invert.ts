@@ -9,7 +9,7 @@ import { RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
+import { DetachIdOverrideType } from "./formatV1.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	CellId,

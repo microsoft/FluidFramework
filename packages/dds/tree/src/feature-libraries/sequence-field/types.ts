@@ -5,7 +5,7 @@
 
 import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import { NodeId } from "../index.js";
-import { DetachIdOverrideType } from "./format.js";
+import { DetachIdOverrideType } from "./formatV1.js";
 
 export type CellCount = number;
 
