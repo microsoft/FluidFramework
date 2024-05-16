@@ -622,6 +622,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getCurrentSeq(): number;
+    // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
