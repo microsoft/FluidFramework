@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/container-loader-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -91,7 +109,6 @@ declare function get_old_InterfaceDeclaration_IContainerExperimental():
 declare function use_current_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<current.IContainerExperimental>): void;
 use_current_InterfaceDeclaration_IContainerExperimental(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -106,7 +123,6 @@ declare function get_current_InterfaceDeclaration_IContainerExperimental():
 declare function use_old_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<old.IContainerExperimental>): void;
 use_old_InterfaceDeclaration_IContainerExperimental(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -289,7 +305,6 @@ declare function get_old_InterfaceDeclaration_IProtocolHandler():
 declare function use_current_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<current.IProtocolHandler>): void;
 use_current_InterfaceDeclaration_IProtocolHandler(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProtocolHandler());
 
 /*
@@ -304,7 +319,6 @@ declare function get_current_InterfaceDeclaration_IProtocolHandler():
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>): void;
 use_old_InterfaceDeclaration_IProtocolHandler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProtocolHandler());
 
 /*
@@ -390,6 +404,34 @@ declare function use_old_FunctionDeclaration_isLocationRedirectionError(
     use: TypeOnly<typeof old.isLocationRedirectionError>): void;
 use_old_FunctionDeclaration_isLocationRedirectionError(
     get_current_FunctionDeclaration_isLocationRedirectionError());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_loadContainerPaused": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_loadContainerPaused():
+    TypeOnly<typeof old.loadContainerPaused>;
+declare function use_current_FunctionDeclaration_loadContainerPaused(
+    use: TypeOnly<typeof current.loadContainerPaused>): void;
+use_current_FunctionDeclaration_loadContainerPaused(
+    get_old_FunctionDeclaration_loadContainerPaused());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_loadContainerPaused": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_loadContainerPaused():
+    TypeOnly<typeof current.loadContainerPaused>;
+declare function use_old_FunctionDeclaration_loadContainerPaused(
+    use: TypeOnly<typeof old.loadContainerPaused>): void;
+use_old_FunctionDeclaration_loadContainerPaused(
+    get_current_FunctionDeclaration_loadContainerPaused());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

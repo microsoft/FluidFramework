@@ -116,6 +116,7 @@ function makeModularChangeCodec(
 	{ jsonValidator: validator }: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
 		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {
@@ -364,7 +365,7 @@ function makeModularChangeCodec(
 				revisions.length === 1 &&
 					revisions[0].revision === context.revision &&
 					revisions[0].rollbackOf === undefined,
-				"A tagged change should only contain the tagged revision",
+				0x964 /* A tagged change should only contain the tagged revision */,
 			);
 
 			return undefined;

@@ -174,6 +174,51 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(success, "mds limit should not be set!!");
 	});
 
+	it("Check error in empty response", async () => {
+		async function mockDownloadSnapshot<T>(
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
+			callback: () => Promise<T>,
+		): Promise<T> {
+			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			getDownloadSnapshotStub.returns(_response);
+			try {
+				return await callback();
+			} finally {
+				getDownloadSnapshotStub.restore();
+			}
+		}
+		const odspResponse: IOdspResponse<Response> = {
+			content: (await createResponse(
+				{},
+				new Uint8Array().buffer,
+				200,
+			)) as unknown as Response,
+			duration: 10,
+			headers: new Map([
+				["x-fluid-epoch", "epoch1"],
+				["content-type", "application/ms-fluid"],
+			]),
+			propsToLog: {},
+		};
+		const response: ISnapshotRequestAndResponseOptions = {
+			odspResponse,
+			requestHeaders: {},
+			requestUrl: siteUrl,
+		};
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getVersions(null, 1),
+			);
+			assert.fail("should throw incorrectServerResponse error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				OdspErrorTypes.incorrectServerResponse,
+				"incorrectServerResponse should be received",
+			);
+		}
+	});
+
 	it("Check error in snapshot content type", async () => {
 		async function mockDownloadSnapshot<T>(
 			_response: Promise<ISnapshotRequestAndResponseOptions>,

@@ -99,6 +99,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			"kafka:lib:producerGlobalAdditionalConfig",
 		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -113,6 +114,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaSslCACertFilePath,
 			eventHubConnString,
 			kafkaProducerGlobalAdditionalConfig,
+			oauthBearerConfig,
 		);
 
 		const redisConfig = config.get("redis");

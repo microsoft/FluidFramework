@@ -131,7 +131,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
 	 */
-	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>) {}
+	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): void {}
 
 	/**
 	 * The most derived constructor (the one invoked with the `new` operator, not a parent class constructor invoked with as `super`) used to construct an instance of this type.
@@ -156,12 +156,12 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	public constructor(input: TInput | InternalTreeNode) {
 		super();
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		assert("constructorCached" in schema, "invalid schema class");
+		assert("constructorCached" in schema, 0x95f /* invalid schema class */);
 		if (schema.constructorCached !== schema) {
 			if (schema.constructorCached !== undefined) {
 				assert(
 					schema.constructorCached !== TreeNodeValid,
-					"Schema class schema must override static constructorCached member",
+					0x960 /* Schema class schema must override static constructorCached member */,
 				);
 				throw new UsageError(
 					`Two schema classes were instantiated (${schema.name} and ${schema.constructorCached.name}) which derived from the same SchemaFactory generated class. This is invalid`,
@@ -171,7 +171,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			const flexSchema = getFlexSchema(schema);
 			assert(
 				tryGetSimpleNodeSchema(flexSchema) === schema,
-				"Schema class not properly configured",
+				0x961 /* Schema class not properly configured */,
 			);
 			schema.oneTimeSetup();
 			// Set the constructorCached on the layer of the prototype chain that declared it.
@@ -184,7 +184,10 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
 					schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 				}
-				assert(schemaBase.constructorCached === undefined, "overwriting wrong cache");
+				assert(
+					schemaBase.constructorCached === undefined,
+					0x962 /* overwriting wrong cache */,
+				);
 				schemaBase.constructorCached = schema;
 			}
 		}
@@ -221,6 +224,6 @@ markEager(TreeNodeValid);
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
 
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
-	assert(isFlexTreeNode(node), "Invalid InternalTreeNode");
+	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);
 	return node;
 }

@@ -21,7 +21,7 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/inter
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions/internal';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions/internal';
-import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
@@ -65,6 +65,7 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger as ITelemetryBaseLogger_2 } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -214,7 +215,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger_2, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
@@ -224,6 +225,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }): void;
     // (undocumented)
     get attachState(): AttachState;
+    // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger_2;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -307,8 +310,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
         provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     }): Promise<ContainerRuntime>;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     makeLocallyVisible(): void;
     // (undocumented)
@@ -455,6 +456,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     protected _attachState: AttachState;
     // (undocumented)
+    get baseLogger(): ITelemetryBaseLogger;
+    // (undocumented)
     get baseSnapshot(): ISnapshotTree | undefined;
     // (undocumented)
     protected _baseSnapshot: ISnapshotTree | undefined;
@@ -527,8 +530,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     isRoot(aliasedDataStores?: Set<string>): Promise<boolean>;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
-    // (undocumented)
-    get logger(): ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
     protected readonly mc: MonitoringContext;
@@ -791,6 +792,33 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes0 {
+    readonly isRootDataStore?: boolean;
+    // (undocumented)
+    pkg: string;
+    // (undocumented)
+    readonly snapshotFormatVersion?: undefined;
+    // (undocumented)
+    readonly summaryFormatVersion?: undefined;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes1 extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
+    // (undocumented)
+    readonly snapshotFormatVersion: "0.1";
+    // (undocumented)
+    readonly summaryFormatVersion?: undefined;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
+    readonly disableIsolatedChannels?: true;
+    readonly snapshotFormatVersion?: undefined;
+    // (undocumented)
+    readonly summaryFormatVersion: 2;
+}
+
 // @internal (undocumented)
 export interface IFluidDataStoreContextEvents extends IEvent_2 {
     // (undocumented)
@@ -1003,8 +1031,6 @@ export interface ISummarizeEventProps {
 // @alpha
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
-    // @deprecated
-    readonly refreshLatestAck?: boolean;
 }
 
 // @alpha (undocumented)
@@ -1042,13 +1068,13 @@ export interface ISummarizerInternalsProvider {
 // @alpha (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger;
+    // (undocumented)
     closeFn(): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disposeFn(): void;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     off(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     // (undocumented)
@@ -1198,11 +1224,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 // @internal
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
+// @alpha @deprecated (undocumented)
+export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+
 // @alpha (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @alpha (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @alpha @deprecated
+export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
 // @internal
 export interface RecentlyAddedContainerRuntimeMessageDetails {

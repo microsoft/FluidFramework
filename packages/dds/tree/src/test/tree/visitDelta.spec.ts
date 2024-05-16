@@ -1066,7 +1066,7 @@ describe("visitDelta", () => {
 			assert.equal(index.entries().next().done, true);
 		});
 
-		it("for changes to repair data", () => {
+		it("for changes to detached trees", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 			const refresherId = { minor: 42 };
 			const buildId = { minor: 43 };

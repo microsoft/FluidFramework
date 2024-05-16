@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -52,7 +53,6 @@ import {
 	DeltaRoot,
 	DeltaVisitor,
 	DetachedFieldIndex,
-	FieldKey,
 	FieldUpPath,
 	IEditableForest,
 	IForestSubscription,
@@ -101,14 +101,12 @@ import {
 	buildForest,
 	createMockNodeKeyManager,
 	cursorForMapTreeNode,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -137,13 +135,7 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import {
-	JsonCompatible,
-	Mutable,
-	brand,
-	disposeSymbol,
-	nestedMapFromFlatList,
-} from "../util/index.js";
+import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -515,13 +507,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<SharedTree> {
-		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
+		const tree = await super.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = super.create(runtime, id) as SharedTree;
+		const tree = super.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}
@@ -534,7 +526,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
 		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
 		for (const tree of trees.slice(1)) {
@@ -697,7 +689,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const view = checkoutWithContent(content, args);
@@ -705,7 +696,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -729,7 +719,6 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -742,12 +731,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(
-		branch,
-		content.schema,
-		manager,
-		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
-	);
+	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
 
@@ -868,7 +852,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export const mockIntoDelta = (delta: DeltaRoot) => delta;
+export const mockIntoDelta = (delta: DeltaRoot): DeltaRoot => delta;
 
 export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
@@ -887,7 +871,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
+const assertDeepEqual = (a: any, b: any): void => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
@@ -989,7 +973,7 @@ export function testChangeReceiver<TChange>(
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange) => changes.push(change);
+	const changeReceiver = (change: TChange): number => changes.push(change);
 	return [changeReceiver, () => [...changes]];
 }
 
@@ -1108,7 +1092,7 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	}
 
 	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
-	const unsubscribe = () => {
+	const unsubscribe = (): void => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
 			revertible[disposeSymbol]();
@@ -1137,7 +1121,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	onDispose?: () => void,
 	nodeKeyManager?: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
 	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
@@ -1149,7 +1132,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		viewSchema,
 		onDispose ?? (() => {}),
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -1202,13 +1184,12 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -1261,4 +1242,20 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
+}
+
+export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return (error: Error) => {
+		assert(error instanceof UsageError);
+		if (
+			typeof expectedErrorMsg === "string"
+				? error.message !== expectedErrorMsg
+				: !expectedErrorMsg.test(error.message)
+		) {
+			throw new Error(
+				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+			);
+		}
+		return true;
+	};
 }

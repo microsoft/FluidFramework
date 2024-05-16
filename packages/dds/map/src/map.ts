@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
+import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import { type IMapDataObjectSerializable, type IMapOperation, MapKernel } from "./mapKernel.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -284,6 +284,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			this.kernel.tryProcessMessage(
 				message.contents as IMapOperation,

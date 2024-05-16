@@ -4,7 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -24,6 +25,7 @@ import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
@@ -68,6 +70,7 @@ import {
 	processAttachMessageGCData,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
+	toDeltaManagerErased,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -189,7 +192,10 @@ export class FluidDataStoreRuntime
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly options: Record<string | number, any>;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly deltaManagerInternal: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
@@ -229,7 +235,7 @@ export class FluidDataStoreRuntime
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.logger,
+			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
@@ -238,7 +244,7 @@ export class FluidDataStoreRuntime
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
-		this.deltaManager = dataStoreContext.deltaManager;
+		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 
@@ -330,6 +336,10 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+	}
+
+	get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 
 	public dispose(): void {

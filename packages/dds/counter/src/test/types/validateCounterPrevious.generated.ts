@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/counter-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -35,7 +53,6 @@ declare function get_old_InterfaceDeclaration_ISharedCounter():
 declare function use_current_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<current.ISharedCounter>): void;
 use_current_InterfaceDeclaration_ISharedCounter(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -50,7 +67,6 @@ declare function get_current_InterfaceDeclaration_ISharedCounter():
 declare function use_old_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<old.ISharedCounter>): void;
 use_old_InterfaceDeclaration_ISharedCounter(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -86,13 +102,53 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedCounter": {"forwardCompat": false}
+ * "VariableDeclaration_SharedCounter": {"forwardCompat": false}
  */
+declare function get_old_VariableDeclaration_SharedCounter():
+    TypeOnly<typeof old.SharedCounter>;
+declare function use_current_VariableDeclaration_SharedCounter(
+    use: TypeOnly<typeof current.SharedCounter>): void;
+use_current_VariableDeclaration_SharedCounter(
+    get_old_VariableDeclaration_SharedCounter());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedCounter": {"backCompat": false}
+ * "VariableDeclaration_SharedCounter": {"backCompat": false}
  */
+declare function get_current_VariableDeclaration_SharedCounter():
+    TypeOnly<typeof current.SharedCounter>;
+declare function use_old_VariableDeclaration_SharedCounter(
+    use: TypeOnly<typeof old.SharedCounter>): void;
+use_old_VariableDeclaration_SharedCounter(
+    get_current_VariableDeclaration_SharedCounter());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_SharedCounter": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_SharedCounter():
+    TypeOnly<old.SharedCounter>;
+declare function use_current_TypeAliasDeclaration_SharedCounter(
+    use: TypeOnly<current.SharedCounter>): void;
+use_current_TypeAliasDeclaration_SharedCounter(
+    get_old_TypeAliasDeclaration_SharedCounter());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_SharedCounter": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_SharedCounter():
+    TypeOnly<current.SharedCounter>;
+declare function use_old_TypeAliasDeclaration_SharedCounter(
+    use: TypeOnly<old.SharedCounter>): void;
+use_old_TypeAliasDeclaration_SharedCounter(
+    get_current_TypeAliasDeclaration_SharedCounter());

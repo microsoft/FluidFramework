@@ -233,14 +233,49 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				),
 			},
 		};
-		this.nextRangeBaseGenCount = this.localGenCount + 1;
-		IdCompressor.assertValidRange(range);
-		return range;
+		return this.updateToRange(range);
 	}
 
-	private static assertValidRange(range: IdCreationRange): void {
+	public takeUnfinalizedCreationRange(): IdCreationRange {
+		const lastLocalCluster = this.localSession.getLastCluster();
+		let count: number;
+		let firstGenCount: number;
+		if (lastLocalCluster === undefined) {
+			firstGenCount = 1;
+			count = this.localGenCount;
+		} else {
+			firstGenCount = genCountFromLocalId(
+				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+			);
+			count = this.localGenCount - firstGenCount + 1;
+		}
+
+		if (count === 0) {
+			return {
+				sessionId: this.localSessionId,
+			};
+		}
+
+		const range: IdCreationRange = {
+			ids: {
+				count,
+				firstGenCount,
+				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
+				requestedClusterSize: this.nextRequestedClusterSize,
+			},
+			sessionId: this.localSessionId,
+		};
+		return this.updateToRange(range);
+	}
+
+	private updateToRange(range: IdCreationRange): IdCreationRange {
+		this.nextRangeBaseGenCount = this.localGenCount + 1;
+		return IdCompressor.assertValidRange(range);
+	}
+
+	private static assertValidRange(range: IdCreationRange): IdCreationRange {
 		if (range.ids === undefined) {
-			return;
+			return range;
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
@@ -249,6 +284,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			requestedClusterSize <= IdCompressor.maxClusterSize,
 			0x877 /* Clusters must not exceed max cluster size. */,
 		);
+		return range;
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
@@ -285,7 +321,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
 			throw rangeFinalizationError(
-				lastCluster.baseLocalId - lastCluster.count + 1,
+				lastCluster.baseLocalId - lastCluster.count,
 				rangeBaseLocal,
 			);
 		}

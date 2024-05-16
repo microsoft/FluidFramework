@@ -210,7 +210,7 @@ export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TD
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg;
 
 // @internal (undocumented)
-export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
+export function createDetachedLocalReferencePosition(slidingPreference: SlidingPreference | undefined, refType?: ReferenceType): LocalReferencePosition;
 
 // @internal @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
@@ -893,10 +893,10 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @internal (undocumented)
