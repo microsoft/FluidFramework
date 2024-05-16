@@ -5,7 +5,6 @@
 
 import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import { NodeId } from "../index.js";
-import { DetachIdOverrideType } from "./format.js";
 
 export type CellCount = number;
 
@@ -102,19 +101,11 @@ export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
 
-export interface DetachIdOverride {
-	readonly type: DetachIdOverrideType;
-	/**
-	 * This ID should be used instead of the mark's own ID when referring to the cell being emptied.
-	 */
-	readonly id: CellId;
-}
-
 export interface DetachFields {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
 	 */
-	readonly idOverride?: DetachIdOverride;
+	readonly idOverride?: CellId;
 }
 
 /**

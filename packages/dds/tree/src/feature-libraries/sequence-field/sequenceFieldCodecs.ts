@@ -20,7 +20,6 @@ import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import {
 	Attach,
 	AttachAndDetach,
-	CellId,
 	Changeset,
 	Detach,
 	Insert,
@@ -104,10 +103,7 @@ function makeV1Codec(
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: {
-											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, context),
-									  },
+									: changeAtomIdCodec.encode(effect.idOverride, context),
 							id: effect.id,
 						},
 					};
@@ -122,10 +118,7 @@ function makeV1Codec(
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: {
-											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, context),
-									  },
+									: changeAtomIdCodec.encode(effect.idOverride, context),
 							id: effect.id,
 						},
 					};
@@ -205,10 +198,7 @@ function makeV1Codec(
 
 			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
-				mark.idOverride = {
-					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id, context),
-				};
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
 			}
 			return mark;
 		},
@@ -224,10 +214,7 @@ function makeV1Codec(
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
 			if (idOverride !== undefined) {
-				mark.idOverride = {
-					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id, context),
-				};
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
 			}
 
 			return mark;
@@ -243,24 +230,6 @@ function makeV1Codec(
 			};
 		},
 	});
-
-	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
-		encode: ({ localId, revision }: CellId, context: ChangeEncodingContext): Encoded.CellId => {
-			const encoded: Encoded.CellId = {
-				atom: changeAtomIdCodec.encode({ localId, revision }, context),
-			};
-			return encoded;
-		},
-		decode: ({ atom }: Encoded.CellId, context: ChangeEncodingContext): CellId => {
-			const { localId, revision } = changeAtomIdCodec.decode(atom, context);
-			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
-			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
-			// explicit undefined properties.
-			const decoded: Mutable<CellId> = { localId };
-			decoded.revision = revision;
-			return decoded;
-		},
-	};
 
 	/**
 	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
@@ -282,7 +251,7 @@ function makeV1Codec(
 					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
+					encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					encodedMark.changes = context.encodeNode(mark.changes);
@@ -308,7 +277,7 @@ function makeV1Codec(
 					);
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
+					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					decodedMark.changes = context.decodeNode(mark.changes);

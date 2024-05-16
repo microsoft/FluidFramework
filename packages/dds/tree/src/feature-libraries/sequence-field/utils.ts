@@ -293,7 +293,7 @@ export function getDetachOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		mark.idOverride?.id ?? {
+		mark.idOverride ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision, metadata),
 			localId: mark.id,
 		}
@@ -584,10 +584,7 @@ function areAdjacentIdRanges(
 
 function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
-		return (
-			lhs.idOverride.type === rhs.idOverride.type &&
-			areMergeableCellIds(lhs.idOverride.id, lhsCount, rhs.idOverride.id)
-		);
+		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
 	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
 }
@@ -845,10 +842,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Remove>;
 			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = {
-					...effect2Remove.idOverride,
-					id: splitDetachEvent(effect2Remove.idOverride.id, length),
-				};
+				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
 			}
 			return [effect1, effect2];
 		}
@@ -861,10 +855,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const return2 = effect2 as Mutable<MoveOut>;
 
 			if (return2.idOverride !== undefined) {
-				return2.idOverride = {
-					...return2.idOverride,
-					id: splitDetachEvent(return2.idOverride.id, length),
-				};
+				return2.idOverride = splitDetachEvent(return2.idOverride, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {

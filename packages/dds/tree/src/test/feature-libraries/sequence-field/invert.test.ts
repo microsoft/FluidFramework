@@ -63,10 +63,7 @@ export function testInvert() {
 		});
 
 		it("insert => remove", () => {
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Unattach,
-				id: { revision: tag1, localId: brand(0) },
-			};
+			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const input = Change.insert(0, 2);
 			const expected = [Mark.remove(2, brand(0), { idOverride })];
 			const actual = invert(input);
@@ -74,10 +71,7 @@ export function testInvert() {
 		});
 
 		it("insert & modify => modify & remove", () => {
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Unattach,
-				id: { revision: tag1, localId: brand(0) },
-			};
+			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const input = [Mark.insert(1, brand(0), { changes: childChange1 })];
 			const expected = [
 				Mark.remove(1, brand(0), {
@@ -115,12 +109,9 @@ export function testInvert() {
 		});
 
 		it("remove => revive (with override ID)", () => {
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Redetach,
-				id: { revision: tag2, localId: brand(0) },
-			};
-			const input: SF.Changeset = [Mark.remove(2, brand(5), { idOverride })];
-			const expected = [Mark.revive(2, idOverride.id, { id: brand(5) })];
+			const cellId: SF.CellId = { revision: tag2, localId: brand(0) };
+			const input: SF.Changeset = [Mark.remove(2, brand(5), { idOverride: cellId })];
+			const expected = [Mark.revive(2, cellId, { id: brand(5) })];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -128,11 +119,7 @@ export function testInvert() {
 		it("active revive => remove", () => {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
 			const input = Change.revive(0, 2, cellId);
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Redetach,
-				id: cellId,
-			};
-			const expected: SF.Changeset = [Mark.remove(2, brand(0), { idOverride })];
+			const expected: SF.Changeset = [Mark.remove(2, brand(0), { idOverride: cellId })];
 			const actual = invert(input, tag2);
 			assertChangesetsEqual(actual, expected);
 		});
@@ -143,10 +130,7 @@ export function testInvert() {
 				Mark.skip(3),
 				Mark.moveIn(1, brand(0)),
 			];
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Unattach,
-				id: { revision: tag1, localId: brand(0) },
-			};
+			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const expected = [
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				Mark.skip(3),
@@ -165,10 +149,7 @@ export function testInvert() {
 				Mark.skip(3),
 				Mark.moveOut(1, brand(0), { changes: childChange1 }),
 			];
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Unattach,
-				id: { revision: tag1, localId: brand(0) },
-			};
+			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const expected = [
 				Mark.moveOut(1, brand(0), {
 					changes: { ...childChange1, revision: tag1 },
@@ -190,19 +171,15 @@ export function testInvert() {
 				Mark.returnTo(2, brand(42), cellId),
 			];
 
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Redetach,
-				id: cellId,
-			};
 			const expected: SF.Changeset = [
 				Mark.returnTo(2, brand(42), { revision: tag1, localId: brand(42) }),
 				{ count: 3 },
 				Mark.moveOut(1, brand(42), {
-					idOverride,
+					idOverride: cellId,
 					changes: { ...childChange1, revision: tag1 },
 				}),
 				Mark.moveOut(1, brand(43), {
-					idOverride: { ...idOverride, id: { ...cellId, localId: brand(1) } },
+					idOverride: { revision: tag2, localId: brand(1) },
 				}),
 			];
 			const actual = invert(input);
@@ -221,10 +198,7 @@ export function testInvert() {
 			const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
 			const expected: SF.Changeset = [
 				Mark.remove(1, brand(0), {
-					idOverride: {
-						type: SF.DetachIdOverrideType.Redetach,
-						id: cellId,
-					},
+					idOverride: cellId,
 					changes: { ...childChange1, revision: tag2 },
 				}),
 			];
@@ -240,10 +214,7 @@ export function testInvert() {
 			];
 
 			const inverse = invert(transient);
-			const idOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Unattach,
-				id: { revision: tag1, localId: brand(1) },
-			};
+			const idOverride: SF.CellId = { revision: tag1, localId: brand(1) };
 			const expected = [
 				Mark.remove(1, brand(1), {
 					cellId: { revision: tag1, localId: brand(0) },
@@ -270,10 +241,7 @@ export function testInvert() {
 				Mark.remove(1, detachId.localId, {
 					cellId: detachId,
 					changes: { ...childChange1, revision: tag1 },
-					idOverride: {
-						type: SF.DetachIdOverrideType.Redetach,
-						id: startId,
-					},
+					idOverride: startId,
 				}),
 			];
 			assertChangesetsEqual(inverse, expected);
@@ -293,19 +261,13 @@ export function testInvert() {
 				Mark.attachAndDetach(
 					Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 					Mark.remove(1, brand(0), {
-						idOverride: {
-							type: SF.DetachIdOverrideType.Unattach,
-							id: { revision: tag1, localId: brand(0) },
-						},
+						idOverride: { revision: tag1, localId: brand(0) },
 					}),
 				),
 				{ count: 1 },
 				Mark.moveOut(1, brand(1), {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride: {
-						type: SF.DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(1) },
-					},
+					idOverride: { revision: tag1, localId: brand(1) },
 				}),
 			];
 
@@ -329,19 +291,13 @@ export function testInvert() {
 				Mark.attachAndDetach(
 					Mark.returnTo(1, detachId.localId, detachId),
 					Mark.remove(1, detachId.localId, {
-						idOverride: {
-							type: SF.DetachIdOverrideType.Redetach,
-							id: startId,
-						},
+						idOverride: startId,
 					}),
 				),
 				{ count: 1 },
 				Mark.moveOut(1, detachId.localId, {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride: {
-						type: SF.DetachIdOverrideType.Unattach,
-						id: detachId,
-					},
+					idOverride: detachId,
 				}),
 			];
 			assertChangesetsEqual(inverse, expected);
@@ -360,10 +316,7 @@ export function testInvert() {
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(1) },
-					idOverride: {
-						type: SF.DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(0) },
-					},
+					idOverride: { revision: tag1, localId: brand(0) },
 					changes: { ...childChange1, revision: tag1 },
 				}),
 			];
@@ -395,20 +348,14 @@ export function testInvert() {
 				Mark.attachAndDetach(
 					Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 					Mark.moveOut(1, brand(0), {
-						idOverride: {
-							type: SF.DetachIdOverrideType.Unattach,
-							id: { revision: tag1, localId: brand(0) },
-						},
+						idOverride: { revision: tag1, localId: brand(0) },
 					}),
 				),
 				{ count: 1 },
 				Mark.moveOut(1, brand(1), {
 					changes: { ...childChange1, revision: tag1 },
 					finalEndpoint: { localId: brand(0) },
-					idOverride: {
-						type: SF.DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(1) },
-					},
+					idOverride: { revision: tag1, localId: brand(1) },
 				}),
 			];
 
@@ -466,10 +413,7 @@ export function testInvert() {
 					Mark.remove(1, brand(0), {
 						changes: { ...childChange1, revision: tag2 },
 						cellId: endId,
-						idOverride: {
-							type: SF.DetachIdOverrideType.Redetach,
-							id: startId,
-						},
+						idOverride: startId,
 					}),
 				];
 				assertChangesetsEqual(actual, expected);

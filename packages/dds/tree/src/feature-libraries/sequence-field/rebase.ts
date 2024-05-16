@@ -16,7 +16,6 @@ import {
 	RebaseRevisionMetadata,
 } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
@@ -114,18 +113,6 @@ function rebaseMarkList(
 	}
 
 	return factory.list;
-}
-
-export function isRedetach(effect: MarkEffect): boolean {
-	switch (effect.type) {
-		case "Remove":
-		case "MoveOut":
-			return effect.idOverride?.type === DetachIdOverrideType.Redetach;
-		case "AttachAndDetach":
-			return isRedetach(effect.detach);
-		default:
-			return false;
-	}
 }
 
 /**

@@ -140,10 +140,7 @@ export function testToDelta() {
 		});
 
 		it("remove with override", () => {
-			const detachIdOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Redetach,
-				id: { revision: tag2, localId: brand(1) },
-			};
+			const detachIdOverride: SF.CellId = { revision: tag2, localId: brand(1) };
 			const changeset = [Mark.remove(10, brand(42), { idOverride: detachIdOverride })];
 			const expected: DeltaFieldChanges = {
 				local: [

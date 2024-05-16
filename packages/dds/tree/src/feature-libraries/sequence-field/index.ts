@@ -22,9 +22,7 @@ export {
 	HasMarkFields,
 	CellMark,
 	AttachAndDetach,
-	DetachIdOverride,
 } from "./types.js";
-export { DetachIdOverrideType } from "./format.js";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,

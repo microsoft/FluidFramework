@@ -37,8 +37,6 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 import {
 	IdAllocator,
 	Mutable,
@@ -612,10 +610,7 @@ describe("ModularChangeFamily integration", () => {
 			const fieldBExpected = [
 				MarkMaker.moveOut(1, brand(1), {
 					changes: nodeId2,
-					idOverride: {
-						type: DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(1) },
-					},
+					idOverride: { revision: tag1, localId: brand(1) },
 				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
@@ -631,10 +626,7 @@ describe("ModularChangeFamily integration", () => {
 			const fieldAExpected = [
 				MarkMaker.moveOut(1, brand(0), {
 					changes: nodeId1,
-					idOverride: {
-						type: DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(0) },
-					},
+					idOverride: { revision: tag1, localId: brand(0) },
 				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),

@@ -1017,10 +1017,7 @@ export function testExamples() {
 			const redetach = invert(rebasedRevive);
 			const expected = [
 				Mark.remove(1, brand(0), {
-					idOverride: {
-						type: SF.DetachIdOverrideType.Redetach,
-						id: { revision: tag1, localId: brand(0) },
-					},
+					idOverride: { revision: tag1, localId: brand(0) },
 				}),
 				Mark.tomb(tag2, brand(42)),
 			];

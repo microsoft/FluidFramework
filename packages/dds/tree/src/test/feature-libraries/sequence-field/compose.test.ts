@@ -1063,10 +1063,7 @@ export function testCompose() {
 					Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 					{ count: 1 },
 					Mark.moveOut(1, brand(0), {
-						idOverride: {
-							type: SF.DetachIdOverrideType.Redetach,
-							id: { revision: tag1, localId: brand(0) },
-						},
+						idOverride: { revision: tag1, localId: brand(0) },
 					}),
 				],
 				tag3,
@@ -1282,10 +1279,7 @@ export function testCompose() {
 			const return1 = tagChangeInline(
 				[
 					Mark.moveOut(1, brand(0), {
-						idOverride: {
-							type: SF.DetachIdOverrideType.Redetach,
-							id: { revision: tag1, localId: brand(0) },
-						},
+						idOverride: { revision: tag1, localId: brand(0) },
 					}),
 					Mark.skip(2),
 					Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
