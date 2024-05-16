@@ -22,6 +22,10 @@ import {
 } from "./socketIoRedisConnection";
 
 class SocketIoSocket implements core.IWebSocket {
+	private readonly eventListeners: { event: string; listener: () => void }[] = [];
+
+	private isDisposed = false;
+
 	public get id(): string {
 		return this.socket.id;
 	}
@@ -29,23 +33,44 @@ class SocketIoSocket implements core.IWebSocket {
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
-		this.socket.on(event, listener);
+		if (!this.isDisposed) {
+			this.eventListeners.push({ event, listener });
+			this.socket.on(event, listener);
+		}
 	}
 
 	public async join(id: string): Promise<void> {
-		return this.socket.join(id);
+		if (!this.isDisposed) {
+			return this.socket.join(id);
+		}
 	}
 
 	public emit(event: string, ...args: any[]) {
-		this.socket.emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.emit(event, ...args);
+		}
 	}
 
 	public emitToRoom(roomId: string, event: string, ...args: any[]) {
-		this.socket.nsp.to(roomId).emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.nsp.to(roomId).emit(event, ...args);
+		}
 	}
 
 	public disconnect(close?: boolean) {
-		this.socket.disconnect(close);
+		if (!this.isDisposed) {
+			this.socket.disconnect(close);
+		}
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+		if (!this.socket.disconnected) {
+			this.disconnect(true);
+		}
+		for (const { event, listener } of this.eventListeners) {
+			this.socket.off(event, listener);
+		}
 	}
 }
 
@@ -81,7 +106,7 @@ class SocketIoServer implements core.IWebSocketServer {
 			this.events.emit("connection", webSocket);
 
 			// Server side listening for ping events
-			socket.on("ping", (cb) => {
+			webSocket.on("ping", (cb) => {
 				if (typeof cb === "function") {
 					cb();
 				}

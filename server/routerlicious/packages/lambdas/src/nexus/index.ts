@@ -536,7 +536,7 @@ export function configureWebSocketServices(
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on("disconnect", async () => {
+		socket.on("disconnect", async (reason: unknown) => {
 			if (!connectDocumentComplete && connectDocumentP) {
 				Lumberjack.warning(
 					`Socket connection disconnected before ConnectDocument completed.`,
@@ -553,6 +553,10 @@ export function configureWebSocketServices(
 					Array.from(connectionsMap.keys()),
 				),
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
+				// Socket.io provides disconnect reason as a string. If it is not a string, it might not be a socket.io socket, so don't log anything.
+				// A list of possible reasons can be found here: https://socket.io/docs/v4/server-socket-instance/#disconnect
+				[CommonProperties.disconnectReason]:
+					typeof reason === "string" ? reason : undefined,
 			});
 
 			if (roomMap.size >= 1) {
@@ -576,6 +580,7 @@ export function configureWebSocketServices(
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
 			}
+			socket.dispose?.();
 		});
 	});
 }
