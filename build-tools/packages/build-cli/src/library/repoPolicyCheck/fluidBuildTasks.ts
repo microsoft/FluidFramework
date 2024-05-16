@@ -177,9 +177,13 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	if (tscScripts.length === 0) {
 		return undefined;
 	}
-	throw new Error(`${project} used in scripts ${tscScripts.join(", ")}`);
+	throw new Error(`'${project}' used in scripts '${tscScripts.join("', '")}'`);
 }
 
+// This should be TSESLint.Linter.Config or .ConfigType from @typescript-eslint/utils
+// but that can only be used once this project is using Node16 resolution. PR #20972
+// We could derive type from @typescript-eslint/eslint-plugin, but that it will add
+// peer dependency requirements.
 interface EslintConfig {
 	parserOptions?: {
 		// https://typescript-eslint.io/packages/parser/#project
@@ -189,10 +193,10 @@ interface EslintConfig {
 }
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
- * @remarks eslint does not depend on build tasks for the projects it references. The
- * projects configuration guides for the eslint parser. The packages that those projects
- * depend on must be built. So effectively eslint has the same prerequisites as the
- * build tasks for the projects referenced.
+ * @remarks eslint does not depend on build tasks for the projects it references. (The
+ * projects' configurations guide eslint typescript parser to use original typescript
+ * source.) The packages that those projects depend on must be built. So effectively
+ * eslint has the same prerequisites as the build tasks for the projects referenced.
  * @param packageDir - directory of the package
  * @param root - directory of the Fluid repo root
  * @param json - content of the package.json
@@ -233,7 +237,9 @@ function eslintGetScriptDependencies(
 
 	let projects = config.parserOptions?.project;
 	if (!Array.isArray(projects) && typeof projects !== "string") {
-		// config does not parse extends. So, "project" is what is set in top file.
+		// "config" is normally the raw configuration as file is on disk and has not
+		// resolved and merged any extends specifications. So, "project" is what is
+		// set in top file.
 		if (projects === false || projects === null) {
 			// type based linting is disabled - assume no task prerequisites
 			return [];
@@ -242,10 +248,11 @@ function eslintGetScriptDependencies(
 		// explicit listings for dependency clarity.
 		if (projects === true) {
 			throw new Error(
-				`${json.name} eslint config 'project' is true, but should be list of tsconfig files.`,
+				`${json.name} eslint config's 'parserOptions' setting has 'project' set to 'true', which is unsupported by fluid-build. Please specify one or more tsconfig files instead.`,
 			);
 		}
-		// It undefined to leverage the expected base config setting of ./tsconfig.json.
+		// projects === undefined, which @typescript-eslint/eslint-plugin handles by using
+		// project path: ./tsconfig.json.
 		projects = ["./tsconfig.json"];
 	}
 	const projectsArray = Array.isArray(projects) ? projects : [projects];
@@ -257,10 +264,9 @@ function eslintGetScriptDependencies(
 		.map((project) => {
 			const found = findTscScript(json, project);
 
-			// The main compile script is build:esnext, point eslint to it
 			if (found === undefined) {
 				throw new Error(
-					`Unable to find script for project ${project} specified in ${eslintConfig}`,
+					`Unable to find tsc script using project '${project}' specified in '${eslintConfig}' within package '${json.name}'`,
 				);
 			}
 
@@ -277,7 +283,9 @@ function eslintGetScriptDependencies(
 	for (const script of siblingTscScripts) {
 		const scriptCommands = json.scripts[script];
 		if (scriptCommands === undefined) {
-			throw new Error(`internal inconsistency - expected ${json.name} ${script} not found`);
+			throw new Error(
+				`internal inconsistency - expected '${script}' not found in package '${json.name}'`,
+			);
 		}
 		for (const commandUntrimmed of scriptCommands.split("&&")) {
 			const command = commandUntrimmed.trim();
