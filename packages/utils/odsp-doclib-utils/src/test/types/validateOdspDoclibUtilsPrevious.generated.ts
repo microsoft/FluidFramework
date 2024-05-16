@@ -24,26 +24,14 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IClientConfig": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IClientConfig": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IClientConfig():
-    TypeOnly<old.IClientConfig>;
-declare function use_current_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<current.IClientConfig>): void;
-use_current_InterfaceDeclaration_IClientConfig(
-    get_old_InterfaceDeclaration_IClientConfig());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IClientConfig": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IClientConfig": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IClientConfig():
-    TypeOnly<current.IClientConfig>;
-declare function use_old_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<old.IClientConfig>): void;
-use_old_InterfaceDeclaration_IClientConfig(
-    get_current_InterfaceDeclaration_IClientConfig());
 
 /*
 * Validate forward compat by using old type in place of current type

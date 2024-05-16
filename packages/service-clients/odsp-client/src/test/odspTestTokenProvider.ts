@@ -5,7 +5,7 @@
 
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
@@ -43,9 +43,8 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 
 	private async fetchTokens(siteUrl: string, scope: string) {
 		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
+		const clientConfig: IPublicClientConfig = {
 			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
@@ -55,7 +54,6 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const body = {
 			scope,
 			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
 			...credentials,
 		};
 		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
