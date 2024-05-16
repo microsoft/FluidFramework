@@ -34,6 +34,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluidframework/azure-client": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
@@ -43,7 +44,6 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tinylicious-client": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"process": "^0.11.10"
 	},

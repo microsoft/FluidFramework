@@ -611,6 +611,7 @@ importers:
       '@fluid-experimental/data-objects': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.39.0-264124
+      '@fluidframework/azure-client': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.39.0-264124
       '@fluidframework/container-definitions': workspace:~
@@ -621,7 +622,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/tinylicious-client': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
@@ -649,13 +649,13 @@ importers:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluid-experimental/data-objects': link:../../../experimental/framework/data-objects
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
+      '@fluidframework/azure-client': link:../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
       fluid-framework: link:../../../packages/framework/fluid-framework
       process: 0.11.10
     devDependencies:
