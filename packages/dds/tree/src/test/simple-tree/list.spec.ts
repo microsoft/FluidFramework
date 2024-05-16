@@ -12,8 +12,8 @@ import { hydrate, pretty } from "./utils.js";
 const schemaFactory = new SchemaFactory("test");
 
 describe("List", () => {
-	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
-	function prettyArgs(...args: unknown[]) {
+	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
+	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
 			if (args.slice(index).findIndex((value) => value !== undefined) === -1) {
@@ -369,8 +369,8 @@ describe("List", () => {
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
 				type IterativeFn = (
-					callback: (...args: unknown[]) => unknown,
-					...args: unknown[]
+					callback: (...args: any[]) => unknown,
+					...args: any[]
 				) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
@@ -391,7 +391,7 @@ describe("List", () => {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
 					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
-						return function (...args: unknown[]) {
+						return function (...args: any[]) {
 							const result = callback(...args);
 
 							// Other than the 'array' parameter, the arguments should be identical.  To make
@@ -425,8 +425,8 @@ describe("List", () => {
 							fnSource: readonly string[],
 						) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
-								callback: (...args: unknown[]) => unknown,
-								...args: unknown[]
+								callback: (...args: any[]) => unknown,
+								...args: any[]
 							) => unknown;
 							const actualArgs: unknown[][] = [];
 							const actualResult = actualFn.apply(subject, [
