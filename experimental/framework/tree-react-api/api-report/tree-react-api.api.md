@@ -29,6 +29,9 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 }
 
 // @public
+export function objectIdNumber(object: object): number;
+
+// @public
 export interface SchemaIncompatibleProps {
     readonly error: SchemaIncompatible;
     readonly upgradeSchema: () => void;
