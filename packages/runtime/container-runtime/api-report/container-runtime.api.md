@@ -1105,7 +1105,7 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 // @alpha (undocumented)
 export interface ISummaryConfigurationDisableSummarizer {
     // (undocumented)
-    state: "disabled";
+    state: "disabled" | "reallyBroken";
 }
 
 // @alpha (undocumented)

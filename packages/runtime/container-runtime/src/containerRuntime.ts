@@ -320,7 +320,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
  * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
-	state: "disabled";
+	state: "disabled" | "reallyBroken";
 }
 
 /**
