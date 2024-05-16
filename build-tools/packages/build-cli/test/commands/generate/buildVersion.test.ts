@@ -409,6 +409,7 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
+	// Commenting this out because I am not able to patch RC3 https://github.com/microsoft/FluidFramework/pull/21112
 	// test
 	// 	.env({
 	// 		VERSION_BUILDNUMBER: "212045",
