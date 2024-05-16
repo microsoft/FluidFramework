@@ -32,7 +32,9 @@
                                         "id": 0
                                       }
                                     },
-                                    "cellId": 0,
+                                    "cellId": {
+                                      "atom": 0
+                                    },
                                     "changes": {
                                       "fieldChanges": [
                                         {
@@ -46,7 +48,9 @@
                                                   "id": 1
                                                 }
                                               },
-                                              "cellId": 1
+                                              "cellId": {
+                                                "atom": 1
+                                              }
                                             }
                                           ]
                                         }
