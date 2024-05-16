@@ -91,7 +91,7 @@ export class OdspTokenManager {
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
-        debug('Getting odsp tokens');
+        debug("Getting odsp tokens");
         return this.getTokens(
             false,
             server,
@@ -109,7 +109,7 @@ export class OdspTokenManager {
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
-        debug('Getting push tokens');
+        debug("Getting push tokens");
         return this.getTokens(
             true,
             server,
