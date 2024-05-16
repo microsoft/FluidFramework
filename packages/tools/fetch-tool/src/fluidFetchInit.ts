@@ -8,7 +8,7 @@ import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
+import { IPublicClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
 import { IOdspResolvedUrl, OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
@@ -33,7 +33,7 @@ export const fluidFetchWebNavigator = (url: string) => {
 async function initializeODSPCore(
     odspResolvedUrl: IOdspResolvedUrl,
     server: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
 ) {
     const { driveId, itemId } = odspResolvedUrl;
 

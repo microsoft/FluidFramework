@@ -8,7 +8,7 @@ import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
     getDriveItemFromDriveAndItem,
-    IClientConfig,
+    IPublicClientConfig,
     IOdspDriveItem,
     getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
@@ -26,7 +26,7 @@ import { getForceTokenReauth } from "./fluidFetchArgs";
 export async function resolveWrapper<T>(
     callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
     server: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
     forceTokenReauth = false,
     forToken = false,
 ): Promise<T> {
@@ -68,7 +68,7 @@ export async function resolveWrapper<T>(
 export async function resolveDriveItemByServerRelativePath(
     server: string,
     serverRelativePath: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
 ) {
     return resolveWrapper<IOdspDriveItem>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -84,7 +84,7 @@ export async function resolveDriveItemByServerRelativePath(
 async function resolveChildrenByDriveItem(
     server: string,
     folderDriveItem: IOdspDriveItem,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
 ) {
     return resolveWrapper<IOdspDriveItem[]>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
