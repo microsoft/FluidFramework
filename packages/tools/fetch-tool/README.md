@@ -1,7 +1,7 @@
 # @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
-In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
+In order to connect to ODSP, the clientID must be set as the environment variable `login__microsoft__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 
 ## Usage
 
@@ -41,7 +41,6 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     leave                                                                    |    16       3810
     ----------------------------------------------------------------------------------------------------
     Total                                                                    |   105      38605
-
 
 **--stat:dataType**
 
@@ -102,6 +101,7 @@ If you would like to debug fetch-tool, you can create a unit test. Remember to a
 In the unit test, you can use `setArguments()` from fluidFetchArgs to pass in arguments you want to test. Then call the methods you want to run and you will be able to set breakpoints in vscode.
 
 **Example**
+
 ```js
 describe("fetch tool", () => {
     it("can fetch messages", async () => {
@@ -111,4 +111,3 @@ describe("fetch tool", () => {
     });
 });
 ```
-

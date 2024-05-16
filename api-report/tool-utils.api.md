@@ -4,15 +4,15 @@
 
 ```ts
 
-import { IClientConfig } from '@fluidframework/odsp-doclib-utils';
 import { IOdspTokens } from '@fluidframework/odsp-doclib-utils';
+import { IPublicClientConfig } from '@fluidframework/odsp-doclib-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 
 // @public
 export const gcBlobPrefix = "__gc";
 
 // @public (undocumented)
-export const getMicrosoftConfiguration: () => IClientConfig;
+export const getMicrosoftConfiguration: () => IPublicClientConfig;
 
 // @public
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree;
@@ -77,9 +77,9 @@ export type OdspTokenConfig = {
 export class OdspTokenManager {
     constructor(tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> | undefined);
     // (undocumented)
-    getOdspTokens(server: string, clientConfig: IClientConfig, tokenConfig: OdspTokenConfig, forceRefresh?: boolean, forceReauth?: boolean): Promise<IOdspTokens>;
+    getOdspTokens(server: string, clientConfig: IPublicClientConfig, tokenConfig: OdspTokenConfig, forceRefresh?: boolean, forceReauth?: boolean): Promise<IOdspTokens>;
     // (undocumented)
-    getPushTokens(server: string, clientConfig: IClientConfig, tokenConfig: OdspTokenConfig, forceRefresh?: boolean, forceReauth?: boolean): Promise<IOdspTokens>;
+    getPushTokens(server: string, clientConfig: IPublicClientConfig, tokenConfig: OdspTokenConfig, forceRefresh?: boolean, forceReauth?: boolean): Promise<IOdspTokens>;
     // (undocumented)
     updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens): Promise<void>;
 }

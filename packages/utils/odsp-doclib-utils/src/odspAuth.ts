@@ -13,6 +13,13 @@ export interface IOdspTokens {
     readonly refreshToken: string;
 }
 
+/**
+ * Configuration for a public client.
+ */
+export interface IPublicClientConfig {
+	clientId: string;
+}
+
 export interface IClientConfig {
     clientId: string;
     clientSecret: string;
@@ -39,7 +46,6 @@ export type TokenRequestCredentials = {
 type TokenRequestBody =
     TokenRequestCredentials & {
         client_id: string;
-        client_secret: string;
         scope: string;
     };
 
@@ -52,7 +58,7 @@ export function getFetchTokenUrl(server: string): string {
 
 export function getLoginPageUrl(
     server: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
     scope: string,
     odspAuthRedirectUri: string,
 ) {
@@ -63,11 +69,16 @@ export function getLoginPageUrl(
         + `&redirect_uri=${odspAuthRedirectUri}`;
 }
 
-export const getOdspRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getOdspRefreshTokenFn = (server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
-export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getPushRefreshTokenFn = (server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
-export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getRefreshTokenFn = (
+    scope: string,
+    server: string,
+    clientConfig: IPublicClientConfig,
+    tokens: IOdspTokens,
+) =>
     async () => {
         const newTokens = await refreshTokens(server, scope, clientConfig, tokens);
         return newTokens.accessToken;
@@ -83,13 +94,12 @@ export const getRefreshTokenFn = (scope: string, server: string, clientConfig: I
 export async function fetchTokens(
     server: string,
     scope: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
     credentials: TokenRequestCredentials,
 ): Promise<IOdspTokens> {
     const body: TokenRequestBody = {
         scope,
         client_id: clientConfig.clientId,
-        client_secret: clientConfig.clientSecret,
         ...credentials,
     };
     const result = await unauthPostAsync(
@@ -122,7 +132,7 @@ export async function fetchTokens(
 export async function refreshTokens(
     server: string,
     scope: string,
-    clientConfig: IClientConfig,
+    clientConfig: IPublicClientConfig,
     tokens: IOdspTokens,
 ): Promise<IOdspTokens> {
     // Clear out the old tokens while awaiting the new tokens

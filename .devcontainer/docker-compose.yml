@@ -34,7 +34,6 @@ services:
             - NODE_ENV=development
             - IS_FLUID_SERVER=true
             - login__microsoft__clientId
-            - login__microsoft__secret
             - login__accounts
         restart: always
     alfred:
