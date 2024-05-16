@@ -16,6 +16,7 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
+	getSchemaAndPolicy,
 	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
@@ -218,6 +219,7 @@ export function setField(
 				content,
 				simpleFieldSchema.allowedTypes,
 				nodeKeyManager,
+				getSchemaAndPolicy(field),
 			);
 			typedField.content = cursor;
 			break;
