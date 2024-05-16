@@ -263,7 +263,8 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IRetriableFailureResult": {
+			"RemovedInterfaceDeclaration_IRetriableFailureResult": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}

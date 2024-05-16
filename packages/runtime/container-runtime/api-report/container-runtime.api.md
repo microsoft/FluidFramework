@@ -631,7 +631,7 @@ export interface IAckSummaryResult {
 
 // @alpha
 export interface IBaseSummarizeResult {
-    readonly error: IRetriableFailureResult | undefined;
+    readonly error: IRetriableFailureError | undefined;
     // (undocumented)
     readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
@@ -973,7 +973,7 @@ export interface IRefreshSummaryAckOptions {
 }
 
 // @alpha
-export interface IRetriableFailureResult extends Error {
+export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
 }
@@ -1300,7 +1300,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: false;
     data: TFailure | undefined;
     message: string;
-    error: IRetriableFailureResult;
+    error: IRetriableFailureError;
 };
 
 // @alpha (undocumented)

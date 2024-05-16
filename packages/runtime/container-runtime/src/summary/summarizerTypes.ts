@@ -185,7 +185,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
  * Type for summarization failures that are retriable.
  * @alpha
  */
-export interface IRetriableFailureResult extends Error {
+export interface IRetriableFailureError extends Error {
 	readonly retryAfterSeconds?: number;
 }
 
@@ -196,7 +196,7 @@ export interface IRetriableFailureResult extends Error {
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
 	/** Retriable error object related to failed summarize attempt. */
-	readonly error: IRetriableFailureResult | undefined;
+	readonly error: IRetriableFailureError | undefined;
 	/** Reference sequence number as of the generate summary attempt. */
 	readonly referenceSequenceNumber: number;
 	readonly minimumSequenceNumber: number;
@@ -315,7 +315,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			success: false;
 			data: TFailure | undefined;
 			message: string;
-			error: IRetriableFailureResult;
+			error: IRetriableFailureError;
 	  };
 
 /**

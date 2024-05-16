@@ -38,7 +38,7 @@ import {
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	SummarizerStopReason,
-	type IRetriableFailureResult,
+	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
@@ -686,7 +686,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
-		let error: IRetriableFailureResult | undefined;
+		let error: IRetriableFailureError | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -736,7 +736,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
 				this.mc.logger.sendPerformanceEvent({
 					eventName: "SummarizeAttemptDelay",
-					duration: retryAfterSeconds,
+					duration: retryAfterSeconds * 1000,
 					stage: submitSummaryResult.data?.stage,
 					...attemptResult.summarizeProps,
 				});
