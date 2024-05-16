@@ -410,6 +410,8 @@ describe("generate:buildVersion", () => {
 		});
 
 	// Commenting this out because I am not able to patch RC3 https://github.com/microsoft/FluidFramework/pull/21112
+	// Seems like it fails because 2.0.0-rc.3.0.0 already exists in npm.
+	// We don't release build-tools from release branches, only the client release group, so this should be fine.
 	// test
 	// 	.env({
 	// 		VERSION_BUILDNUMBER: "212045",
