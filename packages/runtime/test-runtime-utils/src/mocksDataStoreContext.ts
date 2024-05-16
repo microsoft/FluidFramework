@@ -67,7 +67,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
 		private readonly interactive: boolean = true,

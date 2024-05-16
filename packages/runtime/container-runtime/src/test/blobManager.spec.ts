@@ -162,7 +162,7 @@ export class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public logger = this.mc.logger;
+	public baseLogger = this.mc.logger;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();

@@ -24,7 +24,7 @@ import {
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
+import { DetachIdOverrideType } from "./formatV1.js";
 import {
 	CellRename,
 	DetachOfRemovedNodes,
@@ -831,10 +831,10 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
-	const getQueries = (target: CrossFieldTarget) =>
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
 		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
 
 	const table = {
