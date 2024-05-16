@@ -18,6 +18,7 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -593,9 +594,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+		const sequenceField = getSequenceField(this);
 		const content = contextualizeInsertedArrayContent(
 			value as readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-			getSequenceField(this),
+			sequenceField,
 		);
 
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
@@ -606,6 +608,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			content,
 			simpleFieldSchema,
 			getFlexNode(this).context.nodeKeyManager,
+			getSchemaAndPolicy(sequenceField),
 		);
 	}
 
