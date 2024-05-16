@@ -7,8 +7,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -23,7 +24,7 @@ import {
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
-import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
@@ -145,59 +146,6 @@ export class AzureClient {
 	}
 
 	/**
-	 * Creates new detached container out of specific version of another container.
-	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
-	 * (normally not explicitly specified.)
-	 * @param id - Unique ID of the source container in Azure Fluid Relay.
-	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param version - Unique version of the source container in Azure Fluid Relay.
-	 * It defaults to latest version if parameter not provided.
-	 * @returns New detached container instance along with associated services.
-	 */
-	public async copyContainer<TContainerSchema extends ContainerSchema>(
-		id: string,
-		containerSchema: TContainerSchema,
-		version?: AzureContainerVersion,
-	): Promise<{
-		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
-	}> {
-		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
-		url.searchParams.append(
-			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
-		);
-		url.searchParams.append("containerId", encodeURIComponent(id));
-		const sourceContainer = await loader.resolve({ url: url.href });
-
-		if (sourceContainer.resolvedUrl === undefined) {
-			throw new Error("Source container cannot resolve URL.");
-		}
-
-		const documentService = await this.documentServiceFactory.createDocumentService(
-			sourceContainer.resolvedUrl,
-		);
-		const storage = await documentService.connectToStorage();
-		const handle = {
-			type: SummaryType.Handle,
-			handleType: SummaryType.Tree,
-			handle: version?.id ?? "latest",
-		};
-		const tree = await storage.downloadSummary(handle);
-
-		const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
-
-		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
-			container,
-			this.properties.connection,
-		);
-		const services = this.getContainerServices(container);
-		return { container: fluidContainer, services };
-	}
-
-	/**
 	 * Accesses the existing container given its unique ID in the Azure Fluid Relay.
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
@@ -228,6 +176,42 @@ export class AzureClient {
 		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
+	}
+
+	/**
+	 * Load a specific version of a container for viewing only.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
+	 * @param id - Unique ID of the source container in Azure Fluid Relay.
+	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param version - Unique version of the source container in Azure Fluid Relay.
+	 * @returns Loaded container instance at the specified version.
+	 */
+	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
+		id: string,
+		containerSchema: TContainerSchema,
+		version: AzureContainerVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+	}> {
+		const loader = this.createLoader(containerSchema);
+		const url = new URL(this.properties.connection.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"tenantId",
+			encodeURIComponent(getTenantId(this.properties.connection)),
+		);
+		url.searchParams.append("containerId", encodeURIComponent(id));
+		const container = await loadContainerPaused(loader, {
+			url: url.href,
+			headers: { [LoaderHeader.version]: version.id },
+		});
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
+		return { container: fluidContainer };
 	}
 
 	/**

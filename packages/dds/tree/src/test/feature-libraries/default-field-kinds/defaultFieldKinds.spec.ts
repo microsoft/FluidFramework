@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 
-import { makeAnonChange, tagChange } from "../../../core/index.js";
+import { makeAnonChange } from "../../../core/index.js";
 import {
 	ValueFieldEditor,
 	valueChangeHandler,
@@ -23,8 +23,13 @@ import {
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Change, assertEqual, assertTaggedEqual } from "../optional-field/optionalFieldUtils.js";
+import {
+	Change,
+	assertEqual,
+	assertTaggedEqual,
+	tagChangeInline,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../optional-field/optionalFieldUtils.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -75,11 +80,11 @@ describe("defaultFieldKinds", () => {
 		const childChange2 = Change.child(nodeChange2);
 		const childChange3 = Change.child(arbitraryChildChange);
 
-		const change1 = tagChange(
+		const change1 = tagChangeInline(
 			fieldHandler.editor.set({ detach: brand(1), fill: brand(41) }),
 			mintRevisionTag(),
 		);
-		const change2 = tagChange(
+		const change2 = tagChangeInline(
 			fieldHandler.editor.set({ detach: brand(2), fill: brand(42) }),
 			mintRevisionTag(),
 		);
@@ -112,8 +117,8 @@ describe("defaultFieldKinds", () => {
 		describe("correctly composes", () => {
 			it("two field changes", () => {
 				const composed = fieldHandler.rebaser.compose(
-					change1,
-					change2,
+					change1.change,
+					change2.change,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -124,15 +129,18 @@ describe("defaultFieldKinds", () => {
 			});
 
 			it("a field change and a child change", () => {
-				const taggedChildChange1 = tagChange(childChange1, mintRevisionTag());
+				const taggedChildChange1 = tagChangeInline(childChange1, mintRevisionTag());
 				const expected = Change.atOnce(
 					Change.move({ localId: brand(41), revision: change1.revision }, "self"),
 					Change.clear("self", { localId: brand(1), revision: change1.revision }),
-					Change.childAt({ localId: brand(41), revision: change1.revision }, nodeChange1),
+					Change.childAt(
+						{ localId: brand(41), revision: change1.revision },
+						{ ...nodeChange1, revision: taggedChildChange1.revision },
+					),
 				);
 				const actual = fieldHandler.rebaser.compose(
-					change1,
-					taggedChildChange1,
+					change1.change,
+					taggedChildChange1.change,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -143,8 +151,8 @@ describe("defaultFieldKinds", () => {
 
 			it("a child change and a field change", () => {
 				const actual = fieldHandler.rebaser.compose(
-					makeAnonChange(childChange1),
-					change1,
+					childChange1,
+					change1.change,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -161,8 +169,8 @@ describe("defaultFieldKinds", () => {
 			it("two child changes", () => {
 				assertEqual(
 					fieldHandler.rebaser.compose(
-						makeAnonChange(childChange1),
-						makeAnonChange(childChange2),
+						childChange1,
+						childChange2,
 						childComposer1_2,
 						fakeIdAllocator,
 						failCrossFieldManager,
@@ -176,7 +184,7 @@ describe("defaultFieldKinds", () => {
 		it("can invert children", () => {
 			const taggedChange = { revision: mintRevisionTag(), change: change1WithChildChange };
 			const inverted = fieldHandler.rebaser.invert(
-				taggedChange,
+				taggedChange.change,
 				true,
 				idAllocatorFromMaxId(),
 				failCrossFieldManager,
@@ -197,11 +205,11 @@ describe("defaultFieldKinds", () => {
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
 					change2.change,
-					makeAnonChange(change1WithChildChange),
+					change1WithChildChange,
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo([], []),
+					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				change2.change,
 			);
@@ -220,11 +228,11 @@ describe("defaultFieldKinds", () => {
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
 					changeToRebase,
-					makeAnonChange(baseChange),
+					baseChange,
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo([], []),
+					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				childChange3,
 			);

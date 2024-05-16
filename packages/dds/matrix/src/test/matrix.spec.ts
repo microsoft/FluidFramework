@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -47,7 +47,7 @@ function createConnectedMatrix(
 
 function createLocalMatrix(id: string) {
 	const factory = new SharedMatrixFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
 }
 
 function createMatrixForReconnection(
@@ -875,8 +875,8 @@ describe("Matrix1", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
-					const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+					const handle1 = matrix1.getCell(0, 0) as IFluidHandleInternal;
+					const handle2 = matrix2.getCell(0, 0) as IFluidHandleInternal;
 
 					assert.equal(handle1.absolutePath, handle2.absolutePath);
 
@@ -1112,7 +1112,10 @@ describe("Matrix1", () => {
 					public async deleteOutboundRoutes() {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
-						const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+						const deletedHandle = this.matrix1.getCell(
+							0,
+							lastAddedCol,
+						) as IFluidHandleInternal;
 						assert(deletedHandle, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);

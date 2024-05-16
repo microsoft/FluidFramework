@@ -326,8 +326,15 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// There are two parts to refresh, making the network snapshot call and trimming the ops
 		// Container layer Refresh
 		// Network call refreshing the base snapshot
-		const serializedStateManager = (container2 as any).serializedStateManager;
-		await serializedStateManager.refreshLatestSnapshot();
+		const serializedStateManager = (
+			container2 as unknown as {
+				// See SerializedStateManager class in container-loader package
+				serializedStateManager: {
+					refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+				};
+			}
+		).serializedStateManager;
+		await serializedStateManager.refreshLatestSnapshot(true);
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();
@@ -341,7 +348,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// The last two saved ops (setting A and B) have reference sequence numbers that point to a sequence number
 		// before the snapshot
 		(dataObjectA2.containerRuntime as any).pendingStateManager.savedOps = [];
-
 		// Get Pending state and close
 		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
 		const pendingState = await container2.closeAndGetPendingLocalState();

@@ -147,7 +147,11 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const kafkaProducerGlobalAdditionalConfig = config.get(
+			"kafka:lib:producerGlobalAdditionalConfig",
+		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -161,6 +165,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			kafkaMaxBatchSize,
 			kafkaSslCACertFilePath,
 			eventHubConnString,
+			kafkaProducerGlobalAdditionalConfig,
+			oauthBearerConfig,
 		);
 
 		const redisConfig = config.get("redis");

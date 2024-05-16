@@ -8,7 +8,11 @@ import {
 	type IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ILoaderProps,
+	Loader,
+	loadContainerPaused,
+} from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
@@ -106,16 +110,13 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	}
 
 	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
-		const container = await this.loader.resolve({
-			url: id,
-			headers: {
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: "sequenceNumber",
-					pauseAfterLoad: true,
-				},
-				[LoaderHeader.sequenceNumber]: sequenceNumber,
+		const container = await loadContainerPaused(
+			this.loader,
+			{
+				url: id,
 			},
-		});
+			sequenceNumber,
+		);
 		const model = await this.getModelFromContainer(container);
 		return model;
 	}

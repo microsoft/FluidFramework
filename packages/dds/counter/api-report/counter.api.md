@@ -4,16 +4,9 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @alpha
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
@@ -28,17 +21,9 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected applyStashedOp(op: unknown): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedCounter;
-    static getFactory(): IChannelFactory<ISharedCounter>;
-    increment(incrementAmount: number): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    get value(): number;
-}
+export const SharedCounter: ISharedObjectKind<ISharedCounter>;
+
+// @alpha
+export type SharedCounter = ISharedCounter;
 
 ```

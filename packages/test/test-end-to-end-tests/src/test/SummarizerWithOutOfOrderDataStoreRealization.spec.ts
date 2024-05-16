@@ -6,13 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
-import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -22,19 +19,10 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-interface ProvideSearchContent {
-	SearchContent: SearchContent;
-}
-interface SearchContent extends ProvideSearchContent {
-	getSearchContent(): Promise<string | undefined>;
-}
-
-// Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: false },
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
@@ -46,7 +34,6 @@ describeCompat(
 	"Summary where data store is loaded out of order",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedMatrix } = apis.dds;
 		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
@@ -55,25 +42,8 @@ describeCompat(
 			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 		) {
 			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-				const obj: PureDataObject & FluidObject<SearchContent> =
-					await DataObject.getDataObject(runtime);
-				const searchObj = obj.SearchContent;
-				if (searchObj === undefined) {
-					return undefined;
-				}
-
-				// ODSP parser requires every search blob end with a line-feed character.
-				const searchContent = await searchObj.getSearchContent();
-				if (searchContent === undefined) {
-					return undefined;
-				}
-				const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
-				return {
-					// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
-					// that want to provide search content.
-					path: ["_search", "01"],
-					content,
-				};
+				await DataObject.getDataObject(runtime);
+				return undefined;
 			}, factory);
 		}
 
@@ -84,40 +54,9 @@ describeCompat(
 			public get _context() {
 				return this.context;
 			}
-			private readonly mapKey = "SharedMap";
-			public map!: ISharedMap;
-
-			protected async initializingFirstTime() {
-				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
-				this.root.set(this.mapKey, sharedMap.handle);
-			}
-
-			protected async hasInitialized() {
-				const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
-				assert(mapHandle !== undefined, "SharedMap not found");
-				this.map = await mapHandle.get();
-			}
 		}
 
-		class TestDataObject1 extends DataObject implements SearchContent {
-			public async getSearchContent(): Promise<string | undefined> {
-				// By this time, we are in the middle of the summarization process and
-				// the DataStore should have been initialized with no child.
-				// We will force it to be realized so when we invoke completeSummary on the SummarizerNode it would
-				// cause bug https://dev.azure.com/fluidframework/internal/_workitems/edit/1633 to happen.
-				const dataTestDataObject2Handle =
-					this.root.get<IFluidHandle<TestDataObject2>>("dsFactory2");
-				assert(dataTestDataObject2Handle, "dsFactory2 not located");
-				const dataStore2 = await dataTestDataObject2Handle.get();
-				dataStore2.map.set("mapkey", "value");
-
-				return Promise.resolve("TestDataObject1 Search Blob");
-			}
-
-			public get SearchContent() {
-				return this;
-			}
-
+		class TestDataObject1 extends DataObject {
 			public get _root() {
 				return this.root;
 			}
@@ -126,32 +65,21 @@ describeCompat(
 				return this.context;
 			}
 
-			private readonly matrixKey = "SharedMatrix";
-			public matrix!: SharedMatrix;
-
 			protected async initializingFirstTime() {
-				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-				this.root.set(this.matrixKey, sharedMatrix.handle);
-
-				const dataStore =
+				const dataStore2 =
 					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
-				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
-				this.root.set("dsFactory2", dsFactory2.handle);
+				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
 			protected async hasInitialized() {
-				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-				assert(matrixHandle !== undefined, "SharedMatrix not found");
-				this.matrix = await matrixHandle.get();
-
-				this.matrix.insertRows(0, 3);
-				this.matrix.insertCols(0, 3);
+				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
+				await dataStore2Handle?.get();
 			}
 		}
 		const dataStoreFactory1 = new DataObjectFactory(
 			TestDataObjectType1,
 			TestDataObject1,
-			[SharedMap.getFactory(), SharedMatrix.getFactory()],
+			[],
 			[],
 			[],
 			createDataStoreRuntime(),
@@ -159,10 +87,9 @@ describeCompat(
 		const dataStoreFactory2 = new DataObjectFactory(
 			TestDataObjectType2,
 			TestDataObject2,
-			[SharedMap.getFactory(), SharedMatrix.getFactory()],
 			[],
 			[],
-			createDataStoreRuntime(),
+			[],
 		);
 
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
@@ -179,14 +106,10 @@ describeCompat(
 			},
 		);
 
-		async function createSummarizer(
-			testObjectProvider: ITestObjectProvider,
-			container: IContainer,
-			summaryVersion?: string,
-		): Promise<ISummarizer> {
+		async function createSummarizer(summaryVersion?: string): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
-				testObjectProvider,
-				container,
+				provider,
+				mainContainer,
 				dataStoreFactory1,
 				summaryVersion,
 				ContainerRuntimeFactoryWithDefaultDataStore,
@@ -221,9 +144,9 @@ describeCompat(
 		});
 
 		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
-			const summarizerClient = await createSummarizer(provider, mainContainer);
+			const summarizerClient = await createSummarizer();
 			await provider.ensureSynchronized();
-			mainDataStore.matrix.setCell(0, 0, "value");
+			mainDataStore._root.set("1", "2");
 
 			// Here are the steps that would cause bug to repro:
 			// Additional info: https://github.com/microsoft/FluidFramework/pull/11697
@@ -246,26 +169,22 @@ describeCompat(
 			const summaryVersion = await waitForSummary(summarizerClient);
 			assert(summaryVersion, "Summary version should be defined");
 
-			mainDataStore.matrix.setCell(0, 0, "value1");
+			mainDataStore._root.set("2", "3");
 			// The new summarization would immediately trigger bug 1633.
 			const summaryVersion1 = await waitForSummary(summarizerClient);
 			assert(summaryVersion1, "Summary version should be defined");
 
 			// Make sure the next summarization succeeds.
-			mainDataStore.matrix.setCell(0, 0, "value1");
+			mainDataStore._root.set("3", "4");
 			const summaryVersion2 = await waitForSummary(summarizerClient);
 			assert(summaryVersion2, "Summary version should be defined");
 
 			summarizerClient.close();
 
 			// Just make sure new summarizer will be able to load and execute successfully.
-			const summarizerClient2 = await createSummarizer(
-				provider,
-				mainContainer,
-				summaryVersion2,
-			);
+			const summarizerClient2 = await createSummarizer(summaryVersion2);
 
-			mainDataStore.matrix.setCell(0, 0, "value2");
+			mainDataStore._root.set("4", "5");
 			const summaryVersion3 = await waitForSummary(summarizerClient2);
 			assert(summaryVersion3, "Summary version should be defined");
 		});

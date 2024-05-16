@@ -15,7 +15,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory.js";
 import {
 	IConsensusRegisterCollection,
 	IConsensusRegisterCollectionEvents,
@@ -108,29 +107,6 @@ export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>
 	implements IConsensusRegisterCollection<T>
 {
-	/**
-	 * Create a new consensus register collection
-	 *
-	 * @param runtime - data store runtime the new consensus register collection belongs to
-	 * @param id - optional name of the consensus register collection
-	 * @returns newly create consensus register collection (but not attached yet)
-	 */
-	public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(
-			id,
-			ConsensusRegisterCollectionFactory.Type,
-		) as ConsensusRegisterCollection<T>;
-	}
-
-	/**
-	 * Get a factory for ConsensusRegisterCollection to register with the data store.
-	 *
-	 * @returns a factory that creates and load ConsensusRegisterCollection
-	 */
-	public static getFactory() {
-		return new ConsensusRegisterCollectionFactory();
-	}
-
 	private readonly data = new Map<string, ILocalData<T>>();
 
 	/**
@@ -165,7 +141,7 @@ export class ConsensusRegisterCollection<T>
 				type: "Plain",
 				value,
 			},
-			refSeq: this.runtime.deltaManager.lastSequenceNumber,
+			refSeq: this.deltaManager.lastSequenceNumber,
 		};
 
 		return this.newAckBasedPromise<boolean>((resolve) => {

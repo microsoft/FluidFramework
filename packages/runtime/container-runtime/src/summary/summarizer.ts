@@ -98,7 +98,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
-		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "Summarizer" });
+		this.logger = createChildLogger({
+			logger: this.runtime.baseLogger,
+			namespace: "Summarizer",
+		});
 	}
 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {

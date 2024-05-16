@@ -10,6 +10,7 @@ import {
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
@@ -64,10 +65,12 @@ function rebaseTagged<TChangeset>(
 	rebasePath: TaggedChange<TChangeset>[],
 ): TaggedChange<TChangeset> {
 	let currChange = change;
-	const revisionInfo = defaultRevInfosFromChanges(rebasePath);
+	const revisionInfo = defaultRevInfosFromChanges([...rebasePath, change]);
 	for (const base of rebasePath) {
-		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]);
-		currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
+		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+			base.revision,
+		]);
+		currChange = tagChange(rebase(currChange, base, metadata), currChange.revision);
 	}
 
 	return currChange;
@@ -179,11 +182,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
 							const rollbacks = sourceEdits.map((change) =>
-								tagRollbackInverse(
-									fieldRebaser.invert(change, true),
-									`rollback-${change.revision}` as unknown as RevisionTag,
-									change.revision,
-								),
+								invert(fieldRebaser, change),
 							);
 							rollbacks.reverse();
 
@@ -524,11 +523,12 @@ function sandwichRebaseWithCompose<TChangeset>(
 			...sourceEdits.slice(0, i),
 		];
 		const rebaseMetadata = rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges(rebasePath),
+			defaultRevInfosFromChanges([...rebasePath, edit]),
+			edit.revision,
 			[editToRebaseOver.revision],
 		);
 		const rebasedEdit = tagChange(
-			fieldRebaser.rebaseComposed(rebaseMetadata, edit.change, currentComposedEdit),
+			fieldRebaser.rebaseComposed(rebaseMetadata, edit, currentComposedEdit),
 			edit.revision,
 		);
 		rebasedEditsWithCompose.push(rebasedEdit);
@@ -584,14 +584,11 @@ function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 
 	// Rebase over the composition of base edits
 	const metadata = rebaseRevisionMetadataFromInfo(
-		defaultRevInfosFromChanges(editsToRebaseOver),
+		defaultRevInfosFromChanges([...editsToRebaseOver, edit]),
+		edit.revision,
 		editsToRebaseOver.map(({ revision }) => revision),
 	);
-	const rebaseWithCompose = fieldRebaser.rebaseComposed(
-		metadata,
-		edit.change,
-		...editsToRebaseOver,
-	);
+	const rebaseWithCompose = fieldRebaser.rebaseComposed(metadata, edit, ...editsToRebaseOver);
 
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assertDeepEqual(
@@ -650,15 +647,7 @@ function verifyComposeWithInverseEqualsEmpty<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges([edit]);
 
 	const change = tagChange(edit.change, edit.revision);
-	const changeset = fieldRebaser.compose(
-		change,
-		tagRollbackInverse(
-			fieldRebaser.invert(change, true),
-			`rollback-${change.revision}` as unknown as RevisionTag,
-			change.revision,
-		),
-		metadata,
-	);
+	const changeset = fieldRebaser.compose(change, invert(fieldRebaser, change), metadata);
 	assert(fieldRebaser.isEmpty !== undefined);
 	fieldRebaser.isEmpty(changeset);
 }
@@ -688,21 +677,24 @@ function verifyRebaseLeftDistributivity<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assert(namedEditsToRebaseOver.length >= 2, "expected at least 2 edits");
 	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
-	const revInfo = defaultRevInfosFromChanges(editsToRebaseOver);
+	const revInfo = defaultRevInfosFromChanges([...editsToRebaseOver, edit]);
 
 	const editB = editsToRebaseOver[0];
 	const editC = editsToRebaseOver[1];
-	const rebaseMetaData = rebaseRevisionMetadataFromInfo(revInfo, [
+	const rebaseMetaData = rebaseRevisionMetadataFromInfo(revInfo, edit.revision, [
 		editB.revision,
 		editC.revision,
 	]);
 	const actualChange = tagChange(
-		fieldRebaser.rebaseComposed(rebaseMetaData, edit.change, editB, editC),
+		fieldRebaser.rebaseComposed(rebaseMetaData, edit, editB, editC),
 		edit.revision,
 	);
 	let expectedChangeset: TChangeset = edit.change;
 	for (const editToRebaseOver of editsToRebaseOver) {
-		expectedChangeset = fieldRebaser.rebase(expectedChangeset, editToRebaseOver);
+		expectedChangeset = fieldRebaser.rebase(
+			mapTaggedChange(edit, expectedChangeset),
+			editToRebaseOver,
+		);
 	}
 	const expectedChange = tagChange(expectedChangeset, edit.revision);
 
@@ -770,12 +762,15 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	// ((A ↷ B) ↷ B⁻¹) ↷ B
 	const actualChange = tagChange(
 		fieldRebaser.rebase(
-			fieldRebaser.rebase(
-				fieldRebaser.rebase(edit.change, editB),
-				tagRollbackInverse(
-					inverseEditB,
-					`rollback-${editB.revision}` as unknown as RevisionTag,
-					editB.revision,
+			mapTaggedChange(
+				edit,
+				fieldRebaser.rebase(
+					mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
+					tagRollbackInverse(
+						inverseEditB,
+						`rollback-${editB.revision}` as unknown as RevisionTag,
+						editB.revision,
+					),
 				),
 			),
 			editB,
@@ -784,7 +779,7 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	);
 
 	// A ↷ B
-	const expectedChange = tagChange(fieldRebaser.rebase(edit.change, editB), edit.revision);
+	const expectedChange = tagChange(fieldRebaser.rebase(edit, editB), edit.revision);
 	assertDeepEqual(actualChange, expectedChange);
 }
 
@@ -800,7 +795,7 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	// (A ↷ B) ↷ B⁻¹
 	const actualChange = tagChange(
 		fieldRebaser.rebase(
-			fieldRebaser.rebase(edit.change, editB),
+			mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
 			tagChange(invertedEditB, editB.revision),
 		),
 		edit.revision,
@@ -819,7 +814,7 @@ function verifyRebaseOverEmpty<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ) {
 	const emptyChange = tagChange(fieldRebaser.createEmpty(), emptyRevisionTag);
-	const actualChange = tagChange(fieldRebaser.rebase(edit.change, emptyChange), edit.revision);
+	const actualChange = tagChange(fieldRebaser.rebase(edit, emptyChange), edit.revision);
 	const expectedChange = tagChange(edit.change, edit.revision);
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assertDeepEqual(actualChange, expectedChange);
@@ -850,4 +845,16 @@ function composeArray<TChangeset>(
 	}
 
 	return composed;
+}
+
+function invert<TChangeset>(
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+	change: TaggedChange<TChangeset>,
+): TaggedChange<TChangeset> {
+	const revision = `rollback-${change.revision}` as unknown as RevisionTag;
+	return tagRollbackInverse(
+		fieldRebaser.inlineRevision(fieldRebaser.invert(change, true), revision),
+		revision,
+		change.revision,
+	);
 }

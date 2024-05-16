@@ -58,7 +58,7 @@ export type TreeObjectNodeUnsafe<
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 		: unknown;
@@ -166,7 +166,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**

@@ -15,7 +15,6 @@ export type {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 export { AttachState } from "@fluidframework/container-definitions";
-export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerAttachProps,
@@ -91,5 +90,4 @@ export {
 	SequenceMaintenanceEvent,
 	SharedSegmentSequence,
 	SharedString,
-	SharedStringFactory,
 } from "@fluidframework/sequence/internal";

@@ -214,12 +214,14 @@ export function makeCodecFamily<TDecoded, TContext>(
 	}
 
 	return {
-		resolve(formatVersion: number) {
+		resolve(
+			formatVersion: number,
+		): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 			const codec = codecs.get(formatVersion);
 			assert(codec !== undefined, 0x5e6 /* Requested coded for unsupported format. */);
 			return codec;
 		},
-		getSupportedFormats() {
+		getSupportedFormats(): Iterable<FormatVersion> {
 			return codecs.keys();
 		},
 	};
@@ -311,14 +313,14 @@ export function withSchemaValidation<
 	}
 	const compiledFormat = validator.compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat, context: TContext) => {
+		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TContext) => {
+		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}

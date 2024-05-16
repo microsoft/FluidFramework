@@ -132,19 +132,18 @@ export interface AttachProcessProps {
  * This method is retriable on failure. Based on the provided initialAttachmentData
  * this method will resume the attachment process and attempt to complete it.
  *
- * @param props - The data and services necessary to run the attachment process
+ * @param AttachProcessProps - The data and services necessary to run the attachment process
+ * @returns - The attach summary (only if offline load is enabled), or undefined
  */
-export const runRetriableAttachProcess = async (
-	props: AttachProcessProps,
-): Promise<SnapshotWithBlobs | undefined> => {
-	const {
-		detachedBlobStorage,
-		createOrGetStorageService,
-		setAttachmentData,
-		createAttachmentSummary,
-		offlineLoadEnabled,
-	} = props;
-	let currentData: AttachmentData = props.initialAttachmentData;
+export const runRetriableAttachProcess = async ({
+	detachedBlobStorage,
+	createOrGetStorageService,
+	setAttachmentData,
+	createAttachmentSummary,
+	offlineLoadEnabled,
+	initialAttachmentData,
+}: AttachProcessProps): Promise<SnapshotWithBlobs | undefined> => {
+	let currentData: AttachmentData = initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
@@ -161,7 +160,7 @@ export const runRetriableAttachProcess = async (
 			  }
 			: {
 					state: AttachState.Attaching,
-					summary: props.createAttachmentSummary(),
+					summary: createAttachmentSummary(),
 					blobs: "none",
 			  };
 		setAttachmentData(currentData);

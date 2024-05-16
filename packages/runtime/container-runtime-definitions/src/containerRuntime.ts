@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEventProvider,

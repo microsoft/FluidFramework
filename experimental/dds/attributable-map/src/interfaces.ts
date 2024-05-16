@@ -86,6 +86,19 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	/**
+	 * Get the attribution of one entry through its key
+	 * @param key - Key to track
+	 * @returns The attribution of related entry
+	 */
+	getAttribution(key: string): AttributionKey | undefined;
+
+	/**
+	 * Get all attribution of the map
+	 * @returns All attribution in the map
+	 */
+	getAllAttribution(): Map<string, AttributionKey> | undefined;
 }
 
 /**

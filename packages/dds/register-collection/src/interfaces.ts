@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
@@ -17,20 +12,9 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel.
  * @alpha
+ * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
-export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	load(
-		document: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<IConsensusRegisterCollection>;
-
-	create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-}
+export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
 /**
  * Events emitted by {@link IConsensusRegisterCollection}.

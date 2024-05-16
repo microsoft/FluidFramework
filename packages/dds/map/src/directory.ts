@@ -5,22 +5,22 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
-import {
+import type {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
@@ -28,12 +28,13 @@ import {
 	ISharedDirectoryEvents,
 	IValueChanged,
 } from "./interfaces.js";
-import {
+import type {
 	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import type { ILocalValue } from "./localValues.js";
+import { LocalValueMaker, makeSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -202,6 +203,9 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 
 /**
  * Create info for the subdirectory.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface ICreateInfo {
@@ -223,6 +227,9 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface IDirectoryDataObject {
@@ -230,12 +237,12 @@ export interface IDirectoryDataObject {
 	 * Key/value date set by the user.
 	 */
 	// eslint-disable-next-line import/no-deprecated
-	storage?: { [key: string]: ISerializableValue };
+	storage?: Record<string, ISerializableValue>;
 
 	/**
 	 * Recursive sub-directories {@link IDirectoryDataObject | objects}.
 	 */
-	subdirectories?: { [subdirName: string]: IDirectoryDataObject };
+	subdirectories?: Record<string, IDirectoryDataObject>;
 
 	/**
 	 * Create info for the sub directory. Since directories with same name can get deleted/created by multiple clients
@@ -250,7 +257,9 @@ export interface IDirectoryDataObject {
 /**
  * {@link IDirectory} storage format.
  *
- * @internal
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
+ * @alpha
  */
 export interface IDirectoryNewStorageFormat {
 	/**
@@ -322,27 +331,27 @@ interface SequenceData {
  * TODO: It can be combined with the creation tracker utilized in SharedMap
  */
 class DirectoryCreationTracker {
-	readonly indexToKey: RedBlackTree<SequenceData, string>;
+	public readonly indexToKey: RedBlackTree<SequenceData, string>;
 
-	readonly keyToIndex: Map<string, SequenceData>;
+	public readonly keyToIndex: Map<string, SequenceData>;
 
-	constructor() {
+	public constructor() {
 		this.indexToKey = new RedBlackTree<SequenceData, string>(seqDataComparator);
 		this.keyToIndex = new Map<string, SequenceData>();
 	}
 
-	set(key: string, seqData: SequenceData): void {
+	public set(key: string, seqData: SequenceData): void {
 		this.indexToKey.put(seqData, key);
 		this.keyToIndex.set(key, seqData);
 	}
 
-	has(keyOrSeqData: string | SequenceData): boolean {
+	public has(keyOrSeqData: string | SequenceData): boolean {
 		return typeof keyOrSeqData === "string"
 			? this.keyToIndex.has(keyOrSeqData)
 			: this.indexToKey.get(keyOrSeqData) !== undefined;
 	}
 
-	delete(keyOrSeqData: string | SequenceData): void {
+	public delete(keyOrSeqData: string | SequenceData): void {
 		if (this.has(keyOrSeqData)) {
 			if (typeof keyOrSeqData === "string") {
 				const seqData = this.keyToIndex.get(keyOrSeqData) as SequenceData;
@@ -361,7 +370,7 @@ class DirectoryCreationTracker {
 	 * @param constraint - An optional constraint function that filters keys.
 	 * @returns An array of keys that satisfy the constraint (or all keys if no constraint is provided).
 	 */
-	keys(constraint?: (key: string) => boolean): string[] {
+	public keys(constraint?: (key: string) => boolean): string[] {
 		const keys: string[] = [];
 		this.indexToKey.mapRange((node) => {
 			if (!constraint || constraint(node.data)) {
@@ -426,7 +435,7 @@ export class SharedDirectory
 	/**
 	 * Mapping of op types to message handlers.
 	 */
-	private readonly messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
+	private readonly messageHandlers = new Map<string, IDirectoryMessageHandler>();
 
 	/**
 	 * Constructs a new shared directory. If the object is non-local an id and service interfaces will
@@ -767,6 +776,7 @@ export class SharedDirectory
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
@@ -1091,6 +1101,10 @@ interface IDeleteSubDirLocalOpMetadata {
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
+
+/**
+ * Types of local op metadata.
+ */
 export type DirectoryLocalOpMetadata =
 	| IClearLocalOpMetadata
 	| IKeyEditLocalOpMetadata
@@ -1157,12 +1171,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * The in-memory data the directory is storing.
 	 */
-	private readonly _storage: Map<string, ILocalValue> = new Map();
+	private readonly _storage = new Map<string, ILocalValue>();
 
 	/**
 	 * The subdirectories the directory is holding.
 	 */
-	private readonly _subdirectories: Map<string, SubDirectory> = new Map();
+	private readonly _subdirectories = new Map<string, SubDirectory>();
 
 	/**
 	 * Keys that have been modified locally but not yet ack'd from the server. This is for operations on keys like
@@ -1170,21 +1184,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * was modified. We don't store the type of ops, and behaviour of key ops are different from behaviour of sub
 	 * directory ops, so we have separate map from subDirectories tracker.
 	 */
-	private readonly pendingKeys: Map<string, number[]> = new Map();
+	private readonly pendingKeys = new Map<string, number[]>();
 
 	/**
 	 * Subdirectories that have been deleted locally but not yet ack'd from the server. This maintains the record
 	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
 	 * deleted sub directory.
 	 */
-	private readonly pendingDeleteSubDirectoriesTracker: Map<string, number> = new Map();
+	private readonly pendingDeleteSubDirectoriesTracker = new Map<string, number>();
 
 	/**
 	 * Subdirectories that have been created locally but not yet ack'd from the server. This maintains the record
 	 * of create op that are pending or yet to be acked from server. This is maintained just to track the locally
 	 * created sub directory.
 	 */
-	private readonly pendingCreateSubDirectoriesTracker: Map<string, number> = new Map();
+	private readonly pendingCreateSubDirectoriesTracker = new Map<string, number>();
 
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.

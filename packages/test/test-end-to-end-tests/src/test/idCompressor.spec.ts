@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -21,7 +21,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -33,6 +33,8 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -139,7 +141,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		public map!: ISharedMap;
 
 		private readonly sharedCellKey = "sharedCell";
-		public sharedCell!: SharedCell;
+		public sharedCell!: ISharedCell;
 
 		protected async initializingFirstTime() {
 			const sharedMap = SharedMap.create(this.runtime);
@@ -154,7 +156,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 			assert(mapHandle !== undefined, "SharedMap not found");
 			this.map = await mapHandle.get();
 
-			const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
+			const sharedCellHandle = this.root.get<IFluidHandle<ISharedCell>>(this.sharedCellKey);
 			assert(sharedCellHandle !== undefined, "SharedCell not found");
 			this.sharedCell = await sharedCellHandle.get();
 		}
@@ -190,7 +192,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	let sharedMapContainer2: ISharedMap;
 	let sharedMapContainer3: ISharedMap;
 
-	let sharedCellContainer1: SharedCell;
+	let sharedCellContainer1: ISharedCell;
 
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);
@@ -553,38 +555,101 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
 	});
 
-	it("Ids generated when disconnected are correctly resubmitted", async () => {
-		// Disconnect the first container
-		container1.disconnect();
+	const sharedPoints = [0, 1, 2];
+	const testConfigs = generatePairwiseOptions({
+		preOfflineChanges: sharedPoints,
+		postOfflineChanges: sharedPoints,
+		allocateDuringResubmitStride: [1, 2, 3],
+		delayBetweenOfflineChanges: [true, false],
+	});
 
+	for (const testConfig of testConfigs) {
+		it(`Ids generated across batches are correctly resubmitted: ${JSON.stringify(
+			testConfig,
+		)}`, async () => {
+			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
+
+			const simulateAllocation = (map: ISharedMap) => {
+				const idCompressor = getIdCompressor(map);
+				const id = idCompressor.generateCompressedId();
+				idPairs.push([id, idCompressor]);
+			};
+
+			for (let i = 0; i < testConfig.preOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+			}
+
+			container1.disconnect();
+
+			for (let i = 0; i < testConfig.postOfflineChanges; i++) {
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", i); // Trigger Id submission
+
+				if (testConfig.delayBetweenOfflineChanges) {
+					await delay(100); // Trigger Id submission
+				}
+			}
+
+			let invokedCount = 0;
+			const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(
+				sharedMapContainer1,
+			);
+			(sharedMapContainer1 as any).reSubmitCore = (
+				content: unknown,
+				localOpMetadata: unknown,
+			) => {
+				invokedCount++;
+				if (invokedCount % testConfig.allocateDuringResubmitStride === 0) {
+					// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
+					// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
+					simulateAllocation(sharedMapContainer1);
+				}
+				superResubmit(content, localOpMetadata);
+			};
+
+			// important allocation to test the ordering of generate, takeNext, generate, retakeOutstanding, takeNext.
+			// correctness here relies on mutation in retaking if we want the last takeNext to return an empty range
+			// which it must be if we want to avoid overlapping range bugs
+			simulateAllocation(sharedMapContainer1);
+
+			container1.connect();
+			await waitForContainerConnection(container1);
+			await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
+		});
+	}
+
+	it("Reentrant ops do not cause resubmission of ID allocation ops", async () => {
 		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
-		// Generate a new Id in the disconnected container
-		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		idPairs.push([id1, getIdCompressor(sharedMapContainer1)]);
 
-		// Trigger Id submission
-		sharedMapContainer1.set("key", "value");
-
-		const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(sharedMapContainer1);
-		(sharedMapContainer1 as any).reSubmitCore = (
-			content: unknown,
-			localOpMetadata: unknown,
-		) => {
-			// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
-			// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
-			const id = getIdCompressor(sharedMapContainer1).generateCompressedId();
-			idPairs.push([id, getIdCompressor(sharedMapContainer1)]);
-			superResubmit(content, localOpMetadata);
+		const simulateAllocation = (map: ISharedMap) => {
+			const idCompressor = getIdCompressor(map);
+			const id = idCompressor.generateCompressedId();
+			idPairs.push([id, idCompressor]);
 		};
 
-		// Generate ids in a connected container but don't send them yet
-		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		idPairs.push([id2, getIdCompressor(sharedMapContainer2)]);
-		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		idPairs.push([id3, getIdCompressor(sharedMapContainer2)]);
+		container1.disconnect();
 
-		// Reconnect the first container
-		// IdRange should be resubmitted and reflected in all compressors
+		sharedMapContainer2.set("key", "first");
+
+		let invokedCount = 0;
+		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as any).processCore = (
+			message: ISequencedDocumentMessage,
+			local: boolean,
+			localOpMetadata: unknown,
+		) => {
+			if (invokedCount === 0) {
+				// Force reentrancy during first op processing to cause batch manager rebase (which should skip rebasing allocation ops)
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant1");
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant2");
+			}
+			superProcessCore(message, local, localOpMetadata);
+			invokedCount++;
+		};
+
 		container1.connect();
 		await waitForContainerConnection(container1);
 		await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
@@ -675,7 +740,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 
 		// Get the root dataStore from the detached container.
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
 
 		// Generate an Id before attaching the container
 		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
@@ -688,7 +753,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 		const loader2 = provider.makeTestLoader(testConfig) as Loader;
 		const container2 = await loader2.resolve({ url });
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
+		const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
 		// Generate an Id in the second attached container and send an op to send the Ids
 		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
 		testChannel2.set("value");
@@ -805,7 +870,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 	});
 
-	it("Newly connected container synchronizes from summary", async () => {
+	it("Newly connected container synchronizes from summary", async function () {
+		// TODO: This test is consistently failing when ran against FRS. See ADO:7931
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const container = await createContainer(enabledConfig);
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;

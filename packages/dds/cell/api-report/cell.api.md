@@ -8,18 +8,14 @@ import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @internal @sealed
-export class CellFactory implements IChannelFactory {
+export class CellFactory implements IChannelFactory<ISharedCell> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
@@ -59,23 +55,6 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 }
 
 // @internal
-export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected applyStashedOp(content: unknown): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
-    delete(): void;
-    empty(): boolean;
-    get(): Serializable<T> | undefined;
-    // (undocumented)
-    getAttribution(): AttributionKey | undefined;
-    static getFactory(): IChannelFactory;
-    protected initializeLocalCore(): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    set(value: Serializable<T>): void;
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-}
+export const SharedCell: ISharedObjectKind<ISharedCell>;
 
 ```

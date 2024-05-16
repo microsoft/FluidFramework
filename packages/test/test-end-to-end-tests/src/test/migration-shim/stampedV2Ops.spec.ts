@@ -203,6 +203,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
+		await waitForContainerConnection(container);
 		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
@@ -215,17 +216,20 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container1);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
-		await provider.opProcessingController.pauseProcessing();
+		container1.disconnect();
+		container2.disconnect();
 		shim1.submitMigrateOp();
 
 		// Modifies the legacyTree's quantity value
@@ -241,8 +245,10 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// Wait for "migrated" event on both shims.
 		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
 		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
-		provider.opProcessingController.resumeProcessing();
+		container1.connect();
 		await promise1;
+
+		container2.connect();
 		await promise2;
 		await provider.ensureSynchronized();
 

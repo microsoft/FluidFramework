@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IChannelFactory,
 	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -16,7 +15,6 @@ import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions"
 import { type IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { CounterFactory } from "./counterFactory.js";
 import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
@@ -44,33 +42,12 @@ const snapshotFileName = "header";
  * @alpha
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
-	/**
-	 * Create a new {@link SharedCounter}.
-	 *
-	 * @param runtime - The data store runtime to which the new `SharedCounter` will belong.
-	 * @param id - Optional name of the `SharedCounter`. If not provided, one will be generated.
-	 *
-	 * @returns newly create shared counter (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedCounter {
-		return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
-	}
-
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_counter_");
-	}
-
-	/**
-	 * Get a factory for {@link SharedCounter} to register with the data store.
-	 *
-	 * @returns a factory that creates and load SharedCounter
-	 */
-	public static getFactory(): IChannelFactory<ISharedCounter> {
-		return new CounterFactory();
 	}
 
 	private _value: number = 0;

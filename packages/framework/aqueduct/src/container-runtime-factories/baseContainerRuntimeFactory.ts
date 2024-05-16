@@ -12,6 +12,7 @@ import {
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	type RuntimeRequestHandler,
 	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
@@ -45,6 +46,7 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * Request handlers for containers produced.
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	/**
 	 * The runtime options passed to the ContainerRuntime when instantiating it
@@ -78,6 +80,7 @@ export class BaseContainerRuntimeFactory
 	private readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 	private readonly dependencyContainer?: IFluidDependencySynthesizer;
 	private readonly runtimeOptions?: IContainerRuntimeOptions;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 

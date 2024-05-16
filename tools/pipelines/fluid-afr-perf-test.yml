@@ -21,6 +21,7 @@ resources:
   pipelines:
     - pipeline: client
       source: Build - client packages
+      branch: main # Default branch for manual/scheduled triggers if none is selected
 
 variables:
   - group: fluid-afr-perf-test-keys

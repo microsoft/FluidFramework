@@ -109,6 +109,23 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
+export function replaceAtomRevisions(
+	id: ChangeAtomId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): ChangeAtomId {
+	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
+}
+
+function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	const updated = { ...id, revision };
+	if (revision === undefined) {
+		delete updated.revision;
+	}
+
+	return updated;
+}
+
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */

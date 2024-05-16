@@ -101,7 +101,7 @@ export function isStableNodeKey(key: string): key is StableNodeKey {
  * @remarks This is useful for test environments because it will always yield the same keys in the same order.
  * It should not be used for production environments for the same reason; the {@link StableNodeKey}s are not universally unique.
  */
-export function createMockNodeKeyManager(): NodeKeyManager {
+export function createMockNodeKeyManager(): MockNodeKeyManager {
 	return new MockNodeKeyManager();
 }
 
@@ -109,7 +109,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 	private count = 0;
 
 	public generateStableNodeKey(): StableNodeKey {
-		return brand(this.createMockStableId(this.count++));
+		return brand(this.getId(this.count++));
 	}
 
 	public generateLocalNodeKey(): LocalNodeKey {
@@ -121,7 +121,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public stabilizeNodeKey(key: LocalNodeKey): StableNodeKey {
-		return brand(this.createMockStableId(extractFromOpaque(key)));
+		return brand(this.getId(extractFromOpaque(key)));
 	}
 
 	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
@@ -134,7 +134,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 			: undefined;
 	}
 
-	private createMockStableId(offset: number): StableId {
+	public getId(offset: number): StableId {
 		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
 		return assertIsStableId(

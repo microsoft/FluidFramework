@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../core/index.js";
 import {
 	Context,
 	FlexFieldSchema,
@@ -43,7 +42,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	readonly checkout: ITreeCheckout;
 
 	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 * Get a typed view of the tree content using the flex-tree API.
 	 */
 	readonly flexTree: FlexTreeTypedField<TRoot>;
 
@@ -78,16 +77,9 @@ export class CheckoutFlexTreeView<
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(
-			schema,
-			this.checkout.forest,
-			this.checkout.editor,
-			nodeKeyManager,
-			nodeKeyFieldKey,
-		);
+		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
 		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
@@ -99,12 +91,7 @@ export class CheckoutFlexTreeView<
 
 	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new CheckoutFlexTreeView(
-			branch,
-			this.schema,
-			this.nodeKeyManager,
-			this.nodeKeyFieldKey,
-		);
+		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
 }
 

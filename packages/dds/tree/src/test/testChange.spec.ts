@@ -93,7 +93,10 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
-		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId };
+		const context: ChangeEncodingContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+		};
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
@@ -103,14 +106,14 @@ describe("TestChange", () => {
 
 	function rebaseComposed(
 		metadata: RevisionMetadataSource,
-		change: TestChange,
+		change: TaggedChange<TestChange>,
 		...baseChanges: TaggedChange<TestChange>[]
 	): TestChange {
 		baseChanges.forEach((base) => deepFreeze(base));
 		deepFreeze(change);
 
 		const composed = TestChange.composeList(baseChanges.map((c) => c.change));
-		const rebaseResult = TestChange.rebase(change, composed);
+		const rebaseResult = TestChange.rebase(change.change, composed);
 		assert(rebaseResult !== undefined, "Shouldn't get undefined.");
 		return rebaseResult;
 	}
@@ -118,7 +121,7 @@ describe("TestChange", () => {
 	function assertChangesetsEquivalent(
 		change1: TaggedChange<TestChange>,
 		change2: TaggedChange<TestChange>,
-	) {
+	): void {
 		assert.deepEqual(change1, change2);
 	}
 
@@ -151,7 +154,9 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+						return (
+							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
+						);
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);
@@ -160,6 +165,7 @@ describe("TestChange", () => {
 						return TestChange.invert(change.change);
 					},
 					rebaseComposed,
+					inlineRevision: (change, revision) => change,
 					createEmpty: () => TestChange.emptyChange,
 					isEmpty: TestChange.isEmpty,
 					assertChangesetsEquivalent,

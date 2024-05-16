@@ -74,18 +74,21 @@ export function createFuzzNode(
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 		optionalChild: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 		sequenceChildren: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 	});

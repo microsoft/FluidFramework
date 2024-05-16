@@ -13,7 +13,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ITestContainerConfig,
@@ -90,7 +90,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		// We create a new data store because the default data store and is always realized by the test infrastructure.
 		// In these tests, the data store managing referencing should not be realized by default.
 		const dataStoreAHandle = (await containerRuntime.createDataStore(TestDataObjectType))
-			.entryPoint as IFluidHandle<ITestDataObject>;
+			.entryPoint as IFluidHandleInternal<ITestDataObject>;
 		assert(dataStoreAHandle !== undefined, "data store does not have a handle");
 		dataStoreA = await dataStoreAHandle.get();
 		defaultDataStore._root.set("dataStoreA", dataStoreAHandle);
@@ -110,7 +110,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 			// Create a data store and mark it unreferenced to begin with.
 			const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
-				.entryPoint as IFluidHandle<ITestDataObject>;
+				.entryPoint as IFluidHandleInternal<ITestDataObject>;
 			assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
 			const dataStoreB = await dataStoreBHandle.get();
 			dataStoreA._root.set("dataStoreB", dataStoreBHandle);

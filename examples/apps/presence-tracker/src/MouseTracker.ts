@@ -54,11 +54,11 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		super();
 
 		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-			const clientIdMap = this.posMap.get(member.userId);
+			const clientIdMap = this.posMap.get(member.id);
 			if (clientIdMap !== undefined) {
 				clientIdMap.delete(clientId);
 				if (clientIdMap.size === 0) {
-					this.posMap.delete(member.userId);
+					this.posMap.delete(member.id);
 				}
 			}
 			this.emit("mousePositionChanged");
@@ -87,7 +87,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	 */
 	private sendMouseSignal(position: IMousePosition) {
 		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.audience.getMyself()?.id,
 			pos: position,
 		});
 	}

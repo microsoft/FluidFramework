@@ -16,7 +16,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedObject, createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
@@ -33,7 +33,6 @@ const snapshotFileName = "header";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link AttributableMap}.
  *
  * @sealed
- * @internal
  */
 export class MapFactory implements IChannelFactory {
 	/**
@@ -73,7 +72,7 @@ export class MapFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedMap> {
-		const map = new AttributableMap(id, runtime, attributes);
+		const map = new AttributableMapClass(id, runtime, attributes);
 		await map.load(services);
 
 		return map;
@@ -83,7 +82,7 @@ export class MapFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new AttributableMap(id, runtime, MapFactory.Attributes);
+		const map = new AttributableMapClass(id, runtime, MapFactory.Attributes);
 		map.initializeLocal();
 
 		return map;
@@ -94,35 +93,12 @@ export class MapFactory implements IChannelFactory {
  * {@inheritDoc ISharedMap}
  * @internal
  */
-export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-	/**
-	 * Create a new attributable map.
-	 *
-	 * @param runtime - The data store runtime that the new attributable map belongs to.
-	 * @param id - Optional name of the attributable map.
-	 *
-	 * @returns Newly created attributable map.
-	 *
-	 * @example
-	 *
-	 * To create a `AttributableMap`, call the static create method:
-	 *
-	 * ```typescript
-	 * const myMap = AttributableMap.create(this.runtime, id);
-	 * ```
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap {
-		return runtime.createChannel(id, MapFactory.Type) as AttributableMap;
-	}
+export const AttributableMap = createSharedObjectKind(MapFactory);
 
-	/**
-	 * Get a factory for AttributableMap to register with the data store.
-	 * @returns A factory that creates AttributableMap's and loads them from storage.
-	 */
-	public static getFactory(): IChannelFactory {
-		return new MapFactory();
-	}
-
+/**
+ * {@inheritDoc ISharedMap}
+ */
+export class AttributableMapClass extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
 	 * String representation for the class.
 	 */

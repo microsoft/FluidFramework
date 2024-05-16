@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as crypto from "crypto";
 import {
 	EncryptionKeyVersion,
 	IEncryptedTenantKeys,
@@ -18,7 +17,11 @@ import {
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
+import {
+	IApiCounters,
+	InMemoryApiCounters,
+	ITenantKeyGenerator,
+} from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -95,6 +98,7 @@ export class TenantManager {
 		private readonly secretManager: ISecretManager,
 		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly riddlerStorageRequestMetricInterval: number,
+		private readonly tenantKeyGenerator: ITenantKeyGenerator,
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
@@ -276,13 +280,6 @@ export class TenantManager {
 	}
 
 	/**
-	 * Generates a random tenant key
-	 */
-	private generateTenantKey(): string {
-		return crypto.randomBytes(16).toString("hex");
-	}
-
-	/**
 	 * Creates a new tenant
 	 */
 	public async createTenant(
@@ -293,7 +290,7 @@ export class TenantManager {
 	): Promise<ITenantConfig & { key: string }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
-		const tenantKey1 = this.generateTenantKey();
+		const tenantKey1 = this.tenantKeyGenerator.generateTenantKey();
 		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, latestKeyVersion);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
@@ -303,7 +300,7 @@ export class TenantManager {
 			throw new NetworkError(500, "Tenant key1 encryption failed.");
 		}
 
-		const tenantKey2 = this.generateTenantKey();
+		const tenantKey2 = this.tenantKeyGenerator.generateTenantKey();
 		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, latestKeyVersion);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
@@ -492,7 +489,7 @@ export class TenantManager {
 
 		const tenantDocument = await this.getTenantDocument(tenantId, false);
 
-		const newTenantKey = this.generateTenantKey();
+		const newTenantKey = this.tenantKeyGenerator.generateTenantKey();
 		const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
 		const encryptedNewTenantKey = this.secretManager.encryptSecret(
 			newTenantKey,

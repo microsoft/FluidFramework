@@ -21,7 +21,8 @@ import {
 	ISummarizer,
 	InactiveResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -34,6 +35,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
 	manufactureHandle,
@@ -170,7 +172,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					loaderProps: { logger: mockLogger },
 				});
 				const dataObject = await createNewDataObject();
-				const url = dataObject.handle.absolutePath;
+				const url = toFluidHandleInternal(dataObject.handle).absolutePath;
 
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
 				await provider.ensureSynchronized();
@@ -237,12 +239,13 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							trackedId: url,
 							type: "SubDataStore",
 							id: {
-								value: dataObject._root.handle.absolutePath,
+								value: toFluidHandleInternal(dataObject._root.handle).absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 							fromId: {
-								value: defaultDataStore._root.handle.absolutePath,
+								value: toFluidHandleInternal(defaultDataStore._root.handle)
+									.absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 						},
@@ -258,7 +261,8 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 							fromId: {
-								value: defaultDataStore._root.handle.absolutePath,
+								value: toFluidHandleInternal(defaultDataStore._root.handle)
+									.absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 						},
@@ -295,7 +299,9 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				// Get the blob handle in the summarizer client. Don't retrieve the underlying blob yet. We will do that
 				// after the blob node is inactive.
 				const summarizerBlobHandle =
-					summarizerDefaultDataStore._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+					summarizerDefaultDataStore._root.get<IFluidHandleInternal<ArrayBufferLike>>(
+						"blob",
+					);
 				assert(
 					summarizerBlobHandle !== undefined,
 					"Blob handle not sync'd to summarizer client",
@@ -361,8 +367,8 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					loaderProps: { logger: mockLogger },
 				});
 				const dataObject = await createNewDataObject();
-				const dataStoreUrl = dataObject.handle.absolutePath;
-				const ddsUrl = dataObject._root.handle.absolutePath;
+				const dataStoreUrl = toFluidHandleInternal(dataObject.handle).absolutePath;
+				const ddsUrl = toFluidHandleInternal(dataObject._root.handle).absolutePath;
 				const untrackedUrl = `${dataStoreUrl}/unrecognizedSubPath`;
 
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
@@ -461,7 +467,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
-					const dataStoreUrl = dataObject.handle.absolutePath;
+					const dataStoreUrl = toFluidHandleInternal(dataObject.handle).absolutePath;
 					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");
 
@@ -547,7 +553,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						"dds1",
 						SharedMap.getFactory().type,
 					);
-					const ddsUrl = dds.handle.absolutePath;
+					const ddsUrl = toFluidHandleInternal(dds.handle).absolutePath;
 					defaultDataStore._root.set("dds1", dds.handle);
 					defaultDataStore._root.delete("dds1");
 
@@ -622,7 +628,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
-					const url = dataObject.handle.absolutePath;
+					const url = toFluidHandleInternal(dataObject.handle).absolutePath;
 					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");
 
@@ -689,7 +695,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
-					const url = dataObject.handle.absolutePath;
+					const url = toFluidHandleInternal(dataObject.handle).absolutePath;
 					const unreferencedId = dataObject._context.id;
 					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");

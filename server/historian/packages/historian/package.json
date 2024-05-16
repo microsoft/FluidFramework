@@ -29,8 +29,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "^0.0.1",
-		"@fluidframework/server-services-shared": "5.0.0-256582",
-		"@fluidframework/server-services-utils": "5.0.0-256582",
+		"@fluidframework/server-services-shared": "5.0.0-259221",
+		"@fluidframework/server-services-utils": "5.0.0-259221",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
@@ -60,6 +60,6 @@
 		"rimraf": "^5.0.0",
 		"supertest": "^3.3.0",
 		"tslint": "^5.12.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	}
 }

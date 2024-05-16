@@ -30,7 +30,13 @@ import {
 	type INexusLambdaConnectionStateTrackers,
 	type INexusLambdaDependencies,
 } from "./interfaces";
-import { ExpirationTimer, getRoomId, hasWriteAccess } from "./utils";
+import {
+	ExpirationTimer,
+	isSentSignalMessage,
+	getClientSpecificRoomId,
+	getRoomId,
+	hasWriteAccess,
+} from "./utils";
 import {
 	checkThrottleAndUsage,
 	getSubmitOpThrottleId,
@@ -132,16 +138,30 @@ export function configureWebSocketServices(
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Timer to check token expiry for this socket connection
 		const expirationTimer = new ExpirationTimer(() => socket.disconnect(true));
-		// Map from client IDs on this connection to the object ID and user info.
+
+		/**
+		 * Maps and sets to track various information related to client connections.
+		 * Note: These maps/sets are expected to have only one client id entry.
+		 */
+
+		// Map from client IDs on this connection to the object ID and user info
 		const connectionsMap = new Map<string, core.IOrdererConnection>();
-		// Map from client IDs to room.
+
+		// Map from client IDs to room
 		const roomMap = new Map<string, IRoom>();
-		// Map from client Ids to scope.
+
+		// Map from client Ids to scope
 		const scopeMap = new Map<string, string[]>();
+
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
+
+		// Map from client Ids to supportedFeatures ()
+		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
+
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
+
 		// Set of client Ids that have been disconnected from room and client manager.
 		const disconnectedClients = new Set<string>();
 
@@ -153,6 +173,7 @@ export function configureWebSocketServices(
 			expirationTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
+			supportedFeaturesMap,
 		};
 
 		let connectDocumentComplete: boolean = false;
@@ -408,11 +429,13 @@ export function configureWebSocketServices(
 			"submitSignal",
 			/**
 			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
-			 * It is expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
+			 * v1 signals are expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
 			 * [Container.submitSignal](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294)
 			 * and sent via
 			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
 			 * but actual content is passed-thru and not decoded.
+			 *
+			 * v2 signals are expected to be an array of `ISentSignalMessage` objects.
 			 */
 			(clientId: string, contentBatches: unknown[]) => {
 				// Verify the user has subscription to the room.
@@ -425,6 +448,15 @@ export function configureWebSocketServices(
 					);
 					socket.emit("nack", "", [nackMessage]);
 				} else {
+					if (!Array.isArray(contentBatches)) {
+						const nackMessage = createNackMessage(
+							400,
+							NackErrorType.BadRequestError,
+							"Invalid signal message",
+						);
+						socket.emit("nack", "", [nackMessage]);
+						return;
+					}
 					let messageCount = 0;
 					for (const contentBatch of contentBatches) {
 						// Count all messages in each batch for accurate throttling calculation.
@@ -455,20 +487,50 @@ export function configureWebSocketServices(
 						socket.emit("nack", "", [nackMessage]);
 						return;
 					}
-					contentBatches.forEach((contentBatch) => {
-						const contents = Array.isArray(contentBatch)
-							? contentBatch
-							: [contentBatch];
 
-						for (const content of contents) {
-							const signalMessage: ISignalMessage = {
-								clientId,
-								content,
-							};
+					if (supportedFeaturesMap.get(clientId)?.submit_signals_v2) {
+						for (const signal of contentBatches) {
+							if (isSentSignalMessage(signal)) {
+								const signalMessage: ISignalMessage = {
+									...signal,
+									clientId,
+								};
 
-							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+								const roomId: string =
+									signal.targetClientId !== undefined
+										? getClientSpecificRoomId(signal.targetClientId)
+										: getRoomId(room);
+
+								socket.emitToRoom(roomId, "signal", signalMessage);
+							} else {
+								// If the signal is not in the expected format, nack the message.
+								// This will disconnect client from the socket.
+								// No signals sent after this message will be processed.
+								const nackMessage = createNackMessage(
+									400,
+									NackErrorType.BadRequestError,
+									"Invalid signal message",
+								);
+								socket.emit("nack", "", [nackMessage]);
+								return;
+							}
 						}
-					});
+					} else {
+						contentBatches.forEach((contentBatch) => {
+							const contents = Array.isArray(contentBatch)
+								? contentBatch
+								: [contentBatch];
+							for (const content of contents) {
+								const signalMessage: ISignalMessage = {
+									clientId,
+									content,
+								};
+								const roomId: string = getRoomId(room);
+
+								socket.emitToRoom(roomId, "signal", signalMessage);
+							}
+						});
+					}
 				}
 			},
 		);

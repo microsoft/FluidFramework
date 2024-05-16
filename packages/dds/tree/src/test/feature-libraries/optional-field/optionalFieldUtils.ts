@@ -12,6 +12,8 @@ import {
 	TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
@@ -19,6 +21,7 @@ import {
 	OptionalChangeset,
 	RegisterId,
 	RegisterMap,
+	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import {
@@ -55,8 +58,8 @@ export const Change = {
 	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
-		src: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
+		src: RegisterId | ChangesetLocalId | ChangeAtomId,
+		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
 	): OptionalChangeset | ProtoChange => {
 		if (dst === "self") {
 			return {
@@ -306,4 +309,22 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function tagChangeInline(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<OptionalChangeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

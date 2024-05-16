@@ -79,9 +79,15 @@ export interface ChangeRebaser<TChangeset> {
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
 	rebase(
-		change: TChangeset,
+		change: TaggedChange<TChangeset>,
 		over: TaggedChange<TChangeset>,
 		revisionMetadata: RevisionMetadataSource,
+	): TChangeset;
+
+	changeRevision(
+		change: TChangeset,
+		newRevision: RevisionTag | undefined,
+		rollBackOf?: RevisionTag,
 	): TChangeset;
 }
 

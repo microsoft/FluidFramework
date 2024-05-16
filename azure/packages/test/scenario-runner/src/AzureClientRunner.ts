@@ -22,8 +22,8 @@ export interface ICustomUserDetails {
 }
 
 export interface AzureClientRunnerConfig {
-	userId?: string;
-	userName?: string;
+	id?: string;
+	name?: string;
 }
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
@@ -67,8 +67,8 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 				eventMap,
 			));
 		const ac = await createAzureClient({
-			userId: runConfig.userId ?? "testUserId",
-			userName: runConfig.userName ?? "testUserId",
+			id: runConfig.id ?? "testUserId",
+			name: runConfig.name ?? "testUserId",
 			logger,
 		});
 		return ac;

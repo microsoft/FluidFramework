@@ -10,7 +10,7 @@ import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions/internal';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';

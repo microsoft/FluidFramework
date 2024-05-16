@@ -6,7 +6,7 @@
 import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
- * Events sent by {@link SharedCounter}.
+ * Events sent by {@link ISharedCounter}.
  * @alpha
  */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
@@ -33,16 +33,16 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
  *
  * ```typescript
  * const factory = SharedCounter.getFactory();
- * const counter = factory.create(this.runtime, id) as SharedCounter;
+ * const counter = factory.create(this.runtime, id);
  * ```
  *
  * The initial value of a new `SharedCounter` is 0.
- * If you wish to initialize the counter to a different value, you may call {@link SharedCounter.increment} before
+ * If you wish to initialize the counter to a different value, you may call {@link ISharedCounter.increment} before
  * attaching the Container, or before inserting it into an existing shared object.
  *
  * @example Using the `SharedCounter`
  *
- * Once created, you can call {@link SharedCounter.increment} to modify the value with either a positive or
+ * Once created, you can call {@link ISharedCounter.increment} to modify the value with either a positive or
  * negative number:
  *
  * ```typescript

@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
-	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -52,7 +51,7 @@ export interface IConnectionStateHandlerInputs {
 	clientShouldHaveLeft: (clientId: string) => void;
 
 	/** Some critical error was hit. Container should be closed and error logged. */
-	onCriticalError: (error: ICriticalContainerError) => void;
+	onCriticalError: (error: unknown) => void;
 }
 
 /**
@@ -95,8 +94,8 @@ export function createConnectionStateHandler(
 ) {
 	const mc = loggerToMonitoringContext(inputs.logger);
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
+		mc.config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
+		mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,
@@ -214,7 +213,7 @@ class ConnectionStateHandlerPassThrough
 		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 
-	public onCriticalError(error: ICriticalContainerError) {
+	public onCriticalError(error: unknown) {
 		return this.inputs.onCriticalError(error);
 	}
 }
@@ -373,21 +372,19 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		clientIdFromPausedSession?: string,
 	) {
 		this._clientId = clientIdFromPausedSession;
+		const errorHandler = (error) => this.handler.onCriticalError(error);
 		this.prevClientLeftTimer = new Timer(
 			// Default is 5 min for which we are going to wait for its own "leave" message. This is same as
 			// the max time on server after which leave op is sent.
 			this.handler.maxClientLeaveWaitTime ?? 300000,
 			() => {
-				try {
-					assert(
-						this.connectionState !== ConnectionState.Connected,
-						0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
-					);
-					this.applyForConnectedState("timeout");
-				} catch (error) {
-					this.handler.onCriticalError(normalizeError(error));
-				}
+				assert(
+					this.connectionState !== ConnectionState.Connected,
+					0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
+				);
+				this.applyForConnectedState("timeout");
 			},
+			errorHandler,
 		);
 
 		this.joinTimer = new Timer(
@@ -410,6 +407,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					details,
 				);
 			},
+			errorHandler,
 		);
 	}
 
@@ -662,9 +660,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 			this._clientId = this.pendingClientId;
 		} else if (value === ConnectionState.Disconnected) {
-			// Clear pending state immediately to prepare for reconnect
-			this._pendingClientId = undefined;
-
 			if (this.joinTimer.hasTimer) {
 				this.stopjoinTimer();
 			}
@@ -693,8 +688,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 		}
 
-		// Report transition before we propagate event across layers
+		// Report transition
 		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
+
+		// Clear pending state immediately to prepare for reconnect
+		// Do it after calling connectionStateChanged() above, such that our telemetry contains pendingClientId on disconnect events
+		// and we can pair attempts to connect with disconnects (that's the only ID we have if connection did not move far enough before being disconnected)
+		if (value === ConnectionState.Disconnected) {
+			this._pendingClientId = undefined;
+		}
 	}
 
 	protected get membership(): IMembership | undefined {

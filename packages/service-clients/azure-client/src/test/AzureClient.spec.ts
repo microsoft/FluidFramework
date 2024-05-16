@@ -14,7 +14,7 @@ import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definit
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, SharedTree } from "@fluidframework/tree";
+import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
@@ -324,13 +324,15 @@ describe("AzureClient", () => {
 				itWorks: _.string,
 			}) {}
 
-			const view = tree.schematize({
-				schema: RootNode,
-				initialTree: () =>
-					new RootNode({
-						itWorks: "yes",
-					}),
-			});
+			const view = tree.schematize(
+				new TreeConfiguration(
+					RootNode,
+					() =>
+						new RootNode({
+							itWorks: "yes",
+						}),
+				),
+			);
 
 			// Ensure root node is correctly typed.
 			assert.equal(view.root.itWorks, "yes");

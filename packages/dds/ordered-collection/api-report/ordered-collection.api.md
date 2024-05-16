@@ -13,6 +13,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
@@ -50,10 +51,14 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 }
 
 // @alpha
-export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
+export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>>;
+
+// @alpha
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
+
+// @alpha
+export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusQueue<T>;
-    static getFactory(): IChannelFactory;
 }
 
 // @internal

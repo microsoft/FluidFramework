@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { AllowedUpdateType } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
 import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
 import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
@@ -72,11 +71,11 @@ describe("Summary benchmarks", () => {
 	describe("load speed of", () => {
 		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+			const factory = new SharedTreeFactory();
 			benchmark({
 				title,
 				type,
-				before: async () => {
+				before: () => {
 					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 				},
 				benchmarkFnAsync: async () => {

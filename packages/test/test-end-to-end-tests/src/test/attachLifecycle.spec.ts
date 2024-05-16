@@ -31,9 +31,9 @@ const sharedPoints = [3, 4, 5];
 const ddsKey = "string";
 
 const testConfigs = generatePairwiseOptions({
-	containerAttachPoint: [ContainerCreated, DatastoreCreated, ...sharedPoints],
+	containerAttachPoint: [ContainerCreated, DatastoreCreated, DdsCreated, ...sharedPoints],
 	containerSaveAfterAttach: [true, false],
-	datastoreAttachPoint: [DatastoreCreated, ...sharedPoints],
+	datastoreAttachPoint: [DatastoreCreated, DdsCreated, ...sharedPoints],
 	datastoreSaveAfterAttach: [true, false],
 	ddsAttachPoint: [DdsCreated, ...sharedPoints],
 	ddsSaveAfterAttach: [true, false],
@@ -132,9 +132,14 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						);
 					}
 				};
-				if (testConfig.ddsAttachPoint === 2) {
-					// point 2 - at dds create
+				if (testConfig.ddsAttachPoint === DdsCreated) {
 					await attachDds();
+				}
+				if (testConfig.datastoreAttachPoint === DdsCreated) {
+					await attachDatastore();
+				}
+				if (testConfig.containerAttachPoint === DdsCreated) {
+					await attachContainer();
 				}
 
 				// all objects, container, datastore, and dds are created, at least in memory at this point

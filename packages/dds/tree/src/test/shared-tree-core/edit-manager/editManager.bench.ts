@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
+import { ChangeFamily, RevisionTag, rootFieldKey } from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import { Commit } from "../../../shared-tree-core/index.js";
@@ -45,7 +45,7 @@ describe("EditManager - Bench", () => {
 	interface Family<TChange> {
 		readonly name: string;
 		readonly changeFamily: ChangeFamily<any, TChange>;
-		readonly mintChange: () => TChange;
+		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
 
@@ -66,7 +66,12 @@ describe("EditManager - Bench", () => {
 		{
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
-			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
+			mintChange: (revision) => {
+				const change = makeEditMinter(defaultFamily, sequencePrepend)();
+				return revision !== undefined
+					? defaultFamily.rebaser.changeRevision(change, revision)
+					: change;
+			},
 			maxEditCount: 350,
 		},
 	];

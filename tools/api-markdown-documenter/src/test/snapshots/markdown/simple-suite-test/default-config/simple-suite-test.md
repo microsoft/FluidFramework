@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # simple-suite-test
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test)
@@ -334,3 +332,5 @@ I have a `@deprecated` tag with an empty comment block.
 ```typescript
 testConstWithEmptyDeprecatedBlock: string
 ```
+
+**Type:** string

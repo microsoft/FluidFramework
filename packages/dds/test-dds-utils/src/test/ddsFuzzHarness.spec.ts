@@ -248,7 +248,7 @@ describe("DDS Fuzz Harness", () => {
 						...baseModel,
 						generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
 						validateConsistency: (a, b) => {
-							perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+							perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 						},
 					},
 					options,
@@ -292,7 +292,7 @@ describe("DDS Fuzz Harness", () => {
 									takeAsync(1, baseModel.generatorFactory()),
 								),
 							validateConsistency: (a, b) => {
-								perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+								perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 							},
 						},
 						options,

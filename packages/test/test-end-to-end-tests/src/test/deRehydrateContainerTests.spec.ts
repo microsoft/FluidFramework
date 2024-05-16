@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -437,7 +437,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
@@ -489,7 +490,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
@@ -540,7 +542,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =

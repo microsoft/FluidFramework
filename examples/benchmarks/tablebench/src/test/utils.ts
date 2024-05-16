@@ -14,7 +14,10 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-export function create(factory: IChannelFactory) {
+export function create<T>(factory: IChannelFactory<T>): {
+	channel: T & IChannel;
+	processAllMessages: () => void;
+} {
 	const runtimeFactory = new MockContainerRuntimeFactory();
 
 	const sessionId = makeRandom().uuid4() as SessionId;

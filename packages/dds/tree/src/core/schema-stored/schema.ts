@@ -94,6 +94,11 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
+
+	/**
+	 * If true, new content inserted into the tree should be validated against the stored schema.
+	 */
+	readonly validateSchema: boolean;
 }
 
 /**
@@ -258,7 +263,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => {
+	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));

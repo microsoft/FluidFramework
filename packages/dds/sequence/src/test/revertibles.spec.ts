@@ -23,9 +23,9 @@ import {
 	appendSharedStringDeltaToRevertibles,
 	revertSharedStringRevertibles,
 } from "../revertibles.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 
+import { SharedStringClass } from "../sharedString.js";
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 describe("Sequence.Revertibles with Local Edits", () => {
@@ -357,7 +357,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -383,7 +383,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			objectStorage: new MockStorage(),
 		};
 
-		sharedString2 = new SharedString(
+		sharedString2 = new SharedStringClass(
 			dataStoreRuntime2,
 			"shared-string-2",
 			SharedStringFactory.Attributes,
@@ -700,7 +700,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -733,7 +733,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,

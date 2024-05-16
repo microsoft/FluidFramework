@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
+import { type CompatApis, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -25,6 +25,7 @@ import {
 	createLoader,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils/internal";
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 
 const counterKey = "count";
 
@@ -142,6 +143,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		containerUrl: IResolvedUrl | undefined,
 		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
+		sequenceNumber?: number,
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
@@ -154,18 +156,18 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			provider.logger,
 		);
 		loaderContainerTracker.add(loader);
-		return loader.resolve({
-			url: await provider.driver.createContainerUrl(documentId, containerUrl),
-			headers,
-		});
+		return loadContainerPaused(
+			loader,
+			{
+				url: await provider.driver.createContainerUrl(documentId, containerUrl),
+				headers,
+			},
+			sequenceNumber,
+		);
 	}
 
 	it("Can load a paused container", async () => {
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: {
-				pauseAfterLoad: true,
-			},
-		};
+		const headers: IRequestHeader = {};
 		const container2 = await loadContainer(
 			container1.resolvedUrl,
 			testDataObjectFactory,
@@ -214,17 +216,12 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		const sequenceNumber = container1.deltaManager.lastSequenceNumber;
 		const expectedValue = dataObject1.value;
 
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: {
-				pauseAfterLoad: true,
-				opsBeforeReturn: "sequenceNumber",
-			},
-			[LoaderHeader.sequenceNumber]: sequenceNumber,
-		};
+		const headers: IRequestHeader = {};
 		const container2 = await loadContainer(
 			container1.resolvedUrl,
 			testDataObjectFactory,
 			headers,
+			sequenceNumber,
 		);
 		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
@@ -283,17 +280,12 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		const sequenceNumber = container1.deltaManager.lastSequenceNumber;
 		const expectedValue = dataObject1.value;
 
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: {
-				pauseAfterLoad: true,
-				opsBeforeReturn: "sequenceNumber",
-			},
-			[LoaderHeader.sequenceNumber]: sequenceNumber,
-		};
+		const headers: IRequestHeader = {};
 		const container2 = await loadContainer(
 			container1.resolvedUrl,
 			testDataObjectFactory,
 			headers,
+			sequenceNumber,
 		);
 		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
@@ -371,73 +363,45 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	});
 
 	describe("Expected error cases", () => {
-		it("Throw if sequence number not provided", async () => {
-			const headers: IRequestHeader = {
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: "sequenceNumber",
-				},
-			};
-			await assert.rejects(
-				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
-				{ message: "sequenceNumber must be set to a non-negative integer" },
-			);
-		});
+		itExpects(
+			"Throw if attempting to pause at a sequence number before the latest summary",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose" }],
+			async () => {
+				const { summarizer } = await createSummarizerFromFactory(
+					provider,
+					container1,
+					testDataObjectFactory,
+				);
+				// Send 5 ops
+				const numIncrement = 5;
+				for (let i = 0; i < numIncrement; i++) {
+					dataObject1.increment();
+				}
+				await loaderContainerTracker.ensureSynchronized(container1);
+				const result = summarizer.summarizeOnDemand({ reason: "test" });
+				const submitResult = await result.receivedSummaryAckOrNack;
+				assert.ok(submitResult);
 
-		it('Throw if sequence number is a negative integer"', async () => {
-			const headers: IRequestHeader = {
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: "sequenceNumber",
-				},
-				[LoaderHeader.sequenceNumber]: -1,
-			};
-			await assert.rejects(
-				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
-				{ message: "sequenceNumber must be set to a non-negative integer" },
-			);
-		});
-
-		it('Throw if opsBeforeReturn is not set to "sequenceNumber"', async () => {
-			const headers: IRequestHeader = {
-				[LoaderHeader.sequenceNumber]: 0, // Actual value doesn't matter
-			};
-			await assert.rejects(
-				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
-				{ message: 'opsBeforeReturn must be set to "sequenceNumber"' },
-			);
-		});
-
-		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
-			const { summarizer } = await createSummarizerFromFactory(
-				provider,
-				container1,
-				testDataObjectFactory,
-			);
-			// Send 5 ops
-			const numIncrement = 5;
-			for (let i = 0; i < numIncrement; i++) {
-				dataObject1.increment();
-			}
-			await loaderContainerTracker.ensureSynchronized(container1);
-			const result = summarizer.summarizeOnDemand({ reason: "test" });
-			const submitResult = await result.receivedSummaryAckOrNack;
-			assert.ok(submitResult);
-
-			// Try to pause at sequence number 1 (before snapshot)
-			const sequenceNumber = 3;
-			const headers: IRequestHeader = {
-				[LoaderHeader.loadMode]: {
-					pauseAfterLoad: true,
-					opsBeforeReturn: "sequenceNumber",
-				},
-				[LoaderHeader.sequenceNumber]: sequenceNumber,
-			};
-			await assert.rejects(
-				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
-				{
-					message:
-						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
-				},
-			);
-		});
+				// Try to pause at sequence number 1 (before snapshot)
+				const sequenceNumber = 1;
+				const headers: IRequestHeader = {
+					[LoaderHeader.loadMode]: {
+						opsBeforeReturn: "sequenceNumber",
+					},
+				};
+				await assert.rejects(
+					loadContainer(
+						container1.resolvedUrl,
+						testDataObjectFactory,
+						headers,
+						sequenceNumber,
+					),
+					{
+						message:
+							"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					},
+				);
+			},
+		);
 	});
 });

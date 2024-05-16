@@ -32,6 +32,14 @@ parameters:
   type: string
   default: none
 
+- name: STORAGE_ACCOUNT
+  type: string
+  default: none
+
+- name: STORAGE_KEY
+  type: string
+  default: none
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -123,8 +131,8 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.  
-        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists 
+        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
+        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
 
 - task: Bash@3
   displayName: Update Package Version (flub)
@@ -136,6 +144,16 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+
+# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main branch, and
+# for the build of the client release group (we don't need manifests for anything else).
+# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.tagName, 'client')) }}:
+  - template: /tools/pipelines/templates/upload-dev-manifest.yml
+    parameters:
+      buildDirectory: '${{ parameters.buildDirectory }}'
+      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
+      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.

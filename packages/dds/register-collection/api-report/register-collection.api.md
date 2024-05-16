@@ -13,16 +13,21 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
-export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
+export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>>;
+
+// @alpha
+export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
+
+// @alpha
+export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(): void;
-    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusRegisterCollection<T>;
-    static getFactory(): ConsensusRegisterCollectionFactory;
     // (undocumented)
     keys(): string[];
     protected loadCore(storage: IChannelStorageService): Promise<void>;
@@ -39,7 +44,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegis
 }
 
 // @alpha
-export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
+export class ConsensusRegisterCollectionFactory implements IChannelFactory<IConsensusRegisterCollection> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -67,12 +72,8 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
 
-// @alpha
-export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
-    // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
-}
+// @alpha @deprecated
+export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
 // @alpha
 export enum ReadPolicy {

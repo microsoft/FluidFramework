@@ -157,7 +157,7 @@ export class ContainerStorageAdapter
 				this.loadingGroupIdSnapshotsFromPendingState[
 					snapshotFetchOptions.loadingGroupIds[0]
 				];
-			assert(localSnapshot !== undefined, "Local snapshot must be present");
+			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
 		} else {
@@ -171,7 +171,10 @@ export class ContainerStorageAdapter
 
 		// Track the latest snapshot for each loading group id
 		const loadingGroupIds = snapshotFetchOptions?.loadingGroupIds;
-		assert(snapshot.sequenceNumber !== undefined, "Snapshot must have sequence number");
+		assert(
+			snapshot.sequenceNumber !== undefined,
+			0x971 /* Snapshot must have sequence number */,
+		);
 		if (loadingGroupIds !== undefined) {
 			for (const loadingGroupId of loadingGroupIds) {
 				// Do we actually want to update the stored snapshot?

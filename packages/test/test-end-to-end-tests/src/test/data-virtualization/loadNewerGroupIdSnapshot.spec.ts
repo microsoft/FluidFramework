@@ -12,7 +12,11 @@ import {
 	type IContainerRuntimeOptions,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -20,7 +24,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
-	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
@@ -45,6 +48,10 @@ const overrideResult = <T>(parent: any, fn: (...args: any[]) => Promise<T>, resu
 	};
 	parent[fn.name] = overrideFn;
 };
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -72,8 +79,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			},
 		},
 	};
-	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
 
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory(testDataObjectType, TestDataObject, [], {});
@@ -86,12 +91,29 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	let provider: ITestObjectProvider;
-
-	const assertPopulatedGroupIdTree = (snapshotTree: ISnapshotTree, message: string) => {
-		assert(snapshotTree.omitted === undefined, message);
+	const assertPopulatedGroupIdTree = (
+		snapshotTree: ISnapshotTree,
+		blobContents: Map<string, ArrayBuffer>,
+		message: string,
+	) => {
 		assert(snapshotTree.groupId === loadingGroupId, message);
-		assert(Object.entries(snapshotTree.trees).length > 0, message);
-		assert(Object.entries(snapshotTree.blobs).length > 0, message);
+		assertPopulatedTreeCore(snapshotTree, loadingGroupId, blobContents, message);
+	};
+
+	const assertPopulatedTreeCore = (
+		snapshotTree: ISnapshotTree,
+		groupId: string | undefined,
+		blobContents: Map<string, ArrayBuffer>,
+		message: string,
+	) => {
+		for (const id of Object.values(snapshotTree.blobs)) {
+			assert(blobContents.has(id), message);
+		}
+		for (const tree of Object.values(snapshotTree.trees)) {
+			if (tree.groupId === undefined || tree.groupId === groupId) {
+				assertPopulatedTreeCore(tree, groupId, blobContents, message);
+			}
+		}
 	};
 
 	beforeEach("setup", async () => {
@@ -104,7 +126,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			return;
 		}
 		// Load basic container stuff
-		const container = await provider.createContainer(runtimeFactory, { configProvider });
+		const container = await provider.createContainer(runtimeFactory, {
+			configProvider: configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -125,12 +151,23 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
 
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
-			{ configProvider },
+			{
+				configProvider: configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
+			},
 			{ [LoaderHeader.version]: summaryVersion },
 		);
 		await provider.ensureSynchronized();
@@ -160,7 +197,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 		const groupSnapshot = await snapshotADeferred.promise;
 		const snapshotTreeA = groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
-		assertPopulatedGroupIdTree(snapshotTreeA, "Should be a populated groupId tree");
+		assertPopulatedGroupIdTree(
+			snapshotTreeA,
+			groupSnapshot.blobContents,
+			"Should be a populated groupId tree",
+		);
 		assert(
 			groupSnapshot.sequenceNumber === summaryRefSeq,
 			"failed to load snapshot with correct sequence number",
@@ -172,7 +213,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			return;
 		}
 		// Load basic container stuff
-		const container = await provider.createContainer(runtimeFactory, { configProvider });
+		const container = await provider.createContainer(runtimeFactory, {
+			configProvider: configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -193,6 +238,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
 		// Work around getEntryPoint returning the summarizer instead of a datastore
@@ -208,7 +260,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
-			{ configProvider },
+			{
+				configProvider: configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
+			},
 			{ [LoaderHeader.version]: summaryVersion },
 		);
 		// Testing the get snapshot call
@@ -272,7 +328,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			}
 			// Load basic container stuff
 			const container = await provider.createContainer(runtimeFactory, {
-				configProvider,
+				configProvider: configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
 			});
 			const mainObject = (await container.getEntryPoint()) as TestDataObject;
 			const containerRuntime = mainObject.containerRuntime;
@@ -292,6 +350,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				provider,
 				container,
 				dataObjectFactory,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
 			);
 
 			await provider.ensureSynchronized();
@@ -308,7 +373,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 					undefined,
 					undefined,
 					undefined,
-					configProvider,
+					configProvider({
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					}),
 				);
 
 			const { summarizer: summarizer2, container: container2 } =
@@ -320,7 +387,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 					undefined,
 					undefined,
 					undefined,
-					configProvider,
+					configProvider({
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					}),
 				);
 			await provider.ensureSynchronized();
 			// Pause the summarizer2 so we can generate a summary in the future
@@ -366,7 +435,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 			assert(result.stage === "base", "submitSummary should fail in base stage");
 			assert.equal(
-				result.error.message,
+				result.error?.message,
 				"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				"submitSummary should fail in base stage because summarizer is behind",
 			);
@@ -378,7 +447,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			return;
 		}
 		// Load basic container stuff
-		const container = await provider.createContainer(runtimeFactory, { configProvider });
+		const container = await provider.createContainer(runtimeFactory, {
+			configProvider: configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -397,6 +470,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 
 		// Summarize
@@ -411,7 +491,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// Load the container with the second summary
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
-			{ configProvider },
+			{
+				configProvider: configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
+			},
 			{ [LoaderHeader.version]: summaryVersion2 },
 		);
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
