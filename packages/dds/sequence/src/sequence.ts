@@ -189,6 +189,64 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * @param segment - The segment to insert
 	 */
 	insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+
+	/**
+	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
+	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
+	 * @param pos - Character position (index) into the current local view of the SharedString.
+	 */
+	getContainingSegment(pos: number): {
+		segment: T | undefined;
+		offset: number | undefined;
+	};
+
+	getPropertiesAtPosition(pos: number): PropertySet | undefined;
+
+	/**
+	 * Initializes the object as a local, non-shared object. This object can become shared after
+	 * it is attached to the document.
+	 * @privateRemarks
+	 * TODO: determine if this API (from SharedObject) is needed by users of the encapsulated API, declarative API or both,
+	 * and handle exposing it in a consistent way for all SharedObjects if needed.
+	 */
+	initializeLocal(): void;
+
+	/**
+	 * @returns An iterable object that enumerates the IntervalCollection labels.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const iter = this.getIntervalCollectionKeys();
+	 * for (key of iter)
+	 *     const collection = this.getIntervalCollection(key);
+	 *     ...
+	 * ```
+	 */
+	getIntervalCollectionLabels(): IterableIterator<string>;
+
+	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 */
+	obliterateRange(start: number, end: number): void;
+
+	/**
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
+	 * SharedSegmentSequence.
+	 */
+	getCurrentSeq(): number;
+
+	/**
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	groupOperation(groupOp: IMergeTreeGroupMsg): void;
 }
 
 /**
@@ -402,32 +460,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	/**
-	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
-	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
-	 */
 	public obliterateRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
-	/**
-	 * @deprecated The ability to create group ops will be removed in an upcoming
-	 * release, as group ops are redundant with the native batching capabilities
-	 * of the runtime
-	 */
 	// eslint-disable-next-line import/no-deprecated
-	public groupOperation(groupOp: IMergeTreeGroupMsg) {
+	public groupOperation(groupOp: IMergeTreeGroupMsg): void {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
 
-	/**
-	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
-	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
-	 * @param pos - Character position (index) into the current local view of the SharedString.
-	 */
 	public getContainingSegment(pos: number): {
 		segment: T | undefined;
 		offset: number | undefined;
@@ -458,7 +499,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
-	public getPropertiesAtPosition(pos: number) {
+	public getPropertiesAtPosition(pos: number): PropertySet | undefined {
 		return this.client.getPropertiesAtPosition(pos);
 	}
 
@@ -553,11 +594,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
 	}
 
-	/**
-	 * @returns The most recent sequence number which has been acked by the server and processed by this
-	 * SharedSegmentSequence.
-	 */
-	public getCurrentSeq() {
+	public getCurrentSeq(): number {
 		return this.client.getCurrentSeq();
 	}
 
@@ -582,18 +619,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.intervalCollections.get(label);
 	}
 
-	/**
-	 * @returns An iterable object that enumerates the IntervalCollection labels.
-	 *
-	 * @example
-	 *
-	 * ```typescript
-	 * const iter = this.getIntervalCollectionKeys();
-	 * for (key of iter)
-	 *     const collection = this.getIntervalCollection(key);
-	 *     ...
-	 * ```
-	 */
 	public getIntervalCollectionLabels(): IterableIterator<string> {
 		return this.intervalCollections.keys();
 	}

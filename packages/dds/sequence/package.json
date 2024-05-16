@@ -186,6 +186,16 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedString": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedString": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedStringClass": {
+				"backCompat": false
+			}
+		}
 	}
 }

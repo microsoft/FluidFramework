@@ -571,6 +571,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>): void;
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1495,6 +1496,7 @@ declare function get_current_TypeAliasDeclaration_SharedString():
 declare function use_old_TypeAliasDeclaration_SharedString(
     use: TypeOnly<old.SharedString>): void;
 use_old_TypeAliasDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedString());
 
 /*
@@ -1523,6 +1525,7 @@ declare function get_current_ClassDeclaration_SharedStringClass():
 declare function use_old_ClassDeclaration_SharedStringClass(
     use: TypeOnly<old.SharedStringClass>): void;
 use_old_ClassDeclaration_SharedStringClass(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedStringClass());
 
 /*
