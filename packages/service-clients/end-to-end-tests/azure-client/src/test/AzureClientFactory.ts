@@ -11,6 +11,12 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
+import {
+	AzureClient as AzureClientLegacy,
+	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
+	AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
+	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
+} from "@fluidframework/azure-client-legacy";
 import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
@@ -71,6 +77,59 @@ export function createAzureClient(
 		connection: connectionProps,
 		logger: getLogger(),
 		configProvider,
+	});
+}
+
+/**
+ * Copy of {@link createAzureClient} with legacy (LTS) AzureClient APIs.
+ */
+export function createAzureClientLegacy(
+	userID?: string,
+	userName?: string,
+	logger?: MockLogger,
+): AzureClientLegacy {
+	const useAzure = process.env.FLUID_CLIENT === "azure";
+	const tenantId = useAzure
+		? (process.env.azure__fluid__relay__service__tenantId as string)
+		: "frs-client-tenant";
+	const user = {
+		id: userID ?? uuid(),
+		name: userName ?? uuid(),
+	};
+	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
+	if (useAzure && endPoint === undefined) {
+		throw new Error("Azure FRS endpoint is missing");
+	}
+
+	// use AzureClient remote mode will run against live Azure Fluid Relay.
+	// Default to running Tinylicious for PR validation
+	// and local testing so it's not hindered by service availability
+	const connectionProps: AzureRemoteConnectionConfigLegacy | AzureLocalConnectionConfigLegacy =
+		useAzure
+			? {
+					tenantId,
+					tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
+					endpoint: endPoint,
+					type: "remote",
+			  }
+			: {
+					tokenProvider: new InsecureTokenProvider("fooBar", user),
+					endpoint: "http://localhost:7071",
+					type: "local",
+			  };
+	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
+		const testLogger = getTestLogger?.();
+		if (!logger && !testLogger) {
+			return undefined;
+		}
+		if (logger && testLogger) {
+			return createMultiSinkLogger({ loggers: [logger, testLogger] });
+		}
+		return logger ?? testLogger;
+	};
+	return new AzureClientLegacy({
+		connection: connectionProps,
+		logger: getLogger(),
 	});
 }
 

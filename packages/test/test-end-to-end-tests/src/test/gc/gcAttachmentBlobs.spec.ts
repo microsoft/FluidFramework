@@ -44,7 +44,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 					},
 				},
 				gcOptions: {
-					gcAllowed: true,
 					runGCInTestMode: deleteUnreferencedContent,
 				},
 			},

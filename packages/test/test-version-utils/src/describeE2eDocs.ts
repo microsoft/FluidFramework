@@ -15,7 +15,13 @@ import {
 
 import { testBaseVersion } from "./baseVersion.js";
 import { configList } from "./compatConfig.js";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import {
+	CompatKind,
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
@@ -372,7 +378,7 @@ function createE2EDocCompatSuite(
 								type: driver,
 								config: {
 									r11s: { r11sEndpointName },
-									odsp: { tenantIndex },
+									odsp: { tenantIndex, odspEndpointName },
 								},
 							});
 						} catch (error) {

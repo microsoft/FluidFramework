@@ -29,12 +29,10 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-// Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: false },
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 
