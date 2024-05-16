@@ -631,7 +631,7 @@ export interface IAckSummaryResult {
 
 // @alpha
 export interface IBaseSummarizeResult {
-    readonly error: Error | undefined;
+    readonly error: IRetriableFailureError | undefined;
     // (undocumented)
     readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
@@ -946,7 +946,7 @@ export interface IMarkPhaseStats {
 }
 
 // @alpha (undocumented)
-export interface INackSummaryResult extends IRetriableFailureResult {
+export interface INackSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -971,7 +971,7 @@ export interface IRefreshSummaryAckOptions {
 }
 
 // @alpha
-export interface IRetriableFailureResult {
+export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
 }
@@ -1258,7 +1258,7 @@ export enum RuntimeHeaders {
 }
 
 // @alpha
-export interface SubmitSummaryFailureData extends IRetriableFailureResult {
+export interface SubmitSummaryFailureData {
     // (undocumented)
     stage: SummaryStage;
 }
@@ -1298,7 +1298,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: false;
     data: TFailure | undefined;
     message: string;
-    error: any;
+    error: IRetriableFailureError;
 };
 
 // @alpha (undocumented)

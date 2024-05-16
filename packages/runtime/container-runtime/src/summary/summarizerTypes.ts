@@ -182,13 +182,21 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 }
 
 /**
+ * Type for summarization failures that are retriable.
+ * @alpha
+ */
+export interface IRetriableFailureError extends Error {
+	readonly retryAfterSeconds?: number;
+}
+
+/**
  * Base results for all submitSummary attempts.
  * @alpha
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
-	/** Error object related to failed summarize attempt. */
-	readonly error: Error | undefined;
+	/** Retriable error object related to failed summarize attempt. */
+	readonly error: IRetriableFailureError | undefined;
 	/** Reference sequence number as of the generate summary attempt. */
 	readonly referenceSequenceNumber: number;
 	readonly minimumSequenceNumber: number;
@@ -264,18 +272,10 @@ export type SubmitSummaryResult =
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
- * Type for summarization failures that are retriable.
- * @alpha
- */
-export interface IRetriableFailureResult {
-	readonly retryAfterSeconds?: number;
-}
-
-/**
  * The data in summarizer result when submit summary stage fails.
  * @alpha
  */
-export interface SubmitSummaryFailureData extends IRetriableFailureResult {
+export interface SubmitSummaryFailureData {
 	stage: SummaryStage;
 }
 
@@ -298,7 +298,7 @@ export interface IAckSummaryResult {
 /**
  * @alpha
  */
-export interface INackSummaryResult extends IRetriableFailureResult {
+export interface INackSummaryResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }
@@ -315,7 +315,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			success: false;
 			data: TFailure | undefined;
 			message: string;
-			error: any;
+			error: IRetriableFailureError;
 	  };
 
 /**

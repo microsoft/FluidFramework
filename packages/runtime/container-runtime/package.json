@@ -259,6 +259,10 @@
 			"InterfaceDeclaration_ISummarizerRuntime": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IRetriableFailureResult": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

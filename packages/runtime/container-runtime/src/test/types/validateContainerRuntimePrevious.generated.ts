@@ -1712,28 +1712,16 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<old.IRetriableFailureResult>;
-declare function use_current_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<current.IRetriableFailureResult>): void;
-use_current_InterfaceDeclaration_IRetriableFailureResult(
-    get_old_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<current.IRetriableFailureResult>;
-declare function use_old_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<old.IRetriableFailureResult>): void;
-use_old_InterfaceDeclaration_IRetriableFailureResult(
-    get_current_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
