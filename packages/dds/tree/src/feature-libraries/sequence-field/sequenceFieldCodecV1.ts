@@ -225,9 +225,9 @@ export function makeV1Codec(
 	});
 
 	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
-		encode: ({ localId, revision }: CellId, context: ChangeEncodingContext): Encoded.CellId => {
+		encode: (cellId: CellId, context: ChangeEncodingContext): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
-				atom: changeAtomIdCodec.encode({ localId, revision }, context),
+				atom: changeAtomIdCodec.encode(cellId, context),
 			};
 			return encoded;
 		},
