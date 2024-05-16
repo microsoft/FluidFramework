@@ -37,22 +37,10 @@ const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });
 
-const LineageEvent = Type.Tuple([
-	RevisionTagSchema,
-	ChangesetLocalIdSchema,
-	/** count */
-	CellCount,
-	/** offset */
-	Type.Number({ multipleOf: 1, minimum: 0 }),
-]);
-
-const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
-
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 const CellId = Type.Composite(
 	[
-		HasLineage,
 		Type.Object({
 			atom: EncodedChangeAtomId,
 			adjacentCells: Type.Optional(Type.Array(IdRange)),
@@ -166,7 +154,6 @@ export namespace Encoded {
 	export type CellCount = Static<typeof CellCount>;
 
 	export type MoveId = Static<typeof MoveId>;
-	export type LineageEvent = Static<typeof LineageEvent>;
 	export type IdRange = Static<typeof IdRange>;
 
 	export type CellId = Static<typeof CellId>;

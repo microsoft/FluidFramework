@@ -30,6 +30,7 @@ import {
 	FieldKinds,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
+	SequenceField as SF,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -60,8 +61,6 @@ import {
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
-// eslint-disable-next-line import/no-internal-modules
-import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -193,19 +192,15 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldBExpected = purgeUnusedCellOrderingInfo([
+			const fieldBExpected: SF.Changeset = [
 				{ count: 1, changes: nodeId2 },
-				// The two marks below a not essential and only exist because we're currently using tombstone
+				// The two marks below a not essential and only exist because we're using tombstones
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: {
-						revision: tag1,
-						localId: brand(0),
-						adjacentCells: [{ id: brand(0), count: 1 }],
-					},
+					cellId: { revision: tag1, localId: brand(0) },
 				},
-			]);
+			];
 
 			const nodeId1: NodeId = { localId: brand(5) };
 			const node1Expected: NodeChangeset = {
@@ -214,19 +209,15 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const fieldAExpected = purgeUnusedCellOrderingInfo([
+			const fieldAExpected: SF.Changeset = [
 				{ count: 1, changes: nodeId1 },
-				// The two marks below a not essential and only exist because we're currently using tombstones
+				// The two marks below a not essential and only exist because we're using tombstones
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: {
-						revision: tag1,
-						localId: brand(2),
-						adjacentCells: [{ id: brand(2), count: 1 }],
-					},
+					cellId: { revision: tag1, localId: brand(2) },
 				},
-			]);
+			];
 
 			const expected: ModularChangeset = {
 				nodeChanges: nestedMapFromFlatList([

@@ -134,7 +134,7 @@ function createModifyDetachedChangeset(
 
 /**
  * @param count - The number of nodes inserted.
- * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * @param cellId - The first cell to insert the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
@@ -263,7 +263,7 @@ function createMoveOutMark(
 
 /**
  * @param count - The number of nodes moved in.
- * @param cellId - The first cell to move the content into (potentially includes lineage information).
+ * @param cellId - The first cell to move the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */

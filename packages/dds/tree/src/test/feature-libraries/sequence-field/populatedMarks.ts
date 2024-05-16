@@ -30,20 +30,8 @@ export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
  */
 export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {
 	const tag = idCompressor.generateCompressedId();
-	const lineageEvent: Populated<SF.LineageEvent> = {
-		count: 2,
-		id: brand(0),
-		offset: 1,
-		revision: tag,
-	};
-	const adjacentCell: Populated<SF.IdRange> = { count: 2, id: brand(0) };
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
-	const cellId: Populated<SF.CellId> = {
-		localId: brand(0),
-		revision: tag,
-		lineage: [lineageEvent],
-		adjacentCells: [adjacentCell],
-	};
+	const cellId: Populated<SF.CellId> = { localId: brand(0), revision: tag };
 	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const unattachIdOverride: Populated<DetachIdOverride> = {
 		type: DetachIdOverrideType.Unattach,
