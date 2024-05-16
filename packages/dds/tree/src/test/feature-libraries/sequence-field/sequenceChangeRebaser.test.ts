@@ -76,7 +76,7 @@ function withAdjacentTombstones(
 	type: SF.Mark["type"],
 	maxId: number,
 ): SF.Mark[] {
-	const hasEffectType = (m: SF.Mark): boolean => m.type !== type;
+	const hasEffectType = (m: SF.Mark): boolean => m.type === type;
 	const output = [...marks];
 	let markIdx = marks.findIndex(hasEffectType);
 	assert(
@@ -86,7 +86,6 @@ function withAdjacentTombstones(
 	const mark = marks[markIdx];
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const cellId = mark.cellId!;
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const countBefore = cellId.localId;
 	if (countBefore > 0) {
 		output.splice(markIdx, 0, Mark.tomb(cellId.revision, brand(0), countBefore));
@@ -196,7 +195,7 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
 						Change.return(i, 2, 1, { revision: tag3, localId: brand(i) }),
-						"MoveOut",
+						"MoveIn",
 						max,
 					),
 				),
@@ -207,7 +206,7 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
 						Change.return(1, 2, i, { revision: tag3, localId: brand(i) }),
-						"MoveOut",
+						"MoveIn",
 						max,
 					),
 				),
