@@ -11,10 +11,11 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
-import { Changeset as ChangesetSchema, Encoded } from "./format.js";
+import { Changeset as ChangesetSchema, DetachIdOverrideType, Encoded } from "./formatV1.js";
 import {
 	Attach,
 	AttachAndDetach,
+	CellId,
 	Changeset,
 	Detach,
 	Insert,
@@ -87,7 +88,11 @@ export function makeV1Codec(
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: changeAtomIdCodec.encode(effect.idOverride, context),
+									: {
+											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
+											type: DetachIdOverrideType.Unattach,
+											id: cellIdCodec.encode(effect.idOverride, context),
+									  },
 							id: effect.id,
 						},
 					};
@@ -102,7 +107,11 @@ export function makeV1Codec(
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: changeAtomIdCodec.encode(effect.idOverride, context),
+									: {
+											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
+											type: DetachIdOverrideType.Unattach,
+											id: cellIdCodec.encode(effect.idOverride, context),
+									  },
 							id: effect.id,
 						},
 					};
@@ -182,7 +191,7 @@ export function makeV1Codec(
 
 			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
+				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
 			}
 			return mark;
 		},
@@ -198,7 +207,7 @@ export function makeV1Codec(
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
 			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
+				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
 			}
 
 			return mark;
@@ -214,6 +223,18 @@ export function makeV1Codec(
 			};
 		},
 	});
+
+	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
+		encode: ({ localId, revision }: CellId, context: ChangeEncodingContext): Encoded.CellId => {
+			const encoded: Encoded.CellId = {
+				atom: changeAtomIdCodec.encode({ localId, revision }, context),
+			};
+			return encoded;
+		},
+		decode: ({ atom }: Encoded.CellId, context: ChangeEncodingContext): CellId => {
+			return changeAtomIdCodec.decode(atom, context);
+		},
+	};
 
 	/**
 	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
@@ -235,7 +256,7 @@ export function makeV1Codec(
 					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
+					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					encodedMark.changes = context.encodeNode(mark.changes);
@@ -261,7 +282,7 @@ export function makeV1Codec(
 					);
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
+					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					decodedMark.changes = context.decodeNode(mark.changes);

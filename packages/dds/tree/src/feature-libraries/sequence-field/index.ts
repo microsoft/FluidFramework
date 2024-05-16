@@ -23,6 +23,7 @@ export {
 	CellMark,
 	AttachAndDetach,
 } from "./types.js";
+export { DetachIdOverrideType } from "./formatV1.js";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,

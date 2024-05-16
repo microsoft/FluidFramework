@@ -10,6 +10,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
+	parserOptions: {
+		project: "./tsconfig.lint.json",
+	},
 	rules: {
 		"@typescript-eslint/no-require-imports": "off",
 		"@typescript-eslint/no-var-requires": "off",
