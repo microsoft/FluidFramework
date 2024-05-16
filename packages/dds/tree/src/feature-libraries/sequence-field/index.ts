@@ -27,7 +27,7 @@ export {
 	AttachAndDetach,
 	DetachIdOverride,
 } from "./types.js";
-export { DetachIdOverrideType } from "./format.js";
+export { DetachIdOverrideType } from "./formatV1.js";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
