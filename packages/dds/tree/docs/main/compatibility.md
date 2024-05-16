@@ -237,6 +237,7 @@ To make a breaking change in `SchemaChangeCodec`,
 ## Example
 
 A new format was introduced for optional-field in [this PR](https://github.com/microsoft/FluidFramework/pull/20341).
+	- This PR should have also included code changes which began writing this format in messages! That was instead made shortly after in [this commit](https://github.com/microsoft/FluidFramework/commit/0fafbebcd3324fc481bd8464f09ab15d595b4a57).
 That format was added as an option for `SharedTree` users in [this PR](https://github.com/microsoft/FluidFramework/pull/20615).
 
 Future changes introducing a new format can do so in a single PR if desired.
