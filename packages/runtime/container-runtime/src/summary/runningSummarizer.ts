@@ -717,7 +717,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
 			error = ackNackResult.error;
-			retryAfterSeconds = error?.retryAfterSeconds;
+			retryAfterSeconds = error.retryAfterSeconds;
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
@@ -737,6 +737,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				this.mc.logger.sendPerformanceEvent({
 					eventName: "SummarizeAttemptDelay",
 					duration: retryAfterSeconds * 1000,
+					summaryNackDelay: ackNackResult.data !== undefined, // This will only be defined only for nack failures.
 					stage: submitSummaryResult.data?.stage,
 					...attemptResult.summarizeProps,
 				});
