@@ -643,6 +643,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 
@@ -665,6 +666,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 
@@ -673,12 +675,15 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: unknownReferenceEventName,
 						...tagCodeArtifacts({ id, routes: JSON.stringify(routes) }),
+						fullGC: false, // from details
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
+				true /* inlineDetailsProp */,
 			);
 		});
 
+		// Also tests passing fullGC true
 		it("logs gcUnknownOutboundReferences when there are multiple unknown data store references", async () => {
 			const id1 = nodes[0];
 			const routes1 = [nodes[2], nodes[3]];
@@ -691,6 +696,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				true /* fullGC */,
 				mc.logger,
 			);
 
@@ -699,13 +705,16 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: unknownReferenceEventName,
 						...tagCodeArtifacts({ id: id1, routes: JSON.stringify(routes1) }),
+						fullGC: true, // from details
 					},
 					{
 						eventName: unknownReferenceEventName,
 						...tagCodeArtifacts({ id: id2, routes: JSON.stringify(routes2) }),
+						fullGC: true, // from details
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
+				true /* inlineDetailsProp */,
 			);
 		});
 
@@ -719,6 +728,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 
@@ -743,6 +753,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 
@@ -766,6 +777,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 
@@ -789,6 +801,7 @@ describe("GC Telemetry Tracker", () => {
 				currentGCData,
 				previousGCData,
 				explicitReferences,
+				false /* fullGC */,
 				mc.logger,
 			);
 

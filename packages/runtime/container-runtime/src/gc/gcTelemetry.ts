@@ -323,11 +323,14 @@ export class GCTelemetryTracker {
 	 * @param currentGCData - The GC data (reference graph) from the current GC run.
 	 * @param previousGCData - The GC data (reference graph) from the previous GC run.
 	 * @param explicitReferences - New references added explicity between the previous and the current run.
+	 * @param fullGC - Whether this is a full GC run or not, for logging
+	 * @param logger - The logger to use for logging the telemetry events.
 	 */
 	public logIfMissingExplicitReferences(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
+		fullGC: boolean,
 		logger: ITelemetryLoggerExt,
 	) {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
@@ -364,6 +367,7 @@ export class GCTelemetryTracker {
 						id: nodeId,
 						routes: JSON.stringify(missingExplicitRoutes),
 					}),
+					details: { fullGC },
 				});
 			}
 		}

@@ -576,7 +576,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
 		// Get all referenced nodes - References in this run + references between the previous and current runs.
 		const allReferencedNodeIds =
-			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
+			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, fullGC, logger) ??
 			gcResult.referencedNodeIds;
 
 		// 2. Get the mark phase stats based on the previous / current GC state.
@@ -778,6 +778,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
+		fullGC: boolean,
 		logger: ITelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
@@ -794,6 +795,7 @@ export class GarbageCollector implements IGarbageCollector {
 			currentGCData,
 			previousGCData,
 			this.newReferencesSinceLastRun,
+			fullGC,
 			logger,
 		);
 
