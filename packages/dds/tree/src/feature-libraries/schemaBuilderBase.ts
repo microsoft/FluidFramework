@@ -127,7 +127,7 @@ export class SchemaBuilderBase<
 	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
-	private addLibraries(...libraries: SchemaLibrary[]) {
+	private addLibraries(...libraries: SchemaLibrary[]): void {
 		for (const libs of libraries) {
 			for (const lib of libs.libraries) {
 				this.libraries.add(lib);

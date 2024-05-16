@@ -387,8 +387,12 @@ export class SerializedStateManager {
 			this.mc.logger,
 			{
 				eventName: "getPendingLocalState",
-				notifyImminentClosure: props.notifyImminentClosure,
-				processedOpsSize: this.processedOps.length,
+				details: {
+					notifyImminentClosure: props.notifyImminentClosure,
+					sessionExpiryTimerStarted: props.sessionExpiryTimerStarted,
+					snapshotSequenceNumber: props.snapshotSequenceNumber,
+					processedOpsSize: this.processedOps.length,
+				},
 				clientId,
 			},
 			async () => {

@@ -116,6 +116,7 @@ function makeModularChangeCodec(
 	{ jsonValidator: validator }: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
 		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {

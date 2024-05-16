@@ -420,13 +420,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;

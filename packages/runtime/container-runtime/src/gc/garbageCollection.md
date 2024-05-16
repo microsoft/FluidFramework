@@ -88,14 +88,6 @@ for apps to override settings easily, e.g. by backing their `IConfigProviderBase
 In cases where a behavior is controlled by both a Config Setting and GC Option, you may experiment at first using Config Settings
 and then later update the passed-in GC Options to finalize the configuration in your code.
 
-### Disabling Mark Phase
-
-If you wish to disable Mark Phase for newly-created documents, set the `gcAllowed` GC Option to `false`.
-Note that this will disable GC permanently (including the sweep phase) for the container during its lifetime.
-
-Mark Phase can also be disabled just for the session, among other behaviors,
-covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-configurations) docs.
-
 ### Enabling Sweep Phase
 
 To enable the Sweep Phase for new documents, you must set the `enableGCSweep` GC Option to true.

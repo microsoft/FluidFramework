@@ -12,9 +12,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/build-cli': ^0.38.0
+      '@fluid-tools/build-cli': ^0.39.0-264124
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.38.0
+      '@fluidframework/build-tools': ^0.39.0-264124
       '@fluidframework/common-utils-previous': npm:@fluidframework/common-utils@1.0.0
       '@fluidframework/eslint-config-fluid': ^5.2.0
       '@microsoft/api-extractor': ^7.43.1
@@ -62,9 +62,9 @@ importers:
       lodash: 4.17.21
       sha.js: 2.4.11
     devDependencies:
-      '@fluid-tools/build-cli': 0.38.0_@types+node@16.18.38
+      '@fluid-tools/build-cli': 0.39.0-264124_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.38.0_@types+node@16.18.38
+      '@fluidframework/build-tools': 0.39.0-264124_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 5.2.0_yzjfgl2l2fa2siv5ppqhbzvdbi
       '@microsoft/api-extractor': 7.43.1_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
@@ -1627,14 +1627,14 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/build-cli/0.38.0_@types+node@16.18.38:
-    resolution: {integrity: sha512-QvfpjBidx9+bCsSIeqsZiRLg/dDmYrMZeJvAq6zRxhUynnA74koIIt2hbp0cP4MWbDWxMCMUvgLpzJHKuVVslA==}
+  /@fluid-tools/build-cli/0.39.0-264124_@types+node@16.18.38:
+    resolution: {integrity: sha512-KOPn6+tXwkV2Ggn0YwGBHNtz4i+16HC8mmA2/nUY0gt2jDNI3sPhmx3wXlGwFdHkbsI3T7fPqbsOpuSr44fgEg==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/build-tools': 0.38.0_@types+node@16.18.38
-      '@fluidframework/bundle-size-tools': 0.38.0
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/build-tools': 0.39.0-264124_@types+node@16.18.38
+      '@fluidframework/bundle-size-tools': 0.39.0-264124
       '@microsoft/api-extractor': 7.43.1_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
@@ -1688,8 +1688,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.38.0:
-    resolution: {integrity: sha512-sPGkM+2BMv0/QSSXwGEl8y+/cprookyS7mKQFdk3UiBlLBPr8uQcNxG1xPxpmM9JwZH63Q55dy56u4TnjuNoNQ==}
+  /@fluid-tools/version-tools/0.39.0-264124:
+    resolution: {integrity: sha512-CVq50WXgAH4gJUu2Ghzq7x3//gWCEZc8cPC5qD6CT5eiFOg5GLEf35bKjOSMj+fqIUigtoWj1j+uIUhnddwYLQ==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -1710,13 +1710,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.38.0_@types+node@16.18.38:
-    resolution: {integrity: sha512-ZEUnUmaPDGhKRHQBjFwDW1YEHk1twDMqcB7Bj5fSfDheQyxbBGAOyKDIST7zTn/NB3zpARC3rE3R5/3NFnCCcA==}
+  /@fluidframework/build-tools/0.39.0-264124_@types+node@16.18.38:
+    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/bundle-size-tools': 0.38.0
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.61.0_@types+node@16.18.38
@@ -1752,8 +1752,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.38.0:
-    resolution: {integrity: sha512-OaevKCCZKwnSI1iF3wnSgKR52xwtI74AVJsO1o9rjVyZMd78cdBK2KIZjqv7rIDINaqVlsZnulvrEx+AbBrg/g==}
+  /@fluidframework/bundle-size-tools/0.39.0-264124:
+    resolution: {integrity: sha512-nVRbK5X1SnRoZRA6jkxKYtDQ5cRZ1oH6XBJxkvwoPEUsjPNHaco+juwsMDucu0oBA/FnMhOZEz5DtiQz4sBbgQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -7083,7 +7083,7 @@ packages:
       fs.realpath: 1.0.0
       minimatch: 8.0.4
       minipass: 4.2.8
-      path-scurry: 1.10.1
+      path-scurry: 1.10.2
     dev: true
 
   /global-dirs/3.0.1:
@@ -10527,14 +10527,6 @@ packages:
 
   /path-parse/1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
-    dev: true
-
-  /path-scurry/1.10.1:
-    resolution: {integrity: sha512-MkhCqzzBEpPvxxQ71Md0b1Kk51W01lrYvlMzSUaIzNsODdd7mqhiimSZlr+VegAz5Z6Vzt9Xg2ttE//XBhH3EQ==}
-    engines: {node: '>=16 || 14 >=14.17'}
-    dependencies:
-      lru-cache: 10.2.0
-      minipass: 7.0.4
     dev: true
 
   /path-scurry/1.10.2:

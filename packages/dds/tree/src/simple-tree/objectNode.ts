@@ -16,6 +16,7 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
+	getSchemaAndPolicy,
 	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
@@ -218,6 +219,7 @@ export function setField(
 				content,
 				simpleFieldSchema.allowedTypes,
 				nodeKeyManager,
+				getSchemaAndPolicy(field),
 			);
 			typedField.content = cursor;
 			break;
@@ -305,7 +307,7 @@ export function objectSchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			handler = createProxyHandler(flexKeyMap, customizable);

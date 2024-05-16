@@ -115,7 +115,7 @@ export function viewFromState(
 	state.view ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+		getOrCreate(state.view, client.channel, (tree) => {
 			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
