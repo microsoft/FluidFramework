@@ -159,10 +159,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
-	public get summaryStateNeedsReset(): boolean {
-		return this.summaryStateTracker.doesSummaryStateNeedReset;
-	}
-
 	/** Returns the count of data stores whose GC state updated since the last summary. */
 	public get updatedDSCountSinceLastSummary(): number {
 		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
@@ -217,10 +213,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimerStarted = Date.now();
 		}
 
-		this.summaryStateTracker = new GCSummaryStateTracker(
-			this.configs,
-			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-		);
+		this.summaryStateTracker = new GCSummaryStateTracker(this.configs);
 
 		this.telemetryTracker = new GCTelemetryTracker(
 			this.mc,
@@ -480,8 +473,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const fullGC =
 			options.fullGC ??
 			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested() ||
-				this.summaryStateTracker.doesSummaryStateNeedReset);
+				this.summaryStateTracker.autoRecovery.fullGCRequested());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -489,14 +481,12 @@ export class GarbageCollector implements IGarbageCollector {
 			runSweep: options.runSweep,
 		});
 
-		const logger = options.logger
-			? createChildLogger({
-					logger: options.logger,
-					properties: {
-						all: { completedGCRuns: () => this.completedRuns },
-					},
-			  })
-			: this.mc.logger;
+		const logger = createChildLogger({
+			logger: options.logger ?? this.mc.logger,
+			properties: {
+				all: { completedGCRuns: this.completedRuns, fullGC },
+			},
+		});
 
 		/**
 		 * If there is no current reference timestamp, skip running GC. We need the current timestamp to track

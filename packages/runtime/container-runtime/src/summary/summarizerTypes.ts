@@ -214,8 +214,6 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 	readonly summaryStats: IGeneratedSummaryStats;
 	/** Time it took to generate the summary tree and stats. */
 	readonly generateDuration: number;
-	/** True if the full tree regeneration with no handle reuse optimizations was forced. */
-	readonly forcedFullTree: boolean;
 }
 
 /**

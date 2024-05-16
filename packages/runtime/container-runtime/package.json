@@ -263,6 +263,18 @@
 			"RemovedInterfaceDeclaration_IRetriableFailureResult": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IGenerateSummaryTreeResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISubmitSummaryOpResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IUploadSummaryResult": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SubmitSummaryResult": {
+				"backCompat": false
 			}
 		}
 	}

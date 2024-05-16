@@ -22,8 +22,6 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
 	GCNodeType,
-	GCSummaryStateTracker,
-	GCVersion,
 	GarbageCollector,
 	IGCMetadata,
 	IGCMetadata_Deprecated,
@@ -58,9 +56,6 @@ import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
-	readonly summaryStateTracker: Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
-		latestSummaryGCVersion: GCVersion;
-	};
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
 };
 
@@ -187,20 +182,10 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === undefined, "tombstoneTimeoutMs incorrect");
-			assert.equal(
-				gc.summaryStateTracker.latestSummaryGCVersion,
-				0,
-				"latestSummaryGCVersion incorrect",
-			);
 		});
 		it("gcFeature 0", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 0 });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(
-				gc.summaryStateTracker.latestSummaryGCVersion,
-				0,
-				"latestSummaryGCVersion incorrect",
-			);
 		});
 		it("gcFeature 0, Sweep enabled via gcGeneration", () => {
 			gc = createGcWithPrivateMembers(
@@ -209,20 +194,10 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
-			assert.equal(
-				gc.summaryStateTracker.latestSummaryGCVersion,
-				0,
-				"latestSummaryGCVersion incorrect",
-			);
 		});
 		it("gcFeature 1", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 1 });
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(
-				gc.summaryStateTracker.latestSummaryGCVersion,
-				1,
-				"latestSummaryGCVersion incorrect",
-			);
 		});
 		it("sweepEnabled value ignored", () => {
 			gc = createGcWithPrivateMembers(
@@ -380,11 +355,6 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs !== undefined, "tombstoneTimeoutMs incorrect");
-			assert.equal(
-				gc.summaryStateTracker.latestSummaryGCVersion,
-				stableGCVersion,
-				"latestSummaryGCVersion incorrect",
-			);
 		});
 		it("Sweep enabled via gcGeneration", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
