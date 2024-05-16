@@ -203,15 +203,6 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	getPropertiesAtPosition(pos: number): PropertySet | undefined;
 
 	/**
-	 * Initializes the object as a local, non-shared object. This object can become shared after
-	 * it is attached to the document.
-	 * @privateRemarks
-	 * TODO: determine if this API (from SharedObject) is needed by users of the encapsulated API, declarative API or both,
-	 * and handle exposing it in a consistent way for all SharedObjects if needed.
-	 */
-	initializeLocal(): void;
-
-	/**
 	 * @returns An iterable object that enumerates the IntervalCollection labels.
 	 *
 	 * @example
@@ -224,6 +215,12 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * ```
 	 */
 	getIntervalCollectionLabels(): IterableIterator<string>;
+
+	/**
+	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
+	 * creates one.
+	 */
+	getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
@@ -241,12 +238,79 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	getCurrentSeq(): number;
 
 	/**
+	 * Annotates the range with the provided properties
+	 *
+	 * @param start - The inclusive start position of the range to annotate
+	 * @param end - The exclusive end position of the range to annotate
+	 * @param props - The properties to annotate the range with
+	 *
+	 */
+	annotateRange(start: number, end: number, props: PropertySet): void;
+
+	/**
+	 * @param start - The inclusive start of the range to remove
+	 * @param end - The exclusive end of the range to remove
+	 */
+	removeRange(start: number, end: number): void;
+
+	/**
+	 * Resolves a remote client's position against the local sequence
+	 * and returns the remote client's position relative to the local
+	 * sequence. The client ref seq must be above the minimum sequence number
+	 * or the return value will be undefined.
+	 * Generally this method is used in conjunction with signals which provide
+	 * point in time values for the below parameters, and is useful for things
+	 * like displaying user position. It should not be used with persisted values
+	 * as persisted values will quickly become invalid as the remoteClientRefSeq
+	 * moves below the minimum sequence number
+	 * @param remoteClientPosition - The remote client's position to resolve
+	 * @param remoteClientRefSeq - The reference sequence number of the remote client
+	 * @param remoteClientId - The client id of the remote client
+	 */
+	resolveRemoteClientPosition(
+		remoteClientPosition: number,
+		remoteClientRefSeq: number,
+		remoteClientId: string,
+	): number | undefined;
+
+	// #region APIs we might want to remove
+	/**
+	 * Initializes the object as a local, non-shared object. This object can become shared after
+	 * it is attached to the document.
+	 * @privateRemarks
+	 * TODO: determine if this API (from SharedObject) is needed by users of the encapsulated API, declarative API or both,
+	 * and handle exposing it in a consistent way for all SharedObjects if needed.
+	 */
+	initializeLocal(): void;
+
+	/**
 	 * @deprecated The ability to create group ops will be removed in an upcoming
 	 * release, as group ops are redundant with the native batching capabilities
 	 * of the runtime
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	groupOperation(groupOp: IMergeTreeGroupMsg): void;
+
+	getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	};
+
+	/**
+	 * Inserts a segment
+	 * @param start - The position to insert the segment at
+	 * @param spec - The segment to inserts spec
+	 */
+	insertFromSpec(pos: number, spec: IJSONSegment): void;
+
+	/**
+	 * Given a position specified relative to a marker id, lookup the marker
+	 * and convert the position to a character position.
+	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+	 */
+	posFromRelativePos(relativePos: IRelativePosition): number;
+
+	// #endregion
 }
 
 /**
@@ -452,10 +516,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @param start - The inclusive start of the range to remove
-	 * @param end - The exclusive end of the range to remove
-	 */
 	public removeRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
@@ -476,9 +536,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getContainingSegment<T>(pos);
 	}
 
-	/**
-	 * Returns the length of the current sequence for the client
-	 */
 	public getLength(): number {
 		return this.client.getLength();
 	}
@@ -487,14 +544,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getPosition(segment);
 	}
 
-	/**
-	 * Annotates the range with the provided properties
-	 *
-	 * @param start - The inclusive start position of the range to annotate
-	 * @param end - The exclusive end position of the range to annotate
-	 * @param props - The properties to annotate the range with
-	 *
-	 */
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
@@ -503,7 +552,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getPropertiesAtPosition(pos);
 	}
 
-	public getRangeExtentsOfPosition(pos: number) {
+	public getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	} {
 		return this.client.getRangeExtentsOfPosition(pos);
 	}
 
@@ -535,20 +587,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.removeLocalReferencePosition(lref);
 	}
 
-	/**
-	 * Resolves a remote client's position against the local sequence
-	 * and returns the remote client's position relative to the local
-	 * sequence. The client ref seq must be above the minimum sequence number
-	 * or the return value will be undefined.
-	 * Generally this method is used in conjunction with signals which provide
-	 * point in time values for the below parameters, and is useful for things
-	 * like displaying user position. It should not be used with persisted values
-	 * as persisted values will quickly become invalid as the remoteClientRefSeq
-	 * moves below the minimum sequence number
-	 * @param remoteClientPosition - The remote client's position to resolve
-	 * @param remoteClientRefSeq - The reference sequence number of the remote client
-	 * @param remoteClientId - The client id of the remote client
-	 */
 	public resolveRemoteClientPosition(
 		remoteClientPosition: number,
 		remoteClientRefSeq: number,
@@ -575,12 +613,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.submitLocalMessage(message, metadata);
 	}
 
-	/**
-	 * Given a position specified relative to a marker id, lookup the marker
-	 * and convert the position to a character position.
-	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
-	 */
-	public posFromRelativePos(relativePos: IRelativePosition) {
+	public posFromRelativePos(relativePos: IRelativePosition): number {
 		return this.client.posFromRelativePos(relativePos);
 	}
 
@@ -601,20 +634,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
-	/**
-	 * Inserts a segment
-	 * @param start - The position to insert the segment at
-	 * @param spec - The segment to inserts spec
-	 */
+
 	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
-	/**
-	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
-	 * creates one.
-	 */
 	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}

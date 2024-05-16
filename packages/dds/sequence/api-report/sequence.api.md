@@ -373,6 +373,7 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 
 // @alpha (undocumented)
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+    annotateRange(start: number, end: number, props: PropertySet): void;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     getContainingSegment(pos: number): {
         segment: T | undefined;
@@ -380,19 +381,30 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     };
     // (undocumented)
     getCurrentSeq(): number;
+    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
     getLength(): number;
     getPosition(segment: ISegment): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number | undefined;
+        posAfterEnd: number | undefined;
+    };
     // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
     initializeLocal(): void;
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     obliterateRange(start: number, end: number): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    removeRange(start: number, end: number): void;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
@@ -595,6 +607,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 // @alpha (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedSegmentSequence<T> {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
+    // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): void;
     protected applyStashedOp(content: any): void;
     // (undocumented)
@@ -612,6 +625,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
+    // (undocumented)
     getLength(): number;
     // (undocumented)
     getPosition(segment: ISegment): number;
@@ -630,6 +644,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected initializeLocalCore(): void;
     // (undocumented)
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): void;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @deprecated
@@ -640,6 +655,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     obliterateRange(start: number, end: number): void;
     protected onConnect(): void;
     protected onDisconnect(): void;
+    // (undocumented)
     posFromRelativePos(relativePos: IRelativePosition): number;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
@@ -648,6 +664,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     removeRange(start: number, end: number): void;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
+    // (undocumented)
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
