@@ -418,7 +418,6 @@ stages:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark" }'
             login__microsoft__clientId: $(login-microsoft-clientId)
-            login__microsoft__secret: $(login-microsoft-secret)
             ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
               login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
             ${{ if eq( endpointObject.endpointName, 'frs' ) }}:

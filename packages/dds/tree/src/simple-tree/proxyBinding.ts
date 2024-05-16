@@ -63,7 +63,7 @@ export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): 
 	const anchor = anchors.track(path);
 	const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
 	bindProxyToAnchorNode(proxy, anchorNode);
-	const forget = () => {
+	const forget = (): void => {
 		if (anchors.locate(anchor)) {
 			anchors.forget(anchor);
 		}

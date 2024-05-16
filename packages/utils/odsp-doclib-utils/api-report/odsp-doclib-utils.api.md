@@ -24,7 +24,7 @@ export function enrichOdspError(error: IFluidErrorBase & OdspError, response?: R
 export const fetchIncorrectResponse = 712;
 
 // @internal
-export function fetchTokens(server: string, scope: string, clientConfig: IClientConfig, credentials: TokenRequestCredentials): Promise<IOdspTokens>;
+export function fetchTokens(server: string, scope: string, clientConfig: IPublicClientConfig, credentials: TokenRequestCredentials): Promise<IOdspTokens>;
 
 // @internal (undocumented)
 export function getAadTenant(server: string): string;
@@ -54,19 +54,19 @@ export function getDriveItemFromDriveAndItem(server: string, drive: string, item
 export function getFetchTokenUrl(server: string): string;
 
 // @internal (undocumented)
-export function getLoginPageUrl(server: string, clientConfig: IClientConfig, scope: string, odspAuthRedirectUri: string): string;
+export function getLoginPageUrl(server: string, clientConfig: IPublicClientConfig, scope: string, odspAuthRedirectUri: string): string;
 
 // @internal (undocumented)
-export const getOdspRefreshTokenFn: (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
+export const getOdspRefreshTokenFn: (server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
 // @alpha (undocumented)
 export const getOdspScope: (server: string) => string;
 
 // @internal (undocumented)
-export const getPushRefreshTokenFn: (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
+export const getPushRefreshTokenFn: (server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
 // @internal (undocumented)
-export const getRefreshTokenFn: (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) => () => Promise<string>;
+export const getRefreshTokenFn: (scope: string, server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) => () => Promise<string>;
 
 // @internal (undocumented)
 export function getServer(tenantId: string): string;
@@ -81,14 +81,6 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 
 // @internal (undocumented)
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes">;
-
-// @internal (undocumented)
-export interface IClientConfig {
-    // (undocumented)
-    clientId: string;
-    // (undocumented)
-    clientSecret: string;
-}
 
 // @alpha (undocumented)
 export interface IOdspAuthRequestInfo {
@@ -118,6 +110,12 @@ export interface IOdspTokens {
     readonly accessToken: string;
     // (undocumented)
     readonly refreshToken: string;
+}
+
+// @internal
+export interface IPublicClientConfig {
+    // (undocumented)
+    clientId: string;
 }
 
 // @internal (undocumented)
@@ -169,7 +167,7 @@ export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel
 export function putAsync(url: string, authRequestInfo: IOdspAuthRequestInfo): Promise<Response>;
 
 // @internal
-export function refreshTokens(server: string, scope: string, clientConfig: IClientConfig, tokens: IOdspTokens): Promise<IOdspTokens>;
+export function refreshTokens(server: string, scope: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens): Promise<IOdspTokens>;
 
 // @internal
 export function throwOdspNetworkError(errorMessage: string, statusCode: number, response: Response, responseText?: string, props?: ITelemetryBaseProperties): never;

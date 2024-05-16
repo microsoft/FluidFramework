@@ -12,7 +12,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
 
 /**
@@ -59,19 +59,13 @@ describe("SharedTree op format snapshots", () => {
 
 	it("schema change", () => {
 		const messages = spyOnFutureMessages(containerRuntime);
-		tree.schematize({
-			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 0 }),
-		});
+		tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 
 		takeJsonSnapshot(messages);
 	});
 
 	it("field change", () => {
-		const view = tree.schematize({
-			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 2 }),
-		});
+		const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 2 })));
 
 		const messages = spyOnFutureMessages(containerRuntime);
 		view.root.x = 1;

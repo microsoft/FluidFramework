@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/core-interfaces-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -511,7 +529,6 @@ declare function get_old_InterfaceDeclaration_IFluidHandle():
 declare function use_current_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<current.IFluidHandle>): void;
 use_current_InterfaceDeclaration_IFluidHandle(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -526,7 +543,6 @@ declare function get_current_InterfaceDeclaration_IFluidHandle():
 declare function use_old_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<old.IFluidHandle>): void;
 use_old_InterfaceDeclaration_IFluidHandle(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -590,6 +606,62 @@ use_old_InterfaceDeclaration_IFluidHandleContext(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidHandleErased": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IFluidHandleErased():
+    TypeOnly<old.IFluidHandleErased<any>>;
+declare function use_current_InterfaceDeclaration_IFluidHandleErased(
+    use: TypeOnly<current.IFluidHandleErased<any>>): void;
+use_current_InterfaceDeclaration_IFluidHandleErased(
+    get_old_InterfaceDeclaration_IFluidHandleErased());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidHandleErased": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IFluidHandleErased():
+    TypeOnly<current.IFluidHandleErased<any>>;
+declare function use_old_InterfaceDeclaration_IFluidHandleErased(
+    use: TypeOnly<old.IFluidHandleErased<any>>): void;
+use_old_InterfaceDeclaration_IFluidHandleErased(
+    get_current_InterfaceDeclaration_IFluidHandleErased());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidHandleInternal": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IFluidHandleInternal():
+    TypeOnly<old.IFluidHandleInternal>;
+declare function use_current_InterfaceDeclaration_IFluidHandleInternal(
+    use: TypeOnly<current.IFluidHandleInternal>): void;
+use_current_InterfaceDeclaration_IFluidHandleInternal(
+    get_old_InterfaceDeclaration_IFluidHandleInternal());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidHandleInternal": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IFluidHandleInternal():
+    TypeOnly<current.IFluidHandleInternal>;
+declare function use_old_InterfaceDeclaration_IFluidHandleInternal(
+    use: TypeOnly<old.IFluidHandleInternal>): void;
+use_old_InterfaceDeclaration_IFluidHandleInternal(
+    get_current_InterfaceDeclaration_IFluidHandleInternal());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "VariableDeclaration_IFluidLoadable": {"forwardCompat": false}
  */
 declare function get_old_VariableDeclaration_IFluidLoadable():
@@ -625,7 +697,6 @@ declare function get_old_InterfaceDeclaration_IFluidLoadable():
 declare function use_current_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<current.IFluidLoadable>): void;
 use_current_InterfaceDeclaration_IFluidLoadable(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidLoadable());
 
 /*
@@ -640,7 +711,6 @@ declare function get_current_InterfaceDeclaration_IFluidLoadable():
 declare function use_old_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<old.IFluidLoadable>): void;
 use_old_InterfaceDeclaration_IFluidLoadable(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidLoadable());
 
 /*
@@ -767,7 +837,6 @@ declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
 declare function use_current_InterfaceDeclaration_IProvideFluidHandle(
     use: TypeOnly<current.IProvideFluidHandle>): void;
 use_current_InterfaceDeclaration_IProvideFluidHandle(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidHandle());
 
 /*
@@ -824,7 +893,6 @@ declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_current_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<current.IProvideFluidLoadable>): void;
 use_current_InterfaceDeclaration_IProvideFluidLoadable(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*
@@ -839,7 +907,6 @@ declare function get_current_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_old_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<old.IProvideFluidLoadable>): void;
 use_old_InterfaceDeclaration_IProvideFluidLoadable(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*
@@ -1289,3 +1356,31 @@ declare function use_old_TypeAliasDeclaration_TransformedEvent(
     use: TypeOnly<old.TransformedEvent<any,any,any>>): void;
 use_old_TypeAliasDeclaration_TransformedEvent(
     get_current_TypeAliasDeclaration_TransformedEvent());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_fluidHandleSymbol": {"forwardCompat": false}
+ */
+declare function get_old_VariableDeclaration_fluidHandleSymbol():
+    TypeOnly<typeof old.fluidHandleSymbol>;
+declare function use_current_VariableDeclaration_fluidHandleSymbol(
+    use: TypeOnly<typeof current.fluidHandleSymbol>): void;
+use_current_VariableDeclaration_fluidHandleSymbol(
+    get_old_VariableDeclaration_fluidHandleSymbol());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_fluidHandleSymbol": {"backCompat": false}
+ */
+declare function get_current_VariableDeclaration_fluidHandleSymbol():
+    TypeOnly<typeof current.fluidHandleSymbol>;
+declare function use_old_VariableDeclaration_fluidHandleSymbol(
+    use: TypeOnly<typeof old.fluidHandleSymbol>): void;
+use_old_VariableDeclaration_fluidHandleSymbol(
+    get_current_VariableDeclaration_fluidHandleSymbol());

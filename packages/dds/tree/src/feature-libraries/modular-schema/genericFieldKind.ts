@@ -218,7 +218,7 @@ export function convertGenericChange<TChange>(
 	);
 }
 
-const invalidFunc = () => fail("Should not be called when converting generic changes");
+const invalidFunc = (): never => fail("Should not be called when converting generic changes");
 const invalidCrossFieldManager: CrossFieldManager = {
 	set: invalidFunc,
 	get: invalidFunc,
