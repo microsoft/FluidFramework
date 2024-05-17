@@ -76,15 +76,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	private referenceUsedRoutes: string[] | undefined;
 
 	// The base GC details of this node used to initialize the GC state.
-	private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
+	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
 	private baseGCDetailsLoaded: boolean = false;
 
 	// The base GC details for the child nodes. This is passed to child nodes when creating them.
-	private readonly childNodesBaseGCDetailsP: LazyPromise<
-		Map<string, IGarbageCollectionDetailsBase>
-	>;
+	private readonly childNodesBaseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
 
 	private gcData: IGarbageCollectionData | undefined;
 
@@ -195,6 +193,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b1 /* "wip used routes should be set if tracking a summary" */,
 			);
 		}
+
+		// Load GC details from the initial summary, if not already loaded. This is only needed in case where GC
+		// is disabled and there is base GC state. A re-summarization may be needed in this case.
+		await this.loadBaseGCDetails();
 
 		// If trackState is true, get summary from base summarizer node which tracks summary state.
 		// If trackState is false, get summary from summarizeInternal.
