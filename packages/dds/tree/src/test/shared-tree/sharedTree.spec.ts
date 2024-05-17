@@ -45,7 +45,6 @@ import {
 	TreeCompressionStrategy,
 	TreeStatus,
 	ViewSchema,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -92,6 +91,7 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { MockNodeKeyManager } from "../MockNodeKeyManager.js";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -1906,5 +1906,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
+	return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
 }

@@ -19,8 +19,8 @@ import { isTreeNode } from "../../simple-tree/proxies.js";
 
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
-import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../util/index.js";
+import { MockNodeKeyManager } from "../MockNodeKeyManager.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -174,7 +174,7 @@ describe("SharedTreeObject", () => {
 		const schemaWithIdentifier = sb.object("parent", {
 			identifier: sb.identifier,
 		});
-		const nodeKeyManager = createMockNodeKeyManager();
+		const nodeKeyManager = new MockNodeKeyManager();
 		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 			identifier: id,

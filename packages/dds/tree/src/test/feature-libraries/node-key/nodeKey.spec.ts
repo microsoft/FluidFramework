@@ -13,11 +13,11 @@ import {
 	NodeKeyManager,
 	StableNodeKey,
 	compareLocalNodeKeys,
-	createMockNodeKeyManager,
 	createNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import { ISharedTree } from "../../../shared-tree/index.js";
 import { TestTreeProvider } from "../../utils.js";
+import { MockNodeKeyManager } from "../../MockNodeKeyManager.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.
@@ -35,7 +35,7 @@ async function getIIDCompressor(tree?: ISharedTree): Promise<IIdCompressor> {
 describe("Node Keys", () => {
 	function itNodeKeyManager(title: string, fn: (manager: NodeKeyManager) => void): void {
 		it(`${title} (mock)`, () => {
-			fn(createMockNodeKeyManager());
+			fn(new MockNodeKeyManager());
 		});
 		it(`${title} (using IdCompressor)`, async () => {
 			fn(createNodeKeyManager(await getIIDCompressor()));

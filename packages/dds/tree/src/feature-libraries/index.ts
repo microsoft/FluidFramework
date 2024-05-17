@@ -198,7 +198,7 @@ export {
 	compareLocalNodeKeys,
 	LocalNodeKey,
 	createNodeKeyManager,
-	createMockNodeKeyManager,
+	isStableNodeKey,
 	StableNodeKey,
 	NodeKeyIndex,
 	NodeKeyManager,

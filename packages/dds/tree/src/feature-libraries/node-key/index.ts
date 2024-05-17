@@ -12,8 +12,4 @@ export {
 
 export { NodeKeyIndex } from "./nodeKeyIndex.js";
 
-export {
-	createNodeKeyManager,
-	createMockNodeKeyManager,
-	NodeKeyManager,
-} from "./nodeKeyManager.js";
+export { createNodeKeyManager, isStableNodeKey, NodeKeyManager } from "./nodeKeyManager.js";

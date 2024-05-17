@@ -7,11 +7,7 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { UpPath, rootFieldKey } from "../../core/index.js";
-import {
-	TreeStatus,
-	createMockNodeKeyManager,
-	cursorForJsonableTreeNode,
-} from "../../feature-libraries/index.js";
+import { TreeStatus, cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -34,6 +30,7 @@ import {
 } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
+import { MockNodeKeyManager } from "../MockNodeKeyManager.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -187,7 +184,7 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: id,
@@ -224,7 +221,7 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
 				nodeKeyManager.generateLocalNodeKey(),
 			);
