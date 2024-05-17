@@ -669,6 +669,33 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	it("serializing without detached blob storage results in error", async function () {
+		const loader = provider.makeTestLoader({
+			...testContainerConfig,
+		});
+		const serializeContainer = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
+
+		const text = "this is some example text";
+		const dataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
+		dataStore._root.set(
+			"my blob",
+			await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+		);
+
+		try {
+			serializeContainer.serialize();
+			assert.fail("serialize should have thrown");
+		} catch (e) {
+			assert(e instanceof Error);
+			assert.strictEqual(
+				e.message,
+				"DetachedBlobStorage must be provided to loader to enable serialization of containers with blobs.",
+			);
+		}
+	});
+
 	// regression test for https://github.com/microsoft/FluidFramework/issues/9702
 	// this was fixed in 0.58.3000
 	it("correctly handles simultaneous identical blob upload on separate containers", async () => {
