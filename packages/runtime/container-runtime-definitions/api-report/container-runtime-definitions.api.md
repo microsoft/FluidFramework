@@ -15,7 +15,7 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import type { IRequest } from '@fluidframework/core-interfaces';
 import type { IResponse } from '@fluidframework/core-interfaces';

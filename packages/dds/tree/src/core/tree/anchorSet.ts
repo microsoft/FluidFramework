@@ -180,7 +180,9 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
 	 */
-	readonly slots: BrandedMapSubset<AnchorSlot<unknown>>;
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
 	/**
 	 * The set this anchor node is part of.

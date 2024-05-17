@@ -5,7 +5,8 @@
 
 import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Events emitted by {@link ISharedCell}.

@@ -14,9 +14,9 @@ import {
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
 	type Serializable,
 } from "@fluidframework/datastore-definitions/internal";

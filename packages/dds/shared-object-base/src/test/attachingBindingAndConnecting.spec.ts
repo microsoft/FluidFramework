@@ -9,19 +9,21 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type IChannelAttributes,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
+} from "@fluidframework/datastore-definitions";
+import {
+	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IFluidSerializer } from "../serializer.js";
