@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -17,8 +17,10 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 
-import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
-import type { ConsensusQueue } from "../consensusQueue.js";
+import {
+	ConsensusQueueFactory,
+	type ConsensusQueue,
+} from "../consensusOrderedCollectionFactory.js";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 

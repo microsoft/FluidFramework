@@ -21,6 +21,8 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
+	type FlexAllowedTypes,
+	type FlexibleNodeContent,
 } from "../../../feature-libraries/index.js";
 import { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
@@ -150,6 +152,8 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 
 function applySequenceFieldEdit(
 	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	field: FlexTreeSequenceField<any>,
 	change: Insert | Remove | IntraFieldMove | CrossFieldMove,
 ): void {
@@ -186,12 +190,16 @@ function applySequenceFieldEdit(
 
 function applyRequiredFieldEdit(
 	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	field: FlexTreeRequiredField<any>,
 	change: SetField,
 ): void {
 	switch (change.type) {
 		case "set": {
-			field.content = cursorForJsonableTreeNode(change.value) as any;
+			field.content = cursorForJsonableTreeNode(
+				change.value,
+			) as FlexibleNodeContent<FlexAllowedTypes>;
 			break;
 		}
 		default:
@@ -201,6 +209,8 @@ function applyRequiredFieldEdit(
 
 function applyOptionalFieldEdit(
 	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	field: FlexTreeOptionalField<any>,
 	change: SetField | ClearField,
 ): void {

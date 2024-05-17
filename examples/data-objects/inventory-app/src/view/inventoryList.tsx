@@ -20,8 +20,8 @@ export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => 
 				key={part.name}
 				title={part.name}
 				count={part.quantity}
-				onDecrement={() => part.quantity--}
-				onIncrement={() => part.quantity++}
+				onDecrement={(): number => part.quantity--}
+				onIncrement={(): number => part.quantity++}
 			></Counter>,
 		);
 	}

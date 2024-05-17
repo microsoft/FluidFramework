@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
 	SlidingPreference,
@@ -903,7 +903,6 @@ describe("SharedString interval collections", () => {
 			);
 
 			await sharedString3.load(services);
-			await sharedString3.loaded;
 
 			const collection2 = sharedString3.getIntervalCollection("test");
 

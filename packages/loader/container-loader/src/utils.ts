@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
@@ -27,6 +27,7 @@ import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
+	IPendingContainerState,
 	IPendingDetachedContainerState,
 	ISnapshotInfo,
 	SnapshotWithBlobs,
@@ -313,6 +314,11 @@ function isPendingDetachedContainerState(
 	return true;
 }
 
+/**
+ * Parses the given string into {@link IPendingDetachedContainerState} format,
+ * with validation (if invalid, throws a UsageError).
+ * This is the inverse of the JSON.stringify call in {@link Container.serialize}
+ */
 export function getDetachedContainerStateFromSerializedContainer(
 	serializedContainer: string,
 ): IPendingDetachedContainerState {
@@ -333,6 +339,18 @@ export function getDetachedContainerStateFromSerializedContainer(
 	} else {
 		throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 	}
+}
+
+/**
+ * Blindly parses the given string into {@link IPendingContainerState} format.
+ * This is the inverse of the JSON.stringify call in {@link SerializedStateManager.getPendingLocalState}
+ */
+export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string | undefined,
+): IPendingContainerState | undefined {
+	return serializedContainer !== undefined
+		? (JSON.parse(serializedContainer) as IPendingContainerState)
+		: undefined;
 }
 
 /**

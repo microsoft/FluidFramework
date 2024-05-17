@@ -13,7 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
- * @public
+ * @alpha
  */
 export const DriverErrorTypes = {
 	// Inherit base error types
@@ -107,7 +107,7 @@ export const DriverErrorTypes = {
 } as const;
 /**
  * {@inheritDoc (DriverErrorTypes:variable)}
- * @public
+ * @alpha
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
@@ -121,15 +121,20 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)} or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
- * @public
+ * @alpha
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
+	/**
+	 * This property is used predominantly for socket io errors. It captures the underlying socket event name which resulted in the error.
+	 * i.e. connect_error, connect_document_error etc.
+	 */
+	scenarioName?: string;
 }
 
 /**
  * Base interface for all errors and warnings
- * @public
+ * @alpha
  */
 export interface IDriverErrorBase {
 	/**

@@ -121,7 +121,7 @@ export function getPossibleTypes(
 	context: FlexTreeSchema,
 	typeSet: AllowedTypeSet,
 	data: ContextuallyTypedNodeData,
-) {
+): FlexTreeNodeSchema[] {
 	// All types allowed by schema
 	const allowedTypes = getAllowedTypes(context, typeSet);
 

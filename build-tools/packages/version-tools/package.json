@@ -75,7 +75,7 @@
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@oclif/test": "^3.2.12",
 		"@types/chai": "^4.3.5",
 		"@types/mocha": "^9.1.1",

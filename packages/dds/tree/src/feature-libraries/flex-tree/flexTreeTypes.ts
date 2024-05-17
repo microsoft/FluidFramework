@@ -364,6 +364,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
 
@@ -600,7 +601,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"tryGetField",
 	"type",
 	"value",
-	"localNodeKey",
 	"boxedIterator",
 	"iterator",
 	"getBoxed",
@@ -1002,8 +1002,6 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeRequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeOptionalField<Types>
-	: Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: FlexTreeField;
 
 /**
@@ -1060,9 +1058,6 @@ export type FlexTreeUnboxFieldInner<
 	? FlexTreeUnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
-	Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: // TODO: forbidden
 	  unknown;
 

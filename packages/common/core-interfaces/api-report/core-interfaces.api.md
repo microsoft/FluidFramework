@@ -249,10 +249,10 @@ export interface IFluidHandle<out T = unknown> {
     readonly isAttached: boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
-// @public
+// @alpha
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -279,7 +279,7 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 // @public
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
-    handle: IFluidHandle;
+    readonly handle: IFluidHandle;
 }
 
 // @internal (undocumented)
@@ -300,7 +300,7 @@ export interface IGenericError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
-// @internal
+// @alpha
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
@@ -311,7 +311,7 @@ export interface IProvideFluidHandle {
     readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidHandleContext {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;

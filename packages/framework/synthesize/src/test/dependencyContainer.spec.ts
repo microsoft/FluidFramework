@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-
 import {
 	FluidObject,
-	IFluidHandleContext,
 	IFluidLoadable,
-	IProvideFluidHandle,
 	IProvideFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	IProvideFluidHandle,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";

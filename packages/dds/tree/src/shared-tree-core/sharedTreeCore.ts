@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -16,10 +16,9 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -250,7 +249,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
-			"Detached revision should only be set when not attached",
+			0x95a /* Detached revision should only be set when not attached */,
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -272,12 +271,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			if (isResubmit) {
 				assert(
 					this.commitEnricher.isInResubmitPhase,
-					"Invalid resubmit outside of resubmit phase",
+					0x95b /* Invalid resubmit outside of resubmit phase */,
 				);
 			} else {
 				assert(
 					!this.commitEnricher.isInResubmitPhase,
-					"Invalid enrichment call during resubmit phase",
+					0x95c /* Invalid enrichment call during resubmit phase */,
 				);
 			}
 			enrichedCommit = this.commitEnricher.enrichCommit(commit);
@@ -305,7 +304,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
 
@@ -326,7 +325,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
@@ -334,7 +333,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
@@ -345,13 +347,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const toResubmit = this.editManager.getLocalCommits();
 			assert(
 				commit === toResubmit[0],
-				"Resubmit phase should start with the oldest local commit",
+				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
 			this.commitEnricher.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
-			"Local metadata must contain schema and policy.",
+			0x95e /* Local metadata must contain schema and policy. */,
 		);
 		this.submitCommit(commit, localOpMetadata, true);
 	}
