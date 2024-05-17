@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

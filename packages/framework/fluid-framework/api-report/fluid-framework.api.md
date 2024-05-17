@@ -5,15 +5,14 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { ErasedType } from '@fluidframework/core-interfaces/internal';
-import { ErasedType as ErasedType_2 } from '@fluidframework/core-interfaces';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
@@ -25,8 +24,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
@@ -132,7 +130,7 @@ export interface ContainerSchema {
 }
 
 // @public
-export interface DefaultProvider extends ErasedType_2<"@fluidframework/tree.FieldProvider"> {
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
 // @alpha (undocumented)
@@ -504,7 +502,7 @@ export interface InteriorSequencePlace {
 }
 
 // @public
-export interface InternalTreeNode extends ErasedType_2<"@fluidframework/tree.InternalTreeNode"> {
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
 // @alpha
@@ -634,6 +632,43 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
+// @alpha (undocumented)
+export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+    annotateRange(start: number, end: number, props: PropertySet): void;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    getContainingSegment(pos: number): {
+        segment: T | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getCurrentSeq(): number;
+    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
+    getLength(): number;
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    getPropertiesAtPosition(pos: number): PropertySet | undefined;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number | undefined;
+        posAfterEnd: number | undefined;
+    };
+    // @deprecated (undocumented)
+    groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    initializeLocal(): void;
+    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    obliterateRange(start: number, end: number): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    removeRange(start: number, end: number): void;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+}
+
 // @alpha
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
@@ -645,7 +680,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
     annotateMarker(marker: Marker, props: PropertySet): void;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
@@ -812,7 +847,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<unknown>, IFluidHandle_2<unknown>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -980,70 +1015,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 }
 
-// @alpha (undocumented)
-export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
-    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    annotateRange(start: number, end: number, props: PropertySet): void;
-    protected applyStashedOp(content: any): void;
-    // (undocumented)
-    protected client: Client;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    protected didAttach(): void;
-    getContainingSegment(pos: number): {
-        segment: T | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getCurrentSeq(): number;
-    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
-    // (undocumented)
-    getIntervalCollectionLabels(): IterableIterator<string>;
-    getLength(): number;
-    getPosition(segment: ISegment): number;
-    // (undocumented)
-    getPropertiesAtPosition(pos: number): PropertySet | undefined;
-    // (undocumented)
-    getRangeExtentsOfPosition(pos: number): {
-        posStart: number | undefined;
-        posAfterEnd: number | undefined; /**
-        * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-        * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-        * @param segment - Segment to add the local reference on
-        * @param offset - Offset on the segment at which to place the local reference
-        * @param refType - ReferenceType for the created local reference
-        * @param properties - PropertySet to place on the created local reference
-        */
-    };
-    // @deprecated (undocumented)
-    groupOperation(groupOp: IMergeTreeGroupMsg): void;
-    protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
-    // (undocumented)
-    id: string;
-    protected initializeLocalCore(): void;
-    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
-    insertFromSpec(pos: number, spec: IJSONSegment): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @deprecated
-    get loaded(): Promise<void>;
-    localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
-    protected onConnect(): void;
-    protected onDisconnect(): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: IFluidSerializer): void;
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    removeRange(start: number, end: number): void;
-    protected replaceRange(start: number, end: number, segment: ISegment): void;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
-}
-
 // @alpha
 export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind_2<ISharedString>;
 
@@ -1133,7 +1104,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
-export type TreeLeafValue = number | string | boolean | IFluidHandle_2 | null;
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {

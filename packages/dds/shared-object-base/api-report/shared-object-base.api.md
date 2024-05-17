@@ -4,14 +4,14 @@
 
 ```ts
 
-import { ErasedType } from '@fluidframework/core-interfaces/internal';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
@@ -19,8 +19,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
@@ -30,7 +29,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal'
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
-export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): void;
+export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;
 
 // @internal
 export function createSharedObjectKind<TSharedObject>(factory: (new () => IChannelFactory<TSharedObject>) & {
@@ -87,13 +86,13 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 // @alpha
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): any;
+export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
 // @alpha
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
 // @internal
-export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): string | undefined;
+export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
 // @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {

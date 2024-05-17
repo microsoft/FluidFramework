@@ -6,13 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,

@@ -61,7 +61,7 @@ export const cases: {
 		1,
 		3,
 		0,
-		{ type: SF.DetachIdOverrideType.Unattach, id: { revision: tag, localId: brand(1) } },
+		{ revision: tag, localId: brand(1) },
 		{ revision: tag, localId: brand(0) },
 	),
 	transient_insert: [
@@ -124,7 +124,7 @@ function createReturnChangeset(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detachCellId: SF.DetachIdOverride,
+	detachCellId: SF.CellId,
 	attachCellId: SF.CellId,
 ): SF.Changeset {
 	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachCellId, attachCellId);
@@ -147,7 +147,7 @@ function createModifyDetachedChangeset(
 
 /**
  * @param count - The number of nodes inserted.
- * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * @param cellId - The first cell to insert the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
@@ -279,7 +279,6 @@ function createMoveOutMark(
  * @param count - The number of nodes moved in.
  * @param moveId - The ID associated with the first node being moved.
  * By default, the destination cell will be assigned an ID with a local ID that is equal to `moveId + count`.
- * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
 function createMoveInMark(

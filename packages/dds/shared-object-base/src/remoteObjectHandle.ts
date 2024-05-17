@@ -4,11 +4,10 @@
  */
 
 import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
-	IRequest,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";

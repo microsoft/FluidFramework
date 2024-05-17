@@ -49,7 +49,7 @@ describe("simple-tree types", () => {
 		it("Valid subclass", () => {
 			const log: string[] = [];
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const customThis: TreeNodeValid<any> = {} as TreeNodeValid<any>;
+			const customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;

@@ -7,11 +7,10 @@ import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
+import { IChannelServices, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
