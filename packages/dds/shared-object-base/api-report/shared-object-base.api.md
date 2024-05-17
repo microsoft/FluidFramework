@@ -57,7 +57,7 @@ export class FluidSerializer implements IFluidSerializer {
     stringify(input: unknown, bind: IFluidHandle): string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IFluidSerializer {
     decode(input: any): any;
     encode(value: any, bind: IFluidHandle): any;
@@ -71,7 +71,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
-// @public
+// @alpha
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;

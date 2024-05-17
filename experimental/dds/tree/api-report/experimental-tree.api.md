@@ -17,9 +17,9 @@ import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';

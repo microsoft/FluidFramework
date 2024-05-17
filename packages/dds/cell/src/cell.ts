@@ -16,7 +16,7 @@ import {
 	type ISummaryTreeWithStats,
 	type AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import {
