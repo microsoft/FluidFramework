@@ -310,6 +310,62 @@ describe.only("toMapTree", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("Array (recursive)", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.arrayRecursive("array", [
+				schemaFactory.number,
+				() => schema,
+			]);
+
+			const handle = new MockHandle<boolean>(true);
+			const tree = [42, [1, 2], 37];
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						EmptyKey,
+						[
+							{
+								type: leaf.number.name,
+								value: 42,
+								fields: new Map(),
+							},
+							{
+								type: brand("test.array"),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										EmptyKey,
+										[
+											{
+												type: leaf.number.name,
+												value: 1,
+												fields: new Map(),
+											},
+											{
+												type: leaf.number.name,
+												value: 2,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+							{
+								type: leaf.number.name,
+								value: 37,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
 	describe("map", () => {
