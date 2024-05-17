@@ -56,6 +56,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 export function createSampledLogger(
 	logger: ITelemetryLoggerExt,
 	eventSampler?: IEventSampler,
+	doNotLogWhenSamplingIsDisabled?: boolean,
 ): ISampledTelemetryLogger {
 	const monitoringContext = loggerToMonitoringContext(logger);
 	const isSamplingDisabled =
@@ -66,22 +67,39 @@ export function createSampledLogger(
 			// The sampler uses the following logic for sending events:
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+			// 3. If doNotLogWhenSamplingIsDisabled is false, then no event is sent.
+			if (
+				(isSamplingDisabled && !doNotLogWhenSamplingIsDisabled) ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+			if (
+				(isSamplingDisabled && !doNotLogWhenSamplingIsDisabled) ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+			if (
+				(isSamplingDisabled && !doNotLogWhenSamplingIsDisabled) ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+			if (
+				(isSamplingDisabled && !doNotLogWhenSamplingIsDisabled) ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
 				logger.sendPerformanceEvent(event);
 			}
 		},

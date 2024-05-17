@@ -172,6 +172,31 @@ describe("Sampling", () => {
 		);
 	});
 
+	it("Events are not logged if DisableSampling telemetry flag is set to true but doNotLogWhenSamplingIsDisabled is provided as true", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getMockLoggerExtWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 1 }),
+			true, // doNotLogWhenSamplingIsDisabled
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({ samplingRate: 5 }),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+		assert.equal(events.length, 0);
+		assert.equal(events.length, 0);
+	});
+
 	it("Systematic Sampling works as expected", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": false,
