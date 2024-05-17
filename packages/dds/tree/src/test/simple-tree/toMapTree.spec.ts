@@ -366,10 +366,56 @@ describe.only("toMapTree", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		// Fails on undefined entries
 	});
 
 	describe("map", () => {
-		it("Non-empty map", () => {
+		it("Empty map", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", [schemaFactory.number]);
+
+			const tree = new Map<string, number>();
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.map"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Map (simple)", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", [schemaFactory.number, schemaFactory.string]);
+
+			const entries: [string, InsertableContent][] = [
+				["a", 42],
+				["b", "Hello world"],
+				["c", 37],
+			];
+			const tree = new Map<string, InsertableContent>(entries);
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.map"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[
+						brand("b"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Map (complex)", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -386,8 +432,7 @@ describe.only("toMapTree", () => {
 				["a", 42],
 				["b", "Hello world"],
 				["c", null],
-				["d", undefined as unknown as InsertableContent], // Should be skipped in output
-				["e", { age: 37, name: "Jill" }],
+				["d", { age: 37, name: "Jill" }],
 			];
 			const tree = new Map<string, InsertableContent>(entries);
 
@@ -403,7 +448,7 @@ describe.only("toMapTree", () => {
 					],
 					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
 					[
-						brand("e"),
+						brand("d"),
 						[
 							{
 								type: brand(childObjectSchema.identifier),
@@ -438,17 +483,25 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty map", () => {
+		it("Map - undefined input values are omitted", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.map("map", [schemaFactory.number]);
 
-			const tree = new Map<string, number>();
+			const entries: [string, InsertableContent][] = [
+				["a", 42],
+				["b", undefined as unknown as InsertableContent], // Should be skipped in output
+				["c", 37],
+			];
+			const tree = new Map<string, InsertableContent>(entries);
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
-				fields: new Map<FieldKey, MapTree[]>(),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);
