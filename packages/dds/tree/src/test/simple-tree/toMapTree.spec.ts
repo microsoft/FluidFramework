@@ -58,7 +58,7 @@ function nodeDataToMapTree(
 	);
 }
 
-describe("toMapTree", () => {
+describe.only("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
@@ -188,7 +188,64 @@ describe("toMapTree", () => {
 	});
 
 	describe("array", () => {
-		it("Non-empty array", () => {
+		it("Empty array", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("array", schemaFactory.number);
+
+			const tree: number[] = [];
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Array (simple)", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("array", [
+				schemaFactory.number,
+				schemaFactory.handle,
+			]);
+
+			const handle = new MockHandle<boolean>(true);
+			const tree = [42, handle, 37];
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						EmptyKey,
+						[
+							{
+								type: leaf.number.name,
+								value: 42,
+								fields: new Map(),
+							},
+							{
+								type: leaf.handle.name,
+								value: handle,
+								fields: new Map(),
+							},
+							{
+								type: leaf.number.name,
+								value: 37,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Array (complex)", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -249,22 +306,6 @@ describe("toMapTree", () => {
 						],
 					],
 				]),
-			};
-
-			assert.deepEqual(actual, expected);
-		});
-
-		it("Empty array", () => {
-			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("array", schemaFactory.number);
-
-			const tree: number[] = [];
-
-			const actual = nodeDataToMapTree(tree, [schema]);
-
-			const expected: MapTree = {
-				type: brand("test.array"),
-				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
 			assert.deepEqual(actual, expected);
