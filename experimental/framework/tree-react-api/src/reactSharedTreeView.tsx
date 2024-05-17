@@ -14,15 +14,14 @@ import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfac
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
-	configuredSharedTree,
-	typeboxValidator,
 	type ITree,
 	type SchemaIncompatible,
 	type TreeConfiguration,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	type ImplicitFieldSchema,
-} from "@fluidframework/tree/internal";
+} from "@fluidframework/tree";
+import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**

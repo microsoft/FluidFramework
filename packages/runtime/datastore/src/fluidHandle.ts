@@ -4,7 +4,8 @@
  */
 
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**

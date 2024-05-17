@@ -12,8 +12,8 @@ import {
 	type IEvent,
 	type IFluidHandle,
 	type IFluidLoadable,
-	type IProvideFluidHandle,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
+import { type IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type FluidObjectId } from "../CommonInterfaces.js";

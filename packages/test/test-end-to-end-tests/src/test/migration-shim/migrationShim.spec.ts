@@ -30,11 +30,11 @@ import {
 import {
 	type ITree,
 	SchemaFactory,
-	SharedTree,
 	TreeConfiguration,
 	type TreeView,
 	disposeSymbol,
-} from "@fluidframework/tree/internal";
+} from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
 

@@ -5,10 +5,8 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
