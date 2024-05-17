@@ -14,8 +14,7 @@ import {
 	NodeId,
 } from "../modular-schema/index.js";
 
-import { CellOrderingMethod, sequenceConfig } from "./config.js";
-import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
+import { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
@@ -30,7 +29,6 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellId,
 	CellMark,
 	Changeset,
 	Detach,
@@ -49,12 +47,9 @@ import {
 	asAttachAndDetach,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
-	compareCellsFromSameRevision,
-	compareLineages,
 	extractMarkEffect,
 	getEndpoint,
 	getInputCellId,
-	getOffsetInCellRange,
 	getOutputCellId,
 	isAttach,
 	isAttachAndDetachEffect,
@@ -526,8 +521,7 @@ export class ComposeQueue {
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.
 				// In the future, we want to support reattaches in the new change here.
-				// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
-				// (which will be obtained by rebasing the reattach over interim changes
+				// We will need to be able to order the base mark relative to the new mark
 				// (which requires the local changes to have a revision tag))
 				assert(
 					isNewAttach(newMark),
@@ -536,45 +530,24 @@ export class ComposeQueue {
 				return this.dequeueNew();
 			}
 
-			switch (sequenceConfig.cellOrdering) {
-				case CellOrderingMethod.Tombstone: {
-					const newCellId = getInputCellId(newMark, this.revisionMetadata);
-					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
-					const comparison = compareCellPositionsUsingTombstones(
-						baseCellId,
-						newCellId,
-						this.baseMarksCellSources,
-						this.newMarksCellSources,
-						this.revisionMetadata,
-					);
-					switch (comparison) {
-						case CellOrder.SameCell:
-							return this.dequeueBoth();
-						case CellOrder.OldThenNew:
-							return this.dequeueBase();
-						case CellOrder.NewThenOld:
-							return this.dequeueNew();
-						default:
-							unreachableCase(comparison);
-					}
-				}
-				case CellOrderingMethod.Lineage: {
-					const cmp = compareCellPositions(
-						baseCellId,
-						baseMark.count,
-						newMark,
-						this.revisionMetadata,
-					);
-					if (cmp < 0) {
-						return this.dequeueBase(-cmp);
-					} else if (cmp > 0) {
-						return this.dequeueNew(cmp);
-					} else {
-						return this.dequeueBoth();
-					}
-				}
+			const newCellId = getInputCellId(newMark, this.revisionMetadata);
+			assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
+			const comparison = compareCellPositionsUsingTombstones(
+				baseCellId,
+				newCellId,
+				this.baseMarksCellSources,
+				this.newMarksCellSources,
+				this.revisionMetadata,
+			);
+			switch (comparison) {
+				case CellOrder.SameCell:
+					return this.dequeueBoth();
+				case CellOrder.OldThenNew:
+					return this.dequeueBase();
+				case CellOrder.NewThenOld:
+					return this.dequeueNew();
 				default:
-					unreachableCase(sequenceConfig.cellOrdering);
+					unreachableCase(comparison);
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();
@@ -643,92 +616,6 @@ export class ComposeQueue {
 interface ComposeMarks {
 	baseMark?: Mark;
 	newMark?: Mark;
-}
-
-// TODO: Try to share more logic with the version in rebase.ts.
-/**
- * Returns a number N which encodes how the cells of the two marks are aligned.
- * - If N is zero, then the first cell of `baseMark` is the same as the first cell of `newMark`.
- * - If N is positive, then the first N cells of `newMark` (or all its cells if N is greater than its length)
- * are before the first cell of `baseMark`.
- * - If N is negative, then the first N cells of `baseMark` (or all its cells if N is greater than its length)
- * are before the first cell of `newMark`.
- */
-function compareCellPositions(
-	baseCellId: CellId,
-	baseCellCount: number,
-	newMark: EmptyInputCellMark,
-	metadata: RevisionMetadataSource,
-): number {
-	const newCellId = getInputCellId(newMark, metadata);
-	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
-	if (baseCellId.revision === newCellId.revision) {
-		const comparison = compareCellsFromSameRevision(
-			baseCellId,
-			baseCellCount,
-			newCellId,
-			newMark.count,
-		);
-
-		if (comparison !== undefined) {
-			return comparison;
-		}
-	}
-
-	const offsetInBase = getOffsetInCellRange(
-		baseCellId.lineage,
-		newCellId.revision,
-		newCellId.localId,
-		newMark.count,
-	);
-	if (offsetInBase !== undefined) {
-		return offsetInBase > 0 ? offsetInBase : -Infinity;
-	}
-
-	const offsetInNew = getOffsetInCellRange(
-		newCellId.lineage,
-		baseCellId.revision,
-		baseCellId.localId,
-		baseCellCount,
-	);
-	if (offsetInNew !== undefined) {
-		return offsetInNew > 0 ? -offsetInNew : Infinity;
-	}
-
-	const cmp = compareLineages(baseCellId, newCellId);
-	if (cmp !== 0) {
-		return Math.sign(cmp) * Infinity;
-	}
-
-	assert(
-		baseCellId.revision !== undefined && newCellId.revision !== undefined,
-		0x858 /* Cells should have defined revisions */,
-	);
-
-	if (!isNewAttach(newMark)) {
-		// If `newMark` were targeting a cell older than the composition window
-		// there would be lineage determining the relative order of `newCell` and `baseCell`.
-
-		// TODO:6127: Enable this assert
-		// assert(
-		// 	newRevisionIndex !== undefined,
-		// 	"Expected lineage to determine cell order",
-		// );
-
-		// `newCell` was detached by a change in this composition, so there will be a corresponding mark
-		// later in the base changeset.
-		return -Infinity;
-	}
-
-	const newRevisionIndex = metadata.getIndex(newCellId.revision);
-	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
-	assert(
-		newRevisionIndex !== undefined,
-		0x859 /* A cell from a new attach should have a defined revision index */,
-	);
-
-	// We use the tiebreaking policy of the newer cell.
-	return (baseRevisionIndex ?? -Infinity) > newRevisionIndex ? -Infinity : Infinity;
 }
 
 function getMovedChangesFromMark(

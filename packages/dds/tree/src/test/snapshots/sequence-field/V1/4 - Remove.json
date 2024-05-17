@@ -5,25 +5,11 @@
       "delete": {
         "revision": 0,
         "idOverride": {
-          "type": 1,
+          "type": 0,
           "id": {
             "atom": [
               0,
               0
-            ],
-            "adjacentCells": [
-              [
-                0,
-                2
-              ]
-            ],
-            "lineage": [
-              [
-                0,
-                0,
-                2,
-                1
-              ]
             ]
           }
         },
@@ -34,20 +20,6 @@
       "atom": [
         0,
         0
-      ],
-      "adjacentCells": [
-        [
-          0,
-          2
-        ]
-      ],
-      "lineage": [
-        [
-          0,
-          0,
-          2,
-          1
-        ]
       ]
     },
     "changes": {
