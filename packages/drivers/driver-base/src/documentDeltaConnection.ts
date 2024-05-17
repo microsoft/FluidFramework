@@ -5,8 +5,8 @@
 
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
+	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions/internal";
@@ -750,6 +750,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				scenarioName: handler,
 			},
 		);
 	}
@@ -766,6 +767,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				scenarioName: handler,
 			},
 		);
 	}

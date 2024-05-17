@@ -4,7 +4,8 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { type SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { type SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -12,8 +13,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { ITree, SchemaFactory } from "../../simple-tree/index.js";
-import { SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import { SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.
@@ -22,8 +24,8 @@ import { SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/in
 describe("SharedTree op format snapshots", () => {
 	useSnapshotDirectory("op-format");
 
-	function spyOnFutureMessages(runtime: MockContainerRuntime): any[] {
-		const messages: any[] = [];
+	function spyOnFutureMessages(runtime: MockContainerRuntime): JsonCompatibleReadOnly[] {
+		const messages: JsonCompatibleReadOnly[] = [];
 		const originalSubmit = runtime.submit.bind(runtime);
 		runtime.submit = (content, localOpMetadata) => {
 			messages.push(content);
@@ -39,7 +41,7 @@ describe("SharedTree op format snapshots", () => {
 	}) {}
 
 	let containerRuntime: MockContainerRuntime;
-	let tree: ITree;
+	let tree: SharedTree;
 
 	beforeEach(() => {
 		const factory = new SharedTreeFactory({ formatVersion: SharedTreeFormatVersion.v1 });
@@ -59,19 +61,13 @@ describe("SharedTree op format snapshots", () => {
 
 	it("schema change", () => {
 		const messages = spyOnFutureMessages(containerRuntime);
-		tree.schematize({
-			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 0 }),
-		});
+		tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 
 		takeJsonSnapshot(messages);
 	});
 
 	it("field change", () => {
-		const view = tree.schematize({
-			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 2 }),
-		});
+		const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 2 })));
 
 		const messages = spyOnFutureMessages(containerRuntime);
 		view.root.x = 1;

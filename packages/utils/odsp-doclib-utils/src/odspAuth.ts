@@ -19,11 +19,11 @@ export interface IOdspTokens {
 }
 
 /**
+ * Configuration for a public client.
  * @internal
  */
-export interface IClientConfig {
+export interface IPublicClientConfig {
 	clientId: string;
-	clientSecret: string;
 }
 
 /**
@@ -55,7 +55,6 @@ export type TokenRequestCredentials =
 
 type TokenRequestBody = TokenRequestCredentials & {
 	client_id: string;
-	client_secret: string;
 	scope: string;
 };
 
@@ -81,7 +80,7 @@ export function getFetchTokenUrl(server: string): string {
  */
 export function getLoginPageUrl(
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	scope: string,
 	odspAuthRedirectUri: string,
 ) {
@@ -99,7 +98,7 @@ export function getLoginPageUrl(
  */
 export const getOdspRefreshTokenFn = (
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
 ) => getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
 /**
@@ -107,14 +106,14 @@ export const getOdspRefreshTokenFn = (
  */
 export const getPushRefreshTokenFn = (
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
 ) => getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 /**
  * @internal
  */
 export const getRefreshTokenFn =
-	(scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+	(scope: string, server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
 	async () => {
 		const newTokens = await refreshTokens(server, scope, clientConfig, tokens);
 		return newTokens.accessToken;
@@ -131,13 +130,12 @@ export const getRefreshTokenFn =
 export async function fetchTokens(
 	server: string,
 	scope: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	credentials: TokenRequestCredentials,
 ): Promise<IOdspTokens> {
 	const body: TokenRequestBody = {
 		scope,
 		client_id: clientConfig.clientId,
-		client_secret: clientConfig.clientSecret,
 		...credentials,
 	};
 	const response = await unauthPostAsync(
@@ -206,7 +204,7 @@ function isAccessTokenError(parsedResponse: any): parsedResponse is AadOauth2Tok
 export async function refreshTokens(
 	server: string,
 	scope: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
 ): Promise<IOdspTokens> {
 	// Clear out the old tokens while awaiting the new tokens

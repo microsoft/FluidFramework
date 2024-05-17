@@ -24,18 +24,19 @@ import {
 import { type IDirectory } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type {
+	CompatMode,
 	ContainerSchema,
+	DataObjectClass,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
-	CompatMode,
 } from "./types.js";
 import {
-	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
@@ -50,7 +51,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 }
 
 /**
@@ -89,7 +90,9 @@ class RootDataObject
 		const initialObjectsP: Promise<void>[] = [];
 		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
 			const createObject = async (): Promise<void> => {
-				const obj = await this.create<IFluidLoadable>(objectClass);
+				const obj = await this.create<IFluidLoadable>(
+					objectClass as SharedObjectKind<IFluidLoadable>,
+				);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
@@ -132,23 +135,24 @@ class RootDataObject
 	/**
 	 * {@inheritDoc IRootDataObject.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject(objectClass);
-		} else if (isSharedObjectKind(objectClass)) {
-			return this.createSharedObject(objectClass);
+	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
+		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
+		if (isDataObjectClass(internal)) {
+			return this.createDataObject(internal);
+		} else if (isSharedObjectKind(internal)) {
+			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: InternalDataObjectClass<T>,
+		dataObjectClass: DataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as unknown as T;
+		return entryPoint as T;
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(

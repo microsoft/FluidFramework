@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,

@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/runtime-definitions-previous/internal
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -343,6 +361,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<current.IContainerRuntimeBase>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -357,6 +376,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -399,7 +419,6 @@ declare function get_old_InterfaceDeclaration_IDataStore():
 declare function use_current_InterfaceDeclaration_IDataStore(
     use: TypeOnly<current.IDataStore>): void;
 use_current_InterfaceDeclaration_IDataStore(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataStore());
 
 /*
@@ -484,7 +503,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -513,6 +531,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -527,6 +546,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -541,6 +561,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -555,6 +576,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -681,6 +703,7 @@ declare function get_old_InterfaceDeclaration_IFluidParentContext():
 declare function use_current_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<current.IFluidParentContext>): void;
 use_current_InterfaceDeclaration_IFluidParentContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidParentContext());
 
 /*
@@ -695,6 +718,7 @@ declare function get_current_InterfaceDeclaration_IFluidParentContext():
 declare function use_old_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<old.IFluidParentContext>): void;
 use_old_InterfaceDeclaration_IFluidParentContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidParentContext());
 
 /*

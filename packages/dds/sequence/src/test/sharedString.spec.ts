@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	Marker,
 	MergeTreeDeltaRevertible,
@@ -63,7 +63,6 @@ describe("SharedString", () => {
 				SharedStringFactory.Attributes,
 			);
 			await sharedString2.load(services);
-			await sharedString2.loaded;
 
 			assert.equal(
 				sharedString.getText(),

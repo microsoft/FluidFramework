@@ -9,9 +9,10 @@ import {
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
+	type SchemaAndPolicy,
 } from "../../core/index.js";
 
-import { TreeStatus } from "./flexTreeTypes.js";
+import { TreeStatus, type FlexTreeEntity } from "./flexTreeTypes.js";
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
  * @param detachedField - the detached field you want to check.
@@ -71,4 +72,16 @@ export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
 export interface DetachedFieldCache {
 	generationNumber: number;
 	detachedField: DetachedField;
+}
+
+/**
+ * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
+ * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
+ * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
+ */
+export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
+	return {
+		schema: nodeOrField.context.checkout.storedSchema,
+		policy: nodeOrField.context.schema.policy,
+	};
 }

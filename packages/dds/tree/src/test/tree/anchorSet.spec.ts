@@ -663,7 +663,7 @@ class UnorderedTestLogger {
 			this.logEntries.set(name, (this.logEntries.get(name) ?? 0) + 1);
 		};
 	}
-	public expect(expected: [string, number][]) {
+	public expect(expected: [string, number][]): void {
 		const expectedMap = new Map(expected);
 		assert.deepEqual(this.logEntries, expectedMap);
 	}
@@ -672,7 +672,7 @@ class UnorderedTestLogger {
 	}
 }
 
-function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
+function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void): void {
 	const visitor = anchors.acquireVisitor();
 	action(visitor);
 	visitor.free();
@@ -709,11 +709,11 @@ function makeFieldPath(field: FieldKey, ...stepsToFieldParent: PathStep[]): Fiel
 	return { parent: pathToParent, field };
 }
 
-function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
+function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined): void {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
 
-function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")) {
+function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")): void {
 	assert.notEqual(path, undefined);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert.equal(getDetachedFieldContainingPath(path!), expected);

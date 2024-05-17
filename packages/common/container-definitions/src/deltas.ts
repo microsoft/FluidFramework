@@ -10,7 +10,7 @@ import type {
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientConfiguration,
 	IClientDetails,
@@ -22,7 +22,7 @@ import type {
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
- * @public
+ * @alpha
  */
 export interface IConnectionDetails {
 	/**
@@ -51,7 +51,7 @@ export interface IConnectionDetails {
 /**
  * Contract supporting delivery of outbound messages to the server
  * @sealed
- * @public
+ * @alpha
  */
 export interface IDeltaSender {
 	/**
@@ -63,7 +63,7 @@ export interface IDeltaSender {
 /**
  * Events emitted by {@link IDeltaManager}.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
@@ -144,7 +144,7 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
@@ -235,7 +235,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 /**
  * Events emitted by {@link IDeltaQueue}.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
@@ -279,7 +279,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 /**
  * Queue of ops to be sent to or processed from storage
  * @sealed
- * @public
+ * @alpha
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
@@ -328,7 +328,7 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 }
 
 /**
- * @public
+ * @alpha
  */
 export type ReadOnlyInfo =
 	| {

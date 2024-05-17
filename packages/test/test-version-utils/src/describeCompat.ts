@@ -17,7 +17,13 @@ import {
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
 } from "./compatConfig.js";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import {
+	CompatKind,
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
@@ -70,14 +76,14 @@ function createCompatSuite(
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  })
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  });
 					} catch (error) {

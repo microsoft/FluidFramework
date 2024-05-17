@@ -7,9 +7,9 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import {
@@ -35,7 +35,7 @@ import { attributesMatch } from './utils.js';
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
 		private readonly oldFactory: LegacySharedTreeFactory,
-		private readonly newFactory: IChannelFactory,
+		private readonly newFactory: IChannelFactory<ITree>,
 		private readonly populateNewChannelFn: (oldChannel: LegacySharedTree, newChannel: ITree) => void
 	) {}
 

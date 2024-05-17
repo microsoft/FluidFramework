@@ -66,7 +66,6 @@ describe("raw object nodes", () => {
 		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
 		assert.throws(() => rawObjectNode.treeStatus());
-		assert.throws(() => rawObjectNode.localNodeKey);
 	});
 
 	it("disallow reading fields", () => {

@@ -33,9 +33,6 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
-			gcOptions: {
-				gcAllowed: true,
-			},
 		},
 	};
 

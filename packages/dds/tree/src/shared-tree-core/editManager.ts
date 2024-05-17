@@ -83,7 +83,6 @@ export class EditManager<
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	// TODO:#4593: Add test to ensure that peer branches are never initialized with a repairDataStoreProvider
 	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
 		new Map();
 

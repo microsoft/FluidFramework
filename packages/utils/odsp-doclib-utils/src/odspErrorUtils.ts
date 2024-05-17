@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	DriverErrorTelemetryProps,

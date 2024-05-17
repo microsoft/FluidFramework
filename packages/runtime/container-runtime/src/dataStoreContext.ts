@@ -4,15 +4,17 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
@@ -32,13 +34,11 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -77,6 +77,7 @@ import {
 
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -209,8 +210,8 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get logger() {
-		return this.parentContext.logger;
+	public get baseLogger() {
+		return this.parentContext.baseLogger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -381,7 +382,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "FluidDataStoreContext",
 			properties: {
 				all: tagCodeArtifacts({
@@ -1099,7 +1100,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		}
 	}
 
-	/* 
+	/*
 	This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
 	The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
 	1. data store is being attached in attached container
@@ -1116,8 +1117,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		let sequenceNumber: number | undefined;
 		// Check whether we need to fetch the snapshot first to load.
 		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
-			assert(this.blobContents !== undefined, "Blob contents should be present to evaluate");
-			assert(this._baseSnapshot !== undefined, "snapshotTree should be present to evaluate");
+			assert(
+				this.blobContents !== undefined,
+				0x97a /* Blob contents should be present to evaluate */,
+			);
+			assert(
+				this._baseSnapshot !== undefined,
+				0x97b /* snapshotTree should be present to evaluate */,
+			);
 			this.snapshotFetchRequired = isSnapshotFetchRequiredForLoadingGroupId(
 				this._baseSnapshot,
 				this.blobContents,
@@ -1141,6 +1148,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
+			// eslint-disable-next-line import/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1317,6 +1325,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
+		// eslint-disable-next-line import/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

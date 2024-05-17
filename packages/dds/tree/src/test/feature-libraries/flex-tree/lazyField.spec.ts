@@ -218,7 +218,7 @@ describe("LazyField", () => {
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
-		const parentAnchor = context.forest.anchors.track(parentPath);
+		const parentAnchor = context.checkout.forest.anchors.track(parentPath);
 
 		// Move cursor down to leaf field
 		cursor.enterNode(0);
