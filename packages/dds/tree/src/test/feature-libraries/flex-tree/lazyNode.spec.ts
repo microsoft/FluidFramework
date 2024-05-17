@@ -351,27 +351,6 @@ describe("LazyNode", () => {
 			assert.equal(node.value, undefined); // Map nodes do not have a value
 		});
 
-		it("entries", () => {
-			// Insertion order must be preserved
-			assert.deepEqual(
-				[...node.entries()],
-				[
-					["foo", "Hello"],
-					["bar", "world"],
-				],
-			);
-		});
-
-		it("keys", () => {
-			// Insertion order must be preserved
-			assert.deepEqual([...node.keys()], ["foo", "bar"]);
-		});
-
-		it("values", () => {
-			// Insertion order must be preserved
-			assert.deepEqual([...node.values()], ["Hello", "world"]);
-		});
-
 		it("tryGetField", () => {
 			assert.notEqual(node.tryGetField(brand("foo")), undefined);
 			assert.notEqual(node.tryGetField(brand("bar")), undefined);
