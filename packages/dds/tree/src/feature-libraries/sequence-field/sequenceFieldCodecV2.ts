@@ -11,11 +11,10 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
-import { Changeset as ChangesetSchema, DetachIdOverrideType, Encoded } from "./formatV1.js";
+import { Changeset as ChangesetSchema, Encoded } from "./formatV2.js";
 import {
 	Attach,
 	AttachAndDetach,
-	CellId,
 	Changeset,
 	Detach,
 	Insert,
@@ -30,7 +29,7 @@ import { isNoopMark } from "./utils.js";
 import { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
-export function makeV1Codec(
+export function makeV2Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -83,16 +82,12 @@ export function makeV1Codec(
 					};
 				case "Remove":
 					return {
-						delete: {
+						remove: {
 							revision: encodeRevision(effect.revision),
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: {
-											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
-											type: DetachIdOverrideType.Unattach,
-											id: cellIdCodec.encode(effect.idOverride, context),
-									  },
+									: changeAtomIdCodec.encode(effect.idOverride, context),
 							id: effect.id,
 						},
 					};
@@ -107,11 +102,7 @@ export function makeV1Codec(
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
-									: {
-											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
-											type: DetachIdOverrideType.Unattach,
-											id: cellIdCodec.encode(effect.idOverride, context),
-									  },
+									: changeAtomIdCodec.encode(effect.idOverride, context),
 							id: effect.id,
 						},
 					};
@@ -144,10 +135,7 @@ export function makeV1Codec(
 		context: ChangeEncodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
-			assert(
-				context.revision !== undefined,
-				0x965 /* Implicit revision should be provided */,
-			);
+			assert(context.revision !== undefined, "Implicit revision should be provided");
 			return context.revision;
 		}
 
@@ -182,7 +170,7 @@ export function makeV1Codec(
 			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
-		delete(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
+		remove(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
 			const { id, revision, idOverride } = encoded;
 			const mark: Mutable<Remove> = {
 				type: "Remove",
@@ -191,7 +179,7 @@ export function makeV1Codec(
 
 			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
-				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
 			}
 			return mark;
 		},
@@ -207,7 +195,7 @@ export function makeV1Codec(
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
 			if (idOverride !== undefined) {
-				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
 			}
 
 			return mark;
@@ -223,18 +211,6 @@ export function makeV1Codec(
 			};
 		},
 	});
-
-	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
-		encode: (cellId: CellId, context: ChangeEncodingContext): Encoded.CellId => {
-			const encoded: Encoded.CellId = {
-				atom: changeAtomIdCodec.encode(cellId, context),
-			};
-			return encoded;
-		},
-		decode: ({ atom }: Encoded.CellId, context: ChangeEncodingContext): CellId => {
-			return changeAtomIdCodec.decode(atom, context);
-		},
-	};
 
 	/**
 	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
@@ -256,7 +232,7 @@ export function makeV1Codec(
 					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
+					encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					encodedMark.changes = context.encodeNode(mark.changes);
@@ -282,7 +258,7 @@ export function makeV1Codec(
 					);
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
+					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
 					decodedMark.changes = context.decodeNode(mark.changes);
