@@ -5,12 +5,12 @@
 ```ts
 
 import { DataObject } from '@fluidframework/aqueduct/internal';
-import type { DataObjectClass } from '@fluidframework/fluid-static';
 import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
 import { SchemaIncompatible } from '@fluidframework/tree/internal';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
 import { TreeConfiguration } from '@fluidframework/tree/internal';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree/internal';
 import { TreeNode } from '@fluidframework/tree';
@@ -35,10 +35,10 @@ export interface SchemaIncompatibleProps {
 }
 
 // @public
-export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable>;
+export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @internal
-export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
     readonly factory: IFluidDataStoreFactory;
 };
 

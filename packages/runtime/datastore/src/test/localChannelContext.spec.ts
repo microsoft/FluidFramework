@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IChannel } from "@fluidframework/datastore-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {

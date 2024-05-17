@@ -4,9 +4,10 @@
 
 ```ts
 
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ISharedSummaryBlock extends ISharedObject {
@@ -15,7 +16,7 @@ export interface ISharedSummaryBlock extends ISharedObject {
 }
 
 // @alpha
-export const SharedSummaryBlock: ISharedObjectKind<ISharedSummaryBlock>;
+export const SharedSummaryBlock: ISharedObjectKind<ISharedSummaryBlock> & SharedObjectKind<ISharedSummaryBlock>;
 
 // @alpha
 export type SharedSummaryBlock = ISharedSummaryBlock;
