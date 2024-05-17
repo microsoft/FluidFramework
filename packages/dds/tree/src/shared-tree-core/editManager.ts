@@ -40,6 +40,7 @@ import {
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
 import { createEmitter } from "../events/index.js";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -133,6 +134,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: "root",
@@ -165,6 +167,8 @@ export class EditManager<
 				);
 			}
 		});
+
+		this.logger = logger;
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -588,7 +592,7 @@ export class EditManager<
 			() =>
 				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
-		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+		peerLocalBranch.rebaseOnto(this.trunk, this.logger, baseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
@@ -611,7 +615,8 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk);
+		// Case 1. Rebasing the EditManager local branch over new peer edits
+		this.localBranch.rebaseOnto(this.trunk, this.logger);
 	}
 
 	public findLocalCommit(

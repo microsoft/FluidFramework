@@ -22,7 +22,7 @@ import {
 	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
-
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { TransactionStack } from "./transactionStack.js";
 
 /**
@@ -415,12 +415,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
+		logger: ITelemetryLoggerExt,
 		upTo = branch.getHead(),
 	): BranchRebaseResult<TChange> | undefined {
 		this.assertNotDisposed();
 
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this, branch, upTo);
+		const rebaseResult = this.rebaseBranch(this, logger, branch, upTo);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -496,6 +497,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
+		logger: ITelemetryLoggerExt,
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
@@ -508,6 +510,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = rebaseBranch(
 			this.mintRevisionTag,
 			this.changeFamily.rebaser,
+			logger,
 			head,
 			upTo,
 			onto.getHead(),

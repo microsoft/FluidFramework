@@ -17,6 +17,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -123,6 +124,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
+		logger: ITelemetryLoggerExt,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		enricher?: CommitEnricher<TChange>,
@@ -146,7 +148,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
+		this.editManager = new EditManager(
+			changeFamily,
+			localSessionId,
+			this.mintRevisionTag,
+			this.logger,
+		);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// Avoid submitting ops for changes that are part of a transaction.

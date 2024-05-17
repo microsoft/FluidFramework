@@ -18,6 +18,7 @@ import {
 	tagRollbackInverse,
 } from "./changeRebaser.js";
 import { GraphCommit, RevisionTag, mintCommit } from "./types.js";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -146,6 +147,7 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
+	logger: ITelemetryLoggerExt,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -153,15 +155,21 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
+	logger: ITelemetryLoggerExt,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
 ): BranchRebaseResult<TChange> {
+	const startTime = performance.now();
+
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
 	assert(ancestor !== undefined, 0x675 /* branches must be related */);
+
+	const parentBranchLength = targetPath.length;
+	const childBranchLength = sourcePath.length;
 
 	// Find where `targetCommit` is in the target branch
 	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
@@ -173,6 +181,7 @@ export function rebaseBranch<TChange>(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
 			0x676 /* target commit is not in target branch */,
 		);
+
 		return {
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
