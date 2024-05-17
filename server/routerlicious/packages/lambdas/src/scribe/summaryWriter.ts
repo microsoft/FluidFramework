@@ -177,8 +177,8 @@ export class SummaryWriter implements ISummaryWriter {
 						shouldRetryNetworkError,
 						this.maxRetriesOnError,
 					);
-				} catch (e) {
-					clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
+				} catch (error) {
+					clientSummaryMetric.error(`One or more parent summaries are invalid`, error);
 					return {
 						message: {
 							message: "One or more parent summaries are invalid",
@@ -292,18 +292,20 @@ export class SummaryWriter implements ISummaryWriter {
 				const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
 
 				// Now combine with .logtail and .serviceProtocol
-				newTreeEntries.push({
-					mode: FileMode.Directory,
-					path: ".logTail",
-					sha: logTailTree.sha,
-					type: "tree",
-				});
-				newTreeEntries.push({
-					mode: FileMode.Directory,
-					path: ".serviceProtocol",
-					sha: serviceProtocolTree.sha,
-					type: "tree",
-				});
+				newTreeEntries.push(
+					{
+						mode: FileMode.Directory,
+						path: ".logTail",
+						sha: logTailTree.sha,
+						type: "tree",
+					},
+					{
+						mode: FileMode.Directory,
+						path: ".serviceProtocol",
+						sha: serviceProtocolTree.sha,
+						type: "tree",
+					},
+				);
 
 				// Finally perform the write to git
 				const gitTree = await requestWithRetry(
@@ -508,18 +510,20 @@ export class SummaryWriter implements ISummaryWriter {
 					};
 					return createTreeEntry;
 				});
-				newTreeEntries.push({
-					mode: FileMode.Directory,
-					path: ".logTail",
-					sha: logTailTree.sha,
-					type: "tree",
-				});
-				newTreeEntries.push({
-					mode: FileMode.Directory,
-					path: ".serviceProtocol",
-					sha: serviceProtocolTree.sha,
-					type: "tree",
-				});
+				newTreeEntries.push(
+					{
+						mode: FileMode.Directory,
+						path: ".logTail",
+						sha: logTailTree.sha,
+						type: "tree",
+					},
+					{
+						mode: FileMode.Directory,
+						path: ".serviceProtocol",
+						sha: serviceProtocolTree.sha,
+						type: "tree",
+					},
+				);
 
 				// Finally perform the write to git
 				const gitTree = await requestWithRetry(

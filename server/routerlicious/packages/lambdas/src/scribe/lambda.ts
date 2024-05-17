@@ -188,7 +188,13 @@ export class ScribeLambda implements IPartitionLambda {
 				// Ensure protocol handler sequence numbers are monotonically increasing
 				if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
 					// unexpected sequence number. if a pending message reader is available, ask for those ops
-					if (this.pendingMessageReader !== undefined) {
+					if (this.pendingMessageReader === undefined) {
+						const errorMsg =
+							`Invalid message sequence number.` +
+							`Current message @${value.operation.sequenceNumber}.` +
+							`ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
+						throw new Error(errorMsg);
+					} else {
 						const from = lastProtocolHandlerSequenceNumber + 1;
 						const to = value.operation.sequenceNumber - 1;
 						const additionalPendingMessages =
@@ -196,12 +202,6 @@ export class ScribeLambda implements IPartitionLambda {
 						for (const additionalPendingMessage of additionalPendingMessages) {
 							this.pendingMessages.push(additionalPendingMessage);
 						}
-					} else {
-						const errorMsg =
-							`Invalid message sequence number.` +
-							`Current message @${value.operation.sequenceNumber}.` +
-							`ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
-						throw new Error(errorMsg);
 					}
 				}
 
@@ -318,13 +318,13 @@ export class ScribeLambda implements IPartitionLambda {
 										);
 									}
 								}
-							} catch (ex) {
+							} catch (error) {
 								const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
-								this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
+								this.context.log?.error(`${errorMsg} Exception: ${inspect(error)}`);
 								Lumberjack.error(
 									errorMsg,
 									getLumberBaseProperties(this.documentId, this.tenantId),
-									ex,
+									error,
 								);
 								this.revertProtocolState(
 									prevState.protocolState,
@@ -340,7 +340,7 @@ export class ScribeLambda implements IPartitionLambda {
 										},
 									});
 								} else {
-									throw ex;
+									throw error;
 								}
 							}
 						}
@@ -407,7 +407,7 @@ export class ScribeLambda implements IPartitionLambda {
 									getLumberBaseProperties(this.documentId, this.tenantId),
 								);
 							}
-						} catch (ex) {
+						} catch (error) {
 							const errorMsg = `Service summary failure @${operation.sequenceNumber}`;
 
 							// If this flag is set, we should ignore any storage speciic error and move forward
@@ -422,12 +422,12 @@ export class ScribeLambda implements IPartitionLambda {
 								Lumberjack.error(
 									errorMsg,
 									getLumberBaseProperties(this.documentId, this.tenantId),
-									ex,
+									error,
 								);
 							} else {
 								// Throwing error here leads to document being marked as corrupt in document partition
 								this.isDocumentCorrupt = true;
-								throw ex;
+								throw error;
 							}
 						}
 					}
@@ -449,10 +449,11 @@ export class ScribeLambda implements IPartitionLambda {
 							content.summaryProposal.summarySequenceNumber,
 						);
 					}
-				} else if (value.operation.type === MessageType.ClientJoin) {
-					if (this.localCheckpointEnabled) {
-						this.globalCheckpointOnly = false;
-					}
+				} else if (
+					value.operation.type === MessageType.ClientJoin &&
+					this.localCheckpointEnabled
+				) {
+					this.globalCheckpointOnly = false;
 				}
 			}
 		}
@@ -469,15 +470,15 @@ export class ScribeLambda implements IPartitionLambda {
 			this.documentCheckpointManager.setNoActiveClients(false);
 		} else {
 			const checkpointReason = this.getCheckpointReason();
-			if (checkpointReason !== undefined) {
-				// checkpoint the current up-to-date state
-				this.prepareCheckpoint(message, checkpointReason);
-			} else {
+			if (checkpointReason === undefined) {
 				this.documentCheckpointManager.updateCheckpointIdleTimer(
 					this.serviceConfiguration.scribe.checkpointHeuristics.idleTime,
 					this.idleTimeCheckpoint,
 					this.isDocumentCorrupt,
 				);
+			} else {
+				// checkpoint the current up-to-date state
+				this.prepareCheckpoint(message, checkpointReason);
 			}
 		}
 	}

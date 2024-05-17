@@ -645,9 +645,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					break;
 				}
 
-				default:
+				default: {
 					// ignore unknown types
 					break;
+				}
 			}
 		}
 
@@ -676,14 +677,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
-		if (checkpointReason !== undefined) {
-			// checkpoint the current up to date state
-			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
-		} else {
+		if (checkpointReason === undefined) {
 			this.documentCheckpointManager.updateCheckpointIdleTimer(
 				this.serviceConfiguration.deli.checkpointHeuristics.idleTime,
 				this.idleTimeCheckpoint,
 			);
+		} else {
+			// checkpoint the current up to date state
+			this.checkpoint(checkpointReason, this.globalCheckpointOnly);
 		}
 
 		// Start a timer to check inactivity on the document. To trigger idle client leave message,
@@ -892,7 +893,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.sessionMetric,
 			this.sequenceNumber,
 			this.durableSequenceNumber,
-			Array.from(this.nackMessages.keys()),
+			[...this.nackMessages.keys()],
 		);
 	}
 
@@ -971,7 +972,52 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 
 		// Handle client join/leave messages.
-		if (!message.clientId) {
+		if (message.clientId) {
+			// Nack inexistent client.
+			const client = this.clientSeqManager.get(message.clientId);
+			if (!client || client.nack) {
+				return this.createNackMessage(
+					message,
+					400,
+					NackErrorType.BadRequestError,
+					`Nonexistent client`,
+				);
+			}
+
+			// Verify that the message is within the current window.
+			// -1 check just for directly sent ops (e.g., using REST API).
+			if (
+				message.clientId &&
+				message.operation.referenceSequenceNumber !== -1 &&
+				message.operation.referenceSequenceNumber < this.minimumSequenceNumber
+			) {
+				this.clientSeqManager.upsertClient(
+					message.clientId,
+					message.operation.clientSequenceNumber,
+					this.minimumSequenceNumber,
+					message.timestamp,
+					true,
+					[],
+					true,
+				);
+				return this.createNackMessage(
+					message,
+					400,
+					NackErrorType.BadRequestError,
+					`Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`,
+				);
+			}
+
+			// Nack if an unauthorized client tries to summarize.
+			if (message.operation.type === MessageType.Summarize && !canSummarize(client.scopes)) {
+				return this.createNackMessage(
+					message,
+					403,
+					NackErrorType.InvalidScopeError,
+					`Client ${message.clientId} does not have summary permission`,
+				);
+			}
+		} else {
 			if (message.operation.type === MessageType.ClientLeave) {
 				if (!this.clientSeqManager.removeClient(dataContent)) {
 					// not a write client. check if it was a read client
@@ -1027,53 +1073,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						// Return if the client has already been added due to a prior join message.
 						return;
 					}
-				}
-			}
-		} else {
-			// Nack inexistent client.
-			const client = this.clientSeqManager.get(message.clientId);
-			if (!client || client.nack) {
-				return this.createNackMessage(
-					message,
-					400,
-					NackErrorType.BadRequestError,
-					`Nonexistent client`,
-				);
-			}
-
-			// Verify that the message is within the current window.
-			// -1 check just for directly sent ops (e.g., using REST API).
-			if (
-				message.clientId &&
-				message.operation.referenceSequenceNumber !== -1 &&
-				message.operation.referenceSequenceNumber < this.minimumSequenceNumber
-			) {
-				this.clientSeqManager.upsertClient(
-					message.clientId,
-					message.operation.clientSequenceNumber,
-					this.minimumSequenceNumber,
-					message.timestamp,
-					true,
-					[],
-					true,
-				);
-				return this.createNackMessage(
-					message,
-					400,
-					NackErrorType.BadRequestError,
-					`Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`,
-				);
-			}
-
-			// Nack if an unauthorized client tries to summarize.
-			if (message.operation.type === MessageType.Summarize) {
-				if (!canSummarize(client.scopes)) {
-					return this.createNackMessage(
-						message,
-						403,
-						NackErrorType.InvalidScopeError,
-						`Client ${message.clientId} does not have summary permission`,
-					);
 				}
 			}
 		}
@@ -1231,7 +1230,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 						this.updateNackMessages(
 							controlContents.identifier,
-							controlContents.content !== undefined ? controlContents : undefined,
+							controlContents.content === undefined ? undefined : controlContents,
 						);
 
 						break;
@@ -1309,11 +1308,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						break;
 					}
 
-					default:
+					default: {
 						// an unknown control message was received
 						// emit a control message event to support custom control messages
 						this.emit("controlMessage", controlMessage);
 						break;
+					}
 				}
 
 				break;
@@ -1333,8 +1333,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				break;
 			}
 
-			default:
+			default: {
 				break;
+			}
 		}
 
 		// Add traces
@@ -1416,16 +1417,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			if (this.serviceConfiguration.scribe.generateServiceSummary) {
 				addAdditionalContent = true;
-			} else if (message.operation.type === MessageType.Summarize) {
-				// no need to add additionalContent for summarize messages using the single commit flow
+			} else if (
+				message.operation.type === MessageType.Summarize && // no need to add additionalContent for summarize messages using the single commit flow
 				// because scribe will not be involved
-				if (
-					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
+				(!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
 					!(JSON.parse(message.operation.contents as string) as ISummaryContent).details
-						?.includesProtocolTree
-				) {
-					addAdditionalContent = true;
-				}
+						?.includesProtocolTree)
+			) {
+				addAdditionalContent = true;
 			}
 
 			if (addAdditionalContent) {
@@ -1433,13 +1432,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				augmentedOutputMessage.additionalContent = checkpointData;
 			}
 			return augmentedOutputMessage;
-		} else if (dataContent !== undefined) {
+		} else if (dataContent === undefined) {
+			return outputMessage;
+		} else {
 			// TODO to consolidate the logic here
 			const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
 			systemOutputMessage.data = JSON.stringify(dataContent);
 			return systemOutputMessage;
-		} else {
-			return outputMessage;
 		}
 	}
 
@@ -1637,20 +1636,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		let signalMessage: ISignalMessage;
 
 		switch (message.operation.type) {
-			case MessageType.ClientJoin:
+			case MessageType.ClientJoin: {
 				signalMessage = createRoomJoinMessage(
 					(dataContent as IClientJoin).clientId,
 					(dataContent as IClientJoin).detail,
 				);
 				break;
+			}
 
-			case MessageType.ClientLeave:
+			case MessageType.ClientLeave: {
 				signalMessage = createRoomLeaveMessage(
 					typeof dataContent === "string" ? dataContent : dataContent.clientId,
 				);
 				break;
+			}
 
-			case MessageType.Control:
+			case MessageType.Control: {
 				// this will tell broadcaster to process the control message the client
 				signalMessage = {
 					clientId: null,
@@ -1660,9 +1661,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					}),
 				};
 				break;
+			}
 
-			default:
+			default: {
 				throw new Error(`Cannot create signal message for type ${message.operation.type}`);
+			}
 		}
 
 		(signalMessage as any).referenceSequenceNumber = sequenceNumber;
@@ -1735,7 +1738,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			sequenceNumber: this.sequenceNumber,
 			signalClientConnectionNumber: this.signalClientConnectionNumber,
 			lastSentMSN: this.lastSentMSN,
-			nackMessages: Array.from(this.nackMessages),
+			nackMessages: [...this.nackMessages],
 			successfullyStartedLambdas: this.successfullyStartedLambdas,
 			checkpointTimestamp: Date.now(),
 		};
@@ -2050,10 +2053,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		type: NackMessagesType,
 		contents: INackMessagesControlMessageContents | undefined,
 	) {
-		if (contents !== undefined) {
-			this.nackMessages.set(type, contents);
-		} else {
+		if (contents === undefined) {
 			this.nackMessages.delete(type);
+		} else {
+			this.nackMessages.set(type, contents);
 		}
 
 		this.emit("updatedNackMessages", type, contents);

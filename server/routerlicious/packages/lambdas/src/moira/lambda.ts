@@ -102,8 +102,8 @@ export class MoiraLambda implements IPartitionLambda {
 	private createDerivedGuid(referenceGuid: string, identifier: string) {
 		const hexHash = shajs("sha1").update(`${referenceGuid}:${identifier}`).digest("hex");
 		return (
-			`${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
-			`${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
+			`${hexHash.slice(0, 8)}-${hexHash.slice(8, 12)}-` +
+			`${hexHash.slice(12, 16)}-${hexHash.slice(16, 20)}-${hexHash.slice(20, 32)}`
 		);
 	}
 
@@ -242,14 +242,14 @@ export class MoiraLambda implements IPartitionLambda {
 					Lumberjack.error(logMessage, lumberProperties);
 				}
 			}
-		} catch (e: any) {
-			const logMessage = `Commit failed. ${e.message}`;
+		} catch (error: any) {
+			const logMessage = `Commit failed. ${error.message}`;
 			this.context.log?.error(logMessage);
 			if (this.serviceConfiguration.enableLumberjack) {
 				Lumberjack.error(
 					logMessage,
 					getLumberBaseProperties(this.documentId, this.tenantId),
-					e,
+					error,
 				);
 			}
 		}

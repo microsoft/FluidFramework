@@ -319,10 +319,10 @@ export class DeliLambdaFactory
 					Lumberjack.info(message, baseLumberjackProperties);
 				}
 			};
-			handler().catch((e) => {
-				const message = `Failed to handle session alive and active with exception ${e}`;
+			handler().catch((error) => {
+				const message = `Failed to handle session alive and active with exception ${error}`;
 				context.log?.error(message, { messageMetaData });
-				Lumberjack.error(message, baseLumberjackProperties, e);
+				Lumberjack.error(message, baseLumberjackProperties, error);
 			});
 		});
 
@@ -416,18 +416,18 @@ export class DeliLambdaFactory
 					toUtf8(content.content, content.encoding),
 				) as IDeliState;
 				return summaryCheckpoint;
-			} catch (exception) {
+			} catch (error) {
 				const messageMetaData = {
 					documentId,
 					tenantId,
 				};
 				const errorMessage = `Error fetching deli state from summary`;
 				logger?.error(errorMessage, { messageMetaData });
-				logger?.error(JSON.stringify(exception), { messageMetaData });
+				logger?.error(JSON.stringify(error), { messageMetaData });
 				Lumberjack.error(
 					errorMessage,
 					getLumberBaseProperties(documentId, tenantId),
-					exception,
+					error,
 				);
 				return undefined;
 			}

@@ -194,10 +194,8 @@ export function configureWebSocketServices(
 				...baseLumberjackProperties,
 				[CommonProperties.clientDriverVersion]: driverVersion,
 				[CommonProperties.connectionCount]: connectionsMap.size,
-				[CommonProperties.connectionClients]: JSON.stringify(
-					Array.from(connectionsMap.keys()),
-				),
-				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
+				[CommonProperties.connectionClients]: JSON.stringify([...connectionsMap.keys()]),
+				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
 
@@ -259,12 +257,12 @@ export function configureWebSocketServices(
 										disconnectRetryMetric.setProperties({
 											...baseLumberjackProperties,
 											[CommonProperties.connectionCount]: connectionsMap.size,
-											[CommonProperties.connectionClients]: JSON.stringify(
-												Array.from(connectionsMap.keys()),
-											),
-											[CommonProperties.roomClients]: JSON.stringify(
-												Array.from(roomMap.keys()),
-											),
+											[CommonProperties.connectionClients]: JSON.stringify([
+												...connectionsMap.keys(),
+											]),
+											[CommonProperties.roomClients]: JSON.stringify([
+												...roomMap.keys(),
+											]),
 										});
 
 										disconnectDocument(
@@ -296,31 +294,7 @@ export function configureWebSocketServices(
 			(clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
 				// Verify the user has an orderer connection.
 				const connection = connectionsMap.get(clientId);
-				if (!connection) {
-					let nackMessage: INack;
-					const clientScope = scopeMap.get(clientId);
-					if (clientScope && hasWriteAccess(clientScope)) {
-						nackMessage = createNackMessage(
-							400,
-							NackErrorType.BadRequestError,
-							"Readonly client",
-						);
-					} else if (roomMap.has(clientId)) {
-						nackMessage = createNackMessage(
-							403,
-							NackErrorType.InvalidScopeError,
-							"Invalid scope",
-						);
-					} else {
-						nackMessage = createNackMessage(
-							400,
-							NackErrorType.BadRequestError,
-							"Nonexistent client",
-						);
-					}
-
-					socket.emit("nack", "", [nackMessage]);
-				} else {
+				if (connection) {
 					let messageCount = 0;
 					for (const messageBatch of messageBatches) {
 						// Count all messages in each batch for accurate throttling calculation.
@@ -354,21 +328,19 @@ export function configureWebSocketServices(
 						...getLumberBaseProperties(connection.documentId, connection.tenantId),
 					};
 					const handleMessageBatchProcessingError = (error: any) => {
-						if (isNetworkError(error)) {
-							if (error.code === 413) {
-								Lumberjack.info(
-									"Rejected too large operation(s)",
-									lumberjackProperties,
-								);
-								socket.emit("nack", "", [
-									createNackMessage(
-										error.code,
-										NackErrorType.BadRequestError,
-										error.message,
-									),
-								]);
-								return;
-							}
+						if (isNetworkError(error) && error.code === 413) {
+							Lumberjack.info(
+								"Rejected too large operation(s)",
+								lumberjackProperties,
+							);
+							socket.emit("nack", "", [
+								createNackMessage(
+									error.code,
+									NackErrorType.BadRequestError,
+									error.message,
+								),
+							]);
+							return;
 						}
 						Lumberjack.error(
 							"Error processing submitted op(s)",
@@ -376,7 +348,7 @@ export function configureWebSocketServices(
 							error,
 						);
 					};
-					messageBatches.forEach((messageBatch) => {
+					for (const messageBatch of messageBatches) {
 						const messages = Array.isArray(messageBatch)
 							? messageBatch
 							: [messageBatch];
@@ -416,10 +388,34 @@ export function configureWebSocketServices(
 									.order(sanitized)
 									.catch(handleMessageBatchProcessingError);
 							}
-						} catch (e) {
-							handleMessageBatchProcessingError(e);
+						} catch (error) {
+							handleMessageBatchProcessingError(error);
 						}
-					});
+					}
+				} else {
+					let nackMessage: INack;
+					const clientScope = scopeMap.get(clientId);
+					if (clientScope && hasWriteAccess(clientScope)) {
+						nackMessage = createNackMessage(
+							400,
+							NackErrorType.BadRequestError,
+							"Readonly client",
+						);
+					} else if (roomMap.has(clientId)) {
+						nackMessage = createNackMessage(
+							403,
+							NackErrorType.InvalidScopeError,
+							"Invalid scope",
+						);
+					} else {
+						nackMessage = createNackMessage(
+							400,
+							NackErrorType.BadRequestError,
+							"Nonexistent client",
+						);
+					}
+
+					socket.emit("nack", "", [nackMessage]);
 				}
 			},
 		);
@@ -440,14 +436,7 @@ export function configureWebSocketServices(
 			(clientId: string, contentBatches: unknown[]) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
-				if (!room) {
-					const nackMessage = createNackMessage(
-						400,
-						NackErrorType.BadRequestError,
-						"Nonexistent client",
-					);
-					socket.emit("nack", "", [nackMessage]);
-				} else {
+				if (room) {
 					if (!Array.isArray(contentBatches)) {
 						const nackMessage = createNackMessage(
 							400,
@@ -497,9 +486,9 @@ export function configureWebSocketServices(
 								};
 
 								const roomId: string =
-									signal.targetClientId !== undefined
-										? getClientSpecificRoomId(signal.targetClientId)
-										: getRoomId(room);
+									signal.targetClientId === undefined
+										? getRoomId(room)
+										: getClientSpecificRoomId(signal.targetClientId);
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
 							} else {
@@ -516,7 +505,7 @@ export function configureWebSocketServices(
 							}
 						}
 					} else {
-						contentBatches.forEach((contentBatch) => {
+						for (const contentBatch of contentBatches) {
 							const contents = Array.isArray(contentBatch)
 								? contentBatch
 								: [contentBatch];
@@ -529,8 +518,15 @@ export function configureWebSocketServices(
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
 							}
-						});
+						}
 					}
+				} else {
+					const nackMessage = createNackMessage(
+						400,
+						NackErrorType.BadRequestError,
+						"Nonexistent client",
+					);
+					socket.emit("nack", "", [nackMessage]);
 				}
 			},
 		);
@@ -549,14 +545,12 @@ export function configureWebSocketServices(
 			const disconnectMetric = Lumberjack.newLumberMetric(LumberEventName.DisconnectDocument);
 			disconnectMetric.setProperties({
 				[CommonProperties.connectionCount]: connectionsMap.size,
-				[CommonProperties.connectionClients]: JSON.stringify(
-					Array.from(connectionsMap.keys()),
-				),
-				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
+				[CommonProperties.connectionClients]: JSON.stringify([...connectionsMap.keys()]),
+				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 			});
 
-			if (roomMap.size >= 1) {
-				const rooms = Array.from(roomMap.values());
+			if (roomMap.size > 0) {
+				const rooms = [...roomMap.values()];
 				const documentId = rooms[0].documentId;
 				const tenantId = rooms[0].tenantId;
 				disconnectMetric.setProperties({

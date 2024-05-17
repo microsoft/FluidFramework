@@ -111,7 +111,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 								break;
 							}
 
-							case MessageType.ClientLeave:
+							case MessageType.ClientLeave: {
 								await this.clientManager.removeClient(
 									ticketedSignalMessage.tenantId,
 									ticketedSignalMessage.documentId,
@@ -119,19 +119,22 @@ export class BroadcasterLambda implements IPartitionLambda {
 									ticketedSignalMessage.operation,
 								);
 								break;
+							}
 
-							default:
+							default: {
 								// ignore unknown types
 								break;
+							}
 						}
 					}
 
 					break;
 				}
 
-				default:
+				default: {
 					// ignore unknown types
 					continue;
+				}
 			}
 
 			const value = baseMessage as
@@ -156,7 +159,9 @@ export class BroadcasterLambda implements IPartitionLambda {
 			}
 
 			let pendingBatch = this.pending.get(topic);
-			if (!pendingBatch) {
+			if (pendingBatch) {
+				pendingBatch.messages.push(value.operation);
+			} else {
 				pendingBatch = {
 					tenantId: value.tenantId,
 					documentId: value.documentId,
@@ -164,8 +169,6 @@ export class BroadcasterLambda implements IPartitionLambda {
 					messages: [value.operation],
 				};
 				this.pending.set(topic, pendingBatch);
-			} else {
-				pendingBatch.messages.push(value.operation);
 			}
 		}
 
@@ -187,7 +190,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 	}
 
 	public hasPendingWork() {
-		return this.pending.size !== 0 || this.current.size !== 0;
+		return this.pending.size > 0 || this.current.size > 0;
 	}
 
 	private sendPending() {
@@ -223,8 +226,8 @@ export class BroadcasterLambda implements IPartitionLambda {
 
 				try {
 					await Promise.all(promises);
-				} catch (ex) {
-					this.context.error(ex, { restart: true });
+				} catch (error) {
+					this.context.error(error, { restart: true });
 					return;
 				}
 			} else if (this.publisher.emit) {
@@ -238,8 +241,8 @@ export class BroadcasterLambda implements IPartitionLambda {
 
 				try {
 					await Promise.all(promises);
-				} catch (ex) {
-					this.context.error(ex, { restart: true });
+				} catch (error) {
+					this.context.error(error, { restart: true });
 					return;
 				}
 			} else {

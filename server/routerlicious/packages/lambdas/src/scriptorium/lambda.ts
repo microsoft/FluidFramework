@@ -280,7 +280,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			1000 /* retryAfterMs */,
 			{
 				...getLumberBaseProperties(documentId, tenantId),
-				...{ sequenceNumberRanges, insertBatchSize, scriptoriumMetricId },
+				sequenceNumberRanges,
+				insertBatchSize,
+				scriptoriumMetricId,
 			},
 			(error) =>
 				error.code === 11000 ||
