@@ -217,9 +217,12 @@ Creates a release report for an unreleased build (one that is not published to n
 
 ```
 USAGE
-  $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> [-v | --quiet]
+  $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> --branchName <value> [-v |
+    --quiet]
 
 FLAGS
+  --branchName=<value>          (required) Branch name. For release branches, the manifest file is uplaoded by build
+                                number and not by current date.
   --fullReportFilePath=<value>  (required) Path to a report file in the 'full' format.
   --outDir=<value>              (required) Release report output directory
   --version=<value>             (required) Version to generate a report for. Typically, this version is the version of a
