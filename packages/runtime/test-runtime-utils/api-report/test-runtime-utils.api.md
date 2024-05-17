@@ -9,24 +9,23 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
-import { FluidObject } from '@fluidframework/core-interfaces/internal';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IAudienceEvents } from '@fluidframework/container-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService as IChannelStorageService_2 } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
 import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions/internal';
 import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
-import { IDeltaConnection } from '@fluidframework/datastore-definitions/internal';
-import { IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
+import { IDeltaConnection } from '@fluidframework/datastore-definitions';
+import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDeltaManagerErased } from '@fluidframework/datastore-definitions/internal';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions/internal';
@@ -37,7 +36,7 @@ import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
@@ -46,15 +45,15 @@ import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { ILoader } from '@fluidframework/container-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces/internal';
-import { IResponse } from '@fluidframework/core-interfaces/internal';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
@@ -672,7 +671,7 @@ export class MockSharedObjectServices implements IChannelServices {
 }
 
 // @alpha
-export class MockStorage implements IChannelStorageService_2 {
+export class MockStorage implements IChannelStorageService {
     constructor(tree?: ITree | undefined);
     // (undocumented)
     contains(path: string): Promise<boolean>;

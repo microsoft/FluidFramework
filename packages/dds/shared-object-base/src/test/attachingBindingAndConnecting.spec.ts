@@ -9,10 +9,12 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type IChannelAttributes,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
+} from "@fluidframework/datastore-definitions";
+import {
+	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";

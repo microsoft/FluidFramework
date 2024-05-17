@@ -6,11 +6,11 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
+import { type IChannelServices } from '@fluidframework/datastore-definitions';
 import {
 	type IChannel,
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import {

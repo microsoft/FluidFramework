@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,

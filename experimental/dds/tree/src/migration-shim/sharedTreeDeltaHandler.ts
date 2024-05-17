@@ -4,7 +4,8 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
+import { type IDeltaHandler } from '@fluidframework/datastore-definitions';
+import { type IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
