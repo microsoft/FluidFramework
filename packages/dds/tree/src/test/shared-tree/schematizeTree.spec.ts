@@ -13,6 +13,7 @@ import {
 	JsonableTree,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
+	type AnchorSetRootEvents,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
@@ -27,7 +28,13 @@ import {
 	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, ITreeCheckoutFork } from "../../shared-tree/index.js";
+import {
+	ITreeCheckout,
+	ITreeCheckoutFork,
+	type CheckoutEvents,
+	type ISharedTreeEditor,
+	type ITransaction,
+} from "../../shared-tree/index.js";
 import {
 	TreeContent,
 	UpdateType,
@@ -38,6 +45,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
+import type { ISubscribable } from "../../events/index.js";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
@@ -160,8 +168,8 @@ describe("schematizeTree", () => {
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
-			editor: undefined as any,
-			transaction: undefined as any,
+			editor: undefined as unknown as ISharedTreeEditor,
+			transaction: undefined as unknown as ITransaction,
 			fork(): ITreeCheckoutFork {
 				throw new Error("Function not implemented.");
 			},
@@ -174,8 +182,8 @@ describe("schematizeTree", () => {
 			updateSchema(newSchema: TreeStoredSchema): void {
 				throw new Error("Function not implemented.");
 			},
-			events: undefined as any,
-			rootEvents: undefined as any,
+			events: undefined as unknown as ISubscribable<CheckoutEvents>,
+			rootEvents: undefined as unknown as ISubscribable<AnchorSetRootEvents>,
 			getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 				throw new Error("Function not implemented.");
 			},
