@@ -21,7 +21,7 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**

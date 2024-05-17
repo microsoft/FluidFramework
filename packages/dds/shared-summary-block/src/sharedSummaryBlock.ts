@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	Jsonable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ISharedSummaryBlock } from "./interfaces.js";
 

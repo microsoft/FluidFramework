@@ -4,8 +4,7 @@
  */
 
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Consensus Register Collection channel factory interface

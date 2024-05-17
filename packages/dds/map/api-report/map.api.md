@@ -6,14 +6,14 @@
 
 import type { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import type { IChannelServices } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import type { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import type { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
