@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -62,6 +62,20 @@ import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
+
+/** For a negative test, takes in the ideal expectation (which should NOT be met), and the current wrong one, and asserts on them both */
+function assertCurrentAndIdealExpectations(
+	actual: any,
+	expected: { ideal: any; currentButWrong: any },
+	message?: string,
+) {
+	assert.equal(
+		actual,
+		expected.currentButWrong,
+		`Current (wrong) behavior is not as expected. ${message}`,
+	);
+	assert.notEqual(actual, expected.ideal, `Ideal behavior is unexpectedly met. ${message}`);
+}
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -2025,8 +2039,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
 			await provider.ensureSynchronized();
-			assert.strictEqual(counter1.value, 2 * incrementValue);
-			assert.strictEqual(counter2.value, 2 * incrementValue);
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
 		});
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
@@ -2065,9 +2086,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-			assert.strictEqual(counter1.value, 2 * incrementValue);
-			assert.strictEqual(counter2.value, 2 * incrementValue);
-			assert.strictEqual(counter3.value, 2 * incrementValue);
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
 		});
 
 		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
@@ -2098,9 +2128,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-			assert.strictEqual(counter1.value, 2 * incrementValue);
-			assert.strictEqual(counter2.value, 2 * incrementValue);
-			assert.strictEqual(counter3.value, 2 * incrementValue);
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
 		});
 	});
 });
