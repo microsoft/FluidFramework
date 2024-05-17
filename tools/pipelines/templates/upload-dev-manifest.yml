@@ -11,9 +11,6 @@ parameters:
 - name: STORAGE_KEY
   type: string
 
-- name: branchName
-  type: string
-
 steps:
 - task: Bash@3
   displayName: Generate release reports
@@ -31,7 +28,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir upload_release_reports
-      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName ${{ parameters.branchName }}
+      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 
 - task: CopyFiles@2
   displayName: Copy release reports

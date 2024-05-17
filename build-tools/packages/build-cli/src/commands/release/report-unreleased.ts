@@ -112,6 +112,7 @@ async function generateReleaseReport(
  * @param report - A map of package names to full release reports.
  * @param revisedFileName - The revised file name for the report.
  * @param version - The version string to update packages to.
+ * @param branchName - The branch name
  * @param log - The logger object for logging messages.
  */
 async function writeReport(
@@ -123,25 +124,22 @@ async function writeReport(
 	log: Logger,
 ): Promise<void> {
 	const currentDate = formatISO(new Date(), { representation: "date" });
-
 	const buildNumber = extractBuildNumber(version);
 
 	log.log(`Build Number: ${buildNumber}`);
 
-	const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
-	// eslint-disable-next-line unicorn/prefer-ternary
+	// Generate the build-number manifest unconditionally
+	const promises = [fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2))];
+
+	// Generate the date-based manifest only if the branch is main
 	if (branchName === "refs/heads/main") {
-		await Promise.all([
-			fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
-			fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
-		]);
-	} else {
-		await Promise.all([
-			fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
-		]);
+		const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
+		promises.push(fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)));
 	}
+
+	await Promise.all(promises);
 }
 
 /**
