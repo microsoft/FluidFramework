@@ -10,14 +10,12 @@ import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
 import { BaseCommand } from "../../base";
-import { type ReleaseReport, toReportKind } from "../../library";
+import { type ReleaseReport, toReportKind } from "../../lib";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
-	static readonly summary =
-		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
+	static readonly summary = `Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
-	static readonly description =
-		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
+	static readonly description = `This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
 
 	static readonly flags = {
 		version: Flags.string({
