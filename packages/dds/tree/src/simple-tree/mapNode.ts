@@ -115,6 +115,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 			key: string,
 			map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		) => void,
+		// Typing inherited from `ReadonlyMap`.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
 }
