@@ -1,33 +1,66 @@
 import type { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type { IDetachedBlobStorage } from "./loader.js";
 
-export class MemoryBlobStorage implements IDetachedBlobStorage {
-	private blobId: number = 0;
-	private readonly blobs = new Map<string, ArrayBuffer>();
+const MemoryDetachedBlobStorageIdentifier = Symbol();
 
-	async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		const id = `${this.blobId++}`;
-		this.blobs.set(id, file);
-		return { id };
+interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
+	[MemoryDetachedBlobStorageIdentifier]: typeof MemoryDetachedBlobStorageIdentifier;
+	initialize(attachmentBlobs: string[]): void;
+	serialize(): string | undefined;
+}
+
+function isMemoryDetachedBlobStorage(
+	detachedStorage: IDetachedBlobStorage,
+): detachedStorage is MemoryDetachedBlobStorage {
+	return (
+		isObject(detachedStorage) &&
+		MemoryDetachedBlobStorageIdentifier in detachedStorage &&
+		detachedStorage[MemoryDetachedBlobStorageIdentifier] === MemoryDetachedBlobStorageIdentifier
+	);
+}
+
+export function serializeMemoryDetachedBlobStorage(
+	detachedStorage: IDetachedBlobStorage,
+): string | undefined {
+	if (detachedStorage.size > 0 && isMemoryDetachedBlobStorage(detachedStorage)) {
+		return detachedStorage.serialize();
 	}
-	async readBlob(id: string): Promise<ArrayBufferLike> {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.blobs.get(id)!;
-	}
-	get size() {
-		return this.blobs.size;
-	}
-	getBlobIds(): string[] {
-		return [...this.blobs.keys()];
+}
+
+export function tryInitializeMemoryDetachedBlobStorage(
+	detachedStorage: IDetachedBlobStorage,
+	attachmentBlobs: string,
+) {
+	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
+		throw new Error("Blob storage not memory blob storage and cannot be initialize.");
 	}
 
-	public async getBlob(id: string): Promise<ArrayBuffer | undefined> {
-		return this.blobs.get(id);
-	}
+	assert(detachedStorage.size === 0, "Blob storage already initialized");
+	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
+	assert(Array.isArray(maybeAttachmentBlobs), "Invalid attachmentBlobs");
 
-	public async storeBlob(blob: ArrayBuffer): Promise<string> {
-		const id = `${this.blobs.size}`;
-		this.blobs.set(id, blob);
-		return id;
-	}
+	detachedStorage.initialize(maybeAttachmentBlobs);
+}
+
+export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
+	const blobs: ArrayBufferLike[] = [];
+	const storage: MemoryDetachedBlobStorage = {
+		[MemoryDetachedBlobStorageIdentifier]: MemoryDetachedBlobStorageIdentifier,
+		createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => ({
+			id: `${blobs.push(file) - 1}`,
+		}),
+		readBlob: async (id: string): Promise<ArrayBufferLike> => blobs[Number(id)],
+		get size() {
+			return blobs.length;
+		},
+		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
+		dispose: () => blobs.splice(0),
+		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf-8"))),
+		initialize: (attachmentBlobs: string[]) => {
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf-8")));
+		},
+	};
+	return storage;
 }

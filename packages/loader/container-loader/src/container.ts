@@ -136,7 +136,11 @@ import {
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
 } from "./utils.js";
-import { MemoryBlobStorage } from "./memoryBlobStorage.js";
+import {
+	serializeMemoryDetachedBlobStorage,
+	createMemoryDetachedBlobStorage,
+	tryInitializeMemoryDetachedBlobStorage,
+} from "./memoryBlobStorage.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -466,7 +470,7 @@ export class Container
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
-	private readonly detachedBlobStorage: IDetachedBlobStorage | MemoryBlobStorage;
+	private readonly detachedBlobStorage: IDetachedBlobStorage;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -768,7 +772,7 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.detachedBlobStorage = detachedBlobStorage ?? new MemoryBlobStorage();
+		this.detachedBlobStorage = detachedBlobStorage ?? createMemoryDetachedBlobStorage();
 		this.protocolHandlerBuilder =
 			protocolHandlerBuilder ??
 			((
@@ -1188,15 +1192,6 @@ export class Container
 			throw new UsageError("Container must not be attached or closed.");
 		}
 
-		if (
-			this.detachedBlobStorage.size > 0 &&
-			this.detachedBlobStorage instanceof MemoryBlobStorage
-		) {
-			throw new UsageError(
-				"DetachedBlobStorage must be provided to loader to enable serialization of containers with blobs.",
-			);
-		}
-
 		const attachingData =
 			this.attachmentData.state === AttachState.Attaching ? this.attachmentData : undefined;
 
@@ -1219,6 +1214,7 @@ export class Container
 			snapshotBlobs,
 			pendingRuntimeState,
 			hasAttachmentBlobs: this.detachedBlobStorage.size > 0,
+			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1338,6 +1334,7 @@ export class Container
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 
 					if (!this.closed) {
+						this.detachedBlobStorage.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
 							reason: { text: "createDetached" },
@@ -1770,9 +1767,13 @@ export class Container
 		baseSnapshot,
 		snapshotBlobs,
 		hasAttachmentBlobs,
+		attachmentBlobs,
 		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
 		if (hasAttachmentBlobs) {
+			if (attachmentBlobs !== undefined) {
+				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
+			}
 			assert(
 				this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,

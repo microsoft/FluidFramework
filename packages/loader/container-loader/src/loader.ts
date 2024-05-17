@@ -248,6 +248,11 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 	 * Return an array of all blob IDs present in storage
 	 */
 	getBlobIds(): string[];
+
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 };
 
 /**
