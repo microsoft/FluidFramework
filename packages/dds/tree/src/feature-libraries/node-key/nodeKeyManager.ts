@@ -4,13 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-	StableId,
-	assertIsStableId,
-	isStableId,
-} from "@fluidframework/id-compressor/internal";
+import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
+import { assertIsStableId, isStableId } from "@fluidframework/id-compressor/internal";
 
 import { brand, extractFromOpaque, fail } from "../../util/index.js";
 

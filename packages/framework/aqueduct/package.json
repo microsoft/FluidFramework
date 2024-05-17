@@ -112,6 +112,7 @@
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/synthesize": "workspace:~"
 	},
 	"devDependencies": {

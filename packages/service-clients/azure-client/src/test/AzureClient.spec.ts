@@ -14,7 +14,8 @@ import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definit
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";

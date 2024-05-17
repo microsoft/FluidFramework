@@ -6,13 +6,13 @@
 
 import { BaseSegment } from '@fluidframework/merge-tree/internal';
 import { Client } from '@fluidframework/merge-tree/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
@@ -24,9 +24,9 @@ import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { MapLike } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
@@ -45,6 +45,7 @@ import { reservedRangeLabelsKey } from '@fluidframework/merge-tree/internal';
 import { reservedTileLabelsKey } from '@fluidframework/merge-tree/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SlidingPreference } from '@fluidframework/merge-tree/internal';
 import { TextSegment } from '@fluidframework/merge-tree/internal';
 import { TrackingGroup } from '@fluidframework/merge-tree/internal';
@@ -637,7 +638,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 }
 
 // @alpha
-export const SharedString: ISharedObjectKind<ISharedString>;
+export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<ISharedString>;
 
 // @alpha
 export type SharedString = ISharedString;

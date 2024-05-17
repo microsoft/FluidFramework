@@ -22,11 +22,11 @@ import {
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
+import { type IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	type IChannelServices,
+	type Jsonable,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+} from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,

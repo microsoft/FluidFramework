@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	ChangesetLocalId,

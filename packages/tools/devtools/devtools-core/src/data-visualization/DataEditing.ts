@@ -4,7 +4,7 @@
  */
 
 import { type Serializable } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type EditType, type HasFluidObjectId } from "../CommonInterfaces.js";
 

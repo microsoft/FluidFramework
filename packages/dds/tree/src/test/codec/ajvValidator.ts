@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";

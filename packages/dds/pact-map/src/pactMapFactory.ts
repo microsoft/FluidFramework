@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { type IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { type IPactMap } from "./interfaces.js";

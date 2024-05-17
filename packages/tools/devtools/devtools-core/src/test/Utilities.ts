@@ -4,11 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IAudience,
-	IContainer,
-	IContainerEvents,
-} from "@fluidframework/container-definitions/internal";
+import type { IAudience } from "@fluidframework/container-definitions";
+import type { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
