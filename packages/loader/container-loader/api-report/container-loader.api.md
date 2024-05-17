@@ -50,6 +50,7 @@ export interface IContainerExperimental extends IContainer {
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
+    dispose?(): void;
 };
 
 // @alpha @deprecated (undocumented)

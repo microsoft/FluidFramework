@@ -142,6 +142,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
@@ -170,6 +172,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());

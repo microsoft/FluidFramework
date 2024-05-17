@@ -41,6 +41,11 @@ export type MenuSectionProps = React.PropsWithChildren<{
 	 * Callback function that runs when the header is clicked.
 	 */
 	onHeaderClick?(): void;
+
+	/**
+	 * If true, the section is focusable.
+	 */
+	focusable?: boolean;
 }>;
 
 const useMenuStyles = makeStyles({
@@ -197,12 +202,23 @@ function RefreshButton(): React.ReactElement {
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	const { header, icon, children, onHeaderClick } = props;
+	const focusable = props.focusable === undefined ? false : true;
 
 	const styles = useMenuSectionStyles();
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+		if ((event.key === "Enter" || event.key === " ") && onHeaderClick) {
+			onHeaderClick();
+		}
+	};
 
 	return (
 		<div className={styles.root}>
-			<div className={styles.header} onClick={onHeaderClick}>
+			<div
+				className={styles.header}
+				onClick={onHeaderClick}
+				onKeyDown={handleKeyDown}
+				tabIndex={focusable ? 0 : -1}
+			>
 				{header}
 				{icon}
 			</div>
@@ -248,11 +264,17 @@ const useMenuItemStyles = makeStyles({
 export function MenuItem(props: MenuItemProps): React.ReactElement {
 	const { isActive, onClick, text } = props;
 
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+		if (event.key === "Enter" || event.key === " ") {
+			onClick(event);
+		}
+	};
+
 	const styles = useMenuItemStyles();
 	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
 	return (
-		<div className={style} onClick={onClick}>
+		<div className={style} onClick={onClick} onKeyDown={handleKeyDown} tabIndex={0}>
 			{text}
 		</div>
 	);
@@ -401,7 +423,12 @@ export function Menu(props: MenuProps): React.ReactElement {
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
-		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
+		<MenuSection
+			header="Home"
+			key="home-menu-section"
+			onHeaderClick={onHomeClicked}
+			focusable={true}
+		/>,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
@@ -433,6 +460,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 				header="Op Latency"
 				key="op-latency-menu-section"
 				onHeaderClick={onOpLatencyClicked}
+				focusable={true}
 			/>,
 		);
 	}
@@ -442,6 +470,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 			header="Settings"
 			key="settings-menu-section"
 			onHeaderClick={onSettingsClicked}
+			focusable={true}
 		/>,
 	);
 
