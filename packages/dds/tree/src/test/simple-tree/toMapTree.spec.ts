@@ -367,7 +367,15 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		// Fails on undefined entries
+		it("Array - throws when input includes `undefined` entries", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("array", [schemaFactory.number]);
+
+			assert.throws(
+				() => nodeDataToMapTree([42, undefined] as number[], schema),
+				/Received unsupported array entry value: undefined./,
+			);
+		});
 	});
 
 	describe("map", () => {
