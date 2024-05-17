@@ -50,7 +50,7 @@ export class ContainerStorageAdapter
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
-	private _summarizeProtocolTree: boolean | undefined;
+	private readonly _summarizeProtocolTree: boolean | undefined;
 	/**
 	 * Whether the adapter will enforce sending combined summary trees.
 	 */
