@@ -29,7 +29,7 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
-export type { SharedObjectKind, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
@@ -127,4 +127,5 @@ export type {
 	IFluidSerializer,
 	SharedObjectCore,
 	ISharedObject,
+	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";

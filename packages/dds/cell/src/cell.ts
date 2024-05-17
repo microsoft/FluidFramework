@@ -4,11 +4,11 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type Serializable,
+	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -16,7 +16,7 @@ import {
 	type ISummaryTreeWithStats,
 	type AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import {

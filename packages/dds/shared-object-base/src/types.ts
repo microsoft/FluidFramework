@@ -14,7 +14,7 @@ import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/inte
 
 /**
  * Events emitted by {@link ISharedObject}.
- * @public
+ * @alpha
  */
 export interface ISharedObjectEvents extends IErrorEvent {
 	/**

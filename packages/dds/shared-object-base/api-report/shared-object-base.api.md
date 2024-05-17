@@ -10,8 +10,8 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/i
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
@@ -57,7 +57,7 @@ export class FluidSerializer implements IFluidSerializer {
     stringify(input: unknown, bind: IFluidHandle): string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IFluidSerializer {
     decode(input: any): any;
     encode(value: any, bind: IFluidHandle): any;
@@ -71,7 +71,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
-// @public
+// @alpha
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
