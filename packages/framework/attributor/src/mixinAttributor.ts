@@ -22,8 +22,6 @@ import {
 import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	type AttributionInfo,
 	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,

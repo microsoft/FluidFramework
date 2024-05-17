@@ -9,7 +9,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 
 import { SharedJson1 } from "./json1.js";
 import { pkgVersion } from "./packageVersion.js";

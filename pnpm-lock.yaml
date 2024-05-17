@@ -5376,6 +5376,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.43.1
@@ -5401,6 +5402,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
@@ -7724,6 +7726,7 @@ importers:
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/synthesize': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       '@types/mocha': ^9.1.1
@@ -7752,6 +7755,7 @@ importers:
       '@fluidframework/request-handler': link:../request-handler
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base': link:../../dds/shared-object-base
       '@fluidframework/synthesize': link:../synthesize
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -8102,6 +8106,7 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       '@types/node': ^18.19.0
@@ -8117,6 +8122,7 @@ importers:
       '@fluidframework/fluid-static': link:../fluid-static
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/sequence': link:../../dds/sequence
+      '@fluidframework/shared-object-base': link:../../dds/shared-object-base
       '@fluidframework/tree': link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
