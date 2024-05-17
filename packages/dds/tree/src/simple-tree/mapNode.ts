@@ -188,7 +188,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public forEach<TThis extends TreeMapNode<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		for (const field of getFlexNode(this).boxedIterator()) {
 			const node = getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
@@ -302,7 +302,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		throw rawError("Iterating maps with forEach");
 	}

@@ -6,11 +6,10 @@
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -77,8 +76,7 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
  * Entrypoint for {@link ISharedString} creation.
  * @alpha
  */
-export const SharedString: ISharedObjectKind<ISharedString> =
-	createSharedObjectKind(SharedStringFactory);
+export const SharedString = createSharedObjectKind<ISharedString>(SharedStringFactory);
 
 /**
  * Alias for {@link ISharedString} for compatibility.

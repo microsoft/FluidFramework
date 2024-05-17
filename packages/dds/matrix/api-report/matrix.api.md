@@ -4,19 +4,20 @@
 
 ```ts
 
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha (undocumented)
 export interface IRevertible {
@@ -53,7 +54,7 @@ export interface IUndoConsumer {
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @alpha
-export const SharedMatrix: ISharedObjectKind<ISharedMatrix>;
+export const SharedMatrix: ISharedObjectKind<ISharedMatrix<any>> & SharedObjectKind<ISharedMatrix<any>>;
 
 // @alpha
 export type SharedMatrix<T = any> = ISharedMatrix<T>;

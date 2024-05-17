@@ -7,11 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";

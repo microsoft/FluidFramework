@@ -28,7 +28,7 @@ import {
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
-	runGCKey,
+	runGCTestKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
@@ -54,7 +54,7 @@ export function generateGCConfigs(
 		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
-	let gcEnabled: boolean;
+	let gcDisabled: boolean = false;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
@@ -70,9 +70,9 @@ export function generateGCConfigs(
 	if (createParams.existing) {
 		const metadata = createParams.metadata;
 		gcVersionInBaseSnapshot = getGCVersion(metadata);
-		// Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-		// other existing documents, GC is enabled.
-		gcEnabled = gcVersionInBaseSnapshot > 0;
+		// Existing documents which did not have metadata blob or had GC disabled have GC version as 0. GC will be
+		// disabled for these documents.
+		gcDisabled = gcVersionInBaseSnapshot === 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
@@ -86,12 +86,8 @@ export function generateGCConfigs(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 		);
 
-		// For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
-		// flag in GC options to false.
-		gcEnabled = createParams.gcOptions.gcAllowed !== false;
-
-		// Set the Session Expiry if GC is enabled and session expiry flag isn't explicitly set to false.
-		if (gcEnabled && mc.config.getBoolean(runSessionExpiryKey) !== false) {
+		// Set the Session Expiry if session expiry flag isn't explicitly set to false.
+		if (mc.config.getBoolean(runSessionExpiryKey) !== false) {
 			sessionExpiryTimeoutMs =
 				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
 		}
@@ -122,15 +118,12 @@ export function generateGCConfigs(
 
 	/**
 	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 * 1. GC should be enabled for this container.
-	 * 2. GC should not be disabled via disableGC GC option.
-	 * 3. The current GC version should be greater or equal to the GC version in the base snapshot.
+	 * 1. GC should not be disabled for this container.
+	 * 2. The current GC version should be greater or equal to the GC version in the base snapshot.
 	 *
-	 * These conditions can be overridden via the RunGC feature flag.
+	 * These conditions can be overridden via the RunGC feature flag for testing.
 	 */
-	const shouldRunGC =
-		mc.config.getBoolean(runGCKey) ??
-		(gcEnabled && !createParams.gcOptions.disableGC && isGCVersionUpToDate);
+	const shouldRunGC = mc.config.getBoolean(runGCTestKey) ?? (!gcDisabled && isGCVersionUpToDate);
 
 	/**
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
@@ -195,7 +188,7 @@ export function generateGCConfigs(
 		!createParams.isSummarizerClient;
 
 	return {
-		gcEnabled, // For this document
+		gcEnabled: !gcDisabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
 		shouldRunGC, // For this session
 		shouldRunSweep, // For this session

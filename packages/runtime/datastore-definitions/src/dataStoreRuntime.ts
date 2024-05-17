@@ -5,15 +5,15 @@
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
 	ErasedType,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IQuorumClients,
@@ -25,7 +25,7 @@ import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @public
+ * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
@@ -36,7 +36,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
- * @public
+ * @alpha
  */
 export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
@@ -44,7 +44,7 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,

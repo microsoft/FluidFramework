@@ -5,8 +5,8 @@
 
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";

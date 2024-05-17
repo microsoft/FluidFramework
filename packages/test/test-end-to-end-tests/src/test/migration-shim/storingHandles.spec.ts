@@ -26,20 +26,20 @@ import {
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import {
+	type ITree,
+	SchemaFactory,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

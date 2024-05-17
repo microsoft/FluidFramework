@@ -6,19 +6,28 @@
 
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions';
-import type { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { EventEmitterEventType } from '@fluid-internal/client-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
+import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
@@ -28,11 +37,12 @@ import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import type { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
@@ -43,7 +53,7 @@ import { PropertiesManager } from '@fluidframework/merge-tree/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { ReferencePosition } from '@fluidframework/merge-tree/internal';
 import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base/internal';
 import { SlidingPreference } from '@fluidframework/merge-tree/internal';
 import { TextSegment } from '@fluidframework/merge-tree/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -115,16 +125,9 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
 
 // @public
 export interface ContainerSchema {
-    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
-    readonly initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly SharedObjectKind[];
+    readonly initialObjects: Record<string, SharedObjectKind>;
 }
-
-// @public
-export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
-    readonly factory: {
-        readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"];
-    };
-} & (new (...args: any[]) => T);
 
 // @public
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
@@ -145,6 +148,31 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 // @public
 export const disposeSymbol: unique symbol;
+
+// @alpha
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -189,14 +217,97 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
+// @alpha
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
+    scenarioName?: string;
+}
+
 // @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
 }
 
+// @alpha
+export interface IConnectionDetails {
+    checkpointSequenceNumber: number | undefined;
+    // (undocumented)
+    claims: ITokenClaims;
+    clientId: string;
+    // (undocumented)
+    serviceConfiguration: IClientConfiguration;
+}
+
 // @public
 export type ICriticalContainerError = IErrorBase;
+
+// @alpha @sealed
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
+    readonly active: boolean;
+    readonly clientDetails: IClientDetails;
+    readonly hasCheckpointSequenceNumber: boolean;
+    // @deprecated
+    readonly inbound: IDeltaQueue<T>;
+    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
+    readonly initialSequenceNumber: number;
+    readonly lastKnownSeqNumber: number;
+    readonly lastMessage: ISequencedDocumentMessage | undefined;
+    readonly lastSequenceNumber: number;
+    readonly maxMessageSize: number;
+    readonly minimumSequenceNumber: number;
+    // @deprecated
+    readonly outbound: IDeltaQueue<U[]>;
+    // (undocumented)
+    readonly readOnlyInfo: ReadOnlyInfo;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
+    submitSignal(content: any, targetClientId?: string): void;
+    readonly version: string;
+}
+
+// @alpha @sealed
+export interface IDeltaManagerEvents extends IEvent {
+    // @deprecated (undocumented)
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
+    // @deprecated (undocumented)
+    (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
+    (event: "pong", listener: (latency: number) => void): any;
+    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
+    (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
+        reason: string;
+        error?: IErrorBase;
+    }) => void): any;
+}
+
+// @alpha @sealed
+export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable_2 {
+    idle: boolean;
+    length: number;
+    pause(): Promise<void>;
+    paused: boolean;
+    peek(): T | undefined;
+    resume(): void;
+    toArray(): T[];
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
+}
+
+// @alpha @sealed
+export interface IDeltaQueueEvents<T> extends IErrorEvent {
+    (event: "push", listener: (task: T) => void): any;
+    (event: "op", listener: (task: T) => void): any;
+    (event: "idle", listener: (count: number, duration: number) => void): any;
+}
+
+// @alpha @sealed
+export interface IDeltaSender {
+    flush(): void;
+}
 
 // @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
@@ -231,13 +342,22 @@ export interface IDisposable {
     [disposeSymbol](): void;
 }
 
+// @alpha
+export interface IDriverErrorBase {
+    canRetry: boolean;
+    endpointReached?: boolean;
+    readonly errorType: DriverErrorTypes;
+    readonly message: string;
+    online?: string;
+}
+
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(props?: ContainerAttachProps): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
@@ -252,6 +372,14 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
+
+// @alpha (undocumented)
+export interface IFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
 }
 
 // @alpha
@@ -330,7 +458,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<infer TChannel> ? TChannel : never;
 };
 
 // @public
@@ -491,6 +619,57 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 // @alpha
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
+    bindToContext(): void;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+}
+
+// @alpha
+export interface ISharedObjectEvents extends IErrorEvent {
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @alpha (undocumented)
+export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+    annotateRange(start: number, end: number, props: PropertySet): void;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    getContainingSegment(pos: number): {
+        segment: T | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getCurrentSeq(): number;
+    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
+    getLength(): number;
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    getPropertiesAtPosition(pos: number): PropertySet | undefined;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number | undefined;
+        posAfterEnd: number | undefined;
+    };
+    // @deprecated (undocumented)
+    groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    initializeLocal(): void;
+    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    obliterateRange(start: number, end: number): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    removeRange(start: number, end: number): void;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+}
+
+// @alpha
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
@@ -501,7 +680,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
     annotateMarker(marker: Marker, props: PropertySet): void;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
@@ -545,12 +724,6 @@ export interface IValueChanged {
 
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
-
-// @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
-
-// @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export interface MakeNominal {
@@ -610,6 +783,17 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 // @public
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+// @alpha (undocumented)
+export type ReadOnlyInfo = {
+    readonly readonly: false | undefined;
+} | {
+    readonly readonly: true;
+    readonly forced: boolean;
+    readonly permissions: boolean | undefined;
+    readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
 };
 
 // @public
@@ -764,76 +948,75 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
 // @alpha
-export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
 
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
-export const SharedMap: ISharedObjectKind<ISharedMap>;
+export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind_2<ISharedMap>;
 
 // @alpha
 export type SharedMap = ISharedMap;
 
-// @alpha (undocumented)
-export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
-    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    annotateRange(start: number, end: number, props: PropertySet): void;
-    protected applyStashedOp(content: any): void;
-    // (undocumented)
-    protected client: Client;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    protected didAttach(): void;
-    getContainingSegment(pos: number): {
-        segment: T | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getCurrentSeq(): number;
-    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
-    // (undocumented)
-    getIntervalCollectionLabels(): IterableIterator<string>;
-    getLength(): number;
-    getPosition(segment: ISegment): number;
-    // (undocumented)
-    getPropertiesAtPosition(pos: number): PropertySet | undefined;
-    // (undocumented)
-    getRangeExtentsOfPosition(pos: number): {
-        posStart: number | undefined;
-        posAfterEnd: number | undefined;
-    };
-    // @deprecated (undocumented)
-    groupOperation(groupOp: IMergeTreeGroupMsg): void;
-    protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
-    // (undocumented)
-    id: string;
-    protected initializeLocalCore(): void;
-    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
-    insertFromSpec(pos: number, spec: IJSONSegment): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @deprecated
-    get loaded(): Promise<void>;
-    localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
-    protected onConnect(): void;
-    protected onDisconnect(): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+// @alpha
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
-    removeRange(start: number, end: number): void;
-    protected replaceRange(start: number, end: number, segment: ISegment): void;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+    protected get serializer(): IFluidSerializer;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
 // @alpha
-export const SharedString: ISharedObjectKind<ISharedString>;
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    protected abstract applyStashedOp(content: any): void;
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    bindToContext(): void;
+    connect(services: IChannelServices): void;
+    get connected(): boolean;
+    protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    protected didAttach(): void;
+    protected dirty(): void;
+    emit(event: EventEmitterEventType, ...args: any[]): boolean;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly handle: IFluidHandleInternal;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    get IFluidLoadable(): this;
+    initializeLocal(): void;
+    protected initializeLocalCore(): void;
+    isAttached(): boolean;
+    load(services: IChannelServices): Promise<void>;
+    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
+    protected readonly logger: ITelemetryLoggerExt;
+    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    protected onConnect(): void;
+    protected abstract onDisconnect(): any;
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected runtime: IFluidDataStoreRuntime;
+    protected abstract get serializer(): IFluidSerializer;
+    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+}
+
+// @public
+export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+}
+
+// @alpha
+export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind_2<ISharedString>;
 
 // @alpha
 export type SharedString = ISharedString;
@@ -842,7 +1025,7 @@ export type SharedString = ISharedString;
 export type SharedStringSegment = TextSegment | Marker;
 
 // @public
-export const SharedTree: ISharedObjectKind<ITree>;
+export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha
 export enum Side {

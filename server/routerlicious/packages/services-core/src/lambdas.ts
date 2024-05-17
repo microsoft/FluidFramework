@@ -129,7 +129,7 @@ export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitt
 	create(
 		config: TConfig,
 		context: IContext,
-		updateActivityTime?: () => void,
+		updateActivityTime?: (activityTime?: number) => void,
 	): Promise<IPartitionLambda>;
 
 	/**

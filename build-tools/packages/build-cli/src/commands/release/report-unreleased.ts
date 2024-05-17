@@ -33,6 +33,11 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			exists: true,
 			required: true,
 		}),
+		branchName: Flags.string({
+			description:
+				"Branch name. For release branches, the manifest file is uplaoded by build number and not by current date.",
+			required: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -45,7 +50,13 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
 		try {
-			await generateReleaseReport(fullReleaseReport, flags.version, flags.outDir, this.logger);
+			await generateReleaseReport(
+				fullReleaseReport,
+				flags.version,
+				flags.outDir,
+				flags.branchName,
+				this.logger,
+			);
 		} catch (error: unknown) {
 			throw new Error(`Error while generating release reports: ${error}`);
 		}
@@ -63,6 +74,7 @@ async function generateReleaseReport(
 	fullReleaseReport: ReleaseReport,
 	version: string,
 	outDir: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
@@ -73,8 +85,22 @@ async function generateReleaseReport(
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
 
 	await Promise.all([
-		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
-		writeReport(outDir, simpleReportOutput as ReleaseReport, "simpleManifest", version, log),
+		writeReport(
+			outDir,
+			caretReportOutput as ReleaseReport,
+			"manifest",
+			version,
+			branchName,
+			log,
+		),
+		writeReport(
+			outDir,
+			simpleReportOutput as ReleaseReport,
+			"simpleManifest",
+			version,
+			branchName,
+			log,
+		),
 	]);
 
 	log.log("Release report processed successfully.");
@@ -86,6 +112,7 @@ async function generateReleaseReport(
  * @param report - A map of package names to full release reports.
  * @param revisedFileName - The revised file name for the report.
  * @param version - The version string to update packages to.
+ * @param branchName - The branch name
  * @param log - The logger object for logging messages.
  */
 async function writeReport(
@@ -93,21 +120,26 @@ async function writeReport(
 	report: ReleaseReport,
 	revisedFileName: string,
 	version: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const currentDate = formatISO(new Date(), { representation: "date" });
-
 	const buildNumber = extractBuildNumber(version);
 
 	log.log(`Build Number: ${buildNumber}`);
 
-	const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
-	await Promise.all([
-		fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
-		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
-	]);
+	// Generate the build-number manifest unconditionally
+	const promises = [fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2))];
+
+	// Generate the date-based manifest only if the branch is main
+	if (branchName === "refs/heads/main") {
+		const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
+		promises.push(fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)));
+	}
+
+	await Promise.all(promises);
 }
 
 /**

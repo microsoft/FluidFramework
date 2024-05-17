@@ -6,8 +6,8 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
@@ -21,7 +21,7 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**
