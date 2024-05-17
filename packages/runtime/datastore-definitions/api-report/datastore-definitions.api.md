@@ -5,12 +5,12 @@
 ```ts
 
 import type { AttachState } from '@fluidframework/container-definitions';
-import type { ErasedType } from '@fluidframework/core-interfaces/internal';
-import type { FluidObject } from '@fluidframework/core-interfaces/internal';
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces/internal';
-import type { IEvent } from '@fluidframework/core-interfaces/internal';
-import type { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
@@ -21,7 +21,7 @@ import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions'
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 
 // @alpha (undocumented)

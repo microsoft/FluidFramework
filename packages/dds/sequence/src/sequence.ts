@@ -6,9 +6,9 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {

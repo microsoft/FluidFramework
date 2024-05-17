@@ -11,11 +11,13 @@ import type {
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";

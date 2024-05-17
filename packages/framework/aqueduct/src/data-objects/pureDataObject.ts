@@ -4,13 +4,15 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEvent } from "@fluidframework/core-interfaces";
 import {
-	type IFluidHandleInternal,
+	type IEvent,
 	type IFluidLoadable,
-	type IProvideFluidHandle,
 	type IRequest,
 	type IResponse,
+} from "@fluidframework/core-interfaces";
+import {
+	type IFluidHandleInternal,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";

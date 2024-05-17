@@ -24,11 +24,11 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/int
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces/internal';
-import { IRequest } from '@fluidframework/core-interfaces/internal';
-import { IResponse } from '@fluidframework/core-interfaces/internal';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';

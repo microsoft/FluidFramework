@@ -10,7 +10,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';

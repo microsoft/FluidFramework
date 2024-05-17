@@ -15,20 +15,24 @@ import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
+} from "@fluidframework/datastore-definitions";
+import {
+	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 	type IDeltaManagerErased,

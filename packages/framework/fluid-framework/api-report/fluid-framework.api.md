@@ -5,15 +5,14 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { ErasedType } from '@fluidframework/core-interfaces/internal';
-import { ErasedType as ErasedType_2 } from '@fluidframework/core-interfaces';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
@@ -25,8 +24,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
@@ -132,7 +130,7 @@ export interface ContainerSchema {
 }
 
 // @public
-export interface DefaultProvider extends ErasedType_2<"@fluidframework/tree.FieldProvider"> {
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
 // @alpha (undocumented)
@@ -504,7 +502,7 @@ export interface InteriorSequencePlace {
 }
 
 // @public
-export interface InternalTreeNode extends ErasedType_2<"@fluidframework/tree.InternalTreeNode"> {
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
 // @alpha
@@ -812,7 +810,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<unknown>, IFluidHandle_2<unknown>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -1005,14 +1003,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     getRangeExtentsOfPosition(pos: number): {
         posStart: number | undefined;
-        posAfterEnd: number | undefined; /**
-        * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-        * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-        * @param segment - Segment to add the local reference on
-        * @param offset - Offset on the segment at which to place the local reference
-        * @param refType - ReferenceType for the created local reference
-        * @param properties - PropertySet to place on the created local reference
-        */
+        posAfterEnd: number | undefined;
     };
     // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
@@ -1133,7 +1124,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
-export type TreeLeafValue = number | string | boolean | IFluidHandle_2 | null;
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {

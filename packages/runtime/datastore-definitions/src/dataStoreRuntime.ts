@@ -4,16 +4,16 @@
  */
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
 	ErasedType,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IQuorumClients,

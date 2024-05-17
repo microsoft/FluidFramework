@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	Jsonable,
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
