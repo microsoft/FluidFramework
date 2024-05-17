@@ -1,5 +1,48 @@
 # @fluidframework/server-lambdas
 
+## 4.0.1
+
+### Patch Changes
+
+-   Fix: send correct connection scopes for client ([#20312](https://github.com/microsoft/FluidFramework/issues/20312)) [e227db9](https://github.com/microsoft/FluidFramework/commit/e227db94bcab68e05087526c02ea4cca02ee4cea)
+
+    When a client joins in "write" mode with only "read" scopes in their token, the connection message from server will reflect a "read" client mode.
+
+-   Fix: configure user data scrubbing in checkpoints and summaries ([#20150](https://github.com/microsoft/FluidFramework/issues/20150)) [04a2cc9](https://github.com/microsoft/FluidFramework/commit/04a2cc9ee88d4dbfc14bf44320456aa01749990c)
+
+    When scribe boots from a checkpoint, it fails over to the latest summary checkpoint if the quorum is corrupted (i.e. user data is scrubbed).
+    When scribe writes a checkpoint to DB or a summary, it respects new `IScribeServerConfiguration` options (scrubUserDataInSummaries, scrubUserDataInLocalCheckpoints, and scrubUserDataInGlobalCheckpoints) when determining whether to scrub user data in the quorum.
+
+-   Fix: cover edge cases for scrubbed checkpoint users ([#20259](https://github.com/microsoft/FluidFramework/issue/20259)) [6718a9a](https://github.com/microsoft/FluidFramework/commit/6718a9a1707d6a5bcc573acbb2d154b8840c4b72)
+
+    Overhauled how the Scribe lambda handles invalid, missing, or outdated checkpoint data via fallbacks.
+
+    Before:
+
+    ```
+    if (no global checkpoint)
+        use Default checkpoint
+    elsif (global checkpoint was cleared or global checkpoint quorum was scrubbed)
+        use Summary checkpoint
+    else
+        use latest DB checkpoint (local or global)
+    ```
+
+    After:
+
+    ```
+    if (no global and no local checkpoint and no summary checkpoint)
+        use Default checkpoint
+    elsif (
+            global checkpoint was cleared and summary checkpoint ahead of local db checkpoint
+            or latest DB checkpoint quorum was scrubbed
+            or summary checkpoint ahead of latest DB checkpoint
+        )
+        use Summary checkpoint
+    else
+        use latest DB checkpoint (local or global)
+    ```
+
 ## 4.0.0
 
 ### Major Changes

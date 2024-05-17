@@ -1,5 +1,13 @@
 # @fluidframework/server-routerlicious
 
+## 4.0.1
+
+### Patch Changes
+
+-   Fix: configure user data scrubbing in checkpoints and summaries ([#20150](https://github.com/microsoft/FluidFramework/issues/20150)) [04a2cc9](https://github.com/microsoft/FluidFramework/commit/04a2cc9ee88d4dbfc14bf44320456aa01749990c)
+
+    Added the following configuration options for `IScribeServerConfiguration`: scrubUserDataInSummaries, scrubUserDataInLocalCheckpoints, and scrubUserDataInGlobalCheckpoints. All default to `false`.
+
 ## 4.0.0
 
 ### Major Changes
