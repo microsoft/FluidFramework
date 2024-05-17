@@ -10,6 +10,9 @@ const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
 	"@fluidframework/*/internal",
 
+	// Experimental packages are frankly unknown, so allow any imports from them.
+	"@fluid-experimental/**",
+
 	// Allow imports from sibling and ancestral sibling directories,
 	// but not from cousin directories. Parent is allowed but only
 	// because there isn't a known way to deny it.
