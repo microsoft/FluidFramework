@@ -371,13 +371,28 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Array - throws when input includes `undefined` entries", () => {
+		it("Throws on `undefined` entries", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("array", [schemaFactory.number]);
+			assert.throws(
+				() =>
+					nodeDataToMapTree(
+						[42, undefined] as number[],
+						schemaFactory.array(schemaFactory.number),
+					),
+				/Received unsupported array entry value: undefined/,
+			);
+		});
+
+		it("Throws on schema-incompatible entries", () => {
+			const schemaFactory = new SchemaFactory("test");
 
 			assert.throws(
-				() => nodeDataToMapTree([42, undefined] as number[], schema),
-				/Received unsupported array entry value: undefined./,
+				() =>
+					nodeDataToMapTree(
+						["Hello world", true],
+						schemaFactory.array(schemaFactory.string),
+					),
+				/The provided data is incompatible with all of the types allowed by the schema/,
 			);
 		});
 	});
@@ -517,6 +532,22 @@ describe.only("toMapTree", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("Throws on schema-incompatible entries", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", schemaFactory.string);
+
+			const entries: [string, InsertableContent][] = [
+				["a", "Hello world"],
+				["b", true], // Boolean input is not allowed by the schema
+			];
+			const tree = new Map<string, InsertableContent>(entries);
+
+			assert.throws(
+				() => nodeDataToMapTree(tree, schema),
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
 		});
 	});
 
