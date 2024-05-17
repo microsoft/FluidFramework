@@ -17,9 +17,12 @@ import {
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	IFluidDataStoreRuntime,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,

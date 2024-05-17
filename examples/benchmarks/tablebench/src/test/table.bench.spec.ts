@@ -4,9 +4,14 @@
  */
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { IChannel } from "@fluidframework/datastore-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import { type ITree, NodeFromSchema, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import {
+	type ITree,
+	NodeFromSchema,
+	SharedTree,
+	TreeConfiguration,
+} from "@fluidframework/tree/internal";
 
 import { Table, generateTable } from "../index.js";
 

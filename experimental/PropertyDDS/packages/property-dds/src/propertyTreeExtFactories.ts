@@ -11,7 +11,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
 import { deflate, inflate } from "pako";
 

@@ -14,7 +14,7 @@ import {
 	SchemaFactory,
 	type TreeView,
 	type ITree,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { AxiosResponse } from "axios";

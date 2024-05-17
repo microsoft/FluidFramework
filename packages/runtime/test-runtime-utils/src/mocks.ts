@@ -32,7 +32,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
@@ -44,8 +44,9 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,

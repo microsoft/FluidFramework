@@ -26,7 +26,7 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -39,13 +39,11 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,

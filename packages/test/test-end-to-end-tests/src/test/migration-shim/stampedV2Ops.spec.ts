@@ -21,7 +21,7 @@ import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	type ITestObjectProvider,
@@ -36,7 +36,7 @@ import {
 	TreeConfiguration,
 	type TreeView,
 	disposeSymbol,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

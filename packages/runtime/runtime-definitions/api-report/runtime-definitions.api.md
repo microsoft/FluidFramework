@@ -170,7 +170,7 @@ export interface IEnvelope {
     contents: any;
 }
 
-// @public
+// @alpha
 export interface IExperimentalIncrementalSummaryContext {
     latestSummarySequenceNumber: number;
     summaryPath: string;
@@ -289,7 +289,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @public
+// @alpha
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -395,7 +395,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @public
+// @alpha
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -409,13 +409,13 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @public
+// @alpha
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @public
+// @alpha
 export interface ITelemetryContext {
     // @deprecated
     get(prefix: string, property: string): TelemetryBaseEventPropertyType;

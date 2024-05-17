@@ -11,14 +11,14 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import {
+	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
 	constructor(

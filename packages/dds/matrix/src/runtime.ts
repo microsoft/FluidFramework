@@ -9,8 +9,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedMatrix, SharedMatrix as SharedMatrixClass } from "./matrix.js";
@@ -63,8 +62,7 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
  * Entrypoint for {@link ISharedMatrix} creation.
  * @alpha
  */
-export const SharedMatrix: ISharedObjectKind<ISharedMatrix> =
-	createSharedObjectKind(SharedMatrixFactory);
+export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
 
 /**
  * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to

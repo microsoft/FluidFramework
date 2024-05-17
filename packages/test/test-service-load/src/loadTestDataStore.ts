@@ -20,7 +20,7 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
