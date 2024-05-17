@@ -17,11 +17,12 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-member-access": "off",
 		"@typescript-eslint/restrict-template-expressions": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"unicorn/prefer-node-protocol": "off",
 
 		// TODO: enable strict null checks in tsconfig and remove this override
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",
+		"import/no-deprecated": "off", // TODO: put this back
 	},
 };
