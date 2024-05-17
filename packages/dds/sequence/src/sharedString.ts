@@ -20,14 +20,14 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { SharedSegmentSequence } from "./sequence.js";
+import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
  * @alpha
  */
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
 	 * Inserts the text at the position.
 	 * @param pos - The position to insert the text at
