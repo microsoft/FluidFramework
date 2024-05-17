@@ -279,6 +279,11 @@ export class GarbageCollector implements IGarbageCollector {
 		 * Must only be called if there is a current reference timestamp.
 		 */
 		this.initializeGCStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
+			// If GC is disabled, don't initialize GC state because we should not be logging / throwing GC errors.
+			if (!this.shouldRunGC) {
+				return;
+			}
+
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 			assert(
 				currentReferenceTimestampMs !== undefined,
@@ -327,6 +332,10 @@ export class GarbageCollector implements IGarbageCollector {
 				return {};
 			}
 
+			// Note that the base GC details are returned even if GC is disabled. This is to handle the special scenario
+			// where GC is disabled but GC state exists in base snapshot. In this scenario, the nodes which get the GC
+			// state will re-summarize to reset any GC specific state in their summaries (like unreferenced flag).
+
 			const gcNodes: { [id: string]: string[] } = {};
 			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
@@ -367,10 +376,16 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether sweep is enabled or not
+		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether GC / sweep is enabled
 		// to identify deleted nodes' usage.
 		if (baseSnapshotData.deletedNodes !== undefined) {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
+		}
+
+		// If GC is disabled, the GC and tombstone state shouldn't be tracked because there shouldn't be any logs or
+		// errors from GC. The exception is deleted node usage which is mentioned above.
+		if (!this.shouldRunGC) {
+			return;
 		}
 
 		// If running in tombstone mode, initialize the tombstone state from the snapshot. Also, notify the runtime of

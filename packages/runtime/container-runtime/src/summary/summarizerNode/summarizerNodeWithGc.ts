@@ -347,8 +347,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		proposalHandle: string,
 		referenceSequenceNumber: number,
 	): void {
-		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
-		if (!this.gcDisabled) {
+		// If GC is disabled, set referencedUsedRoutes to undefined since it is not tracked for this node.
+		if (this.gcDisabled) {
+			this.referenceUsedRoutes = undefined;
+		} else {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
 				// If a pending summary exists, it must have used routes since GC is enabled.
@@ -515,9 +517,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * was previously used and became unused (or vice versa), its used state has changed.
 	 */
 	private hasUsedStateChanged(): boolean {
-		// If GC is disabled, we are not tracking used state, return false.
 		if (this.gcDisabled) {
-			return false;
+			// If GC is disabled and there are used routes in the latest summary, return true because the unreferenced
+			// property (if any) in this node's summary must be removed by re-summarizing it.
+			return this.referenceUsedRoutes !== undefined;
 		}
 
 		return (
