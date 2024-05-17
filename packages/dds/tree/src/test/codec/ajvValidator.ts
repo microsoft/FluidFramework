@@ -18,6 +18,7 @@ import formats from "ajv-formats";
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
 import type { JsonValidator } from "../../codec/index.js";

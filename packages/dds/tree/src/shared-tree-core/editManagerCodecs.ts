@@ -165,6 +165,7 @@ function makeV1CodecWithVersion<TChangeset>(
 			},
 			decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const trunk: readonly any[] = json.trunk;
 				return {
 					trunk: trunk.map(

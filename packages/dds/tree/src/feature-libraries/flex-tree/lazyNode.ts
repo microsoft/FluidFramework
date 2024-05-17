@@ -348,7 +348,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
 		for (const [key, value] of this.entries()) {

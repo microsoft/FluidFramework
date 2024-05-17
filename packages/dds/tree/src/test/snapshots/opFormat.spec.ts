@@ -15,6 +15,7 @@ import {
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.
@@ -23,8 +24,8 @@ import { SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../sh
 describe("SharedTree op format snapshots", () => {
 	useSnapshotDirectory("op-format");
 
-	function spyOnFutureMessages(runtime: MockContainerRuntime): any[] {
-		const messages: any[] = [];
+	function spyOnFutureMessages(runtime: MockContainerRuntime): JsonCompatibleReadOnly[] {
+		const messages: JsonCompatibleReadOnly[] = [];
 		const originalSubmit = runtime.submit.bind(runtime);
 		runtime.submit = (content, localOpMetadata) => {
 			messages.push(content);
