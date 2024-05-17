@@ -9,15 +9,25 @@ import {
 	IDocumentStorageService,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include
  * the protocol summary, using the provided callback to add it if necessary.
  */
 export class ProtocolTreeStorageService implements IDocumentStorageService, IDisposable {
+	/**
+	 *
+	 * @param internalStorageService - Document storage service responsible to make api calls to the storage.
+	 * @param addProtocolSummaryIfMissing - Function to add protocol summary tree to the summary. Used in scenarios where single-commit summaries are used.
+	 * @param shouldSummarizeProtocolTree - Callback function to learn about the service preference on whether single-commit summaries are enabled.
+	 * @param logger - Logger
+	 */
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
+		private readonly shouldSummarizeProtocolTree: () => boolean,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
 		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
@@ -46,9 +56,14 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return this.internalStorageService.uploadSummaryWithContext(
-			this.addProtocolSummaryIfMissing(summary),
-			context,
-		);
+		if (this.shouldSummarizeProtocolTree()) {
+			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+			return this.internalStorageService.uploadSummaryWithContext(
+				this.addProtocolSummaryIfMissing(summary),
+				context,
+			);
+		} else {
+			return this.internalStorageService.uploadSummaryWithContext(summary, context);
+		}
 	}
 }

@@ -100,11 +100,10 @@ export class DocumentService
 		super();
 	}
 
-
 	private documentStorageService: DocumentStorageService | undefined;
 
-	public get policies(): api.IDocumentServicePolicies {
-		return this._policies || {};
+	public get policies(): api.IDocumentServicePolicies | undefined {
+		return this._policies ?? {};
 	}
 
 	public dispose() {}
@@ -288,10 +287,13 @@ export class DocumentService
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
 			const connection = await connect();
-			if ((connection as R11sDocumentDeltaConnection).details.supportedFeatures?.enable_single_commit_summary) {
+			if (
+				(connection as R11sDocumentDeltaConnection).details.supportedFeatures
+					?.enable_single_commit_summary
+			) {
 				// Enable single-commit summaries via driver policy if the delta connection service provides enable_single_commit_summary value as true
 				// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
-				this._policies = {...this._policies, summarizeProtocolTree: true};
+				this._policies = { ...this._policies, summarizeProtocolTree: true };
 			}
 			return connection;
 		} catch (error: any) {

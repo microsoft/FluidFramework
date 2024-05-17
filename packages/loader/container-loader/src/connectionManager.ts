@@ -370,7 +370,6 @@ export class ConnectionManager implements IConnectionManager {
 			mode: connection.mode,
 			serviceConfiguration: connection.serviceConfiguration,
 			version: connection.version,
-			supportedFeatures: connection.supportedFeatures,
 			reason,
 		};
 	}

@@ -962,12 +962,7 @@ export class Container
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
 		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree ??
-			(typeof this._deltaManager.connectionManager.connectionDetails?.supportedFeatures
-				?.enable_single_commit_summary === "boolean"
-				? this._deltaManager.connectionManager.connectionDetails?.supportedFeatures
-						?.enable_single_commit_summary
-				: false);
+			options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,

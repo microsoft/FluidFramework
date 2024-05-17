@@ -109,15 +109,20 @@ export class ContainerStorageAdapter
 			this.logger,
 		));
 
-		this._summarizeProtocolTree =
-			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
-		if (this.summarizeProtocolTree) {
-			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
-			this._storageService = new ProtocolTreeStorageService(
-				retriableStorage,
-				this.addProtocolSummaryIfMissing,
-			);
-		}
+		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
+		// the protocol summary, provided single-commit summary is enabled.
+		this._storageService = new ProtocolTreeStorageService(
+			retriableStorage,
+			this.addProtocolSummaryIfMissing,
+			() => {
+				// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
+				// based on the response received from the service after connection is established.
+				return (
+					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false
+				);
+			},
+			this.logger,
+		);
 	}
 
 	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {

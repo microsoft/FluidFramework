@@ -116,7 +116,6 @@ export interface IConnectionDetails {
     clientId: string;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    supportedFeatures?: Record<string, unknown>;
 }
 
 // @alpha
