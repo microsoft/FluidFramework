@@ -9,4 +9,4 @@ Declarative API cleanup
 Make `IDisposable` `@beta` since it's most public use is `IDevtools` which is `@beta`.
 Make `IInboundSignalMessage` `@alpha` since its not used in the declarative API.
 
-Cleanup `fluid-framework` legacy exports toi remove no longer required types.
+Cleanup `fluid-framework` legacy exports to remove no longer required types.
