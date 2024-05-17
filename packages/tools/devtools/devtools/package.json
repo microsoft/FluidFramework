@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/legacy": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
@@ -33,7 +33,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/beta": {
+		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
@@ -54,22 +54,22 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "./dist/public.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints . ./lib/legacy ./lib/beta",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
@@ -78,11 +78,12 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"place:cjs:package-stub": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "tsc --watch",
-		"typetests:gen": "fluid-type-test-generator",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
+		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -115,12 +116,12 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.36.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.36.0",
-		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.8.0.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",
 		"c8": "^8.0.1",
@@ -141,7 +142,6 @@
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
-				"...",
 				"typetests:gen"
 			]
 		}

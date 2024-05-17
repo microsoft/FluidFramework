@@ -96,7 +96,7 @@ export interface OdspMember extends IMember {
 	/**
 	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	id: string;
 	/**
 	 * The user's name
 	 */

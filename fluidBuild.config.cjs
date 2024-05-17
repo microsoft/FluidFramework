@@ -65,19 +65,15 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
-		"build:test": [
-			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
-			// requires them. I don't want to change the policy right now.
-			...tscDependsOn,
-			"typetests:gen",
-			"tsc",
-			"api-extractor:commonjs",
-			"api-extractor:esnext",
-		],
+		// Generic build:test script should be replaced by :esm or :cjs specific versions.
+		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
+		// on CommonJS.
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -85,6 +81,7 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
+		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"build:docs": ["tsc", "build:esnext"],
@@ -167,7 +164,6 @@ module.exports = {
 
 		// Independent packages
 		"build": "common/build",
-		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -209,10 +205,6 @@ module.exports = {
 				"^packages/test/test-utils/package.json",
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
-			],
-			"fluid-build-tasks-tsc": [
-				// TODO: AB#7460 fix tsconfig reference path match on Windows
-				"^packages/tools/devtools/devtools-view/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -448,7 +440,6 @@ module.exports = {
 			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
-			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",

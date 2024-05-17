@@ -4,6 +4,7 @@
  */
 
 import type {
+	OdspEndpoint,
 	RouterliciousEndpoint,
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
@@ -74,6 +75,9 @@ const options = {
 	r11sEndpointName: {
 		type: "string",
 	},
+	odspEndpointName: {
+		type: "string",
+	},
 	tenantIndex: {
 		type: "number",
 	},
@@ -100,6 +104,7 @@ nconf
 			"fluid__test__backCompat",
 			"fluid__test__driver",
 			"fluid__test__r11sEndpointName",
+			"fluid__test__odspEndpointName",
 			"fluid__test__baseVersion",
 		],
 		transform: (obj: { key: string; value: string }) => {
@@ -148,6 +153,10 @@ export const compatVersions = nconf.get("fluid:test:compatVersion") as string[] 
  * @internal
  */
 export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
+/**
+ * @internal
+ */
+export const odspEndpointName = nconf.get("fluid:test:odspEndpointName") as OdspEndpoint;
 /**
  * @internal
  */

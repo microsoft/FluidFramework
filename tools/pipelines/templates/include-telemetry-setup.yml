@@ -82,6 +82,7 @@ steps:
 # Install logger package
 - task: Npm@1
   displayName: 'npm install aria logger'
+  retryCountOnTaskFailure: 1
   inputs:
     workingDir: ${{ parameters.pathToTelemetryGenerator }}
     command: 'custom'

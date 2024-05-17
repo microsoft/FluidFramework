@@ -4,16 +4,14 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeValue } from "../core/index.js";
 import {
 	FlexTreeNode,
+	NodeKeyManager,
 	Unenforced,
 	isFlexTreeNode,
-	isFluidHandle,
 	isLazy,
-	markEager,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
@@ -24,8 +22,6 @@ import {
 	numberSchema,
 	stringSchema,
 } from "./leafNodeSchema.js";
-import { isTreeNode } from "./proxies.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -36,14 +32,17 @@ import {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
-	type,
 	type FieldProps,
+	createFieldSchema,
+	DefaultProvider,
+	getDefaultProvider,
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
-import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
@@ -217,66 +216,6 @@ export class SchemaFactory<
 	public readonly handle = handleSchema;
 
 	/**
-	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
-	 * More specific schema extend this class.
-	 */
-	private nodeSchema<
-		const Name extends TName | string,
-		const TKind extends NodeKind,
-		T,
-		const TImplicitlyConstructable extends boolean,
-	>(
-		name: Name,
-		kind: TKind,
-		t: T,
-		implicitlyConstructable: TImplicitlyConstructable,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		TKind,
-		TreeNode & WithType<ScopedSchemaName<TScope, Name>>,
-		FlexTreeNode | unknown,
-		TImplicitlyConstructable,
-		T
-	> {
-		const identifier = this.scoped(name);
-		class schema extends TreeNode implements WithType<ScopedSchemaName<TScope, Name>> {
-			public static readonly identifier = identifier;
-			public static readonly kind = kind;
-			public static readonly info = t;
-			public static readonly implicitlyConstructable: TImplicitlyConstructable =
-				implicitlyConstructable;
-			/**
-			 * This constructor only does validation of the input, and should be passed the argument from the derived type unchanged.
-			 * It is up to the derived type to actually do something with this value.
-			 */
-			public constructor(input: FlexTreeNode | unknown) {
-				super();
-				// Currently this just does validation. All other logic is in the subclass.
-				if (isFlexTreeNode(input)) {
-					assert(
-						tryGetSimpleNodeSchema(input.schema) === this.constructor,
-						0x83b /* building node with wrong schema */,
-					);
-				}
-
-				if (isTreeNode(input)) {
-					// TODO: update this once we have better support for deep-copying and move operations.
-					throw new UsageError(
-						"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
-					);
-				}
-			}
-
-			public get [type](): ScopedSchemaName<TScope, Name> {
-				return identifier;
-			}
-		}
-		// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-		markEager(schema);
-		return schema;
-	}
-
-	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
@@ -296,7 +235,7 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(this.nodeSchema(name, NodeKind.Object, fields, true));
+		return objectSchema(this.scoped(name), fields, true);
 	}
 
 	/**
@@ -414,8 +353,11 @@ export class SchemaFactory<
 		T
 	> {
 		return mapSchema(
-			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
-			customizable,
+			this.scoped(name),
+			allowedTypes,
+			implicitlyConstructable,
+			// The current policy is customizable nodes don't get fake prototypes.
+			!customizable,
 		);
 	}
 
@@ -541,10 +483,7 @@ export class SchemaFactory<
 		ImplicitlyConstructable,
 		T
 	> {
-		return arraySchema(
-			this.nodeSchema(name, NodeKind.Array, allowedTypes, implicitlyConstructable),
-			customizable,
-		);
+		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
 	}
 
 	/**
@@ -555,9 +494,15 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t, props);
+		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+			return undefined;
+		});
+		return createFieldSchema(FieldKind.Optional, t, {
+			...props,
+			defaultProvider: defaultOptionalProvider,
+		});
 	}
 
 	/**
@@ -572,16 +517,51 @@ export class SchemaFactory<
 	 */
 	public required<const T extends ImplicitAllowedTypes>(
 		t: T,
-		props?: FieldProps,
+		props?: Omit<FieldProps, "defaultProvider">,
 	): FieldSchema<FieldKind.Required, T> {
-		return new FieldSchema(FieldKind.Required, t, props);
+		return createFieldSchema(FieldKind.Required, t, props);
+	}
+
+	/**
+	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: Omit<FieldProps, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Optional, T> {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
+	}
+
+	/**
+	 * {@link SchemaFactory.required} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: Omit<FieldProps, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Required, T> {
+		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}
 
 	/**
 	 * Make a field of type identifier instead of the default which is required.
 	 */
-	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return new FieldSchema(FieldKind.Identifier, this.string);
+	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
+		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
+			(nodeKeyManager: NodeKeyManager) => {
+				return nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			},
+		);
+		return createFieldSchema(FieldKind.Identifier, this.string, {
+			defaultProvider: defaultIdentifierProvider,
+		});
 	}
 
 	/**
@@ -595,6 +575,7 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -614,23 +595,13 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
-	 */
-	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t);
-	}
-
-	/**
 	 * `SchemaFactory.array` except tweaked to work better for recursive types.
 	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 * @remarks
 	 * This version of `SchemaFactory.array` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public arrayRecursive<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
@@ -647,6 +618,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(data);
@@ -684,6 +657,7 @@ export class SchemaFactory<
 	 * This version of `SchemaFactory.map` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
 		name: Name,
 		allowedTypes: T,
@@ -707,6 +681,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(new Map(data));

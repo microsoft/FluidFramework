@@ -182,7 +182,7 @@ export class OpSplitter {
 	}
 
 	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
-		assert(isChunkedContents(message.contents), "message not of type ChunkedOp");
+		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
 		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)

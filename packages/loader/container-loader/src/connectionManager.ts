@@ -4,18 +4,16 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	ICriticalContainerError,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
+	DriverErrorTypes,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -42,11 +40,12 @@ import {
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	GenericError,
 	UsageError,
 	formatTick,
+	generateStack,
 	isFluidError,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -203,6 +202,9 @@ export class ConnectionManager implements IConnectionManager {
 	private pendingConnection: IPendingConnection | undefined;
 	private connection: IDocumentDeltaConnection | undefined;
 
+	/** Details about connection. undefined if there is no active connection. */
+	private _connectionDetails?: IConnectionDetailsInternal;
+
 	/** file ACL - whether user has only read-only access to a file */
 	private _readonlyPermissions: boolean | undefined;
 
@@ -255,6 +257,12 @@ export class ConnectionManager implements IConnectionManager {
 	public get clientId() {
 		return this.connection?.clientId;
 	}
+
+	/** Details about connection. undefined if there is no active connection. */
+	public get connectionDetails() {
+		return this._connectionDetails;
+	}
+
 	/**
 	 * Automatic reconnecting enabled or disabled.
 	 * If set to Never, then reconnecting will never be allowed.
@@ -505,21 +513,7 @@ export class ConnectionManager implements IConnectionManager {
 	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
-		if (this.connection !== undefined) {
-			return; // Connection attempt already completed successfully
-		}
-
-		let pendingConnectionMode;
-		if (this.pendingConnection !== undefined) {
-			pendingConnectionMode = this.pendingConnection.connectionMode;
-			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
-			assert(
-				this.pendingConnection === undefined,
-				0x344 /* this.pendingConnection should be undefined */,
-			);
-		}
-		// If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
-		let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
+		let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
 		// if we have any non-acked ops from last connection, reconnect as "write".
 		// without that we would connect in view-only mode, which will result in immediate
@@ -528,6 +522,28 @@ export class ConnectionManager implements IConnectionManager {
 		// so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
 		if (this.shouldJoinWrite()) {
 			requestedMode = "write";
+		}
+
+		if (this.connection !== undefined || this.pendingConnection !== undefined) {
+			// Connection attempt already completed successfully or is in progress
+			// In general, there should be no issues if the modes do not match:
+			// If at some point it was Ok to connect as "read" (i.e. there were no pending ops we had to track),
+			// then it should be Ok to use "read" connection even if for some reason request came in to connect as "write"
+			// (though that should never happen)
+			// The opposite should be fine as well: we may have had idle "write" connection, and request to reconnect came in,
+			// using default "read" mode.
+			// That all said, let's understand better where such mismatches are coming from.
+			const mode = this.connection?.mode ?? this.pendingConnection?.connectionMode;
+			if (mode !== requestedMode) {
+				this.logger.sendTelemetryEvent({
+					eventName: "ConnectionModeMismatch",
+					connected: this.connection !== undefined,
+					mode,
+					requestedMode,
+					stack: generateStack(),
+				});
+			}
+			return;
 		}
 
 		const docService = this.serviceProvider();
@@ -758,6 +774,7 @@ export class ConnectionManager implements IConnectionManager {
 		const connection = this.connection;
 		// Avoid any re-entrancy - clear object reference
 		this.connection = undefined;
+		this._connectionDetails = undefined;
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
@@ -789,7 +806,10 @@ export class ConnectionManager implements IConnectionManager {
 		);
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
-		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
+		this.logger.sendTelemetryEvent({
+			eventName: "ConnectionCancelReceived",
+			reason: reason.text,
+		});
 		this.props.cancelConnectionHandler({
 			text: `Cancel Pending Connection due to ${reason.text}`,
 			error: reason.error,
@@ -910,9 +930,9 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		const details = ConnectionManager.detailsFromConnection(connection, reason);
-		details.checkpointSequenceNumber = checkpointSequenceNumber;
-		this.props.connectHandler(details);
+		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
+		this._connectionDetails.checkpointSequenceNumber = checkpointSequenceNumber;
+		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;
 

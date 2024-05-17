@@ -53,8 +53,6 @@ export function makeSerializable<T extends ISerializableInterval>(
 
 /**
  * Manages a contained value type.
- *
- * @alpha
  */
 export class IntervalCollectionTypeLocalValue<T extends ISerializableInterval>
 	implements ILocalIntervalCollection<T>

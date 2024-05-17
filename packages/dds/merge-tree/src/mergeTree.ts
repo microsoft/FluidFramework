@@ -45,7 +45,6 @@ import {
 	BlockAction,
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	HierMergeBlock,
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
@@ -69,7 +68,7 @@ import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } fro
 import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { MapLike, PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
 	ReferencePosition,
@@ -133,26 +132,6 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 	min: { maxSeq: -2 },
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
-
-function addTile(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
-	const tileLabels = refGetTileLabels(tile);
-	if (tileLabels) {
-		for (const tileLabel of tileLabels) {
-			tiles[tileLabel] = tile;
-		}
-	}
-}
-
-function addTileIfNotPresent(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
-	const tileLabels = refGetTileLabels(tile);
-	if (tileLabels) {
-		for (const tileLabel of tileLabels) {
-			if (tiles[tileLabel] === undefined) {
-				tiles[tileLabel] = tile;
-			}
-		}
-	}
-}
 
 /**
  * @alpha
@@ -479,7 +458,7 @@ export class MergeTree {
 	}
 
 	public makeBlock(childCount: number) {
-		const block: MergeBlock = new HierMergeBlock(childCount);
+		const block = new MergeBlock(childCount);
 		block.ordinal = "";
 		return block;
 	}
@@ -1099,7 +1078,6 @@ export class MergeTree {
 						foundMarker = node;
 					}
 				} else {
-					assert(node.hierBlock(), "must be hierBlock");
 					const marker = forwards
 						? node.leftmostTiles[markerLabel]
 						: node.rightmostTiles[markerLabel];
@@ -1850,7 +1828,9 @@ export class MergeTree {
 				this.collabWindow.collaborating,
 				rollback,
 			);
-			deltaSegments.push({ segment, propertyDeltas });
+			if (!isRemovedOrMoved(segment)) {
+				deltaSegments.push({ segment, propertyDeltas });
+			}
 			if (this.collabWindow.collaborating) {
 				if (seq === UnassignedSequenceNumber) {
 					segmentGroup = this.addToPendingList(
@@ -2460,55 +2440,53 @@ export class MergeTree {
 
 		normalize();
 	}
-
-	private addNodeReferences(
-		node: IMergeNode,
-		rightmostTiles: MapLike<ReferencePosition>,
-		leftmostTiles: MapLike<ReferencePosition>,
-	) {
-		if (node.isLeaf()) {
-			const segment = node;
-			if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
-				const markerId = segment.getId();
-				// Also in insertMarker but need for reload segs case
-				// can add option for this only from reload segs
-				if (markerId) {
-					this.idToMarker.set(markerId, segment);
-				}
-				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
-					addTile(segment, rightmostTiles);
-					addTileIfNotPresent(segment, leftmostTiles);
-				}
-			}
-		} else {
-			assert(node.hierBlock(), "must be hier block");
-			// eslint-disable-next-line import/no-deprecated
-			extend(rightmostTiles, node.rightmostTiles);
-			// eslint-disable-next-line import/no-deprecated
-			extendIfUndefined(leftmostTiles, node.leftmostTiles);
-		}
-	}
-
 	private blockUpdate(block: MergeBlock) {
 		let len: number | undefined;
-		if (block.hierBlock()) {
-			// eslint-disable-next-line import/no-deprecated
-			block.rightmostTiles = createMap<Marker>();
-			// eslint-disable-next-line import/no-deprecated
-			block.leftmostTiles = createMap<Marker>();
-		}
+
+		// eslint-disable-next-line import/no-deprecated
+		const rightmostTiles = createMap<Marker>();
+		// eslint-disable-next-line import/no-deprecated
+		const leftmostTiles = createMap<Marker>();
+
 		for (let i = 0; i < block.childCount; i++) {
-			const child = block.children[i];
-			const nodeLength = nodeTotalLength(this, child);
+			const node = block.children[i];
+			const nodeLength = nodeTotalLength(this, node);
 			if (nodeLength !== undefined) {
 				len ??= 0;
 				len += nodeLength;
 			}
-			if (block.hierBlock()) {
-				this.addNodeReferences(child, block.rightmostTiles, block.leftmostTiles);
+			if (node.isLeaf()) {
+				const segment = node;
+				if ((this.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
+					const markerId = segment.getId();
+					// Also in insertMarker but need for reload segs case
+					// can add option for this only from reload segs
+					if (markerId) {
+						this.idToMarker.set(markerId, segment);
+					}
+
+					if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
+						const tileLabels = refGetTileLabels(segment);
+						if (tileLabels) {
+							for (const tileLabel of tileLabels) {
+								// this depends on walking children in order
+								// The later, and right most children overwrite
+								// whereas early, and left most do not overwrite
+								rightmostTiles[tileLabel] = segment;
+								leftmostTiles[tileLabel] ??= segment;
+							}
+						}
+					}
+				}
+			} else {
+				// eslint-disable-next-line import/no-deprecated
+				extend(rightmostTiles, node.rightmostTiles);
+				// eslint-disable-next-line import/no-deprecated
+				extendIfUndefined(leftmostTiles, node.leftmostTiles);
 			}
 		}
-
+		block.leftmostTiles = leftmostTiles;
+		block.rightmostTiles = rightmostTiles;
 		block.cachedLength = len;
 	}
 

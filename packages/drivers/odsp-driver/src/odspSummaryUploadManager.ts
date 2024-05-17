@@ -10,8 +10,8 @@ import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/in
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	loggerToMonitoringContext,

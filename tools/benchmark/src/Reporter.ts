@@ -33,13 +33,15 @@ SOFTWARE.
 /* eslint-disable unicorn/prefer-module */
 
 /* eslint no-console: ["error", { allow: ["log"] }] */
-import * as path from "node:path";
 import * as fs from "node:fs";
-import Table from "easy-table";
+import * as path from "node:path";
+
 import chalk from "chalk";
+import Table from "easy-table";
+
 import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
-import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
+import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
 
 interface BenchmarkResults {
 	table: Table;

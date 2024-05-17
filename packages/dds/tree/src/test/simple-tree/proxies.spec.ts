@@ -20,6 +20,7 @@ import { isTreeNode } from "../../simple-tree/proxies.js";
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
 import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../util/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -180,6 +181,7 @@ describe("SharedTreeObject", () => {
 		}));
 
 		const root = getView(config, nodeKeyManager).root;
+		type _ = requireAssignableTo<typeof root.identifier, string>;
 		assert.equal(root.identifier, id);
 	});
 });
@@ -255,20 +257,6 @@ describe("ArrayNode Proxy", () => {
 				array.length = 1;
 			});
 		}
-	});
-
-	it("Json stringify", () => {
-		// JSON.stringify uses ownKeys and getOwnPropertyDescriptor
-
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [])), "[]");
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [1, 2, 3])), "[1,2,3]");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [])), "{}");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [1, 2, 3])), `{"0":1,"1":2,"2":3}`);
-
-		assert.equal(
-			JSON.stringify(hydrate(CustomizedArray, [1, 2, 3])),
-			`{"0":1,"1":2,"2":3,"extra":"foo"}`,
-		);
 	});
 
 	describe("inserting nodes created by factory", () => {
@@ -436,56 +424,6 @@ describe("ArrayNode Proxy", () => {
 			const allowsHandles: typeof root.handles | typeof root.poly = root.poly;
 			allowsHandles.insertAtEnd(handle);
 			assert.deepEqual(root.poly, [42, "s", true, handle]);
-		});
-	});
-
-	describe("removing items", () => {
-		const _ = new SchemaFactory("test");
-		const schema = _.array(_.number);
-
-		it("removeAt()", () => {
-			const list = hydrate(schema, [0, 1, 2]);
-			assert.deepEqual(list, [0, 1, 2]);
-			list.removeAt(1);
-			assert.deepEqual(list, [0, 2]);
-		});
-
-		it("removeRange()", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-		});
-
-		it("removeRange() - all", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-			list.removeRange();
-			assert.deepEqual(list, []);
-		});
-
-		it("removeRange() - past end", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(/* start: */ 1, /* end: */ 3);
-			assert.deepEqual(list, [0, 3]);
-			list.removeRange(1, Infinity);
-			assert.deepEqual(list, [0]);
-		});
-
-		it("removeRange() - empty range", () => {
-			const list = hydrate(schema, [0, 1, 2, 3]);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-			list.removeRange(2, 2);
-			assert.deepEqual(list, [0, 1, 2, 3]);
-		});
-
-		it("removeRange() - empty list", () => {
-			const list = hydrate(schema, []);
-			assert.deepEqual(list, []);
-			assert.throws(() => list.removeRange());
 		});
 	});
 

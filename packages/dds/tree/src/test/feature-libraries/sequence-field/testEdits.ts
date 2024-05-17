@@ -11,29 +11,25 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { ChangesetLocalId, RevisionTag } from "../../../index.js";
-import { ChangeAtomId } from "../../../core/index.js";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
-
-// TODO: Remove this
-export type TestChangeset = SF.Changeset;
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
 export const cases: {
-	no_change: TestChangeset;
-	insert: TestChangeset;
-	modify: TestChangeset;
-	modify_insert: TestChangeset;
-	remove: TestChangeset;
-	revive: TestChangeset;
-	pin: TestChangeset;
-	move: TestChangeset;
-	moveAndRemove: TestChangeset;
-	return: TestChangeset;
-	transient_insert: TestChangeset;
+	no_change: SF.Changeset;
+	insert: SF.Changeset;
+	modify: SF.Changeset;
+	modify_insert: SF.Changeset;
+	remove: SF.Changeset;
+	revive: SF.Changeset;
+	pin: SF.Changeset;
+	move: SF.Changeset;
+	moveAndRemove: SF.Changeset;
+	return: SF.Changeset;
+	transient_insert: SF.Changeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, brand(1)),
@@ -138,7 +134,7 @@ function createModifyDetachedChangeset(
 
 /**
  * @param count - The number of nodes inserted.
- * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * @param cellId - The first cell to insert the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
@@ -267,7 +263,7 @@ function createMoveOutMark(
 
 /**
  * @param count - The number of nodes moved in.
- * @param cellId - The first cell to move the content into (potentially includes lineage information).
+ * @param cellId - The first cell to move the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */

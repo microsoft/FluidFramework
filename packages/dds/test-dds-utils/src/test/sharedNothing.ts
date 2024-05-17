@@ -4,12 +4,14 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 

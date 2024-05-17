@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { SharedObjectKind } from "@fluidframework/shared-object-base";
+import {
+	ISharedObjectKind,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
@@ -19,14 +23,14 @@ import { ITree } from "./simple-tree/index.js";
  * A channel factory that creates an {@link ITree}.
  */
 export class TreeFactory implements IChannelFactory<ITree> {
-	public static readonly type = "https://graph.microsoft.com/types/tree";
+	public static readonly Type = "https://graph.microsoft.com/types/tree";
 	public static readonly attributes: IChannelAttributes = {
-		type: this.type,
+		type: this.Type,
 		snapshotFormatVersion: "0.0.0",
 		packageVersion: pkgVersion,
 	};
 
-	public readonly type = TreeFactory.type;
+	public readonly type = TreeFactory.Type;
 	public readonly attributes: IChannelAttributes = TreeFactory.attributes;
 
 	public constructor(private readonly options: SharedTreeOptions) {}
@@ -36,14 +40,14 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ITree> {
-		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options, "SharedTree");
+	): Promise<SharedTreeImpl> {
+		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ITree {
-		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options, "SharedTree");
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
+		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
 	}
@@ -52,9 +56,9 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @public
+ * @alpha
  */
-export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
+export const SharedTree = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -81,15 +85,13 @@ export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
  * Maybe as part of a test utils or dev-tool package?
  * @internal
  */
-export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree> {
-	const factory = new TreeFactory(options);
-	return {
-		getFactory(): IChannelFactory<ITree> {
-			return factory;
-		},
-
-		create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
-			return runtime.createChannel(id, TreeFactory.type) as ITree;
-		},
-	};
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	class ConfiguredFactory extends TreeFactory {
+		public constructor() {
+			super(options);
+		}
+	}
+	return createSharedObjectKind<ITree>(ConfiguredFactory);
 }

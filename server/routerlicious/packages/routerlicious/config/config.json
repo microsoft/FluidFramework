@@ -28,7 +28,7 @@
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEnabled": false,
-		"expireAfterSeconds": -1,
+		"expireAfterSeconds": 9000,
 		"createCosmosDBIndexes": false,
 		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
@@ -188,7 +188,8 @@
 			"maxMessages": 500
 		},
 		"restartOnCheckpointFailure": true,
-		"enableEphemeralContainerSummaryCleanup": true
+		"enableEphemeralContainerSummaryCleanup": true,
+		"enableLeaveOpNoClientServerMetadata": false
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -217,7 +218,8 @@
 	},
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
-		"signalUsageCountingEnabled": false
+		"signalUsageCountingEnabled": false,
+		"httpUsageCountingEnabled": false
 	},
 	"shared": {
 		"transientTenants": [],
@@ -281,7 +283,11 @@
 		"enableOfflineQueue": true,
 		"enableClustering": false,
 		"retryDelayOnMoved": 100,
-		"maxRedirections": 16
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForTenantCache": {
 		"host": "redis",
@@ -294,7 +300,11 @@
 		"enableOfflineQueue": true,
 		"enableClustering": false,
 		"retryDelayOnMoved": 100,
-		"maxRedirections": 16
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redis2": {
 		"host": "redis",
@@ -307,7 +317,11 @@
 		"enableOfflineQueue": true,
 		"enableClustering": false,
 		"retryDelayOnMoved": 100,
-		"maxRedirections": 16
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -320,7 +334,11 @@
 		"enableOfflineQueue": true,
 		"enableClustering": false,
 		"retryDelayOnMoved": 100,
-		"maxRedirections": 16
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"error": {
 		"track": false,

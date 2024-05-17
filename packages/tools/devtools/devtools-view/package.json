@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -25,8 +25,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
@@ -41,7 +41,7 @@
 		"build:test:utils": "concurrently npm:build:test:utils:cjs npm:build:test:utils:esm",
 		"build:test:utils:cjs": "fluid-tsc commonjs --project ./src/test/utils/tsconfig.cjs.json",
 		"build:test:utils:esm": "fluid-tsc module --project ./src/test/utils/tsconfig.esm.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -65,7 +65,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "tsc --watch"
+		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",
@@ -91,14 +91,14 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.36.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.36.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@previewjs/api": "^13.0.0",
 		"@previewjs/chromeless": "^7.0.3",
 		"@previewjs/core": "^23.0.0",
@@ -139,7 +139,7 @@
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.1.6",
-		"vite": "^4.4.3"
+		"vite": "^4.5.2"
 	},
 	"fluid": {
 		"browser": {

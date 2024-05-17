@@ -5,13 +5,13 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -202,7 +202,7 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	protected isActive() {
-		return this.runtime.connected && this.runtime.deltaManager.active;
+		return this.runtime.connected && this.deltaManager.active;
 	}
 
 	protected async complete(acquireId: string) {

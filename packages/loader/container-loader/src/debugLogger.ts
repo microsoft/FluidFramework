@@ -9,8 +9,8 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,

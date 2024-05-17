@@ -64,7 +64,7 @@ export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAt
 
 /**
  * Attribution information associated with a change.
- * @internal
+ * @alpha
  */
 export interface AttributionInfo {
 	/**

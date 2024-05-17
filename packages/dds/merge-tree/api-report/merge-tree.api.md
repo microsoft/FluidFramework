@@ -7,12 +7,12 @@
 import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)
@@ -210,7 +210,7 @@ export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TD
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg;
 
 // @internal (undocumented)
-export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
+export function createDetachedLocalReferencePosition(slidingPreference: SlidingPreference | undefined, refType?: ReferenceType): LocalReferencePosition;
 
 // @internal @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
@@ -394,9 +394,7 @@ export interface IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
-    // (undocumented)
     readonly deltaSegments: IMergeTreeSegmentDelta[];
-    // (undocumented)
     readonly operation: TOperationType;
 }
 
@@ -481,9 +479,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeSegmentDelta {
-    // (undocumented)
     propertyDeltas?: PropertySet;
-    // (undocumented)
     segment: ISegment;
 }
 
@@ -758,7 +754,7 @@ export class PropertiesManager {
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
-    hasPendingProperties(): boolean;
+    hasPendingProperties(props: PropertySet): boolean;
     // (undocumented)
     hasPendingProperty(key: string): boolean;
 }
@@ -897,10 +893,10 @@ export enum ReferenceType {
     Transient = 256
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const refGetTileLabels: (refPos: ReferencePosition) => string[] | undefined;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean;
 
 // @internal (undocumented)
@@ -909,7 +905,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal
+// @alpha
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)

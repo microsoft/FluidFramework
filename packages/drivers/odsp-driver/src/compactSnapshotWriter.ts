@@ -85,10 +85,6 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 		if (snapshotTree.groupId !== undefined) {
 			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
 		}
-
-		if (snapshotTree.omitted !== undefined) {
-			addBoolProperty(treeNode, "omitted", snapshotTree.omitted);
-		}
 	}
 
 	if (snapshotTree.blobs) {

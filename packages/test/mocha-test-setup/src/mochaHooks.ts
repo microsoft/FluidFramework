@@ -111,6 +111,8 @@ export const mochaHooks = {
 			timedOut: this.currentTest?.timedOut,
 			testVariant,
 			hostName: pkgName,
+			error: this.currentTest?.err?.message,
+			stack: this.currentTest?.err?.stack,
 		});
 
 		console.log = log;

@@ -12,7 +12,7 @@ import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import { EncodedNodeChangeset, type FieldChangeEncodingContext } from "../modular-schema/index.js";
 
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV0.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(

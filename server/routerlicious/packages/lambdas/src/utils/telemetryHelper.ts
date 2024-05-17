@@ -21,20 +21,22 @@ import {
 /**
  * @internal
  */
-export const createSessionMetric = (
+export const createSessionMetric = <T extends string = LumberEventName>(
 	tenantId: string,
 	documentId: string,
-	lumberEventName: LumberEventName,
+	lumberEventName: T,
 	serviceConfiguration: IServiceConfiguration,
-): Lumber<any> | undefined => {
+	isEphemeralContainer: boolean = false,
+): Lumber<T> | undefined => {
 	if (!serviceConfiguration.enableLumberjack) {
-		return;
+		return undefined;
 	}
 
 	const sessionMetric = Lumberjack.newLumberMetric(lumberEventName);
 	sessionMetric?.setProperties({
 		[BaseTelemetryProperties.tenantId]: tenantId,
 		[BaseTelemetryProperties.documentId]: documentId,
+		[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 	});
 
 	return sessionMetric;

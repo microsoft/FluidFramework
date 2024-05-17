@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -11,12 +12,13 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+} from "@fluidframework/datastore-definitions/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -52,9 +54,9 @@ import {
 	DeltaRoot,
 	DeltaVisitor,
 	DetachedFieldIndex,
-	FieldKey,
 	FieldUpPath,
 	IEditableForest,
+	IForestSubscription,
 	JsonableTree,
 	Revertible,
 	RevisionInfo,
@@ -75,6 +77,10 @@ import {
 	moveToDetachedField,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type Anchor,
+	type AnchorNode,
+	type AnchorSetRootEvents,
+	type TreeStoredSchemaSubscription,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -96,14 +102,12 @@ import {
 	buildForest,
 	createMockNodeKeyManager,
 	cursorForMapTreeNode,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -121,6 +125,9 @@ import {
 	TreeCheckout,
 	TreeContent,
 	createTreeCheckout,
+	type ISharedTreeEditor,
+	type ITransaction,
+	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
@@ -129,42 +136,18 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import {
-	JsonCompatible,
-	Mutable,
-	brand,
-	disposeSymbol,
-	nestedMapFromFlatList,
-} from "../util/index.js";
+import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
 
 // Testing utilities
-
-const frozenMethod = () => {
-	assert.fail("Object is frozen");
-};
-
-function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
-	if (Object.isFrozen(object)) {
-		for (const method of methods) {
-			assert.equal(object[method], frozenMethod);
-		}
-	} else {
-		for (const method of methods) {
-			Object.defineProperty(object, method, {
-				enumerable: false,
-				configurable: false,
-				writable: false,
-				value: frozenMethod,
-			});
-		}
-	}
-}
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
  *
  * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodec: IJsonCodec<any, any, any, any> = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
@@ -173,48 +156,11 @@ export const failCodec: IJsonCodec<any, any, any, any> = {
 /**
  * A {@link ICodecFamily} implementation which fails to resolve any codec.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodecFamily: ICodecFamily<any, any> = {
 	resolve: () => assert.fail("Unexpected resolve"),
 	getSupportedFormats: () => [],
 };
-
-/**
- * Recursively freezes the given object.
- *
- * WARNING: this function mutates Map and Set instances to override their mutating methods in order to ensure that the
- * state of those instances cannot be changed. This is necessary because calling `Object.freeze` on a Set or Map does
- * not prevent it from being mutated.
- *
- * @param object - The object to freeze.
- */
-export function deepFreeze<T>(object: T): void {
-	if (object === undefined || object === null) {
-		return;
-	}
-	if (object instanceof Map) {
-		for (const [key, value] of object.entries()) {
-			deepFreeze(key);
-			deepFreeze(value);
-		}
-		freezeObjectMethods(object, ["set", "delete", "clear"]);
-	} else if (object instanceof Set) {
-		for (const key of object.keys()) {
-			deepFreeze(key);
-		}
-		freezeObjectMethods(object, ["add", "delete", "clear"]);
-	} else {
-		// Retrieve the property names defined on object
-		const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-		// Freeze properties before freezing self
-		for (const name of propNames) {
-			const value = object[name];
-			if (typeof value === "object") {
-				deepFreeze(value);
-			}
-		}
-	}
-	Object.freeze(object);
-}
 
 /**
  * Manages the creation, connection, and retrieval of SharedTrees and related components for ease of testing.
@@ -564,13 +510,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<SharedTree> {
-		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
+		const tree = await super.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = super.create(runtime, id) as SharedTree;
+		const tree = super.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}
@@ -583,7 +529,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]) {
+export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
 		const baseline = nestedMapFromFlatList(trees[0].getRemovedRoots());
 		for (const tree of trees.slice(1)) {
@@ -603,6 +549,17 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 		treeA.contentSnapshot(),
 		treeB.contentSnapshot(),
 		`id: ${treeA.id} vs id: ${treeB.id}`,
+	);
+}
+
+export function validateFuzzTreeConsistency(
+	treeA: Client<SharedTreeFactory>,
+	treeB: Client<SharedTreeFactory>,
+): void {
+	validateSnapshotConsistency(
+		treeA.channel.contentSnapshot(),
+		treeB.channel.contentSnapshot(),
+		`id: ${treeA.channel.id} vs id: ${treeB.channel.id}`,
 	);
 }
 
@@ -655,22 +612,61 @@ export function validateSnapshotConsistency(
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	assert.deepEqual(
-		treeA.tree,
-		treeB.tree,
+		prepareTreeForCompare(treeA.tree),
+		prepareTreeForCompare(treeB.tree),
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
-	// Note: removed trees are not currently GCed, which allows us to expect that all clients should share the same
+
+	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
 	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
-	const mapA = nestedMapFromFlatList(treeA.removed);
-	const mapB = nestedMapFromFlatList(treeB.removed);
+	const mapA = nestedMapFromFlatList(
+		treeA.removed.map(([key, num, children]) => [
+			key,
+			num,
+			prepareTreeForCompare([children])[0],
+		]),
+	);
+	const mapB = nestedMapFromFlatList(
+		treeB.removed.map(([key, num, children]) => [
+			key,
+			num,
+			prepareTreeForCompare([children])[0],
+		]),
+	);
 	assert.deepEqual(
 		mapA,
 		mapB,
 		`Inconsistent removed trees json representation: ${idDifferentiator}`,
 	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
+}
+
+/**
+ * Make a copy of a {@link JsonableTree} array adjusted for compatibility with `assert.deepEqual`.
+ * @remarks
+ * This replaces handles replaced with `{ Handle: absolutePath }`, and normalizes optional fields to be omitted.
+ */
+export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
+	return tree.map((node): object => {
+		const fields: Record<string, object> = {};
+		for (const [key, children] of Object.entries(node.fields ?? {})) {
+			fields[key] = prepareTreeForCompare(children);
+		}
+		const inputValue = node.value;
+		const value = isFluidHandle(inputValue)
+			? { Handle: toFluidHandleInternal(inputValue).absolutePath }
+			: inputValue;
+
+		const output: Record<string, unknown> = { ...node, value, fields };
+
+		// Normalize optional values to be omitted for cleaner diffs:
+		if (output.value === undefined) delete output.value;
+		if (Reflect.ownKeys(output.fields as object).length === 0) delete output.fields;
+
+		return output as object;
+	});
 }
 
 export function checkoutWithContent(
@@ -696,7 +692,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const view = checkoutWithContent(content, args);
@@ -704,7 +699,6 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -728,7 +722,6 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -741,12 +734,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new CheckoutFlexTreeView(
-		branch,
-		content.schema,
-		manager,
-		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
-	);
+	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
 
@@ -798,9 +786,13 @@ export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
 /**
  * Assumes `tree` is in the json domain and returns its content as a json compatible object.
  */
-export function toJsonTree(tree: ITreeCheckout): JsonCompatible[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+export function jsonTreeFromCheckout(tree: ITreeCheckout): JsonCompatible[] {
+	return jsonTreeFromForest(tree.forest);
+}
+
+export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
 	readCursor.free();
 	return copy;
@@ -841,7 +833,7 @@ export function expectJsonTree(
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
-		const roots = toJsonTree(tree);
+		const roots = jsonTreeFromCheckout(tree);
 		assert.deepEqual(roots, expected);
 	}
 	if (expectRemovedRootsAreSynchronized) {
@@ -863,7 +855,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export const mockIntoDelta = (delta: DeltaRoot) => delta;
+export const mockIntoDelta = (delta: DeltaRoot): DeltaRoot => delta;
 
 export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
@@ -882,7 +874,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
+const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
@@ -984,7 +976,7 @@ export function testChangeReceiver<TChange>(
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
-	const changeReceiver = (change: TChange) => changes.push(change);
+	const changeReceiver = (change: TChange): number => changes.push(change);
 	return [changeReceiver, () => [...changes]];
 }
 
@@ -1103,7 +1095,7 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	}
 
 	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
-	const unsubscribe = () => {
+	const unsubscribe = (): void => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
 			revertible[disposeSymbol]();
@@ -1132,7 +1124,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	onDispose?: () => void,
 	nodeKeyManager?: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
 	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
@@ -1144,7 +1135,6 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		viewSchema,
 		onDispose ?? (() => {}),
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -1183,7 +1173,7 @@ export function treeTestFactory(
 			}),
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix ?? "SharedTree",
+		options.telemetryContextPrefix,
 	);
 }
 
@@ -1197,12 +1187,78 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		nodeKeyManager ?? createMockNodeKeyManager(),
-		brand(defaultNodeKeyFieldKey),
 	);
+}
+
+/**
+ * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
+ */
+export class MockTreeCheckout implements ITreeCheckout {
+	private readonly _editor: ISharedTreeEditor | undefined;
+	public constructor(
+		public readonly forest: IForestSubscription,
+		editor?: ISharedTreeEditor,
+	) {
+		this._editor = editor;
+	}
+
+	public get storedSchema(): TreeStoredSchemaSubscription {
+		throw new Error("'storedSchema' property not implemented in MockTreeCheckout.");
+	}
+	public get editor(): ISharedTreeEditor {
+		if (this._editor === undefined) {
+			throw new Error("No editor provided to MockTreeCheckout.");
+		}
+		return this._editor;
+	}
+	public get transaction(): ITransaction {
+		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
+	}
+	public get events(): ISubscribable<CheckoutEvents> {
+		throw new Error("'events' property not implemented in MockTreeCheckout.");
+	}
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
+	}
+
+	public fork(): ITreeCheckoutFork {
+		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
+	}
+	public merge(view: unknown, disposeView?: unknown): void {
+		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
+	}
+	public rebase(view: ITreeCheckoutFork): void {
+		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
+	}
+	public updateSchema(newSchema: TreeStoredSchema): void {
+		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
+	}
+	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
+		throw new Error("Method 'getRemovedRoots' not implemented in MockTreeCheckout.");
+	}
+	public locate(anchor: Anchor): AnchorNode | undefined {
+		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
+	}
+}
+
+export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return (error: Error) => {
+		assert(error instanceof UsageError);
+		if (
+			typeof expectedErrorMsg === "string"
+				? error.message !== expectedErrorMsg
+				: !expectedErrorMsg.test(error.message)
+		) {
+			throw new Error(
+				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+			);
+		}
+		return true;
+	};
 }

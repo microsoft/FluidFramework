@@ -30,9 +30,9 @@ export interface IWebSocket {
 
 	join(id: string): Promise<void>;
 
-	emit(event: string, ...args);
+	emit(event: string, ...args): void;
 
-	emitToRoom(roomId: string, event: string, ...args: any[]);
+	emitToRoom(roomId: string, event: string, ...args: any[]): void;
 
 	disconnect(close?: boolean): void;
 }

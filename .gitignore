@@ -10,6 +10,7 @@ nyc
 # Generated Node10 module resolution compatibility files
 beta.d.ts
 internal.d.ts
+legacy.d.ts
 
 # TypeScript incremental build cache
 *.tsbuildinfo

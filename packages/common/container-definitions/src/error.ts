@@ -80,17 +80,14 @@ export interface ContainerWarning extends IErrorBase {
 /**
  * Represents errors raised on container.
  *
- * @see
+ * @remarks
  *
  * The following are commonly thrown error types, but `errorType` could be any string.
  *
- * - {@link @fluidframework/core-interfaces#ContainerErrorTypes}
+ * - {@link @fluidframework/core-interfaces#FluidErrorTypes}
  *
- * - {@link @fluidframework/driver-definitions#DriverErrorTypes}
+ * - {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)}
  *
- * - {@link @fluidframework/odsp-driver-definitions#OdspErrorTypes}
- *
- * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
  * @public
  */
 export type ICriticalContainerError = IErrorBase;

@@ -15,13 +15,9 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IRootDataObject,
-	LoadableObjectClass,
-} from "./types.js";
+import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
@@ -33,7 +29,7 @@ export type InitialObjects<T extends ContainerSchema> = {
 	//
 	// The '? TChannel : never' is required because infer can only be used in
 	// a conditional 'extends' expression.
-	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
+	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<
 		infer TChannel
 	>
 		? TChannel
@@ -172,7 +168,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
+	 * {@link @fluidframework/container-definitions#AttachState.Detached} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.attachState}.
 	 *
@@ -219,7 +215,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
 
 	/**
 	 * Dispose of the container instance, permanently disabling it.
@@ -347,7 +343,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	/**
 	 * {@inheritDoc IFluidContainer.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
+	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
 	}
 

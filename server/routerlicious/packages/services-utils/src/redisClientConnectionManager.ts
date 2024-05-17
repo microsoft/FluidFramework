@@ -16,11 +16,25 @@ export interface IRedisClientConnectionManager {
 	 * @returns The Redis client.
 	 */
 	getRedisClient(): Redis.default | Redis.Cluster;
+
+	/**
+	 * Adds an error handler to the Redis client, which will print telemetry when an error is encountered.
+	 *
+	 * @param lumberProperties - Lumber properties to be added to the telemetry.
+	 * @param errorMessage - The error message to be printed when an error is encountered.
+	 * @param additionalLoggingFunctionality - A lambda function that adds additional error handling and/or logging behavior.
+	 * If this lambda returns true it will completely override the existing error handling/logging, otherwise it will do both.
+	 */
+	addErrorHandler(
+		lumberProperties?: Record<string, any>,
+		errorMessage?: string,
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void;
 }
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
 	private client: Redis.default | Redis.Cluster | undefined;
-	private readonly redisOptions: Redis.RedisOptions;
+	private readonly redisOptions: Partial<Redis.RedisOptions & Redis.ClusterOptions>;
 	private readonly enableClustering: boolean;
 	private readonly slotsRefreshTimeout: number;
 	private readonly retryDelays: {
@@ -32,7 +46,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	};
 
 	constructor(
-		redisOptions?: Redis.RedisOptions,
+		redisOptions?: Partial<Redis.RedisOptions & Redis.ClusterOptions>,
 		redisConfig?: any,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
@@ -66,10 +80,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
+				retryStrategy: getRedisClusterRetryStrategy(redisConfig.retryStrategyParams),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -95,24 +106,54 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			}
 			this.redisOptions = redisOptions;
 		}
+
+		if (!this.redisOptions.retryStrategy) {
+			this.redisOptions.retryStrategy = getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			});
+		}
 		this.authenticateAndCreateRedisClient();
 	}
 
 	private authenticateAndCreateRedisClient(): void {
+		if (this.enableClustering) {
+			this.redisOptions.clusterRetryStrategy = this.redisOptions.retryStrategy;
+		}
+
+		const redisClusteringOptions: Partial<Redis.ClusterOptions> = {
+			redisOptions: this.redisOptions,
+			slotsRefreshTimeout: this.slotsRefreshTimeout,
+			dnsLookup: (adr, callback) => callback(null, adr),
+			showFriendlyErrorStack: true,
+			retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
+			retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
+			retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
+			retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
+			maxRedirections: this.retryDelays.maxRedirections,
+		};
+
+		// Remove password from the options objects that will be logged
+		const loggableRedisOptions = { ...this.redisOptions };
+		loggableRedisOptions.password = undefined;
+
+		const loggableClusteringOptions = { ...redisClusteringOptions };
+		loggableClusteringOptions.redisOptions = loggableRedisOptions;
+
+		const stringifiedOptions = this.enableClustering
+			? JSON.stringify(loggableClusteringOptions)
+			: JSON.stringify(loggableRedisOptions);
+
 		this.client = this.enableClustering
-			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
-					redisOptions: this.redisOptions,
-					slotsRefreshTimeout: this.slotsRefreshTimeout,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-					retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
-					retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
-					retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
-					retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
-					maxRedirections: this.retryDelays.maxRedirections,
-			  })
+			? new Redis.Cluster(
+					[{ port: this.redisOptions.port, host: this.redisOptions.host }],
+					redisClusteringOptions,
+			  )
 			: new Redis.default(this.redisOptions);
-		Lumberjack.info("Redis client created");
+		Lumberjack.info("Redis client created", {
+			["constructorOptions"]: stringifiedOptions,
+			["clusteringEnabled"]: this.enableClustering,
+		});
 	}
 
 	public getRedisClient(): Redis.default | Redis.Cluster {
@@ -120,5 +161,62 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			throw new Error("Redis client not initialized");
 		}
 		return this.client;
+	}
+
+	private redactArg(arg: string, ind: number, commandName: string): string {
+		// For some commands argument 0 is the key, meaning we can safely log it
+		const safeCommands: string[] = ["get", "set", "del", "hget", "hset", "hdel"];
+		if (ind === 0 && safeCommands.includes(commandName?.toLowerCase() ?? "")) {
+			return arg;
+		}
+
+		return arg.length.toString();
+	}
+
+	public addErrorHandler(
+		lumberProperties: Record<string, any> = {},
+		errorMessage: string = "Error with Redis",
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void {
+		if (!this.client) {
+			throw new Error("Redis client not initialized");
+		}
+
+		this.client.on("error", (error) => {
+			if (additionalLoggingFunctionality && additionalLoggingFunctionality(error)) {
+				// If the additionalLoggingFunctionality returns true, it means it has completely handled the error
+				return;
+			}
+
+			const commandName: string | undefined =
+				error.command.name ?? error.lastNodeError?.command.name;
+			const args: string[] = error.command?.args ?? error.lastNodeError?.command.args ?? [];
+
+			if (error.previousErrors) {
+				// Internally redact the previous errors of an exec command
+				lumberProperties.previousErrors = [];
+				error.previousErrors?.forEach((prevError) => {
+					if (prevError.command) {
+						const prevCommandName: string | undefined = prevError.command.name;
+						const prevArgs: string[] = prevError.command.args;
+						const prevArgsRedacted: string[] = prevArgs.map((arg, ind) =>
+							this.redactArg(arg, ind, prevCommandName ?? ""),
+						);
+						const prevErrorCopy = { ...prevError };
+						prevErrorCopy.command.args = prevArgsRedacted;
+						lumberProperties.previousErrors.push(prevErrorCopy);
+					}
+				});
+			}
+			const argSizes: string[] = args.map((arg, ind) =>
+				this.redactArg(arg, ind, commandName ?? ""),
+			);
+
+			// Set additional logging info in lumberProperties
+			lumberProperties.commandName = commandName;
+			lumberProperties.commandArgSizes = argSizes;
+
+			Lumberjack.error(errorMessage, lumberProperties, error);
+		});
 	}
 }

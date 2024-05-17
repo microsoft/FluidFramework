@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { Client } from "@fluidframework/merge-tree/internal";
 
 import {
@@ -33,7 +33,7 @@ import {
 	createSequenceInterval,
 } from "../intervals/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringClass } from "../sharedString.js";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;
@@ -95,7 +95,7 @@ interface SharedStringInternals {
 	intervalCollections: IntervalCollectionMap<SequenceInterval>;
 }
 
-export class SharedStringWithV1IntervalCollection extends SharedString {
+export class SharedStringWithV1IntervalCollection extends SharedStringClass {
 	/**
 	 * Create a new shared string.
 	 * @param runtime - data store runtime the new shared string belongs to

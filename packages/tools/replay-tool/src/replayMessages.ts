@@ -32,8 +32,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -911,15 +910,16 @@ async function assertDdsEqual(
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
 		const objectStorage = MockStorage.createFromSummary(summary);
-		const matrix = new SharedMatrix(
-			dataStoreRuntime as any,
+		const matrixFactory = SharedMatrix.getFactory();
+		const matrix = await matrixFactory.load(
+			dataStoreRuntime,
 			"1",
-			SharedMatrixFactory.Attributes,
+			{
+				deltaConnection,
+				objectStorage,
+			},
+			matrixFactory.attributes,
 		);
-		await matrix.load({
-			deltaConnection,
-			objectStorage,
-		});
 		return matrix;
 	}
 

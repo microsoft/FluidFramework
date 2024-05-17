@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { type ISharedMatrix, SharedMatrix } from "./matrix.js";
+import { type ISharedMatrix, SharedMatrix as SharedMatrixClass } from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMatrix}.
  * @alpha
+ * @deprecated - Use `SharedMatrix.getFactory` instead.
  */
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
@@ -44,14 +46,29 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedMatrix & IChannel> {
-		const matrix = new SharedMatrix(runtime, id, attributes);
+		const matrix = new SharedMatrixClass(runtime, id, attributes);
 		await matrix.load(services);
 		return matrix;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel {
-		const matrix = new SharedMatrix(document, id, this.attributes);
+		const matrix = new SharedMatrixClass(document, id, this.attributes);
 		matrix.initializeLocal();
 		return matrix;
 	}
 }
+
+/**
+ * Entrypoint for {@link ISharedMatrix} creation.
+ * @alpha
+ */
+export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
+
+/**
+ * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to
+ * SharedMatrix as a type.
+ * @alpha
+ * @privateRemarks
+ * This alias is for legacy compat from when the SharedMatrix class was exported as public.
+ */
+export type SharedMatrix<T = any> = ISharedMatrix<T>;

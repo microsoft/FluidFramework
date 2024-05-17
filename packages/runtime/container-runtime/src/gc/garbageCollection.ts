@@ -5,15 +5,16 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
-import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	gcTreeKey,
+	type IGarbageCollectionData,
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -23,11 +24,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager } from "../blobManager.js";
-import {
-	InactiveResponseHeaderKey,
-	RuntimeHeaderData,
-	TombstoneResponseHeaderKey,
-} from "../containerRuntime.js";
+import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
@@ -48,12 +45,15 @@ import {
 	ISweepPhaseStats,
 	UnreferencedState,
 	disableAutoRecoveryKey,
+	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
 	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
+	dataStoreNodePathOnly,
 	getGCDataFromSnapshot,
+	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
@@ -401,17 +401,27 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// If the GC state hasn't been initialized yet, initialize it and return.
-		if (this.gcDataFromLastRun === undefined) {
-			await this.initializeGCStateFromBaseSnapshotP;
-			return;
-		}
+		const initialized = this.gcDataFromLastRun !== undefined;
+		await PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "InitializeOrUpdateGCState",
+				details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
+			},
+			async () => {
+				// If the GC state hasn't been initialized yet, initialize it and return.
+				if (!initialized) {
+					await this.initializeGCStateFromBaseSnapshotP;
+					return;
+				}
 
-		// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
-		// reference timestamp.
-		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-			nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-		}
+				// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
+				// reference timestamp.
+				for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+					nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+				}
+			},
+		);
 	}
 
 	/**
@@ -978,30 +988,30 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
-	 * @param nodePath - The path of the node that changed.
-	 * @param reason - Whether the node was loaded or changed.
-	 * @param timestampMs - The timestamp when the node changed.
-	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
-	 * @param request - The original request for loads to preserve it in telemetry.
-	 * @param requestHeaders - If the node was loaded via request path, the headers in the request.
+	 * @param IGCNodeUpdatedProps - Details about the node and how it was updated
 	 */
-	public nodeUpdated(
-		nodePath: string,
-		reason: "Loaded" | "Changed",
-		timestampMs?: number,
-		packagePath?: readonly string[],
-		request?: IRequest,
-		headerData?: RuntimeHeaderData,
-	) {
+	public nodeUpdated({
+		node,
+		reason,
+		timestampMs,
+		packagePath,
+		request,
+		headerData,
+	}: IGCNodeUpdatedProps) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
-		const isTombstoned = this.tombstones.includes(nodePath);
+		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
+		const trackedId = node.path;
+		const isTombstoned = this.tombstones.includes(trackedId);
+		const isInactive = this.unreferencedNodesState.get(trackedId)?.state === "Inactive";
+
+		const fullPath = request !== undefined ? urlToGCNodePath(request.url) : trackedId;
 
 		// This will log if appropriate
-		this.telemetryTracker.nodeUsed({
-			id: nodePath,
+		this.telemetryTracker.nodeUsed(trackedId, {
+			id: fullPath,
 			usageType: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
@@ -1010,6 +1020,8 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
+			requestUrl: request?.url,
+			requestHeaders: JSON.stringify(request?.headers),
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
@@ -1018,17 +1030,20 @@ export class GarbageCollector implements IGarbageCollector {
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {
 			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.
-			this.triggerAutoRecovery(nodePath);
+			this.triggerAutoRecovery(fullPath);
 		}
 
-		const nodeType = this.runtime.getNodeType(nodePath);
+		const nodeType = this.runtime.getNodeType(fullPath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
-		if (reason !== "Loaded" || ![GCNodeType.Blob, GCNodeType.DataStore].includes(nodeType)) {
+		const loadedBlobOrDataStore =
+			reason === "Loaded" &&
+			(nodeType === GCNodeType.Blob || nodeType === GCNodeType.DataStore);
+		if (!loadedBlobOrDataStore) {
 			return;
 		}
 
-		const errorRequest: IRequest = request ?? { url: nodePath };
+		const errorRequest: IRequest = request ?? { url: fullPath };
 		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			throw responseToException(
@@ -1040,7 +1055,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// If the object is inactive and inactive enforcement is configured, throw an error.
-		if (this.unreferencedNodesState.get(nodePath)?.state === "Inactive") {
+		if (isInactive) {
 			const shouldThrowOnInactiveLoad =
 				!this.isSummarizerClient &&
 				this.configs.throwOnInactiveLoad === true &&
@@ -1112,22 +1127,30 @@ export class GarbageCollector implements IGarbageCollector {
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-		this.telemetryTracker.nodeUsed({
+		// GC won't recognize some subDataStore paths that we encounter (e.g. a path suited for a custom request handler)
+		// So for subDataStore paths we need to check the parent dataStore for current tombstone/inactive status.
+		const trackedId =
+			this.runtime.getNodeType(toNodePath) === "SubDataStore"
+				? dataStoreNodePathOnly(toNodePath)
+				: toNodePath;
+		this.telemetryTracker.nodeUsed(trackedId, {
 			id: toNodePath,
+			fromId: fromNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath: undefined,
 			completedGCRuns: this.completedRuns,
-			isTombstoned: this.tombstones.includes(toNodePath),
+			isTombstoned: this.tombstones.includes(trackedId),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			fromId: fromNodePath,
 			autorecovery,
 		});
 
-		// This node is referenced - Clear its unreferenced state
+		// This node is referenced - Clear its unreferenced state if present
 		// But don't delete the node id from the map yet.
 		// When generating GC stats, the set of nodes in here is used as the baseline for
 		// what was unreferenced in the last GC run.
+		// NOTE: We use toNodePath not trackedId even though it may be an unrecognized subDataStore route (hence no-op),
+		// because a reference to such a path is not sufficient to consider the DataStore referenced.
 		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
 	}
 

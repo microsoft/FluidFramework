@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/beta": {
+		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
@@ -43,7 +43,7 @@
 				"default": "./dist/intervalCollection.js"
 			}
 		},
-		"./lib/legacy": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
@@ -64,12 +64,12 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "./dist/public.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -79,11 +79,11 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints . ./lib/beta ./lib/legacy",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -105,7 +105,7 @@
 		"test:newsnapfiles": "node lib/test/createSnapshotFiles.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.fuzz.spec.*js\" -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -149,14 +149,14 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.36.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.36.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.8.0.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-rc.4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/diff": "^3.5.1",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^9.1.1",
@@ -187,10 +187,13 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IIntervalCollection": {
+			"InterfaceDeclaration_ISharedString": {
 				"backCompat": false
 			},
-			"ClassDeclaration_SharedString": {
+			"TypeAliasDeclaration_SharedString": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedStringClass": {
 				"backCompat": false
 			}
 		}

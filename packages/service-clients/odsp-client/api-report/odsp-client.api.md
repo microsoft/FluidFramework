@@ -59,8 +59,8 @@ export interface OdspContainerServices {
 // @beta
 export interface OdspMember extends IMember {
     email: string;
+    id: string;
     name: string;
-    userId: string;
 }
 
 export { TokenResponse }

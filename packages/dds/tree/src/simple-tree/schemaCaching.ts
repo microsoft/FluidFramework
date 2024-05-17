@@ -38,6 +38,7 @@ const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
 export function cachedFlexSchemaFromClassSchema(
 	schema: TreeNodeSchema,
 ): TreeNodeSchemaBase | undefined {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return (schema as any)[flexSchemaSymbol] as TreeNodeSchemaBase | undefined;
 }
 
@@ -45,9 +46,11 @@ export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
 	flex: TreeNodeSchemaBase,
 ): void {
-	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
-	assert(!(simpleNodeSchemaSymbol in flex), "flex schema already marked");
+	assert(!(flexSchemaSymbol in simple), 0x91f /* simple schema already marked */);
+	assert(!(simpleNodeSchemaSymbol in flex), 0x920 /* flex schema already marked */);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(simple as any)[flexSchemaSymbol] = flex;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(flex as any)[simpleNodeSchemaSymbol] = simple;
 }
 
@@ -85,6 +88,7 @@ export function getSimpleFieldSchema(
 	}
 
 	const fieldSchema = normalizeFieldSchema(implicitSimpleSchema);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
 	return fieldSchema;
 }

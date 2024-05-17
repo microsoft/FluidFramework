@@ -21,8 +21,11 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { GenericError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	GenericError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;

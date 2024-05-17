@@ -151,7 +151,7 @@
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
         <li>
-            <select name="API version" id="api-version" onchange="window.location.href = this.value;">
+            <select name="API version" aria-label="API version" id="api-version" onchange="window.location.href = this.value;">
                 {{ range $name, $version := $.Site.Data.versions.apiVersionOptionName }}
                     {{ $path := printf "%s%s/" $.Site.Data.versions.apiDocsDirectory $version }}
                     {{ $isCurrentVersion := strings.Contains $version $selectedApiVersion }}

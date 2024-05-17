@@ -94,6 +94,11 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
+
+	/**
+	 * If true, new content inserted into the tree should be validated against the stored schema.
+	 */
+	readonly validateSchema: boolean;
 }
 
 /**
@@ -175,7 +180,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
-	 * This allows os short friendly field keys which can ergonomically used as field names in code.
+	 * This allows us short friendly field keys which can be ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
 	public constructor(
@@ -208,10 +213,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
 	 * @param mapFields -
-	 * Allows using using the fields as a map, with the keys being
+	 * Allows using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 * Usually `FieldKind.Value` should NOT be used here
-	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
+	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
 	public constructor(public readonly mapFields: TreeFieldStoredSchema) {
@@ -258,7 +263,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => {
+	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));

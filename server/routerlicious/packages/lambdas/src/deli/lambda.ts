@@ -217,6 +217,11 @@ export interface IDeliLambdaEvents extends IEvent {
 	 * Emitted when the lambda is closing.
 	 */
 	(event: "close", listener: (type: LambdaCloseType) => void);
+
+	/**
+	 * NoClient message received
+	 */
+	(event: "noClient", listener: () => void);
 }
 
 /**
@@ -665,6 +670,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = true;
 			}
+
+			// No clients in the session, since Deli get NoClient message it sends itself, emit no client event
+			this.emit("noClient");
 		}
 
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
@@ -870,9 +878,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				this.documentId,
 				LumberEventName.SessionResult,
 				this.serviceConfiguration,
-			);
-			this.sessionMetric?.setProperty(
-				CommonProperties.isEphemeralContainer,
 				isEphemeralContainer,
 			);
 		}

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FlexMapNodeSchema,
 	FlexTreeMapNode,
 	FlexTreeNode,
+	FlexTreeNodeSchema,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
-	isFlexTreeNode,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -20,7 +20,7 @@ import {
 	markContentType,
 	prepareContentForInsert,
 } from "./proxies.js";
-import { getFlexNode, setFlexNode } from "./proxyBinding.js";
+import { getFlexNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -29,11 +29,11 @@ import {
 	TreeNodeSchemaClass,
 	WithType,
 	TreeNodeSchema,
-	InsertableTypedNode,
 	TreeNodeFromImplicitAllowedTypes,
+	type,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeNode } from "./types.js";
+import { TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, nodeContent, rawError } from "./rawNode.js";
 
@@ -76,200 +76,154 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	delete(key: string): void;
 }
 
-// #region Create dispatch map for maps
-
-export const mapStaticDispatchMap: PropertyDescriptorMap = {
-	[Symbol.iterator]: {
-		value(this: TreeMapNode) {
-			return this.entries();
-		},
+const handler: ProxyHandler<TreeMapNode> = {
+	getPrototypeOf: () => {
+		return Map.prototype;
 	},
-	delete: {
-		value(this: TreeMapNode, key: string): void {
-			const node = getFlexNode(this);
-			node.delete(key);
-		},
-	},
-	entries: {
-		*value(this: TreeMapNode): IterableIterator<[string, unknown]> {
-			const node = getFlexNode(this);
-			for (const key of node.keys()) {
-				yield [key, getProxyForField(node.getBoxed(key))];
-			}
-		},
-	},
-	get: {
-		value(this: TreeMapNode, key: string): unknown {
-			const node = getFlexNode(this);
-			const field = node.getBoxed(key);
-			return getProxyForField(field);
-		},
-	},
-	has: {
-		value(this: TreeMapNode, key: string): boolean {
-			const node = getFlexNode(this);
-			return node.has(key);
-		},
-	},
-	keys: {
-		value(this: TreeMapNode): IterableIterator<string> {
-			const node = getFlexNode(this);
-			return node.keys();
-		},
-	},
-	set: {
-		value(
-			this: TreeMapNode,
-			key: string,
-			value: InsertableTypedNode<TreeNodeSchema>,
-		): TreeMapNode {
-			const node = getFlexNode(this);
-			const content = prepareContentForInsert(
-				value as InsertableContent,
-				node.context.forest,
-			);
-
-			const classSchema = getSimpleNodeSchema(node.schema);
-			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
-
-			node.set(key, cursor);
-			return this;
-		},
-	},
-	size: {
-		get(this: TreeMapNode) {
-			return getFlexNode(this).size;
-		},
-	},
-	values: {
-		*value(this: TreeMapNode): IterableIterator<unknown> {
-			for (const [, value] of this.entries()) {
-				yield value;
-			}
-		},
-	},
-	forEach: {
-		value(
-			this: TreeMapNode,
-			callbackFn: (value: unknown, key: string, map: ReadonlyMap<string, unknown>) => void,
-			thisArg?: any,
-		): void {
-			if (thisArg === undefined) {
-				// We can't pass `callbackFn` to `FlexTreeMapNode` directly, or else the third argument ("map") will be a flex node instead of the proxy.
-				getFlexNode(this).forEach((v, k, _) => callbackFn(v, k, this), thisArg);
-			} else {
-				const boundCallbackFn = callbackFn.bind(thisArg);
-				getFlexNode(this).forEach((v, k, _) => boundCallbackFn(v, k, this), thisArg);
-			}
-		},
-	},
-	// TODO: add `clear` once we have established merge semantics for it.
 };
 
-const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
+abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
+	Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
+> {
+	public static readonly kind = NodeKind.Map;
 
-// #endregion
+	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+		return this.entries();
+	}
+	public delete(key: string): void {
+		const node = getFlexNode(this);
+		node.delete(key);
+	}
+	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+		const node = getFlexNode(this);
+		for (const key of node.keys()) {
+			yield [
+				key,
+				getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+			];
+		}
+	}
+	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
+		const node = getFlexNode(this);
+		const field = node.getBoxed(key);
+		return getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+	}
+	public has(key: string): boolean {
+		const node = getFlexNode(this);
+		return node.has(key);
+	}
+	public keys(): IterableIterator<string> {
+		const node = getFlexNode(this);
+		return node.keys();
+	}
+	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
+		const node = getFlexNode(this);
+		const content = prepareContentForInsert(
+			value as InsertableContent,
+			node.context.checkout.forest,
+		);
 
-/**
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `new Map()` is used for the target and a separate object created to dispatch map methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide the map functionality from {@link mapPrototype}.
- */
-export function createMapProxy(
-	allowAdditionalProperties: boolean,
-	customTargetObject?: object,
-): TreeMapNode {
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
-	const dispatch: object =
-		customTargetObject ??
-		Object.create(mapPrototype, {
-			// Empty - JavaScript Maps do not expose any "own" properties.
-		});
-	const targetObject: object = customTargetObject ?? new Map<string, TreeNode>();
+		const classSchema = getSimpleNodeSchema(node.schema);
+		const cursor = cursorFromNodeData(
+			content,
+			classSchema.info as ImplicitAllowedTypes,
+			node.context.nodeKeyManager,
+			getSchemaAndPolicy(node),
+		);
 
-	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
-	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy<TreeMapNode>(targetObject as TreeMapNode, {
-		get: (target, key, receiver): unknown => {
-			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(dispatch, key, proxy);
-		},
-		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
-			return Reflect.getOwnPropertyDescriptor(dispatch, key);
-		},
-		has: (target, key) => {
-			return Reflect.has(dispatch, key);
-		},
-		set: (target, key, newValue): boolean => {
-			return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
-		},
-		ownKeys: (target) => {
-			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
-			return [];
-		},
-	});
-	return proxy;
+		node.set(key, cursor);
+		return this;
+	}
+	public get size(): number {
+		return getFlexNode(this).size;
+	}
+	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		for (const [, value] of this.entries()) {
+			yield value;
+		}
+	}
+	public forEach<TThis extends TreeMapNode<T>>(
+		this: TThis,
+		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
+		thisArg?: unknown,
+	): void {
+		for (const field of getFlexNode(this).boxedIterator()) {
+			const node = getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+			callbackFn.call(thisArg, node, field.key, this);
+		}
+	}
+	// TODO: add `clear` once we have established merge semantics for it.
 }
 
 /**
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
- * @param name - Unique identifier for this schema including the factory's scope.
+ * @param base - base schema type to extend.
+ * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 >(
-	base: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Map,
-		TreeNode & WithType<TName>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		ImplicitlyConstructable,
-		T
-	>,
-	customizable: boolean,
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
+	useMapPrototype: boolean,
 ) {
-	class schema extends base {
-		public constructor(
-			input: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		) {
-			super(input);
+	let flexSchema: FlexMapNodeSchema;
 
-			const proxyTarget = customizable ? this : undefined;
+	class schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+		public static override prepareInstance<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			flexNode: FlexTreeNode,
+		): TreeNodeValid<T2> {
+			if (useMapPrototype) {
+				return new Proxy<schema>(instance as schema, handler);
+			}
+			return instance;
+		}
 
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexMapNodeSchema, "invalid flex schema");
-			const flexNode: FlexTreeNode = isFlexTreeNode(input)
-				? input
-				: new RawMapNode(
-						flexSchema,
-						copyContent(flexSchema.name, input) as ReadonlyMap<
-							string,
-							InsertableContent
-						>,
-				  );
+		public static override buildRawNode<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			input: T2,
+		): RawTreeNode<FlexTreeNodeSchema, unknown> {
+			return new RawMapNode(
+				flexSchema,
+				copyContent(
+					flexSchema.name,
+					input as Iterable<[string, InsertableContent]>,
+				) as ReadonlyMap<string, InsertableContent>,
+			);
+		}
 
-			const proxy: TreeNode = createMapProxy(customizable, proxyTarget);
-			setFlexNode(proxy, flexNode);
-			return proxy as unknown as schema;
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
+		}
+
+		public static readonly identifier = identifier;
+		public static readonly info = info;
+		public static readonly implicitlyConstructable: ImplicitlyConstructable =
+			implicitlyConstructable;
+
+		public get [type](): TName {
+			return identifier;
 		}
 	}
-
-	// Setup map functionality
-	Object.defineProperties(schema.prototype, mapStaticDispatchMap);
-
-	return schema as TreeNodeSchemaClass<
+	const schemaErased: TreeNodeSchemaClass<
 		TName,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<TName>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 		ImplicitlyConstructable,
 		T
-	>;
+	> = schema;
+	return schemaErased;
 }
 
 /**
@@ -305,7 +259,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		throw rawError("Iterating maps with forEach");
 	}

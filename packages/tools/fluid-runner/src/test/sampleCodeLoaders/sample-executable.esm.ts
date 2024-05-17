@@ -6,6 +6,6 @@
 
 import { fluidExport } from "./sampleCodeLoader.js";
 
-import { fluidRunner } from "@fluidframework/fluid-runner";
+import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 
 await fluidRunner(fluidExport);

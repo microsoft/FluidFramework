@@ -12,7 +12,7 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
@@ -71,10 +71,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export interface ContainerDevtoolsFeatureFlags {
-    // @deprecated
-    "container-data"?: boolean;
-    "containerDataEditing"?: boolean;
-    "containerDataVisualization"?: boolean;
+    containerDataEditing?: boolean;
+    containerDataVisualization?: boolean;
 }
 
 // @internal
@@ -89,7 +87,7 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @beta
+// @alpha
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -246,7 +244,7 @@ export const EditType: {
 // @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @beta
+// @alpha
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -387,7 +385,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @beta
+// @alpha
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -408,7 +406,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @beta
+// @alpha
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal

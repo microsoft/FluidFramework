@@ -9,7 +9,7 @@ import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
@@ -21,12 +21,12 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
+import { IProvideFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
@@ -34,6 +34,7 @@ import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-defi
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils/internal';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
@@ -84,6 +85,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
+// @internal
+export function createDataObjectKind<T extends new (...any: any[]) => DataObject>(factory: T): T & SharedObjectKind<InstanceType<T>>;
+
 // @alpha
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
@@ -122,11 +126,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
-    get handle(): IFluidHandle<this>;
+    get handle(): IFluidHandleInternal<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
-    get IFluidHandle(): IFluidHandle<this>;
+    get IFluidHandle(): IFluidHandleInternal<this>;
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)

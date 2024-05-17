@@ -7,22 +7,6 @@
 import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
 import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
-import { IAudience } from '@fluidframework/container-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-
-// @internal
-export class Attributor implements IAttributor {
-    constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
-    // (undocumented)
-    entries(): IterableIterator<[number, AttributionInfo]>;
-    getAttributionInfo(key: number): AttributionInfo;
-    // (undocumented)
-    protected readonly keyToInfo: Map<number, AttributionInfo>;
-    // (undocumented)
-    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
-}
 
 // @internal
 export function createRuntimeAttributor(): IRuntimeAttributor;
@@ -60,11 +44,6 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 
 // @internal
 export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
-
-// @internal
-export class OpStreamAttributor extends Attributor implements IAttributor {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
-}
 
 // (No @packageDocumentation comment for this package)
 

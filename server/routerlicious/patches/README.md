@@ -7,4 +7,7 @@ The files in this folder are patches for packages we depend on within the repo. 
 
 Each patch is described here, along with any relevant links to issues or PRs and any additional relevant details.
 
-**TODO: add patched dependency descriptions here as sub-headings as needed. There are currently none in this directory.**
+### @microsoft/api-extractor
+
+We have patched our dependency on `@microsoft/api-extractor` in order to ensure we can validate release tag compatibility across package boundaries.
+It is a mitigation of [issue 4430](https://github.com/microsoft/rushstack/issues/4430).

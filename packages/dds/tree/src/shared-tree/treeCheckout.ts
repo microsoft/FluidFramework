@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,
@@ -29,6 +29,7 @@ import {
 	TreeStoredSchemaRepository,
 	TreeStoredSchemaSubscription,
 	combineVisitors,
+	makeAnonChange,
 	makeDetachedFieldIndex,
 	rebaseChange,
 	tagChange,
@@ -430,15 +431,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const getRevertible = hasSchemaChange(change)
 				? undefined
 				: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
-						assert(
-							withinEventContext,
-							0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
-						);
-						assert(
-							this.revertibleCommitBranches.get(revision) === undefined,
-							0x903 /* cannot get the revertible more than once */,
-						);
-
+						if (!withinEventContext) {
+							throw new UsageError(
+								"Cannot get a revertible outside of the context of a commitApplied event.",
+							);
+						}
+						if (this.revertibleCommitBranches.get(revision) !== undefined) {
+							throw new UsageError(
+								"Cannot generate the same revertible more than once. Note that this can happen when multiple commitApplied event listeners are registered.",
+							);
+						}
 						const revertibleCommits = this.revertibleCommitBranches;
 						const revertible: DisposableRevertible = {
 							get status(): RevertibleStatus {
@@ -448,10 +450,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									: RevertibleStatus.Valid;
 							},
 							revert: (release: boolean = true) => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									0x904 /* a disposed revertible cannot be reverted */,
-								);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to revert a revertible that has been disposed.",
+									);
+								}
 								this.revertRevertible(revision, data.kind);
 								if (release) {
 									revertible[disposeSymbol]();
@@ -459,10 +462,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							},
 							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									"a disposed revertible cannot be disposed",
-								);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to dispose a revertible that has already been disposed.",
+									);
+								}
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
 							},
@@ -489,7 +493,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private checkNotDisposed(): void {
-		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
+		assert(!this.isDisposed, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -575,13 +579,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				cursor,
 			);
 			const tree = jsonableTreeFromCursor(cursor);
-			if (tree !== undefined) {
-				// This method is used for tree consistency comparison.
-				const { major, minor } = id;
-				const finalizedMajor =
-					major !== undefined ? this.revisionTagCodec.encode(major) : major;
-				trees.push([finalizedMajor, minor, tree]);
-			}
+			// This method is used for tree consistency comparison.
+			const { major, minor } = id;
+			const finalizedMajor =
+				major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
 		return trees;
@@ -600,34 +602,34 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
-		assert(
-			!this.branch.isTransacting(),
-			0x7cb /* Undo is not yet supported during transactions */,
-		);
+		if (this.branch.isTransacting()) {
+			throw new UsageError("Undo is not yet supported during transactions.");
+		}
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
 
-		let change = this.changeFamily.rebaser.invert(
-			tagChange(commitToRevert.change, revision),
-			false,
+		let change = makeAnonChange(
+			this.changeFamily.rebaser.invert(tagChange(commitToRevert.change, revision), false),
 		);
 
 		const headCommit = this.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
-			change = rebaseChange(
-				this.changeFamily.rebaser,
-				change,
-				commitToRevert,
-				headCommit,
-				this.mintRevisionTag,
+			change = makeAnonChange(
+				rebaseChange(
+					this.changeFamily.rebaser,
+					change,
+					commitToRevert,
+					headCommit,
+					this.mintRevisionTag,
+				),
 			);
 		}
 
 		this.branch.apply(
-			change,
+			change.change,
 			this.mintRevisionTag(),
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo

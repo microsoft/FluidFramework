@@ -7,19 +7,24 @@ import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
 import {
-	AsyncGenerator,
-	Generator,
+	type AsyncGenerator,
+	type Generator,
 	combineReducers,
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import {
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
-import { ISharedMap, MapFactory } from "../../index.js";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
+import { type ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -49,14 +54,12 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
 		if (isObject(aVal) === true) {
-			const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
 			assert(
 				isObject(bVal),
 				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
 			);
-			const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
-			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
-			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+			const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+			const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
 			assert.equal(
 				aHandle,
 				bHandle,
@@ -131,7 +134,7 @@ describe("Map fuzz tests", () => {
 		factory: new MapFactory(),
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: assertMapsAreEquivalent,
+		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 	};
 
 	createDDSFuzzSuite(model, {

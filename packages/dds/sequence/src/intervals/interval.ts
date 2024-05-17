@@ -89,7 +89,7 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 		return serializedInterval;
 	}

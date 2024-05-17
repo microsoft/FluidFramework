@@ -50,7 +50,7 @@ export class OpGroupingManager {
 	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		assert(this.shouldGroup(batch), "cannot group the provided batch");
+		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -96,7 +96,7 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
 		let fakeCsn = 1;

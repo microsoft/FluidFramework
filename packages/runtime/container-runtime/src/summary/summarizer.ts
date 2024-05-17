@@ -4,11 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 	createChildLogger,
@@ -98,7 +98,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
-		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "Summarizer" });
+		this.logger = createChildLogger({
+			logger: this.runtime.baseLogger,
+			namespace: "Summarizer",
+		});
 	}
 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {

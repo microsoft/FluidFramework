@@ -6,16 +6,16 @@
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
+	ITelemetryContext,
 	IFluidDataStoreContext,
+	IGarbageCollectionData,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelServiceEndpoints,

@@ -10,7 +10,7 @@ export function getUrlAndHeadersWithAuth(
 	token: string,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): { url: string; headers: { [index: string]: string } } {
-	assert(token.length > 0, "should be token");
+	assert(token.length > 0, 0x936 /* should be token */);
 
 	if (!forceAccessTokenViaAuthorizationHeader) {
 		// Pass access token via query string: this will make request be treated as 'simple' request

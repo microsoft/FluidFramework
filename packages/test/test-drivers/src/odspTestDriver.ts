@@ -10,7 +10,7 @@ import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitio
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
@@ -41,7 +41,7 @@ interface IOdspTestLoginInfo {
 	supportsBrowserAuth?: boolean;
 }
 
-type TokenConfig = IOdspTestLoginInfo & IClientConfig;
+type TokenConfig = IOdspTestLoginInfo & IPublicClientConfig;
 
 interface IOdspTestDriverConfig extends TokenConfig {
 	directory: string;
@@ -265,7 +265,7 @@ export class OdspTestDriver implements ITestDriver {
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
-		config: IOdspTestLoginInfo & IClientConfig,
+		config: IOdspTestLoginInfo & IPublicClientConfig,
 	) {
 		const host = new URL(options.siteUrl).host;
 

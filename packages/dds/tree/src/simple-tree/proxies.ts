@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
@@ -20,7 +21,6 @@ import {
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeTypedField,
-	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
@@ -87,7 +87,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		}
 		case FieldKinds.identifier: {
 			const identifier = field.boxedAt(0);
-			assert(identifier !== undefined, "identifier must exist");
+			assert(identifier !== undefined, 0x91a /* identifier must exist */);
 			return getOrCreateNodeProxy(identifier);
 		}
 
@@ -104,7 +104,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 
 	const schema = flexNode.schema;
 	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, "node without schema");
+	assert(classSchema !== undefined, 0x91b /* node without schema */);
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
 		return new simpleSchema(flexNode);
