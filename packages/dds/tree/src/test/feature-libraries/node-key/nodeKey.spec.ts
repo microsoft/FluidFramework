@@ -17,7 +17,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { ISharedTree } from "../../../shared-tree/index.js";
 import { TestTreeProvider } from "../../utils.js";
-import { MockNodeKeyManager } from "../../MockNodeKeyManager.js";
+import { MockNodeKeyManager } from "../../nodeKeyManager.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.

@@ -51,7 +51,7 @@ import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
 import { contextWithContentReadonly } from "./utils.js";
-import { MockNodeKeyManager } from "../../MockNodeKeyManager.js";
+import { MockNodeKeyManager } from "../../nodeKeyManager.js";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {

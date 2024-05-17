@@ -47,7 +47,7 @@ import {
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 } from "../../utils.js";
-import { MockNodeKeyManager } from "../../MockNodeKeyManager.js";
+import { MockNodeKeyManager } from "../../nodeKeyManager.js";
 
 const options = {
 	jsonValidator: typeboxValidator,

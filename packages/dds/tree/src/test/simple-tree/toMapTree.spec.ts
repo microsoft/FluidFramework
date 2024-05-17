@@ -39,7 +39,7 @@ import {
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 import { createNodeKeyManager } from "../../feature-libraries/index.js";
-import { MockNodeKeyManager } from "../MockNodeKeyManager.js";
+import { MockNodeKeyManager } from "../nodeKeyManager.js";
 
 describe.only("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;

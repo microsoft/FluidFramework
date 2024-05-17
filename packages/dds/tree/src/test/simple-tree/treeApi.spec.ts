@@ -30,7 +30,7 @@ import {
 } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
-import { MockNodeKeyManager } from "../MockNodeKeyManager.js";
+import { MockNodeKeyManager } from "../nodeKeyManager.js";
 
 const schema = new SchemaFactory("com.example");
 
