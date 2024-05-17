@@ -4,12 +4,12 @@
  */
 
 import type {
-	IDisposable,
 	IErrorBase,
 	IErrorEvent,
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientConfiguration,

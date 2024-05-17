@@ -7,7 +7,6 @@ import type { AttachState, IAudience } from "@fluidframework/container-definitio
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
-	IDisposable,
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
@@ -18,6 +17,7 @@ import type {
 import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
+	IDisposable,
 } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";

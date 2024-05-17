@@ -4,12 +4,12 @@
  */
 
 import type {
-	IDisposable,
 	IErrorEvent,
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import type {
 	ConnectionMode,
 	IClient,

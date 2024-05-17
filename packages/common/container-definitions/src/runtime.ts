@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	FluidObject,
-	IDisposable,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentStorageService,
 	ISnapshot,

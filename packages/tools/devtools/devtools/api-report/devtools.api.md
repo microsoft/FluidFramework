@@ -8,7 +8,7 @@ import { ContainerKey } from '@fluidframework/devtools-core/internal';
 import { createDevtoolsLogger } from '@fluidframework/devtools-core/internal';
 import { HasContainerKey } from '@fluidframework/devtools-core/internal';
 import { IDevtoolsLogger } from '@fluidframework/devtools-core/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 
 // @beta

@@ -47,7 +47,7 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
-// @public
+// @beta
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;

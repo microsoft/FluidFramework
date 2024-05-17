@@ -8,7 +8,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';

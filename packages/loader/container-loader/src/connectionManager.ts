@@ -6,7 +6,8 @@
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,

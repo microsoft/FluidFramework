@@ -21,7 +21,7 @@ import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-defin
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions/internal';
 import { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IEnvelope } from '@fluidframework/runtime-definitions/internal';
@@ -41,7 +41,7 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';

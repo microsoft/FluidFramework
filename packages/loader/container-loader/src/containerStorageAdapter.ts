@@ -5,7 +5,7 @@
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,

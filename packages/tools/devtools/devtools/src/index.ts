@@ -19,7 +19,8 @@
  */
 
 import { type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IDisposable, type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IDisposable } from "@fluidframework/core-interfaces/internal";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,

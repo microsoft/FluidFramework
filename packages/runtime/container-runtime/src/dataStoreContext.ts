@@ -8,13 +8,12 @@ import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
-	IDisposable,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal, IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
@@ -34,7 +33,6 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -57,6 +55,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,

@@ -6,26 +6,14 @@
 
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import type { IClientDetails } from '@fluidframework/protocol-definitions';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces/internal';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
@@ -38,11 +26,6 @@ import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import type { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
@@ -110,19 +93,6 @@ export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionS
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
-// @alpha
-export const ContainerErrorTypes: {
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
-    readonly usageError: "usageError";
-};
-
-// @alpha
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
-
 // @public
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly SharedObjectKind[];
@@ -136,43 +106,8 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-// @alpha @sealed
-export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
-    static readonly Type = "https://graph.microsoft.com/types/directory";
-    get type(): string;
-}
-
 // @public
 export const disposeSymbol: unique symbol;
-
-// @alpha
-export const DriverErrorTypes: {
-    readonly genericNetworkError: "genericNetworkError";
-    readonly authorizationError: "authorizationError";
-    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
-    readonly offlineError: "offlineError";
-    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
-    readonly writeError: "writeError";
-    readonly fetchFailure: "fetchFailure";
-    readonly fetchTokenError: "fetchTokenError";
-    readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
-    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection";
-    readonly fluidInvalidSchema: "fluidInvalidSchema";
-    readonly fileIsLocked: "fileIsLocked";
-    readonly outOfStorageError: "outOfStorageError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly usageError: "usageError";
-};
-
-// @alpha
-export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -217,97 +152,14 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @alpha
-export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
-    // (undocumented)
-    readonly errorType: string;
-    scenarioName?: string;
-}
-
 // @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
 }
 
-// @alpha
-export interface IConnectionDetails {
-    checkpointSequenceNumber: number | undefined;
-    // (undocumented)
-    claims: ITokenClaims;
-    clientId: string;
-    // (undocumented)
-    serviceConfiguration: IClientConfiguration;
-}
-
 // @public
 export type ICriticalContainerError = IErrorBase;
-
-// @alpha @sealed
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
-    readonly active: boolean;
-    readonly clientDetails: IClientDetails;
-    readonly hasCheckpointSequenceNumber: boolean;
-    // @deprecated
-    readonly inbound: IDeltaQueue<T>;
-    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
-    readonly initialSequenceNumber: number;
-    readonly lastKnownSeqNumber: number;
-    readonly lastMessage: ISequencedDocumentMessage | undefined;
-    readonly lastSequenceNumber: number;
-    readonly maxMessageSize: number;
-    readonly minimumSequenceNumber: number;
-    // @deprecated
-    readonly outbound: IDeltaQueue<U[]>;
-    // (undocumented)
-    readonly readOnlyInfo: ReadOnlyInfo;
-    readonly serviceConfiguration: IClientConfiguration | undefined;
-    submitSignal(content: any, targetClientId?: string): void;
-    readonly version: string;
-}
-
-// @alpha @sealed
-export interface IDeltaManagerEvents extends IEvent {
-    // @deprecated (undocumented)
-    (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
-    // @deprecated (undocumented)
-    (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
-    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
-    (event: "pong", listener: (latency: number) => void): any;
-    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
-    (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
-        reason: string;
-        error?: IErrorBase;
-    }) => void): any;
-}
-
-// @alpha @sealed
-export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable_2 {
-    idle: boolean;
-    length: number;
-    pause(): Promise<void>;
-    paused: boolean;
-    peek(): T | undefined;
-    resume(): void;
-    toArray(): T[];
-    waitTillProcessingDone(): Promise<{
-        count: number;
-        duration: number;
-    }>;
-}
-
-// @alpha @sealed
-export interface IDeltaQueueEvents<T> extends IErrorEvent {
-    (event: "push", listener: (task: T) => void): any;
-    (event: "op", listener: (task: T) => void): any;
-    (event: "idle", listener: (count: number, duration: number) => void): any;
-}
-
-// @alpha @sealed
-export interface IDeltaSender {
-    flush(): void;
-}
 
 // @alpha
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
@@ -342,15 +194,6 @@ export interface IDisposable {
     [disposeSymbol](): void;
 }
 
-// @alpha
-export interface IDriverErrorBase {
-    canRetry: boolean;
-    endpointReached?: boolean;
-    readonly errorType: DriverErrorTypes;
-    readonly message: string;
-    online?: string;
-}
-
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(props?: ContainerAttachProps): Promise<string>;
@@ -372,14 +215,6 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
-}
-
-// @alpha (undocumented)
-export interface IFluidSerializer {
-    decode(input: any): any;
-    encode(value: any, bind: IFluidHandle): any;
-    parse(value: string): any;
-    stringify(value: any, bind: IFluidHandle): string;
 }
 
 // @alpha
@@ -729,16 +564,6 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 export interface MakeNominal {
 }
 
-// @alpha @sealed
-export class MapFactory implements IChannelFactory<ISharedMap> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    get type(): string;
-}
-
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
@@ -783,17 +608,6 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 // @public
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
-};
-
-// @alpha (undocumented)
-export type ReadOnlyInfo = {
-    readonly readonly: false | undefined;
-} | {
-    readonly readonly: true;
-    readonly forced: boolean;
-    readonly permissions: boolean | undefined;
-    readonly storageOnly: boolean;
-    readonly storageOnlyReason?: string;
 };
 
 // @public
@@ -958,58 +772,6 @@ export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind_2<IShar
 
 // @alpha
 export type SharedMap = ISharedMap;
-
-// @alpha
-export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
-    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
-    protected processGCDataCore(serializer: IFluidSerializer): void;
-    // (undocumented)
-    protected get serializer(): IFluidSerializer;
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
-    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
-}
-
-// @alpha
-export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected abstract applyStashedOp(content: any): void;
-    // (undocumented)
-    readonly attributes: IChannelAttributes;
-    bindToContext(): void;
-    connect(services: IChannelServices): void;
-    get connected(): boolean;
-    protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    protected didAttach(): void;
-    protected dirty(): void;
-    emit(event: EventEmitterEventType, ...args: any[]): boolean;
-    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
-    readonly handle: IFluidHandleInternal;
-    protected handleDecoded(decodedHandle: IFluidHandle): void;
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    get IFluidLoadable(): this;
-    initializeLocal(): void;
-    protected initializeLocalCore(): void;
-    isAttached(): boolean;
-    load(services: IChannelServices): Promise<void>;
-    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
-    protected readonly logger: ITelemetryLoggerExt;
-    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
-    protected onConnect(): void;
-    protected abstract onDisconnect(): any;
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected runtime: IFluidDataStoreRuntime;
-    protected abstract get serializer(): IFluidSerializer;
-    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-}
 
 // @public
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {

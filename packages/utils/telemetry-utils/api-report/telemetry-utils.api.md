@@ -8,7 +8,7 @@ import { ConfigTypes } from '@fluidframework/core-interfaces';
 import type { EventEmitter } from '@fluid-internal/client-utils';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces/internal';

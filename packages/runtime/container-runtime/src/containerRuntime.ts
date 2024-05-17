@@ -8,8 +8,8 @@ import {
 	AttachState,
 	IAudience,
 	ISelf,
-	ICriticalContainerError,
 	type IAudienceEvents,
+	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -70,7 +70,6 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -88,6 +87,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

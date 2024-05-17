@@ -7,19 +7,18 @@ import type { AttachState, IAudience } from "@fluidframework/container-definitio
 import type {
 	IFluidHandle,
 	FluidObject,
-	IDisposable,
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
 	ErasedType,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext, IDisposable } from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 

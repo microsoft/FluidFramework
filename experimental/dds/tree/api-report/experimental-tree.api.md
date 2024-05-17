@@ -10,7 +10,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions/intern
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';

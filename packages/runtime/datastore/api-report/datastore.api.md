@@ -23,7 +23,7 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';

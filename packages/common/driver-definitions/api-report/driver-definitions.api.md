@@ -8,7 +8,7 @@ import type { ConnectionMode } from '@fluidframework/protocol-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';

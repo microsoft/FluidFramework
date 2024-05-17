@@ -8,7 +8,7 @@ import type { AttachState } from '@fluidframework/container-definitions';
 import type { ErasedType } from '@fluidframework/core-interfaces';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
@@ -17,7 +17,7 @@ import type { IFluidHandleContext } from '@fluidframework/core-interfaces/intern
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';

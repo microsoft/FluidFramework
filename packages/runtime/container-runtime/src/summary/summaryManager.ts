@@ -4,12 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IDisposable,
-	IEvent,
-	IEventProvider,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {

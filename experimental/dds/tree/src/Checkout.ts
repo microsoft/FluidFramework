@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
 	ITelemetryLoggerExt,

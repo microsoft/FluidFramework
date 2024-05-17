@@ -4,11 +4,11 @@
  */
 
 import type {
-	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import type {
 	ISharedObject,
 	ISharedObjectEvents,

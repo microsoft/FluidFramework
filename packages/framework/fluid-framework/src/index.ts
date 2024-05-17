@@ -58,23 +58,6 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 // ===============================================================
 // Legacy exports
 
-export {
-	ContainerErrorTypes,
-	type IDeltaManager,
-	type IDeltaManagerEvents,
-	type IDeltaSender,
-	type IDeltaQueue,
-	type ReadOnlyInfo,
-	type IConnectionDetails,
-	type IDeltaQueueEvents,
-} from "@fluidframework/container-definitions/internal";
-
-export type {
-	IAnyDriverError,
-	IDriverErrorBase,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions/internal";
-
 export type {
 	IDirectory,
 	IDirectoryEvents,
@@ -86,12 +69,7 @@ export type {
 	IValueChanged,
 } from "@fluidframework/map/internal";
 
-export {
-	DirectoryFactory,
-	MapFactory,
-	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map/internal";
+export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 
 export type {
 	DeserializeCallback,
@@ -110,6 +88,7 @@ export type {
 	SequencePlace,
 	SharedStringSegment,
 	Side,
+	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export {
@@ -119,13 +98,9 @@ export {
 	SequenceInterval,
 	SequenceMaintenanceEvent,
 	SharedString,
-	type ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export type {
-	SharedObject,
-	IFluidSerializer,
-	SharedObjectCore,
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";

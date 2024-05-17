@@ -8,7 +8,7 @@ import { DataObject } from '@fluidframework/aqueduct/internal';
 import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { Jsonable } from '@fluidframework/datastore-definitions/internal';
 
 // @internal

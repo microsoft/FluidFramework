@@ -9,7 +9,7 @@ import type { IAnyDriverError } from '@fluidframework/driver-definitions/interna
 import type { IClient } from '@fluidframework/protocol-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IErrorBase } from '@fluidframework/core-interfaces/internal';

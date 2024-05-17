@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IDisposable } from "@fluidframework/core-interfaces";
+import { type IDisposable } from "@fluidframework/core-interfaces/internal";
 
 import { type ContainerKey } from "./CommonInterfaces.js";
 import { type ContainerDevtoolsProps } from "./ContainerDevtools.js";

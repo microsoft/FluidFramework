@@ -8,12 +8,14 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	type IDisposable,
 	type IEvent,
 	type IFluidHandle,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import {
+	type IProvideFluidHandle,
+	type IDisposable,
+} from "@fluidframework/core-interfaces/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type FluidObjectId } from "../CommonInterfaces.js";
