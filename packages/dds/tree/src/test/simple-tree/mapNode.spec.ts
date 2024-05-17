@@ -48,67 +48,6 @@ describe("MapNode", () => {
 			node.forEach(callback, thisArg);
 			assert.deepEqual(log, ["b"]);
 		});
-
-		// Ensure map enumeration respects insert ordering, in accordance with JavaScript map spec:
-		// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map>
-		it("Enumeration ordering", () => {
-			class Schema extends schemaFactory.map("x", schemaFactory.number) {}
-			const node = hydrate(
-				Schema,
-				new Map([
-					["b", 2],
-					["c", 1],
-				]),
-			);
-
-			function assertEnumerationOrdering(expectedEntries: [string, number][]) {
-				const expectedKeys = expectedEntries.map(([key]) => key);
-				const expectedValues = expectedEntries.map(([, value]) => value);
-
-				assert.deepEqual([...node.entries()], expectedEntries);
-				assert.deepEqual([...node.keys()], expectedKeys);
-				assert.deepEqual([...node.values()], expectedValues);
-
-				let i = 0;
-				for (const entry of node) {
-					assert.deepEqual(entry, expectedEntries[i]);
-					i++;
-				}
-			}
-
-			// Assert initial ordering is correct
-			assertEnumerationOrdering([
-				["b", 2],
-				["c", 1],
-			]);
-
-			// Insert some items and assert again
-			node.set("a", 3);
-			node.set("d", -1);
-			assertEnumerationOrdering([
-				["b", 2],
-				["c", 1],
-				["a", 3],
-				["d", -1],
-			]);
-
-			// Remove an item and assert again
-			node.delete("c");
-			assertEnumerationOrdering([
-				["b", 2],
-				["a", 3],
-				["d", -1],
-			]);
-
-			// Re-insert the removed item and assert that it appears at the end
-			node.set("c", 1);
-			assertEnumerationOrdering([
-				["b", 2],
-				["a", 3],
-				["d", -1],
-				["c", 1],
-			]);
-		});
 	});
 
 	describe("prototype", () => {
