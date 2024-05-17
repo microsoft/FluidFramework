@@ -192,7 +192,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const fieldBExpected: SF.Changeset = [
 				{ count: 1, changes: nodeId2 },
-				// The two marks below a not essential and only exist because we're using tombstones
+				// The two marks below are not essential and only exist because we're using tombstones
 				{ count: 1 },
 				{
 					count: 1,
