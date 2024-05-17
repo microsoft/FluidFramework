@@ -193,7 +193,7 @@ describe.only("toMapTree", () => {
 	});
 
 	describe("array", () => {
-		it("Empty array", () => {
+		it("Empty", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.array("array", schemaFactory.number);
 
@@ -209,7 +209,7 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Array (simple)", () => {
+		it("Simple array", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.array("array", [
 				schemaFactory.number,
@@ -250,7 +250,7 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Array (complex)", () => {
+		it("Complex array", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -316,14 +316,13 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Array (recursive)", () => {
+		it("Recursive array", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.arrayRecursive("array", [
 				schemaFactory.number,
 				() => schema,
 			]);
 
-			const handle = new MockHandle<boolean>(true);
 			const tree = [42, [1, 2], 37];
 
 			const actual = nodeDataToMapTree(tree, [schema]);
@@ -400,7 +399,7 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Map (simple)", () => {
+		it("Simple map", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.map("map", [schemaFactory.number, schemaFactory.string]);
 
@@ -428,7 +427,7 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Map (complex)", () => {
+		it("Complex Map", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -496,7 +495,7 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Map - undefined input values are omitted", () => {
+		it("Undefined map entries are omitted", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.map("map", [schemaFactory.number]);
 
