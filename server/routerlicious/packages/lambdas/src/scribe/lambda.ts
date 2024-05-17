@@ -48,7 +48,13 @@ import {
 	DocumentCheckpointManager,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
-import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
+import {
+	getClientIds,
+	initializeProtocol,
+	isGlobalCheckpoint,
+	isScribeCheckpointQuorumScrubbed,
+	sendToDeli,
+} from "./utils";
 
 /**
  * @internal
@@ -243,6 +249,7 @@ export class ScribeLambda implements IPartitionLambda {
 							try {
 								const scribeCheckpoint = this.generateScribeCheckpoint(
 									this.lastOffset,
+									this.serviceConfiguration.scribe.scrubUserDataInSummaries,
 								);
 								const operation =
 									value.operation as ISequencedDocumentAugmentedMessage;
@@ -358,7 +365,10 @@ export class ScribeLambda implements IPartitionLambda {
 						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
-						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
+						const scribeCheckpoint = this.generateScribeCheckpoint(
+							this.lastOffset,
+							this.serviceConfiguration.scribe.scrubUserDataInSummaries,
+						);
 						try {
 							const summaryResponse = await this.summaryWriter.writeServiceSummary(
 								operation,
@@ -474,8 +484,17 @@ export class ScribeLambda implements IPartitionLambda {
 		checkpointReason: CheckpointReason,
 		skipKafkaCheckpoint?: boolean,
 	) {
+		const isGlobal = isGlobalCheckpoint(
+			this.documentCheckpointManager.getNoActiveClients(),
+			this.globalCheckpointOnly,
+		);
 		// Get checkpoint context
-		const checkpoint = this.generateScribeCheckpoint(message.offset);
+		const checkpoint = this.generateScribeCheckpoint(
+			message.offset,
+			isGlobal
+				? this.serviceConfiguration.scribe.scrubUserDataInGlobalCheckpoints
+				: this.serviceConfiguration.scribe.scrubUserDataInLocalCheckpoints,
+		);
 		this.documentCheckpointManager.updateCheckpointMessages(message);
 
 		// write the checkpoint with the current up-to-date state
@@ -498,6 +517,8 @@ export class ScribeLambda implements IPartitionLambda {
 			localCheckpointEnabled: this.localCheckpointEnabled,
 			globalCheckpointOnly: this.globalCheckpointOnly,
 			localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
+			checkpointLocation: isGlobal ? "global" : "local",
+			scrubbedUserData: isScribeCheckpointQuorumScrubbed(checkpoint),
 		};
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
@@ -603,8 +624,8 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingMessages = new Deque(pendingOps);
 	}
 
-	private generateScribeCheckpoint(logOffset: number): IScribe {
-		const protocolState = this.protocolHandler.getProtocolState();
+	private generateScribeCheckpoint(logOffset: number, scrubUserData = false): IScribe {
+		const protocolState = this.protocolHandler.getProtocolState(scrubUserData);
 		const checkpoint: IScribe = {
 			lastSummarySequenceNumber: this.lastSummarySequenceNumber,
 			lastClientSummaryHead: this.lastClientSummaryHead,
@@ -822,7 +843,16 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private readonly idleTimeCheckpoint = (initialScribeCheckpointMessage: IQueuedMessage) => {
 		if (initialScribeCheckpointMessage) {
-			const checkpoint = this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset);
+			const isGlobal = isGlobalCheckpoint(
+				this.documentCheckpointManager.getNoActiveClients(),
+				this.globalCheckpointOnly,
+			);
+			const checkpoint = this.generateScribeCheckpoint(
+				initialScribeCheckpointMessage.offset,
+				isGlobal
+					? this.serviceConfiguration.scribe.scrubUserDataInGlobalCheckpoints
+					: this.serviceConfiguration.scribe.scrubUserDataInLocalCheckpoints,
+			);
 			this.checkpointCore(checkpoint, initialScribeCheckpointMessage, this.clearCache);
 			const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
 			const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
@@ -839,6 +869,8 @@ export class ScribeLambda implements IPartitionLambda {
 				localCheckpointEnabled: this.localCheckpointEnabled,
 				globalCheckpointOnly: this.globalCheckpointOnly,
 				localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
+				checkpointLocation: isGlobal ? "global" : "local",
+				scrubbedUserData: isScribeCheckpointQuorumScrubbed(checkpoint),
 			};
 			Lumberjack.info(checkpointResult, lumberjackProperties);
 		}

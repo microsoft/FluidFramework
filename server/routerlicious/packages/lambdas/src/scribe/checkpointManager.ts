@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
+import { isLocalCheckpoint } from "./utils";
 
 /**
  * MongoDB specific implementation of ICheckpointManager
@@ -49,7 +50,7 @@ export class CheckpointManager implements ICheckpointManager {
 		globalCheckpointOnly: boolean,
 		markAsCorrupt: boolean = false,
 	) {
-		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
+		const isLocal = isLocalCheckpoint(noActiveClients, globalCheckpointOnly);
 		if (this.getDeltasViaAlfred) {
 			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
@@ -109,7 +110,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				isLocalCheckpoint,
+				isLocal,
 				markAsCorrupt,
 			);
 		} else {
@@ -149,7 +150,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				isLocalCheckpoint,
+				isLocal,
 				markAsCorrupt,
 			);
 

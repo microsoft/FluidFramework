@@ -1,5 +1,17 @@
 # @fluidframework/protocol-base
 
+## 4.0.1
+
+### Patch Changes
+
+-   Fix: ensure immutability of quorum snapshot ([#20329](https://github.com/microsoft/FluidFramework/issues/20329)) [f49f533](https://github.com/microsoft/FluidFramework/commit/f49f533a41a7bc1dbbf8b5f79e59b203904f426b)
+
+    Creates a deep-er clone of the quorum members when snapshotting to make sure the snapshot is immutable.
+
+-   Fix: configure user data scrubbing in checkpoints and summaries ([#20150](https://github.com/microsoft/FluidFramework/issues/20150)) [04a2cc9](https://github.com/microsoft/FluidFramework/commit/04a2cc9ee88d4dbfc14bf44320456aa01749990c)
+
+    Added optional param, `scrubUserData`, to `ProtocolOpHandler.getProtocolState()`. When `true`, user data in the quorum is replaced with `{ id: "" }`. Defaults to `false`. Previously was always scrubbed.
+
 ## 4.0.0
 
 Dependency updates only.
