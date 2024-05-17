@@ -56,8 +56,8 @@ const allDataCorruption = async (containers: IFluidContainer[]): Promise<boolean
 		),
 	).then((all) => !all.includes(false));
 
-for (const compatMode of ["1", "2"] as const) {
-	describe(`TinyliciousClient (compatMode: ${compatMode})`, function () {
+for (const compatibilityMode of ["1", "2"] as const) {
+	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, function () {
 		let tinyliciousClient: TinyliciousClient;
 		const schema = {
 			initialObjects: {
@@ -76,7 +76,10 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("can create instance without specifying port number", async function () {
-			const containerAndServicesP = tinyliciousClient.createContainer(schema, compatMode);
+			const containerAndServicesP = tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 
 			await assert.doesNotReject(
 				containerAndServicesP,
@@ -95,7 +98,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const clientProps = { connection: { port: 7070 } };
 			const clientWithPort = new TinyliciousClient(clientProps);
 
-			const containerAndServicesP = clientWithPort.createContainer(schema, compatMode);
+			const containerAndServicesP = clientWithPort.createContainer(schema, compatibilityMode);
 
 			await assert.doesNotReject(
 				containerAndServicesP,
@@ -113,7 +116,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const containerAndServicesP = tinyliciousClient.getContainer(
 				"containerConfig",
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			const errorFn = (error): boolean => {
@@ -140,7 +143,10 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("can create a container and services successfully", async function () {
-			const containerAndServicesP = tinyliciousClient.createContainer(schema, compatMode);
+			const containerAndServicesP = tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 
 			await assert.doesNotReject(
 				containerAndServicesP,
@@ -150,7 +156,10 @@ for (const compatMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container with detached state", async function () {
-			const { container } = await tinyliciousClient.createContainer(schema, compatMode);
+			const { container } = await tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -159,7 +168,10 @@ for (const compatMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container that can only be attached once", async function () {
-			const { container } = await tinyliciousClient.createContainer(schema, compatMode);
+			const { container } = await tinyliciousClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 
 			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -185,7 +197,7 @@ for (const compatMode of ["1", "2"] as const) {
 		it("can get a container successfully", async function () {
 			const { container: containerCreate } = await tinyliciousClient.createContainer(
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			const containerId = await containerCreate.attach();
 			await new Promise<void>((resolve, reject) => {
@@ -197,7 +209,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await tinyliciousClient.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			const map1Create = containerCreate.initialObjects.map1;
 			const map1Get = containerGet.initialObjects.map1;
@@ -213,7 +225,7 @@ for (const compatMode of ["1", "2"] as const) {
 		it("can change initialObjects value", async function () {
 			const { container: containerCreate } = await tinyliciousClient.createContainer(
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			const containerId = await containerCreate.attach();
 			await timeoutPromise((resolve, reject) => {
@@ -239,7 +251,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await tinyliciousClient.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			// Make sure the container get the changed state
 			await timeoutPromise((resolve, reject) => {
@@ -274,7 +286,7 @@ for (const compatMode of ["1", "2"] as const) {
 
 			const { container } = await tinyliciousClient.createContainer(
 				dynamicSchema,
-				compatMode,
+				compatibilityMode,
 			);
 			await container.attach();
 			await new Promise<void>((resolve, reject) => {
@@ -312,7 +324,7 @@ for (const compatMode of ["1", "2"] as const) {
 
 			const { container: createFluidContainer } = await tinyliciousClient.createContainer(
 				dynamicSchema,
-				compatMode,
+				compatibilityMode,
 			);
 			await createFluidContainer.attach();
 			await new Promise<void>((resolve, reject) => {
@@ -345,7 +357,7 @@ for (const compatMode of ["1", "2"] as const) {
 
 			const { container: createFluidContainer } = await tinyliciousClient.createContainer(
 				dynamicSchema,
-				compatMode,
+				compatibilityMode,
 			);
 			await createFluidContainer.attach();
 			await new Promise<void>((resolve, reject) => {
@@ -371,7 +383,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
 			const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-			const { container } = await client.createContainer(schema, compatMode);
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -380,7 +392,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			assert.strictEqual(
@@ -410,7 +422,7 @@ for (const compatMode of ["1", "2"] as const) {
 			]);
 			const client = new TinyliciousClient({ connection: { tokenProvider } });
 
-			const { container } = await client.createContainer(schema, compatMode);
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -419,7 +431,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			assert.strictEqual(
@@ -446,7 +458,7 @@ for (const compatMode of ["1", "2"] as const) {
 						map1: SharedMap,
 					},
 				},
-				compatMode,
+				compatibilityMode,
 			);
 
 			// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:

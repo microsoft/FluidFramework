@@ -28,7 +28,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type {
-	CompatMode,
+	CompatibilityMode,
 	ContainerSchema,
 	DataObjectClass,
 	IRootDataObject,
@@ -174,12 +174,12 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
-	compatMode: CompatMode;
+	compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatibilityMode);
 }
 
-const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
+const compatibilityModeRuntimeOptions: Record<CompatibilityMode, IContainerRuntimeOptions> = {
 	"1": {
 		// 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
@@ -224,7 +224,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	public constructor(schema: ContainerSchema, compatMode: CompatMode) {
+	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -262,7 +262,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			runtimeOptions: compatModeRuntimeOptions[compatMode],
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;

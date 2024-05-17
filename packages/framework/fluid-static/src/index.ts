@@ -18,7 +18,7 @@ export {
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export type {
-	CompatMode,
+	CompatibilityMode,
 	ContainerSchema,
 	ContainerAttachProps,
 	IConnection,

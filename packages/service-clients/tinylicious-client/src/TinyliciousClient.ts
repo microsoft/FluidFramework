@@ -22,7 +22,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatMode,
+	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
@@ -64,16 +64,17 @@ export class TinyliciousClient {
 	/**
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		compatMode: CompatMode,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatMode);
+		const loader = this.createLoader(containerSchema, compatibilityMode);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -115,17 +116,18 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatMode: CompatMode,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema, compatMode);
+		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
@@ -146,10 +148,13 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema, compatMode: CompatMode): IHostLoader {
+	private createLoader(
+		schema: ContainerSchema,
+		compatibilityMode: CompatibilityMode,
+	): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatMode,
+			compatibilityMode,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

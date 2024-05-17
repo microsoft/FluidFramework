@@ -49,8 +49,8 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	(container as any).container.connectionMode as ConnectionMode;
 
-for (const compatMode of ["1", "2"] as const) {
-	describe(`AzureClient (compatMode: ${compatMode})`, function () {
+for (const compatibilityMode of ["1", "2"] as const) {
+	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
 		let schema: ContainerSchema;
@@ -72,7 +72,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("can create new Azure Fluid Relay container successfully", async function () {
-			const resourcesP = client.createContainer(schema, compatMode);
+			const resourcesP = client.createContainer(schema, compatibilityMode);
 
 			await assert.doesNotReject(
 				resourcesP,
@@ -89,7 +89,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("created container is detached", async function () {
-			const { container } = await client.createContainer(schema, compatMode);
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -104,7 +104,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("can attach a container", async function () {
-			const { container } = await client.createContainer(schema, compatMode);
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -129,7 +129,7 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("cannot attach a container twice", async function () {
-			const { container } = await client.createContainer(schema, compatMode);
+			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -159,7 +159,10 @@ for (const compatMode of ["1", "2"] as const) {
 		 * be returned.
 		 */
 		it("can retrieve existing Azure Fluid Relay container successfully", async function () {
-			const { container: newContainer } = await client.createContainer(schema, compatMode);
+			const { container: newContainer } = await client.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await newContainer.attach();
 
 			if (newContainer.connectionState !== ConnectionState.Connected) {
@@ -169,7 +172,7 @@ for (const compatMode of ["1", "2"] as const) {
 				});
 			}
 
-			const resources = client.getContainer(containerId, schema, compatMode);
+			const resources = client.getContainer(containerId, schema, compatibilityMode);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -188,7 +191,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const containerAndServicesP = client.getContainer(
 				"containerConfig",
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			const errorFunction = (error: Error): boolean => {
@@ -215,7 +218,10 @@ for (const compatMode of ["1", "2"] as const) {
 		it("can create a container with only read permission in read mode", async function () {
 			const readOnlyAzureClient = createAzureClient({ scopes: [ScopeType.DocRead] });
 
-			const { container } = await readOnlyAzureClient.createContainer(schema, compatMode);
+			const { container } = await readOnlyAzureClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -224,7 +230,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await readOnlyAzureClient.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			assert.strictEqual(
@@ -252,7 +258,10 @@ for (const compatMode of ["1", "2"] as const) {
 				scopes: [ScopeType.DocRead, ScopeType.DocWrite],
 			});
 
-			const { container } = await readWriteAzureClient.createContainer(schema, compatMode);
+			const { container } = await readWriteAzureClient.createContainer(
+				schema,
+				compatibilityMode,
+			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
 				durationMs: 1000,
@@ -261,7 +270,7 @@ for (const compatMode of ["1", "2"] as const) {
 			const { container: containerGet } = await readWriteAzureClient.getContainer(
 				containerId,
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 
 			assert.strictEqual(
@@ -280,7 +289,7 @@ for (const compatMode of ["1", "2"] as const) {
 		it("GC is disabled by default, but can be enabled", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			assert.strictEqual(
 				(
@@ -298,7 +307,7 @@ for (const compatMode of ["1", "2"] as const) {
 			});
 			const { container: container_gcEnabled } = await client_gcEnabled.createContainer(
 				schema,
-				compatMode,
+				compatibilityMode,
 			);
 			assert.strictEqual(
 				(
@@ -321,7 +330,7 @@ for (const compatMode of ["1", "2"] as const) {
 							map: SharedMap,
 						},
 					},
-					compatMode,
+					compatibilityMode,
 				);
 
 				// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
@@ -329,8 +338,8 @@ for (const compatMode of ["1", "2"] as const) {
 			});
 
 			it("preserves 'SharedTree' type", async function () {
-				// SharedTree is not supported in compatMode "1", because it requires idCompressor to be enabled.
-				if (compatMode === "1") {
+				// SharedTree is not supported in compatibilityMode "1", because it requires idCompressor to be enabled.
+				if (compatibilityMode === "1") {
 					this.skip();
 				}
 				const { container } = await client.createContainer(
@@ -339,7 +348,7 @@ for (const compatMode of ["1", "2"] as const) {
 							tree: SharedTree,
 						},
 					},
-					compatMode,
+					compatibilityMode,
 				);
 
 				// Ensure that the 'tree' API is accessible without casting or suppressing lint rules:
