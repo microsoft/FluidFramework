@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";

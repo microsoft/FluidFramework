@@ -12,12 +12,8 @@ import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import {
-	FluidObject,
-	IFluidHandleContext,
-	IFluidLoadable,
-	IRequest,
-} from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,

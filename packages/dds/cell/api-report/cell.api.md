@@ -7,10 +7,10 @@
 import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';

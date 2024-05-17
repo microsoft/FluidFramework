@@ -9,6 +9,7 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -17,7 +18,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -27,12 +27,14 @@ import {
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {

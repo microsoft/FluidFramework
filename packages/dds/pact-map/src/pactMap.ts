@@ -5,9 +5,9 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { type IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	type IChannelAttributes,
-	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";

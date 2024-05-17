@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
