@@ -636,14 +636,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     getRangeExtentsOfPosition(pos: number): {
         posStart: number | undefined;
-        posAfterEnd: number | undefined; /**
-        * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-        * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-        * @param segment - Segment to add the local reference on
-        * @param offset - Offset on the segment at which to place the local reference
-        * @param refType - ReferenceType for the created local reference
-        * @param properties - PropertySet to place on the created local reference
-        */
+        posAfterEnd: number | undefined;
     };
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
