@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
 import type { AzureMember, AzureUser } from "@fluidframework/azure-client/internal";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 export function createMockServiceMember(audienceMember: IClient): AzureMember {
 	const azureUser = audienceMember.user as AzureUser;
