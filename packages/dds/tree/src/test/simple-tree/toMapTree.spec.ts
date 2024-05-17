@@ -539,20 +539,18 @@ describe.only("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Non-empty object", () => {
+		it("Simple object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
 				a: schemaFactory.string,
 				b: schemaFactory.optional(schemaFactory.number),
 				c: schemaFactory.boolean,
-				d: schemaFactory.optional(schemaFactory.number),
 			});
 
 			const tree = {
 				a: "Hello world",
 				b: 42,
 				c: false,
-				d: undefined, // Should be skipped in output
 			};
 
 			const actual = nodeDataToMapTree(tree, [schema]);
@@ -566,6 +564,105 @@ describe.only("toMapTree", () => {
 					],
 					[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Complex object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const childSchema = schemaFactory.object("child-object", {
+				foo: schemaFactory.number,
+			});
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.string,
+				b: childSchema,
+				c: schemaFactory.array(schemaFactory.boolean),
+			});
+
+			const tree = {
+				a: "Hello world",
+				b: {
+					foo: 42,
+				},
+				c: [true, false],
+			};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand("test.child-object"),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										brand("foo"),
+										[{ type: leaf.number.name, value: 42, fields: new Map() }],
+									],
+								]),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[
+							{
+								type: brand('test.Array<["com.fluidframework.leaf.boolean"]>'),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										EmptyKey,
+										[
+											{
+												type: leaf.boolean.name,
+												value: true,
+												fields: new Map(),
+											},
+											{
+												type: leaf.boolean.name,
+												value: false,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Undefined properties are omitted", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.number),
+				b: schemaFactory.optional(schemaFactory.number),
+				c: schemaFactory.optional(schemaFactory.number),
+			});
+
+			const tree = {
+				a: 42,
+				// b is implicitly omitted - should be skipped in output.
+				c: undefined, // Explicitly set to undefined - Should be skipped in output
+			};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 				]),
 			};
 
