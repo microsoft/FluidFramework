@@ -74,6 +74,49 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * @param key - The key of the element to remove from the map.
 	 */
 	delete(key: string): void;
+
+	/**
+	 * Returns an iterable of keys in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the keys returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	keys(): IterableIterator<string>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the values returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the entries returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+
+	/**
+	 * Executes the provided function once per each key/value pair in this map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.
+	 * If your usage scenario depends on consistent ordering, you will need to account for this.
+	 */
+	forEach(
+		callbackfn: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			key: string,
+			map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+		) => void,
+		thisArg?: any,
+	): void;
 }
 
 const handler: ProxyHandler<TreeMapNode> = {
