@@ -105,6 +105,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
+	protected override readonly logger: ITelemetryLoggerExt;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -124,7 +126,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		logger: ITelemetryLoggerExt,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		enricher?: CommitEnricher<TChange>,
@@ -142,6 +143,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		this.idCompressor = runtime.idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
+		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "SharedTree" });
+
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
