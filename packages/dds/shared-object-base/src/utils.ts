@@ -53,7 +53,7 @@ export function makeHandlesSerializable(
 /**
  * Given a fully-plain object that may have serializable-form handles within, will return the mostly-plain object
  * with handle objects created instead.
- * Idempotent when called multiple times.
+ * @remarks Idempotent when called multiple times.
  * @param value - The fully-plain object
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
