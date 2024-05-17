@@ -118,8 +118,8 @@ export {
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SharedSegmentSequence,
 	SharedString,
+	type ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export type {

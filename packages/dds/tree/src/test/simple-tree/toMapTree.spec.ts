@@ -28,6 +28,7 @@ import {
 	createFieldSchema,
 	ImplicitAllowedTypes,
 	normalizeAllowedTypes,
+	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
@@ -156,9 +157,8 @@ describe("toMapTree", () => {
 	it("Fails when referenced schema has not yet been instantiated", () => {
 		const schemaFactory = new SchemaFactory("test");
 
-		let Bar: any;
+		let Bar: TreeNodeSchema;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			x: schemaFactory.optionalRecursive(() => Bar),
 		}) {}
 
