@@ -584,7 +584,7 @@ extends:
 
                 # This condition should be kept in sync with the one in include-set-package-version, which decides if
                 # upload-dev-manifest.yml should be included or not.
-                - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.tagName, 'client')) }}:
+                - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), eq(parameters.tagName, 'client')) }}:
                   - output: pipelineArtifact
                     displayName: Publish Artifact - release_reports
                     targetPath: $(Build.ArtifactStagingDirectory)/release_reports

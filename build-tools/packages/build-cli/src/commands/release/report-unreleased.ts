@@ -33,6 +33,11 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			exists: true,
 			required: true,
 		}),
+		branchName: Flags.string({
+			description:
+				"Branch name. For release branches, the manifest file is uplaoded by build number and not by current date.",
+			required: true,
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -45,7 +50,13 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
 		try {
-			await generateReleaseReport(fullReleaseReport, flags.version, flags.outDir, this.logger);
+			await generateReleaseReport(
+				fullReleaseReport,
+				flags.version,
+				flags.outDir,
+				flags.branchName,
+				this.logger,
+			);
 		} catch (error: unknown) {
 			throw new Error(`Error while generating release reports: ${error}`);
 		}
@@ -63,6 +74,7 @@ async function generateReleaseReport(
 	fullReleaseReport: ReleaseReport,
 	version: string,
 	outDir: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
@@ -73,8 +85,22 @@ async function generateReleaseReport(
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
 
 	await Promise.all([
-		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
-		writeReport(outDir, simpleReportOutput as ReleaseReport, "simpleManifest", version, log),
+		writeReport(
+			outDir,
+			caretReportOutput as ReleaseReport,
+			"manifest",
+			version,
+			branchName,
+			log,
+		),
+		writeReport(
+			outDir,
+			simpleReportOutput as ReleaseReport,
+			"simpleManifest",
+			version,
+			branchName,
+			log,
+		),
 	]);
 
 	log.log("Release report processed successfully.");
@@ -93,6 +119,7 @@ async function writeReport(
 	report: ReleaseReport,
 	revisedFileName: string,
 	version: string,
+	branchName: string,
 	log: Logger,
 ): Promise<void> {
 	const currentDate = formatISO(new Date(), { representation: "date" });
@@ -104,10 +131,17 @@ async function writeReport(
 	const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
-	await Promise.all([
-		fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
-		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
-	]);
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (branchName === "refs/heads/main") {
+		await Promise.all([
+			fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
+			fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
+		]);
+	} else {
+		await Promise.all([
+			fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
+		]);
+	}
 }
 
 /**
