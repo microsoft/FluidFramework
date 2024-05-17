@@ -4,11 +4,12 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IChannelServices, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";

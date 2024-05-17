@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";

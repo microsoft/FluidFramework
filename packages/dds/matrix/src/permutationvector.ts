@@ -5,8 +5,10 @@
 
 import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import {
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,

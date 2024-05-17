@@ -11,8 +11,8 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/i
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';

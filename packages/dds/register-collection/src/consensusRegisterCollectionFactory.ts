@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	type IChannelFactory,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 

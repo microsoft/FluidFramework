@@ -8,8 +8,10 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import {
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";

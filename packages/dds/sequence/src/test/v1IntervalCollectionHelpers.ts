@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { Client } from "@fluidframework/merge-tree/internal";
 
