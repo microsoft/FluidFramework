@@ -11,7 +11,8 @@
  */
 
 // ===============================================================
-// Public exports
+// #region Public exports
+// #region Basic re-exports
 
 export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
@@ -43,8 +44,9 @@ export * from "@fluidframework/tree";
 
 // End of basic public exports - nothing above this line should
 // depend on an /internal path.
+// #endregion Basic re-exports
 // ---------------------------------------------------------------
-// Custom re-exports
+// #region Custom re-exports
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
@@ -64,8 +66,11 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
 // eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+// #endregion Custom re-exports
+// #endregion Public exports
+
 // ===============================================================
-// Legacy exports
+// #region Legacy exports
 
 export {
 	ContainerErrorTypes,
@@ -138,3 +143,5 @@ export type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
+
+// #endregion Legacy exports
