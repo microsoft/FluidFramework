@@ -298,7 +298,8 @@ for (const testOpts of testMatrix) {
 		it("Legacy AzureClient can get container made by current AzureClient", async () => {
 			const { container: containerCurrent } = await clientCurrent.createContainer(
 				schemaCurrent,
-				"2",
+				// Note: Only containers created in compatibility mode "1" may be loaded by legacy client.
+				"1",
 			);
 			const containerId = await containerCurrent.attach();
 
@@ -356,7 +357,9 @@ for (const testOpts of testMatrix) {
 
 			(containerLegacy.initialObjects.map1 as SharedMapLegacy).set("key", "value");
 
-			const resources = clientCurrent.getContainer(containerId, schemaCurrent, "2");
+			// Note: Technically the current client could get the container in either mode.
+			// TODO: Test both.
+			const resources = clientCurrent.getContainer(containerId, schemaCurrent, "1");
 			await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
 			const { container: containerCurrent } = await resources;
