@@ -433,7 +433,7 @@ export class ScribeLambdaFactory
 		tenantId: string,
 		documentId: string,
 		contents: ILambdaStartControlMessageContents | undefined,
-	): Promise<any> {
+	): Promise<void> {
 		const controlMessage: IControlMessage = {
 			type: ControlMessageType.LambdaStartResult,
 			contents,

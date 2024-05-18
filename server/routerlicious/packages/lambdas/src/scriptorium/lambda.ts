@@ -258,7 +258,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private async insertOp(
 		messages: ISequencedOperationMessage[],
 		scriptoriumMetricId: string | undefined,
-	): Promise<any> {
+	): Promise<void | undefined> {
 		const dbOps = messages.map((message) => ({
 			...message,
 			mongoTimestamp: new Date(message.operation.timestamp),
