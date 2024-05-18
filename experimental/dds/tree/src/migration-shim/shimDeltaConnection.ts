@@ -5,8 +5,11 @@
 
 import { type IFluidHandle } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { type IDeltaConnection, type IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { type IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import {
+	type IChannelAttributes,
+	type IDeltaConnection,
+	type IDeltaHandler,
+} from '@fluidframework/datastore-definitions/internal';
 
 import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 

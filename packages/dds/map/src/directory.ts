@@ -5,10 +5,10 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
@@ -18,7 +18,7 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";

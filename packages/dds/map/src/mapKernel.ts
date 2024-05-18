@@ -6,7 +6,7 @@
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMapEvents } from "./interfaces.js";

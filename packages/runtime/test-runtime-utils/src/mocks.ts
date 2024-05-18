@@ -30,8 +30,6 @@ import {
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
-} from "@fluidframework/datastore-definitions";
-import {
 	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,

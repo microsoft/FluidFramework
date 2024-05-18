@@ -12,7 +12,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelServices, IChannelStorageService } from "@fluidframework/datastore-definitions";
+import {
+	IChannelServices,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	IChannelAttributes,
 	type IChannelFactory,
