@@ -421,7 +421,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this, logger, branch, upTo);
+		const rebaseResult = this.rebaseBranch(this, branch, upTo, logger);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -472,6 +472,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
+		// TOOD: Figure out what to do.
 		const rebaseResult = this.rebaseBranch(branch, this);
 		if (rebaseResult === undefined) {
 			return undefined;
@@ -497,10 +498,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
-		logger: ITelemetryLoggerExt,
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
+		logger?: ITelemetryLoggerExt,
 	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;
 		if (head === upTo) {
@@ -510,10 +511,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = rebaseBranch(
 			this.mintRevisionTag,
 			this.changeFamily.rebaser,
-			logger,
 			head,
 			upTo,
 			onto.getHead(),
+			logger,
 		);
 		if (this.head === rebaseResult.newSourceHead) {
 			return undefined;

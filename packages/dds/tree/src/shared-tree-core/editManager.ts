@@ -134,7 +134,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly logger: ITelemetryLoggerExt,
+		protected readonly logger: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: "root",

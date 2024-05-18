@@ -147,18 +147,18 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
-	logger: ITelemetryLoggerExt,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	logger?: ITelemetryLoggerExt,
 ): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
-	logger: ITelemetryLoggerExt,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
+	logger?: ITelemetryLoggerExt,
 ): BranchRebaseResult<TChange> {
 	const startTime = performance.now();
 
@@ -181,6 +181,13 @@ export function rebaseBranch<TChange>(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
 			0x676 /* target commit is not in target branch */,
 		);
+
+		logger?.sendTelemetryEvent({
+			eventName: "RebaseBranch",
+			rebaseDuration: performance.now() - startTime,
+			parentBranchLength,
+			childBranchLength,
+		});
 
 		return {
 			newSourceHead: sourceHead,
@@ -233,6 +240,9 @@ export function rebaseBranch<TChange>(
 		for (const c of sourcePath) {
 			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
+
+		// TODO: Add logger here.
+
 		return {
 			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
 			sourceChange: undefined,
