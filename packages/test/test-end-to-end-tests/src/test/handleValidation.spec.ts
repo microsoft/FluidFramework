@@ -18,19 +18,13 @@ import {
 	ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { type ISharedMatrix } from "@fluidframework/matrix/internal";
-import {
-	ConsensusResult,
-	type ConsensusCallback,
-	type IConsensusOrderedCollection,
-} from "@fluidframework/ordered-collection/internal";
+import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	SharedTree,
 	SchemaFactory,
 	TreeConfiguration,
 	type TreeView,
 	type ISharedTree,
-	type ITree,
 } from "@fluidframework/tree/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -38,7 +32,10 @@ import type { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore
 import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
 import { ISharedCell } from "@fluidframework/cell/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import {
+	ConsensusRegisterCollectionFactory,
+	type IConsensusRegisterCollection,
+} from "@fluidframework/register-collection/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -107,7 +104,6 @@ async function setup(
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		simple: true,
 		runtimeOptions: {
 			enableRuntimeIdCompressor: "on",
 		},
@@ -130,17 +126,8 @@ async function setup(
 	};
 }
 
-type allDDS =
-	| ISharedMap
-	| ISharedCell
-	| ISharedDirectory
-	| SharedString
-	| ISharedMatrix
-	| ITree
-	| IConsensusRegisterCollection<FluidObject>
-	| IConsensusOrderedCollection<FluidObject>;
-
-interface aDDSType<T extends allDDS = allDDS> {
+interface aDDSType {
+	id: string;
 	storeHandle(handle: IFluidHandle): void;
 	readHandle(): Promise<unknown>;
 	handle: IFluidHandle;
@@ -148,23 +135,25 @@ interface aDDSType<T extends allDDS = allDDS> {
 
 interface aDDSFactory {
 	id: string;
-	createDDS(
-		runtime: IFluidDataStoreRuntime,
-		apis: CompatApis,
-		dataStore: ITestFluidObject | undefined,
-	): aDDSType;
+	type: string;
+	createDDS(runtime: IFluidDataStoreRuntime, apis: CompatApis): aDDSType;
+	downCast(channel: IChannel): aDDSType;
+	getDDS(dataStore: ITestFluidObject): Promise<aDDSType>;
 }
 
 const ddsTypes: aDDSFactory[] = [
 	{
 		id: mapId,
-		async createDDS(runtime, apis, dataStore) {
+		type: "https://graph.microsoft.com/types/map",
+		createDDS(runtime, apis) {
 			const { SharedMap } = apis.dds;
-			const map =
-				dataStore === undefined
-					? SharedMap.getFactory().create(runtime, mapId)
-					: await dataStore.getSharedObject<ISharedMap>(mapId);
+			const map = runtime.createChannel(undefined, SharedMap.getFactory().type);
+			return this.downCast(map);
+		},
+		downCast(channel): aDDSType {
+			const map = channel as ISharedMap;
 			return {
+				id: map.id,
 				storeHandle(handle: IFluidHandle) {
 					map.set("B", handle);
 				},
@@ -174,232 +163,232 @@ const ddsTypes: aDDSFactory[] = [
 				handle: map.handle,
 			};
 		},
+		async getDDS(dataStore) {
+			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+			return this.downCast(map);
+		},
 	},
-];
-
-interface handleType<T extends IChannel> {
-	id: string;
-	storeHandle: (dds: T, handle: IFluidHandle) => Promise<void>;
-	readHandle: (dds: T) => Promise<unknown>;
-	getTypedSharedObject: (dataStore: ITestFluidObject) => Promise<T>;
-	createDDS: (runtime: IFluidDataStoreRuntime, apis: CompatApis) => T;
-}
-
-const handleFns = [
-	{
-		id: mapId,
-		storeHandle: async (dds, handle) => {
-			dds.set("B", handle);
-		},
-		readHandle: async (dds) => {
-			return dds.get("B");
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<ISharedMap>(mapId);
-		},
-		createDDS: (runtime, apis) => {
-			const { SharedMap } = apis.dds;
-			return SharedMap.getFactory().create(runtime, mapId);
-		},
-	} satisfies handleType<ISharedMap>,
 	{
 		id: cellId,
-		storeHandle: async (dds, handle) => {
-			dds.set(handle);
-		},
-		readHandle: async (dds) => {
-			return dds.get();
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<ISharedCell>(cellId);
-		},
-		createDDS: (runtime, apis) => {
+		type: "https://graph.microsoft.com/types/cell",
+		createDDS(runtime, apis) {
 			const { SharedCell } = apis.dds;
-			return SharedCell.getFactory().create(runtime, cellId);
+			const cell = runtime.createChannel(undefined, SharedCell.getFactory().type);
+			return this.downCast(cell);
 		},
-	} satisfies handleType<ISharedCell>,
+		downCast(channel): aDDSType {
+			const cell = channel as ISharedCell;
+			return {
+				id: cell.id,
+				storeHandle(handle: IFluidHandle) {
+					cell.set(handle);
+				},
+				async readHandle(): Promise<unknown> {
+					return cell.get();
+				},
+				handle: cell.handle,
+			};
+		},
+		async getDDS(dataStore) {
+			const cell = await dataStore.getSharedObject<ISharedCell>(cellId);
+			return this.downCast(cell);
+		},
+	},
 	{
 		id: directoryId,
-		storeHandle: async (dds, handle) => {
-			dds.set("B", handle);
-		},
-		readHandle: async (dds) => {
-			return dds.get("B");
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<ISharedDirectory>(directoryId);
-		},
-		createDDS: (runtime, apis) => {
+		type: "https://graph.microsoft.com/types/directory",
+		createDDS(runtime, apis) {
 			const { SharedDirectory } = apis.dds;
-			return SharedDirectory.getFactory().create(runtime, directoryId);
+			const directory = runtime.createChannel(undefined, SharedDirectory.getFactory().type);
+			return this.downCast(directory);
 		},
-	} satisfies handleType<ISharedDirectory>,
+		downCast(channel): aDDSType {
+			const directory = channel as ISharedDirectory;
+			return {
+				id: directory.id,
+				storeHandle(handle: IFluidHandle) {
+					directory.set("B", handle);
+				},
+				async readHandle(): Promise<unknown> {
+					return directory.get("B");
+				},
+				handle: directory.handle,
+			};
+		},
+		async getDDS(dataStore) {
+			const directory = await dataStore.getSharedObject<ISharedDirectory>(directoryId);
+			return this.downCast(directory);
+		},
+	},
 	{
 		id: stringId,
-		storeHandle: async (dds, handle) => {
-			dds.insertText(0, "hello");
-			dds.annotateRange(0, 1, { B: handle });
-		},
-		readHandle: async (dds) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return dds.getPropertiesAtPosition(0)?.B;
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<SharedString>(stringId);
-		},
-		createDDS: (runtime, apis) => {
+		type: "https://graph.microsoft.com/types/mergeTree",
+		createDDS(runtime, apis) {
 			const { SharedString } = apis.dds;
-			return SharedString.getFactory().create(runtime, stringId);
+			const string = runtime.createChannel(undefined, SharedString.getFactory().type);
+			return this.downCast(string);
 		},
-	} satisfies handleType<SharedString>,
+		downCast(channel): aDDSType {
+			const string = channel as SharedString;
+			return {
+				id: string.id,
+				storeHandle(handle: IFluidHandle) {
+					string.insertText(0, "hello");
+					string.annotateRange(0, 1, { B: handle });
+				},
+				async readHandle(): Promise<unknown> {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return string.getPropertiesAtPosition(0)?.B;
+				},
+				handle: string.handle,
+			};
+		},
+		async getDDS(dataStore) {
+			const string = await dataStore.getSharedObject<SharedString>(stringId);
+			return this.downCast(string);
+		},
+	},
 	{
 		id: matrixId,
-		storeHandle: async (dds, handle) => {
-			dds.insertRows(0, 1);
-			dds.insertCols(0, 1);
-			dds.setCell(0, 0, handle);
-		},
-		readHandle: async (dds) => {
-			return dds.getCell(0, 0);
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<ISharedMatrix>(matrixId);
-		},
-		createDDS: (runtime, apis) => {
+		type: SharedMatrixFactory.Type,
+		createDDS(runtime, apis) {
 			const { SharedMatrix } = apis.dds;
-			return SharedMatrix.getFactory().create(runtime, matrixId);
+			const matrix = runtime.createChannel(undefined, SharedMatrix.getFactory().type);
+			return this.downCast(matrix);
 		},
-		// deal with this
-	} satisfies handleType<ISharedMatrix>,
+		downCast(channel): aDDSType {
+			const matrix = channel as ISharedMatrix;
+			return {
+				id: matrix.id,
+				storeHandle(handle: IFluidHandle) {
+					matrix.insertRows(0, 1);
+					matrix.insertCols(0, 1);
+					matrix.setCell(0, 0, handle);
+				},
+				async readHandle(): Promise<unknown> {
+					return matrix.getCell(0, 0);
+				},
+				handle: matrix.handle,
+			};
+		},
+		async getDDS(dataStore) {
+			const matrix = await dataStore.getSharedObject<ISharedMatrix>(matrixId);
+			return this.downCast(matrix);
+		},
+	},
 	{
 		id: treeId,
-		storeHandle: async (dds, handle) => {
-			const treeView = treeSetup(dds);
-			treeView.root.h = handle;
+		type: SharedTree.getFactory().type,
+		createDDS(runtime, apis) {
+			const tree = runtime.createChannel(undefined, SharedTree.getFactory().type);
+			return this.downCast(tree);
 		},
-		readHandle: async (dds) => {
-			const treeView = treeSetup(dds);
-			return treeView.root.h;
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<ISharedTree>(treeId);
-		},
-		createDDS: (runtime, apis) => {
-			return SharedTree.getFactory().create(runtime, treeId);
-		},
-		// itree as opposed to isharedtree???
-	} satisfies handleType<ITree>,
-	// {
-	// 	type: legacyTreeId,
-	// 	storeHandle: async (defaultDataStore, handle) => {
-	// 		const treeRoot = await defaultDataStore.getSharedObject<LegacySharedTree>(legacyTreeId);
-	// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+		downCast(channel): aDDSType {
+			const tree = channel as ISharedTree;
+			const treeView = treeSetup(tree);
 
-	// 		const handleNode: BuildNode = {
-	// 			definition: legacyNodeId,
-	// 			traits: {
-	// 				handle,
-	// 			},
-	// 		};
-	// 		treeRoot.applyEdit(
-	// 			Change.insertTree(
-	// 				handleNode,
-	// 				StablePlace.atStartOf({
-	// 					parent: treeRoot.currentView.root,
-	// 					label: legacyNodeId,
-	// 				}),
-	// 			),
-	// 		);
-
-	// 		const rootNode = treeRoot.currentView.getViewNode(treeRoot.currentView.root);
-	// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	// 		const nodeId = rootNode.traits.get(legacyNodeId)![0];
-	// 		const change: Change = Change.setPayload(nodeId, handle);
-	// 		treeRoot.applyEdit(change);
-	// 	},
-	// },
+			return {
+				id: tree.id,
+				storeHandle(handle: IFluidHandle) {
+					treeView.root.h = handle;
+				},
+				async readHandle(): Promise<unknown> {
+					return treeView.root.h;
+				},
+				handle: tree.handle,
+			};
+		},
+		async getDDS(dataStore) {
+			const tree = await dataStore.getSharedObject<ISharedTree>(treeId);
+			return this.downCast(tree);
+		},
+	},
 	{
 		id: registerId,
-		storeHandle: async (dds, handle) => {
-			await dds.write("B", handle);
-		},
-		readHandle: async (dds) => {
-			return dds.read("B");
-		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(registerId);
-		},
-		createDDS: (runtime, apis) => {
+		type: ConsensusRegisterCollectionFactory.Type,
+		createDDS(runtime, apis) {
 			const { ConsensusRegisterCollection } = apis.dds;
-			return ConsensusRegisterCollection.getFactory().create(runtime, registerId);
+			const register = runtime.createChannel(
+				undefined,
+				ConsensusRegisterCollection.getFactory().type,
+			);
+			return this.downCast(register);
 		},
-	} satisfies handleType<IConsensusRegisterCollection<FluidObject>>,
-	{
-		id: queueId,
-		storeHandle: async (dds, handle) => {
-			await dds.add(handle);
-		},
-		readHandle: async (dds) => {
-			let handle2: unknown;
-			// dont know if this should be <IFluidHandle> or <FluidObject>
-			const callback: ConsensusCallback<FluidObject> = async (value) => {
-				handle2 = value;
-				return ConsensusResult.Complete;
+		downCast(channel): aDDSType {
+			const register = channel as IConsensusRegisterCollection<FluidObject>;
+			return {
+				id: register.id,
+				storeHandle(handle: IFluidHandle) {
+					void register.write("B", handle);
+				},
+				async readHandle(): Promise<unknown> {
+					return register.read("B");
+				},
+				handle: register.handle,
 			};
-			await dds.waitAndAcquire(callback);
-			return handle2;
 		},
-		getTypedSharedObject: async (dataStore) => {
-			return dataStore.getSharedObject<IConsensusOrderedCollection<FluidObject>>(queueId);
+		async getDDS(dataStore) {
+			const register =
+				await dataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(
+					registerId,
+				);
+			return this.downCast(register);
 		},
-		createDDS: (runtime, apis) => {
-			const { ConsensusQueue } = apis.dds;
-			return ConsensusQueue.getFactory().create(runtime, queueId);
-		},
-	} satisfies handleType<IConsensusOrderedCollection<FluidObject>>,
+	},
 	// {
-	// 	type: migrationShimId,
-	// 	storeHandle: async (defaultDataStore, handle) => {
-	// 		const migrationShimRoot = await defaultDataStore.getSharedObject<MigrationShim>(migrationShimId);
-	// 		const tree = migrationShimRoot.currentTree as LegacySharedTree;
-	// 		const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
-
-	// 		const handleNode: BuildNode = {
-	// 			definition: legacyNodeId,
-	// 			traits: {
-	// 				handle,
+	// 	id: queueId,
+	// 	type: ConsensusQueueFactory.Type,
+	// 	createDDS(runtime, apis) {
+	// 		const { ConsensusQueue } = apis.dds;
+	// 		const queue = ConsensusQueue.getFactory().create(runtime, queueId);
+	// 		return this.downCast(queue);
+	// 	},
+	// 	downCast(channel): aDDSType {
+	// 		const queue = channel as IConsensusOrderedCollection<FluidObject>;
+	// 		return {
+	// 			id: queueId,
+	// 			storeHandle(handle: IFluidHandle) {
+	// 				void queue.add(handle);
 	// 			},
+	// 			async readHandle(): Promise<unknown> {
+	// 				let handle2: unknown;
+	// 				// dont know if this should be <IFluidHandle> or <FluidObject>
+	// 				const callback: ConsensusCallback<FluidObject> = async (value) => {
+	// 					handle2 = value;
+	// 					return ConsensusResult.Complete;
+	// 				};
+	// 				await queue.waitAndAcquire(callback);
+	// 				return handle2;
+	// 			},
+	// 			handle: queue.handle,
 	// 		};
-	// 		tree.applyEdit(
-	// 			Change.insertTree(
-	// 				handleNode,
-	// 				StablePlace.atStartOf({
-	// 					parent: tree.currentView.root,
-	// 					label: legacyNodeId,
-	// 				}),
-	// 			),
-	// 		);
-
-	// 		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
-	// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	// 		const nodeId = rootNode.traits.get(legacyNodeId)![0];
-	// 		const change = Change.setPayload(nodeId, handle);
-	// 		tree.applyEdit(change);
+	// 	},
+	// 	async getDDS(dataStore) {
+	// 		const queue =
+	// 			await dataStore.getSharedObject<IConsensusOrderedCollection<FluidObject>>(queueId);
+	// 		return this.downCast(queue);
 	// 	},
 	// },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, apis) => {
+const ddsFactoriesByType = new Map<string, aDDSFactory>(
+	ddsTypes.map((factory) => [factory.type, factory]),
+);
+
+async function getReferencedDDS(handle: IFluidHandle): Promise<aDDSType> {
+	const channel = (await handle.get()) as IChannel;
+	const factory = ddsFactoriesByType.get(channel.attributes.type);
+	assert(factory !== undefined);
+	return factory.downCast(channel);
+}
+
+describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	for (const handle of ddsTypes) {
-		it.only(`store handle in dds: ${handle.id}`, async () => {
+		it(`store handle in dds: ${handle.id}`, async () => {
 			const { container1, provider, testContainerConfig } = await setup(
 				getTestObjectProvider,
 				apis,
 			);
-			// let idA: string;
-			// let seq: number;
-			// let dds;
 
 			const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 			const runtime = defaultDataStore.context.containerRuntime;
@@ -407,7 +396,7 @@ describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, ap
 
 			const dataStoreB = await runtime.createDataStore(["default"]);
 			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
-			const dds = handle.createDDS(defaultDataStore.runtime, apis, dataObjectB);
+			const dds = handle.createDDS(defaultDataStore.runtime, apis);
 
 			dds.storeHandle(dataObjectB.handle);
 
@@ -430,8 +419,6 @@ describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, ap
 				});
 			}
 
-			const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
-
 			const actualVal = await dds.readHandle();
 			assert(isFluidHandle(actualVal), `not a handle: ${actualVal}`);
 
@@ -443,18 +430,6 @@ describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, ap
 		});
 	}
 
-	/**
-	 * actual new tests: store handle to detached dds in an attached dds
-	 *
-	 * will need 3 nested loops:
-	 * first loop: creates a detached dds
-	 * second loop: creates a detached dds and stores handle from dds in first loop
-	 * third loop: have attached dds, store handle to dds from second loop
-	 *
-	 * will also need to:
-	 * add create in handlefns
-	 * update store and read to take in the dds instead of the datastore to support using the detached ones
-	 */
 	for (const detachedDds1Utils of ddsTypes) {
 		for (const detachedDds2Utils of ddsTypes) {
 			for (const attachedDdsUtils of ddsTypes) {
@@ -469,39 +444,30 @@ describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, ap
 
 					const attachedDataStore =
 						(await container1.getEntryPoint()) as ITestFluidObject;
-					const fluidRuntime = attachedDataStore.runtime;
-					const idA = attachedDataStore.context.id;
+
+					const dataStoreB =
+						await attachedDataStore.context.containerRuntime.createDataStore([
+							"default",
+						]);
+					const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+					await provider.ensureSynchronized();
 
 					/**
 					 * create the first detached dds
 					 */
-					const createdDds1 = detachedDds1Utils.createDDS(fluidRuntime, apis, undefined);
+					const createdDds1 = detachedDds1Utils.createDDS(dataObjectB.runtime, apis);
 
 					/**
 					 * create the second detached dds and store a handle to the first dds in it
 					 */
-					const createdDds2 = detachedDds2Utils.createDDS(fluidRuntime, apis, undefined);
+					const createdDds2 = detachedDds2Utils.createDDS(dataObjectB.runtime, apis);
 					createdDds2.storeHandle(createdDds1.handle);
 
 					/**
-					 * set up the attached data store, data object, and get the attached dds
+					 * get the attached dds
 					 */
+					const attachedDds = await attachedDdsUtils.getDDS(attachedDataStore);
 
-					const containerRuntime = attachedDataStore.context.containerRuntime;
-					const detachedDataStore1 = await containerRuntime.createDataStore(["default"]);
-					const detachedDataObject1 =
-						(await detachedDataStore1.entryPoint.get()) as ITestFluidObject;
-					// typing is still off
-					// const attachedDds = await attachedDataStore.getSharedObject<>(
-					// 	attachedDdsUtils.id,
-					// );
-					// const attachedDds =
-					// 	await attachedDdsUtils.getTypedSharedObject(attachedDataStore);
-					const attachedDds = attachedDdsUtils.createDDS(
-						fluidRuntime,
-						apis,
-						attachedDataStore,
-					);
 					/**
 					 * store handle to dds2 in attached dds (which will attach ddss 1 and 2)
 					 */
@@ -510,56 +476,54 @@ describeCompat("handle validation", "NoCompat", async (getTestObjectProvider, ap
 					/**
 					 * close container, get sequence number and sync
 					 */
-					await provider.ensureSynchronized();
+					await provider.ensureSynchronized(container1);
 					const seq = container1.deltaManager.lastSequenceNumber;
 					container1.dispose();
 
 					const container2 = await provider.loadTestContainer(testContainerConfig);
 					if (container2.deltaManager.lastSequenceNumber < seq) {
 						await new Promise<void>((resolve, reject) => {
-							const func = () => {
+							const func = (op) => {
 								if (container2.deltaManager.lastSequenceNumber >= seq) {
 									container2.deltaManager.off("op", func);
 									container2.off("closed", reject);
 									resolve();
 								}
+								console.log(op);
 							};
 							container2.deltaManager.on("op", func);
 							container2.once("closed", reject);
 						});
 					}
+					await provider.ensureSynchronized(container2);
 
-					/**
-					 * validate handle to detached 1 stored in detached 2
-					 */
 					const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
-					// not sure if this is the right way to get the dds after attaching everything
-					const val1 = await createdDds2.readHandle();
-					assert(isObject(val1), `not a handle: ${val1}`);
-					const handle1: FluidObject<IFluidHandle> = val1;
-
-					const obj1 = await handle1.IFluidHandle?.get();
-					assert(isObject(obj1), "not an object");
-
-					const id1: FluidObject<ITestFluidObject> = obj1;
-					// this is not necessarily comparing to the right id
-					assert(id1.ITestFluidObject?.context.id, idA);
-
+					const attached2 = await attachedDdsUtils.getDDS(default2);
 					/**
-					 * validate handle to detached 2 stored in attached
+					 * validation
 					 */
-					// typing again
-					const attachedVal = attachedDdsUtils.createDDS(fluidRuntime, apis, default2);
-					const val2 = await attachedVal.readHandle();
-					assert(isObject(val2), `not a handle: ${val2}`);
-					const handle2: FluidObject<IFluidHandle> = val2;
+					const handleFromAttached = await attached2.readHandle();
+					assert(
+						isFluidHandle(handleFromAttached),
+						`not a handle: ${handleFromAttached}`,
+					);
 
-					const obj2 = await handle2.IFluidHandle?.get();
-					assert(isObject(obj2), "not an object");
+					const refToDetached2 = await getReferencedDDS(handleFromAttached);
+					assert(
+						refToDetached2.id === createdDds2.id,
+						`ids do not match: ${refToDetached2.id}, ${createdDds2.id}`,
+					);
+					const handleFromDetached2 = await refToDetached2.readHandle();
+					assert(
+						isFluidHandle(handleFromDetached2),
+						`not a handle: ${handleFromDetached2}`,
+					);
 
-					const id2: FluidObject<ITestFluidObject> = obj2;
-					// this is not necessarily comparing to the right id
-					assert(id2.ITestFluidObject?.context.id, idA);
+					const refToDetached1 = await getReferencedDDS(handleFromDetached2);
+					assert(
+						refToDetached1.id === createdDds1.id,
+						`ids do not match: ${refToDetached1.id}, ${createdDds1.id}`,
+					);
 				});
 			}
 		}
