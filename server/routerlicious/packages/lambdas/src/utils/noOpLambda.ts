@@ -20,7 +20,7 @@ export class NoOpLambda implements IPartitionLambda {
 		private readonly checkpointConfiguration?: NoOpLambdaCheckpointConfiguration,
 	) {}
 
-	public handler(message: IQueuedMessage) {
+	public handler(message: IQueuedMessage): undefined {
 		// default
 		if (!this.checkpointConfiguration?.enabled) {
 			this.context.checkpoint(message);
@@ -47,7 +47,7 @@ export class NoOpLambda implements IPartitionLambda {
 
 	public close(): void {}
 
-	private configurableCheckpoint(message: IQueuedMessage) {
+	private configurableCheckpoint(message: IQueuedMessage): void {
 		if (message?.offset > this.lastCheckpointOffset) {
 			this.context.checkpoint(message);
 			if (this.idleTimer) {
@@ -63,7 +63,7 @@ export class NoOpLambda implements IPartitionLambda {
 		}
 	}
 
-	private resetMaxTimer() {
+	private resetMaxTimer(): void {
 		console.log(`Resetting max timer`);
 		this.maxTimer = setInterval(
 			() => {
@@ -74,7 +74,7 @@ export class NoOpLambda implements IPartitionLambda {
 		);
 	}
 
-	private resetIdleTimer() {
+	private resetIdleTimer(): void {
 		if (this.idleTimer) {
 			clearTimeout(this.idleTimer);
 		}

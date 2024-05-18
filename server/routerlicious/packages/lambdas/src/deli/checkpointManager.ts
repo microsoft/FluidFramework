@@ -52,6 +52,8 @@ export interface ICheckpointParams {
 	clear?: boolean;
 }
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */

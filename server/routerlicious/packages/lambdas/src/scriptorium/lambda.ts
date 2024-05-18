@@ -64,7 +64,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.opsCountTelemetryEnabled = this.providerConfig?.opsCountTelemetryEnabled;
 	}
 
-	public handler(message: IQueuedMessage) {
+	public handler(message: IQueuedMessage): undefined {
 		if (this.opsCountTelemetryEnabled) {
 			setInterval(() => {
 				if (this.savedOpsCount > 0) {
@@ -137,14 +137,12 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close() {
+	public close(): void {
 		this.pending.clear();
 		this.current.clear();
-
-		return;
 	}
 
-	private sendPending() {
+	private sendPending(): void {
 		// If there is work currently being sent or we have no pending work return early
 		if (this.current.size > 0 || this.pending.size === 0) {
 			return;
@@ -199,8 +197,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// checkpoint batch offset
 				try {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this.context.checkpoint(batchOffset!, this.restartOnCheckpointFailure);
+					this.context.checkpoint(batchOffset, this.restartOnCheckpointFailure);
 					status = ScriptoriumStatus.CheckpointComplete;
 					metric?.setProperty("timestampCheckpointComplete", new Date().toISOString());
 				} catch (error) {
@@ -241,7 +238,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		status: string,
 		batchOffset: number | undefined,
 		metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined,
-	) {
+	): void {
 		if (this.telemetryEnabled && metric) {
 			metric.setProperty("status", status);
 			metric.error(errorMessage, error);
@@ -260,7 +257,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private async insertOp(
 		messages: ISequencedOperationMessage[],
 		scriptoriumMetricId: string | undefined,
-	) {
+	): Promise<any> {
 		const dbOps = messages.map((message) => ({
 			...message,
 			mongoTimestamp: new Date(message.operation.timestamp),

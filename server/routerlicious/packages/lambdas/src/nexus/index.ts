@@ -82,6 +82,8 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 	return map;
 }
 
+// TODO: documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -423,6 +425,8 @@ export function configureWebSocketServices(
 		// Message sent when a new signal is submitted to the router.
 		socket.on(
 			"submitSignal",
+			// TODO: semantic documentation
+			// eslint-disable-next-line jsdoc/require-description
 			/**
 			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
 			 * v1 signals are expected to be an array of strings (Json.stringified `ISignalEnvelope`s from

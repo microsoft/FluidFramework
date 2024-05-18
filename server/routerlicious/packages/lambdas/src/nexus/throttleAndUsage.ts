@@ -62,6 +62,8 @@ export async function storeClientConnectivityTime(
 	}
 }
 
+// TODO: semantic documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
