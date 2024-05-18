@@ -39,7 +39,7 @@ export class ClientSequenceNumberManager {
 		return this.clientNodeMap.size;
 	}
 
-	public peek(): any {
+	public peek(): IClientSequenceNumber | undefined {
 		const node = this.clientSeqNumbers.peek();
 		if (node === undefined) {
 			return undefined;

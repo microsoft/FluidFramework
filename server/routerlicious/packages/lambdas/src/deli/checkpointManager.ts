@@ -63,7 +63,7 @@ export function createDeliCheckpointManagerFromCollection(
 	checkpointService: ICheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
-		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean): Promise<any> => {
+		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean): Promise<void> => {
 			return checkpointService.writeCheckpoint(
 				documentId,
 				tenantId,

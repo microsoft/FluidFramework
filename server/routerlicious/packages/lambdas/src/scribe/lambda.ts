@@ -775,7 +775,7 @@ export class ScribeLambda implements IPartitionLambda {
 		}
 	}
 
-	private async sendSummaryAck(contents: ISummaryAck): Promise<any> {
+	private async sendSummaryAck(contents: ISummaryAck): Promise<void> {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents,
@@ -788,7 +788,7 @@ export class ScribeLambda implements IPartitionLambda {
 		return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
 	}
 
-	private async sendSummaryNack(contents: ISummaryNack): Promise<any> {
+	private async sendSummaryNack(contents: ISummaryNack): Promise<void> {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents,
@@ -809,7 +809,7 @@ export class ScribeLambda implements IPartitionLambda {
 		durableSequenceNumber: number,
 		isClientSummary: boolean,
 		clearCache: boolean,
-	): Promise<any> {
+	): Promise<void> {
 		const controlMessage: IControlMessage = {
 			type: ControlMessageType.UpdateDSN,
 			contents: {

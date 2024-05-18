@@ -27,13 +27,12 @@ export const initializeProtocol = (protocolState: IProtocolState): ProtocolOpHan
 		() => -1,
 	);
 
-export const sendToDeli = (
+export const sendToDeli = async (
 	tenantId: string,
 	documentId: string,
 	producer: IProducer | undefined,
 	operation: IDocumentMessage | IDocumentSystemMessage,
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-): Promise<any> => {
+): Promise<void> => {
 	if (!producer) {
 		throw new Error("Invalid producer");
 	}
