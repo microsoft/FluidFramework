@@ -345,7 +345,6 @@ export class ScribeLambda implements IPartitionLambda {
 							}
 						}
 					}
-					// eslint-disable-next-line unicorn/prefer-switch
 				} else if (value.operation.type === MessageType.NoClient) {
 					assert(
 						value.operation.referenceSequenceNumber === value.operation.sequenceNumber,
@@ -487,7 +486,7 @@ export class ScribeLambda implements IPartitionLambda {
 		message: IQueuedMessage,
 		checkpointReason: CheckpointReason,
 		skipKafkaCheckpoint?: boolean,
-	) {
+	): void {
 		const isGlobal = isGlobalCheckpoint(
 			this.documentCheckpointManager.getNoActiveClients(),
 			this.globalCheckpointOnly,
@@ -527,14 +526,14 @@ export class ScribeLambda implements IPartitionLambda {
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
 
-	public close(closeType: LambdaCloseType) {
+	public close(closeType: LambdaCloseType): void {
 		this.logScribeSessionMetrics(closeType);
 
 		this.closed = true;
 		this.protocolHandler.close();
 	}
 
-	private logScribeSessionMetrics(closeType: LambdaCloseType) {
+	private logScribeSessionMetrics(closeType: LambdaCloseType): void {
 		if (this.scribeSessionMetric?.isCompleted()) {
 			Lumberjack.info(
 				"Scribe session metric already completed. Creating a new one.",
@@ -565,7 +564,7 @@ export class ScribeLambda implements IPartitionLambda {
 	// Advances the protocol state up to 'target' sequence number. Having an exception while running this code
 	// is crucial and the document is essentially corrupted at this point. We should start logging this and
 	// have a better understanding of all failure modes.
-	private processFromPending(target: number, queuedMessage: IQueuedMessage) {
+	private processFromPending(target: number, queuedMessage: IQueuedMessage): void {
 		while (
 			this.pendingMessages.length > 0 &&
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -612,7 +611,7 @@ export class ScribeLambda implements IPartitionLambda {
 		}
 	}
 
-	private markDocumentAsCorrupt(message: IQueuedMessage) {
+	private markDocumentAsCorrupt(message: IQueuedMessage): void {
 		this.isDocumentCorrupt = true;
 		this.prepareCheckpoint(message, CheckpointReason.MarkAsCorrupt, this.isDocumentCorrupt);
 	}
@@ -620,7 +619,7 @@ export class ScribeLambda implements IPartitionLambda {
 	private revertProtocolState(
 		protocolState: IProtocolState,
 		pendingOps: ISequencedDocumentMessage[],
-	) {
+	): void {
 		this.protocolHandler = initializeProtocol(protocolState);
 		this.pendingMessages = new Deque(pendingOps);
 	}
@@ -647,7 +646,7 @@ export class ScribeLambda implements IPartitionLambda {
 		queuedMessage: IQueuedMessage,
 		clearCache: boolean,
 		skipKafkaCheckpoint: boolean = false,
-	) {
+	): void {
 		if (this.closed) {
 			return;
 		}
@@ -700,7 +699,7 @@ export class ScribeLambda implements IPartitionLambda {
 			});
 	}
 
-	private async writeCheckpoint(checkpoint: IScribe) {
+	private async writeCheckpoint(checkpoint: IScribe): Promise<void> {
 		const inserts = this.pendingCheckpointMessages
 			.toArray()
 			.filter((pcm) => pcm.operation.sequenceNumber > this.lastCheckpointInsertedNumber);
@@ -738,7 +737,7 @@ export class ScribeLambda implements IPartitionLambda {
 	 * This method updates the protocol head to the new summary sequence number
 	 * @param protocolHead - The sequence number of the new summary
 	 */
-	private updateProtocolHead(protocolHead: number) {
+	private updateProtocolHead(protocolHead: number): void {
 		this.protocolHead = protocolHead;
 	}
 
@@ -747,7 +746,7 @@ export class ScribeLambda implements IPartitionLambda {
 	 * This method updates it to the sequence number that was part of the latest summary
 	 * @param summarySequenceNumber - The sequence number of the operation that was part of the latest summary
 	 */
-	private updateLastSummarySequenceNumber(summarySequenceNumber: number) {
+	private updateLastSummarySequenceNumber(summarySequenceNumber: number): void {
 		this.lastSummarySequenceNumber = summarySequenceNumber;
 	}
 
@@ -755,7 +754,7 @@ export class ScribeLambda implements IPartitionLambda {
 	 * validParentSummaries tracks summary handles for service summaries that have been written since the latest client summary.
 	 * @param summaryHandle - The handle for a service summary that occurred after latest client summary.
 	 */
-	private updateValidParentSummaries(summaryHandle: string) {
+	private updateValidParentSummaries(summaryHandle: string): void {
 		if (this.validParentSummaries === undefined) {
 			this.validParentSummaries = [];
 		}
@@ -776,7 +775,7 @@ export class ScribeLambda implements IPartitionLambda {
 		}
 	}
 
-	private async sendSummaryAck(contents: ISummaryAck) {
+	private async sendSummaryAck(contents: ISummaryAck): Promise<any> {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents,
@@ -789,7 +788,7 @@ export class ScribeLambda implements IPartitionLambda {
 		return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
 	}
 
-	private async sendSummaryNack(contents: ISummaryNack) {
+	private async sendSummaryNack(contents: ISummaryNack): Promise<any> {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents,
@@ -810,7 +809,7 @@ export class ScribeLambda implements IPartitionLambda {
 		durableSequenceNumber: number,
 		isClientSummary: boolean,
 		clearCache: boolean,
-	) {
+	): Promise<any> {
 		const controlMessage: IControlMessage = {
 			type: ControlMessageType.UpdateDSN,
 			contents: {
@@ -832,7 +831,7 @@ export class ScribeLambda implements IPartitionLambda {
 		return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
 	}
 
-	private setStateFromCheckpoint(scribe: IScribe) {
+	private setStateFromCheckpoint(scribe: IScribe): void {
 		this.sequenceNumber = scribe.sequenceNumber;
 		this.minSequenceNumber = scribe.minimumSequenceNumber;
 		this.lastClientSummaryHead = scribe.lastClientSummaryHead;
@@ -866,7 +865,9 @@ export class ScribeLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	private readonly idleTimeCheckpoint = (initialScribeCheckpointMessage: IQueuedMessage) => {
+	private readonly idleTimeCheckpoint = (
+		initialScribeCheckpointMessage: IQueuedMessage,
+	): void => {
 		if (initialScribeCheckpointMessage) {
 			const isGlobal = isGlobalCheckpoint(
 				this.documentCheckpointManager.getNoActiveClients(),

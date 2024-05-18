@@ -112,7 +112,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
-) {
+): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
 		tenantManager,
@@ -329,7 +329,7 @@ export function configureWebSocketServices(
 						[CommonProperties.clientId]: clientId,
 						...getLumberBaseProperties(connection.documentId, connection.tenantId),
 					};
-					const handleMessageBatchProcessingError = (error: any) => {
+					const handleMessageBatchProcessingError = (error: any): void => {
 						if (isNetworkError(error) && error.code === 413) {
 							Lumberjack.info(
 								"Rejected too large operation(s)",

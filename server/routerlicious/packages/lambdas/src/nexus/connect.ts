@@ -227,7 +227,7 @@ function trackSocket(
 	documentId: string,
 	claims: ITokenClaims,
 	{ socketTracker }: INexusLambdaDependencies,
-) {
+): void {
 	// Track socket and tokens for this connection
 	if (socketTracker && claims.jti) {
 		socketTracker.addSocketForToken(

@@ -50,7 +50,7 @@ export const sendToDeli = (
 	return producer.send([message], tenantId, documentId);
 };
 
-export const getClientIds = (protocolState: IProtocolState, clientCount: number) => {
+export const getClientIds = (protocolState: IProtocolState, clientCount: number): string[] => {
 	return protocolState.members.slice(0, clientCount).map((member) => member[0]);
 };
 
@@ -60,7 +60,10 @@ export const getClientIds = (protocolState: IProtocolState, clientCount: number)
  * @param globalCheckpointOnly - whether to always write checkpoints to global db
  * @returns whether to write checkpoint to local db
  */
-export const isLocalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly: boolean) => {
+export const isLocalCheckpoint = (
+	noActiveClients: boolean,
+	globalCheckpointOnly: boolean,
+): boolean => {
 	return !isGlobalCheckpoint(noActiveClients, globalCheckpointOnly);
 };
 /**
@@ -69,7 +72,10 @@ export const isLocalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly
  * @param globalCheckpointOnly - whether to always write checkpoints to global db
  * @returns whether to write checkpoint to global db
  */
-export const isGlobalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly: boolean) => {
+export const isGlobalCheckpoint = (
+	noActiveClients: boolean,
+	globalCheckpointOnly: boolean,
+): boolean => {
 	return noActiveClients || globalCheckpointOnly;
 };
 

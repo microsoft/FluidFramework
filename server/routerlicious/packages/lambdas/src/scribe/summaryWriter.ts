@@ -582,7 +582,7 @@ export class SummaryWriter implements ISummaryWriter {
 		summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>,
 		op: ISequencedDocumentAugmentedMessage,
 		isEphemeralContainer?: boolean,
-	) {
+	): void {
 		summaryMetric.setProperties(getLumberBaseProperties(this.documentId, this.tenantId));
 		summaryMetric.setProperties({
 			[CommonProperties.clientId]: op.clientId,
@@ -682,7 +682,7 @@ export class SummaryWriter implements ISummaryWriter {
 			const minHeapComparator = (
 				a: ISequencedDocumentMessage,
 				b: ISequencedDocumentMessage,
-			) => {
+			): 1 | 0 | -1 => {
 				if (a.sequenceNumber < b.sequenceNumber) {
 					return -1;
 				}
@@ -753,6 +753,7 @@ export class SummaryWriter implements ISummaryWriter {
 		};
 
 		// Fetching ops from the local db
+		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const logTailOpMessage = await this.opStorage.find(query, {
 			"operation.sequenceNumber": 1,
 		});
