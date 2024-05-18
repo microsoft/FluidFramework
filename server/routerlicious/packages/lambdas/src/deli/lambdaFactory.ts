@@ -230,7 +230,7 @@ export class DeliLambdaFactory
 
 		deliLambda.on("close", (closeType) => {
 			const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const handler = async () => {
+			const handler = async (): Promise<void> => {
 				if (
 					closeType === LambdaCloseType.ActivityTimeout ||
 					closeType === LambdaCloseType.Error
@@ -328,7 +328,7 @@ export class DeliLambdaFactory
 
 		deliLambda.on("noClient", () => {
 			const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const handler = async () => {
+			const handler = async (): Promise<void> => {
 				// Set activity timer to reduce session grace period for ephemeral containers if cluster is in draining
 				if (document?.isEphemeralContainer && this.clusterDrainingChecker) {
 					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining();
@@ -380,7 +380,7 @@ export class DeliLambdaFactory
 		sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		errMsg: string,
-	) {
+	): void {
 		sessionMetric?.error(errMsg);
 		sessionStartMetric?.error(errMsg);
 	}

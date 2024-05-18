@@ -232,7 +232,7 @@ export interface IDeliLambdaEvents extends IEvent {
  * @param type - the type to check
  * @returns true if it is a system message type
  */
-const isServiceMessageType = (type: string) =>
+const isServiceMessageType = (type: string): boolean =>
 	type === MessageType.ClientJoin ||
 	type === MessageType.ClientLeave ||
 	type === MessageType.Control ||
@@ -441,7 +441,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	public handler(rawMessage: IQueuedMessage) {
+	public handler(rawMessage: IQueuedMessage): undefined {
 		// In cases where we are reprocessing messages we have already checkpointed exit early
 		if (this.logOffset !== undefined && rawMessage.offset <= this.logOffset) {
 			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
@@ -730,7 +730,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	public close(closeType: LambdaCloseType) {
+	public close(closeType: LambdaCloseType): void {
 		this.closed = true;
 
 		this.checkpointContext.close();
@@ -756,7 +756,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	private produceMessage(producer: IProducer, message: ITicketedMessage) {
+	private produceMessage(producer: IProducer, message: ITicketedMessage): void {
 		this.lastSendP = producer
 			.send([message], message.tenantId, message.documentId)
 			.catch((error) => {
@@ -788,7 +788,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		producer: IProducer,
 		messages: ITicketedMessage[],
 		rawMessage: IQueuedMessage,
-	) {
+	): void {
 		this.lastSendP = producer.send(messages, this.tenantId, this.documentId).catch((error) => {
 			if (this.closed) {
 				return;
@@ -825,7 +825,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		});
 	}
 
-	private logSessionStartMetrics(failMetric: boolean = false) {
+	private logSessionStartMetrics(failMetric: boolean = false): void {
 		if (this.sessionStartMetric?.isCompleted()) {
 			return;
 		}
@@ -860,13 +860,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	private verifyRequiredLambdaStarted() {
+	private verifyRequiredLambdaStarted(): boolean {
 		return this.expectedSuccessfullyStartedLambdas.every((val) =>
 			this.successfullyStartedLambdas.includes(val),
 		);
 	}
 
-	private logSessionEndMetrics(closeType: LambdaCloseType) {
+	private logSessionEndMetrics(closeType: LambdaCloseType): void {
 		if (this.sessionMetric?.isCompleted()) {
 			Lumberjack.info(
 				"Session metric already completed. Creating a new one.",
@@ -1340,8 +1340,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 		// Add traces
 		if (trace && message.operation.traces && message.operation.traces.length > 1) {
-			message.operation.traces.push(trace);
-			message.operation.traces.push(this.createTrace("end"));
+			message.operation.traces.push(trace, this.createTrace("end"));
 		}
 
 		// craft the output message
@@ -1363,7 +1362,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		};
 	}
 
-	private extractDataContent(message: IRawOperationMessage) {
+	private extractDataContent(message: IRawOperationMessage): any {
 		if (
 			message.operation.type === MessageType.ClientJoin ||
 			message.operation.type === MessageType.ClientLeave ||
@@ -1373,7 +1372,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		) {
 			const operation = message.operation as IDocumentSystemMessage;
 			if (operation.data) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return JSON.parse(operation.data);
 			}
 		}
@@ -1485,7 +1483,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Sends a message to the rawdeltas queue.
 	 * This essentially sends the message to this deli lambda
 	 */
-	private async sendToRawDeltas(message: IRawOperationMessage) {
+	private async sendToRawDeltas(message: IRawOperationMessage): Promise<void> {
 		try {
 			await this.rawDeltasProducer.send([message], message.tenantId, message.documentId);
 		} catch (error) {
@@ -1518,7 +1516,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Craft and send a leave message if one is found.
 	 * To prevent recurrent leave message sending, leave messages are only piggybacked with other message type.
 	 */
-	private checkIdleWriteClients(timestamp: number) {
+	private checkIdleWriteClients(timestamp: number): void {
 		const idleClient = this.getIdleClient(timestamp);
 		if (idleClient?.clientId) {
 			const leaveMessage = this.createLeaveMessage(
@@ -1545,7 +1543,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * an ExtendClient control message within the time for 'clientTimeout'.
 	 * Craft and send a leave message for each one found.
 	 */
-	private checkIdleReadClients() {
+	private checkIdleReadClients(): void {
 		const currentTime = Date.now();
 
 		for (const [clientId, { client, exp }] of this.sequencedSignalClients) {
@@ -1707,7 +1705,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Creates a new trace
 	 */
-	private createTrace(action: string) {
+	private createTrace(action: string): ITrace {
 		const trace: ITrace = {
 			action,
 			service: "deli",
@@ -1764,7 +1762,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	private setActivityIdleTimer() {
+	private setActivityIdleTimer(): void {
 		if (this.documentCheckpointManager.getNoActiveClients()) {
 			return;
 		}
@@ -1785,14 +1783,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}, this.serviceConfiguration.deli.activityTimeout);
 	}
 
-	private clearActivityIdleTimer() {
+	private clearActivityIdleTimer(): void {
 		if (this.activityIdleTimer !== undefined) {
 			clearTimeout(this.activityIdleTimer);
 			this.activityIdleTimer = undefined;
 		}
 	}
 
-	private setReadClientIdleTimer() {
+	private setReadClientIdleTimer(): void {
 		this.clearReadClientIdleTimer();
 
 		this.readClientIdleTimer = setInterval(() => {
@@ -1800,14 +1798,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}, this.serviceConfiguration.deli.readClientIdleTimer);
 	}
 
-	private clearReadClientIdleTimer() {
+	private clearReadClientIdleTimer(): void {
 		if (this.readClientIdleTimer !== undefined) {
 			clearInterval(this.readClientIdleTimer);
 			this.readClientIdleTimer = undefined;
 		}
 	}
 
-	private setNoopConsolidationTimer() {
+	private setNoopConsolidationTimer(): void {
 		if (this.documentCheckpointManager.getNoActiveClients()) {
 			return;
 		}
@@ -1828,7 +1826,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}, this.serviceConfiguration.deli.noOpConsolidationTimeout);
 	}
 
-	private clearNoopConsolidationTimer() {
+	private clearNoopConsolidationTimer(): void {
 		if (this.noopEvent !== undefined) {
 			clearTimeout(this.noopEvent);
 			this.noopEvent = undefined;
@@ -1839,7 +1837,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Reset the op event idle timer
 	 * Called after a message is sequenced
 	 */
-	private updateOpIdleTimer() {
+	private updateOpIdleTimer(): void {
 		const idleTime = this.serviceConfiguration.deli.opEvent.idleTime;
 		if (idleTime === undefined) {
 			return;
@@ -1852,7 +1850,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}, idleTime);
 	}
 
-	private clearOpIdleTimer() {
+	private clearOpIdleTimer(): void {
 		if (this.opEvent.idleTimer !== undefined) {
 			clearTimeout(this.opEvent.idleTimer);
 			this.opEvent.idleTimer = undefined;
@@ -1863,7 +1861,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Resets the op event MaxTime timer
 	 * Called after an opEvent is emitted
 	 */
-	private updateOpMaxTimeTimer() {
+	private updateOpMaxTimeTimer(): void {
 		const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
 		if (maxTime === undefined) {
 			return;
@@ -1876,7 +1874,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}, maxTime);
 	}
 
-	private clearOpMaxTimeTimer() {
+	private clearOpMaxTimeTimer(): void {
 		if (this.opEvent.maxTimer !== undefined) {
 			clearTimeout(this.opEvent.maxTimer);
 			this.opEvent.maxTimer = undefined;
@@ -1887,7 +1885,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Emits an opEvent for the provided type
 	 * Also resets the MaxTime timer
 	 */
-	private emitOpEvent(type: OpEventType, force?: boolean) {
+	private emitOpEvent(type: OpEventType, force?: boolean): void {
 		if (!force && this.opEvent.sequencedMessagesSinceLastOpEvent === 0) {
 			// no need to emit since no messages were handled since last time
 			return;
@@ -1908,7 +1906,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Checks if the nackMessages flag should be reset
 	 */
-	private checkNackMessagesState() {
+	private checkNackMessagesState(): void {
 		if (
 			this.serviceConfiguration.deli.summaryNackMessages.enable &&
 			this.nackMessages.has(NackMessagesType.SummaryMaxOps)
@@ -1964,7 +1962,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Checkpoints the current state once the pending kafka messages are produced
 	 */
-	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean) {
+	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean): void {
 		this.documentCheckpointManager.resetCheckpointTimer();
 
 		Promise.all([this.lastSendP, this.lastNoClientP])
@@ -2021,7 +2019,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			});
 	}
 
-	private readonly idleTimeCheckpoint = (message: IQueuedMessage) => {
+	private readonly idleTimeCheckpoint = (message: IQueuedMessage): void => {
 		this.checkpoint(CheckpointReason.IdleTime, this.globalCheckpointOnly);
 	};
 
@@ -2029,7 +2027,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Updates the durable sequence number
 	 * @param dsn - New durable sequence number
 	 */
-	private updateDurableSequenceNumber(dsn: number) {
+	private updateDurableSequenceNumber(dsn: number): void {
 		this.durableSequenceNumber = dsn;
 
 		this.checkNackMessagesState();
@@ -2052,7 +2050,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private updateNackMessages(
 		type: NackMessagesType,
 		contents: INackMessagesControlMessageContents | undefined,
-	) {
+	): void {
 		if (contents === undefined) {
 			this.nackMessages.delete(type);
 		} else {
@@ -2071,7 +2069,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private addSequencedSignalClient(
 		clientJoinMessage: IClientJoin,
 		signalMessage: ISignalMessageOutput,
-	) {
+	): void {
 		const sequencedSignalClient: ISequencedSignalClient = {
 			client: clientJoinMessage.detail,
 			referenceSequenceNumber: (signalMessage.message.operation as any)
