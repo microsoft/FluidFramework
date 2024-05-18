@@ -18,7 +18,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import shajs from "sha.js";
-import Axios from "axios";
+import axios from "axios";
 
 /**
  * @internal
@@ -167,7 +167,7 @@ export class MoiraLambda implements IPartitionLambda {
 
 	private async createBranch(branchGuid: string): Promise<string> {
 		const rootCommitGuid = this.createDerivedGuid(branchGuid, "root");
-		const branchCreationResponse = await Axios.post(
+		const branchCreationResponse = await axios.post(
 			`${this.serviceConfiguration.moira.endpoint}/branch`,
 			{
 				guid: branchGuid,
@@ -217,7 +217,7 @@ export class MoiraLambda implements IPartitionLambda {
 					minimumSequenceNumber: message.operation.minimumSequenceNumber,
 				},
 			};
-			const commitCreationResponse = await Axios.post(
+			const commitCreationResponse = await axios.post(
 				`${this.serviceConfiguration.moira.endpoint}/branch/${branchGuid}/commit`,
 				{
 					...commitData,
