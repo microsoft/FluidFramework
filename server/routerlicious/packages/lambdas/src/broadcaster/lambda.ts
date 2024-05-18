@@ -62,7 +62,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 		private readonly clientManager: IClientManager | undefined,
 	) {}
 
-	public async handler(message: IQueuedMessage) {
+	public async handler(message: IQueuedMessage): Promise<undefined> {
 		const boxcar = extractBoxcar(message);
 
 		for (const baseMessage of boxcar.contents) {
@@ -178,7 +178,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close() {
+	public close(): void {
 		this.pending.clear();
 		this.current.clear();
 		this.pendingOffset = undefined;
@@ -189,11 +189,11 @@ export class BroadcasterLambda implements IPartitionLambda {
 		}
 	}
 
-	public hasPendingWork() {
+	public hasPendingWork(): boolean {
 		return this.pending.size > 0 || this.current.size > 0;
 	}
 
-	private sendPending() {
+	private sendPending(): void {
 		if (this.messageSendingTimerId !== undefined) {
 			// a send is in progress
 			return;
@@ -253,8 +253,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
 			this.messageSendingTimerId = undefined;
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.context.checkpoint(batchOffset!);
+			this.context.checkpoint(batchOffset);
 			this.current.clear();
 			this.sendPending();
 		});

@@ -35,7 +35,7 @@ export async function storeClientConnectivityTime(
 	tenantId: string,
 	connectionTimestamp: number,
 	throttleAndUsageStorageManager: IThrottleAndUsageStorageManager,
-) {
+): Promise<void> {
 	try {
 		const now = Date.now();
 		const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;

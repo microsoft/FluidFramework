@@ -130,7 +130,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.globalCheckpointOnly = this.localCheckpointEnabled ? false : true;
 	}
 
-	public async handler(message: IQueuedMessage) {
+	public async handler(message: IQueuedMessage): Promise<void> {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
 		if (this.lastOffset !== undefined && message.offset <= this.lastOffset) {

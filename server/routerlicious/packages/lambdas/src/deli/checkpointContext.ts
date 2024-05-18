@@ -30,7 +30,7 @@ export class CheckpointContext {
 		checkpoint: ICheckpointParams,
 		restartOnCheckpointFailure?: boolean,
 		globalCheckpointOnly?: boolean,
-	) {
+	): Promise<void> {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
@@ -122,14 +122,14 @@ export class CheckpointContext {
 		}
 	}
 
-	public close() {
+	public close(): void {
 		this.closed = true;
 	}
 
 	private async checkpointCore(
 		checkpoint: ICheckpointParams,
 		globalCheckpointOnly: boolean = false,
-	) {
+	): Promise<void> {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
