@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -16,10 +16,9 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -311,7 +310,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(message.contents, {
 			idCompressor: this.idCompressor,
@@ -334,7 +333,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
@@ -342,7 +341,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },

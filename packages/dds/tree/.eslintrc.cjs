@@ -29,6 +29,24 @@ module.exports = {
 		// TODO: Remove this override once dependency on eslint-config-fluid has been updated to 5.2.0+
 		"import/order": "off",
 
+		// TODO: Remove these overrides once this config has been updated to extend at least the "recommended" base config.
+		"@typescript-eslint/no-explicit-any": [
+			"error",
+			{
+				ignoreRestArgs: true,
+			},
+		],
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: true,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
+
 		// TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
 	},
@@ -40,6 +58,7 @@ module.exports = {
 			},
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
+				"@typescript-eslint/explicit-function-return-type": "off",
 			},
 		},
 	],

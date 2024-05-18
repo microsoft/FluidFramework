@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/sequence-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -539,7 +557,6 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>): void;
 use_current_InterfaceDeclaration_ISharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -554,6 +571,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>): void;
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1324,7 +1342,6 @@ declare function get_old_ClassDeclaration_SharedIntervalCollection():
 declare function use_current_ClassDeclaration_SharedIntervalCollection(
     use: TypeOnly<current.SharedIntervalCollection>): void;
 use_current_ClassDeclaration_SharedIntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedIntervalCollection());
 
 /*
@@ -1381,7 +1398,6 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>): void;
 use_current_ClassDeclaration_SharedSegmentSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -1410,7 +1426,6 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>): void;
 use_current_ClassDeclaration_SharedSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -1432,32 +1447,86 @@ use_old_ClassDeclaration_SharedSequence(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedString": {"forwardCompat": false}
+ * "VariableDeclaration_SharedString": {"forwardCompat": false}
  */
+declare function get_old_VariableDeclaration_SharedString():
+    TypeOnly<typeof old.SharedString>;
+declare function use_current_VariableDeclaration_SharedString(
+    use: TypeOnly<typeof current.SharedString>): void;
+use_current_VariableDeclaration_SharedString(
+    get_old_VariableDeclaration_SharedString());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedString": {"backCompat": false}
+ * "VariableDeclaration_SharedString": {"backCompat": false}
  */
+declare function get_current_VariableDeclaration_SharedString():
+    TypeOnly<typeof current.SharedString>;
+declare function use_old_VariableDeclaration_SharedString(
+    use: TypeOnly<typeof old.SharedString>): void;
+use_old_VariableDeclaration_SharedString(
+    get_current_VariableDeclaration_SharedString());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedStringFactory": {"forwardCompat": false}
+ * "TypeAliasDeclaration_SharedString": {"forwardCompat": false}
  */
+declare function get_old_TypeAliasDeclaration_SharedString():
+    TypeOnly<old.SharedString>;
+declare function use_current_TypeAliasDeclaration_SharedString(
+    use: TypeOnly<current.SharedString>): void;
+use_current_TypeAliasDeclaration_SharedString(
+    get_old_TypeAliasDeclaration_SharedString());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_SharedStringFactory": {"backCompat": false}
+ * "TypeAliasDeclaration_SharedString": {"backCompat": false}
  */
+declare function get_current_TypeAliasDeclaration_SharedString():
+    TypeOnly<current.SharedString>;
+declare function use_old_TypeAliasDeclaration_SharedString(
+    use: TypeOnly<old.SharedString>): void;
+use_old_TypeAliasDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_TypeAliasDeclaration_SharedString());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_SharedStringClass": {"forwardCompat": false}
+ */
+declare function get_old_ClassDeclaration_SharedStringClass():
+    TypeOnly<old.SharedStringClass>;
+declare function use_current_ClassDeclaration_SharedStringClass(
+    use: TypeOnly<current.SharedStringClass>): void;
+use_current_ClassDeclaration_SharedStringClass(
+    get_old_ClassDeclaration_SharedStringClass());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_SharedStringClass": {"backCompat": false}
+ */
+declare function get_current_ClassDeclaration_SharedStringClass():
+    TypeOnly<current.SharedStringClass>;
+declare function use_old_ClassDeclaration_SharedStringClass(
+    use: TypeOnly<old.SharedStringClass>): void;
+use_old_ClassDeclaration_SharedStringClass(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_ClassDeclaration_SharedStringClass());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

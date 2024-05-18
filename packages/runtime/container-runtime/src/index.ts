@@ -97,7 +97,7 @@ export {
 	ICancellableSummarizerController,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 	IdCompressorMode,
 	IDocumentSchema,

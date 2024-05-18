@@ -18,14 +18,13 @@ export class TransactionStack {
 	/**
 	 * The number of transactions currently ongoing.
 	 */
-	public get size() {
+	public get size(): number {
 		return this.stack.length;
 	}
 
 	/**
 	 * Pushes a new transaction onto the stack. That transaction becomes the current transaction.
 	 * @param startRevision - the revision of the latest commit when this transaction begins
-	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
 	 * @param disposables - an optional collection of disposable data to release after finishing a transaction
 	 */
 	public push(startRevision: RevisionTag, dispose: () => void): void {
@@ -34,7 +33,7 @@ export class TransactionStack {
 
 	/**
 	 * Ends the current transaction. Fails if there is currently no ongoing transaction.
-	 * @returns The revision that the closed transaction began on, and its repair data store if it has one.
+	 * @returns The revision that the closed transaction began on.
 	 */
 	public pop(): {
 		startRevision: RevisionTag;

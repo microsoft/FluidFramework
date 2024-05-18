@@ -1484,7 +1484,7 @@
             "error"
         ],
         "unicorn/number-literal-case": [
-            "error"
+            "off"
         ],
         "unicorn/numeric-separators-style": [
             "error",

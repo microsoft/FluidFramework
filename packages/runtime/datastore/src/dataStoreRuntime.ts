@@ -6,13 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -26,7 +21,7 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -39,13 +34,11 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -235,7 +228,7 @@ export class FluidDataStoreRuntime
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.logger,
+			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },

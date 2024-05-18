@@ -21,6 +21,7 @@ import {
 	r11sEndpointName,
 	tenantIndex,
 	reinstall,
+	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
@@ -317,6 +318,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	}
 	process.env.fluid__test__driver = driver;
 	process.env.fluid__test__r11sEndpointName = r11sEndpointName;
+	process.env.fluid__test__odspEndpointName = odspEndpointName;
 	process.env.fluid__test__tenantIndex = tenantIndex.toString();
 	process.env.fluid__test__baseVersion = baseVersion;
 

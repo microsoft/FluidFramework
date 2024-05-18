@@ -1149,7 +1149,7 @@ describe("ModularChangeFamily", () => {
 			nested: NodeId[];
 		}
 
-		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>> = {
 			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
@@ -1159,7 +1159,7 @@ describe("ModularChangeFamily", () => {
 					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
 				];
 			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
+		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
 		const hasRemovedRootsRefsField = new FieldKindWithEditor(
 			fieldKind,
 			Multiplicity.Single,

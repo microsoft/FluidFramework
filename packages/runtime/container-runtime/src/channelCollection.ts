@@ -21,13 +21,11 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -149,7 +147,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		},
 		deltaManager: context.deltaManager,
 		storage: context.storage,
-		logger: context.logger,
+		baseLogger: context.baseLogger,
 		get clientDetails() {
 			return context.clientDetails;
 		},
@@ -679,7 +677,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					channel,
 					id,
 					this,
-					createChildLogger({ logger: this.parentContext.logger }),
+					createChildLogger({ logger: this.parentContext.baseLogger }),
 				),
 		});
 
@@ -1561,7 +1559,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		const runtime = this.ctor(
 			context.baseSnapshot,
 			context, // parentContext
-			context.logger,
+			context.baseLogger,
 			() => {}, // gcNodeUpdated
 			(_nodePath: string) => false, // isDataStoreDeleted
 			new Map(), // aliasMap

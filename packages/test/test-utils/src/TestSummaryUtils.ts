@@ -189,9 +189,6 @@ export async function summarizeNow(
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
-		if (typeof submitResult.error !== "string") {
-			submitResult.error.data = submitResult.data;
-		}
 		throw submitResult.error;
 	}
 	assert(

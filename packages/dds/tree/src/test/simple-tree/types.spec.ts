@@ -17,7 +17,7 @@ import { RawTreeNode } from "../../simple-tree/rawNode.js";
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { validateUsageError } from "./utils.js";
+import { validateUsageError } from "../utils.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -49,7 +49,7 @@ describe("simple-tree types", () => {
 		it("Valid subclass", () => {
 			const log: string[] = [];
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const customThis: TreeNodeValid<any> = {} as TreeNodeValid<any>;
+			const customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;

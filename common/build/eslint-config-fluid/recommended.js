@@ -92,6 +92,11 @@ module.exports = {
 		"unicorn/template-indent": "off",
 
 		/**
+		 * Disabled because it is incompatible with prettier.
+		 */
+		"unicorn/number-literal-case": "off",
+
+		/**
 		 * The rule seems to crash on some of our code
 		 */
 		"unicorn/expiring-todo-comments": "off",
