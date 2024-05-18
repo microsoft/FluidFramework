@@ -165,7 +165,6 @@ declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<current.ContainerDevtoolsProps>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
@@ -180,7 +179,6 @@ declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
@@ -447,7 +445,6 @@ declare function get_old_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_current_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<current.FluidDevtoolsProps>): void;
 use_current_InterfaceDeclaration_FluidDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
@@ -462,7 +459,6 @@ declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<old.FluidDevtoolsProps>): void;
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*

@@ -149,11 +149,9 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ContainerDevtoolsProps": {
-				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_DevtoolsProps": {
-				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
