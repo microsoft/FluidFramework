@@ -1341,10 +1341,7 @@ export function testCompose() {
 					Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
 				),
 				{ count: 1 },
-				Mark.attachAndDetach(
-					Mark.moveIn(1, { revision: tag2, localId: brand(0) }),
-					Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
-				),
+				Mark.tomb(tag2, brand(1)),
 			];
 
 			assertChangesetsEqual(composed, expected);
@@ -1369,7 +1366,7 @@ export function testCompose() {
 			const composed = shallowCompose([move1, returnAndMove]);
 
 			const expected = [
-				Mark.tomb(tag1, brand(0)),
+				Mark.tomb(tag1, brand(1)),
 				Mark.skip(1),
 				Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
 				Mark.skip(1),
