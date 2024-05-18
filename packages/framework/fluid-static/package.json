@@ -151,32 +151,7 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IFluidContainer": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IProvideRootDataObject": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IRootDataObject": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_LoadableObjectRecord": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_InitialObjects": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ContainerDevtoolsProps": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_DevtoolsProps": {
-				"forwardCompat": false,
+			"InterfaceDeclaration_ContainerSchema": {
 				"backCompat": false
 			}
 		}
