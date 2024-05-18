@@ -312,7 +312,7 @@ async function checkClusterDraining(
 	{ clusterDrainingChecker }: INexusLambdaDependencies,
 	message: IConnect,
 	properties: Record<string, any>,
-) {
+): Promise<void> {
 	if (!clusterDrainingChecker) {
 		return;
 	}
@@ -472,7 +472,7 @@ async function addMessageClientToClientManager(
 	messageClient: Partial<IClient>,
 	metricProperties: { clientId: string; tenantId: string; documentId: string },
 	{ clientManager, logger }: INexusLambdaDependencies,
-) {
+): Promise<void> {
 	const connectDocumentAddClientMetric = Lumberjack.newLumberMetric(
 		LumberEventName.ConnectDocumentAddClient,
 		metricProperties,
@@ -499,7 +499,7 @@ function setUpSignalListenerForRoomBroadcasting(
 	documentId: string,
 	tenantId: string,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-) {
+): void {
 	collaborationSessionEventEmitter?.on(
 		"broadcastSignal",
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises

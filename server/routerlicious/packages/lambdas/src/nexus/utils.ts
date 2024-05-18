@@ -62,8 +62,9 @@ export class ExpirationTimer {
 	}
 }
 
-export const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
-export const isWriter = (scopes: string[], mode: ConnectionMode) =>
+export const hasWriteAccess = (scopes: string[]): boolean =>
+	canWrite(scopes) || canSummarize(scopes);
+export const isWriter = (scopes: string[], mode: ConnectionMode): boolean =>
 	hasWriteAccess(scopes) && mode === "write";
 
 export const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;

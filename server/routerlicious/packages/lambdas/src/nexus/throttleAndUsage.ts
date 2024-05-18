@@ -18,12 +18,13 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
 
-export const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
+export const getSocketConnectThrottleId = (tenantId: string): string =>
+	`${tenantId}_OpenSocketConn`;
 
-export const getSubmitOpThrottleId = (clientId: string, tenantId: string) =>
+export const getSubmitOpThrottleId = (clientId: string, tenantId: string): string =>
 	`${clientId}_${tenantId}_SubmitOp`;
 
-export const getSubmitSignalThrottleId = (clientId: string, tenantId: string) =>
+export const getSubmitSignalThrottleId = (clientId: string, tenantId: string): string =>
 	`${clientId}_${tenantId}_SubmitSignal`;
 
 /**

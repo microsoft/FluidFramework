@@ -35,7 +35,7 @@ export class MoiraLambda implements IPartitionLambda {
 		private readonly documentId: string,
 	) {}
 
-	public handler(message: IQueuedMessage) {
+	public handler(message: IQueuedMessage): undefined {
 		const boxcar = extractBoxcar(message);
 
 		for (const baseMessage of boxcar.contents) {
@@ -63,12 +63,12 @@ export class MoiraLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close() {
+	public close(): void {
 		this.pending.clear();
 		this.current.clear();
 	}
 
-	private sendPending() {
+	private sendPending(): void {
 		// If there is work currently being sent or we have no pending work return early
 		if (this.current.size > 0 || this.pending.size === 0) {
 			return;
@@ -99,7 +99,7 @@ export class MoiraLambda implements IPartitionLambda {
 			});
 	}
 
-	private createDerivedGuid(referenceGuid: string, identifier: string) {
+	private createDerivedGuid(referenceGuid: string, identifier: string): string {
 		const hexHash = shajs("sha1").update(`${referenceGuid}:${identifier}`).digest("hex");
 		return (
 			`${hexHash.slice(0, 8)}-${hexHash.slice(8, 12)}-` +
@@ -107,7 +107,9 @@ export class MoiraLambda implements IPartitionLambda {
 		);
 	}
 
-	private async processMoiraCoreParallel(messages: ISequencedOperationMessage[]) {
+	private async processMoiraCoreParallel(
+		messages: ISequencedOperationMessage[],
+	): Promise<void[]> {
 		const processedMessages: Map<string, Promise<void>> = new Map();
 
 		for (const message of messages) {
@@ -202,7 +204,7 @@ export class MoiraLambda implements IPartitionLambda {
 		branchGuid: string,
 		opData: any,
 		message: ISequencedOperationMessage,
-	) {
+	): Promise<void> {
 		try {
 			const commitData = {
 				guid: commitGuid,

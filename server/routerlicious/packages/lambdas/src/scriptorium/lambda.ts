@@ -197,7 +197,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// checkpoint batch offset
 				try {
-					this.context.checkpoint(batchOffset, this.restartOnCheckpointFailure);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.context.checkpoint(batchOffset!, this.restartOnCheckpointFailure);
 					status = ScriptoriumStatus.CheckpointComplete;
 					metric?.setProperty("timestampCheckpointComplete", new Date().toISOString());
 				} catch (error) {

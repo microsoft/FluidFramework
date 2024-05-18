@@ -253,7 +253,8 @@ export class BroadcasterLambda implements IPartitionLambda {
 
 			this.messageSendingTimerId = undefined;
 
-			this.context.checkpoint(batchOffset);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.context.checkpoint(batchOffset!);
 			this.current.clear();
 			this.sendPending();
 		});
