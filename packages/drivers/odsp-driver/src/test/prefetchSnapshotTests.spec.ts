@@ -628,6 +628,7 @@ describe("Tests for prefetching snapshot", () => {
 				...snapshotTreeWithGroupId.trees[".app"].trees,
 				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
 			},
+			id: "SnapshotId",
 		};
 		beforeEach(async () => {
 			mockLogger = new MockLogger();
