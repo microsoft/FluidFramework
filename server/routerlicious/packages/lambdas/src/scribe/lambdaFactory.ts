@@ -246,11 +246,7 @@ export class ScribeLambdaFactory
 			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
-			if (!latestSummary.fromSummary) {
-				context.log?.error(`Summary can't be fetched`, { messageMetaData });
-				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
-				lastCheckpoint = DefaultScribe;
-			} else {
+			if (latestSummary.fromSummary) {
 				if (!latestSummaryCheckpoint) {
 					const error = new Error(
 						"Attempted to load from non-existent summary checkpoint.",
@@ -274,6 +270,10 @@ export class ScribeLambdaFactory
 				const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
 				context.log?.info(checkpointMessage, { messageMetaData });
 				Lumberjack.info(checkpointMessage, lumberProperties);
+			} else {
+				context.log?.error(`Summary can't be fetched`, { messageMetaData });
+				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
+				lastCheckpoint = DefaultScribe;
 			}
 		} else {
 			if (!latestDbCheckpoint) {
@@ -433,7 +433,7 @@ export class ScribeLambdaFactory
 		tenantId: string,
 		documentId: string,
 		contents: ILambdaStartControlMessageContents | undefined,
-	) {
+	): Promise<void> {
 		const controlMessage: IControlMessage = {
 			type: ControlMessageType.LambdaStartResult,
 			contents,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 
@@ -12,6 +13,10 @@ export class MockHandleContext implements IFluidHandleContext {
 	public get IFluidHandleContext() {
 		return this;
 	}
+
+	// In real scenarios, the handle context is ContainerFluidHandleContext which has a circular reference to ContainerRuntime.
+	// This has caused trouble with traversing an object with handles, so include it in the mock as well.
+	public circular = this;
 
 	constructor(
 		public readonly absolutePath = "",

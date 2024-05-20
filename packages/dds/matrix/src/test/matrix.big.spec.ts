@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockEmptyDeltaConnection,

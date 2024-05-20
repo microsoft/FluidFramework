@@ -8,8 +8,11 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ValueType,
+	bindHandles,
+} from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";

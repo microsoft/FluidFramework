@@ -67,6 +67,7 @@ declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
@@ -123,6 +124,7 @@ declare function get_current_InterfaceDeclaration_DevtoolsProps():
 declare function use_old_InterfaceDeclaration_DevtoolsProps(
     use: TypeOnly<old.DevtoolsProps>): void;
 use_old_InterfaceDeclaration_DevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_DevtoolsProps());
 
 /*

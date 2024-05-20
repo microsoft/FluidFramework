@@ -95,6 +95,7 @@ declare function get_current_InterfaceDeclaration_ContainerSchema():
 declare function use_old_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerSchema());
 
 /*
@@ -102,28 +103,16 @@ use_old_InterfaceDeclaration_ContainerSchema(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
+ * "RemovedTypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_DataObjectClass():
-    TypeOnly<old.DataObjectClass>;
-declare function use_current_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<current.DataObjectClass>): void;
-use_current_TypeAliasDeclaration_DataObjectClass(
-    get_old_TypeAliasDeclaration_DataObjectClass());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_DataObjectClass": {"backCompat": false}
+ * "RemovedTypeAliasDeclaration_DataObjectClass": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_DataObjectClass():
-    TypeOnly<current.DataObjectClass>;
-declare function use_old_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<old.DataObjectClass>): void;
-use_old_TypeAliasDeclaration_DataObjectClass(
-    get_current_TypeAliasDeclaration_DataObjectClass());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -179,6 +168,7 @@ declare function get_current_InterfaceDeclaration_IFluidContainer():
 declare function use_old_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<old.IFluidContainer>): void;
 use_old_InterfaceDeclaration_IFluidContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidContainer());
 
 /*
@@ -375,6 +365,7 @@ declare function get_current_TypeAliasDeclaration_InitialObjects():
 declare function use_old_TypeAliasDeclaration_InitialObjects(
     use: TypeOnly<old.InitialObjects<any>>): void;
 use_old_TypeAliasDeclaration_InitialObjects(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_InitialObjects());
 
 /*
@@ -382,56 +373,32 @@ use_old_TypeAliasDeclaration_InitialObjects(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_LoadableObjectClass": {"forwardCompat": false}
+ * "RemovedTypeAliasDeclaration_LoadableObjectClass": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
-    TypeOnly<old.LoadableObjectClass>;
-declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<current.LoadableObjectClass>): void;
-use_current_TypeAliasDeclaration_LoadableObjectClass(
-    get_old_TypeAliasDeclaration_LoadableObjectClass());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_LoadableObjectClass": {"backCompat": false}
+ * "RemovedTypeAliasDeclaration_LoadableObjectClass": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_LoadableObjectClass():
-    TypeOnly<current.LoadableObjectClass>;
-declare function use_old_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<old.LoadableObjectClass>): void;
-use_old_TypeAliasDeclaration_LoadableObjectClass(
-    get_current_TypeAliasDeclaration_LoadableObjectClass());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_LoadableObjectClassRecord": {"forwardCompat": false}
+ * "RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_LoadableObjectClassRecord():
-    TypeOnly<old.LoadableObjectClassRecord>;
-declare function use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
-    use: TypeOnly<current.LoadableObjectClassRecord>): void;
-use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
-    get_old_TypeAliasDeclaration_LoadableObjectClassRecord());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_LoadableObjectClassRecord": {"backCompat": false}
+ * "RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_LoadableObjectClassRecord():
-    TypeOnly<current.LoadableObjectClassRecord>;
-declare function use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
-    use: TypeOnly<old.LoadableObjectClassRecord>): void;
-use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
-    get_current_TypeAliasDeclaration_LoadableObjectClassRecord());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

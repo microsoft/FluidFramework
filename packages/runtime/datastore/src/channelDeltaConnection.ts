@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 

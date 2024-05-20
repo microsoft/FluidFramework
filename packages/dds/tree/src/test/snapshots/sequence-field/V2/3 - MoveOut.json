@@ -1,26 +1,24 @@
 [
   {
     "count": 1,
-    "cellId": {
-      "atom": [
-        0,
-        0
-      ],
-      "adjacentCells": [
-        [
+    "effect": {
+      "moveOut": {
+        "revision": 0,
+        "finalEndpoint": [
           0,
-          2
-        ]
-      ],
-      "lineage": [
-        [
+          0
+        ],
+        "idOverride": [
           0,
-          0,
-          2,
-          1
-        ]
-      ]
+          0
+        ],
+        "id": 0
+      }
     },
+    "cellId": [
+      0,
+      0
+    ],
     "changes": {
       "fieldChanges": [
         {
