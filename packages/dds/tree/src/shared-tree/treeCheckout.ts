@@ -362,6 +362,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
 	>();
 
+	/**
+	 * A copy of the removed roots that is modified during a transaction. If the transaction is aborted, this copy is disposed.
+	 * If the transaction is committed, this copy replaces {@link removedRoots}.
+	 */
+	private removedRootsInTransaction: DetachedFieldIndex | undefined;
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -385,15 +391,25 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
 				const revision =
-					event.type === "replace"
+					event.type !== "remove"
 						? event.newCommits[event.newCommits.length - 1].revision
-						: event.change.revision;
+						: undefined;
+
+				if (this.transaction.inProgress() && this.removedRootsInTransaction === undefined) {
+					this.removedRootsInTransaction = this.removedRoots.clone();
+				}
+
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
 						const delta = intoDelta(tagChange(change.innerChange, revision));
 						this.withCombinedVisitor((visitor) => {
-							visitDelta(delta, visitor, this.removedRoots, revision);
+							visitDelta(
+								delta,
+								visitor,
+								this.removedRootsInTransaction ?? this.removedRoots,
+								revision,
+							);
 						});
 					} else if (change.type === "schema") {
 						// Schema changes from a current to a new schema are expected to be backwards compatible.
@@ -419,10 +435,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
+				// commit the in progress removed roots if there are no more transactions
+				if (!this.transaction.inProgress()) {
+					assert(
+						this.removedRootsInTransaction !== undefined,
+						"a transaction should operate on a copy of the removed roots index",
+					);
+					this.removedRoots.loadIndex(this.removedRootsInTransaction);
+					this.removedRootsInTransaction = undefined;
+				}
 				const transactionRevision = event.newCommits[0].revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
+			}
+			if (event.type === "remove") {
+				this.removedRootsInTransaction = undefined;
 			}
 		});
 		branch.on("commitApplied", (data) => {
