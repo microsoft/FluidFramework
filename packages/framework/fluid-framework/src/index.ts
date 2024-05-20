@@ -10,6 +10,10 @@
  * @packageDocumentation
  */
 
+// ===============================================================
+// #region Public exports
+// #region Basic re-exports
+
 export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
 	ICriticalContainerError,
@@ -38,9 +42,15 @@ export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 // eslint-disable-next-line no-restricted-syntax, import/export
 export * from "@fluidframework/tree";
 
+// End of basic public exports - nothing above this line should
+// depend on an /internal path.
+// #endregion Basic re-exports
+// ---------------------------------------------------------------
+// #region Custom re-exports
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ITree } from "@fluidframework/tree";
 import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
-import { type ITree } from "@fluidframework/tree";
 
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -52,11 +62,15 @@ import { type ITree } from "@fluidframework/tree";
  * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
  * @public
  */
+// Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
 // eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+// #endregion Custom re-exports
+// #endregion Public exports
+
 // ===============================================================
-// Legacy exports
+// #region Legacy exports
 
 export type {
 	IDirectory,
@@ -104,3 +118,5 @@ export type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
+
+// #endregion Legacy exports
