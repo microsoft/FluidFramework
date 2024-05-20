@@ -137,7 +137,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -147,6 +147,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_DevtoolsProps": {
+				"backCompat": false
+			}
+		}
 	}
 }
