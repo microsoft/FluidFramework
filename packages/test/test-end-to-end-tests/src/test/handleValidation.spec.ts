@@ -28,7 +28,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import type { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import type { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
 import { ISharedCell } from "@fluidframework/cell/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
