@@ -879,7 +879,6 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @internal
 export interface ForestEvents {
-    afterChange(): void;
     afterRootFieldCreated(key: FieldKey): void;
     beforeChange(): void;
 }
