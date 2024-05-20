@@ -88,6 +88,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
