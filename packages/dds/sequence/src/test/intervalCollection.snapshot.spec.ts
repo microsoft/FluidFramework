@@ -40,7 +40,6 @@ async function loadSharedString(
 		SharedStringFactory.Attributes,
 	);
 	await sharedString.load(services);
-	await sharedString.loaded;
 	return sharedString;
 }
 

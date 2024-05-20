@@ -22,8 +22,6 @@ import {
 import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	type AttributionInfo,
 	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,
@@ -187,7 +185,10 @@ export const mixinAttributor = (
 			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
+			const logger = createChildLogger({
+				logger: runtime.baseLogger,
+				namespace: "Attributor",
+			});
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution

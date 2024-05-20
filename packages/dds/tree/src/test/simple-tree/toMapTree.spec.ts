@@ -7,30 +7,54 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	ValueSchema,
+	type FieldKey,
+	type FieldKindData,
+	type FieldKindIdentifier,
+	type MapTree,
+	type SchemaAndPolicy,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+} from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 import {
+	FieldKind,
+	createFieldSchema,
+	ImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	type TreeNodeSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaTypes.js";
+import {
+	cursorFromFieldData,
+	cursorFromNodeData,
 	nodeDataToMapTree as nodeDataToMapTreeBase,
 	objectToMapTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { createMockNodeKeyManager, createNodeKeyManager } from "../../feature-libraries/index.js";
 
 /**
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
  * convenience.
  */
-function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
+function nodeDataToMapTree(
+	tree: InsertableContent,
+	allowedTypes: ImplicitAllowedTypes,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+): MapTree {
 	return nodeDataToMapTreeBase(
 		tree,
 		normalizeAllowedTypes(allowedTypes),
 		createMockNodeKeyManager(),
+		schemaValidationPolicy,
 	);
 }
 
@@ -133,9 +157,8 @@ describe("toMapTree", () => {
 	it("Fails when referenced schema has not yet been instantiated", () => {
 		const schemaFactory = new SchemaFactory("test");
 
-		let Bar: any;
+		let Bar: TreeNodeSchema;
 		class Foo extends schemaFactory.objectRecursive("Foo", {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			x: schemaFactory.optionalRecursive(() => Bar),
 		}) {}
 
@@ -650,7 +673,7 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("ambagious unions", () => {
+	it("ambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const a = schemaFactory.object("a", { x: schemaFactory.string });
 		const b = schemaFactory.object("b", { x: schemaFactory.string });
@@ -663,7 +686,7 @@ describe("toMapTree", () => {
 		);
 	});
 
-	it("unambagious unions", () => {
+	it("unambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const a = schemaFactory.object("a", { a: schemaFactory.string, c: schemaFactory.string });
 		const b = schemaFactory.object("b", { b: schemaFactory.string, c: schemaFactory.string });
@@ -779,6 +802,129 @@ describe("toMapTree", () => {
 					]),
 				/Received unsupported array entry value/,
 			);
+		});
+	});
+
+	describe("Stored schema validation", () => {
+		/**
+		 * Creates a schema and policy and indicates stored schema validation should be performed.
+		 */
+		function createSchemaAndPolicy(
+			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
+			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
+		): SchemaAndPolicy {
+			return {
+				schema: {
+					nodeSchema,
+				},
+				policy: {
+					fieldKinds,
+					validateSchema: true,
+				},
+			};
+		}
+
+		const outOfSchemaExpectedError: Partial<Error> = {
+			message: "Tree does not conform to schema.",
+		};
+
+		const schemaFactory = new SchemaFactory("test");
+		const schemaValidationPolicyForSuccess = createSchemaAndPolicy(
+			new Map([
+				[
+					brand(schemaFactory.string.identifier),
+					new LeafNodeStoredSchema(ValueSchema.String),
+				],
+			]),
+			new Map(),
+		);
+		const schemaValidationPolicyForFailure = createSchemaAndPolicy(
+			new Map([
+				[
+					// Fake a stored schema that associates the string identifier to a number schema
+					brand(schemaFactory.string.identifier),
+					new LeafNodeStoredSchema(ValueSchema.Number),
+				],
+			]),
+			new Map(),
+		);
+
+		describe("nodeDataToMapTree", () => {
+			it("Success", () => {
+				const content = "Hello world";
+				nodeDataToMapTree(
+					content,
+					[schemaFactory.string],
+					schemaValidationPolicyForSuccess,
+				);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				assert.throws(
+					() =>
+						nodeDataToMapTree(
+							content,
+							[schemaFactory.string],
+							schemaValidationPolicyForFailure,
+						),
+					outOfSchemaExpectedError,
+				);
+			});
+		});
+
+		describe("cursorFromNodeData", () => {
+			it("Success", () => {
+				const nodeData = "Hello world";
+				cursorFromNodeData(
+					nodeData,
+					[schemaFactory.string],
+					createNodeKeyManager(),
+					schemaValidationPolicyForSuccess,
+				);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				assert.throws(
+					() =>
+						cursorFromNodeData(
+							content,
+							[schemaFactory.string],
+							createNodeKeyManager(),
+							schemaValidationPolicyForFailure,
+						),
+					outOfSchemaExpectedError,
+				);
+			});
+		});
+
+		describe("cursorFromFieldData", () => {
+			it("Success", () => {
+				const content = "Hello world";
+				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
+				cursorFromFieldData(
+					content,
+					fieldSchema,
+					createNodeKeyManager(),
+					schemaValidationPolicyForSuccess,
+				);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
+				assert.throws(
+					() =>
+						cursorFromFieldData(
+							content,
+							fieldSchema,
+							createNodeKeyManager(),
+							schemaValidationPolicyForFailure,
+						),
+					outOfSchemaExpectedError,
+				);
+			});
 		});
 	});
 });

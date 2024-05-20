@@ -32,7 +32,7 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 	return new BlobManager(
 		failProxy({
 			// defaults, these can still be overridden below
-			runtime: failProxy<IBlobManagerRuntime>({ logger: createChildLogger() }),
+			runtime: failProxy<IBlobManagerRuntime>({ baseLogger: createChildLogger() }),
 			snapshot: {},
 			stashedBlobs: undefined,
 

@@ -14,6 +14,7 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import {
+	BaseCommand,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
@@ -37,7 +38,6 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";

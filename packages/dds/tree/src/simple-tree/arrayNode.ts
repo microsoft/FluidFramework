@@ -18,6 +18,7 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -384,7 +385,7 @@ const TreeNodeWithArrayFeatures = (() => {
  * To update this class delete all members and reapply the "implement interface" refactoring.
  * As these signatures get formatted to be over three times as many lines with prettier (which is not helpful), it is also suppressed.
  */
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
@@ -421,7 +422,7 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	toString(): string;
 	values(): IterableIterator<T>;
 }
-/* eslint-enable @typescript-eslint/explicit-member-accessibility */
+/* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
 /**
  * Attempts to coerce the given property key to an integer index property.
@@ -593,9 +594,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+		const sequenceField = getSequenceField(this);
 		const content = contextualizeInsertedArrayContent(
 			value as readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-			getSequenceField(this),
+			sequenceField,
 		);
 
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
@@ -606,6 +608,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			content,
 			simpleFieldSchema,
 			getFlexNode(this).context.nodeKeyManager,
+			getSchemaAndPolicy(sequenceField),
 		);
 	}
 
@@ -618,7 +621,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
 	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
-	public get length() {
+	public get length(): number {
 		return fail("Proxy should intercept length");
 	}
 
@@ -626,6 +629,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return this.values();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get [Symbol.unscopables]() {
 		// This might not be the exact right set of values, but it only matters for `with` clauses which are deprecated and are banned in strict mode, so it shouldn't matter much.
 		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with for details.
@@ -789,7 +793,7 @@ export function arraySchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
 		}
 

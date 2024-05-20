@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/container-definitions-previous/intern
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -175,7 +193,6 @@ declare function get_old_InterfaceDeclaration_IAudience():
 declare function use_current_InterfaceDeclaration_IAudience(
     use: TypeOnly<current.IAudience>): void;
 use_current_InterfaceDeclaration_IAudience(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAudience());
 
 /*
@@ -190,8 +207,35 @@ declare function get_current_InterfaceDeclaration_IAudience():
 declare function use_old_InterfaceDeclaration_IAudience(
     use: TypeOnly<old.IAudience>): void;
 use_old_InterfaceDeclaration_IAudience(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAudience());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IAudienceEvents": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IAudienceEvents():
+    TypeOnly<old.IAudienceEvents>;
+declare function use_current_InterfaceDeclaration_IAudienceEvents(
+    use: TypeOnly<current.IAudienceEvents>): void;
+use_current_InterfaceDeclaration_IAudienceEvents(
+    get_old_InterfaceDeclaration_IAudienceEvents());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IAudienceEvents": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IAudienceEvents():
+    TypeOnly<current.IAudienceEvents>;
+declare function use_old_InterfaceDeclaration_IAudienceEvents(
+    use: TypeOnly<old.IAudienceEvents>): void;
+use_old_InterfaceDeclaration_IAudienceEvents(
+    get_current_InterfaceDeclaration_IAudienceEvents());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -205,7 +249,6 @@ declare function get_old_InterfaceDeclaration_IAudienceOwner():
 declare function use_current_InterfaceDeclaration_IAudienceOwner(
     use: TypeOnly<current.IAudienceOwner>): void;
 use_current_InterfaceDeclaration_IAudienceOwner(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAudienceOwner());
 
 /*
@@ -220,7 +263,6 @@ declare function get_current_InterfaceDeclaration_IAudienceOwner():
 declare function use_old_InterfaceDeclaration_IAudienceOwner(
     use: TypeOnly<old.IAudienceOwner>): void;
 use_old_InterfaceDeclaration_IAudienceOwner(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAudienceOwner());
 
 /*
@@ -319,7 +361,6 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>): void;
 use_current_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -334,7 +375,6 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>): void;
 use_old_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -349,7 +389,6 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>): void;
 use_current_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -364,7 +403,6 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>): void;
 use_old_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -1065,7 +1103,6 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>): void;
 use_old_InterfaceDeclaration_ILoaderHeader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*
@@ -1291,6 +1328,34 @@ declare function use_old_InterfaceDeclaration_IRuntimeFactory(
     use: TypeOnly<old.IRuntimeFactory>): void;
 use_old_InterfaceDeclaration_IRuntimeFactory(
     get_current_InterfaceDeclaration_IRuntimeFactory());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_ISelf": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_ISelf():
+    TypeOnly<old.ISelf>;
+declare function use_current_InterfaceDeclaration_ISelf(
+    use: TypeOnly<current.ISelf>): void;
+use_current_InterfaceDeclaration_ISelf(
+    get_old_InterfaceDeclaration_ISelf());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_ISelf": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_ISelf():
+    TypeOnly<current.ISelf>;
+declare function use_old_InterfaceDeclaration_ISelf(
+    use: TypeOnly<old.ISelf>): void;
+use_old_InterfaceDeclaration_ISelf(
+    get_current_InterfaceDeclaration_ISelf());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
