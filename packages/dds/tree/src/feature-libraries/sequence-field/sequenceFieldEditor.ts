@@ -37,7 +37,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	moveIn(
 		destIndex: number,
 		count: number,
-		detachCellId: ChangesetLocalId,
+		moveId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
 	): Changeset;
 
@@ -109,12 +109,12 @@ export const sequenceFieldEditor = {
 	moveIn(
 		destIndex: number,
 		count: number,
-		detachCellId: ChangesetLocalId,
+		moveId: ChangesetLocalId,
 		attachCellId: ChangesetLocalId,
 	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
-			id: detachCellId,
+			id: moveId,
 			count,
 			cellId: { localId: attachCellId },
 		};
