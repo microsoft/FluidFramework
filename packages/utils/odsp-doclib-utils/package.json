@@ -146,6 +146,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IClientConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
