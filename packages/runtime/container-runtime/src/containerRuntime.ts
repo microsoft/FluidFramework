@@ -2320,6 +2320,7 @@ export class ContainerRuntime
 		let newState: boolean;
 
 		try {
+			this.submitIdAllocationOpIfNeeded(true);
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
 		} finally {
@@ -2812,9 +2813,9 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
-			// 1. It would not help, as we flush attach ops as they become available.
-			// 2. There is no way to undo process of data store creation.
+			// Note: we are not touching any batches other than mainBatch here, for two reasons:
+			// 1. It would not help, as other batches are flushed independently from main batch.
+			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
 		try {
@@ -3854,9 +3855,11 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
 		if (this._idCompressor) {
-			const idRange = this._idCompressor.takeNextCreationRange();
+			const idRange = resubmitOutstandingRanges
+				? this.idCompressor?.takeUnfinalizedCreationRange()
+				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -3936,33 +3939,7 @@ export class ContainerRuntime
 					});
 				}
 
-				// If this is attach message for new data store, and we are in a batch, send this op out of order
-				// Is it safe:
-				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-				//    is stored in some DDS, i.e. only after some other op.
-				// Why:
-				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-				//    these issues.
-				// Cons:
-				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-				//    This change creates new possibility of a lot of newly created data stores never being referenced
-				//    because client died before it had a change to submit the rest of the ops. This will create more
-				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-				//    issue than sending.
-				// Please note that this does not change file format, so it can be disabled in the future if this
-				// optimization no longer makes sense (for example, batch compression may make it less appealing).
-				if (
-					this.currentlyBatching() &&
-					type === ContainerMessageType.Attach &&
-					this.disableAttachReorder !== true
-				) {
-					this.outbox.submitAttach(message);
-				} else if (type === ContainerMessageType.BlobAttach) {
+				if (type === ContainerMessageType.BlobAttach) {
 					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 					this.outbox.submitBlobAttach(message);
 				} else {
@@ -4122,7 +4099,13 @@ export class ContainerRuntime
 				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
 			case ContainerMessageType.IdAllocation: {
-				this.submit(message, localOpMetadata);
+				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
+				// avoid being submitted out of order. For example, if the pending state manager contained
+				// [idOp1, dataOp1, idOp2, dataOp2] and the resubmission of dataOp1 generated idOp3, that would be
+				// placed into the outbox in the same batch as idOp1, but before idOp2 is resubmitted.
+				// To avoid this, allocation ops are simply never resubmitted. Prior to invoking the pending state
+				// manager to replay pending ops, the runtime will always submit a new allocation range that includes
+				// all pending IDs. The resubmitted allocation ops are then ignored here.
 				break;
 			}
 			case ContainerMessageType.ChunkedOp:
