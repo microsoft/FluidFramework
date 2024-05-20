@@ -4,9 +4,10 @@
 
 ```ts
 
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal
 export interface IAcceptedPact<T> {
@@ -30,7 +31,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 }
 
 // @internal
-export const PactMap: ISharedObjectKind<IPactMap<unknown>>;
+export const PactMap: ISharedObjectKind<IPactMap<unknown>> & SharedObjectKind<IPactMap<unknown>>;
 
 // (No @packageDocumentation comment for this package)
 

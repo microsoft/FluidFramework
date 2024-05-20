@@ -399,7 +399,6 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 				runtimeOptions: {
 					...defaultGCConfig.runtimeOptions,
 					gcOptions: {
-						gcAllowed: true,
 						runGCInTestMode: deleteContent,
 					},
 				},

@@ -77,7 +77,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				break;
 			}
 			default: {
-				throw new Error(`Unknown type: ${(summaryObject as any).type}`);
+				throw new Error(`Unknown type: ${(summaryObject as SummaryObject).type}`);
 			}
 		}
 
