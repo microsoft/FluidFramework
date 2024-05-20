@@ -41,7 +41,7 @@ import { brand } from "../../util/index.js";
 import { createNodeKeyManager } from "../../feature-libraries/index.js";
 import { MockNodeKeyManager } from "../nodeKeyManager.js";
 
-describe.only("toMapTree", () => {
+describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;
 	beforeEach(() => {
 		nodeKeyManager = new MockNodeKeyManager();
