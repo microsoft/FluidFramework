@@ -1418,14 +1418,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			if (this.serviceConfiguration.scribe.generateServiceSummary) {
 				addAdditionalContent = true;
-			} else if (
-				message.operation.type === MessageType.Summarize && // no need to add additionalContent for summarize messages using the single commit flow
+			} else if (message.operation.type === MessageType.Summarize) {
+				// no need to add additionalContent for summarize messages using the single commit flow
 				// because scribe will not be involved
-				(!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
+				// eslint-disable-next-line unicorn/no-lonely-if
+				if (
+					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
 					!(JSON.parse(message.operation.contents as string) as ISummaryContent).details
-						?.includesProtocolTree)
-			) {
-				addAdditionalContent = true;
+						?.includesProtocolTree
+				) {
+					addAdditionalContent = true;
+				}
 			}
 
 			if (addAdditionalContent) {
