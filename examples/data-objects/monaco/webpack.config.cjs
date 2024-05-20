@@ -63,9 +63,6 @@ module.exports = (env) => {
 			publicPath: "/dist/",
 			globalObject: "self",
 		},
-		plugins: [
-			new MonacoWebpackPlugin(),
-			// new BundleAnalyzerPlugin()
-		],
+		plugins: [new MonacoWebpackPlugin()],
 	});
 };
