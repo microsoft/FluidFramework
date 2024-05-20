@@ -1412,15 +1412,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		) {
 			const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
 
-			// only add additional content if scribe will use this op for generating a summary
-			// NoClient ops are ignored by scribe when generateServiceSummary is disabled
+			// Only add additional content if scribe will use this op for generating a summary.
+			// `NoClient` ops are ignored by scribe when `generateServiceSummary` is disabled.
 			let addAdditionalContent = false;
 
 			if (this.serviceConfiguration.scribe.generateServiceSummary) {
 				addAdditionalContent = true;
 			} else if (message.operation.type === MessageType.Summarize) {
-				// no need to add additionalContent for summarize messages using the single commit flow
-				// because scribe will not be involved
+				// No need to add additionalContent for summarize messages using the single commit flow
+				// because scribe will not be involved.
 				// eslint-disable-next-line unicorn/no-lonely-if
 				if (
 					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
