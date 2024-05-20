@@ -145,10 +145,10 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
-# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main branch, and
+# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main and release branch, and
 # for the build of the client release group (we don't need manifests for anything else).
-# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
-- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.tagName, 'client')) }}:
+# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))) }}:
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'

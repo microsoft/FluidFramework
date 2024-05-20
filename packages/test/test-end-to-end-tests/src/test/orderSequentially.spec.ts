@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
-import type { SharedString } from "@fluidframework/sequence/internal";
+import type { ISharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -54,12 +54,16 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedString: SharedString;
-	let sharedString2: SharedString;
+	let sharedString: ISharedString;
+	let sharedString2: ISharedString;
 	let sharedDir: SharedDirectory;
 	let sharedCell: ISharedCell;
 	let sharedMap: ISharedMap;
-	let changedEventData: (IValueChanged | Serializable<unknown>)[];
+	let changedEventData: (
+		| IValueChanged
+		| Serializable<unknown>
+		| InstanceType<typeof SequenceDeltaEvent>
+	)[];
 	let containerRuntime: ContainerRuntime;
 	let error: Error | undefined;
 
@@ -85,19 +89,19 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			"maybeTestFluidObject not a ITestFluidObject",
 		);
 		dataObject = maybeTestFluidObject.ITestFluidObject;
-		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
-		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
+		sharedString = await dataObject.getSharedObject<ISharedString>(stringId);
+		sharedString2 = await dataObject.getSharedObject<ISharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
 		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
 		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];
-		sharedString.on("sequenceDelta", (changed, _local, _target) => {
-			changedEventData.push(changed);
+		sharedString.on("sequenceDelta", (event, _target) => {
+			changedEventData.push(event);
 		});
-		sharedString2.on("sequenceDelta", (changed, _local, _target) => {
-			changedEventData.push(changed);
+		sharedString2.on("sequenceDelta", (event, _target) => {
+			changedEventData.push(event);
 		});
 		sharedDir.on("valueChanged", (changed, _local, _target) => {
 			changedEventData.push(changed);

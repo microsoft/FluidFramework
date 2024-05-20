@@ -12,6 +12,7 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -86,7 +87,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 > {
 	public static readonly kind = NodeKind.Map;
 
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		return this.entries();
 	}
 	public delete(key: string): void {
@@ -127,6 +128,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			content,
 			classSchema.info as ImplicitAllowedTypes,
 			node.context.nodeKeyManager,
+			getSchemaAndPolicy(node),
 		);
 
 		node.set(key, cursor);
@@ -143,7 +145,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public forEach<TThis extends TreeMapNode<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		for (const field of getFlexNode(this).boxedIterator()) {
 			const node = getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
@@ -159,6 +161,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
@@ -199,7 +202,7 @@ export function mapSchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
 		}
 
@@ -256,7 +259,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		throw rawError("Iterating maps with forEach");
 	}

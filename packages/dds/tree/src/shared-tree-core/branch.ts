@@ -499,7 +499,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
-	) {
+	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;
 		if (head === upTo) {
 			return undefined;

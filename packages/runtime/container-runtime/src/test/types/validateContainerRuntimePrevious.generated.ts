@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/container-runtime-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -291,7 +309,6 @@ declare function get_old_ClassDeclaration_DataStoreContexts():
 declare function use_current_ClassDeclaration_DataStoreContexts(
     use: TypeOnly<current.DataStoreContexts>): void;
 use_current_ClassDeclaration_DataStoreContexts(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataStoreContexts());
 
 /*
@@ -335,6 +352,34 @@ declare function use_old_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof old.DefaultSummaryConfiguration>): void;
 use_old_VariableDeclaration_DefaultSummaryConfiguration(
     get_current_VariableDeclaration_DefaultSummaryConfiguration());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_DeletedResponseHeaderKey": {"forwardCompat": false}
+ */
+declare function get_old_VariableDeclaration_DeletedResponseHeaderKey():
+    TypeOnly<typeof old.DeletedResponseHeaderKey>;
+declare function use_current_VariableDeclaration_DeletedResponseHeaderKey(
+    use: TypeOnly<typeof current.DeletedResponseHeaderKey>): void;
+use_current_VariableDeclaration_DeletedResponseHeaderKey(
+    get_old_VariableDeclaration_DeletedResponseHeaderKey());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_DeletedResponseHeaderKey": {"backCompat": false}
+ */
+declare function get_current_VariableDeclaration_DeletedResponseHeaderKey():
+    TypeOnly<typeof current.DeletedResponseHeaderKey>;
+declare function use_old_VariableDeclaration_DeletedResponseHeaderKey(
+    use: TypeOnly<typeof old.DeletedResponseHeaderKey>): void;
+use_old_VariableDeclaration_DeletedResponseHeaderKey(
+    get_current_VariableDeclaration_DeletedResponseHeaderKey());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1155,6 +1200,90 @@ use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes0": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IFluidDataStoreAttributes0():
+    TypeOnly<old.IFluidDataStoreAttributes0>;
+declare function use_current_InterfaceDeclaration_IFluidDataStoreAttributes0(
+    use: TypeOnly<current.IFluidDataStoreAttributes0>): void;
+use_current_InterfaceDeclaration_IFluidDataStoreAttributes0(
+    get_old_InterfaceDeclaration_IFluidDataStoreAttributes0());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes0": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IFluidDataStoreAttributes0():
+    TypeOnly<current.IFluidDataStoreAttributes0>;
+declare function use_old_InterfaceDeclaration_IFluidDataStoreAttributes0(
+    use: TypeOnly<old.IFluidDataStoreAttributes0>): void;
+use_old_InterfaceDeclaration_IFluidDataStoreAttributes0(
+    get_current_InterfaceDeclaration_IFluidDataStoreAttributes0());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes1": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IFluidDataStoreAttributes1():
+    TypeOnly<old.IFluidDataStoreAttributes1>;
+declare function use_current_InterfaceDeclaration_IFluidDataStoreAttributes1(
+    use: TypeOnly<current.IFluidDataStoreAttributes1>): void;
+use_current_InterfaceDeclaration_IFluidDataStoreAttributes1(
+    get_old_InterfaceDeclaration_IFluidDataStoreAttributes1());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes1": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IFluidDataStoreAttributes1():
+    TypeOnly<current.IFluidDataStoreAttributes1>;
+declare function use_old_InterfaceDeclaration_IFluidDataStoreAttributes1(
+    use: TypeOnly<old.IFluidDataStoreAttributes1>): void;
+use_old_InterfaceDeclaration_IFluidDataStoreAttributes1(
+    get_current_InterfaceDeclaration_IFluidDataStoreAttributes1());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes2": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IFluidDataStoreAttributes2():
+    TypeOnly<old.IFluidDataStoreAttributes2>;
+declare function use_current_InterfaceDeclaration_IFluidDataStoreAttributes2(
+    use: TypeOnly<current.IFluidDataStoreAttributes2>): void;
+use_current_InterfaceDeclaration_IFluidDataStoreAttributes2(
+    get_old_InterfaceDeclaration_IFluidDataStoreAttributes2());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IFluidDataStoreAttributes2": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IFluidDataStoreAttributes2():
+    TypeOnly<current.IFluidDataStoreAttributes2>;
+declare function use_old_InterfaceDeclaration_IFluidDataStoreAttributes2(
+    use: TypeOnly<old.IFluidDataStoreAttributes2>): void;
+use_old_InterfaceDeclaration_IFluidDataStoreAttributes2(
+    get_current_InterfaceDeclaration_IFluidDataStoreAttributes2());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "InterfaceDeclaration_IFluidDataStoreContextEvents": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_IFluidDataStoreContextEvents():
@@ -1265,6 +1394,34 @@ declare function use_old_InterfaceDeclaration_IGCMetadata(
     use: TypeOnly<old.IGCMetadata>): void;
 use_old_InterfaceDeclaration_IGCMetadata(
     get_current_InterfaceDeclaration_IGCMetadata());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IGCNodeUpdatedProps": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IGCNodeUpdatedProps():
+    TypeOnly<old.IGCNodeUpdatedProps>;
+declare function use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
+    use: TypeOnly<current.IGCNodeUpdatedProps>): void;
+use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
+    get_old_InterfaceDeclaration_IGCNodeUpdatedProps());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IGCNodeUpdatedProps": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IGCNodeUpdatedProps():
+    TypeOnly<current.IGCNodeUpdatedProps>;
+declare function use_old_InterfaceDeclaration_IGCNodeUpdatedProps(
+    use: TypeOnly<old.IGCNodeUpdatedProps>): void;
+use_old_InterfaceDeclaration_IGCNodeUpdatedProps(
+    get_current_InterfaceDeclaration_IGCNodeUpdatedProps());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1555,28 +1712,16 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<old.IRetriableFailureResult>;
-declare function use_current_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<current.IRetriableFailureResult>): void;
-use_current_InterfaceDeclaration_IRetriableFailureResult(
-    get_old_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<current.IRetriableFailureResult>;
-declare function use_old_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<old.IRetriableFailureResult>): void;
-use_old_InterfaceDeclaration_IRetriableFailureResult(
-    get_current_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -2457,6 +2602,34 @@ use_old_ClassDeclaration_LocalFluidDataStoreContextBase(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAliasDeclaration_OmitAttributesVersions": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_OmitAttributesVersions():
+    TypeOnly<old.OmitAttributesVersions<any>>;
+declare function use_current_TypeAliasDeclaration_OmitAttributesVersions(
+    use: TypeOnly<current.OmitAttributesVersions<any>>): void;
+use_current_TypeAliasDeclaration_OmitAttributesVersions(
+    get_old_TypeAliasDeclaration_OmitAttributesVersions());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_OmitAttributesVersions": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_OmitAttributesVersions():
+    TypeOnly<current.OmitAttributesVersions<any>>;
+declare function use_old_TypeAliasDeclaration_OmitAttributesVersions(
+    use: TypeOnly<old.OmitAttributesVersions<any>>): void;
+use_old_TypeAliasDeclaration_OmitAttributesVersions(
+    get_current_TypeAliasDeclaration_OmitAttributesVersions());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAliasDeclaration_OpActionEventListener": {"forwardCompat": false}
  */
 declare function get_old_TypeAliasDeclaration_OpActionEventListener():
@@ -2507,6 +2680,34 @@ declare function use_old_TypeAliasDeclaration_OpActionEventName(
     use: TypeOnly<old.OpActionEventName>): void;
 use_old_TypeAliasDeclaration_OpActionEventName(
     get_current_TypeAliasDeclaration_OpActionEventName());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ReadFluidDataStoreAttributes": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_ReadFluidDataStoreAttributes():
+    TypeOnly<old.ReadFluidDataStoreAttributes>;
+declare function use_current_TypeAliasDeclaration_ReadFluidDataStoreAttributes(
+    use: TypeOnly<current.ReadFluidDataStoreAttributes>): void;
+use_current_TypeAliasDeclaration_ReadFluidDataStoreAttributes(
+    get_old_TypeAliasDeclaration_ReadFluidDataStoreAttributes());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_ReadFluidDataStoreAttributes": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_ReadFluidDataStoreAttributes():
+    TypeOnly<current.ReadFluidDataStoreAttributes>;
+declare function use_old_TypeAliasDeclaration_ReadFluidDataStoreAttributes(
+    use: TypeOnly<old.ReadFluidDataStoreAttributes>): void;
+use_old_TypeAliasDeclaration_ReadFluidDataStoreAttributes(
+    get_current_TypeAliasDeclaration_ReadFluidDataStoreAttributes());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

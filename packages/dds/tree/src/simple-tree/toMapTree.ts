@@ -12,6 +12,7 @@ import {
 	type MapTree,
 	type TreeValue,
 	ValueSchema,
+	type SchemaAndPolicy,
 } from "../core/index.js";
 import {
 	type CursorWithNode,
@@ -38,6 +39,7 @@ import {
 	getStoredKey,
 	extractFieldProvider,
 } from "./schemaTypes.js";
+import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 
 /**
  * Module notes:
@@ -54,6 +56,10 @@ import {
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  *
  * @returns A cursor (in nodes mode) for the mapped tree if the input data was defined. Otherwise, returns `undefined`.
  */
@@ -61,6 +67,7 @@ export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
@@ -69,6 +76,7 @@ export function cursorFromNodeData(
 		data,
 		normalizeAllowedTypes(allowedTypes),
 		nodeKeyManager,
+		schemaValidationPolicy,
 	);
 	return cursorForMapTreeNode(mappedContent);
 }
@@ -77,16 +85,21 @@ export function cursorFromNodeData(
  * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param schema - Schema of the field with which the input `data` is associated.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
 export function cursorFromFieldData(
 	data: InsertableContent,
 	schema: FieldSchema,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): CursorWithNode<MapTree> {
 	// TODO: array node content should not go through here since sequence fields don't exist at this abstraction layer.
 	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, schema.allowedTypeSet, nodeKeyManager)
-		: [nodeDataToMapTree(data, schema.allowedTypeSet, nodeKeyManager)];
+		? arrayToMapTreeFields(data, schema.allowedTypeSet, nodeKeyManager, schemaValidationPolicy)
+		: [nodeDataToMapTree(data, schema.allowedTypeSet, nodeKeyManager, schemaValidationPolicy)];
 	return cursorForMapTreeField(mappedContent);
 }
 
@@ -104,30 +117,48 @@ export function cursorFromFieldData(
  *
  * * `-0` =\> `+0`
  *
- * @param data - The tree data being transformed.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
 export function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
 	const schema = getType(data, allowedTypes);
 
+	let result: MapTree;
 	switch (schema.kind) {
 		case NodeKind.Leaf:
-			return leafToMapTree(data, schema, allowedTypes);
+			result = leafToMapTree(data, schema, allowedTypes);
+			break;
 		case NodeKind.Array:
-			return arrayToMapTree(data, schema, nodeKeyManager);
+			result = arrayToMapTree(data, schema, nodeKeyManager);
+			break;
 		case NodeKind.Map:
-			return mapToMapTree(data, schema, nodeKeyManager);
+			result = mapToMapTree(data, schema, nodeKeyManager);
+			break;
 		case NodeKind.Object:
-			return objectToMapTree(data, schema, nodeKeyManager);
+			result = objectToMapTree(data, schema, nodeKeyManager);
+			break;
 		default:
 			fail(`Unrecognized schema kind: ${schema.kind}.`);
 	}
+
+	if (schemaValidationPolicy?.policy.validateSchema === true) {
+		const maybeError = isNodeInSchema(result, schemaValidationPolicy);
+		if (maybeError !== SchemaValidationErrors.NoError) {
+			throw new UsageError("Tree does not conform to schema.");
+		}
+	}
+
+	return result;
 }
 
 /**
@@ -199,10 +230,20 @@ function mapValueWithFallbacks(
 	}
 }
 
+/**
+ * Transforms data under an Array schema.
+ * @param data - The tree data to be transformed.
+ * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
+ */
 function arrayToMapTreeFields(
 	data: readonly InsertableContent[],
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree[] {
 	const mappedData: MapTree[] = [];
 	for (const child of data) {
@@ -216,7 +257,12 @@ function arrayToMapTreeFields(
 				throw new TypeError(`Received unsupported array entry value: ${child}.`);
 			}
 		}
-		const mappedChild = nodeDataToMapTree(childWithFallback, allowedTypes, nodeKeyManager);
+		const mappedChild = nodeDataToMapTree(
+			childWithFallback,
+			allowedTypes,
+			nodeKeyManager,
+			schemaValidationPolicy,
+		);
 		mappedData.push(mappedChild);
 	}
 
@@ -227,13 +273,16 @@ function arrayToMapTreeFields(
  * Transforms data under an Array schema.
  * @param data - The tree data to be transformed. Must be an array.
  * @param schema - The schema associated with the value.
- * @param allowedTypes - The allowed types specified by the parent.
- * Used to determine which fallback values may be appropriate.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
 function arrayToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
@@ -242,7 +291,12 @@ function arrayToMapTree(
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, nodeKeyManager);
+	const mappedData = arrayToMapTreeFields(
+		data,
+		allowedChildTypes,
+		nodeKeyManager,
+		schemaValidationPolicy,
+	);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fieldsEntries: [FieldKey, MapTree[]][] =
@@ -259,13 +313,16 @@ function arrayToMapTree(
  * Transforms data under a Map schema.
  * @param data - The tree data to be transformed. Must be a TypeScript Map.
  * @param schema - The schema associated with the value.
- * @param allowedTypes - The allowed types specified by the parent.
- * Used to determine which fallback values may be appropriate.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
+ * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
+ * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
 function mapToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): MapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
@@ -280,7 +337,12 @@ function mapToMapTree(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, allowedChildTypes, nodeKeyManager);
+			const mappedField = nodeDataToMapTree(
+				value,
+				allowedChildTypes,
+				nodeKeyManager,
+				schemaValidationPolicy,
+			);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -295,8 +357,7 @@ function mapToMapTree(
  * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
- * @param allowedTypes - The allowed types specified by the parent.
- * Used to determine which fallback values may be appropriate.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
  */
 export function objectToMapTree(
 	data: InsertableContent,
@@ -413,7 +474,7 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: ContextuallyTypedNodeData,
-) {
+): TreeNodeSchema[] {
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const schema of allowedTypes) {
 		if (shallowCompatibilityTest(schema, data)) {

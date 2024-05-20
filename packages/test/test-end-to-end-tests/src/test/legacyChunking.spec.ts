@@ -70,9 +70,6 @@ describeInstallVersions(
 				// to force the container to flush the ops as soon as
 				// they are produced.
 				flushMode: FlushMode.Immediate,
-				gcOptions: {
-					gcAllowed: true,
-				},
 			},
 		);
 

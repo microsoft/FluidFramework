@@ -23,13 +23,8 @@ import {
 	type ConsensusCallback,
 	type IConsensusOrderedCollection,
 } from "@fluidframework/ordered-collection/internal";
-import {
-	ISharedTree,
-	SharedTree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-} from "@fluidframework/tree/internal";
+import { SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";

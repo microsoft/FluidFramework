@@ -231,6 +231,7 @@ export const TestChange = {
 	codecs: makeCodecFamily([
 		[1, codec],
 		[2, codec],
+		[3, codec],
 	]),
 };
 deepFreeze(TestChange);
