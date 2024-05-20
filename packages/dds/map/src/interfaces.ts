@@ -343,7 +343,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
- * If your scenario requires consistent key ordering, you will need to manage that ordering yourself.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
