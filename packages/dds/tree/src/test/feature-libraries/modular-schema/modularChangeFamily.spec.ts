@@ -46,7 +46,6 @@ import {
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
 	ChangeAtomIdMap,
-	taggedAtomId,
 	Multiplicity,
 	replaceAtomRevisions,
 	FieldUpPath,
@@ -132,7 +131,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
-	isEmpty: (change) => false, // XXX
+
+	// We create changesets by composing an empty single node field with a change to the child.
+	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
+	isEmpty: (change) => false,
 	createEmpty: () => undefined,
 };
 
@@ -298,7 +300,6 @@ const rebasedChangeGeneric: ModularChangeset = buildChangeset([
 	},
 ]);
 
-// XXX: This is the same as `rebasedChange`
 const rootChange2: ModularChangeset = buildChangeset([
 	{
 		type: "field",
@@ -320,7 +321,6 @@ const rootChange2: ModularChangeset = buildChangeset([
 	},
 ]);
 
-// XXX
 const rootChange2Generic: ModularChangeset = buildChangeset([
 	{
 		type: "field",
@@ -351,7 +351,6 @@ const rootChange3: ModularChangeset = buildChangeset([
 	},
 ]);
 
-// XXX: Could have ID conflicts
 const rootChange4: ModularChangeset = family.compose([
 	tagChangeInline(rootChange3, tag1),
 	makeAnonChange(buildExistsConstraint(pathA0)),
@@ -359,7 +358,6 @@ const rootChange4: ModularChangeset = family.compose([
 
 const dummyRevisionTag = mintRevisionTag();
 
-// XXX: Could have ID conflicts
 const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 	tagChangeInline(
 		buildChangeset([
