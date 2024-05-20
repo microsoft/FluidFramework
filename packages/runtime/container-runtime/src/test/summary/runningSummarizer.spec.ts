@@ -633,7 +633,7 @@ describe("Runtime", () => {
 						expectedEvents.push({
 							eventName: "Running:SummarizeAttemptDelay",
 							...retryProps1,
-							duration: retryAfterSeconds,
+							duration: retryAfterSeconds ? retryAfterSeconds * 1000 : undefined,
 						});
 					}
 					mockLogger.assertMatch(

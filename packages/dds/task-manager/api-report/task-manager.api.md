@@ -4,9 +4,10 @@
 
 ```ts
 
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
@@ -34,7 +35,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 export type TaskEventListener = (taskId: string) => void;
 
 // @alpha
-export const TaskManager: ISharedObjectKind<ITaskManager>;
+export const TaskManager: ISharedObjectKind<ITaskManager> & SharedObjectKind<ITaskManager>;
 
 // @alpha
 export type TaskManager = ITaskManager;

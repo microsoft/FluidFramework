@@ -16,11 +16,21 @@ export interface IKafkaBaseOptions {
 	sslCACertFilePath?: string;
 	restartOnKafkaErrorCodes?: number[];
 	eventHubConnString?: string;
+	oauthBearerConfig?: any;
 }
 
 export interface IKafkaEndpoints {
 	kafka: string[];
 	zooKeeper?: string[];
+}
+
+export interface IOauthBearerResponse {
+	tokenStr: string;
+	refreshInMs: number;
+}
+
+export interface IOauthBearerConfig {
+	tokenProvider: () => Promise<IOauthBearerResponse>;
 }
 
 export abstract class RdkafkaBase extends EventEmitter {
@@ -54,14 +64,11 @@ export abstract class RdkafkaBase extends EventEmitter {
 		// To build node-rdkafka with SSL support, make sure OpenSSL libraries are available in the
 		// environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
 		// as usual will automatically include SSL support.
-		const rdKafkaHasSSLEnabled = kafka.features.filter((feature) =>
-			feature.toLowerCase().includes("ssl"),
-		);
-
+		const lcKafkaFeatures = kafka.features.map((s) => s.toLowerCase());
 		if (options?.sslCACertFilePath) {
 			// If the use of SSL is desired, but rdkafka has not been built with SSL support,
 			// throw an error making that clear to the user.
-			if (!rdKafkaHasSSLEnabled) {
+			if (!lcKafkaFeatures.includes("ssl")) {
 				throw new Error(
 					"Attempted to configure SSL, but rdkafka has not been built to support it. " +
 						"Please make sure OpenSSL is available and build rdkafka again.",
@@ -72,8 +79,27 @@ export abstract class RdkafkaBase extends EventEmitter {
 				"security.protocol": "ssl",
 				"ssl.ca.location": options?.sslCACertFilePath,
 			};
+		} else if (options?.oauthBearerConfig) {
+			if (!lcKafkaFeatures.includes("ssl") || !lcKafkaFeatures.includes("sasl_oauthbearer")) {
+				throw new Error(
+					"Attempted to configure SASL_OAUTHBEARER for OAUTHBEARER, but rdkafka has not been built to support it. " +
+						"Please make sure OpenSSL is available and build rdkafka again.",
+				);
+			}
+
+			if (
+				!options.oauthBearerConfig.tokenProvider ||
+				typeof options.oauthBearerConfig.tokenProvider !== "function"
+			) {
+				throw new Error("oauthBearerConfig is malformed");
+			}
+
+			this.sslOptions = {
+				"security.protocol": "sasl_ssl",
+				"sasl.mechanisms": "OAUTHBEARER",
+			};
 		} else if (options?.eventHubConnString) {
-			if (!kafka.features.filter((feature) => feature.toLowerCase().includes("sasl_ssl"))) {
+			if (!lcKafkaFeatures.includes("ssl") || !lcKafkaFeatures.includes("sasl")) {
 				throw new Error(
 					"Attempted to configure SASL_SSL for Event Hubs, but rdkafka has not been built to support it. " +
 						"Please make sure OpenSSL is available and build rdkafka again.",
@@ -91,7 +117,35 @@ export abstract class RdkafkaBase extends EventEmitter {
 		setTimeout(() => void this.initialize(), 1);
 	}
 
-	protected abstract connect(): void;
+	protected abstract connect(): Promise<void>;
+
+	protected async setOauthBearerTokenIfNeeded(client: kafkaTypes.Client<any>) {
+		if (!this.options.oauthBearerConfig?.tokenProvider) {
+			return;
+		}
+
+		Lumberjack.info("Setting up kafka client with oauthbearer token provider");
+
+		const tokenResponse = await this.options.oauthBearerConfig.tokenProvider();
+
+		if (!tokenResponse?.tokenStr || !tokenResponse?.refreshInMs) {
+			Lumberjack.error("Token provider returned malformed return value");
+			throw new Error("Token provider returned malformed return value");
+		}
+
+		if (tokenResponse.refreshInMs <= 0) {
+			Lumberjack.error("Token provider returned zero or negative 'refreshInMs'");
+			throw new Error("Token provider returned zero or negative 'refreshInMs'");
+		}
+
+		client.setOauthBearerToken(tokenResponse.tokenStr);
+
+		setTimeout(() => {
+			this.setOauthBearerTokenIfNeeded(client).catch((err) => {
+				Lumberjack.error("OAuthBearer token refresh has failed", undefined, err);
+			});
+		}, tokenResponse.refreshInMs).unref();
+	}
 
 	private async initialize() {
 		try {
@@ -99,7 +153,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 				await this.ensureTopics();
 			}
 
-			this.connect();
+			await this.connect();
 		} catch (ex) {
 			this.error(ex, {
 				restart: false,
@@ -121,7 +175,13 @@ export abstract class RdkafkaBase extends EventEmitter {
 			...this.sslOptions,
 		};
 
-		const adminClient = this.kafka.AdminClient.create(options);
+		let oauthBearerToken;
+		if (this.options.oauthBearerConfig?.tokenProvider) {
+			const tokenResponse = await this.options.oauthBearerConfig.tokenProvider();
+			oauthBearerToken = tokenResponse?.tokenStr;
+		}
+
+		const adminClient = this.kafka.AdminClient.create(options, oauthBearerToken);
 
 		const newTopic: kafkaTypes.NewTopic = {
 			topic: this.topic,

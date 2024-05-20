@@ -24,7 +24,6 @@ import {
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
 import {
 	CellRename,
 	DetachOfRemovedNodes,
@@ -40,9 +39,7 @@ import {
 	Detach,
 	DetachFields,
 	HasRevisionTag,
-	IdRange,
 	Insert,
-	LineageEvent,
 	Mark,
 	MarkEffect,
 	MoveId,
@@ -104,7 +101,7 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	if (a === undefined || b === undefined) {
 		return a === b;
 	}
-	return areEqualChangeAtomIds(a, b) && areSameLineage(a.lineage, b.lineage);
+	return areEqualChangeAtomIds(a, b);
 }
 
 export function getInputCellId(
@@ -296,7 +293,7 @@ export function getDetachOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): ChangeAtomId {
 	return (
-		mark.idOverride?.id ?? {
+		mark.idOverride ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision, metadata),
 			localId: mark.id,
 		}
@@ -402,37 +399,7 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 
 export function cloneCellId(id: CellId): CellId {
 	const cloned = { ...id };
-	if (cloned.lineage !== undefined) {
-		cloned.lineage = [...cloned.lineage];
-	}
 	return cloned;
-}
-
-function areSameLineage(
-	lineage1: LineageEvent[] | undefined,
-	lineage2: LineageEvent[] | undefined,
-): boolean {
-	if (lineage1 === undefined && lineage2 === undefined) {
-		return true;
-	}
-
-	if (lineage1 === undefined || lineage2 === undefined) {
-		return false;
-	}
-
-	if (lineage1.length !== lineage2.length) {
-		return false;
-	}
-
-	for (let i = 0; i < lineage1.length; i++) {
-		const event1 = lineage1[i];
-		const event2 = lineage2[i];
-		if (event1.revision !== event2.revision || event1.offset !== event2.offset) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -471,22 +438,6 @@ export function isAttachAndDetachEffect(effect: MarkEffect): effect is AttachAnd
 
 export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRemovedNodes> {
 	return isDetach(mark) && mark.cellId !== undefined;
-}
-
-export function getDetachIdForLineage(mark: MarkEffect): ChangeAtomId | undefined {
-	if (isDetach(mark)) {
-		if (mark.idOverride?.type === DetachIdOverrideType.Redetach) {
-			return {
-				revision: mark.idOverride.id.revision,
-				localId: mark.idOverride.id.localId,
-			};
-		}
-		return { revision: mark.revision, localId: mark.id };
-	}
-	if (isAttachAndDetachEffect(mark)) {
-		return getDetachIdForLineage(mark.detach);
-	}
-	return undefined;
 }
 
 export function isImpactfulCellRename(
@@ -578,31 +529,6 @@ export function isNoopMark(mark: Mark): mark is CellMark<NoopMark> {
 	return mark.type === NoopMarkType;
 }
 
-/**
- * @returns The number of cells in the range which come before the position described by `lineage`.
- */
-export function getOffsetInCellRange(
-	lineage: LineageEvent[] | undefined,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
-	count: number,
-): number | undefined {
-	if (lineage === undefined || revision === undefined) {
-		return undefined;
-	}
-
-	for (const event of lineage) {
-		if (
-			event.revision === revision &&
-			areOverlappingIdRanges(id, count, event.id, event.count)
-		) {
-			return (event.id as number) + event.offset - id;
-		}
-	}
-
-	return undefined;
-}
-
 export function areOverlappingIdRanges(
 	id1: ChangesetLocalId,
 	count1: number,
@@ -624,30 +550,7 @@ export function compareCellsFromSameRevision(
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
-
-	// Both cells should have the same `adjacentCells`.
-	const adjacentCells = cell1.adjacentCells;
-	if (adjacentCells !== undefined) {
-		return (
-			getPositionAmongAdjacentCells(adjacentCells, cell1.localId) -
-			getPositionAmongAdjacentCells(adjacentCells, cell2.localId)
-		);
-	}
-
 	return undefined;
-}
-
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
-	}
-
-	fail("Could not find id in adjacentCells");
 }
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
@@ -681,10 +584,7 @@ function areAdjacentIdRanges(
 
 function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
-		return (
-			lhs.idOverride.type === rhs.idOverride.type &&
-			areMergeableCellIds(lhs.idOverride.id, lhsCount, rhs.idOverride.id)
-		);
+		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
 	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
 }
@@ -694,9 +594,7 @@ function areMergeableCellIds(
 	lhsCount: number,
 	rhs: CellId | undefined,
 ): boolean {
-	return (
-		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
-	);
+	return areMergeableChangeAtoms(lhs, lhsCount, rhs);
 }
 
 /**
@@ -831,10 +729,10 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
-	const getQueries = (target: CrossFieldTarget) =>
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
 		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
 
 	const table = {
@@ -944,10 +842,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Remove>;
 			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = {
-					...effect2Remove.idOverride,
-					id: splitDetachEvent(effect2Remove.idOverride.id, length),
-				};
+				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
 			}
 			return [effect1, effect2];
 		}
@@ -960,10 +855,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const return2 = effect2 as Mutable<MoveOut>;
 
 			if (return2.idOverride !== undefined) {
-				return2.idOverride = {
-					...return2.idOverride,
-					id: splitDetachEvent(return2.idOverride.id, length),
-				};
+				return2.idOverride = splitDetachEvent(return2.idOverride, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {
@@ -995,35 +887,6 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 
 function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
-}
-
-/**
- * @returns -1 if the lineage indicates that cell1 is earlier in the field than cell2.
- * Returns 1 if cell2 is earlier in the field.
- * Returns 0 if the order cannot be determined from the lineage.
- */
-export function compareLineages(cell1: CellId, cell2: CellId): number {
-	const cell1Events = new Map<RevisionTag, LineageEvent>();
-	for (const event of cell1.lineage ?? []) {
-		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
-		cell1Events.set(event.revision, event);
-	}
-
-	const lineage2 = cell2.lineage ?? [];
-	for (let i = lineage2.length - 1; i >= 0; i--) {
-		const event = lineage2[i];
-		const offset1 = cell1Events.get(event.revision)?.offset;
-		if (offset1 !== undefined) {
-			const offset2 = event.offset;
-			cell1Events.delete(event.revision);
-			if (offset1 < offset2) {
-				return -1;
-			} else if (offset1 > offset2) {
-				return 1;
-			}
-		}
-	}
-	return 0;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.

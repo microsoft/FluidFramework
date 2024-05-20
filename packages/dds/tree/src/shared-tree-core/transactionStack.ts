@@ -18,7 +18,7 @@ export class TransactionStack {
 	/**
 	 * The number of transactions currently ongoing.
 	 */
-	public get size() {
+	public get size(): number {
 		return this.stack.length;
 	}
 

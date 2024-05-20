@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
@@ -17,6 +18,7 @@ import formats from "ajv-formats";
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
 import type { JsonValidator } from "../../codec/index.js";
