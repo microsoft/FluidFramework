@@ -72,6 +72,7 @@ describe("sharedTreeChangeCodec", () => {
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
 			]),
+			nodeToParent: new Map(),
 			crossFieldKeys: new BTree(),
 		};
 		sharedTreeChangeCodec.encode(

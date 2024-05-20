@@ -440,6 +440,7 @@ function makeModularChangeCodec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges,
 				nodeChanges,
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(), // XXX
 			};
 

@@ -265,6 +265,7 @@ const rootChange1a: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -286,6 +287,7 @@ const rootChange1aGeneric: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -300,6 +302,7 @@ const rootChange1b: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -314,6 +317,7 @@ const rootChange1bGeneric: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -322,6 +326,7 @@ const rebasedChange: ModularChangeset = {
 	fieldChanges: new Map([
 		[fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeId1) }],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -336,6 +341,7 @@ const rebasedChangeGeneric: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -350,6 +356,7 @@ const rootChange2: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -364,6 +371,7 @@ const rootChange2Generic: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -378,6 +386,7 @@ const rootChange3: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -396,6 +405,7 @@ const rootChange4: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -414,6 +424,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
 			},
 		],
 	]),
+	nodeToParent: new Map(), // XXX
 	crossFieldKeys: new BTree(),
 };
 
@@ -452,12 +463,14 @@ describe("ModularChangeFamily", () => {
 			const change1: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
 			};
 			const change2: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				builds: new Map([
 					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
@@ -490,6 +503,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -522,6 +536,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 			assert.deepEqual(
@@ -551,6 +566,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 			assert.deepEqual(
@@ -582,6 +598,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 			assert.deepEqual(
@@ -603,6 +620,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([[fieldA, change1A]]),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 				},
 				tag1,
@@ -632,6 +650,7 @@ describe("ModularChangeFamily", () => {
 						[nodeId2.revision, nodeId2.localId, nodeChange2],
 					]),
 					fieldChanges: new Map([[fieldB, change2B]]),
+					nodeToParent: new Map(), // XXX
 					crossFieldKeys: new BTree(),
 				},
 				tag2,
@@ -674,6 +693,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -686,6 +706,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
@@ -699,6 +720,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					destroys: new Map([
 						[tag1, new Map([[brand(0), 1]])],
@@ -715,6 +737,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -727,6 +750,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					destroys: new Map([
 						[tag1, new Map([[brand(0), 1]])],
@@ -740,6 +764,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
@@ -756,6 +781,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
@@ -768,6 +794,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
@@ -785,6 +812,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -806,6 +834,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				builds: new Map([
 					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
@@ -840,6 +869,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
@@ -852,6 +882,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -869,6 +900,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				refreshers: new Map([
 					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -891,6 +923,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(), // XXX
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
@@ -903,6 +936,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
@@ -919,6 +953,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
@@ -959,6 +994,7 @@ describe("ModularChangeFamily", () => {
 					],
 					[fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -978,6 +1014,7 @@ describe("ModularChangeFamily", () => {
 					],
 					[fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -992,6 +1029,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
@@ -1004,6 +1042,7 @@ describe("ModularChangeFamily", () => {
 			const expectedRollback: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				destroys: new Map([
 					[tag1, new Map([[brand(0), 1]])],
@@ -1013,6 +1052,7 @@ describe("ModularChangeFamily", () => {
 			const expectedUndo: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1101,6 +1141,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[undefined, new Map([[brand(1), node1Chunk]])],
@@ -1133,6 +1174,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					destroys: new Map([
 						[undefined, new Map([[brand(1), 1]])],
@@ -1160,6 +1202,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[undefined, new Map([[brand(1), node1Chunk]])],
@@ -1251,6 +1294,7 @@ describe("ModularChangeFamily", () => {
 					[brand("fA"), { fieldKind, change: brand(changeA) }],
 					[brand("fB"), { fieldKind, change: brand(changeB) }],
 				]),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1284,6 +1328,7 @@ describe("ModularChangeFamily", () => {
 					[nodeId2.revision, nodeId2.localId, nodeChangeFromHasRemovedRootsRefs(changeC)],
 				]),
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1306,6 +1351,7 @@ describe("ModularChangeFamily", () => {
 					[nodeId1.revision, nodeId1.localId, nodeChangeFromHasRemovedRootsRefs(changeB)],
 				]),
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1353,6 +1399,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1394,6 +1441,7 @@ describe("ModularChangeFamily", () => {
 			const input: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
 			};
@@ -1401,6 +1449,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
 			};
@@ -1413,6 +1462,7 @@ describe("ModularChangeFamily", () => {
 			const input: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				refreshers: new Map([
 					[
@@ -1429,6 +1479,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 			};
 
@@ -1441,6 +1492,7 @@ describe("ModularChangeFamily", () => {
 			const input: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
@@ -1448,6 +1500,7 @@ describe("ModularChangeFamily", () => {
 			const expected: ModularChangeset = {
 				nodeChanges: new Map(),
 				fieldChanges: new Map(),
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
@@ -1463,12 +1516,14 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 				};
 
 				const expected: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[
@@ -1490,6 +1545,7 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[
@@ -1505,6 +1561,7 @@ describe("ModularChangeFamily", () => {
 				const expected: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					refreshers: new Map([
 						[
@@ -1525,6 +1582,7 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[
@@ -1541,6 +1599,7 @@ describe("ModularChangeFamily", () => {
 				const expected: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 					builds: new Map([
 						[
@@ -1562,6 +1621,7 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
 				};
 
@@ -1627,6 +1687,7 @@ describe("ModularChangeFamily", () => {
 			fieldChanges: new Map([
 				[fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
 			]),
+			nodeToParent: new Map(), // XXX
 			crossFieldKeys: new BTree(),
 		};
 

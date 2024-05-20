@@ -238,6 +238,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(), // XXX
 				maxId: brand(5),
 			};
@@ -554,6 +555,7 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 			const b: ModularChangeset = {
@@ -567,6 +569,7 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 			};
 
@@ -662,6 +665,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(),
 				maxId: brand(5),
 			};
@@ -697,6 +701,8 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+
+				nodeToParent: new Map(), // XXX
 				crossFieldKeys: new BTree(), // XXX
 			};
 			const moveOut1: DeltaMark = {
