@@ -15,7 +15,7 @@ export interface ValueWithSnapshot {
 	value: ISnapshot;
 }
 
-export class SnapshotCache implements IPersistedCache {
+export class TestSnapshotCache implements IPersistedCache {
 	private readonly cache = new Map<string, ValueWithSnapshot>();
 	private readonly versionCache = new Map<string, ValueWithSnapshot>();
 	private readonly versionToCacheKey = new Map<string, string>();
