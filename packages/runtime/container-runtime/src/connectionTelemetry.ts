@@ -95,6 +95,13 @@ class OpPerfTelemetry {
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
+
+	/**
+	 * A sampled logger to log Ops that have been processed by the current client, the NoOp sent and the
+	 * size of the ops processed within one sampling window of this log event.
+	 * The data from this logger will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+	 * Note: no log events are sent when sampling is disabled, because logging at every op will be too noisy.
+	 */
 	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
@@ -167,7 +174,11 @@ class OpPerfTelemetry {
 				},
 			};
 		})();
-		this.opsLogger = createSampledLogger(logger, opsEventSampler);
+		this.opsLogger = createSampledLogger(
+			logger,
+			opsEventSampler,
+			true /* skipLoggingWhenSamplingIsDisabled */,
+		);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));

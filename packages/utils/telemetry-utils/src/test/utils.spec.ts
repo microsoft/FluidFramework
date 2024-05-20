@@ -172,7 +172,7 @@ describe("Sampling", () => {
 		);
 	});
 
-	it("Events are not logged if DisableSampling telemetry flag is set to true but doNotLogWhenSamplingIsDisabled is provided as true", () => {
+	it("Events are not logged if DisableSampling telemetry flag is set to true but skipLoggingWhenSamplingIsDisabled is provided as false", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": true,
 		};
@@ -181,11 +181,12 @@ describe("Sampling", () => {
 		const loggerWithoutSampling = createSampledLogger(
 			logger,
 			createSystematicEventSampler({ samplingRate: 1 }),
-			true, // doNotLogWhenSamplingIsDisabled
+			true, // skipLoggingWhenSamplingIsDisabled
 		);
 		const loggerWithEvery5Sampling = createSampledLogger(
 			logger,
 			createSystematicEventSampler({ samplingRate: 5 }),
+			true, // skipLoggingWhenSamplingIsDisabled
 		);
 
 		const totalEventCount = 15;
@@ -193,8 +194,16 @@ describe("Sampling", () => {
 			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
 			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
 		}
-		assert.equal(events.length, 0);
-		assert.equal(events.length, 0);
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			0,
+			"skipLoggingWhenSamplingIsDisabled flag was not honored by loggerWithoutSampling",
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			0,
+			"skipLoggingWhenSamplingIsDisabled flag was not honored by loggerWithEvery5Sampling",
+		);
 	});
 
 	it("Systematic Sampling works as expected", () => {
