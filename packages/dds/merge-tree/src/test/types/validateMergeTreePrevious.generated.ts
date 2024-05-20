@@ -615,6 +615,7 @@ declare function get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     use: TypeOnly<current.IMergeTreeDeltaCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
 /*
@@ -755,6 +756,7 @@ declare function get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
 declare function use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     use: TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
 /*
@@ -895,6 +897,7 @@ declare function get_old_InterfaceDeclaration_IMergeTreeSegmentDelta():
 declare function use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
     use: TypeOnly<current.IMergeTreeSegmentDelta>): void;
 use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeSegmentDelta());
 
 /*

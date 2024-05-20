@@ -197,6 +197,15 @@
 			},
 			"ClassDeclaration_TrackingGroup": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeSegmentDelta": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+				"forwardCompat": false
 			}
 		}
 	}

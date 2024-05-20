@@ -227,6 +227,21 @@
 			},
 			"ClassDeclaration_SharedStringClass": {
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_IntervalRevertible": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceDeltaEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringRevertible": {
+				"forwardCompat": false
 			}
 		}
 	}
