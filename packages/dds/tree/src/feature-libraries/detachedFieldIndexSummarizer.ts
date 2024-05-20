@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

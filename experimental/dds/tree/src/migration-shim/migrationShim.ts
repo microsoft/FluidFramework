@@ -7,12 +7,12 @@ import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { type IChannelServices } from '@fluidframework/datastore-definitions';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
 	type IFluidDataStoreRuntime,
 	type IChannel,
+	type IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type IChannelServices, type IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { type IChannel, type IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import {
+	type IChannel,
+	type IChannelAttributes,
+	type IChannelServices,
+	type IDeltaHandler,
+} from '@fluidframework/datastore-definitions/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import { type SharedTree as LegacySharedTree } from '../SharedTree.js';

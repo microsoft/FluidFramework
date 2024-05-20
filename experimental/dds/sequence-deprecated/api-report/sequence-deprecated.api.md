@@ -7,7 +7,7 @@
 import { BaseSegment } from '@fluidframework/merge-tree/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IJSONRunSegment } from '@fluidframework/sequence/internal';

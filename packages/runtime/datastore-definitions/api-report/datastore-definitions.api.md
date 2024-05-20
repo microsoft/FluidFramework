@@ -51,7 +51,7 @@ export interface IChannelFactory<out TChannel = unknown> {
     readonly type: string;
 }
 
-// @public
+// @alpha
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -59,14 +59,14 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @public
+// @alpha
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @public
+// @alpha
 export interface IDeltaConnection {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -77,7 +77,7 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @public
+// @alpha
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;

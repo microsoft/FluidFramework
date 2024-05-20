@@ -6,10 +6,10 @@
 
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { IsoBuffer } from '@fluid-internal/client-utils';
