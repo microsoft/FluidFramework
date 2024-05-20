@@ -62,7 +62,10 @@ export class BroadcasterLambda implements IPartitionLambda {
 		private readonly clientManager: IClientManager | undefined,
 	) {}
 
-	public async handler(message: IQueuedMessage): Promise<undefined> {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public async handler(message: IQueuedMessage): Promise<void> {
 		const boxcar = extractBoxcar(message);
 
 		for (const baseMessage of boxcar.contents) {
@@ -174,8 +177,6 @@ export class BroadcasterLambda implements IPartitionLambda {
 
 		this.pendingOffset = message;
 		this.sendPending();
-
-		return undefined;
 	}
 
 	public close(): void {
