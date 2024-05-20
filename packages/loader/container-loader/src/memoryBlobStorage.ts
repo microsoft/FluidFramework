@@ -6,10 +6,12 @@
 import type { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import/no-deprecated
 import type { IDetachedBlobStorage } from "./loader.js";
 
 const MemoryDetachedBlobStorageIdentifier = Symbol();
 
+// eslint-disable-next-line import/no-deprecated
 interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
 	[MemoryDetachedBlobStorageIdentifier]: typeof MemoryDetachedBlobStorageIdentifier;
 	initialize(attachmentBlobs: string[]): void;
@@ -17,6 +19,7 @@ interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
 }
 
 function isMemoryDetachedBlobStorage(
+	// eslint-disable-next-line import/no-deprecated
 	detachedStorage: IDetachedBlobStorage,
 ): detachedStorage is MemoryDetachedBlobStorage {
 	return (
@@ -27,6 +30,7 @@ function isMemoryDetachedBlobStorage(
 }
 
 export function serializeMemoryDetachedBlobStorage(
+	// eslint-disable-next-line import/no-deprecated
 	detachedStorage: IDetachedBlobStorage,
 ): string | undefined {
 	if (detachedStorage.size > 0 && isMemoryDetachedBlobStorage(detachedStorage)) {
@@ -35,6 +39,7 @@ export function serializeMemoryDetachedBlobStorage(
 }
 
 export function tryInitializeMemoryDetachedBlobStorage(
+	// eslint-disable-next-line import/no-deprecated
 	detachedStorage: IDetachedBlobStorage,
 	attachmentBlobs: string,
 ) {
@@ -49,6 +54,7 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
+// eslint-disable-next-line import/no-deprecated
 export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
 	const storage: MemoryDetachedBlobStorage = {

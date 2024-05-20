@@ -227,6 +227,7 @@ export interface ILoaderServices {
 
 	/**
 	 * Blobs storage for detached containers.
+	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
@@ -241,6 +242,8 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  * @alpha
+ *
+ * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;

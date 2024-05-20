@@ -111,6 +111,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -223,6 +224,7 @@ export interface IContainerCreateProps {
 	/**
 	 * Blobs storage for detached containers.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
 	/**
@@ -470,6 +472,7 @@ export class Container
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly detachedBlobStorage: IDetachedBlobStorage;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
