@@ -35,6 +35,9 @@ export class MoiraLambda implements IPartitionLambda {
 		private readonly documentId: string,
 	) {}
 
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
 	public handler(message: IQueuedMessage): undefined {
 		const boxcar = extractBoxcar(message);
 

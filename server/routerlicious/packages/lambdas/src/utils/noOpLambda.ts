@@ -20,6 +20,9 @@ export class NoOpLambda implements IPartitionLambda {
 		private readonly checkpointConfiguration?: NoOpLambdaCheckpointConfiguration,
 	) {}
 
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
 	public handler(message: IQueuedMessage): undefined {
 		// default
 		if (!this.checkpointConfiguration?.enabled) {

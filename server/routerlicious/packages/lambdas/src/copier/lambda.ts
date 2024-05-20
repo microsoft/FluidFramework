@@ -27,6 +27,9 @@ export class CopierLambda implements IPartitionLambda {
 		protected context: IContext,
 	) {}
 
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
 	public handler(message: IQueuedMessage): undefined {
 		// Extract batch of raw ops from Kafka message:
 		const boxcar = extractBoxcar(message);
