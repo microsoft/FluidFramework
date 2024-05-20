@@ -10532,6 +10532,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
+      '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/ordered-collection': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
@@ -10586,6 +10587,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
+      '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
