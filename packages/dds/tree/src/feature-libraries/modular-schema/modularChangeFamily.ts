@@ -39,13 +39,13 @@ import {
 	mapCursorField,
 	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
-	type ChangeAtomId,
 } from "../../core/index.js";
 import {
 	IdAllocationState,
 	IdAllocator,
 	Mutable,
 	NestedSet,
+	RangeQueryResult,
 	addToNestedSet,
 	brand,
 	deleteFromNestedMap,
@@ -793,7 +793,7 @@ export class ModularChangeFamily
 		crossFieldTable: RebaseTable,
 		genId: IdAllocator,
 		metadata: RebaseRevisionMetadata,
-	) {
+	): void {
 		crossFieldTable.affectedNewFields.forEachPair(([revision, localId, fieldKey]) => {
 			const fieldMap = fieldMapFromNodeId(
 				rebasedFields,
@@ -815,7 +815,7 @@ export class ModularChangeFamily
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
-			) => {
+			): NodeId | undefined => {
 				assert(baseChild === undefined, "There should be no base changes in this field");
 				return child;
 			};
@@ -851,7 +851,7 @@ export class ModularChangeFamily
 		crossFieldTable: RebaseTable,
 		genId: IdAllocator,
 		metadata: RebaseRevisionMetadata,
-	) {
+	): void {
 		const baseChange = crossFieldTable.baseChange;
 		crossFieldTable.affectedBaseFields.forEachPair(([revision, localId, fieldKey]) => {
 			const nodeId = localId !== undefined ? { revision, localId } : undefined;
@@ -873,7 +873,7 @@ export class ModularChangeFamily
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
-			) => {
+			): NodeId | undefined => {
 				assert(child === undefined, "There should be no new changes in this field");
 				return child;
 			};
@@ -927,7 +927,7 @@ export class ModularChangeFamily
 		{ nodeId, field: fieldKey }: FieldId,
 		idAllocator: IdAllocator,
 		metadata: RebaseRevisionMetadata,
-	) {
+	): void {
 		if (nodeId === undefined) {
 			rebasedFields.set(fieldKey, rebasedField);
 			return;
@@ -981,7 +981,7 @@ export class ModularChangeFamily
 		parentFieldIdBase: FieldId,
 		idAllocator: IdAllocator,
 		metadata: RebaseRevisionMetadata,
-	) {
+	): void {
 		const baseFieldChange = fieldChangeFromId(
 			table.baseChange.fieldChanges,
 			table.baseChange.nodeChanges,
@@ -1065,7 +1065,7 @@ export class ModularChangeFamily
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
-			) => {
+			): NodeId | undefined => {
 				if (child !== undefined && baseChild !== undefined) {
 					crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
 				}
@@ -1861,7 +1861,7 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		count: number,
 		newValue: unknown,
 		invalidateDependents: boolean,
-	) {
+	): void {
 		if (invalidateDependents && this.allowInval) {
 			const lastChangedId = (id as number) + count - 1;
 			let firstId = id;
@@ -1888,7 +1888,7 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	) {
+	): RangeQueryResult<unknown> {
 		if (addDependency) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.
@@ -1904,13 +1904,13 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		return getFirstFromCrossFieldMap(this.getMap(target), revision, id, count);
 	}
 
-	private getMap(target: CrossFieldTarget) {
+	private getMap(target: CrossFieldTarget): CrossFieldMap<unknown> {
 		return target === CrossFieldTarget.Source
 			? this.crossFieldTable.srcTable
 			: this.crossFieldTable.dstTable;
 	}
 
-	private getDependents(target: CrossFieldTarget) {
+	private getDependents(target: CrossFieldTarget): CrossFieldMap<T> {
 		return target === CrossFieldTarget.Source
 			? this.crossFieldTable.srcDependents
 			: this.crossFieldTable.dstDependents;
@@ -1929,7 +1929,7 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		count: number,
 		newValue: unknown,
 		invalidateDependents: boolean,
-	) {
+	): void {
 		if (invalidateDependents && this.allowInval) {
 			const newFieldId = this.table.newChange.crossFieldKeys.get([target, revision, id]);
 			if (newFieldId !== undefined) {
