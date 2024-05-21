@@ -14,6 +14,7 @@ import {
 	Brand,
 	NestedMap,
 	RangeMap,
+	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
@@ -107,6 +108,10 @@ export function taggedOptAtomId(
 		return undefined;
 	}
 	return taggedAtomId(id, revision);
+}
+
+export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+	return { ...id, localId: brand(id.localId + offset) };
 }
 
 export function replaceAtomRevisions(

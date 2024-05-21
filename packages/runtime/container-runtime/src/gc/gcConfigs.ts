@@ -28,7 +28,6 @@ import {
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
-	runGCTestKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
@@ -54,7 +53,7 @@ export function generateGCConfigs(
 		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
-	let gcDisabled: boolean = false;
+	let gcEnabled: boolean = true;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
@@ -72,7 +71,7 @@ export function generateGCConfigs(
 		gcVersionInBaseSnapshot = getGCVersion(metadata);
 		// Existing documents which did not have metadata blob or had GC disabled have GC version as 0. GC will be
 		// disabled for these documents.
-		gcDisabled = gcVersionInBaseSnapshot === 0;
+		gcEnabled = gcVersionInBaseSnapshot !== 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
 		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
@@ -108,23 +107,6 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 
-	const gcVersionInEffect = getGCVersionInEffect(mc.config);
-
-	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
-	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
-	// should not run as it may produce incorrect / unreliable state.
-	const isGCVersionUpToDate =
-		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
-
-	/**
-	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 * 1. GC should not be disabled for this container.
-	 * 2. The current GC version should be greater or equal to the GC version in the base snapshot.
-	 *
-	 * These conditions can be overridden via the RunGC feature flag for testing.
-	 */
-	const shouldRunGC = mc.config.getBoolean(runGCTestKey) ?? (!gcDisabled && isGCVersionUpToDate);
-
 	/**
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
@@ -137,7 +119,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const sweepEnabled: boolean =
-		!shouldRunGC || tombstoneTimeoutMs === undefined
+		!gcEnabled || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
@@ -188,9 +170,8 @@ export function generateGCConfigs(
 		!createParams.isSummarizerClient;
 
 	return {
-		gcEnabled: !gcDisabled, // For this document
+		gcEnabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
-		shouldRunGC, // For this session
 		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,
@@ -201,7 +182,7 @@ export function generateGCConfigs(
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
-		gcVersionInEffect,
+		gcVersionInEffect: getGCVersionInEffect(mc.config),
 		throwOnInactiveLoad,
 		throwOnTombstoneLoad,
 		throwOnTombstoneUsage,

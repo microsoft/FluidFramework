@@ -43,15 +43,13 @@ export interface ForestEvents {
 
 	/**
 	 * The forest is about to be changed.
-	 * Emitted before the first change in a batch of changes.
+	 * Emitted before each change in a batch of changes.
+	 * @remarks
+	 * This is the last chance for users of the forest to remove cursors from the forest before the edit.
+	 * Removing these cursors is important since they are not allowed to live across edits and
+	 * not clearing them can lead to corruption of in memory structures.
 	 */
 	beforeChange(): void;
-
-	/**
-	 * The forest was just changed.
-	 * Emitted after the last change in a batch of changes.
-	 */
-	afterChange(): void;
 }
 
 /**

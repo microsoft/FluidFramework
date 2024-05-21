@@ -19,6 +19,7 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
@@ -302,6 +303,7 @@ export interface ITestDataObject extends IFluidLoadable {
 
 // @internal (undocumented)
 export interface ITestObjectProviderOptions {
+    persistedCache?: IPersistedCache;
     resetAfterEach?: boolean;
     syncSummarizer?: boolean;
 }
