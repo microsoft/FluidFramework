@@ -57,7 +57,6 @@ function CreateInfra {
         FLUID_TEST_UID="$TestUid" `
         TEST_PROFILE="$TestProfile" `
         login__microsoft__clientId="$env:ClientId" `
-        login__microsoft__secret="$env:ClientSecret" `
         APPINSIGHTS_INSTRUMENTATIONKEY="$env:InstrumentationKey" `
         BUILD_BUILD_ID="$TestDocFolder"
 

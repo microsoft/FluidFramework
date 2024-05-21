@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../core/index.js";
 import {
 	Context,
 	FlexFieldSchema,
@@ -78,16 +77,9 @@ export class CheckoutFlexTreeView<
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(
-			schema,
-			this.checkout.forest,
-			this.checkout.editor,
-			nodeKeyManager,
-			nodeKeyFieldKey,
-		);
+		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
 		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
@@ -99,12 +91,7 @@ export class CheckoutFlexTreeView<
 
 	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new CheckoutFlexTreeView(
-			branch,
-			this.schema,
-			this.nodeKeyManager,
-			this.nodeKeyFieldKey,
-		);
+		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
 }
 
@@ -112,4 +99,6 @@ export class CheckoutFlexTreeView<
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
+// TODO: use something other than `any`
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();

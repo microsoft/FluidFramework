@@ -10,19 +10,14 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
 

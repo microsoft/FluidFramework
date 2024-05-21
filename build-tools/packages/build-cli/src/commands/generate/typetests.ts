@@ -25,8 +25,12 @@ import * as resolve from "resolve.exports";
 import { ModuleKind, Project, type SourceFile } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand";
 import type { PackageSelectionDefault } from "../../flags";
-import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
-import { unscopedPackageNameString } from "./entrypoints";
+import {
+	ApiLevel,
+	ensureDevDependencyExists,
+	knownApiLevels,
+	unscopedPackageNameString,
+} from "../../library";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand

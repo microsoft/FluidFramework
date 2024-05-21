@@ -644,7 +644,7 @@ export enum LoaderHeader {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*

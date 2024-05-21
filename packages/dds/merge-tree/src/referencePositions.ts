@@ -30,7 +30,7 @@ export function refTypeIncludesFlag(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
@@ -38,7 +38,7 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
- * @internal
+ * @alpha
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);

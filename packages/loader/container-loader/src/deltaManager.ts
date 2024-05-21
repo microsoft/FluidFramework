@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
@@ -16,10 +16,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,

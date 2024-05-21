@@ -146,8 +146,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			refSeq = 0;
 		}
 		if (
-			this.dataStoreRuntime.deltaManager.lastSequenceNumber !== refSeq ||
-			this.dataStoreRuntime.deltaManager.minimumSequenceNumber !== refSeq
+			this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber !== refSeq ||
+			this.dataStoreRuntime.deltaManagerInternal.minimumSequenceNumber !== refSeq
 		) {
 			throw new Error(
 				"computed min and ref seq don't match the loaded values; this indicates a bad load, or missing messages",
@@ -182,11 +182,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			stashedOps.delete(seq);
 		};
-		await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManager.lastSequenceNumber);
+		await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber);
 		// apply the saved and pending ops
 		for (const savedOp of remoteOps) {
 			this.process(savedOp);
-			await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManager.lastSequenceNumber);
+			await applyStashedOpsAtSeq(
+				this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
+			);
 		}
 		if (stashedOps.size !== 0) {
 			throw new Error("There should be no pending message after saved ops are processed");

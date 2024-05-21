@@ -1,5 +1,22 @@
 # @fluidframework/driver-definitions
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
+
+    Move the following types from `@public` to `@alpha`:
+
+    -   ITokenClaims
+    -   IDocumentMessage
+    -   IClientConfiguration
+    -   IAnyDriverError
+    -   IDriverErrorBase
+    -   DriverErrorTypes
+
+    `DriverErrorTypes` is no longer exported from the `fluid-framework` package.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

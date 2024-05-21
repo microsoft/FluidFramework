@@ -1,7 +1,7 @@
 # @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
-In order to connect to ODSP, the clientID and clientSecret must be set as environment variables `login__microsoft__clientId` and `login__microsoft__secret`, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
+In order to connect to ODSP, the clientID must be set as the environment variable `login__microsoft__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
 ## Usage
@@ -28,8 +28,9 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
 ### Tips
 
 -   If not done already run `npm run build`
--   Example command - run `node bin/fluid-fetch --saveDir example 'URL'` in the `fetch-tool` directory
-    -   An example URL is something from office.com that looks like `https://www.office.com/launch/fluid/...`
+-   Example command - run `node lib/fluidFetch.js --saveDir example 'get-versions-fetch-url'` in the `fetch-tool` directory
+    -   Look at the `getVersions` call in the relevant driver to build the right url
+    -   If you have access to the document, you can also look at the standard browser devtools and look for the url there as well.
     -   This command creates an `example` directory (if it doesn't exist) in the `fetch-tool` folder.
     -   If run multiple times without clearing the `example` directory, the snapshot will overwrite any old folders or files.
 -   Looking at the `example` directory:

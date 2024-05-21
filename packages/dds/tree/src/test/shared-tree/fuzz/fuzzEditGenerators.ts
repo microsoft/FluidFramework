@@ -115,7 +115,7 @@ export function viewFromState(
 	state.view ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+		getOrCreate(state.view, client.channel, (tree) => {
 			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
@@ -142,7 +142,8 @@ export function viewFromState(
 }
 
 function isEmptyStoredSchema(tree: SharedTree): boolean {
-	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const rootFieldSchemaData = (tree.storedSchema as any).rootFieldSchemaData;
 	return rootFieldSchemaData.types.size === 0;
 }
 /**

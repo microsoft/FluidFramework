@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecFamily } from "../../codec/index.js";
 import {
@@ -242,13 +242,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId(count);
+		const detachId = this.modularBuilder.generateId(count);
+		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
 				count,
 				destIndex,
-				moveId,
+				detachId,
+				attachId,
 			);
 			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
 		} else {
@@ -266,11 +268,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					if (attachAncestorIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
-					} else {
-						assert(
-							sourceIndex + count <= attachAncestorIndex,
-							0x801 /* Invalid move: the destination is below one of the moved elements. */,
-						);
+					} else if (sourceIndex + count <= attachAncestorIndex) {
 						// The attach path runs through a node located after the detached nodes.
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
@@ -288,11 +286,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 							};
 						}
 						adjustedAttachField = { parent, field: destinationField.field };
+					} else {
+						throw new UsageError(
+							"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
+						);
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, moveId);
-			const moveIn = sequence.changeHandler.editor.moveIn(destIndex, count, moveId);
+			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, detachId);
+			const moveIn = sequence.changeHandler.editor.moveIn(
+				destIndex,
+				count,
+				detachId,
+				attachId,
+			);
 			this.modularBuilder.submitChanges([
 				{
 					type: "field",
@@ -345,12 +352,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId(count);
+				const detachId = this.modularBuilder.generateId(count);
+				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
-					moveId,
+					detachId,
+					attachId,
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
 			},

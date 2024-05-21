@@ -7,12 +7,12 @@ import { type ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
- * @public
+ * @alpha
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
- * @public
+ * @alpha
  */
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -20,7 +20,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @public
+ * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**

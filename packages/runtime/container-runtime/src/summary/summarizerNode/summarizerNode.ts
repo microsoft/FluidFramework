@@ -13,8 +13,6 @@ import {
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	ISummarizeResult,
