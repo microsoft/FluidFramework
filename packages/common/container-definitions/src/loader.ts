@@ -9,15 +9,17 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type {
+	IResolvedUrl,
+	IDocumentMessage,
+	ISequencedProposal,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISequencedProposal,
-	ISnapshotTree,
 } from "@fluidframework/driver-definitions";
 
 import type { IAudience } from "./audience.js";
