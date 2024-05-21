@@ -276,6 +276,8 @@ You should assume that developers have common sense and do not exploit quirks or
 An assertion failure indicates a bug in the Fluid Framework itself, not the user's code.
 User errors should by signaled by throwing an instance of `Error`, `TypeError`, `ReferenceError`, `RangeError`, `AggregateError` or an appropriate subclass (other built-in error types are reserved for language parsing errors).
 
+-   See the [@fluidframework/core-interfaces](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/src/error.ts) package for some example Error subclasses used frequently across the framework.
+
 ### Documentation
 
 We leverage TSDoc syntax for TypeScript API-level source code documentation.
