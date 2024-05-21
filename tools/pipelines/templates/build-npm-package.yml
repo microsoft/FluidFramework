@@ -147,6 +147,7 @@ variables:
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: ado-feeds
+  - group: storage-vars
 
 stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -299,6 +300,8 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
               packageTypesOverride: ${{ parameters.packageTypesOverride }}
+              STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+              STORAGE_KEY: $(STORAGE_KEY)
 
         # Build and Lint
         - template: include-build-lint.yml
