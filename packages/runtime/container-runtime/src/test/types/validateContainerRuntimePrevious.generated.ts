@@ -1505,6 +1505,7 @@ declare function get_current_InterfaceDeclaration_IGenerateSummaryTreeResult():
 declare function use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<old.IGenerateSummaryTreeResult>): void;
 use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenerateSummaryTreeResult());
 
 /*
@@ -1805,6 +1806,7 @@ declare function get_current_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<old.ISubmitSummaryOpResult>): void;
 use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*
@@ -2479,6 +2481,7 @@ declare function get_current_InterfaceDeclaration_IUploadSummaryResult():
 declare function use_old_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<old.IUploadSummaryResult>): void;
 use_old_InterfaceDeclaration_IUploadSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUploadSummaryResult());
 
 /*
@@ -2847,6 +2850,7 @@ declare function get_current_TypeAliasDeclaration_SubmitSummaryResult():
 declare function use_old_TypeAliasDeclaration_SubmitSummaryResult(
     use: TypeOnly<old.SubmitSummaryResult>): void;
 use_old_TypeAliasDeclaration_SubmitSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SubmitSummaryResult());
 
 /*
