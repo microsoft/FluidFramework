@@ -164,11 +164,6 @@ export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T exte
  * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
  * @public
  */
-// export type InsertableObjectFromSchemaRecordUnsafe<
-// 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-// > = {
-// 	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
-// };
 export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 > = {
