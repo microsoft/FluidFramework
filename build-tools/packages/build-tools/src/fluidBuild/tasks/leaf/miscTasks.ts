@@ -236,13 +236,19 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	 */
 	protected async getInputFiles(): Promise<string[]> {
 		if (this.inputFiles === undefined) {
-			const { packageJsonPath: previousPackageJsonPath } = getTypeTestPreviousPackageDetails(
-				this.node.pkg,
-			);
-			this.inputFiles = [
-				path.join(this.node.pkg.directory, "package.json"),
-				previousPackageJsonPath,
-			];
+			this.inputFiles = [path.join(this.node.pkg.directory, "package.json")];
+			if (!(this.node.pkg.packageJson.typeValidation?.disabled === true)) {
+				// TODO: depend on all of input to product tsc, which impacts the API.
+				// This task is effectively a TscDependentTask with additional input,
+				// but some packages build tests including type tests as part of
+				// production build, which would create a dependency cycle.
+				// AB#7318 would make sure type tests are separate.
+
+				// The package.json file of prior package is a pretty good representative
+				// for exposed types of prior package. If this is missing, task won't be
+				// incremental. That is okay because task will also fail.
+				this.inputFiles.push(getTypeTestPreviousPackageDetails(this.node.pkg).packageJsonPath);
+			}
 		}
 		return this.inputFiles;
 	}

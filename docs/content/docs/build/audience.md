@@ -24,7 +24,7 @@ Audience members exist as `IMember` objects:
 
 ```typescript
 export interface IMember {
-    userId: string;
+    id: string;
     connections: IConnection[];
 }
 ```

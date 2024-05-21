@@ -82,6 +82,7 @@ deli:
     maxMessages: 500
   restartOnCheckpointFailure: true
   enableEphemeralContainerSummaryCleanup: true
+  enableLeaveOpNoClientServerMetadata: false
 
 scriptorium:
   name: scriptorium

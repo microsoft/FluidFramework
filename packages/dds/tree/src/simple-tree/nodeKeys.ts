@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalNodeKey, StableNodeKey, TreeNode } from "../index.js";
+import { LocalNodeKey, StableNodeKey } from "../feature-libraries/index.js";
+import { TreeNode } from "./types.js";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.

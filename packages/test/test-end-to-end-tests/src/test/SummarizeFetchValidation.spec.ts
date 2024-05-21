@@ -29,12 +29,10 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-// Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: false },
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 
@@ -262,6 +260,13 @@ describeCompat(
 		});
 
 		it("Second summarizer from latest should not fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7894
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizer1 = await createSummarizer(provider, mainContainer);
 
 			const versionWrap1 = await incrementCellValueAndRunSummary(
@@ -307,6 +312,13 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
 			const versionWrap1 = await incrementCellValueAndRunSummary(
 				summarizerClient,

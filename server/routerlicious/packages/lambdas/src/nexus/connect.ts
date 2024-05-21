@@ -35,6 +35,7 @@ import { createRoomJoinMessage, createRuntimeMessage, generateClientId } from ".
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
+	getClientSpecificRoomId,
 	getRoomId,
 	isWriter,
 } from "./utils";
@@ -92,6 +93,9 @@ function composeConnectedMessage(
 		initialMessages: [],
 		initialSignals: [],
 		supportedVersions: ProtocolVersions,
+		supportedFeatures: {
+			submit_signals_v2: true,
+		},
 		version,
 	};
 	return connectedMessage;
@@ -318,7 +322,10 @@ async function joinRoomAndSubscribeToChannel(
 
 	try {
 		// Subscribe to channels.
-		await Promise.all([socket.join(getRoomId(room)), socket.join(`client#${clientId}`)]);
+		await Promise.all([
+			socket.join(getRoomId(room)),
+			socket.join(getClientSpecificRoomId(clientId)),
+		]);
 		return [clientId, room];
 	} catch (err) {
 		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
@@ -381,7 +388,13 @@ function createMessageClientAndJoinRoom(
 	room: IRoom,
 	clientId: string,
 	connectedTimestamp: number,
-	{ connectionTimeMap, scopeMap, roomMap }: INexusLambdaConnectionStateTrackers,
+	supportedFeatures: Record<string, unknown> | undefined,
+	{
+		connectionTimeMap,
+		scopeMap,
+		roomMap,
+		supportedFeaturesMap,
+	}: INexusLambdaConnectionStateTrackers,
 ): Partial<IClient> {
 	// Todo should all the client details come from the claims???
 	// we are still trusting the users permissions and type here.
@@ -408,6 +421,9 @@ function createMessageClientAndJoinRoom(
 
 	// Join the room to receive signals.
 	roomMap.set(clientId, room);
+
+	// Store the supported features for the client
+	supportedFeaturesMap.set(clientId, supportedFeatures ?? {});
 
 	return messageClient;
 }
@@ -548,6 +564,7 @@ export async function connectDocument(
 			room,
 			clientId,
 			connectedTimestamp,
+			message.supportedFeatures,
 			lambdaConnectionStateTrackers,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);

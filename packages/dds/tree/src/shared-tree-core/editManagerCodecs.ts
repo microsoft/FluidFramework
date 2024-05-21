@@ -64,6 +64,7 @@ export function makeEditManagerCodecs<TChangeset>(
 	return makeCodecFamily([
 		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
 		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
+		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
 	]);
 }
 
@@ -95,6 +96,7 @@ function makeV1CodecWithVersion<TChangeset>(
 	const encodeCommit = <T extends Commit<TChangeset>>(
 		commit: T,
 		context: ChangeEncodingContext,
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	) => ({
 		...commit,
 		revision: revisionTagCodec.encode(commit.revision, {
@@ -107,6 +109,7 @@ function makeV1CodecWithVersion<TChangeset>(
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
 		commit: T,
 		context: ChangeEncodingContext,
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	) => {
 		const revision = revisionTagCodec.decode(commit.revision, {
 			originatorId: commit.sessionId,
@@ -162,6 +165,7 @@ function makeV1CodecWithVersion<TChangeset>(
 			},
 			decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const trunk: readonly any[] = json.trunk;
 				return {
 					trunk: trunk.map(

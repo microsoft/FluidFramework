@@ -342,7 +342,11 @@ async function visualizeMapNode(
 
 /**
  * Main recursive helper function to create the visual representation of the SharedTree.
- * Filters tree nodes based on their schema type.
+ * Processes tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, LeafNodeStoredSchema), producing the visual representation for each type.
+ *
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/} for more information on the SharedTree schema.
+ *
+ * @remarks
  */
 export async function visualizeSharedTreeNodeBySchema(
 	tree: JsonableTree,

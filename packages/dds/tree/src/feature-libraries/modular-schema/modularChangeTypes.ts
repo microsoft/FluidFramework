@@ -84,15 +84,6 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
-
-	/**
-	 * If defined, `change` is part of the specified revision.
-	 * Undefined in the following cases:
-	 * A) A revision is specified on an ancestor of this `FieldChange`, in which case `change` is part of that revision.
-	 * B) `change` is composed of multiple revisions.
-	 * C) `change` is part of an anonymous revision.
-	 */
-	revision?: RevisionTag;
 	change: FieldChangeset;
 }
 

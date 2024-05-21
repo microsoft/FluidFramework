@@ -46,9 +46,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 					state: "disabled",
 				},
 			},
-			gcOptions: {
-				gcAllowed: true,
-			},
 		},
 	};
 
@@ -338,9 +335,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 									initialSummarizerDelayMs: 10,
 								},
 							},
-						},
-						gcOptions: {
-							gcAllowed: true,
 						},
 					},
 				});

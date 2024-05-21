@@ -16,9 +16,9 @@ import {
 import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
 	type Serializable,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet } from "@fluidframework/merge-tree/internal";
 
@@ -155,7 +155,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
-			annotateRange: 0,
+			annotateRange: 1,
 			obliterateRange: 1,
 		},
 		propertyNamePool: ["prop1", "prop2", "prop3"],
@@ -322,13 +322,7 @@ export function createSharedStringGeneratorOperations(
 	async function annotateRange(state: ClientOpState): Promise<AnnotateRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
-		const value = random.pick([
-			random.string(5),
-			random.handle(),
-			// Bring back after AB#7805, #7806 fixed
-			// undefined
-			null,
-		]);
+		const value = random.pick([random.string(5), random.handle(), undefined, null]);
 		return {
 			type: "annotateRange",
 			...exclusiveRange(state),

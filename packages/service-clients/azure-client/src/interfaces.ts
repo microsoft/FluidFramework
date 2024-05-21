@@ -176,7 +176,7 @@ export interface AzureMember<T = any> extends IMember {
 	/**
 	 * {@inheritDoc AzureUser.name}
 	 */
-	userName: string;
+	name: string;
 
 	/**
 	 * {@inheritDoc AzureUser.additionalDetails}

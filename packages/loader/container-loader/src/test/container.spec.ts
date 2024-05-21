@@ -6,14 +6,14 @@
 import assert from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { AttachState, IAudience } from "@fluidframework/container-definitions/";
 import {
-	AttachState,
-	IAudience,
+	IContainer,
+	IContainerEvents,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentMessage,

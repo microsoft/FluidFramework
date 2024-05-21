@@ -11,8 +11,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { ChangesetLocalId, RevisionTag } from "../../../index.js";
-import { ChangeAtomId } from "../../../core/index.js";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -135,7 +134,7 @@ function createModifyDetachedChangeset(
 
 /**
  * @param count - The number of nodes inserted.
- * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * @param cellId - The first cell to insert the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
@@ -264,7 +263,7 @@ function createMoveOutMark(
 
 /**
  * @param count - The number of nodes moved in.
- * @param cellId - The first cell to move the content into (potentially includes lineage information).
+ * @param cellId - The first cell to move the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */

@@ -9,7 +9,6 @@ import { RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	CellId,
@@ -33,7 +32,6 @@ import {
 	isAttach,
 	isDetach,
 	isImpactful,
-	isReattach,
 	normalizeCellRename,
 	splitMark,
 	withNodeChange,
@@ -103,10 +101,7 @@ function invertMark(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-							idOverride: {
-								type: DetachIdOverrideType.Redetach,
-								id: inputId,
-							},
+							idOverride: inputId,
 					  };
 			return [withNodeChange(inverse, mark.changes)];
 		}
@@ -117,13 +112,7 @@ function invertMark(
 				type: "Remove",
 				count: mark.count,
 				id: inputId.localId,
-			};
-
-			removeMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
-				id: inputId,
+				idOverride: inputId,
 			};
 
 			const inverse = withNodeChange(removeMark, mark.changes);
@@ -169,10 +158,7 @@ function invertMark(
 					detach: {
 						type: "Remove",
 						id: mark.id,
-						idOverride: {
-							type: DetachIdOverrideType.Redetach,
-							id: inputId,
-						},
+						idOverride: inputId,
 					},
 				};
 			}
@@ -185,19 +171,12 @@ function invertMark(
 				type: "MoveOut",
 				id: mark.id,
 				count: mark.count,
+				idOverride: inputId,
 			};
 
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
-
-			invertedMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
-				id: inputId,
-			};
-
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {

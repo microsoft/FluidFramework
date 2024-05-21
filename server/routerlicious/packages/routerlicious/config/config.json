@@ -188,7 +188,8 @@
 			"maxMessages": 500
 		},
 		"restartOnCheckpointFailure": true,
-		"enableEphemeralContainerSummaryCleanup": true
+		"enableEphemeralContainerSummaryCleanup": true,
+		"enableLeaveOpNoClientServerMetadata": false
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",

@@ -174,7 +174,6 @@ export {
 	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	nodeKeyFieldKey,
 	SchemaLintConfiguration,
 	TreeStatus,
 	FlexTreeFieldNode,
@@ -240,7 +239,6 @@ export {
 	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
-	SharedTreeFactory,
 	SharedTreeOptions,
 	ITreeCheckoutFork,
 	CheckoutEvents,
@@ -275,6 +273,7 @@ export {
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
+	ITreeConfigurationOptions,
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
@@ -306,7 +305,9 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
+	DefaultProvider,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
@@ -388,7 +389,6 @@ export {
 	// These names also are collision prone.
 	Required,
 	Optional,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	Sequence,

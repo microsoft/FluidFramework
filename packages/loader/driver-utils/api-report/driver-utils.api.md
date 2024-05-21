@@ -16,7 +16,7 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -194,6 +194,9 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @internal
+export function getSnapshotTree(tree: ISnapshotTree | ISnapshot): ISnapshotTree;
 
 // @public (undocumented)
 export interface ICompressionStorageConfig {

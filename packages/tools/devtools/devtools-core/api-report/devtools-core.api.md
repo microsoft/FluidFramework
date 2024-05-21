@@ -12,7 +12,7 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
@@ -71,10 +71,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export interface ContainerDevtoolsFeatureFlags {
-    // @deprecated
-    "container-data"?: boolean;
-    "containerDataEditing"?: boolean;
-    "containerDataVisualization"?: boolean;
+    containerDataEditing?: boolean;
+    containerDataVisualization?: boolean;
 }
 
 // @internal

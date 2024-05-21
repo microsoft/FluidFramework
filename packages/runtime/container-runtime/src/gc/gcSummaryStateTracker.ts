@@ -4,8 +4,8 @@
  */
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+	ISummaryTreeWithStats,
 	ISummarizeResult,
 	gcBlobPrefix,
 	gcDeletedBlobKey,

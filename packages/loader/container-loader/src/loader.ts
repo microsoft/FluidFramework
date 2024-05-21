@@ -41,7 +41,10 @@ import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
-import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -335,7 +338,7 @@ export class Loader implements IHostLoader {
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
 			return this.resolveCore(
 				request,
-				pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
 			);
 		});
 	}
