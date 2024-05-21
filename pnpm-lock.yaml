@@ -7683,6 +7683,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -13053,6 +13056,9 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2

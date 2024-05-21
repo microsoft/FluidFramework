@@ -46,7 +46,6 @@ const getDefaultCheckpoint = (): IDeliState => {
 		signalClientConnectionNumber: 0,
 		lastSentMSN: 0,
 		nackMessages: undefined,
-		successfullyStartedLambdas: [],
 		checkpointTimestamp: Date.now(),
 	};
 };
@@ -80,7 +79,6 @@ export class DeliLambdaFactory
 	): Promise<IPartitionLambda> {
 		const { documentId, tenantId } = config;
 		let sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
-		let sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined;
 
 		const messageMetaData = {
 			documentId,
@@ -128,20 +126,12 @@ export class DeliLambdaFactory
 				document?.isEphemeralContainer,
 			);
 
-			sessionStartMetric = createSessionMetric(
-				tenantId,
-				documentId,
-				LumberEventName.StartSessionResult,
-				this.serviceConfiguration,
-				document?.isEphemeralContainer,
-			);
-
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 		} catch (error) {
 			const errMsg = "Deli lambda creation failed";
 			context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
 			Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId), error);
-			this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+			this.logSessionFailureMetrics(sessionMetric, errMsg);
 			throw error;
 		}
 
@@ -171,7 +161,7 @@ export class DeliLambdaFactory
 					const errMsg = "Could not load state from summary";
 					context.log?.error(errMsg, { messageMetaData });
 					Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
-					this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+					this.logSessionFailureMetrics(sessionMetric, errMsg);
 
 					lastCheckpoint = getDefaultCheckpoint();
 				} else {
@@ -224,7 +214,6 @@ export class DeliLambdaFactory
 			this.reverseProducer,
 			this.serviceConfiguration,
 			sessionMetric,
-			sessionStartMetric,
 			this.checkpointService,
 		);
 
@@ -378,11 +367,9 @@ export class DeliLambdaFactory
 
 	private logSessionFailureMetrics(
 		sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-		sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		errMsg: string,
 	): void {
 		sessionMetric?.error(errMsg);
-		sessionStartMetric?.error(errMsg);
 	}
 
 	public async dispose(): Promise<void> {
