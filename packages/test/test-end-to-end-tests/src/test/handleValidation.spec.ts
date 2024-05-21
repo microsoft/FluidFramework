@@ -27,7 +27,6 @@ import {
 	type ISharedTree,
 } from "@fluidframework/tree/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
@@ -39,6 +38,7 @@ import {
 	ConsensusRegisterCollectionFactory,
 	type IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/internal";
+import { isFluidHandle } from "@fluidframework/shared-object-base/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -260,9 +260,10 @@ const ddsTypes: aDDSFactory[] = [
 			return this.downCast(matrix);
 		},
 		downCast(channel): aDDSType {
-			const matrix = channel as ISharedMatrix;
+			const matrix = channel as unknown as ISharedMatrix;
+
 			return {
-				id: matrix.id,
+				id: channel.id,
 				async storeHandle(handle: IFluidHandle) {
 					matrix.insertRows(0, 1);
 					matrix.insertCols(0, 1);
@@ -271,12 +272,12 @@ const ddsTypes: aDDSFactory[] = [
 				async readHandle(): Promise<unknown> {
 					return matrix.getCell(0, 0);
 				},
-				handle: matrix.handle,
+				handle: channel.handle,
 			};
 		},
 		async getDDS(dataStore) {
 			const matrix = await dataStore.getSharedObject<ISharedMatrix>(matrixId);
-			return this.downCast(matrix);
+			return this.downCast(matrix as unknown as IChannel);
 		},
 	},
 	{
@@ -445,7 +446,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					/**
 					 * close container, get sequence number and sync
 					 */
-					await provider.ensureSynchronized(container1);
+					await provider.ensureSynchronized();
 					const seq = container1.deltaManager.lastSequenceNumber;
 					container1.dispose();
 
@@ -464,7 +465,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 							container2.once("closed", reject);
 						});
 					}
-					await provider.ensureSynchronized(container2);
+					await provider.ensureSynchronized();
 
 					const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 					const attached2 = await attachedDdsUtils.getDDS(default2);
@@ -544,7 +545,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					/**
 					 * close container, get sequence number and sync
 					 */
-					await provider.ensureSynchronized(container1);
+					await provider.ensureSynchronized();
 					const seq = container1.deltaManager.lastSequenceNumber;
 					container1.dispose();
 
@@ -563,7 +564,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 							container2.once("closed", reject);
 						});
 					}
-					await provider.ensureSynchronized(container2);
+					await provider.ensureSynchronized();
 
 					const default2 = (await container2.getEntryPoint()) as ITestFluidObject;
 					const attached2 = await attachedDdsUtils.getDDS(default2);

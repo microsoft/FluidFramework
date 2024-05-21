@@ -56,6 +56,9 @@ export interface IFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
+// @internal (undocumented)
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
