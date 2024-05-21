@@ -19,8 +19,8 @@ import { isTreeNode } from "../../simple-tree/proxies.js";
 
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../util/index.js";
-import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");

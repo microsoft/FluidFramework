@@ -38,8 +38,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createNodeKeyManager } from "../../feature-libraries/index.js";
-import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
+import { createNodeKeyManager, MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;

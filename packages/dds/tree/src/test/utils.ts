@@ -107,6 +107,7 @@ import {
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
+	MockNodeKeyManager,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -138,7 +139,6 @@ import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-
 import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { MockNodeKeyManager } from "./mockNodeKeyManager.js";
 
 // Testing utilities
 

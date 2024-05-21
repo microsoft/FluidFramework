@@ -9,7 +9,7 @@
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha"],
 	},
-	"include": ["./**/*"],
+	"include": ["./**/*", "../feature-libraries/node-key/mockNodeKeyManager.ts"],
 	"references": [
 		{
 			"path": "../../tsconfig.json",

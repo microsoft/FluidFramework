@@ -40,6 +40,7 @@ import {
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
 import {
@@ -47,7 +48,6 @@ import {
 	flexTreeViewWithContent,
 	numberSequenceRootSchema,
 } from "../../utils.js";
-import { MockNodeKeyManager } from "../../mockNodeKeyManager.js";
 
 const options = {
 	jsonValidator: typeboxValidator,

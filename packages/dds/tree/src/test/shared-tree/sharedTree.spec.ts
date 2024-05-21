@@ -40,6 +40,7 @@ import {
 	FlexFieldSchema,
 	FlexTreeSchema,
 	FlexTreeTypedField,
+	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
@@ -91,7 +92,6 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,

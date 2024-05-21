@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { UpPath, rootFieldKey } from "../../core/index.js";
-import { TreeStatus, cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import {
+	cursorForJsonableTreeNode,
+	MockNodeKeyManager,
+	TreeStatus,
+} from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -30,7 +34,6 @@ import {
 } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
-import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 
 const schema = new SchemaFactory("com.example");
 
