@@ -15,10 +15,14 @@ export class BranchCommitEnricher<TChange> {
 	private transactionEnricher?: TransactionEnricher<TChange>;
 	private readonly rebaser: ChangeRebaser<TChange>;
 	private readonly enricher: ChangeEnricherReadonlyCheckout<TChange>;
-	private readonly preparedCommits: {
-		readonly local: GraphCommit<TChange>;
-		readonly toSend: GraphCommit<TChange>;
-	}[] = [];
+	/**
+	 * Maps each local commit to the corresponding enriched commit.
+	 * Entries are added then the commits are prepared (before being applied and submitted).
+	 * Entries are removed when the commits are retrieved for submission (after being applied).
+	 * It's possible an entry will linger in the map indefinitely if it is never retrieved for submission.
+	 * This would happen if applying a commit were to fail and the commit were not retrieved/purged after the failure.
+	 */
+	private readonly preparedCommits: Map<GraphCommit<TChange>, GraphCommit<TChange>> = new Map();
 
 	public constructor(
 		rebaser: ChangeRebaser<TChange>,
@@ -43,6 +47,9 @@ export class BranchCommitEnricher<TChange> {
 	 * Prepares an enriched commit for later submission (see {@link BranchCommitEnricher.getPreparedCommit}).
 	 * @param commit - The commit to prepare an enriched version of.
 	 * @param concludesOuterTransaction - Whether the commit concludes an outer transaction.
+	 *
+	 * Each call to this method must be followed by a call to {@link BranchCommitEnricher.getPreparedCommit} or
+	 * {@link BranchCommitEnricher.purgePreparedCommits}. Failing to do so will result in a memory leak.
 	 */
 	public prepareCommit(commit: GraphCommit<TChange>, concludesOuterTransaction: boolean): void {
 		let enrichedChange: TChange;
@@ -56,21 +63,27 @@ export class BranchCommitEnricher<TChange> {
 		} else {
 			enrichedChange = this.enricher.updateChangeEnrichments(commit.change, commit.revision);
 		}
-		this.preparedCommits.push({
-			local: commit,
-			toSend: replaceChange(commit, enrichedChange),
-		});
+		this.preparedCommits.set(commit, replaceChange(commit, enrichedChange));
 	}
 
 	/**
 	 * @param commit - A commit previously passed to {@link BranchCommitEnricher.prepareCommit}.
 	 * @returns The enriched commit corresponds to the given commit.
-	 *
-	 * Commits are expected to be retrieved in the same order they were prepared (FIFO).
 	 */
 	public getPreparedCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
-		const prepared = this.preparedCommits.shift();
-		assert(prepared?.local === commit, "Inconsistent commits between before and after change");
-		return prepared.toSend;
+		const prepared = this.preparedCommits.get(commit);
+		assert(prepared !== undefined, "Unknown commit");
+		this.preparedCommits.delete(commit);
+		return prepared;
+	}
+
+	/**
+	 * Purges all commits that have been prepared but not been retrieved.
+	 * This should be called to avoid memory leaks if the prepared commits are no longer needed.
+	 *
+	 * Does not affect ingested transaction commits.
+	 */
+	public purgePreparedCommits(): void {
+		this.preparedCommits.clear();
 	}
 }
