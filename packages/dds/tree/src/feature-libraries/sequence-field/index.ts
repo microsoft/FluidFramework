@@ -18,14 +18,10 @@ export {
 	MoveId,
 	Attach,
 	NoopMark,
-	LineageEvent,
 	CellId,
 	HasMarkFields,
-	HasLineage,
-	IdRange,
 	CellMark,
 	AttachAndDetach,
-	DetachIdOverride,
 } from "./types.js";
 export { DetachIdOverrideType } from "./formatV1.js";
 export {

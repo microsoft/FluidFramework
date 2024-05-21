@@ -9,6 +9,7 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -17,7 +18,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -27,12 +27,14 @@ import {
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
@@ -68,13 +70,11 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -3614,12 +3614,9 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
-			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
-			// state of all the nodes.
-			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree || forcedFullTree,
+					fullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -3696,7 +3693,6 @@ export class ContainerRuntime
 				summaryTree,
 				summaryStats,
 				generateDuration: trace.trace().duration,
-				forcedFullTree,
 			} as const;
 
 			continueResult = checkContinue();

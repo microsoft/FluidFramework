@@ -256,6 +256,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			trees: {
 				...hierarchicalAppTree.trees,
 			},
+			id: snapshotTree.id,
 		};
 
 		// The app tree could have a .protocol in that case we want to server protocol to override it.

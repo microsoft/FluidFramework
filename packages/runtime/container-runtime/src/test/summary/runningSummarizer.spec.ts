@@ -264,7 +264,6 @@ describe("Runtime", () => {
 					summaryStats: emptySummaryStats,
 					handle: "test-handle",
 					clientSequenceNumber: lastClientSeq,
-					forcedFullTree: false,
 				} as const;
 			}
 
@@ -633,7 +632,7 @@ describe("Runtime", () => {
 						expectedEvents.push({
 							eventName: "Running:SummarizeAttemptDelay",
 							...retryProps1,
-							duration: retryAfterSeconds,
+							duration: retryAfterSeconds ? retryAfterSeconds * 1000 : undefined,
 						});
 					}
 					mockLogger.assertMatch(

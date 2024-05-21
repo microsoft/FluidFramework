@@ -197,11 +197,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.groupId !== undefined) {
-			const groupId = getStringInstance(records.groupId, "groupId should be a string");
-			snapshotTree.groupId = groupId;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -213,6 +208,10 @@ function readTreeSection(node: NodeCore): {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
+			if (records.groupId !== undefined) {
+				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				trees[path].groupId = groupId;
+			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
