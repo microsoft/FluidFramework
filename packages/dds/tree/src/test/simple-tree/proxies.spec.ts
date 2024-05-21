@@ -33,6 +33,7 @@ describe("simple-tree proxies", () => {
 		object: childSchema,
 		list: sb.array(sb.number),
 		map: sb.map("map", sb.string),
+		optionalFlag: sb.optional(sb.boolean),
 	});
 
 	const initialTree = {
@@ -45,21 +46,27 @@ describe("simple-tree proxies", () => {
 	};
 
 	it("cache and reuse objects", () => {
-		const root = hydrate(schema, initialTree);
+		// TODO: make this work at the type-level
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const root = hydrate(schema, initialTree as any);
 		const objectProxy = root.object;
 		const objectProxyAgain = root.object;
 		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	it("cache and reuse lists", () => {
-		const root = hydrate(schema, initialTree);
+		// TODO: make this work at the type-level
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const root = hydrate(schema, initialTree as any);
 		const listProxy = root.list;
 		const listProxyAgain = root.list;
 		assert.equal(listProxyAgain, listProxy);
 	});
 
 	it("cache and reuse maps", () => {
-		const root = hydrate(schema, initialTree);
+		// TODO: make this work at the type-level
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const root = hydrate(schema, initialTree as any);
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
@@ -73,7 +80,9 @@ describe("simple-tree proxies", () => {
 		// Unhydrated node:
 		assert(isTreeNode(new childSchema({ content: 5 })));
 		// Hydrated node:
-		assert(isTreeNode(hydrate(schema, initialTree)));
+		// TODO: make this work at the type-level
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		assert(isTreeNode(hydrate(schema, initialTree as any)));
 	});
 });
 
