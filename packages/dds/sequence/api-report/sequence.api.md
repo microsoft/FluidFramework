@@ -318,7 +318,7 @@ export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof Interv
 export enum IntervalType {
     // (undocumented)
     Simple = 0,
-    SlideOnRemove = 2,
+    SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
     // @internal
     Transient = 4
 }

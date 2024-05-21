@@ -118,7 +118,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 // @internal (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
-    Primed = 0,
+    Primed = 0,// default
     // (undocumented)
     Test = 1
 }

@@ -14,6 +14,10 @@ export class MockHandleContext implements IFluidHandleContext {
 		return this;
 	}
 
+	// In real scenarios, the handle context is ContainerFluidHandleContext which has a circular reference to ContainerRuntime.
+	// This has caused trouble with traversing an object with handles, so include it in the mock as well.
+	public circular = this;
+
 	constructor(
 		public readonly absolutePath = "",
 		public readonly routeContext?: IFluidHandleContext,
