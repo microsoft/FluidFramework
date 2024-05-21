@@ -21,7 +21,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	MonitoringContext,
 	PerformanceEvent,

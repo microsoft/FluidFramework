@@ -10,7 +10,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { type ConnectionMode, ScopeType } from "@fluidframework/driver-definitions";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";

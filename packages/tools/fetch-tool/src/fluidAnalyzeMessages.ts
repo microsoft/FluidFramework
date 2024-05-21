@@ -17,7 +17,7 @@ import {
 	ISummaryProposal,
 	MessageType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";

@@ -12,7 +12,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";

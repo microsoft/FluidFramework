@@ -20,7 +20,7 @@ import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

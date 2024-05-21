@@ -24,7 +24,7 @@ import {
 import {
 	ISequencedDocumentMessage,
 	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

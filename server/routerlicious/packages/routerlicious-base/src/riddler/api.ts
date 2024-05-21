@@ -15,7 +15,7 @@ import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { getParam, ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { decode } from "jsonwebtoken";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { ITokenClaims } from "@fluidframework/driver-definitions";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
 import { TenantManager } from "./tenantManager";
 import { ITenantRepository } from "./mongoTenantRepository";

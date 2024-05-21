@@ -23,7 +23,7 @@ import {
 	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { IDetachedBlobStorage } from "./loader.js";

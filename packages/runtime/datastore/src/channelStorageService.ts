@@ -5,7 +5,7 @@
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 

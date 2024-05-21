@@ -33,7 +33,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,

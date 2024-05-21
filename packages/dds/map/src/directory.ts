@@ -12,7 +12,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

@@ -27,7 +27,7 @@ import {
 	ISummaryContent,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**

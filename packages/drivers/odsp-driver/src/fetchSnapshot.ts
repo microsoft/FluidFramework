@@ -23,7 +23,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,

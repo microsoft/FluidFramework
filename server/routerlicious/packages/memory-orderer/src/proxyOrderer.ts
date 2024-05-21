@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@fluidframework/server-services-core";
 
 export interface IOrdererConnectionFactory {

@@ -30,7 +30,7 @@ import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

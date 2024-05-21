@@ -11,7 +11,7 @@ import {
 	type IClientJoin,
 	type IClientDetails,
 	type IUser,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ProtocolOpHandler } from "../protocol";
 
 describe("Protocol", () => {

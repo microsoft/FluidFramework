@@ -10,7 +10,7 @@ import type {
 	ISummaryTree,
 	ITree,
 	SummaryTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import type {
 	IGarbageCollectionData,

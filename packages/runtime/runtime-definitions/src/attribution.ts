@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IUser } from "@fluidframework/protocol-definitions";
+import type { IUser } from "@fluidframework/driver-definitions";
 
 /**
  * AttributionKey representing a reference to some op in the op stream.

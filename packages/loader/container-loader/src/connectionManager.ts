@@ -39,7 +39,7 @@ import {
 	ITokenClaims,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,

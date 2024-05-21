@@ -25,7 +25,7 @@ import {
 	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	GitManager,

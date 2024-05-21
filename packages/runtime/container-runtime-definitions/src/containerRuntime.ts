@@ -18,7 +18,7 @@ import {
 	type IClientDetails,
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	type FlushMode,
 	type IContainerRuntimeBase,

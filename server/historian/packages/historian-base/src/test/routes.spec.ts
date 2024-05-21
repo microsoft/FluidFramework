@@ -19,7 +19,7 @@ import {
 	generateToken,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { ScopeType } from "@fluidframework/driver-definitions";
 
 const limit = 10;
 const sha = "testSha";

@@ -23,7 +23,7 @@ import {
 	ISnapshotTree,
 	ISummaryBlob,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,

@@ -15,7 +15,7 @@ import {
 	ISequencedDocumentSystemMessage,
 	ISequencedProposal,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 /**

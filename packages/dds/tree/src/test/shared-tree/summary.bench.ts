@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, ITree } from "@fluidframework/driver-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,

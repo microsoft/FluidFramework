@@ -23,7 +23,7 @@ import {
 	ISnapshotTree,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import { Deferred } from "@fluidframework/core-utils/internal";

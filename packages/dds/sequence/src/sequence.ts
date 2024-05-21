@@ -43,7 +43,7 @@ import {
 	createRemoveRangeOp,
 	matchProperties,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

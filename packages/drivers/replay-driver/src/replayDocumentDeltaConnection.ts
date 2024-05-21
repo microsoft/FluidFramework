@@ -23,7 +23,7 @@ import {
 	ITokenClaims,
 	IVersion,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { ReplayController } from "./replayController.js";
 

@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/driver-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

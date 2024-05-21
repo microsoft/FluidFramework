@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/driver-definitions";
 import {
 	isFluidError,
 	ITelemetryLoggerExt,

@@ -16,7 +16,7 @@ import {
 	IUser,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IWebSocket } from "@fluidframework/server-services-core";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { TestNotImplementedDocumentRepository } from "@fluidframework/server-test-utils";

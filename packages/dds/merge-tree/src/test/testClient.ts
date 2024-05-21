@@ -13,7 +13,7 @@ import {
 	ISummaryTree,
 	ITree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";

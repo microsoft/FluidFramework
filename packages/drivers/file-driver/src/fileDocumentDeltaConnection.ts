@@ -19,7 +19,7 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 

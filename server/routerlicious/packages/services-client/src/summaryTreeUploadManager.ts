@@ -18,7 +18,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 

@@ -8,7 +8,7 @@ import {
 	ISummaryNack,
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
 
 /**

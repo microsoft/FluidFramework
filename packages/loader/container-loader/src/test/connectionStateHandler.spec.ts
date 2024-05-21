@@ -14,7 +14,7 @@ import {
 	IClientConfiguration,
 	ISequencedClient,
 	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	TelemetryEventCategory,
 	createChildLogger,

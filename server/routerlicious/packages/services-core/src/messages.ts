@@ -10,7 +10,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message

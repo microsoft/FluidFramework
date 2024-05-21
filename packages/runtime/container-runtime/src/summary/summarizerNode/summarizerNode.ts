@@ -9,7 +9,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,

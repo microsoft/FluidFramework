@@ -15,7 +15,7 @@ import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
 import {
 	IFileSnapshot,
 	ReadDocumentStorageServiceBase,

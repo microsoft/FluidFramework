@@ -10,7 +10,7 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
-import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
+import { IClient, INack, NackErrorType } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ConnectionManager } from "../connectionManager.js";

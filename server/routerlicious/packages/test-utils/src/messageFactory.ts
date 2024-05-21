@@ -11,7 +11,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	BoxcarType,
 	IBoxcarMessage,

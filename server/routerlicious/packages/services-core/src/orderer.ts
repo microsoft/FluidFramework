@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage } from "@fluidframework/driver-definitions";
 import { IServiceConfiguration } from "./configuration";
 import { IWebSocket } from "./http";
 

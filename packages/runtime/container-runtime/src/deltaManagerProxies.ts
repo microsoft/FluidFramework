@@ -20,7 +20,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { summarizerClientType } from "./summary/index.js";
 import type { PendingStateManager } from "./pendingStateManager.js";

@@ -9,7 +9,7 @@ import {
 	IDocumentMessage,
 	IDocumentSystemMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import * as core from "@fluidframework/server-services-core";
 
 /**

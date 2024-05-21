@@ -14,7 +14,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FileStorageDocumentName } from "@fluidframework/file-driver/internal";
-import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/driver-definitions";
 import {
 	IFileSnapshot,
 	StaticStorageDocumentServiceFactory,

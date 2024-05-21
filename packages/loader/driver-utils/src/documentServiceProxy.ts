@@ -12,7 +12,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 
 /**
  * This abstract class implements IDocumentService interface. It uses delegation pattern.

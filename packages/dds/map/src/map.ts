@@ -9,7 +9,7 @@ import type {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

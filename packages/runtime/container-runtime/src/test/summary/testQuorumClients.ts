@@ -8,7 +8,7 @@ import {
 	IQuorumClients,
 	IQuorumEvents,
 	ISequencedClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 export class TestQuorumClients extends TypedEventEmitter<IQuorumEvents> implements IQuorumClients {
 	public disposed = false;

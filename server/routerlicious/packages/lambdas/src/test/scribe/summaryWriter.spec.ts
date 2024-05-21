@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/driver-definitions";
 import { SummaryWriter } from "../..";
 import { TestDeltaManager, TestTenantManager } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";

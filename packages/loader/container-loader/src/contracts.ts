@@ -21,7 +21,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",

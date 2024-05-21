@@ -25,7 +25,7 @@ import {
 	SummaryObject,
 	SummaryType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ISummaryStats,
 	ISummaryTreeWithStats,

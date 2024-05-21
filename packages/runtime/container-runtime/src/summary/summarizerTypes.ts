@@ -14,7 +14,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,

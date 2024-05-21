@@ -9,7 +9,7 @@ import {
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 /**
  * Defines the current layout of an .app + .protocol summary tree

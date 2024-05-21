@@ -4,26 +4,12 @@
 
 ```ts
 
-import type { ConnectionMode as ConnectionMode_2 } from '@fluidframework/protocol-definitions';
-import type { IClient as IClient_2 } from '@fluidframework/protocol-definitions';
-import type { IClientConfiguration as IClientConfiguration_2 } from '@fluidframework/protocol-definitions';
-import type { ICreateBlobResponse as ICreateBlobResponse_2 } from '@fluidframework/protocol-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IDocumentMessage as IDocumentMessage_2 } from '@fluidframework/protocol-definitions';
 import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { INack as INack_2 } from '@fluidframework/protocol-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { ISequencedDocumentMessage as ISequencedDocumentMessage_2 } from '@fluidframework/protocol-definitions';
-import type { ISignalClient as ISignalClient_2 } from '@fluidframework/protocol-definitions';
-import type { ISignalMessage as ISignalMessage_2 } from '@fluidframework/protocol-definitions';
-import type { ISnapshotTree as ISnapshotTree_2 } from '@fluidframework/protocol-definitions';
-import type { ISummaryHandle as ISummaryHandle_2 } from '@fluidframework/protocol-definitions';
-import type { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITokenClaims as ITokenClaims_2 } from '@fluidframework/protocol-definitions';
-import type { IVersion as IVersion_2 } from '@fluidframework/protocol-definitions';
 
 // @public
 export type ConnectionMode = "write" | "read";
@@ -234,7 +220,7 @@ export interface ICreateBlobResponse {
 
 // @internal (undocumented)
 export interface IDeltasFetchResult {
-    messages: ISequencedDocumentMessage_2[];
+    messages: ISequencedDocumentMessage[];
     partialResult: boolean;
 }
 
@@ -254,16 +240,16 @@ export interface IDocumentAttributes {
 // @alpha (undocumented)
 export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     checkpointSequenceNumber?: number;
-    claims: ITokenClaims_2;
+    claims: ITokenClaims;
     clientId: string;
     existing: boolean;
-    initialClients: ISignalClient_2[];
-    initialMessages: ISequencedDocumentMessage_2[];
-    initialSignals: ISignalMessage_2[];
-    mode: ConnectionMode_2;
+    initialClients: ISignalClient[];
+    initialMessages: ISequencedDocumentMessage[];
+    initialSignals: ISignalMessage[];
+    mode: ConnectionMode;
     relayServiceAgent?: string;
-    serviceConfiguration: IClientConfiguration_2;
-    submit(messages: IDocumentMessage_2[]): void;
+    serviceConfiguration: IClientConfiguration;
+    submit(messages: IDocumentMessage[]): void;
     submitSignal: (content: string, targetClientId?: string) => void;
     version: string;
 }
@@ -271,13 +257,13 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
 // @alpha (undocumented)
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
-    (event: "nack", listener: (documentId: string, message: INack_2[]) => void): any;
+    (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
     // (undocumented)
     (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
-    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage_2[]) => void): any;
+    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
     // (undocumented)
-    (event: "signal", listener: (message: ISignalMessage_2 | ISignalMessage_2[]) => void): any;
+    (event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void): any;
     // (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // (undocumented)
@@ -286,7 +272,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 
 // @alpha
 export interface IDocumentDeltaStorageService {
-    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage_2[]>;
+    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
 // @alpha
@@ -304,7 +290,7 @@ export interface IDocumentMessage {
 // @alpha (undocumented)
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient_2): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
     policies?: IDocumentServicePolicies;
@@ -319,7 +305,7 @@ export interface IDocumentServiceEvents extends IEvent {
 
 // @alpha (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree_2 | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
@@ -332,14 +318,14 @@ export interface IDocumentServicePolicies {
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse_2>;
-    downloadSummary(handle: ISummaryHandle_2): Promise<ISummaryTree_2>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-    getSnapshotTree(version?: IVersion_2, scenarioName?: string): Promise<ISnapshotTree_2 | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion_2[]>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
-    uploadSummaryWithContext(summary: ISummaryTree_2, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @alpha
@@ -610,12 +596,12 @@ export interface ISnapshot {
     blobContents: Map<string, ArrayBuffer>;
     latestSequenceNumber: number | undefined;
     // (undocumented)
-    ops: ISequencedDocumentMessage_2[];
+    ops: ISequencedDocumentMessage[];
     sequenceNumber: number | undefined;
     // (undocumented)
     snapshotFormatV: 1;
     // (undocumented)
-    snapshotTree: ISnapshotTree_2;
+    snapshotTree: ISnapshotTree;
 }
 
 // @alpha

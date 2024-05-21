@@ -26,8 +26,8 @@ export type {
 } from "./interfaces.js";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
-export { ScopeType } from "@fluidframework/protocol-definitions";
+export type { ITokenClaims, IUser } from "@fluidframework/driver-definitions";
+export { ScopeType } from "@fluidframework/driver-definitions";
 
 // Re-export so developers can build loggers without pulling in core-interfaces
 export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

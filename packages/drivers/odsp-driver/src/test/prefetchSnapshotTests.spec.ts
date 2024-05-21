@@ -15,7 +15,7 @@ import {
 	IOdspResolvedUrl,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";

@@ -12,7 +12,7 @@ import {
 	type ISummaryNack,
 	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,

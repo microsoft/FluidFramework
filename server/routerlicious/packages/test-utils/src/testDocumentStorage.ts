@@ -33,7 +33,7 @@ import {
 	ISnapshotTreeEx,
 	SummaryObject,
 	FileMode,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 

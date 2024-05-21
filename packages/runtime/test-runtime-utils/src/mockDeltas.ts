@@ -18,7 +18,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing

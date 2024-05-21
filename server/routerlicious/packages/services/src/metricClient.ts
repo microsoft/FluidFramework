@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@fluidframework/protocol-definitions";
+import { ITrace } from "@fluidframework/driver-definitions";
 import * as telegraf from "telegrafjs";
 import { DefaultMetricClient, IMetricClient } from "@fluidframework/server-services-core";
 

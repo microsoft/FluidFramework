@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { ScopeType } from "@fluidframework/driver-definitions";
 
 /**
  * C1 can revoke an access token of a client

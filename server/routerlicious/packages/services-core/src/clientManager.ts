@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/protocol-definitions";
+import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/driver-definitions";
 
 /**
  * Represents a client that has some sequence numbers attached

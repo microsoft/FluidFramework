@@ -4,7 +4,7 @@
  */
 
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions";
 
 /**
  * Utility API to check if the type of snapshot contents is `ISnapshot`.

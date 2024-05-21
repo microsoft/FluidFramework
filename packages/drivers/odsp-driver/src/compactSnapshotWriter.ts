@@ -10,7 +10,7 @@ import {
 	IBlob,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";

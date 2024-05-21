@@ -4,7 +4,7 @@
  */
 
 import type { TypedEventEmitter } from "@fluidframework/common-utils";
-import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
+import type { IClient, IConnected } from "@fluidframework/driver-definitions";
 import type {
 	IClientManager,
 	IClusterDrainingChecker,

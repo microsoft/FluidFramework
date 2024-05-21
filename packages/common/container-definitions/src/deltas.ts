@@ -18,7 +18,7 @@ import type {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.

@@ -20,7 +20,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {

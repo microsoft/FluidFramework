@@ -15,7 +15,7 @@ import {
 	type ISequencedDocumentMessage,
 	type ISnapshotTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 

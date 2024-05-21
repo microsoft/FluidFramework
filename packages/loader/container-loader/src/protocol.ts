@@ -17,7 +17,7 @@ import {
 	ISignalClient,
 	ISignalMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {

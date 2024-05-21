@@ -20,7 +20,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";

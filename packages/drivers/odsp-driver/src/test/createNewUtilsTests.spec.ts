@@ -14,7 +14,7 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createNewFluidFile } from "../createFile.js";

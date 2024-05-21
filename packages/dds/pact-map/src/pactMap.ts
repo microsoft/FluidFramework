@@ -11,7 +11,7 @@ import {
 	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/driver-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";

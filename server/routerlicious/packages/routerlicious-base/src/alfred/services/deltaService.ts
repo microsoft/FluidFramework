@@ -4,7 +4,7 @@
  */
 
 import { toUtf8 } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ICollection,
 	IDeltaService,

@@ -9,7 +9,7 @@ import {
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {

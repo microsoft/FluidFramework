@@ -6,7 +6,7 @@
 import {
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 export const opSize = (op: ISequencedDocumentMessage): number => {
 	// Some messages may already have string contents,

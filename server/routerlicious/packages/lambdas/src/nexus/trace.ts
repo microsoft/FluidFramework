@@ -4,7 +4,7 @@
  */
 
 import { performance } from "@fluidframework/common-utils";
-import type { IDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IDocumentMessage } from "@fluidframework/driver-definitions";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";

@@ -13,7 +13,7 @@ import {
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import { IRepositoryManager } from "../definitions";
 import { IFullGitTree } from "./definitions";
 import {

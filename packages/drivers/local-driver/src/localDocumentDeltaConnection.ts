@@ -10,7 +10,7 @@ import {
 	IConnect,
 	IDocumentMessage,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";

@@ -19,7 +19,7 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,

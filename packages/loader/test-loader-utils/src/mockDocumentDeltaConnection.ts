@@ -19,7 +19,7 @@ import {
 	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {

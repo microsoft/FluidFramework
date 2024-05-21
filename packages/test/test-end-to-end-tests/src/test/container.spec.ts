@@ -47,7 +47,7 @@ import {
 	NonRetryableError,
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IClient, ISnapshotTree } from "@fluidframework/driver-definitions";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,

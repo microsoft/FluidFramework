@@ -29,7 +29,7 @@ import {
 	type ISnapshotTree,
 	ISummaryTree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,

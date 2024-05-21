@@ -5,7 +5,7 @@
 
 import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import { IClient, IClientJoin, ScopeType } from "@fluidframework/driver-definitions";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,

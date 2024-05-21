@@ -12,7 +12,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {

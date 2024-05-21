@@ -18,7 +18,7 @@ import {
 	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	LoggingError,

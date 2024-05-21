@@ -5,7 +5,7 @@
 
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";

@@ -7,7 +7,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 /**
  * Tells if message was sent by container runtime

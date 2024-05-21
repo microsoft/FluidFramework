@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryObject } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 

@@ -5,7 +5,7 @@
 
 import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	BroadcasterLambda,
 	CheckpointManager,

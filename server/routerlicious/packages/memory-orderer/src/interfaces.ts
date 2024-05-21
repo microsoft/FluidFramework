@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ICollection,
 	IContext,

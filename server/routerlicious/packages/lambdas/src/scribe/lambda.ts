@@ -15,7 +15,7 @@ import {
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentSystemMessage,
 	IProtocolState,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
 	ControlMessageType,

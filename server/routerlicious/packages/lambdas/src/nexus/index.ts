@@ -10,7 +10,7 @@ import {
 	INack,
 	ISignalMessage,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as core from "@fluidframework/server-services-core";

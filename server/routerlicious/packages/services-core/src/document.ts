@@ -8,7 +8,7 @@ import {
 	IProtocolState,
 	ISummaryTree,
 	ICommittedProposal,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IGitCache, ISession } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";

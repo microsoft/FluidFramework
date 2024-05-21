@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, IDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	INode,
 	IOrderer,

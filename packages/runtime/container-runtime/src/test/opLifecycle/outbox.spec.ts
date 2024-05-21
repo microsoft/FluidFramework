@@ -15,7 +15,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {

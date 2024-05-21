@@ -32,7 +32,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,

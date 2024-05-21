@@ -10,7 +10,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import { INormalizedWholeSnapshot } from "./contracts.js";
 

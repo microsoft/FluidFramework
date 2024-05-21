@@ -11,7 +11,7 @@ import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, ITree, TreeEntry } from "@fluidframework/driver-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 
 /**

@@ -14,7 +14,7 @@ import {
 	ISequencedDocumentAugmentedMessage,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	buildTreePath,
 	IGitManager,

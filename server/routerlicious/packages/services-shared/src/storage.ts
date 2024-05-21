@@ -10,7 +10,7 @@ import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IGitCache,
 	SummaryTreeUploadManager,

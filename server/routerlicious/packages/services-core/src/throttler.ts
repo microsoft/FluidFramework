@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
+import { INackContent, NackErrorType } from "@fluidframework/driver-definitions";
 import { IUsageData } from ".";
 
 /**

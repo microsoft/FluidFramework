@@ -18,7 +18,7 @@ import {
 	ISummaryAck,
 	ISummaryContent,
 	IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	canSummarize,
 	defaultHash,

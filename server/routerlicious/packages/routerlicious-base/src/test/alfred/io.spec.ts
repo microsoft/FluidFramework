@@ -8,7 +8,7 @@ import {
 	ISummaryTree,
 	SummaryType,
 	ICommittedProposal,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import * as services from "@fluidframework/server-services";
 import { defaultHash } from "@fluidframework/server-services-client";

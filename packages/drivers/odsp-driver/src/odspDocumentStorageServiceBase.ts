@@ -15,7 +15,7 @@ import {
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
