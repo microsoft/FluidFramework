@@ -74,9 +74,7 @@ describe("simple-tree proxies", () => {
 		// Unhydrated node:
 		assert(isTreeNode(new childSchema({ content: 5 })));
 		// Hydrated node:
-		// TODO: make this work at the type-level
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		assert(isTreeNode(hydrate(schema, initialTree as any)));
+		assert(isTreeNode(hydrate(schema, initialTree)));
 	});
 });
 
