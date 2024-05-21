@@ -31,7 +31,7 @@ export async function disconnectDocument(
 		disconnectedClients,
 		disconnectedOrdererConnections,
 	}: INexusLambdaConnectionStateTrackers,
-) {
+): Promise<void> {
 	// Clear token expiration timer on disconnection
 	expirationTimer.clear();
 	const removeAndStoreP: Promise<void>[] = [];

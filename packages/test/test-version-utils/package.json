@@ -88,6 +88,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
@@ -125,7 +126,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
+		"typescript": "~5.3.3",
 		"uuid": "^9.0.0",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"

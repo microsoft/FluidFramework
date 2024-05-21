@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,
@@ -431,15 +431,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const getRevertible = hasSchemaChange(change)
 				? undefined
 				: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
-						assert(
-							withinEventContext,
-							0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
-						);
-						assert(
-							this.revertibleCommitBranches.get(revision) === undefined,
-							0x903 /* cannot get the revertible more than once */,
-						);
-
+						if (!withinEventContext) {
+							throw new UsageError(
+								"Cannot get a revertible outside of the context of a commitApplied event.",
+							);
+						}
+						if (this.revertibleCommitBranches.get(revision) !== undefined) {
+							throw new UsageError(
+								"Cannot generate the same revertible more than once. Note that this can happen when multiple commitApplied event listeners are registered.",
+							);
+						}
 						const revertibleCommits = this.revertibleCommitBranches;
 						const revertible: DisposableRevertible = {
 							get status(): RevertibleStatus {
@@ -449,10 +450,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									: RevertibleStatus.Valid;
 							},
 							revert: (release: boolean = true) => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									0x904 /* a disposed revertible cannot be reverted */,
-								);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to revert a revertible that has been disposed.",
+									);
+								}
 								this.revertRevertible(revision, data.kind);
 								if (release) {
 									revertible[disposeSymbol]();
@@ -460,10 +462,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							},
 							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									0x910 /* a disposed revertible cannot be disposed */,
-								);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to dispose a revertible that has already been disposed.",
+									);
+								}
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
 							},
@@ -599,10 +602,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
-		assert(
-			!this.branch.isTransacting(),
-			0x7cb /* Undo is not yet supported during transactions */,
-		);
+		if (this.branch.isTransacting()) {
+			throw new UsageError("Undo is not yet supported during transactions.");
+		}
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);

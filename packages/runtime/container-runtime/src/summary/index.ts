@@ -63,7 +63,7 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 } from "./summarizerTypes.js";
 export {

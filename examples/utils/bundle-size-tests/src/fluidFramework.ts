@@ -6,5 +6,5 @@
 import { SharedTree } from "fluid-framework";
 
 export function apisToBundle() {
-	SharedTree.getFactory();
+	return SharedTree;
 }

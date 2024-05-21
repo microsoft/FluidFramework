@@ -11,6 +11,7 @@ import { fail, getOrCreate } from "../util/index.js";
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
 	k: infer U,
 ) => unknown
@@ -21,6 +22,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
  * `true` iff the given type is an acceptable shape for an event
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 /**
@@ -67,7 +69,7 @@ export type Events<E> = {
  */
 export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
 	[P in keyof Events<E>]: (event: P, listener: E[P]) => void;
-} extends Record<any, infer Z>
+} extends Record<string | number | symbol, infer Z>
 	? UnionToIntersection<Z> & Target
 	: never;
 
@@ -202,6 +204,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	// but only calls it once, and unsubscribing will stop calling it all together.
 	// This is surprising since it makes subscribing and unsubscribing not inverses (but instead both idempotent).
 	// This might be desired, but if so the documentation should indicate it.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.

@@ -4,7 +4,7 @@
  */
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions";
+import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

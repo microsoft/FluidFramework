@@ -9,6 +9,7 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -17,7 +18,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -27,12 +27,14 @@ import {
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
@@ -68,13 +70,11 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -1791,6 +1791,9 @@ export class ContainerRuntime
 				orderedClientCollection,
 				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
 			);
 
 			this.summarizerClientElection = new SummarizerClientElection(
