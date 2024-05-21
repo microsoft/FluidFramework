@@ -12,8 +12,9 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
@@ -33,13 +34,11 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,

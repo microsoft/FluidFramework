@@ -1505,6 +1505,7 @@ declare function get_current_InterfaceDeclaration_IGenerateSummaryTreeResult():
 declare function use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<old.IGenerateSummaryTreeResult>): void;
 use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenerateSummaryTreeResult());
 
 /*
@@ -1712,28 +1713,16 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<old.IRetriableFailureResult>;
-declare function use_current_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<current.IRetriableFailureResult>): void;
-use_current_InterfaceDeclaration_IRetriableFailureResult(
-    get_old_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IRetriableFailureResult():
-    TypeOnly<current.IRetriableFailureResult>;
-declare function use_old_InterfaceDeclaration_IRetriableFailureResult(
-    use: TypeOnly<old.IRetriableFailureResult>): void;
-use_old_InterfaceDeclaration_IRetriableFailureResult(
-    get_current_InterfaceDeclaration_IRetriableFailureResult());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1817,6 +1806,7 @@ declare function get_current_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<old.ISubmitSummaryOpResult>): void;
 use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*
@@ -2491,6 +2481,7 @@ declare function get_current_InterfaceDeclaration_IUploadSummaryResult():
 declare function use_old_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<old.IUploadSummaryResult>): void;
 use_old_InterfaceDeclaration_IUploadSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUploadSummaryResult());
 
 /*
@@ -2859,6 +2850,7 @@ declare function get_current_TypeAliasDeclaration_SubmitSummaryResult():
 declare function use_old_TypeAliasDeclaration_SubmitSummaryResult(
     use: TypeOnly<old.SubmitSummaryResult>): void;
 use_old_TypeAliasDeclaration_SubmitSummaryResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SubmitSummaryResult());
 
 /*

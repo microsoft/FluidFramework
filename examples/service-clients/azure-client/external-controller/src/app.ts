@@ -140,7 +140,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema));
+		({ container, services } = await client.createContainer(containerSchema, "2"));
 		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
 		// const map2 = container.initialObjects.map1 as ISharedMap;
@@ -160,7 +160,7 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, containerSchema));
+		({ container, services } = await client.getContainer(id, containerSchema, "2"));
 		[diceRollerController1Props, diceRollerController2Props] =
 			createDiceRollerControllerPropsFromContainer(container);
 	}

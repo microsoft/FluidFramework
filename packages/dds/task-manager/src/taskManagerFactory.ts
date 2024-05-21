@@ -6,9 +6,9 @@
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ITaskManager } from "./interfaces.js";

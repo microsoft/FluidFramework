@@ -5,11 +5,12 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
-import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	gcTreeKey,
+	type IGarbageCollectionData,
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
 import {
@@ -95,7 +96,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly configs: IGarbageCollectorConfigs;
 
 	public get shouldRunGC(): boolean {
-		return this.configs.shouldRunGC;
+		return this.configs.gcEnabled;
 	}
 
 	public readonly sessionExpiryTimerStarted: number | undefined;
@@ -158,10 +159,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
-	public get summaryStateNeedsReset(): boolean {
-		return this.summaryStateTracker.doesSummaryStateNeedReset;
-	}
-
 	/** Returns the count of data stores whose GC state updated since the last summary. */
 	public get updatedDSCountSinceLastSummary(): number {
 		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
@@ -216,10 +213,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.sessionExpiryTimerStarted = Date.now();
 		}
 
-		this.summaryStateTracker = new GCSummaryStateTracker(
-			this.configs,
-			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-		);
+		this.summaryStateTracker = new GCSummaryStateTracker(this.configs);
 
 		this.telemetryTracker = new GCTelemetryTracker(
 			this.mc,
@@ -333,6 +327,10 @@ export class GarbageCollector implements IGarbageCollector {
 				return {};
 			}
 
+			// Note that the base GC details are returned even if GC is disabled. This is to handle the special scenario
+			// where GC is disabled but GC state exists in base snapshot. In this scenario, the nodes which get the GC
+			// state will re-summarize to reset any GC specific state in their summaries (like unreferenced flag).
+
 			const gcNodes: { [id: string]: string[] } = {};
 			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
@@ -373,7 +371,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether sweep is enabled or not
+		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether GC / sweep is enabled
 		// to identify deleted nodes' usage.
 		if (baseSnapshotData.deletedNodes !== undefined) {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
@@ -439,7 +437,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * with an older reference timestamp. So, doing this on every connection will keep the unreferenced state
 		 * tracking up-to-date.
 		 */
-		if (connected && this.configs.shouldRunGC) {
+		if (connected && this.shouldRunGC) {
 			this.initializeOrUpdateGCState().catch((error) => {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -479,8 +477,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const fullGC =
 			options.fullGC ??
 			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested() ||
-				this.summaryStateTracker.doesSummaryStateNeedReset);
+				this.summaryStateTracker.autoRecovery.fullGCRequested());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -488,14 +485,12 @@ export class GarbageCollector implements IGarbageCollector {
 			runSweep: options.runSweep,
 		});
 
-		const logger = options.logger
-			? createChildLogger({
-					logger: options.logger,
-					properties: {
-						all: { completedGCRuns: () => this.completedRuns },
-					},
-			  })
-			: this.mc.logger;
+		const logger = createChildLogger({
+			logger: options.logger ?? this.mc.logger,
+			properties: {
+				all: { completedGCRuns: this.completedRuns, fullGC },
+			},
+		});
 
 		/**
 		 * If there is no current reference timestamp, skip running GC. We need the current timestamp to track
@@ -854,7 +849,7 @@ export class GarbageCollector implements IGarbageCollector {
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined {
-		if (!this.configs.shouldRunGC || this.gcDataFromLastRun === undefined) {
+		if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
 			return;
 		}
 
@@ -997,7 +992,7 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 	}: IGCNodeUpdatedProps) {
-		if (!this.configs.shouldRunGC) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 
@@ -1106,7 +1101,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
 	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
-		if (!this.configs.shouldRunGC) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 
