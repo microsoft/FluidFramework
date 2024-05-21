@@ -211,7 +211,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                     const rollButton = elem.querySelector(".roll");
                     const diceElem = elem.querySelector(".dice");
 
-                    // Set the value at our dataKey with a random number between 1 and 6.
+                    // Set the value on the persisted Dice object to a random number between 1 and 6.
                     rollButton.onclick = () => {
                         dice.value = Math.floor(Math.random() * 6) + 1;
                     };
@@ -225,7 +225,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                     };
                     updateDice();
 
-                    // Use the changed event to trigger the rerender whenever the value changes.
+                    // Use the afterChange event to trigger a rerender whenever the value changes.
                     Tree.on(dice, "afterChange", updateDice);
                     // Setting "fluidStarted" is just for our test automation
                     window["fluidStarted"] = true;
