@@ -31,7 +31,9 @@ const INDEX_SCHEMA = Joi.object({
 				name: Joi.string()
 					.regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/)
 					.required(),
-				typeId: Joi.string().required().valid(Object.keys(IndexKeyEncoder.Type)),
+				typeId: Joi.string()
+					.required()
+					.valid(...Object.keys(IndexKeyEncoder.Type)),
 			}),
 		)
 		.min(1)
