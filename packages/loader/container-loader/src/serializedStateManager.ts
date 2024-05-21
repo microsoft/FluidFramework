@@ -68,6 +68,12 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
 	hasAttachmentBlobs: boolean;
+	/** Used by the memory blob storage to persisted attachment blobs */
+	attachmentBlobs?: string;
+	/**
+	 * Runtime-specific state that will be needed to properly rehydrate
+	 * (it's included in ContainerContext passed to instantiateRuntime)
+	 */
 	pendingRuntimeState?: unknown;
 }
 
