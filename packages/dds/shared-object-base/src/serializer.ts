@@ -14,7 +14,10 @@ import {
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
-function isFluidHandle(value: unknown): value is IFluidHandle {
+/**
+ * @internal
+ */
+export function isFluidHandle(value: unknown): value is IFluidHandle {
 	// `in` gives a type error on non-objects and null, so filter them out
 	if (typeof value !== "object" || value === null) {
 		return false;
