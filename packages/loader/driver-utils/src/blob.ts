@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FileMode, IAttachment, IBlob, ITree, TreeEntry } from "@fluidframework/driver-definitions";
+import {
+	FileMode,
+	IAttachment,
+	IBlob,
+	ITree,
+	TreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Basic implementation of a blob ITreeEntry

@@ -25,15 +25,15 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
-	ICreateBlobResponse,
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	IVersion,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 
