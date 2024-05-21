@@ -23,8 +23,6 @@
     **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
     to distinguish stable APIs from those that are in development.**
 
--   `joi` dependency was updated from 14.3.1 to 17.3.1 to address a critical vulnerability exploit [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp). This required updating the use of `joi` schema validation function within `property-query` to the new major version syntax.
-
 ## 2.0.0-rc.2.0.0
 
 Dependency updates only.
