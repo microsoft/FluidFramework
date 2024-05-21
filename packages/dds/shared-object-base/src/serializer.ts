@@ -14,6 +14,22 @@ import {
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
+function isFluidHandle(value: unknown): value is IFluidHandle {
+	// `in` gives a type error on non-objects and null, so filter them out
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	if (IFluidHandle in value) {
+		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
+		const inner = value[IFluidHandle] as IFluidHandle;
+		if (typeof inner !== "object" || inner === null) {
+			return false;
+		}
+		return IFluidHandle in inner;
+	}
+	return false;
+}
+
 /**
  * @public
  */
@@ -161,9 +177,9 @@ export class FluidSerializer implements IFluidSerializer {
 		// is a non-null object.
 		const maybeReplaced = replacer(input, context);
 
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
-		if (maybeReplaced !== input) {
+		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
 			return maybeReplaced;
 		}
 
