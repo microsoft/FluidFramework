@@ -220,18 +220,16 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	}
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined
 	): ISummaryTreeWithStats {
-		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
+		return this.currentTree.getAttachSummary(fullTree, telemetryContext);
 	}
 	public async summarize(
 		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined
 	): Promise<ISummaryTreeWithStats> {
-		return this.currentTree.summarize(fullTree, trackState, telemetryContext, incrementalSummaryContext);
+		return this.currentTree.summarize(fullTree, telemetryContext, incrementalSummaryContext);
 	}
 	public isAttached(): boolean {
 		return this.currentTree.isAttached();

@@ -94,10 +94,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		};
 	});
 
-	async function summarizeInternal(
-		fullTree: boolean,
-		trackState: boolean,
-	): Promise<ISummarizeInternalResult> {
+	async function summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
 		const stats = mergeStats();
 		stats.treeNodeCount++;
 		return {

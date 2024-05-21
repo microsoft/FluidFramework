@@ -98,7 +98,6 @@ export class ForestSummarizer implements Summarizable {
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
@@ -107,7 +106,6 @@ export class ForestSummarizer implements Summarizable {
 	public async summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));

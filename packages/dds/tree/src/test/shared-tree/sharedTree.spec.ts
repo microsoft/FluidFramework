@@ -474,7 +474,6 @@ describe("SharedTree", () => {
 				const summaryTree = await tree2.summarize(
 					undefined,
 					undefined,
-					undefined,
 					incrementalSummaryContext,
 				);
 				containerRuntimeFactory.processAllMessages();

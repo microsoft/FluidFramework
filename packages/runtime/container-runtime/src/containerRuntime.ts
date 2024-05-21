@@ -1610,8 +1610,8 @@ export class ContainerRuntime
 		this.summarizerNode = createRootSummarizerNodeWithGC(
 			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
-			async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
-				this.summarizeInternal(fullTree, trackState, telemetryContext),
+			async (fullTree: boolean, telemetryContext?: ITelemetryContext) =>
+				this.summarizeInternal(fullTree, telemetryContext),
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
 			// Summary reference sequence number, undefined if no summary yet
@@ -2254,7 +2254,6 @@ export class ContainerRuntime
 	protected addContainerStateToSummary(
 		summaryTree: ISummaryTreeWithStats,
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	) {
 		this.addMetadataToSummary(summaryTree);
@@ -2288,7 +2287,7 @@ export class ContainerRuntime
 			addSummarizeResultToSummary(summaryTree, blobsTreeName, blobManagerSummary);
 		}
 
-		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
+		const gcSummary = this.garbageCollector.summarize(fullTree, telemetryContext);
 		if (gcSummary !== undefined) {
 			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
 		}
@@ -3149,12 +3148,7 @@ export class ContainerRuntime
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 
-		this.addContainerStateToSummary(
-			summarizeResult,
-			true /* fullTree */,
-			false /* trackState */,
-			telemetryContext,
-		);
+		this.addContainerStateToSummary(summarizeResult, true /* fullTree */, telemetryContext);
 		return summarizeResult.summary;
 	}
 
@@ -3162,12 +3156,11 @@ export class ContainerRuntime
 
 	private async summarizeInternal(
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
 		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
-			trackState,
+			true /* trackState */,
 			telemetryContext,
 		);
 
@@ -3178,7 +3171,7 @@ export class ContainerRuntime
 		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
 		await this.loadIdCompressor();
 
-		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		this.addContainerStateToSummary(summarizeResult, fullTree, telemetryContext);
 		return {
 			...summarizeResult,
 			id: "",
@@ -3192,7 +3185,11 @@ export class ContainerRuntime
 	public async summarize(options: {
 		/** True to generate the full tree with no handle reuse optimizations; defaults to false */
 		fullTree?: boolean;
-		/** True to track the state for this summary in the SummarizerNodes; defaults to true */
+		/**
+		 * @deprecated - This has no effect and is redundant with fullTree. Please use fullTree = true
+		 * instead of trackState = false to re-summarize all nodes and vice-versa.
+		 * True to track the state for this summary in the SummarizerNodes; defaults to true
+		 */
 		trackState?: boolean;
 		/** Logger to use for correlated summary events */
 		summaryLogger?: ITelemetryLoggerExt;
@@ -3207,7 +3204,6 @@ export class ContainerRuntime
 
 		const {
 			fullTree = false,
-			trackState = true,
 			summaryLogger = this.mc.logger,
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
@@ -3218,7 +3214,6 @@ export class ContainerRuntime
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
-			trackState,
 			runGC,
 			fullGC,
 			runSweep,
@@ -3234,7 +3229,6 @@ export class ContainerRuntime
 
 			const { stats, summary } = await this.summarizerNode.summarize(
 				fullTree,
-				trackState,
 				telemetryContext,
 			);
 
@@ -3617,7 +3611,6 @@ export class ContainerRuntime
 			try {
 				summarizeResult = await this.summarize({
 					fullTree,
-					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
 				});

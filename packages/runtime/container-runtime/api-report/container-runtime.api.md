@@ -152,7 +152,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext): void;
     // (undocumented)
-    summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
@@ -211,7 +211,7 @@ export enum ContainerMessageType {
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
-    protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
+    protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
         absolutePath: string;
     }, outboundHandle: {
@@ -342,7 +342,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
-        trackState?: boolean;
         summaryLogger?: ITelemetryLoggerExt;
         runGC?: boolean;
         fullGC?: boolean;
@@ -566,7 +565,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    summarize(fullTree?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     // (undocumented)
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     // (undocumented)

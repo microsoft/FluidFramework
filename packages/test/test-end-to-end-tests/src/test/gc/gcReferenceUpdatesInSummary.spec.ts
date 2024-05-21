@@ -123,7 +123,6 @@ describeCompat(
 			const { summary } = await containerRuntime.summarize({
 				runGC: true,
 				fullTree: true,
-				trackState: false,
 				summaryLogger: createChildLogger(),
 			});
 

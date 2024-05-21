@@ -59,7 +59,6 @@ export class SchemaSummarizer implements Summarizable {
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
@@ -84,7 +83,6 @@ export class SchemaSummarizer implements Summarizable {
 	public async summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {

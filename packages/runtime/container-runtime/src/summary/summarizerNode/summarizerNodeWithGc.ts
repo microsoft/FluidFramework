@@ -64,9 +64,6 @@ class SummaryNodeWithGC extends SummaryNode {
  *
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  * and to determine if the node's used state changed since last summary.
- *
- * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
- * directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
@@ -100,9 +97,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 */
 	public constructor(
 		logger: ITelemetryBaseLogger,
-		private readonly summarizeFn: (
+		summarizeFn: (
 			fullTree: boolean,
-			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
 			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		) => Promise<ISummarizeInternalResult>,
@@ -118,18 +114,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	) {
 		super(
 			logger,
-			async (
-				fullTree: boolean,
-				_trackState: boolean,
-				telemetryContext?: ITelemetryContext,
-				incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-			) =>
-				summarizeFn(
-					fullTree,
-					true /* trackState */,
-					telemetryContext,
-					incrementalSummaryContext,
-				),
+			summarizeFn,
 			config,
 			changeSequenceNumber,
 			latestSummary,
@@ -182,7 +167,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 	public async summarize(
 		fullTree: boolean,
-		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		// If GC is not disabled and a summary is in progress, GC should have run and updated the used routes for this
@@ -194,11 +178,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			);
 		}
 
-		// If trackState is true, get summary from base summarizer node which tracks summary state.
-		// If trackState is false, get summary from summarizeInternal.
-		return trackState
-			? super.summarize(fullTree, true /* trackState */, telemetryContext)
-			: this.summarizeFn(fullTree, trackState, telemetryContext);
+		return super.summarize(fullTree, telemetryContext);
 	}
 
 	/**

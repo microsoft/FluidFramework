@@ -311,7 +311,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	public abstract getAttachSummary(
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats;
 
@@ -320,7 +319,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	public abstract summarize(
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;
 
@@ -675,7 +673,6 @@ export abstract class SharedObject<
 	 */
 	public getAttachSummary(
 		fullTree: boolean = false,
-		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const result = this.summarizeCore(this.serializer, telemetryContext);
@@ -697,7 +694,6 @@ export abstract class SharedObject<
 	 */
 	public async summarize(
 		fullTree: boolean = false,
-		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {

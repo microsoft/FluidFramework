@@ -224,10 +224,9 @@ export const mixinAttributor = (
 		protected addContainerStateToSummary(
 			summaryTree: ISummaryTreeWithStats,
 			fullTree: boolean,
-			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
 		): void {
-			super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
+			super.addContainerStateToSummary(summaryTree, fullTree, telemetryContext);
 			const attributorSummary = this.runtimeAttributor?.summarize();
 			if (attributorSummary) {
 				addSummarizeResultToSummary(summaryTree, attributorTreeName, attributorSummary);

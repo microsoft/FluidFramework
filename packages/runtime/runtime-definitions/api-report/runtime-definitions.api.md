@@ -364,7 +364,7 @@ export interface ISummarizerNode {
     isSummaryInProgress?(): boolean;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
-    summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
@@ -444,7 +444,7 @@ export interface OpAttributionKey {
 }
 
 // @alpha (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @internal (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";

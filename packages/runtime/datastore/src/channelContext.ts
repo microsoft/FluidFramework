@@ -41,11 +41,7 @@ export interface IChannelContext {
 
 	processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-	summarize(
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummarizeResult>;
+	summarize(fullTree?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
 
 	reSubmit(content: any, localOpMetadata: unknown): void;
 
@@ -104,10 +100,9 @@ export function createChannelServiceEndpoints(
 export function summarizeChannel(
 	channel: IChannel,
 	fullTree: boolean = false,
-	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
+	const summarizeResult = channel.getAttachSummary(fullTree, telemetryContext);
 
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
@@ -117,13 +112,11 @@ export function summarizeChannel(
 export async function summarizeChannelAsync(
 	channel: IChannel,
 	fullTree: boolean = false,
-	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ): Promise<ISummaryTreeWithStats> {
 	const summarizeResult = await channel.summarize(
 		fullTree,
-		trackState,
 		telemetryContext,
 		incrementalSummaryContext,
 	);

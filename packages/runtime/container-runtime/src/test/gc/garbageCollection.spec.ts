@@ -1491,10 +1491,7 @@ describe("Garbage Collection Tests", () => {
 
 			await garbageCollector.collectGarbage({});
 			// Summarize with fullTree as true so that the deleted nodes are written as a blob and can be validated.
-			const summaryTree = garbageCollector.summarize(
-				true /* fullTree */,
-				true /* trackState */,
-			);
+			const summaryTree = garbageCollector.summarize(true /* fullTree */);
 			assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
@@ -1540,10 +1537,7 @@ describe("Garbage Collection Tests", () => {
 
 			// Run GC and summarize. The summary should contain the deleted nodes.
 			await garbageCollector.collectGarbage({});
-			const gcSummary = garbageCollector.summarize(
-				false /* fullTree */,
-				true /* trackState */,
-			);
+			const gcSummary = garbageCollector.summarize(false /* fullTree */);
 			assert(gcSummary?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
@@ -1560,10 +1554,7 @@ describe("Garbage Collection Tests", () => {
 
 			// Run GC and summarize again. The whole GC summary should now be a summary handle.
 			await garbageCollector.collectGarbage({});
-			const gcSummary2 = garbageCollector.summarize(
-				false /* fullTree */,
-				true /* trackState */,
-			);
+			const gcSummary2 = garbageCollector.summarize(false /* fullTree */);
 			assert(
 				gcSummary2?.summary.type === SummaryType.Handle,
 				"The summary should be a handle",
@@ -1630,7 +1621,7 @@ describe("Garbage Collection Tests", () => {
 
 			await garbageCollector.collectGarbage({});
 
-			const summaryTree = garbageCollector.summarize(true, false)?.summary;
+			const summaryTree = garbageCollector.summarize(true)?.summary;
 			assert(summaryTree !== undefined, "Nothing to summarize after running GC");
 			assert(summaryTree.type === SummaryType.Tree, "Expecting a summary tree!");
 
@@ -2121,7 +2112,6 @@ describe("Garbage Collection Tests", () => {
 
 	describe("No changes to GC between summaries", () => {
 		const fullTree = false;
-		const trackState = true;
 		let garbageCollector: IGarbageCollector;
 
 		beforeEach(() => {
@@ -2146,7 +2136,7 @@ describe("Garbage Collection Tests", () => {
 			garbageCollector = createGarbageCollector();
 
 			await garbageCollector.collectGarbage({});
-			const tree1 = garbageCollector.summarize(fullTree, trackState);
+			const tree1 = garbageCollector.summarize(fullTree);
 
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
@@ -2155,7 +2145,7 @@ describe("Garbage Collection Tests", () => {
 				isSummaryNewer: true,
 			});
 			await garbageCollector.collectGarbage({});
-			const tree2 = garbageCollector.summarize(fullTree, trackState);
+			const tree2 = garbageCollector.summarize(fullTree);
 
 			checkGCSummaryType(tree2, SummaryType.Handle, "second");
 		});

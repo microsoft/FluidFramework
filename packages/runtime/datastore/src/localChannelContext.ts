@@ -112,16 +112,14 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	/**
 	 * Returns a summary at the current sequence number.
 	 * @param fullTree - true to bypass optimizations and force a full summary tree
-	 * @param trackState - This tells whether we should track state from this summary.
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
 	 */
 	public async summarize(
 		fullTree: boolean = false,
-		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		const channel = await this.getChannel();
-		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
+		return summarizeChannelAsync(channel, fullTree, telemetryContext);
 	}
 
 	/**
@@ -134,12 +132,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
-		return summarizeChannel(
-			this._channel,
-			true /* fullTree */,
-			false /* trackState */,
-			telemetryContext,
-		);
+		return summarizeChannel(this._channel, true /* fullTree */, telemetryContext);
 	}
 
 	/**

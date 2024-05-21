@@ -29,11 +29,11 @@ export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
     connect(services: IChannelServices): void;
-    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
 // @alpha

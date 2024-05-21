@@ -319,6 +319,10 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 */
 	summarize(
 		fullTree?: boolean,
+		/**
+		 * @deprecated - This has no effect and is redundant with fullTree. Please use fullTree = true
+		 * instead of trackState = false to re-summarize all nodes and vice-versa.
+		 */
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;

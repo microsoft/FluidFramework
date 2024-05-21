@@ -629,7 +629,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
     // (undocumented)
     get currentTree(): IChannel & (SharedTree | ITree);
     // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -645,7 +645,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
     // (undocumented)
     submitMigrateOp(): void;
     // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed
@@ -908,7 +908,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get edits(): OrderedEditSet<InternalizedChange>;
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
     // (undocumented)
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
@@ -1020,7 +1020,7 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     get currentTree(): ITree & IChannel;
     // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
+    getAttachSummary(fullTree?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -1038,7 +1038,7 @@ export class SharedTreeShim implements IShim {
     // (undocumented)
     readonly sharedTreeFactory: IChannelFactory<ITree>;
     // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
 }
 
 // @internal @sealed

@@ -39,7 +39,6 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
-			trackState: false,
 		});
 	}
 

@@ -846,7 +846,6 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	public summarize(
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined {
 		if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
@@ -863,7 +862,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		return this.summaryStateTracker.summarize(
-			trackState && !fullTree,
+			!fullTree,
 			gcState,
 			this.deletedNodes,
 			this.tombstones,

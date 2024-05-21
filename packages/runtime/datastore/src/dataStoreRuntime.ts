@@ -854,11 +854,7 @@ export class FluidDataStoreRuntime
 					return isAttached;
 				})
 				.map(async ([contextId, context]) => {
-					const contextSummary = await context.summarize(
-						fullTree,
-						trackState,
-						telemetryContext,
-					);
+					const contextSummary = await context.summarize(fullTree, telemetryContext);
 					summaryBuilder.addWithStats(contextId, contextSummary);
 				}),
 		);
@@ -997,11 +993,7 @@ export class FluidDataStoreRuntime
 			0x2d0 /* "Data store should be globally visible to attach channels." */,
 		);
 
-		const summarizeResult = summarizeChannel(
-			channel,
-			true /* fullTree */,
-			false /* trackState */,
-		);
+		const summarizeResult = summarizeChannel(channel, true /* fullTree */);
 
 		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
 		const gcData = channel.getGCData(/* fullGC: */ true);

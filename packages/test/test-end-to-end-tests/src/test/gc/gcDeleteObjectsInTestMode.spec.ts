@@ -48,7 +48,6 @@ async function validateNodeStateInGCSummaryTree(
 	const { summary } = await summarizerContainerRuntime.summarize({
 		runGC: true,
 		fullTree: true,
-		trackState: false,
 		summaryLogger: createChildLogger(),
 	});
 
