@@ -75,7 +75,7 @@ export interface ContainerWarning extends IErrorBase_2 {
 export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    getSelf: () => ISelf | undefined;
+    getSelf(): ISelf | undefined;
 }
 
 // @public
@@ -462,8 +462,8 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 // @public
 export interface ISelf {
-    client?: IClient;
-    clientId: string;
+    readonly client?: IClient;
+    readonly clientId: string;
 }
 
 // @alpha

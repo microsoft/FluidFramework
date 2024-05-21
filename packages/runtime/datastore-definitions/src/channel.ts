@@ -119,7 +119,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @public
+ * @alpha
  */
 export interface IDeltaHandler {
 	/**
@@ -174,7 +174,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @public
+ * @alpha
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -213,7 +213,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @public
+ * @alpha
  */
 export interface IChannelStorageService {
 	/**
@@ -234,7 +234,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @public
+ * @alpha
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;

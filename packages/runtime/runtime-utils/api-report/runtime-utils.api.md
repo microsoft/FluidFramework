@@ -5,7 +5,7 @@
 ```ts
 
 import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';

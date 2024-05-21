@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Data about a single point in an ink stroke

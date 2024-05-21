@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

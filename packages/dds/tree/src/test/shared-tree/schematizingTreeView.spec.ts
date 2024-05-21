@@ -102,8 +102,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [
 			["rootChanged", 6],
-			// This checkout editing setup does not produce batch events.
-			// ["afterBatch", 6],
+			["afterBatch", 6],
 		]);
 	});
 

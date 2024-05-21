@@ -6,10 +6,10 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -49,8 +49,12 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject, type ISharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 

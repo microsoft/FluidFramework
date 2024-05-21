@@ -95,6 +95,7 @@ declare function get_current_InterfaceDeclaration_ContainerSchema():
 declare function use_old_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerSchema());
 
 /*

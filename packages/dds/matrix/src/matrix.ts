@@ -9,11 +9,11 @@ import {
 	type IEventProvider,
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	type IChannel,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -29,8 +29,11 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
