@@ -127,7 +127,7 @@ export function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
