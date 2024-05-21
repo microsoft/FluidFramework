@@ -5285,6 +5285,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       '@types/node': ^18.19.0
       copyfiles: ^2.4.1
@@ -5301,6 +5302,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
