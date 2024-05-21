@@ -342,6 +342,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
+        trackState?: boolean;
         summaryLogger?: ITelemetryLoggerExt;
         runGC?: boolean;
         fullGC?: boolean;
