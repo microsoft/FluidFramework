@@ -14,6 +14,22 @@ import {
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
+function isFluidHandle(value: unknown): value is IFluidHandle {
+	// `in` gives a type error on non-objects and null, so filter them out
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	if (IFluidHandle in value) {
+		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
+		const inner = value[IFluidHandle] as IFluidHandle;
+		if (typeof inner !== "object" || inner === null) {
+			return false;
+		}
+		return IFluidHandle in inner;
+	}
+	return false;
+}
+
 /**
  * @public
  */
