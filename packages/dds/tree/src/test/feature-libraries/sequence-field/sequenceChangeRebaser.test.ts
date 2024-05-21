@@ -194,7 +194,13 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 			(i, max) =>
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
-						Change.return(i, 2, 1, { revision: tag3, localId: brand(i) }),
+						Change.return(
+							i,
+							2,
+							1,
+							{ revision: tag3, localId: brand(i + 2) },
+							{ revision: tag3, localId: brand(i) },
+						),
 						"MoveIn",
 						max,
 					),
@@ -205,7 +211,13 @@ const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrappe
 			(i, max) =>
 				ChangesetWrapper.create(
 					withAdjacentTombstones(
-						Change.return(1, 2, i, { revision: tag3, localId: brand(i) }),
+						Change.return(
+							1,
+							2,
+							i,
+							{ revision: tag3, localId: brand(i + 2) },
+							{ revision: tag3, localId: brand(i) },
+						),
 						"MoveIn",
 						max,
 					),
