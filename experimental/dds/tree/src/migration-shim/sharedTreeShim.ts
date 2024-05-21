@@ -10,15 +10,15 @@ import {
 	type IChannel,
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from '@fluidframework/runtime-definitions';
+} from '@fluidframework/runtime-definitions/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';

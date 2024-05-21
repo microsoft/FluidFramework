@@ -38,8 +38,6 @@
 		"checks:fix": "fluid-build --task checks:fix",
 		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
-		"ci:test:azureclient:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:azureclient:tinylicious:report",
-		"ci:test:azureclient:tinylicious:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:azureclient:tinylicious:report",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
@@ -182,7 +180,7 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"engines": {

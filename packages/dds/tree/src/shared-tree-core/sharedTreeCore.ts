@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -16,10 +16,9 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {

@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+	Jsonable,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment,
 	IJSONSegment,

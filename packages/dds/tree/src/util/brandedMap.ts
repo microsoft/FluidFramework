@@ -15,6 +15,7 @@ export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
 	unknown,
 	infer TContent
@@ -38,6 +39,7 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey exte
  *
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
 	has(key: K): boolean;
@@ -49,7 +51,9 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
  * Version of {@link getOrCreate} with better typing for {@link BrandedMapSubset}.
  */
 export function getOrCreateSlotContent<
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M extends BrandedMapSubset<BrandedKey<unknown, any>>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	K extends BrandedKey<unknown, any>,
 >(map: M, key: K, defaultValue: (key: K) => BrandedKeyContent<K>): BrandedKeyContent<K> {
 	const result: BrandedKeyContent<K> = getOrCreate(map, key, defaultValue);
@@ -68,6 +72,7 @@ let slotCounter = 0;
  * Define a strongly typed slot in which data can be stored in a {@link BrandedMapSubset}.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function brandedSlot<TSlot extends BrandedKey<any, any>>(): TSlot {
 	return slotCounter++ as TSlot;
 }

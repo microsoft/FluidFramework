@@ -10,11 +10,11 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -24,8 +24,8 @@ import {
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
