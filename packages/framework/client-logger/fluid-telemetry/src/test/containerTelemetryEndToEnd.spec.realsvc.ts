@@ -5,18 +5,17 @@
 
 import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import { SharedTree } from "@fluid-experimental/tree";
-import * as AppInsights from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
 import { spy } from "sinon";
 import { expect } from "chai";
 import { startTelemetry } from "../factory/index.js";
 import {
-	AppInsightsTelemetryConsumer,
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
-	type IContainerTelemetry,
+	type IFluidTelemetry,
+	type ITelemetryConsumer,
 } from "../index.js";
 
 // This test suite creates an actual IFluidContainer and confirms events are fired with the expected names during the expected events
@@ -24,8 +23,18 @@ import {
 describe("container telemetry E2E", () => {
 	let schema;
 	let tinyliciousClient: TinyliciousClient;
-	let appInsightsClient: AppInsights.ApplicationInsights;
-	let appInsightsTrackEventSpy: Sinon.SinonSpy;
+	let telemetryConsumerConsumeSpy: Sinon.SinonSpy;
+	let testTelemetryConsumer: ITelemetryConsumer;
+
+	// Simple test class that will be used as the telemetry consumer.
+	class TestTelemetryConsumer implements ITelemetryConsumer {
+		/**
+		 * Takes the incoming {@link IFluidTelemetry} and sends it to Azure App Insights
+		 */
+		public consume(event: IFluidTelemetry): void {
+			return;
+		}
+	}
 
 	before(() => {
 		tinyliciousClient = new TinyliciousClient({ connection: { port: 7070 } });
@@ -35,20 +44,14 @@ describe("container telemetry E2E", () => {
 			},
 		};
 
-		appInsightsClient = new AppInsights.ApplicationInsights({
-			config: {
-				connectionString:
-					// (this is an example string)
-					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
-			},
-		});
-		appInsightsTrackEventSpy = spy(appInsightsClient, "trackEvent");
+		testTelemetryConsumer = new TestTelemetryConsumer();
+		telemetryConsumerConsumeSpy = spy(testTelemetryConsumer, "consume");
 	});
 
 	beforeEach(() => {
-		// We need to reset the Application Insights client spy for each test so the trackEvent calls
+		// We need to reset the telemetry consumer spy for each test so the trackEvent calls
 		// from the last test don't bleed into the next one.
-		appInsightsTrackEventSpy.resetHistory();
+		telemetryConsumerConsumeSpy.resetHistory();
 	});
 
 	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using AppInsightsTelemetryConsumer", async () => {
@@ -58,7 +61,7 @@ describe("container telemetry E2E", () => {
 		startTelemetry({
 			container,
 			containerId,
-			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
+			consumers: [testTelemetryConsumer],
 		});
 
 		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
@@ -66,39 +69,34 @@ describe("container telemetry E2E", () => {
 		const testCompletePromise = new Promise<void>((resolve, reject) => {
 			// We Capture and analyze telemetry after the container connected event
 			container.on("connected", () => {
-				// Obtain the calls made to the appInsights trackEvent method
-				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-					appInsightsTrackEventSpy
+				// Obtain the calls made to the TestTelemetryConsumer consume() method
+				const actualConsumedConnectedTelemetry: ContainerConnectedTelemetry[] =
+					telemetryConsumerConsumeSpy
 						.getCalls()
-						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
 						.filter(
 							(telemetry) =>
-								telemetry.name === ContainerTelemetryEventNames.CONNECTED,
-						);
+								telemetry.eventName === ContainerTelemetryEventNames.CONNECTED,
+						) as ContainerConnectedTelemetry[];
 
-				if (actualEmittedAppInsightsTelemetry.length === 0) {
+				if (actualConsumedConnectedTelemetry.length === 0) {
 					console.log("Failed to find expected telemetry");
 					reject(
 						new Error(
-							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
 						),
 					);
 				}
-				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-				const actualContainerTelemetry =
-					actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
-				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-					name: ContainerTelemetryEventNames.CONNECTED,
-					properties: {
-						eventName: ContainerTelemetryEventNames.CONNECTED,
-						containerId,
-						containerInstanceId: actualContainerTelemetry.containerInstanceId,
-					} satisfies ContainerConnectedTelemetry,
+				const actualContainerTelemetry = actualConsumedConnectedTelemetry[0];
+				const expectedContainerTelemetry: ContainerConnectedTelemetry = {
+					eventName: ContainerTelemetryEventNames.CONNECTED,
+					containerId,
+					containerInstanceId: actualContainerTelemetry.containerInstanceId,
 				};
 
 				try {
-					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 					expect(actualContainerTelemetry.containerInstanceId)
 						.to.be.a("string")
@@ -121,7 +119,7 @@ describe("container telemetry E2E", () => {
 		startTelemetry({
 			container,
 			containerId,
-			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
+			consumers: [testTelemetryConsumer],
 		});
 
 		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
@@ -133,37 +131,32 @@ describe("container telemetry E2E", () => {
 			});
 
 			container.on("disconnected", () => {
-				// Obtain the calls made to the appInsights trackEvent method
-				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-					appInsightsTrackEventSpy
+				// Obtain the calls made to the TestTelemetryConsumer consume() method
+				const actualConsumedDisconnectedTelemetry: ContainerDisconnectedTelemetry[] =
+					telemetryConsumerConsumeSpy
 						.getCalls()
-						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
 						.filter(
 							(telemetry) =>
-								telemetry.name === ContainerTelemetryEventNames.DISCONNECTED,
-						);
+								telemetry.eventName === ContainerTelemetryEventNames.DISCONNECTED,
+						) as ContainerDisconnectedTelemetry[];
 
-				if (actualEmittedAppInsightsTelemetry.length === 0) {
+				if (actualConsumedDisconnectedTelemetry.length === 0) {
 					reject(
 						new Error(
-							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
 						),
 					);
 				}
-				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-				const actualContainerTelemetry =
-					actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
-				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-					name: ContainerTelemetryEventNames.DISCONNECTED,
-					properties: {
-						eventName: ContainerTelemetryEventNames.DISCONNECTED,
-						containerId,
-						containerInstanceId: actualContainerTelemetry.containerInstanceId,
-					} satisfies ContainerDisconnectedTelemetry,
+				const actualContainerTelemetry = actualConsumedDisconnectedTelemetry[0];
+				const expectedContainerTelemetry: ContainerDisconnectedTelemetry = {
+					eventName: ContainerTelemetryEventNames.DISCONNECTED,
+					containerId,
+					containerInstanceId: actualContainerTelemetry.containerInstanceId,
 				};
 				try {
-					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 					expect(actualContainerTelemetry.containerInstanceId)
 						.to.be.a("string")
@@ -187,7 +180,7 @@ describe("container telemetry E2E", () => {
 		startTelemetry({
 			container,
 			containerId,
-			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
+			consumers: [testTelemetryConsumer],
 		});
 
 		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
@@ -204,37 +197,32 @@ describe("container telemetry E2E", () => {
 			});
 
 			container.on("disposed", () => {
-				// Obtain the calls made to the appInsights trackEvent method
-				const actualEmittedAppInsightsTelemetry: AppInsights.IEventTelemetry[] =
-					appInsightsTrackEventSpy
+				// Obtain the calls made to the TestTelemetryConsumer consume() method
+				const actualConsumedDisposedTelemetry: ContainerDisposedTelemetry[] =
+					telemetryConsumerConsumeSpy
 						.getCalls()
-						.map((spyCall) => spyCall.args[0] as AppInsights.IEventTelemetry)
+						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
 						.filter(
-							(telemetry) => telemetry.name === ContainerTelemetryEventNames.DISPOSED,
-						);
+							(telemetry) =>
+								telemetry.eventName === ContainerTelemetryEventNames.DISPOSED,
+						) as ContainerDisposedTelemetry[];
 
-				if (actualEmittedAppInsightsTelemetry.length === 0) {
+				if (actualConsumedDisposedTelemetry.length === 0) {
 					reject(
 						new Error(
-							"Expected AppInsights.trackEvent() to be called alteast once with expected container telemetry but was not.",
+							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
 						),
 					);
 				}
-				const actualAppInsightsTelemetry = actualEmittedAppInsightsTelemetry[0];
-				const actualContainerTelemetry =
-					actualAppInsightsTelemetry.properties as IContainerTelemetry;
-
-				const expectedAppInsightsTelemetry: AppInsights.IEventTelemetry = {
-					name: ContainerTelemetryEventNames.DISPOSED,
-					properties: {
-						eventName: ContainerTelemetryEventNames.DISPOSED,
-						containerId,
-						containerInstanceId: actualContainerTelemetry.containerInstanceId,
-					} satisfies ContainerDisposedTelemetry,
+				const actualContainerTelemetry = actualConsumedDisposedTelemetry[0];
+				const expectedContainerTelemetry: ContainerDisposedTelemetry = {
+					eventName: ContainerTelemetryEventNames.DISPOSED,
+					containerId,
+					containerInstanceId: actualContainerTelemetry.containerInstanceId,
 				};
 
 				try {
-					expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
+					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
 					expect(actualContainerTelemetry.containerInstanceId)
 						.to.be.a("string")
