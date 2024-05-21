@@ -9,7 +9,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type FluidObject,
@@ -18,18 +18,19 @@ import {
 	type IResponse,
 } from "@fluidframework/core-interfaces";
 import { type IDirectory } from "@fluidframework/map/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import {
-	type DataObjectClass,
-	type ContainerSchema,
-	type IRootDataObject,
-	type LoadableObjectClass,
-	type LoadableObjectClassRecord,
-	type LoadableObjectRecord,
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+	DataObjectClass,
+	IRootDataObject,
+	LoadableObjectClass,
+	LoadableObjectClassRecord,
+	LoadableObjectRecord,
 } from "./types.js";
 import {
 	isDataObjectClass,
@@ -169,8 +170,9 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
+	compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatibilityMode);
 }
 
 /**
@@ -193,7 +195,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	public constructor(schema: ContainerSchema) {
+	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -231,17 +233,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			// WARNING: These settigs are not compatible with FF 1.3 clients!
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: "on",
-				// For now this was set to false to allow 1.x/2.x testing with AzureClient.
-				// Long term, this config will be set dynamically. See https://github.com/microsoft/FluidFramework/pull/20997.
-				explicitSchemaControl: false,
-			},
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;

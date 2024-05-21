@@ -16,6 +16,9 @@ import { IRuntimeFactory } from '@fluidframework/container-definitions/internal'
 import { SharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
+export type CompatibilityMode = "1" | "2";
+
+// @public
 export type ContainerAttachProps<T = unknown> = T;
 
 // @public
@@ -27,6 +30,7 @@ export interface ContainerSchema {
 // @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
+    compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory;
 
 // @internal

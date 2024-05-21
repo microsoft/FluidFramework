@@ -215,7 +215,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "error"
+            "error",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
