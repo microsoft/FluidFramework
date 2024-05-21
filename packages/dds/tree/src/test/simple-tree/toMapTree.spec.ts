@@ -370,7 +370,7 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Throws on `undefined` entries", () => {
+		it("Throws on `undefined` entries when null is not allowed", () => {
 			const schemaFactory = new SchemaFactory("test");
 			assert.throws(
 				() =>
