@@ -280,7 +280,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit = false,
-	): GraphCommit<TChange> | undefined {
+	): void {
 		assert(
 			// Edits should not be submitted until all transactions finish
 			!this.getLocalBranch().isTransacting() || isResubmit,
@@ -320,7 +320,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			policy: schemaAndPolicy.policy,
 		});
 		this.resubmitMachine.onCommitSubmitted(commit);
-		return commit;
 	}
 
 	protected processCore(
