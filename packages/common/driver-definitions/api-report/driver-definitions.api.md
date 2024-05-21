@@ -4,26 +4,29 @@
 
 ```ts
 
-import type { ConnectionMode } from '@fluidframework/protocol-definitions';
-import type { IClient } from '@fluidframework/protocol-definitions';
-import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import type { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
+import type { ConnectionMode as ConnectionMode_2 } from '@fluidframework/protocol-definitions';
+import type { IClient as IClient_2 } from '@fluidframework/protocol-definitions';
+import type { IClientConfiguration as IClientConfiguration_2 } from '@fluidframework/protocol-definitions';
+import type { ICreateBlobResponse as ICreateBlobResponse_2 } from '@fluidframework/protocol-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDocumentMessage as IDocumentMessage_2 } from '@fluidframework/protocol-definitions';
 import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { INack } from '@fluidframework/protocol-definitions';
+import type { INack as INack_2 } from '@fluidframework/protocol-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { ISignalClient } from '@fluidframework/protocol-definitions';
-import type { ISignalMessage } from '@fluidframework/protocol-definitions';
-import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import type { ISummaryHandle } from '@fluidframework/protocol-definitions';
-import type { ISummaryTree } from '@fluidframework/protocol-definitions';
+import type { ISequencedDocumentMessage as ISequencedDocumentMessage_2 } from '@fluidframework/protocol-definitions';
+import type { ISignalClient as ISignalClient_2 } from '@fluidframework/protocol-definitions';
+import type { ISignalMessage as ISignalMessage_2 } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree as ISnapshotTree_2 } from '@fluidframework/protocol-definitions';
+import type { ISummaryHandle as ISummaryHandle_2 } from '@fluidframework/protocol-definitions';
+import type { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITokenClaims } from '@fluidframework/protocol-definitions';
-import type { IVersion } from '@fluidframework/protocol-definitions';
+import type { ITokenClaims as ITokenClaims_2 } from '@fluidframework/protocol-definitions';
+import type { IVersion as IVersion_2 } from '@fluidframework/protocol-definitions';
+
+// @public
+export type ConnectionMode = "write" | "read";
 
 // @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
@@ -76,13 +79,42 @@ export enum FetchSource {
 }
 
 // @alpha (undocumented)
+export enum FileMode {
+    // (undocumented)
+    Directory = "040000",
+    // (undocumented)
+    Executable = "100755",
+    // (undocumented)
+    File = "100644",
+    // (undocumented)
+    Symlink = "120000"
+}
+
+// @alpha (undocumented)
 export type FiveDaysMs = 432000000;
+
+// @internal @deprecated (undocumented)
+export interface IActorClient {
+    // (undocumented)
+    sub: string;
+}
 
 // @alpha
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
     scenarioName?: string;
+}
+
+// @alpha
+export type IApprovedProposal = {
+    approvalSequenceNumber: number;
+} & ISequencedProposal;
+
+// @alpha (undocumented)
+export interface IAttachment {
+    // (undocumented)
+    id: string;
 }
 
 // @alpha (undocumented)
@@ -96,13 +128,113 @@ export interface IAuthorizationError extends IDriverErrorBase {
 }
 
 // @alpha
+export interface IBlob {
+    contents: string;
+    encoding: "utf-8" | "base64";
+}
+
+// @public
+export interface IBranchOrigin {
+    id: string;
+    minimumSequenceNumber: number;
+    sequenceNumber: number;
+}
+
+// @public
+export interface ICapabilities {
+    interactive: boolean;
+}
+
+// @public
+export interface IClient {
+    details: IClientDetails;
+    mode: ConnectionMode;
+    // (undocumented)
+    permission: string[];
+    scopes: string[];
+    timestamp?: number;
+    user: IUser;
+}
+
+// @alpha
+export interface IClientConfiguration {
+    blockSize: number;
+    maxMessageSize: number;
+    noopCountFrequency?: number;
+    noopTimeFrequency?: number;
+}
+
+// @public
+export interface IClientDetails {
+    capabilities: ICapabilities;
+    // (undocumented)
+    device?: string;
+    // (undocumented)
+    environment?: string;
+    type?: string;
+}
+
+// @internal
+export interface IClientJoin {
+    clientId: string;
+    detail: IClient;
+}
+
+// @alpha
+export type ICommittedProposal = {
+    commitSequenceNumber: number;
+} & IApprovedProposal;
+
+// @alpha
+export interface IConnect {
+    client: IClient;
+    driverVersion?: string;
+    epoch?: string;
+    id: string;
+    mode: ConnectionMode;
+    nonce?: string;
+    relayUserAgent?: string;
+    supportedFeatures?: Record<string, unknown>;
+    tenantId: string;
+    token: string | null;
+    versions: string[];
+}
+
+// @alpha
+export interface IConnected {
+    checkpointSequenceNumber?: number;
+    claims: ITokenClaims;
+    clientId: string;
+    epoch?: string;
+    existing: boolean;
+    initialClients: ISignalClient[];
+    initialMessages: ISequencedDocumentMessage[];
+    initialSignals: ISignalMessage[];
+    maxMessageSize: number;
+    mode: ConnectionMode;
+    nonce?: string;
+    relayServiceAgent?: string;
+    serviceConfiguration: IClientConfiguration;
+    supportedFeatures?: Record<string, unknown>;
+    supportedVersions: string[];
+    timestamp?: number;
+    version: string;
+}
+
+// @alpha
 export interface IContainerPackageInfo {
     name: string;
 }
 
+// @alpha (undocumented)
+export interface ICreateBlobResponse {
+    // (undocumented)
+    id: string;
+}
+
 // @internal (undocumented)
 export interface IDeltasFetchResult {
-    messages: ISequencedDocumentMessage[];
+    messages: ISequencedDocumentMessage_2[];
     partialResult: boolean;
 }
 
@@ -114,18 +246,24 @@ export interface IDeltaStorageService {
 }
 
 // @alpha (undocumented)
+export interface IDocumentAttributes {
+    minimumSequenceNumber: number;
+    sequenceNumber: number;
+}
+
+// @alpha (undocumented)
 export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     checkpointSequenceNumber?: number;
-    claims: ITokenClaims;
+    claims: ITokenClaims_2;
     clientId: string;
     existing: boolean;
-    initialClients: ISignalClient[];
-    initialMessages: ISequencedDocumentMessage[];
-    initialSignals: ISignalMessage[];
-    mode: ConnectionMode;
+    initialClients: ISignalClient_2[];
+    initialMessages: ISequencedDocumentMessage_2[];
+    initialSignals: ISignalMessage_2[];
+    mode: ConnectionMode_2;
     relayServiceAgent?: string;
-    serviceConfiguration: IClientConfiguration;
-    submit(messages: IDocumentMessage[]): void;
+    serviceConfiguration: IClientConfiguration_2;
+    submit(messages: IDocumentMessage_2[]): void;
     submitSignal: (content: string, targetClientId?: string) => void;
     version: string;
 }
@@ -133,13 +271,13 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
 // @alpha (undocumented)
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
-    (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
+    (event: "nack", listener: (documentId: string, message: INack_2[]) => void): any;
     // (undocumented)
     (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
-    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
+    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage_2[]) => void): any;
     // (undocumented)
-    (event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void): any;
+    (event: "signal", listener: (message: ISignalMessage_2 | ISignalMessage_2[]) => void): any;
     // (undocumented)
     (event: "pong", listener: (latency: number) => void): any;
     // (undocumented)
@@ -148,13 +286,25 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 
 // @alpha
 export interface IDocumentDeltaStorageService {
-    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+    fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage_2[]>;
+}
+
+// @alpha
+export interface IDocumentMessage {
+    clientSequenceNumber: number;
+    compression?: string;
+    contents: unknown;
+    metadata?: unknown;
+    referenceSequenceNumber: number;
+    serverMetadata?: unknown;
+    traces?: ITrace[];
+    type: string;
 }
 
 // @alpha (undocumented)
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient_2): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
     policies?: IDocumentServicePolicies;
@@ -169,7 +319,7 @@ export interface IDocumentServiceEvents extends IEvent {
 
 // @alpha (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree_2 | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
@@ -182,20 +332,26 @@ export interface IDocumentServicePolicies {
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse_2>;
+    downloadSummary(handle: ISummaryHandle_2): Promise<ISummaryTree_2>;
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    getSnapshotTree(version?: IVersion_2, scenarioName?: string): Promise<ISnapshotTree_2 | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion_2[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree_2, context: ISummaryContext): Promise<string>;
 }
 
 // @alpha
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
+}
+
+// @internal
+export interface IDocumentSystemMessage extends IDocumentMessage {
+    // (undocumented)
+    data: string;
 }
 
 // @alpha
@@ -240,6 +396,118 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @alpha (undocumented)
+export interface INack {
+    content: INackContent;
+    operation: IDocumentMessage | undefined;
+    sequenceNumber: number;
+}
+
+// @alpha
+export interface INackContent {
+    code: number;
+    message: string;
+    retryAfter?: number;
+    type: NackErrorType;
+}
+
+// @alpha (undocumented)
+export interface IProcessMessageResult {
+    // (undocumented)
+    immediateNoOp?: boolean;
+}
+
+// @alpha
+export interface IProposal {
+    key: string;
+    value: unknown;
+}
+
+// @internal (undocumented)
+export interface IProtocolState {
+    // (undocumented)
+    members: [string, ISequencedClient][];
+    // (undocumented)
+    minimumSequenceNumber: number;
+    // (undocumented)
+    proposals: [number, ISequencedProposal, string[]][];
+    // (undocumented)
+    sequenceNumber: number;
+    // (undocumented)
+    values: [string, ICommittedProposal][];
+}
+
+// @alpha
+export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off"> {
+    // (undocumented)
+    off: IQuorum["on"];
+    // (undocumented)
+    on: IQuorumClients["on"] & IQuorumProposals["on"];
+    // (undocumented)
+    once: IQuorum["on"];
+}
+
+// @public
+export interface IQuorumClients {
+    // (undocumented)
+    getMember(clientId: string): ISequencedClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, ISequencedClient>;
+    // (undocumented)
+    off: IQuorumClients["on"];
+    // (undocumented)
+    on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    on(event: "removeMember", listener: (clientId: string) => void): any;
+    // (undocumented)
+    on(event: "error", listener: (message: any) => void): any;
+    // (undocumented)
+    once: IQuorumClients["on"];
+}
+
+// @internal @deprecated (undocumented)
+export interface IQuorumClientsEvents {
+    // (undocumented)
+    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    (event: "removeMember", listener: (clientId: string) => void): any;
+    // (undocumented)
+    (event: "error", listener: (message: any) => void): any;
+}
+
+// @internal @deprecated
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+// @alpha
+export interface IQuorumProposals {
+    // (undocumented)
+    get(key: string): unknown;
+    // (undocumented)
+    has(key: string): boolean;
+    // (undocumented)
+    off: IQuorumProposals["on"];
+    // (undocumented)
+    on(event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
+    // (undocumented)
+    on(event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
+    // (undocumented)
+    on(event: "error", listener: (message: any) => void): void;
+    // (undocumented)
+    once: IQuorumProposals["on"];
+    // (undocumented)
+    propose(key: string, value: unknown): Promise<void>;
+}
+
+// @internal @deprecated
+export interface IQuorumProposalsEvents {
+    // (undocumented)
+    (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
+    // (undocumented)
+    (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
+    // (undocumented)
+    (event: "error", listener: (message: any) => void): void;
+}
+
+// @alpha (undocumented)
 export interface IResolvedUrl {
     // (undocumented)
     endpoints: {
@@ -256,18 +524,98 @@ export interface IResolvedUrl {
     url: string;
 }
 
+// @internal
+export type ISentSignalMessage = ISignalMessageBase;
+
+// @public
+export interface ISequencedClient {
+    client: IClient;
+    sequenceNumber: number;
+}
+
+// @internal (undocumented)
+export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    additionalContent: string;
+}
+
+// @public
+export interface ISequencedDocumentMessage {
+    clientId: string | null;
+    clientSequenceNumber: number;
+    // @deprecated
+    compression?: string;
+    contents: unknown;
+    data?: string;
+    // @deprecated
+    expHash1?: string;
+    metadata?: unknown;
+    minimumSequenceNumber: number;
+    origin?: IBranchOrigin;
+    referenceSequenceNumber: number;
+    sequenceNumber: number;
+    serverMetadata?: unknown;
+    timestamp: number;
+    traces?: ITrace[];
+    type: string;
+}
+
+// @internal
+export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessage, "expHash1" | "compression"> & {
+    expHash1?: string;
+    compression?: string;
+};
+
+// @internal (undocumented)
+export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    data: string;
+}
+
+// @alpha
+export type ISequencedProposal = {
+    sequenceNumber: number;
+} & IProposal;
+
+// @internal
+export interface IServerError {
+    errorMessage: string;
+}
+
+// @alpha (undocumented)
+export interface ISignalClient {
+    client: IClient;
+    clientConnectionNumber?: number;
+    clientId: string;
+    referenceSequenceNumber?: number;
+}
+
+// @public
+export interface ISignalMessage extends ISignalMessageBase {
+    clientId: string | null;
+}
+
+// @public
+export interface ISignalMessageBase {
+    clientConnectionNumber?: number;
+    content: unknown;
+    referenceSequenceNumber?: number;
+    targetClientId?: string;
+    type?: string;
+}
+
 // @alpha
 export interface ISnapshot {
     // (undocumented)
     blobContents: Map<string, ArrayBuffer>;
     latestSequenceNumber: number | undefined;
     // (undocumented)
-    ops: ISequencedDocumentMessage[];
+    ops: ISequencedDocumentMessage_2[];
     sequenceNumber: number | undefined;
     // (undocumented)
     snapshotFormatV: 1;
     // (undocumented)
-    snapshotTree: ISnapshotTree;
+    snapshotTree: ISnapshotTree_2;
 }
 
 // @alpha
@@ -278,6 +626,35 @@ export interface ISnapshotFetchOptions {
     scenarioName?: string;
     versionId?: string;
 }
+
+// @alpha (undocumented)
+export interface ISnapshotTree {
+    // (undocumented)
+    blobs: {
+        [path: string]: string;
+    };
+    groupId?: string;
+    // (undocumented)
+    id?: string;
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTree;
+    };
+    unreferenced?: true;
+}
+
+// @internal (undocumented)
+export interface ISnapshotTreeEx extends ISnapshotTree {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeEx;
+    };
+}
+
+// @alpha
+export type IsoDate = string;
 
 // @alpha
 export interface IStream<T> {
@@ -294,11 +671,85 @@ export type IStreamResult<T> = {
 };
 
 // @alpha
+export interface ISummaryAck {
+    handle: string;
+    summaryProposal: ISummaryProposal;
+}
+
+// @public
+export interface ISummaryAttachment {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    type: SummaryType.Attachment;
+}
+
+// @public
+export interface ISummaryBlob {
+    // (undocumented)
+    content: string | Uint8Array;
+    // (undocumented)
+    type: SummaryType.Blob;
+}
+
+// @alpha (undocumented)
+export interface ISummaryContent {
+    details?: IUploadedSummaryDetails;
+    handle: string;
+    head: string;
+    message: string;
+    parents: string[];
+}
+
+// @alpha
 export interface ISummaryContext {
     readonly ackHandle: string | undefined;
     readonly proposalHandle: string | undefined;
     // (undocumented)
     readonly referenceSequenceNumber: number;
+}
+
+// @public
+export interface ISummaryHandle {
+    handle: string;
+    handleType: SummaryTypeNoHandle;
+    // (undocumented)
+    type: SummaryType.Handle;
+}
+
+// @alpha
+export interface ISummaryNack {
+    code?: number;
+    message?: string;
+    retryAfter?: number;
+    summaryProposal: ISummaryProposal;
+}
+
+// @alpha
+export interface ISummaryProposal {
+    summarySequenceNumber: number;
+}
+
+// @internal @deprecated (undocumented)
+export interface ISummaryTokenClaims {
+    // (undocumented)
+    act: IActorClient;
+    // (undocumented)
+    claims: ITokenClaims;
+    // (undocumented)
+    sub: string;
+}
+
+// @public
+export interface ISummaryTree {
+    groupId?: string;
+    // (undocumented)
+    tree: {
+        [path: string]: SummaryObject;
+    };
+    // (undocumented)
+    type: SummaryType.Tree;
+    unreferenced?: true;
 }
 
 // @alpha (undocumented)
@@ -309,6 +760,65 @@ export interface IThrottlingWarning extends IDriverErrorBase {
     readonly retryAfterSeconds: number;
 }
 
+// @alpha
+export interface ITokenClaims {
+    documentId: string;
+    exp: number;
+    iat: number;
+    jti?: string;
+    scopes: string[];
+    tenantId: string;
+    user: IUser;
+    ver: string;
+}
+
+// @internal @deprecated (undocumented)
+export interface ITokenProvider {
+    isValid(): boolean;
+}
+
+// @internal @deprecated (undocumented)
+export interface ITokenService {
+    // (undocumented)
+    extractClaims(token: string): ITokenClaims;
+}
+
+// @public
+export interface ITrace {
+    action: string;
+    service: string;
+    timestamp: number;
+}
+
+// @alpha (undocumented)
+export interface ITree {
+    // (undocumented)
+    entries: ITreeEntry[];
+    groupId?: string;
+    id?: string;
+    unreferenced?: true;
+}
+
+// @alpha
+export type ITreeEntry = {
+    path: string;
+    mode: FileMode;
+} & ({
+    type: TreeEntry.Blob;
+    value: IBlob;
+} | {
+    type: TreeEntry.Tree;
+    value: ITree;
+} | {
+    type: TreeEntry.Attachment;
+    value: IAttachment;
+});
+
+// @alpha (undocumented)
+export interface IUploadedSummaryDetails {
+    includesProtocolTree?: boolean;
+}
+
 // @alpha (undocumented)
 export interface IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
@@ -316,10 +826,98 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
+// @public
+export interface IUser {
+    id: string;
+}
+
+// @alpha
+export interface IVersion {
+    date?: IsoDate;
+    id: string;
+    treeId: string;
+}
+
 // @alpha (undocumented)
 export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
+}
+
+// @alpha (undocumented)
+export enum MessageType {
+    Accept = "accept",
+    ClientJoin = "join",
+    ClientLeave = "leave",
+    Control = "control",
+    NoClient = "noClient",
+    NoOp = "noop",
+    Operation = "op",
+    Propose = "propose",
+    Reject = "reject",
+    RoundTrip = "tripComplete",
+    Summarize = "summarize",
+    SummaryAck = "summaryAck",
+    SummaryNack = "summaryNack"
+}
+
+// @alpha
+export enum NackErrorType {
+    BadRequestError = "BadRequestError",
+    InvalidScopeError = "InvalidScopeError",
+    LimitExceededError = "LimitExceededError",
+    ThrottlingError = "ThrottlingError"
+}
+
+// @alpha
+export enum ScopeType {
+    DocRead = "doc:read",
+    DocWrite = "doc:write",
+    SummaryWrite = "summary:write"
+}
+
+// @internal (undocumented)
+export enum SignalType {
+    ClientJoin = "join",
+    ClientLeave = "leave"
+}
+
+// @public
+export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
+
+// @alpha
+export type SummaryTree = ISummaryTree | ISummaryHandle;
+
+// @public
+export namespace SummaryType {
+    // @internal (undocumented)
+    export type Attachment = 4;
+    // @internal (undocumented)
+    export type Blob = 2;
+    // @internal (undocumented)
+    export type Handle = 3;
+    // @internal (undocumented)
+    export type Tree = 1;
+    const Tree: Tree;
+    const Blob: Blob;
+    const Handle: Handle;
+    const Attachment: Attachment;
+}
+
+// @public
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
+
+// @public
+export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
+
+// @alpha
+export enum TreeEntry {
+    // (undocumented)
+    Attachment = "Attachment",
+    // (undocumented)
+    Blob = "Blob",
+    // (undocumented)
+    Tree = "Tree"
 }
 
 // (No @packageDocumentation comment for this package)
