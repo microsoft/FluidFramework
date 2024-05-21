@@ -296,6 +296,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 				gcData: {
 					gcNodes: {},
 				},
+				usedRoutes: undefined,
 			};
 			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
 			await summarizerNode.loadBaseGCDetails();
@@ -320,6 +321,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 				gcData: {
 					gcNodes: {},
 				},
+				usedRoutes: undefined,
 			};
 			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
 			await summarizerNodeGCDisabled.loadBaseGCDetails();
