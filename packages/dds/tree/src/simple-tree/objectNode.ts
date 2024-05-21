@@ -97,11 +97,6 @@ export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
  *
  * @public
  */
-// export type InsertableObjectFromSchemaRecord<
-// 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-// > = {
-// 	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-// };
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
