@@ -26,7 +26,7 @@ import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
 	FieldKind,
 	createFieldSchema,
-	ImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
@@ -53,7 +53,7 @@ describe("toMapTree", () => {
 	function nodeDataToMapTree(
 		tree: InsertableContent,
 		allowedTypes: ImplicitAllowedTypes,
-		schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+		schemaValidationPolicy?: SchemaAndPolicy,
 	): MapTree {
 		return nodeDataToMapTreeBase(
 			tree,
