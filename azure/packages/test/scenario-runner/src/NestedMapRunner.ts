@@ -178,7 +178,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "load" },
 					async () => {
-						return client.getContainer(docId, schema);
+						return client.getContainer(docId, schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));
@@ -208,7 +208,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "create" },
 					async () => {
-						return client.createContainer(schema);
+						return client.createContainer(schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));
