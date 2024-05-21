@@ -167,6 +167,31 @@ There are a few different areas in which we generate documentation content as a 
     - We leverage [API-Extractor](https://api-extractor.com/) to generate summaries of our package APIs.
       This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:api` from the repo root.
 
+## Common Workflows and Patterns
+
+This section contains common workflows and patterns to increase inner dev loop efficiency.
+
+### Build
+
+- `pnpm install` from repo root if dependencies need to be installed (e.g., new clone, you just pulled from main, etc.)
+- `pnpm run build:fast` from repo root. This matches CI. This should build incrementally.
+- `pnpm run build:fast -- <path>` to just build that part of the repo
+- `pnpm run build` in a package directory
+- `pnpm run build:compile` for cross package compiling
+- `pnpm run format` to format code using Prettier, or `pnpm -r run format` to format all packages
+
+
+### Debug
+
+- Use "Debug Current Mocha Test" for unit tests in Visual Studio Code. If this doesn't work, "Debug Current Test (JS)" is a workaround, although you will have to set breakpoints in js files for other packages.
+- You can also use the VSCode JS debug terminal, then run the test as normal.
+- Sometimes, uncommitted changes can cause build failures. Committing changes might be necessary to resolve such issues.
+
+### Troubleshooting
+
+- Mysterious build failures, especially with no changes? `pnpm clean <package>`
+- If debugging becomes slow or hangs, clean the repo with `git clean -xdf` to remove extraneous files.
+
 ## Testing
 
 You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
@@ -186,10 +211,25 @@ git submodule update
 ```
 
 ### Run the tests
+Before running the tests, the project has to be built. Depending on what tests you want to run, execute the following command in the package directory or at the root:
 
 ```shell
 npm run test
 ```
+
+- To run a single test within a module, add `.only` to `it` or `describe`. To exclude a test, use `.skip`.
+- You can use `ts-mocha` to quickly run specific test files without needing to make the whole project compile. For more details on test filtering using CLI arguments, refer to the [Mocha documentation](https://mochajs.org/#command-line-usage).
+
+#### Important Notes
+
+- Our test setup generally requires building before running the tests.
+- Incremental builds may leave extra files, which can result in ghost tests. To avoid this, consider running a clean build with the following command:
+
+```shell
+pnpm clean <package>
+```
+
+This removes any leftover files from previous builds, providing a clean testing environment.
 
 ### Include code coverage
 
