@@ -35,9 +35,7 @@ export class BranchCommitEnricher<TChange> {
 	public ingestTransactionCommit(commit: GraphCommit<TChange>): void {
 		// We do not submit ops for changes that are part of a transaction.
 		// But we need to enrich the commits that will be sent if the transaction is committed.
-		if (this.transactionEnricher === undefined) {
-			this.transactionEnricher = new TransactionEnricher(this.rebaser, this.enricher);
-		}
+		this.transactionEnricher ??= new TransactionEnricher(this.rebaser, this.enricher);
 		this.transactionEnricher.addTransactionSteps(commit);
 	}
 
