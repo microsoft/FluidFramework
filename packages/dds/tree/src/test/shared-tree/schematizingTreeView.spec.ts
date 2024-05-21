@@ -102,8 +102,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [
 			["rootChanged", 6],
-			// This checkout editing setup does not produce batch events.
-			// ["afterBatch", 6],
+			["afterBatch", 6],
 		]);
 	});
 
@@ -213,11 +212,7 @@ describe("SchematizingSimpleTreeView", () => {
 		// This is a regression test for a bug in which the initial tree contained a proxy and subsequent reads of the tree would mix up the proxy associations.
 		const sf = new SchemaFactory(undefined);
 		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
-		const treeContent = {
-			schema: TestObject,
-			// Initial tree contains a proxy
-			initialTree: () => new TestObject({ value: 3 }),
-		};
+		const treeContent = new TreeConfiguration(TestObject, () => new TestObject({ value: 3 }));
 		const nodeKeyManager = createMockNodeKeyManager();
 		const view = new SchematizingSimpleTreeView(
 			checkoutWithContent(toFlexConfig(treeContent, nodeKeyManager)),

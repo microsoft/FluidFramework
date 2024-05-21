@@ -575,6 +575,7 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -600,6 +601,7 @@ export class SchemaFactory<
 	 * This version of `SchemaFactory.array` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public arrayRecursive<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
@@ -616,6 +618,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(data);
@@ -653,6 +657,7 @@ export class SchemaFactory<
 	 * This version of `SchemaFactory.map` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
 		name: Name,
 		allowedTypes: T,
@@ -676,6 +681,8 @@ export class SchemaFactory<
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
+					// TODO: use something other than `any`
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					super(data as any);
 				} else {
 					super(new Map(data));

@@ -48,7 +48,7 @@
 		"@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
 		"@fluid-tools/version-tools": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/bundle-size-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
@@ -59,7 +59,7 @@
 		"rimraf": "^4.4.0",
 		"string-replace-loader": "^3.1.0",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
+		"typescript": "~5.3.3",
 		"webpack": "^5.82.0",
 		"webpack-bundle-analyzer": "^4.5.0",
 		"webpack-cli": "^4.9.2"

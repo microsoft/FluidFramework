@@ -32,6 +32,7 @@ import {
 	insert,
 	makeTreeFromJson,
 	remove,
+	validateUsageError,
 } from "../utils.js";
 
 const rootField: FieldUpPath = {
@@ -1755,13 +1756,17 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			assert.throws(() =>
-				tree.editor.move(
-					{ parent: rootNode, field: brand("foo") },
-					0,
-					1,
-					{ parent: fooPath, field: brand("bar") },
-					0,
+			assert.throws(
+				() =>
+					tree.editor.move(
+						{ parent: rootNode, field: brand("foo") },
+						0,
+						1,
+						{ parent: fooPath, field: brand("bar") },
+						0,
+					),
+				validateUsageError(
+					/Invalid move operation: the destination is located under one of the moved elements/,
 				),
 			);
 		});

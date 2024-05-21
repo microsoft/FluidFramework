@@ -9,17 +9,15 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	IFluidDataStoreContext,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";

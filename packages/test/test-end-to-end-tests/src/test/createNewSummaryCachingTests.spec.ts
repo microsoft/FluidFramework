@@ -52,9 +52,6 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		summaryOptions: {
 			summaryConfigOverrides,
 		},
-		gcOptions: {
-			gcAllowed: true,
-		},
 	};
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,

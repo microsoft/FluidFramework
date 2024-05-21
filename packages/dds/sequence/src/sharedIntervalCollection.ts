@@ -7,14 +7,17 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { IIntervalCollection, IntervalCollectionValueType } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";

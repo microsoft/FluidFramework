@@ -66,9 +66,16 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly config: TreeConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
+		const policy = {
+			...defaultSchemaPolicy,
+			validateSchema: config.options.enableSchemaValidation,
+		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, nodeKeyManager);
-		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
+		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
+			schema: checkout.storedSchema,
+			policy,
+		});
+		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -163,6 +170,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 						lastRoot = this.root;
 						this.events.emit("rootChanged");
 					}
+					this.events.emit("afterBatch");
 				});
 				break;
 			}

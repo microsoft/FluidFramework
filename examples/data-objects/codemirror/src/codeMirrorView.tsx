@@ -46,7 +46,7 @@ class CodeMirrorView {
 		// https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
 
 		if (this.sequenceDeltaCb) {
-			this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
+			this.text.off("sequenceDelta", this.sequenceDeltaCb);
 			this.sequenceDeltaCb = undefined;
 		}
 
