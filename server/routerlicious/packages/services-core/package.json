@@ -82,6 +82,9 @@
 			},
 			"InterfaceDeclaration_IDeliServerConfiguration": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDeliState": {
+				"backCompat": false
 			}
 		}
 	}

@@ -4,12 +4,13 @@
 
 ```ts
 
-import { DataObject } from '@fluidframework/aqueduct/internal';
-import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
-import { EventEmitter } from '@fluid-internal/client-utils';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import type { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @internal
 export interface IRuntimeSignaler {
@@ -22,31 +23,18 @@ export interface IRuntimeSignaler {
 }
 
 // @internal
-export interface ISignaler {
+export interface ISignaler extends IEventProvider<IErrorEvent> {
     offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
     onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
     submitSignal<T>(signalName: string, payload?: Jsonable<T>): any;
 }
 
 // @internal
-export class Signaler extends DataObject<{
-    Events: IErrorEvent;
-}> implements EventEmitter, ISignaler {
-    // (undocumented)
-    static readonly factory: DataObjectFactory<Signaler, {
-        Events: IErrorEvent;
-    }>;
-    // (undocumented)
-    protected hasInitialized(): Promise<void>;
-    // (undocumented)
-    static readonly Name = "@fluid-example/signaler";
-    // (undocumented)
-    offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
-    // (undocumented)
-    onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
-    // (undocumented)
-    submitSignal<T>(signalName: string, payload?: Jsonable<T>): void;
-}
+export const Signaler: {
+    readonly factory: IFluidDataStoreFactory & {
+        readonly registryEntry: NamedFluidDataStoreRegistryEntry;
+    };
+} & SharedObjectKind<ISignaler>;
 
 // @internal (undocumented)
 export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;

@@ -93,6 +93,8 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
 	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/** Used by the memory blob storage to persisted attachment blobs */
+	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)
