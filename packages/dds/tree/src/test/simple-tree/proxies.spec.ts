@@ -46,27 +46,21 @@ describe("simple-tree proxies", () => {
 	};
 
 	it("cache and reuse objects", () => {
-		// TODO: make this work at the type-level
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const root = hydrate(schema, initialTree as any);
+		const root = hydrate(schema, initialTree);
 		const objectProxy = root.object;
 		const objectProxyAgain = root.object;
 		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	it("cache and reuse lists", () => {
-		// TODO: make this work at the type-level
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const root = hydrate(schema, initialTree as any);
+		const root = hydrate(schema, initialTree);
 		const listProxy = root.list;
 		const listProxyAgain = root.list;
 		assert.equal(listProxyAgain, listProxy);
 	});
 
 	it("cache and reuse maps", () => {
-		// TODO: make this work at the type-level
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const root = hydrate(schema, initialTree as any);
+		const root = hydrate(schema, initialTree);
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);

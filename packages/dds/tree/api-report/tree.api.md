@@ -20,7 +20,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
     readonly value: TValue;
 }) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
         readonly value: TEnum[Property];
-    }, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    }, object & {} & {}, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
         readonly value: TEnum[Property];
     }); };
 
@@ -426,7 +426,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
     readonly value: TValue;
 }) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: Members;
-}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}, object & {} & {}, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: Members;
 })>;
 
@@ -907,6 +907,12 @@ export interface GenericFieldsNode<TChild> {
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
+// @public
+export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+
+// @public
+export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<FieldSchema<FieldKind.Optional | FieldKind.Identifier>> ? true : false;
+
 // @internal (undocumented)
 export interface HasListeners<E extends Events<E>> {
     hasListeners(eventName?: keyof Events<E>): boolean;
@@ -995,12 +1001,16 @@ export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
-    readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+} & {
+    readonly [Property in keyof T as HasDefault<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
 // @public
 export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
-    readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+    readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+} & {
+    readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
 // @public
@@ -1618,7 +1628,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as HasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
@@ -1730,7 +1740,7 @@ export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeForma
 // @internal
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TName;
-}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}, object & {} & {}, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TName;
 });
 
@@ -1756,23 +1766,32 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, TreeObjectNodeUnsafe<    {
 readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}, "Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecordUnsafe<    {
-readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}>, false, {
+}, "Test Recursive Domain.testObject">, object & {} & {
+readonly recursive?: test_RecursiveObject | undefined;
+readonly number?: number | undefined;
+}, false, {
 readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>;
 
 // @internal
 export const test_RecursiveObjectPojoMode: TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<    {
-readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & InsertableObjectFromSchemaRecordUnsafe<any>, false, any>]>;
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & {} & {
+readonly recursive?: TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject"> | undefined;
+readonly number?: number | undefined;
+}, false, any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}, "Test Recursive Domain.testPOJOObject">, object & InsertableObjectFromSchemaRecordUnsafe<    {
-readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & InsertableObjectFromSchemaRecordUnsafe<any>, false, any>]>;
+}, "Test Recursive Domain.testPOJOObject">, object & {} & {
+readonly recursive?: TreeObjectNodeUnsafe<    {
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & {} & any, false, any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}>, false, {
-readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & InsertableObjectFromSchemaRecordUnsafe<any>, false, any>]>;
+}, "Test Recursive Domain.testPOJOObject"> | undefined;
+readonly number?: number | undefined;
+}, false, {
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNodeSchemaClass<"Test Recursive Domain.testPOJOObject", NodeKind.Object, TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject">, object & {} & {
+readonly recursive?: TreeObjectNodeUnsafe<any, "Test Recursive Domain.testPOJOObject"> | undefined;
+readonly number?: number | undefined;
+}, false, any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>;
 

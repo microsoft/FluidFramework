@@ -292,6 +292,8 @@ export {
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
+	type HasDefault,
+	type HasDefaultUnsafe,
 	ImplicitAllowedTypes,
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeFieldFromImplicitField,

@@ -39,6 +39,7 @@ import {
 	FieldSchema,
 	normalizeFieldSchema,
 	type,
+	type FieldKind,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
@@ -73,6 +74,17 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
+ * TODO
+ *
+ * @public
+ */
+export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+	FieldKind.Optional | FieldKind.Identifier
+>
+	? true
+	: false;
+
+/**
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
@@ -85,10 +97,24 @@ export type TreeObjectNode<
  *
  * @public
  */
+// export type InsertableObjectFromSchemaRecord<
+// 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+// > = {
+// 	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
+// };
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
+	// Field might not have a default, so make it required:
+	readonly [Property in keyof T as HasDefault<T[Property]> extends false
+		? Property
+		: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+} & {
+	// Field might have a default, so allow optional.
+	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
+	readonly [Property in keyof T as HasDefault<T[Property]> extends true
+		? Property
+		: never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
 /**
