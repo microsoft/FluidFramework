@@ -138,7 +138,7 @@ import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-
 import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { MockNodeKeyManager } from "./nodeKeyManager.js";
+import { MockNodeKeyManager } from "./mockNodeKeyManager.js";
 
 // Testing utilities
 

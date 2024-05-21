@@ -11,7 +11,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView } from "../utils.js";
-import { MockNodeKeyManager } from "../nodeKeyManager.js";
+import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 
 const schema = new SchemaFactory("com.example");
 

@@ -25,7 +25,7 @@ import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { disposeSymbol } from "../../util/index.js";
 import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
-import { MockNodeKeyManager } from "../nodeKeyManager.js";
+import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);

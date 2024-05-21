@@ -13,7 +13,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
-import { MockNodeKeyManager } from "../nodeKeyManager.js";
+import { MockNodeKeyManager } from "../mockNodeKeyManager.js";
 import { flexTreeWithContent } from "../utils.js";
 
 /**
