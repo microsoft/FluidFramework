@@ -96,7 +96,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly configs: IGarbageCollectorConfigs;
 
 	public get shouldRunGC(): boolean {
-		return this.configs.shouldRunGC;
+		return this.configs.gcEnabled;
 	}
 
 	public readonly sessionExpiryTimerStarted: number | undefined;
@@ -279,11 +279,6 @@ export class GarbageCollector implements IGarbageCollector {
 		 * Must only be called if there is a current reference timestamp.
 		 */
 		this.initializeGCStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
-			// If GC is disabled, don't initialize GC state because we should not be logging / throwing GC errors.
-			if (!this.shouldRunGC) {
-				return;
-			}
-
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 			assert(
 				currentReferenceTimestampMs !== undefined,
@@ -382,12 +377,6 @@ export class GarbageCollector implements IGarbageCollector {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
 		}
 
-		// If GC is disabled, the GC and tombstone state shouldn't be tracked because there shouldn't be any logs or
-		// errors from GC. The exception is deleted node usage which is mentioned above.
-		if (!this.shouldRunGC) {
-			return;
-		}
-
 		// If running in tombstone mode, initialize the tombstone state from the snapshot. Also, notify the runtime of
 		// tombstone routes.
 		if (this.configs.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
@@ -448,7 +437,7 @@ export class GarbageCollector implements IGarbageCollector {
 		 * with an older reference timestamp. So, doing this on every connection will keep the unreferenced state
 		 * tracking up-to-date.
 		 */
-		if (connected && this.configs.shouldRunGC) {
+		if (connected && this.shouldRunGC) {
 			this.initializeOrUpdateGCState().catch((error) => {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -860,7 +849,7 @@ export class GarbageCollector implements IGarbageCollector {
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined {
-		if (!this.configs.shouldRunGC || this.gcDataFromLastRun === undefined) {
+		if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
 			return;
 		}
 
@@ -1003,7 +992,7 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 	}: IGCNodeUpdatedProps) {
-		if (!this.configs.shouldRunGC) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 
@@ -1112,7 +1101,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
 	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
-		if (!this.configs.shouldRunGC) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 

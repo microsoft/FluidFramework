@@ -1314,13 +1314,13 @@ describe("Garbage Collection Tests", () => {
 					"Expecting 1 deleted node",
 				);
 				assert.strictEqual(
-					garbageCollector.configs.shouldRunGC,
+					garbageCollector.configs.gcEnabled,
 					true,
-					"GC should be configured to run",
+					"Expected GC to be enabled",
 				);
 			});
 
-			it("resets GC / tombstone state and disables GC when GC version is older that the one in base snapshot", async () => {
+			it("resets GC / tombstone state when GC version is older that the one in base snapshot", async () => {
 				// Set the GC version in base snapshot to higher than the stable GC version (current GC version).
 				const garbageCollector = createGCOverride(stableGCVersion + 1);
 
@@ -1364,39 +1364,9 @@ describe("Garbage Collection Tests", () => {
 					"Expecting 1 deleted node",
 				);
 				assert.strictEqual(
-					garbageCollector.configs.shouldRunGC,
-					false,
-					"Expected GC to be disabled to run",
-				);
-			});
-
-			it("resets GC and tombstone state when GC is disabled via config", async () => {
-				configProvider.set("Fluid.GarbageCollection.Test.RunGC", false);
-				const garbageCollector = createGCOverride(stableGCVersion);
-				// Initialize from the base state and validate the following:
-				// - GC data should be available.
-				// - Tombstones should have 0 entries because it is discarded.
-				// - Deleted nodes should have one entry because it is still used.
-				// - GC should be disabled to run.
-				await garbageCollector.initializeBaseState();
-				assert.strict(
-					garbageCollector.gcDataFromLastRun === undefined,
-					"Expecting no GC data",
-				);
-				assert.strictEqual(
-					garbageCollector.tombstones.length,
-					0,
-					"Expecting no tombstone nodes",
-				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
-				assert.strictEqual(
-					garbageCollector.configs.shouldRunGC,
-					false,
-					"Expected GC to be disabled to run",
+					garbageCollector.configs.gcEnabled,
+					true,
+					"Expected GC to be enabled",
 				);
 			});
 
@@ -1430,7 +1400,7 @@ describe("Garbage Collection Tests", () => {
 					"Expecting no deleted node",
 				);
 				assert.strictEqual(
-					garbageCollector.configs.shouldRunGC,
+					garbageCollector.configs.gcEnabled,
 					true,
 					"Expected GC to be enabled to run",
 				);

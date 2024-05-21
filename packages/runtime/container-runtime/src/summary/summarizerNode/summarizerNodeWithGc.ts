@@ -194,10 +194,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			);
 		}
 
-		// Load GC details from the initial summary, if not already loaded. This is only needed in case where GC
-		// is disabled and there is base GC state. A re-summarization may be needed in this case.
-		await this.loadBaseGCDetails();
-
 		// If trackState is true, get summary from base summarizer node which tracks summary state.
 		// If trackState is false, get summary from summarizeInternal.
 		return trackState
@@ -349,10 +345,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		proposalHandle: string,
 		referenceSequenceNumber: number,
 	): void {
-		// If GC is disabled, set referencedUsedRoutes to undefined since it is not tracked for this node.
-		if (this.gcDisabled) {
-			this.referenceUsedRoutes = undefined;
-		} else {
+		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
+		if (!this.gcDisabled) {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
 				// If a pending summary exists, it must have used routes since GC is enabled.
@@ -519,10 +513,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * was previously used and became unused (or vice versa), its used state has changed.
 	 */
 	private hasUsedStateChanged(): boolean {
+		// If GC is disabled, it should not affect summary state, return false.
 		if (this.gcDisabled) {
-			// If GC is disabled and there are used routes in the latest summary, return true because the unreferenced
-			// property (if any) in this node's summary must be removed by re-summarizing it.
-			return this.referenceUsedRoutes !== undefined;
+			return false;
 		}
 
 		return (

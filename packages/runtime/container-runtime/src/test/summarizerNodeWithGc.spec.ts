@@ -330,34 +330,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 				"Re-summarization should not be triggered",
 			);
 		});
-
-		/**
-		 * This tests an edge case where GC state exists in base snapshot but GC is disabled. The base snapshot may
-		 * have some nodes marked as unreferenced and those need to be cleared via re-summarization.
-		 */
-		it("should trigger re-summarization if base snapshot used routes is not empty and GC is disabled", async () => {
-			const summarizerNodeGCDisabled = rootSummarizerNode.createChild(
-				summarizeInternal,
-				"nodeGCDisabled",
-				{ type: CreateSummarizerNodeSource.FromSummary },
-				{ gcDisabled: true },
-				getChildInternalGCData,
-			) as SummarizerNodeWithPrivates;
-
-			const baseGCDetails: IGarbageCollectionDetailsBase = {
-				gcData: {
-					gcNodes: {},
-				},
-				usedRoutes: ["route"],
-			};
-			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
-			await summarizerNodeGCDisabled.loadBaseGCDetails();
-			assert.strictEqual(
-				summarizerNodeGCDisabled.hasUsedStateChanged(),
-				true,
-				"Re-summarization should be triggered",
-			);
-		});
 	});
 
 	describe("Validate Summary", () => {

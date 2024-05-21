@@ -63,7 +63,7 @@ export class GCSummaryStateTracker {
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"shouldRunGC" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+			"gcEnabled" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
 		>,
 	) {}
 
@@ -97,7 +97,7 @@ export class GCSummaryStateTracker {
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
-		if (!this.configs.shouldRunGC) {
+		if (!this.configs.gcEnabled) {
 			return;
 		}
 
@@ -228,7 +228,7 @@ export class GCSummaryStateTracker {
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		if (!this.configs.shouldRunGC || !result.isSummaryTracked) {
+		if (!this.configs.gcEnabled || !result.isSummaryTracked) {
 			return;
 		}
 
