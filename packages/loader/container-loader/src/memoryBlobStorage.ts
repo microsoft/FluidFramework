@@ -44,7 +44,9 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	attachmentBlobs: string,
 ) {
 	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
-		throw new Error("Blob storage not memory blob storage and cannot be initialize.");
+		throw new Error(
+			"DetachedBlobStorage was not provided to the loader during serialize so cannot be provided during rehydrate.",
+		);
 	}
 
 	assert(detachedStorage.size === 0, "Blob storage already initialized");
@@ -62,16 +64,16 @@ export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
 		createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => ({
 			id: `${blobs.push(file) - 1}`,
 		}),
-		readBlob: async (id: string): Promise<ArrayBufferLike> => blobs[Number(id)],
+		readBlob: async (id: string): Promise<ArrayBufferLike> =>
+			blobs[Number(id)] ?? Promise.reject(new Error(`Blob not found: ${id}`)),
 		get size() {
 			return blobs.length;
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
 		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf-8"))),
-		initialize: (attachmentBlobs: string[]) => {
-			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf-8")));
-		},
+		initialize: (attachmentBlobs: string[]) =>
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf-8"))),
 	};
 	return storage;
 }
