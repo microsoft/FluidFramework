@@ -1,79 +1,43 @@
 {
-	"name": "historian-release-group-root",
-	"version": "0.0.1",
+	"name": "@fluid-internal/getkeys",
+	"version": "1.0.0",
 	"private": true,
+	"description": "",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "server/historian"
+		"directory": "tools/getkeys"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"main": "index.js",
 	"scripts": {
-		"build": "npm run build:genver && npm run build:compile && npm run lint",
-		"build:compile": "pnpm run -r --stream build:compile",
-		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
-		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
-		"clean": "rimraf --glob \"dist\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint ./index.js",
+		"eslint:fix": "eslint ./index.js --fix",
 		"format": "npm run prettier:fix",
-		"preinstall": "node scripts/only-pnpm.cjs",
-		"lint": "npm run prettier && npm run ci:eslint",
-		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
-		"policy-check": "cd ../.. && npm run policy-check",
-		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
-		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
-		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
-		"start": "node packages/historian/dist/www.js",
-		"test": "pnpm run -r --stream --no-bail --no-sort test",
-		"tsc": "pnpm run -r --stream tsc"
+		"preinstall": "node ../../scripts/only-pnpm.cjs",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"start": "node ./index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [],
-		"include": [],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
+	"dependencies": {
+		"@fluidframework/tool-utils": "^0.35.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@types/compression": "0.0.36",
-		"@types/cors": "^2.8.4",
-		"@types/debug": "^4.1.5",
-		"@types/lodash": "^4.14.119",
-		"@types/nconf": "0.0.37",
-		"@types/redis": "^2.8.10",
-		"@types/supertest": "^2.0.7",
-		"async": "^3.2.2",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^5.0.0",
-		"run-script-os": "^1.1.5",
-		"supertest": "^3.3.0",
-		"tslint": "^5.12.0",
-		"typescript": "~5.1.6"
+		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"pnpm": {
-		"commentsOverrides": [
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
-		],
 		"overrides": {
-			"@types/node": "^18.17.1",
-			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4",
-			"sharp": "^0.33.2"
+			"qs": "^6.11.0"
 		}
 	}
 }

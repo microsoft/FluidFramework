@@ -1,126 +1,43 @@
 {
-	"name": "server-release-group-root",
-	"version": "5.0.0",
+	"name": "@fluid-internal/getkeys",
+	"version": "1.0.0",
 	"private": true,
+	"description": "",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "server/routerlicious"
+		"directory": "tools/getkeys"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"main": "index.js",
 	"scripts": {
-		"build": "npm run policy-check && npm run layer-check && pnpm run generate:packageList && fluid-build -g server --task build",
-		"build:compile": "fluid-build -g server --task compile",
-		"build:docs": "fluid-build -g server --task build:docs",
-		"build:fast": "fluid-build -g server --task build --worker",
-		"build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
-		"build:genver": "pnpm run -r --no-sort --stream build:genver",
-		"changeset": "flub changeset add --releaseGroup server",
-		"check:versions": "flub check buildVersion -g server --path .",
-		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
-		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
-		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
-		"ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
-		"ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
-		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
-		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
-		"clean:nyc": "rimraf --glob \"nyc/**\"",
-		"docker-build": "docker compose build",
-		"docker-clean": "docker compose down --rmi local -v",
-		"eslint": "fluid-build --task eslint",
-		"eslint:fix": "fluid-build --task eslint:fix",
+		"eslint": "eslint ./index.js",
+		"eslint:fix": "eslint ./index.js --fix",
 		"format": "npm run prettier:fix",
-		"generate:packageList": "concurrently npm:generate:packageList:*",
-		"generate:packageList:internal-build": "flub list server --no-private --feed internal-build --outFile feeds/internal-build.txt",
-		"generate:packageList:internal-dev": "flub list server --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
-		"generate:packageList:internal-test": "flub list server --no-private --feed internal-test --outFile feeds/internal-test.txt",
-		"generate:packageList:public": "flub list server --no-private --feed public --outFile feeds/public.txt",
-		"preinstall": "node scripts/only-pnpm.cjs",
-		"layer-check": "cd ../.. && npm run layer-check",
-		"lint": "npm run prettier && npm run ci:eslint",
-		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
-		"policy-check": "cd ../.. && npm run policy-check",
-		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
-		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
-		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
-		"restart": "docker compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium",
-		"start": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
-		"start:debug": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
-		"start:debug:service": "docker compose -f docker-compose.service.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up -V",
-		"start:rdkafka": "docker compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
-		"start:service": "docker compose -f docker-compose.service.yml -f docker-compose.dev.yml up -V",
-		"stop": "docker compose down",
-		"stop:full": "docker compose down -v",
-		"test": "pnpm run -r --no-sort --stream --no-bail test",
-		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
-		"test:coverage": "c8 npm run test:report",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
-		"test:report": "pnpm run -r --no-sort --stream --no-bail test -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "pnpm run -r --stream tsc",
-		"typetests:gen": "pnpm -r typetests:gen",
-		"typetests:prepare": "flub typetests -g server --reset --normalize",
-		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
-		"watch:esnext": "pnpm run -r --no-sort --stream build:esnext -- -- --watch",
-		"watch:tsc": "pnpm run -r --no-sort --stream tsc -- -- --watch"
+		"preinstall": "node ../../scripts/only-pnpm.cjs",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"start": "node ./index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [],
-		"include": [],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
+	"dependencies": {
+		"@fluidframework/tool-utils": "^0.35.0"
 	},
 	"devDependencies": {
-		"@changesets/cli": "^2.26.1",
-		"@fluid-private/changelog-generator-wrapper": "file:../../tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.43.1",
-		"c8": "^8.0.1",
-		"changesets-format-with-issue-links": "^0.3.0",
-		"concurrently": "^8.2.1",
-		"copyfiles": "^2.4.1",
-		"mocha": "^10.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"run-script-os": "^1.1.5",
-		"typescript": "~5.1.6"
+		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
-	"engines": {
-		"node": ">=14.17.0"
-	},
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"pnpm": {
-		"commentsOverrides": [
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
-		],
 		"overrides": {
-			"@types/node": "^18.17.1",
-			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4",
-			"sharp": "^0.33.2"
-		},
-		"peerDependencyComments": [
-			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
-		],
-		"peerDependencyRules": {
-			"ignoreMissing": [
-				"@types/node"
-			]
-		},
-		"patchedDependencies": {
-			"@microsoft/api-extractor@7.43.1": "patches/@microsoft__api-extractor@7.43.1.patch"
+			"qs": "^6.11.0"
 		}
 	}
 }
