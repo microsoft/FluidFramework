@@ -61,6 +61,7 @@ export type {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ITelemetryContextExt,
 	SummarizeInternalFn,
 } from "./summary.js";
 export {

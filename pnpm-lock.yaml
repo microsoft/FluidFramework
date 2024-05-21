@@ -8998,6 +8998,7 @@ importers:
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-rc.4.0.0
+      '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -9011,6 +9012,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/id-compressor': link:../id-compressor
       '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
