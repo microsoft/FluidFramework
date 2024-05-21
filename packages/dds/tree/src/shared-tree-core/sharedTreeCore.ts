@@ -102,7 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly idCompressor: IIdCompressor;
 
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	private readonly commitEnricher: BranchCommitEnricher<TChange>;
+	protected readonly commitEnricher: BranchCommitEnricher<TChange>;
 
 	protected readonly mintRevisionTag: () => RevisionTag;
 
@@ -153,6 +153,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
 		this.editManager.localBranch.on("beforeChange", (change) => {
+			// Ensure that any previously prepared commits that have not been sent are purged.
+			this.commitEnricher.purgePreparedCommits();
 			if (this.detachedRevision !== undefined) {
 				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
 			} else if (change.type === "append") {

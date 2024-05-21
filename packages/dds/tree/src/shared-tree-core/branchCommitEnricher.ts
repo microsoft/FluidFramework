@@ -33,6 +33,13 @@ export class BranchCommitEnricher<TChange> {
 	}
 
 	/**
+	 * @returns The number of commits that have been prepared but not yet retrieved.
+	 */
+	public get preparedCommitsCount(): number {
+		return this.preparedCommits.size;
+	}
+
+	/**
 	 * Adds a commit to the enricher.
 	 * @param commit - A commit that is part of a transaction.
 	 */
