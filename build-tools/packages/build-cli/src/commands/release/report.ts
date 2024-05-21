@@ -386,6 +386,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			char: "o",
 			description: "Output JSON report files to this directory.",
 		}),
+		baseFileName: Flags.string({
+			description:
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+			required: false,
+		}),
 		...ReleaseReportBaseCommand.flags,
 	};
 
@@ -497,10 +502,42 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		if (shouldOutputFiles) {
 			this.info(`Writing files to path: ${path.resolve(outputPath)}`);
 			const promises = [
-				writeReport(context, report, "simple", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "full", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "caret", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "tilde", outputPath, flags.releaseGroup, this.logger),
+				writeReport(
+					context,
+					report,
+					"simple",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"full",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"caret",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"tilde",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
 			];
 
 			await Promise.all(promises);
@@ -647,9 +684,14 @@ function generateReportFileName(
 	kind: ReportKind,
 	releaseVersion: ReleaseVersion,
 	releaseGroup?: ReleaseGroup,
+	baseFileName?: string,
 ): string {
 	if (releaseGroup === undefined && releaseVersion === undefined) {
 		throw new Error(`Both releaseGroup and releaseVersion were undefined.`);
+	}
+
+	if (baseFileName !== undefined) {
+		return `${baseFileName}.${kind}.json`;
 	}
 
 	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${
@@ -667,6 +709,7 @@ async function writeReport(
 	kind: ReportKind,
 	dir: string,
 	releaseGroup?: ReleaseGroup,
+	baseFileName?: string,
 	log?: CommandLogger,
 ): Promise<void> {
 	const version =
@@ -675,7 +718,7 @@ async function writeReport(
 				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
-	const reportName = generateReportFileName(kind, version, releaseGroup);
+	const reportName = generateReportFileName(kind, version, releaseGroup, baseFileName);
 	const reportPath = path.join(dir, reportName);
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);
