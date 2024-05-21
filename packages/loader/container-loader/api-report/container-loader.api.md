@@ -46,10 +46,11 @@ export interface IContainerExperimental extends IContainer {
     getPendingLocalState?(): Promise<string>;
 }
 
-// @alpha
+// @alpha @deprecated
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
+    dispose?(): void;
 };
 
 // @alpha @deprecated (undocumented)
@@ -80,6 +81,7 @@ export interface ILoaderProps {
 // @alpha
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
+    // @deprecated
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;

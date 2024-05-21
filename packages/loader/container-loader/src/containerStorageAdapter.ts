@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
@@ -79,6 +80,7 @@ export class ContainerStorageAdapter
 	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
 	 */
 	public constructor(
+		// eslint-disable-next-line import/no-deprecated
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 		/**
@@ -233,6 +235,7 @@ export class ContainerStorageAdapter
  */
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
+		// eslint-disable-next-line import/no-deprecated
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -245,6 +248,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.verifyStorage().readBlob(blobId);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private verifyStorage(): IDetachedBlobStorage {
 		if (this.detachedStorage === undefined) {
 			throw new UsageError("Real storage calls not allowed in Unattached container");
