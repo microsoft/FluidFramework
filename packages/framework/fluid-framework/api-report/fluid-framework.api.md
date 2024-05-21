@@ -361,7 +361,7 @@ export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof Interv
 export enum IntervalType {
     // (undocumented)
     Simple = 0,
-    SlideOnRemove = 2,
+    SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
     // @internal
     Transient = 4
 }
@@ -871,7 +871,11 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
+    entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) => void, thisArg?: any): void;
+    keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
+    values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
 // @public
