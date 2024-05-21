@@ -61,11 +61,7 @@
 		"exclude": [],
 		"include": [],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
@@ -109,10 +105,7 @@
 			"allowedVersions": {
 				"eslint": "8.51.0"
 			},
-			"ignoreMissing": [
-				"@types/node",
-				"@aws-sdk/*"
-			]
+			"ignoreMissing": ["@types/node", "@aws-sdk/*"]
 		},
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
