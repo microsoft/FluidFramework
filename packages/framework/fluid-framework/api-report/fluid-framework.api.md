@@ -7,7 +7,7 @@
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -107,9 +107,6 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public
-export const disposeSymbol: unique symbol;
-
-// @public
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
@@ -162,7 +159,7 @@ export interface IConnection {
 export type ICriticalContainerError = IErrorBase;
 
 // @alpha
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
@@ -187,11 +184,6 @@ export interface IDirectoryEvents extends IEvent {
 // @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
-}
-
-// @public
-export interface IDisposable {
-    [disposeSymbol](): void;
 }
 
 // @public @sealed
@@ -617,7 +609,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;

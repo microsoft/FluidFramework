@@ -23,13 +23,7 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -174,7 +168,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 						quantity,
 					})),
 				)
-				[disposeSymbol]();
+				.dispose();
 		},
 	);
 

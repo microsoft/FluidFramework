@@ -5,6 +5,7 @@
 ```ts
 
 import { ErasedType } from '@fluidframework/core-interfaces';
+import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
@@ -409,7 +410,7 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 // @internal
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
-// @public
+// @internal
 export const disposeSymbol: unique symbol;
 
 // @internal
@@ -941,7 +942,7 @@ export interface IDefaultEditBuilder {
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {
 }
 
-// @public
+// @internal
 export interface IDisposable {
     [disposeSymbol](): void;
 }
@@ -1495,7 +1496,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
@@ -2035,7 +2036,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @public
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable_2 {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
     get root(): TreeFieldFromImplicitField<TSchema>;

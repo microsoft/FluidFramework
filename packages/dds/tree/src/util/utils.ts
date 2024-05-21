@@ -397,15 +397,19 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
- * @public
+ * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
- * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @public
+ * Simpler alternative to core-utils/IDisposable for internal use in this package.
+ * This avoids adding a named "dispose" method, and will eventually be replaced with
+ * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ *
+ * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
+ * @internal
  */
 export interface IDisposable {
 	/**

@@ -27,13 +27,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -196,7 +190,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 						handle,
 					})),
 				)
-				[disposeSymbol]();
+				.dispose();
 		},
 	);
 
