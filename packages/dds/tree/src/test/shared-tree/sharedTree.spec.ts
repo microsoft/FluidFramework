@@ -91,6 +91,7 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
@@ -378,7 +379,10 @@ describe("SharedTree", () => {
 		treeId: string,
 		summaryType: SummaryType,
 	) {
-		const a = (await provider.containers[0].getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await provider.containers[0].getEntryPoint();
+		const a = maybeTestFluidObject.ITestFluidObject;
+		assert(a !== undefined, "a not a ITestFluidObject");
 		const id = a.runtime.id;
 
 		const { summaryTree } = await provider.summarize();
@@ -1488,7 +1492,10 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await loadedContainer.getEntryPoint();
+			const dataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			const tree = assertSchema(
 				await dataStore.getSharedObject<SharedTree>("TestSharedTree"),
 				stringSequenceRootSchema,
@@ -1724,7 +1731,10 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await loadedContainer.getEntryPoint();
+			const dataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
@@ -68,7 +68,10 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 
 				const container = await loader.createDetachedContainer(codeDetails);
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -93,7 +96,10 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -149,7 +155,10 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await container.getEntryPoint();
+				const dataObject = maybeTestFluidObject.ITestFluidObject;
+				assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 
 				await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
 			}
@@ -182,7 +191,10 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 
 			const container = await loader.createDetachedContainer(codeDetails);
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataObject = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();
@@ -228,7 +240,10 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			const container = await loader.resolve({
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
 			});
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataObject = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();

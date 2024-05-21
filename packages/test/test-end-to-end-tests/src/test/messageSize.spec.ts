@@ -14,7 +14,7 @@ import {
 	ContainerMessageType,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { FluidErrorTypes, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IDocumentMessage,
@@ -73,12 +73,24 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await localContainer.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		localDataObject = maybeTestFluidObject.ITestFluidObject;
 		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await remoteContainer.getEntryPoint();
+		assert(
+			maybeTestFluidObject2.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		remoteDataObject = maybeTestFluidObject.ITestFluidObject;
 		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);

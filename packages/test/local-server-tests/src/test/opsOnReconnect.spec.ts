@@ -17,7 +17,7 @@ import {
 	ContainerMessageType,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, type FluidObject } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -105,7 +105,13 @@ describe("Ops on Reconnect", () => {
 	) {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
-		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		container1Object1 = maybeTestFluidObject.ITestFluidObject;
 
 		container1Object1Map1 = await container1Object1.getSharedObject<ISharedMap>(map1Id);
 		container1Object1Map2 = await container1Object1.getSharedObject<ISharedMap>(map2Id);
@@ -120,7 +126,10 @@ describe("Ops on Reconnect", () => {
 		await waitForContainerConnection(container2);
 
 		// Get dataStore1 on the second container.
-		const container2Object1 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const container2Object1 = maybeTestFluidObject.ITestFluidObject;
+		assert(container2Object1 !== undefined, "container2Object1 not a ITestFluidObject");
 
 		container2Object1.context.containerRuntime.on(
 			"op",
@@ -304,7 +313,10 @@ describe("Ops on Reconnect", () => {
 			// Create dataObject2 in the first container.
 			const dataStore =
 				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
-			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await dataStore.entryPoint.get();
+			const container1Object2 = maybeTestFluidObject.ITestFluidObject;
+			assert(container1Object2 !== undefined, "container1Object2 not a ITestFluidObject");
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
@@ -434,7 +446,10 @@ describe("Ops on Reconnect", () => {
 			// Create dataObject2 in the first container.
 			const dataStore =
 				await container1Object1.context.containerRuntime.createDataStore("dataObject2");
-			const container1Object2 = (await dataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await dataStore.entryPoint.get();
+			const container1Object2 = maybeTestFluidObject.ITestFluidObject;
+			assert(container1Object2 !== undefined, "container1Object2 not a ITestFluidObject");
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =

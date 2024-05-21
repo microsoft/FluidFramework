@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import lodash from "lodash";
 const { isEmpty, last } = lodash;
 
@@ -22,7 +23,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
@@ -66,7 +67,10 @@ describe("PropertyDDS summarizer", () => {
 		const container = await (load
 			? objProvider.loadTestContainer()
 			: objProvider.makeTestContainer());
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataObject = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 
 		let summarizer;
 		if (withSummarizer) {
@@ -379,12 +383,24 @@ function executePerPropertyTreeType(
 
 			// Create a Container for the first client.
 			container1 = await createContainer();
-			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject1 = maybeTestFluidObject.ITestFluidObject;
 			sharedPropertyTree1 = await dataObject1.getSharedObject(propertyDdsId);
 
 			// Load the Container that was created by the first client.
 			container2 = await loadContainer();
-			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			assert(
+				maybeTestFluidObject2.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject2 = maybeTestFluidObject2.ITestFluidObject;
 			sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
 		});
 

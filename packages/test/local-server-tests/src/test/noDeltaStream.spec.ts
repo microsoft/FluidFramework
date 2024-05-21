@@ -27,6 +27,7 @@ import {
 	createAndAttachContainer,
 	createLoader,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";
@@ -93,7 +94,10 @@ describe("No Delta Stream", () => {
 
 		// Create a Container for the first client.
 		const container = await createContainer();
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataObject = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 
 		assert.strictEqual(container.deltaManager.active, false, "active");
 		assert.strictEqual(container.deltaManager.readOnlyInfo.readonly, false, "readonly");
@@ -131,7 +135,10 @@ describe("No Delta Stream", () => {
 		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
 		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataObject = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
 		assert.strictEqual(
 			dataObject.runtime.clientId,
@@ -148,8 +155,14 @@ describe("No Delta Stream", () => {
 		await loadContainer(true);
 		const normalContainer1 = await loadContainer(false);
 		const normalContainer2 = await loadContainer(false);
-		const normalDataObject1 = (await normalContainer1.getEntryPoint()) as ITestFluidObject;
-		const normalDataObject2 = (await normalContainer2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await normalContainer1.getEntryPoint();
+		const normalDataObject1 = maybeTestFluidObject.ITestFluidObject;
+		assert(normalDataObject1 !== undefined, "normalDataObject1 not a ITestFluidObject");
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await normalContainer2.getEntryPoint();
+		const normalDataObject2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(normalDataObject2 !== undefined, "normalDataObject2 not a ITestFluidObject");
 		normalDataObject1.root.set("fluid", "great");
 		normalDataObject2.root.set("prague", "a city in europe");
 		await loaderContainerTracker.ensureSynchronized();
@@ -157,8 +170,10 @@ describe("No Delta Stream", () => {
 		assert.strictEqual(normalDataObject2.root.get("fluid"), "great");
 
 		const storageOnlyContainer = await loadContainer(true);
-		const storageOnlyDataObject =
-			(await storageOnlyContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+			await storageOnlyContainer.getEntryPoint();
+		const storageOnlyDataObject = maybeTestFluidObject3.ITestFluidObject;
+		assert(storageOnlyDataObject !== undefined, "normalDataObject2 not a ITestFluidObject");
 		assert.strictEqual(storageOnlyDataObject.root.get("prague"), "a city in europe");
 		assert.strictEqual(storageOnlyDataObject.root.get("fluid"), "great");
 	});
@@ -198,7 +213,10 @@ describe("No Delta Stream", () => {
 		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
 		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataObject = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject !== undefined, "dataObject not a ITestFluidObject");
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
 		assert.strictEqual(
 			dataObject.runtime.clientId,

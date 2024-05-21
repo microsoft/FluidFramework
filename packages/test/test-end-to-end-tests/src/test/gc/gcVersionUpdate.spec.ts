@@ -25,6 +25,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -126,18 +127,29 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
-		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await mainContainer.getEntryPoint();
+		const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 		dataStore1Id = dataStore1.context.id;
 
 		// Create couple more data stores and mark them as referenced.
 		const containerRuntime = dataStore1.context.containerRuntime;
-		const dataStore2 = (await (
-			await containerRuntime.createDataStore(defaultFactory.type)
-		).entryPoint.get()) as ITestFluidObject;
+		const dataStore2 = await containerRuntime
+			.createDataStore(defaultFactory.type)
+			.then(async (d) => d.entryPoint.get())
+			.then((fo: FluidObject<ITestFluidObject>) => {
+				assert(fo.ITestFluidObject !== undefined, "dataStore2 not a ITestFluidObject");
+				return fo.ITestFluidObject;
+			});
 		dataStore1.root.set("dataStore2", dataStore2.handle);
-		const dataStore3 = (await (
-			await containerRuntime.createDataStore(defaultFactory.type)
-		).entryPoint.get()) as ITestFluidObject;
+		const dataStore3 = await containerRuntime
+			.createDataStore(defaultFactory.type)
+			.then(async (d) => d.entryPoint.get())
+			.then((fo: FluidObject<ITestFluidObject>) => {
+				assert(fo.ITestFluidObject !== undefined, "dataStore3 not a ITestFluidObject");
+				return fo.ITestFluidObject;
+			});
 		dataStore1.root.set("dataStore3", dataStore3.handle);
 		dataStore2Id = dataStore2.context.id;
 		dataStore3Id = dataStore3.context.id;

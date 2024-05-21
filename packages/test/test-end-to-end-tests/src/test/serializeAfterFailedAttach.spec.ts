@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
@@ -90,7 +90,10 @@ describeCompat(
 
 		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
-			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await dataStore.entryPoint.get();
+			const peerDataStore = maybeTestFluidObject.ITestFluidObject;
+			assert(peerDataStore !== undefined, "peerDataStore not a ITestFluidObject");
 			return {
 				peerDataStore,
 				peerDataStoreRuntimeChannel: peerDataStore.channel,

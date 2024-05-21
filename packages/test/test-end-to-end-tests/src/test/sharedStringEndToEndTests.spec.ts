@@ -18,6 +18,7 @@ import {
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 const stringId = "sharedStringKey";
 
@@ -144,7 +145,10 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 
 	it("can load summarized grouped batch at min seqnum", async () => {
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const text = "syncSharedString";
@@ -163,7 +167,10 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 		await summarizeNow(summarizer);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
 		// These calls ensures assert 0x072 isn't hit
@@ -173,7 +180,10 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 
 	it("can load summarized grouped batch", async () => {
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const text = "syncSharedString";
@@ -189,7 +199,10 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 		await summarizeNow(summarizer);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 
 		// These calls ensures assert 0x072 isn't hit

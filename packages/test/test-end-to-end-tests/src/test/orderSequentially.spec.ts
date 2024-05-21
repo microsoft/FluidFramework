@@ -9,10 +9,14 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type FluidObject,
+} from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
-import type { ISharedString, SharedString } from "@fluidframework/sequence/internal";
+import type { ISharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -50,8 +54,8 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedString: SharedString;
-	let sharedString2: SharedString;
+	let sharedString: ISharedString;
+	let sharedString2: ISharedString;
 	let sharedDir: SharedDirectory;
 	let sharedCell: ISharedCell;
 	let sharedMap: ISharedMap;
@@ -78,7 +82,13 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject = maybeTestFluidObject.ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<ISharedString>(stringId);
 		sharedString2 = await dataObject.getSharedObject<ISharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);

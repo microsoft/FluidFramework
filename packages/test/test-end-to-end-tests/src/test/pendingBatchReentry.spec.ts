@@ -21,6 +21,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
@@ -66,7 +67,13 @@ describeCompat(
 				runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject = maybeTestFluidObject.ITestFluidObject;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
 			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");

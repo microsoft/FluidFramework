@@ -37,6 +37,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
@@ -313,17 +314,37 @@ describeCompat(
 					);
 
 				mainContainer = await createContainer();
-				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+				const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+					await mainContainer.getEntryPoint();
+				assert(
+					maybeTestFluidObject.ITestFluidObject !== undefined,
+					"maybeTestFluidObject not a ITestFluidObject",
+				);
+				dataStoreA = maybeTestFluidObject.ITestFluidObject;
 
 				// Create data stores B and C, and mark them as referenced.
 				const containerRuntime = dataStoreA.context.containerRuntime;
-				dataStoreB = (await (
-					await containerRuntime.createDataStore(defaultFactory.type)
-				).entryPoint.get()) as ITestFluidObject;
+				dataStoreB = await containerRuntime
+					.createDataStore(defaultFactory.type)
+					.then(async (d) => d.entryPoint.get())
+					.then((fo: FluidObject<ITestFluidObject>) => {
+						assert(
+							fo.ITestFluidObject !== undefined,
+							"dataStoreB not a ITestFluidObject",
+						);
+						return fo.ITestFluidObject;
+					});
 				dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-				dataStoreC = (await (
-					await containerRuntime.createDataStore(defaultFactory.type)
-				).entryPoint.get()) as ITestFluidObject;
+				dataStoreC = await containerRuntime
+					.createDataStore(defaultFactory.type)
+					.then(async (d) => d.entryPoint.get())
+					.then((fo: FluidObject<ITestFluidObject>) => {
+						assert(
+							fo.ITestFluidObject !== undefined,
+							"dataStoreC not a ITestFluidObject",
+						);
+						return fo.ITestFluidObject;
+					});
 				dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
 				await waitForContainerConnection(mainContainer);

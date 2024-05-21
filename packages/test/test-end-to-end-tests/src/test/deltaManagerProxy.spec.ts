@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 const configProvider = createTestConfigProvider();
 // configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
@@ -58,9 +59,18 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await provider.loadContainer(runtimeFactory, loaderProps);
 		const container3 = await provider.loadContainer(runtimeFactory, loaderProps);
 
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container1.getEntryPoint();
+		const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
+		const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+			await container3.getEntryPoint();
+		const dataObject3 = maybeTestFluidObject3.ITestFluidObject;
+		assert(dataObject3 !== undefined, "dataObject3 not a ITestFluidObject");
 
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedType);
 		const sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedType);
@@ -99,7 +109,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 			return;
 		}
 		const containerA = await provider.createDetachedContainer(runtimeFactory, loaderProps);
-		const dataObjectA = (await containerA.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await containerA.getEntryPoint();
+		const dataObjectA = maybeTestFluidObject.ITestFluidObject;
+		assert(dataObjectA !== undefined, "dataObjectA not a ITestFluidObject");
 		const sharedStringA = await dataObjectA.getSharedObject<SharedString>(sharedType);
 
 		// These changes are sent when attaching
@@ -107,7 +120,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.attachDetachedContainer(containerA);
 
 		const containerB = await provider.loadContainer(runtimeFactory, loaderProps);
-		const dataObjectB = (await containerB.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await containerB.getEntryPoint();
+		const dataObjectB = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataObjectB !== undefined, "dataObjectB not a ITestFluidObject");
 		const sharedStringB = await dataObjectB.getSharedObject<SharedString>(sharedType);
 		sharedStringB.removeRange(0, 1);
 

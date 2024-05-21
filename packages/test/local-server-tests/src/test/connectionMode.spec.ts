@@ -24,6 +24,7 @@ import {
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";
@@ -98,7 +99,13 @@ describe("Logging Last Connection Mode ", () => {
 
 		// Create the first container, component and DDSes.
 		container = await createContainer();
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		assert(
+			maybeTestFluidObject.ITestFluidObject !== undefined,
+			"maybeTestFluidObject not a ITestFluidObject",
+		);
+		dataObject = maybeTestFluidObject.ITestFluidObject;
 		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

@@ -14,6 +14,7 @@ import {
 import {
 	ConfigTypes,
 	IConfigProviderBase,
+	type FluidObject,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -125,7 +126,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "no url");
 
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		await waitForSummary(container);
@@ -140,7 +144,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
 		await provider.ensureSynchronized();
@@ -193,7 +200,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "no url");
 
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+			await container.getEntryPoint();
+		const dataStore = maybeTestFluidObject.ITestFluidObject;
+		assert(dataStore !== undefined, "dataStore not a ITestFluidObject");
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		// not waiting for summary to reuse the stashed snapshot for new loaded containers
@@ -208,7 +218,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+			await container2.getEntryPoint();
+		const dataStore2 = maybeTestFluidObject2.ITestFluidObject;
+		assert(dataStore2 !== undefined, "dataStore2 not a ITestFluidObject");
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
 		await provider.ensureSynchronized();

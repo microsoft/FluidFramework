@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, type FluidObject } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
@@ -276,7 +276,13 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject = maybeTestFluidObject.ITestFluidObject;
 			sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 			sharedString.insertText(0, "012");
 
@@ -400,7 +406,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "0123456789");
@@ -416,7 +425,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 
 			await provider.ensureSynchronized();
 
@@ -459,7 +471,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "012");
@@ -479,7 +494,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 
 			await provider.ensureSynchronized();
 
@@ -581,7 +599,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			const dataObject1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataObject1 !== undefined, "dataObject1 not a ITestFluidObject");
 			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 			sharedString1.insertText(0, "01234");
@@ -593,7 +614,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
@@ -927,17 +951,29 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		beforeEach("setupSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container1.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			dataObject1 = maybeTestFluidObject.ITestFluidObject;
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject2: FluidObject<ITestFluidObject> | undefined =
+				await container2.getEntryPoint();
+			const dataObject2 = maybeTestFluidObject2.ITestFluidObject;
+			assert(dataObject2 !== undefined, "dataObject2 not a ITestFluidObject");
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject3: FluidObject<ITestFluidObject> | undefined =
+				await container3.getEntryPoint();
+			const dataObject3 = maybeTestFluidObject3.ITestFluidObject;
+			assert(dataObject3 !== undefined, "dataObject3 not a ITestFluidObject");
 			sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 		});
 

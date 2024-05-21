@@ -12,7 +12,7 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions/i
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
 import type { ISharedMap, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
@@ -61,7 +61,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 
 		it("blob is aborted before uploading", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const ac = new AbortController();
 			ac.abort("abort test");
 			try {
@@ -81,7 +84,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const ac = new AbortController();
 			let blob: IFluidHandle<ArrayBufferLike>;
@@ -104,7 +110,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("blob is attached after usage in map", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -116,7 +125,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("blob is attached after usage in directory", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -127,7 +139,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 
 		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
@@ -141,7 +156,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("removes pending blob after attached and acked", async function () {
 			const testString = "this is a test string";
 			const testKey = "a blob";
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -153,7 +171,10 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		});
 
 		it("removes multiple pending blobs after attached and acked", async function () {
-			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			const dataStore1 = maybeTestFluidObject.ITestFluidObject;
+			assert(dataStore1 !== undefined, "dataStore1 not a ITestFluidObject");
 			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
@@ -190,7 +211,13 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			provider.updateDocumentId(container.resolvedUrl);
-			detachedDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const maybeTestFluidObject: FluidObject<ITestFluidObject> | undefined =
+				await container.getEntryPoint();
+			assert(
+				maybeTestFluidObject.ITestFluidObject !== undefined,
+				"maybeTestFluidObject not a ITestFluidObject",
+			);
+			detachedDataStore = maybeTestFluidObject.ITestFluidObject;
 			map = SharedMap.create(detachedDataStore.runtime);
 			directory = SharedDirectory.create(detachedDataStore.runtime);
 			text = "this is some example text";
