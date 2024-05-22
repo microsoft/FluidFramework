@@ -406,26 +406,66 @@ export function generateCompatibilityTestCases(
 		// look for settings not under version, then fall back to version for back compat
 		const brokenData = broken?.[getFullTypeName(currentType)];
 
-		testString.push(
-			`/*`,
-			` * Validate forward compatibility by using the old type in place of the current type.`,
-			` * If this test starts failing, it indicates a change that is not forward compatible.`,
-			` * To acknowledge the breaking change, add the following to package.json under`,
-			` * typeValidation.broken:`,
-			` * "${getFullTypeName(currentType)}": {"forwardCompat": false}`,
-			" */",
-			...buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true),
-			"",
-			`/*`,
-			` * Validate backward compatibility by using the current type in place of the old type.`,
-			` * If this test starts failing, it indicates a change that is not backward compatible.`,
-			` * To acknowledge the breaking change, add the following to package.json under`,
-			` * typeValidation.broken:`,
-			` * "${getFullTypeName(currentType)}": {"backCompat": false}`,
-			" */",
-			...buildTestCase(currentType, oldType, brokenData?.backCompat ?? true),
-			"",
-		);
+		const typePreprocessor = selectTypePreprocessor(currentType);
+		if (typePreprocessor !== undefined) {
+			if (oldTypeData.tags.has("sealed")) {
+				// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
+				// This means that the case having the new (current) version of the type,
+				// but trying to implement it based on the old version should not occur and is not a supported usage.
+				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change,
+				// and the type tests to detect and error on such changes can be skipped, which is what this check does.
+			} else {
+				testString.push(
+					`/*`,
+					` * Validate forward compatibility by using the old type in place of the current type.`,
+					` * If this test starts failing, it indicates a change that is not forward compatible.`,
+					` * To acknowledge the breaking change, add the following to package.json under`,
+					` * typeValidation.broken:`,
+					` * "${getFullTypeName(currentType)}": {"forwardCompat": false}`,
+					" */",
+					...buildTestCase(
+						oldType,
+						currentType,
+						brokenData?.forwardCompat ?? true,
+						typePreprocessor,
+					),
+					"",
+				);
+			}
+			testString.push(
+				`/*`,
+				` * Validate backward compatibility by using the current type in place of the old type.`,
+				` * If this test starts failing, it indicates a change that is not backward compatible.`,
+				` * To acknowledge the breaking change, add the following to package.json under`,
+				` * typeValidation.broken:`,
+				` * "${getFullTypeName(currentType)}": {"backCompat": false}`,
+				" */",
+				...buildTestCase(
+					currentType,
+					oldType,
+					brokenData?.backCompat ?? true,
+					typePreprocessor,
+				),
+				"",
+			);
+		}
 	}
 	return testString;
+}
+
+/**
+ * Returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
+ */
+function selectTypePreprocessor(typeData: TypeData): string | undefined {
+	if (typeData.tags.has("type-test-minimal")) {
+		return "MinimalType";
+	}
+	if (typeData.tags.has("type-test-full")) {
+		return "FullType";
+	}
+	if (typeData.tags.has("internal")) {
+		// Skip type tests for `@internal` types, unless they explicitly opted in via another tag.
+		return undefined;
+	}
+	return "TypeOnly";
 }

@@ -63,9 +63,9 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 
 	if (Node.isIdentifier(node)) {
 		const typeData: TypeData[] = [];
-		node.getDefinitionNodes().forEach((d) =>
-			typeData.push(...getNodeTypeData(d, namespacePrefix)),
-		);
+		node
+			.getDefinitionNodes()
+			.forEach((d) => typeData.push(...getNodeTypeData(d, namespacePrefix)));
 		return typeData;
 	}
 
@@ -81,7 +81,7 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 			namespacePrefix !== undefined
 				? `${namespacePrefix}.${node.getName()}`
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  node.getName()!;
+					node.getName()!;
 
 		const docs = Node.isVariableDeclaration(node)
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
@@ -139,24 +139,6 @@ export function toTypeString(prefix: string, typeData: TypeData, typePreprocesso
 
 		default:
 			return `${typePreprocessor}<${typeStringBase}>`;
-	}
-}
-
-/**
- * @returns the name of the type preprocessing type meta-function to use, or undefined if no type test should be generated.
- */
-export function selectTypePreprocessor(typeData: TypeData): string | undefined {
-	if (typeData.tags.has("type-test-minimal")) {
-		return "MinimalType";
-	}
-	if (typeData.tags.has("type-test-full")) {
-		return "FullType";
-	}
-	if (typeData.tags.has("internal")) {
-		// Skip type tests for `@internal` types, unless they explicitly opted in via another tag.
-		return undefined;
-	} else {
-		return "TypeOnly";
 	}
 }
 

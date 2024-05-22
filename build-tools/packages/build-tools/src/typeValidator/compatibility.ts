@@ -48,10 +48,10 @@ type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
 type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
 	: Key extends symbol
-	? Key extends WellKnownSymbols
-		? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-		: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-	: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
 /**
  * Remove details of T which are incompatible with type testing while keeping as much as is practical.
  *
@@ -60,12 +60,12 @@ type SkipUniqueSymbols<Key> = symbol extends Key
 export type TypeOnly<T> = T extends number
 	? number
 	: T extends boolean | bigint | string
-	? T
-	: T extends symbol
-	? SkipUniqueSymbols<T>
-	: {
-			[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-	  };
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 export type MinimalType<T> = 0;
 export type FullType<T> = T;
