@@ -43,7 +43,6 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	iterateCursorField,
-	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
