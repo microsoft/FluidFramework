@@ -36,7 +36,7 @@ type requireAssignableTo<_A extends B, B> = true;
  * This will cause issues with symbols, enums, and classes with private or protected members.
  */
 export const typeOnly =
-	'import { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools"';
+	'import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools"';
 
 type ValueOf<T> = T[keyof T];
 type OnlySymbols<T> = T extends symbol ? T : never;
