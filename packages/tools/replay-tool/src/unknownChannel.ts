@@ -12,7 +12,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryContext,
 	IGarbageCollectionData,

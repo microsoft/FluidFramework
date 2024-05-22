@@ -8,14 +8,12 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-} from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
-import {
 	IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,

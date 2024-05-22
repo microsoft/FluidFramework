@@ -92,9 +92,9 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"async-mutex": "^0.3.1",
 		"debug": "^4.3.4",
 		"jwt-decode": "^4.0.0",

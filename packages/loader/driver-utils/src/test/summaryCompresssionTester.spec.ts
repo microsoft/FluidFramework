@@ -25,17 +25,17 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
-	ICreateBlobResponse,
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	IVersion,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import {
 	ICompressionStorageConfig,
@@ -523,7 +523,7 @@ async function checkUploadDownloadSummary(
 	assert(
 		originBlobContent === downloadedBlobContent,
 		`The origin and the downloaded blob are not the same
-		\norigin     : ${originBlobContent} 
+		\norigin     : ${originBlobContent}
 		\ndownloaded : ${downloadedBlobContent}`,
 	);
 	return downloadedSummary;
@@ -593,7 +593,7 @@ async function checkEncDecConfigurable(
 	} else {
 		assert(
 			compareTwoBlobs(blob, originBlob),
-			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}. 
+			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}.
 			The first bytes are ${blob[0]} and ${originBlob[0]}`,
 		);
 	}

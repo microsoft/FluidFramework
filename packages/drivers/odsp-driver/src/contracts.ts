@@ -5,7 +5,7 @@
 
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
@@ -44,11 +44,11 @@ export interface IOdspSocketError {
  * Contains either SequencedDocumentMessages or SequencedDeltaOpMessage.
  */
 export interface IDeltaStorageGetResponse {
-	value: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
+	value: ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
 }
 
 export interface ISequencedDeltaOpMessage {
-	op: api.ISequencedDocumentMessage;
+	op: ISequencedDocumentMessage;
 	sequenceNumber: number;
 }
 
@@ -207,7 +207,7 @@ export interface IGetOpsResponse {
 	 * Time in seconds. Currently never set by PUSH
 	 */
 	retryAfter?: number;
-	messages?: api.ISequencedDocumentMessage[];
+	messages?: ISequencedDocumentMessage[];
 }
 
 export interface IFlushOpsResponse {
