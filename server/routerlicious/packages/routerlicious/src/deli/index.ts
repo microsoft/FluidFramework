@@ -32,7 +32,11 @@ export async function deliCreate(
 	const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 	const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 	const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+	const kafkaProducerGlobalAdditionalConfig = config.get(
+		"kafka:lib:producerGlobalAdditionalConfig",
+	);
 	const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+	const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 	const kafkaForwardClientId = config.get("deli:kafkaClientId");
 	const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -50,6 +54,9 @@ export async function deliCreate(
 
 	const kafkaCheckpointOnReprocessingOp =
 		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
+
+	const enableLeaveOpNoClientServerMetadata =
+		(config.get("deli:enableLeaveOpNoClientServerMetadata") as boolean) ?? false;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -71,6 +78,11 @@ export async function deliCreate(
 		(config.get("deli:enableEphemeralContainerSummaryCleanup") as boolean | undefined) ?? true;
 	core.DefaultServiceConfiguration.deli.enableEphemeralContainerSummaryCleanup =
 		enableEphemeralContainerSummaryCleanup;
+
+	const ephemeralContainerSoftDeleteTimeInMs =
+		(config.get("deli:ephemeralContainerSoftDeleteTimeInMs") as number | undefined) ?? -1; // -1 means not soft deletion but hard deletion directly
+	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
+		ephemeralContainerSoftDeleteTimeInMs;
 
 	let globalDb: core.IDb;
 	if (globalDbEnabled) {
@@ -105,6 +117,8 @@ export async function deliCreate(
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
 		eventHubConnString,
+		kafkaProducerGlobalAdditionalConfig,
+		oauthBearerConfig,
 	);
 	const reverseProducer = services.createProducer(
 		kafkaLibrary,
@@ -118,6 +132,8 @@ export async function deliCreate(
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
 		eventHubConnString,
+		kafkaProducerGlobalAdditionalConfig,
+		oauthBearerConfig,
 	);
 
 	const redisConfig = config.get("redis");
@@ -170,6 +186,7 @@ export async function deliCreate(
 			...core.DefaultServiceConfiguration.deli,
 			restartOnCheckpointFailure,
 			kafkaCheckpointOnReprocessingOp,
+			enableLeaveOpNoClientServerMetadata,
 		},
 	};
 

@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
@@ -20,7 +21,6 @@ import {
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeTypedField,
-	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";

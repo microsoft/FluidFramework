@@ -6,23 +6,24 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ThresholdCounter, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	ThresholdCounter,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelServiceEndpoints,

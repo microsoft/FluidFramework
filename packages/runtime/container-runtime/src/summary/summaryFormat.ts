@@ -14,15 +14,27 @@ import {
 	ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
 
-type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
-interface IFluidDataStoreAttributes0 {
+/**
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @alpha
+ */
+export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+
+/**
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @alpha
+ */
+export interface IFluidDataStoreAttributes0 {
 	readonly snapshotFormatVersion?: undefined;
 	readonly summaryFormatVersion?: undefined;
 	pkg: string;
@@ -33,11 +45,23 @@ interface IFluidDataStoreAttributes0 {
 	 */
 	readonly isRootDataStore?: boolean;
 }
-interface IFluidDataStoreAttributes1 extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
+
+/**
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @alpha
+ */
+export interface IFluidDataStoreAttributes1
+	extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
 	readonly snapshotFormatVersion: "0.1";
 	readonly summaryFormatVersion?: undefined;
 }
-interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
+
+/**
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @alpha
+ */
+export interface IFluidDataStoreAttributes2
+	extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
 	/** Switch from snapshotFormatVersion to summaryFormatVersion */
 	readonly snapshotFormatVersion?: undefined;
 	readonly summaryFormatVersion: 2;
@@ -53,6 +77,11 @@ interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFluidDataSt
  * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell the attributes of a
  * store like the package, snapshotFormatVersion to take different decisions based on a particular
  * snapshotFormatVersion.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
+ * @alpha
+ *
  */
 export type ReadFluidDataStoreAttributes =
 	| IFluidDataStoreAttributes0

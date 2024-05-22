@@ -175,7 +175,7 @@ describe("mixinAttributor", () => {
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience!.getMember(op.clientId!)!.user },
+				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
 			],
 		]);
 

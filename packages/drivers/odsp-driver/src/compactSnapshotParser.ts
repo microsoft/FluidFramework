@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
@@ -197,20 +197,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.groupId !== undefined) {
-			const groupId = getStringInstance(records.groupId, "groupId should be a string");
-			snapshotTree.groupId = groupId;
-		}
-
-		if (records.omitted !== undefined) {
-			assertBoolInstance(records.omitted, "omitted should be a boolean");
-			assert(
-				!records.omitted || snapshotTree.groupId !== undefined,
-				0x8df /* GroupId absent but omitted is true */,
-			);
-			snapshotTree.omitted = records.omitted;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -222,6 +208,10 @@ function readTreeSection(node: NodeCore): {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
+			if (records.groupId !== undefined) {
+				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				trees[path].groupId = groupId;
+			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };

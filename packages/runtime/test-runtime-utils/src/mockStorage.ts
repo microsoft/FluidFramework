@@ -5,7 +5,7 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import {
 	convertSummaryTreeToITree,

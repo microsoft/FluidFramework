@@ -100,6 +100,7 @@ export class IsoBuffer extends Uint8Array {
 	}
 
 	/**
+	 * Deprecated
 	 * @param value - (string | ArrayBuffer)
 	 * @param encodingOrOffset - (string | number)
 	 * @param length - (number)
@@ -116,6 +117,7 @@ export class IsoBuffer extends Uint8Array {
 		} else if (isArrayBuffer(value)) {
 			return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
 		} else {
+			// eslint-disable-next-line unicorn/error-message
 			throw new TypeError();
 		}
 	}
@@ -133,6 +135,7 @@ export class IsoBuffer extends Uint8Array {
 			validLength < 0 ||
 			validLength + offset > arrayBuffer.byteLength
 		) {
+			// eslint-disable-next-line unicorn/error-message
 			throw new RangeError();
 		}
 

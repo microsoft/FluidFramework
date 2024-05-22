@@ -536,7 +536,7 @@ export abstract class BaseSegment implements ISegment {
 
 	protected addSerializedProps(jseg: IJSONSegment) {
 		if (this.properties) {
-			jseg.props = this.properties;
+			jseg.props = { ...this.properties };
 		}
 	}
 

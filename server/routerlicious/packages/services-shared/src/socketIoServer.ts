@@ -36,11 +36,11 @@ class SocketIoSocket implements core.IWebSocket {
 		return this.socket.join(id);
 	}
 
-	public async emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]) {
 		this.socket.emit(event, ...args);
 	}
 
-	public async emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]) {
 		this.socket.nsp.to(roomId).emit(event, ...args);
 	}
 
@@ -216,12 +216,15 @@ export function create(
 	socketIoConfig?: any,
 	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
-	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
-	});
-	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis sub connection", undefined, err);
-	});
+	redisClientConnectionManagerForPub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis pub connection", // error message
+	);
+
+	redisClientConnectionManagerForSub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis sub connection", // error message
+	);
 
 	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {

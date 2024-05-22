@@ -16,12 +16,12 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	FieldKey,
+	RevisionTag,
 	TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
-
-import { deepFreeze } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**
@@ -231,6 +231,7 @@ export const TestChange = {
 	codecs: makeCodecFamily([
 		[1, codec],
 		[2, codec],
+		[3, codec],
 	]),
 };
 deepFreeze(TestChange);
@@ -244,17 +245,28 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		return invert(change.change);
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public rebase(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): TestChange {
 		return (
-			rebase(change, over.change) ?? {
+			rebase(change.change, over.change) ?? {
 				intentions: [],
 			}
 		);
 	}
+
+	public changeRevision(
+		change: TestChange,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
+	): TestChange {
+		return change;
+	}
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -264,9 +276,12 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		this.rebasedCount += 1;
-		return change;
+		return change.change;
 	}
 
 	public override invert(change: TaggedChange<TestChange>): TestChange {
@@ -283,14 +298,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 	public constructor(
 		private readonly constraint: (
-			change: TestChange,
+			change: TaggedChange<TestChange>,
 			over: TaggedChange<TestChange>,
 		) => boolean,
 	) {
 		super();
 	}
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}

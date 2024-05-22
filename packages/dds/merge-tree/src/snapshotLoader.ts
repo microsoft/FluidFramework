@@ -9,13 +9,16 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	UsageError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";

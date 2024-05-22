@@ -27,4 +27,12 @@ export class TestRedisClientConnectionManager implements IRedisClientConnectionM
 			: new RedisMock();
 		return mockRedisClient;
 	}
+
+	public addErrorHandler(
+		lumberProperties?: Map<string, any> | Record<string, any> | undefined,
+		errorMessage: string = "Error with Redis",
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void {
+		// Do nothing
+	}
 }

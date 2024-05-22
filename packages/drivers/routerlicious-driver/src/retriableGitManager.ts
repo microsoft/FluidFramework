@@ -9,7 +9,7 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { IWholeFlatSnapshot } from "./contracts.js";
 import { IR11sResponse } from "./restWrapper.js";

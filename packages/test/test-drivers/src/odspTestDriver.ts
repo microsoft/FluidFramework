@@ -10,12 +10,13 @@ import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitio
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
+	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
@@ -41,7 +42,7 @@ interface IOdspTestLoginInfo {
 	supportsBrowserAuth?: boolean;
 }
 
-type TokenConfig = IOdspTestLoginInfo & IClientConfig;
+type TokenConfig = IOdspTestLoginInfo & IPublicClientConfig;
 
 interface IOdspTestDriverConfig extends TokenConfig {
 	directory: string;
@@ -265,7 +266,7 @@ export class OdspTestDriver implements ITestDriver {
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
-		config: IOdspTestLoginInfo & IClientConfig,
+		config: IOdspTestLoginInfo & IPublicClientConfig,
 	) {
 		const host = new URL(options.siteUrl).host;
 
@@ -305,6 +306,7 @@ export class OdspTestDriver implements ITestDriver {
 		return this.api.version;
 	}
 	private readonly testIdToUrl = new Map<string, string>();
+	private cache?: IPersistedCache;
 	private constructor(
 		private readonly config: Readonly<IOdspTestDriverConfig>,
 		private readonly api = OdspDriverApi,
@@ -346,13 +348,20 @@ export class OdspTestDriver implements ITestDriver {
 		return this.testIdToUrl.get(testId)!;
 	}
 
+	public setPersistedCache(cache: IPersistedCache) {
+		this.cache = cache;
+	}
+
 	createDocumentServiceFactory(): IDocumentServiceFactory {
-		return new this.api.OdspDocumentServiceFactory(
+		const documentServiceFactory = new this.api.OdspDocumentServiceFactory(
 			this.getStorageToken.bind(this),
 			this.getPushToken.bind(this),
-			undefined,
+			this.cache,
 			this.config.options,
 		);
+		// Automatically reset the cache after creating the factory
+		this.cache = undefined;
+		return documentServiceFactory;
 	}
 
 	createUrlResolver(): IUrlResolver {

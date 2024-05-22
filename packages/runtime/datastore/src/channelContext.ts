@@ -9,23 +9,24 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	IFluidDataStoreContext,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { DataCorruptionError, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	DataCorruptionError,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import { ChannelStorageService } from "./channelStorageService.js";

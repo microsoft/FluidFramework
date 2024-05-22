@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
@@ -23,8 +28,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -63,7 +67,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
 		private readonly interactive: boolean = true,
@@ -87,6 +91,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
+	// back-compat: to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
 	}
@@ -130,7 +135,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
 

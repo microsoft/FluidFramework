@@ -10,11 +10,11 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -24,8 +24,8 @@ import {
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
@@ -103,7 +103,7 @@ describe("Data Store Context Tests", () => {
 			return {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger,
+				baseLogger: logger,
 				clientDetails,
 				submitMessage,
 			} as ContainerRuntime;
@@ -575,7 +575,10 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
 				clientDetails: {},
-			} as ContainerRuntime;
+				isSnapshotFetchRequired: (path) => false,
+				containerRuntime,
+				blobContents: undefined,
+			} as unknown as ContainerRuntime;
 		});
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
@@ -639,7 +642,7 @@ describe("Data Store Context Tests", () => {
 
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
-						snapshotTree,
+						snapshot: snapshotTree,
 						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
@@ -693,7 +696,7 @@ describe("Data Store Context Tests", () => {
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
-						snapshotTree: undefined,
+						snapshot: undefined,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -767,7 +770,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -819,7 +822,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -871,7 +874,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -925,7 +928,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -1000,7 +1003,7 @@ describe("Data Store Context Tests", () => {
 
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
-					snapshotTree,
+					snapshot: snapshotTree,
 					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
@@ -1028,7 +1031,12 @@ describe("Data Store Context Tests", () => {
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
 		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
-			channelToDataStore(fluidDataStore, "id", channelCollection, containerRuntime.logger);
+			channelToDataStore(
+				fluidDataStore,
+				"id",
+				channelCollection,
+				createChildLogger({ logger: containerRuntime.baseLogger }),
+			);
 		let containerRuntime: ContainerRuntime;
 		let channelCollection: ChannelCollection;
 		let provideDsRuntimeWithFailingEntrypoint = false;
@@ -1082,9 +1090,9 @@ describe("Data Store Context Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				baseLogger: createChildLogger(),
 				clientDetails: {},
-			} as ContainerRuntime;
+			} as unknown as ContainerRuntime;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			channelCollection = {

@@ -8,8 +8,8 @@ import { join as pathJoin } from "path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
-	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
@@ -74,18 +74,21 @@ export function createFuzzNode(
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 		optionalChild: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 		sequenceChildren: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
 			() => node,
 			leaf.number,
 			leaf.string,
+			leaf.handle,
 			...nodeTypes,
 		]),
 	});

@@ -43,7 +43,7 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 ];
 
 // Dummy context object created to pass through the codec.
-const dummyContext = { originatorId: "dummySessionID" as SessionId };
+const dummyContext = { originatorId: "dummySessionID" as SessionId, revision: undefined };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],

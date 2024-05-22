@@ -31,7 +31,7 @@ export async function disconnectDocument(
 		disconnectedClients,
 		disconnectedOrdererConnections,
 	}: INexusLambdaConnectionStateTrackers,
-) {
+): Promise<void> {
 	// Clear token expiration timer on disconnection
 	expirationTimer.clear();
 	const removeAndStoreP: Promise<void>[] = [];
@@ -107,16 +107,16 @@ export async function disconnectDocument(
 					);
 				}),
 		);
-		socket
-			.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))
-			.catch((error) => {
-				const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(room)}.`;
-				Lumberjack.error(
-					errorMsg,
-					getLumberBaseProperties(room.documentId, room.tenantId),
-					error,
-				);
-			});
+		try {
+			socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
+		} catch (error) {
+			const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(room)}.`;
+			Lumberjack.error(
+				errorMsg,
+				getLumberBaseProperties(room.documentId, room.tenantId),
+				error,
+			);
+		}
 	}
 	// Clear socket tracker upon disconnection
 	if (socketTracker) {

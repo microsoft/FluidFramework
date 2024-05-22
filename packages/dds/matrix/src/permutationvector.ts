@@ -6,9 +6,9 @@
 import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,
@@ -21,9 +21,9 @@ import {
 	MergeTreeMaintenanceType,
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { HandleCache } from "./handlecache.js";

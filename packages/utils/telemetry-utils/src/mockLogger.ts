@@ -67,7 +67,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	): void {
 		const actualEvents = this.events;
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
-			throw new Error(`${message}
+			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
 
@@ -106,7 +106,7 @@ ${JSON.stringify(actualEvents)}`);
 	): void {
 		const actualEvents = this.events;
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
-			throw new Error(`${message}
+			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
 
@@ -143,7 +143,7 @@ ${JSON.stringify(actualEvents)}`);
 	): void {
 		const actualEvents = this.events;
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
-			throw new Error(`${message}
+			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
 
@@ -162,7 +162,7 @@ ${JSON.stringify(actualEvents)}`);
 	): void {
 		const actualEvents = this.events;
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
-			throw new Error(`${message}
+			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
 ${JSON.stringify(disallowedEvents)}
 

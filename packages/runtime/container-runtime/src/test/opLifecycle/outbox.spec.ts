@@ -5,8 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { ICriticalContainerError, IDeltaManager } from "@fluidframework/container-definitions";
-import { IBatchMessage, IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	IDeltaManager,
+	IBatchMessage,
+	IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -462,72 +466,6 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Compress and send (only) ID allocation ops if compression is enabled and their size exceed the compression threshold", () => {
-		const messages = [
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.IdAllocation, "3"),
-			createMessage(ContainerMessageType.IdAllocation, "4"),
-			createMessage(ContainerMessageType.IdAllocation, "5"),
-			createMessage(ContainerMessageType.IdAllocation, "6"),
-			createMessage(ContainerMessageType.IdAllocation, "7"),
-		];
-
-		const idAllocationMessages = messages.filter(
-			(x) => typeFromBatchedOp(x) === ContainerMessageType.IdAllocation,
-		);
-		assert.ok(
-			idAllocationMessages.length > 0 && idAllocationMessages[0].contents !== undefined,
-		);
-		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
-			compressionOptions: {
-				minimumBatchSizeInBytes: idAllocationMessages[0].contents.length * 3,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		});
-
-		for (const message of messages) {
-			if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
-				outbox.submitIdAllocation(message);
-			} else {
-				outbox.submit(message);
-			}
-		}
-
-		// Although there was no explicit flush, the Id allocation messages will get flushed
-		// as their size have exceeded the compression threshold.
-		assert.equal(state.opsSubmitted, idAllocationMessages.length);
-		assert.equal(state.batchesSubmitted.length, 2); // 6 messages in 2 batches
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toBatch(idAllocationMessages.slice(0, 3)),
-			toBatch(idAllocationMessages.slice(3)),
-		]);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				toBatch(idAllocationMessages.slice(0, 3)).content.map((x) => batchedMessage(x)),
-				toBatch(idAllocationMessages.slice(3)).content.map((x) => batchedMessage(x)),
-			],
-		);
-
-		assert.deepEqual(
-			state.pendingOpContents,
-			idAllocationMessages.map((message) => ({
-				content: message.contents,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				opMetadata: message.metadata,
-			})),
-		);
-	});
-
 	it("Throws at flush, when compression is enabled and the compressed batch is still larger than the threshold", () => {
 		const outbox = getOutbox({
 			context: getMockContext() as IContainerContext,
@@ -652,25 +590,6 @@ describe("Outbox", () => {
 				],
 			],
 		);
-	});
-
-	it("Throws at submit, when compression is enabled and the compressed batch is still larger than the threshold", () => {
-		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
-			maxBatchSize: 1,
-			compressionOptions: {
-				minimumBatchSizeInBytes: 1,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		});
-
-		const messages = [createMessage(ContainerMessageType.IdAllocation, "0")];
-
-		assert.throws(() => outbox.submitIdAllocation(messages[0]));
-		// The batch is compressed
-		assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
-		// The batch is not persisted
-		assert.deepEqual(state.pendingOpContents, []);
 	});
 
 	it("Splits the batch when an out of order message is detected", () => {

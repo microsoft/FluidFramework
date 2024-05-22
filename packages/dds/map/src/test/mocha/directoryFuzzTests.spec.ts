@@ -7,23 +7,23 @@ import { strict as assert } from "node:assert";
 import * as dirPath from "node:path";
 
 import {
-	AsyncGenerator,
-	AsyncReducer,
+	type AsyncGenerator,
+	type AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	Client,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type Client,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DirectoryFactory, IDirectory } from "../../index.js";
+import { DirectoryFactory, type IDirectory } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
@@ -336,7 +336,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator(options)),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 
@@ -393,7 +393,7 @@ describe("SharedDirectory fuzz", () => {
 		workloadName: "default directory 2",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 

@@ -1281,7 +1281,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				start: startPos,
 				end: endPos,
 				intervalType: IntervalType.SlideOnRemove,
-				properties: interval.properties,
+				properties: { ...interval.properties },
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
 				startSide,

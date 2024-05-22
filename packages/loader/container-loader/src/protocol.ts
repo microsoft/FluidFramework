@@ -61,6 +61,10 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 			sendProposal,
 		);
 
+		for (const [clientId, member] of this.quorum.getMembers()) {
+			audience.addMember(clientId, member.client);
+		}
+
 		// Join / leave signals are ignored for "write" clients in favor of join / leave ops
 		this.quorum.on("addMember", (clientId, details) =>
 			audience.addMember(clientId, details.client),

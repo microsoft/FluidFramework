@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { resetReentrancyLogCounter } from "../sequence.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString } from "../sequenceFactory.js";
 
 describe("SharedString op-reentrancy", () => {
 	/**

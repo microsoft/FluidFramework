@@ -875,24 +875,20 @@
 					"excerptTokens": [
 						{
 							"kind": "Content",
-							"text": "testConstWithEmptyDeprecatedBlock = "
+							"text": "testConstWithEmptyDeprecatedBlock: "
 						},
 						{
 							"kind": "Content",
-							"text": "\"I have a `@deprecated` tag with an empty comment block.\""
+							"text": "string"
 						}
 					],
 					"fileUrlPath": "dist/TestConst.d.ts",
-					"initializerTokenRange": {
-						"startIndex": 1,
-						"endIndex": 2
-					},
 					"isReadonly": true,
 					"releaseTag": "Public",
 					"name": "testConstWithEmptyDeprecatedBlock",
 					"variableTypeTokenRange": {
-						"startIndex": 0,
-						"endIndex": 0
+						"startIndex": 1,
+						"endIndex": 2
 					}
 				},
 				{

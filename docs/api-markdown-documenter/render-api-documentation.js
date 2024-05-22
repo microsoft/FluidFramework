@@ -88,8 +88,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 			return ["@fluid-private"].includes(packageScope);
 		},
-		frontMatter: (apiItem) =>
-			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
 		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
@@ -124,10 +122,23 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 			let fileContents;
 			try {
-				fileContents = MarkdownRenderer.renderDocument(document, {
+				const documentFrontMatter =
+					document.apiItem === undefined
+						? undefined
+						: createHugoFrontMatter(
+								document.apiItem,
+								config,
+								customRenderers,
+								apiVersionNum,
+							);
+				const documentBody = MarkdownRenderer.renderDocument(document, {
 					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					customRenderers,
 				});
+				fileContents =
+					documentFrontMatter === undefined
+						? documentBody
+						: `${documentFrontMatter}\n\n${documentBody}`;
 			} catch (error) {
 				logErrorAndRethrow(
 					`Encountered error while rendering Markdown contents for "${document.apiItem.displayName}"`,

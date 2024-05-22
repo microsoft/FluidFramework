@@ -29,6 +29,9 @@ import { schemaFormat } from "../schema-stored/index.js";
  * If that switch happens before SharedTree commits to back-compat, this persisted format file can be deleted.
  */
 
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 /**
  * Json compatible map as object.
  * Keys are FieldKey strings.
@@ -92,3 +95,5 @@ const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
  */
 export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
 export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

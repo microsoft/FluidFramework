@@ -14,6 +14,7 @@ import {
 	Brand,
 	NestedMap,
 	RangeMap,
+	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
@@ -107,6 +108,27 @@ export function taggedOptAtomId(
 		return undefined;
 	}
 	return taggedAtomId(id, revision);
+}
+
+export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+	return { ...id, localId: brand(id.localId + offset) };
+}
+
+export function replaceAtomRevisions(
+	id: ChangeAtomId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): ChangeAtomId {
+	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
+}
+
+function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	const updated = { ...id, revision };
+	if (revision === undefined) {
+		delete updated.revision;
+	}
+
+	return updated;
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	IOdspTokens,
 	TokenRequestCredentials,
 	fetchTokens,
@@ -28,20 +28,12 @@ const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).hr
 /**
  * @internal
  */
-export const getMicrosoftConfiguration = (): IClientConfig => ({
+export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 	get clientId() {
 		if (!process.env.login__microsoft__clientId) {
 			throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
 		}
 		return process.env.login__microsoft__clientId;
-	},
-	get clientSecret() {
-		if (!process.env.login__microsoft__secret) {
-			throw new Error(
-				"Client Secret environment variable not set: login__microsoft__secret.",
-			);
-		}
-		return process.env.login__microsoft__secret;
 	},
 });
 
@@ -109,21 +101,23 @@ export class OdspTokenManager {
 
 	public async getOdspTokens(
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
+		debug("Getting odsp tokens");
 		return this.getTokens(false, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
+		debug("Getting push tokens");
 		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
 	}
 
@@ -157,7 +151,7 @@ export class OdspTokenManager {
 	private async getTokens(
 		isPush: boolean,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh: boolean,
 		forceReauth: boolean,
@@ -199,7 +193,7 @@ export class OdspTokenManager {
 	private async getTokensCore(
 		isPush: boolean,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
 		forceRefresh,
 		forceReauth,
@@ -262,7 +256,7 @@ export class OdspTokenManager {
 	private async acquireTokensWithPassword(
 		server: string,
 		scope: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		username: string,
 		password: string,
 	): Promise<IOdspTokens> {
@@ -277,7 +271,7 @@ export class OdspTokenManager {
 	private async acquireTokensViaBrowserLogin(
 		loginPageUrl: string,
 		server: string,
-		clientConfig: IClientConfig,
+		clientConfig: IPublicClientConfig,
 		scope: string,
 		navigator: (url: string) => void,
 		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,

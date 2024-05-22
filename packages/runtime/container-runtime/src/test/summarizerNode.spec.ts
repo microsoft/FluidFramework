@@ -232,7 +232,7 @@ describe("Runtime", () => {
 					createRoot();
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					rootNode.completeSummary("test-handle");
 					rootNode.startSummary(12, logger, 0); // This is 0 since we did not "ack" the latest summary
 				});
 
@@ -247,7 +247,7 @@ describe("Runtime", () => {
 					createRoot();
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					rootNode.completeSummary("test-handle");
 					// Refreshing should be necessary for startSummary to occur
 					await rootNode.refreshLatestSummary("test-handle", 11);
 					const result = rootNode.startSummary(12, logger, 11);
@@ -259,13 +259,13 @@ describe("Runtime", () => {
 					// Need one latest summary
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					rootNode.completeSummary("test-handle");
 					await rootNode.refreshLatestSummary("test-handle", 11);
 
 					// Summary with missing refresh
 					rootNode.startSummary(12, logger, 11);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					rootNode.completeSummary("test-handle");
 
 					// Failing to refresh the root node should generate failing summaries
 					const result = rootNode.startSummary(21, logger, 12);
@@ -285,7 +285,7 @@ describe("Runtime", () => {
 					createRoot();
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
-					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					rootNode.completeSummary("test-handle");
 					await rootNode.refreshLatestSummary("test-handle", 11);
 					const result = rootNode.startSummary(12, logger, 0); // 0 is wrong here (so we can get invalid results)
 					assert.strictEqual(result.invalidNodes, 1, "expected failure wrong ref seq");
@@ -318,17 +318,6 @@ describe("Runtime", () => {
 						expectedResult,
 						"validate summary should have failed at the root node",
 					);
-
-					// Validate summary fails by calling completeSummary.
-					assert.throws(
-						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error: any) => {
-							const correctErrorMessage = error.message === "NodeDidNotSummarize";
-							const correctErrorId = error.id.value === "";
-							return correctErrorMessage && correctErrorId;
-						},
-						"Complete summary should have failed at the root node",
-					);
 				});
 
 				it("summary validation should fail if summarize not called on child node", async () => {
@@ -356,16 +345,6 @@ describe("Runtime", () => {
 						expectedResult,
 						"validate summary should have failed at the mid node",
 					);
-
-					assert.throws(
-						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error: any) => {
-							const correctErrorMessage = error.message === "NodeDidNotSummarize";
-							const correctErrorId = error.id.value === midNodeId;
-							return correctErrorMessage && correctErrorId;
-						},
-						"Complete summary should have failed at the mid node",
-					);
 				});
 
 				it("summary validation should fail if summarize not called on leaf node", async () => {
@@ -392,17 +371,6 @@ describe("Runtime", () => {
 						result,
 						expectedResult,
 						"validate summary should have failed at the leaf node",
-					);
-
-					// Validate summary fails by calling completeSummary.
-					assert.throws(
-						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error: any) => {
-							const correctErrorMessage = error.message === "NodeDidNotSummarize";
-							const correctErrorId = error.id.value === leafNodeId;
-							return correctErrorMessage && correctErrorId;
-						},
-						"Complete summary should have failed at the leaf node",
 					);
 				});
 			});
@@ -473,7 +441,7 @@ describe("Runtime", () => {
 
 					rootNode.startSummary(10, logger, 0);
 					await rootNode.summarize(false);
-					rootNode.completeSummary(proposalHandle, true /* validateSummary */);
+					rootNode.completeSummary(proposalHandle);
 
 					const result = await rootNode.refreshLatestSummary(
 						proposalHandle,

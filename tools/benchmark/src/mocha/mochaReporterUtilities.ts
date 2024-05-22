@@ -4,6 +4,7 @@
  */
 
 import { Suite } from "mocha";
+
 import { getName } from "../ReporterUtilities";
 
 /**
