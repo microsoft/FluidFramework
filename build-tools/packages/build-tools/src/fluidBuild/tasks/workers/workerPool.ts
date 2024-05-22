@@ -121,7 +121,7 @@ export class WorkerPool {
 					// Incase memoryUsage is not available,
 					// or as a last result when something other than this worker is using up all the memory
 					// kill the worker if there is less than 2 GB of memory free.
-					freemem() < 2 * 1024 * 1204 * 1024
+					freemem() < 2 * 1024 * 1024 * 1024
 				) {
 					worker.kill();
 				} else {
