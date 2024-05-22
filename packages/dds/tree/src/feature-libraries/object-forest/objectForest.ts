@@ -44,7 +44,7 @@ import {
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
-/** A `MapTree` with a mutable value and mutable fields */
+/** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
 	readonly fields: Map<FieldKey, MutableMapTree[]>;
 }
@@ -61,8 +61,6 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
 	return newField;
 }
 
-// TODO: this references the existing TreeValues instead of copying them:
-// they are assumed to be copy on write. See TODO on NodeData.
 function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
 	return {
 		...mapTree,
