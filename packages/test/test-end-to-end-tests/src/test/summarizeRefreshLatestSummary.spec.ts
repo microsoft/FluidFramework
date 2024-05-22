@@ -12,7 +12,7 @@ import {
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,

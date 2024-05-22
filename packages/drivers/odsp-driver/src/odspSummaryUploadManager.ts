@@ -9,7 +9,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
-import * as api from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -49,10 +49,7 @@ export class OdspSummaryUploadManager {
 		this.mc = loggerToMonitoringContext(logger);
 	}
 
-	public async writeSummaryTree(
-		tree: api.ISummaryTree,
-		context: ISummaryContext,
-	): Promise<string> {
+	public async writeSummaryTree(tree: ISummaryTree, context: ISummaryContext): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
 		// Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
@@ -82,7 +79,7 @@ export class OdspSummaryUploadManager {
 	private async writeSummaryTreeCore(
 		parentHandle: string | undefined,
 		referenceSequenceNumber: number,
-		tree: api.ISummaryTree,
+		tree: ISummaryTree,
 	): Promise<IWriteSummaryResponse> {
 		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
 		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
@@ -161,7 +158,7 @@ export class OdspSummaryUploadManager {
 	 */
 	private async convertSummaryToSnapshotTree(
 		parentHandle: string | undefined,
-		tree: api.ISummaryTree,
+		tree: ISummaryTree,
 		rootNodeName: string,
 		markUnreferencedNodes: boolean = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.MarkUnreferencedNodes",
@@ -189,7 +186,7 @@ export class OdspSummaryUploadManager {
 			let unreferenced: true | undefined;
 			let groupId: string | undefined;
 			switch (summaryObject.type) {
-				case api.SummaryType.Tree: {
+				case SummaryType.Tree: {
 					const result = await this.convertSummaryToSnapshotTree(
 						parentHandle,
 						summaryObject,
@@ -201,7 +198,7 @@ export class OdspSummaryUploadManager {
 					blobs += result.blobs;
 					break;
 				}
-				case api.SummaryType.Blob: {
+				case SummaryType.Blob: {
 					value =
 						typeof summaryObject.content === "string"
 							? {
@@ -217,7 +214,7 @@ export class OdspSummaryUploadManager {
 					blobs++;
 					break;
 				}
-				case api.SummaryType.Handle: {
+				case SummaryType.Handle: {
 					if (!parentHandle) {
 						throw new Error("Parent summary does not exist to reference by handle.");
 					}
@@ -229,14 +226,14 @@ export class OdspSummaryUploadManager {
 					id = `${parentHandle}/${pathKey}`;
 					break;
 				}
-				case api.SummaryType.Attachment: {
+				case SummaryType.Attachment: {
 					id = summaryObject.id;
 					break;
 				}
 				default: {
 					unreachableCase(
 						summaryObject,
-						`Unknown type: ${(summaryObject as api.SummaryObject).type}`,
+						`Unknown type: ${(summaryObject as SummaryObject).type}`,
 					);
 				}
 			}

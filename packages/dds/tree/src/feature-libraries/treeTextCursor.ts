@@ -90,13 +90,17 @@ export const adapter: CursorAdapter<JsonableTree> = {
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
-	const node: JsonableTree = {
-		type: cursor.type,
-	};
+	const node: JsonableTree =
+		cursor.value !== undefined
+			? {
+					type: cursor.type,
+					value: cursor.value,
+			  }
+			: {
+					type: cursor.type,
+			  };
+
 	// Normalize object by only including fields that are required.
-	if (cursor.value !== undefined) {
-		node.value = cursor.value;
-	}
 	for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
 		const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
 		setGenericTreeField(node, cursor.getFieldKey(), field);
