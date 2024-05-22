@@ -85,6 +85,7 @@ Options:
      --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
      --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
      --vscode         Output error message to work with default problem matcher in vscode
+	 --worker         Reuse worker threads for some tasks, increasing memory use but lowering overhead.
 ${commonOptionString}
 `,
 	);
