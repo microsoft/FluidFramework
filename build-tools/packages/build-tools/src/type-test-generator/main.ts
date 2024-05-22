@@ -11,7 +11,11 @@ import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { typeOnly } from "../typeValidator/compatibility";
 import { TestCaseTypeData, buildTestCase } from "../typeValidator/testGeneration";
-import { TypeData, getFullTypeName, getNodeTypeData } from "../typeValidator/typeData";
+import {
+	getFullTypeName,
+	selectTypePreprocessor,
+	typeDataFromFile,
+} from "../typeValidator/typeData";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -136,31 +140,50 @@ for (const oldTypeData of previousData) {
 	const brokenData = broken?.[getFullTypeName(currentType)];
 
 	const typePreprocessor = selectTypePreprocessor(currentType);
+	if (typePreprocessor !== undefined) {
+		if (oldTypeData.tags.has("sealed")) {
+			// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
+			// This means that the case having the new (current) version of the type,
+			// but trying to implement it based on the old version should not occur and is not a supported usage.
+			// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change,
+			// and the type tests to detect and error on such changes can be skipped, which is what this check does.
+		} else {
+			testString.push(`/*`);
+			testString.push(`* Validate forward compat by using old type in place of current type`);
+			testString.push(
+				`* If breaking change required, add in package.json under typeValidation.broken:`,
+			);
+			testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
+			testString.push("*/");
+			testString.push(
+				...buildTestCase(
+					oldType,
+					currentType,
+					brokenData?.forwardCompat ?? true,
+					typePreprocessor,
+				),
+			);
+		}
 
-	testString.push(`/*`);
-	testString.push(`* Validate forward compat by using old type in place of current type`);
-	testString.push(
-		`* If breaking change required, add in package.json under typeValidation.broken:`,
-	);
-	testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
-	testString.push("*/");
-	testString.push(
-		...buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true, typePreprocessor),
-	);
+		testString.push("");
 
-	testString.push("");
-
-	testString.push(`/*`);
-	testString.push(`* Validate back compat by using current type in place of old type`);
-	testString.push(
-		`* If breaking change required, add in package.json under typeValidation.broken:`,
-	);
-	testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
-	testString.push("*/");
-	testString.push(
-		...buildTestCase(currentType, oldType, brokenData?.backCompat ?? true, typePreprocessor),
-	);
-	testString.push("");
+		testString.push(`/*`);
+		testString.push(`* Validate back compat by using current type in place of old type`);
+		testString.push(
+			`* If breaking change required, add in package.json under typeValidation.broken:`,
+		);
+		testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
+		testString.push("*/");
+		testString.push(
+			...buildTestCase(
+				currentType,
+				oldType,
+				brokenData?.backCompat ?? true,
+				typePreprocessor,
+			),
+		);
+		testString.push("");
+	}
 }
 
 mkdirSync("./src/test/types", { recursive: true });

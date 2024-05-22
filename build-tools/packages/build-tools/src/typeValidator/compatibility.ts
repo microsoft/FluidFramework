@@ -14,7 +14,7 @@
 type requireAssignableTo<_A extends B, B> = true;
 
 /**
- * Type meta-function which takes in a type, and removes some of its type information to get structural typing.
+ * Type meta-functions which takes in a type, and removes some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
  * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes).
@@ -28,37 +28,15 @@ type requireAssignableTo<_A extends B, B> = true;
  * Another case is custom symbols.
  * To mitigate this, symbols which are not either `symbol` or a [well known symbol (like Symbols.iterator)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#static_properties),
  * are replaced with `never`.
- */
-export const typeOnly = `
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
  *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ * MinimalType can be used in cases where TypeOnly fails to handle the type properly
+ * and a fallback to something known to conservatively work (by testing nothing but the type exists currently).
+ *
+ * FullType can be explicitly opted into to test the type unmodified.
+ * This will cause issues with symbols, enums, and classes with private or protected members.
  */
-type TypeOnly<T> = T extends number
-	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
-`;
+export const typeOnly =
+	'import { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools"';
 
 type ValueOf<T> = T[keyof T];
 type OnlySymbols<T> = T extends symbol ? T : never;
@@ -79,7 +57,7 @@ type SkipUniqueSymbols<Key> = symbol extends Key
  *
  * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
  */
-type TypeOnly<T> = T extends number
+export type TypeOnly<T> = T extends number
 	? number
 	: T extends boolean | bigint | string
 	? T
@@ -88,6 +66,9 @@ type TypeOnly<T> = T extends number
 	: {
 			[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
 	  };
+
+export type MinimalType<T> = 0;
+export type FullType<T> = T;
 
 // Checks //
 // Confirm typeOnly and general compatibility in TypeScript works as expected.

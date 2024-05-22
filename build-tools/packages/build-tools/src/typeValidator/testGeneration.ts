@@ -28,7 +28,9 @@ export function buildTestCase(
 	testString.push(`declare function ${getSig}():`);
 	testString.push(`    ${toTypeString(getAsType.prefix, getAsType, typePreprocessor)};`);
 	testString.push(`declare function ${useSig}(`);
-	testString.push(`    use: ${toTypeString(useType.prefix, useType, typePreprocessor)}): void;`);
+	testString.push(
+		`    use: ${toTypeString(useType.prefix, useType, typePreprocessor)}): void;`,
+	);
 	testString.push(`${useSig}(`);
 	if (!isCompatible) {
 		testString.push(expectErrorString);
