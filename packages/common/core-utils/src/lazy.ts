@@ -45,7 +45,9 @@ export class Lazy<T> {
  */
 export class LazyPromise<T> implements Promise<T> {
 	public get [Symbol.toStringTag](): string {
-		return this.getPromise()[Symbol.toStringTag];
+		return this.result === undefined
+			? "[object LazyPromise] (not yet accessed)"
+			: this.result[Symbol.toStringTag];
 	}
 
 	private result: Promise<T> | undefined;
