@@ -43,7 +43,6 @@ module.exports = {
 		// Superseded by prettier and @trivago/prettier-plugin-sort-imports
 		"import/order": "off",
 
-		"jsdoc/no-bad-blocks": "error",
 		"jsdoc/multiline-blocks": [
 			"error",
 			{
