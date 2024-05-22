@@ -22012,7 +22012,7 @@ packages:
       '@fluidframework/core-utils': 2.0.0-rc.4.0.0
       '@fluidframework/driver-definitions': 2.0.0-rc.4.0.0
       '@fluidframework/driver-utils': 2.0.0-rc.4.0.0(debug@4.3.4)
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.4.0.0
       '@ungap/structured-clone': 1.2.0
@@ -22321,8 +22321,8 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-rc.4.0.0
       '@fluidframework/core-utils': 2.0.0-rc.4.0.0
       '@fluidframework/driver-definitions': 2.0.0-rc.4.0.0
-      '@fluidframework/gitresources': 4.0.1
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/gitresources': 4.0.0
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.4.0.0
       axios: 1.6.2(debug@4.3.4)
@@ -22493,13 +22493,13 @@ packages:
       '@fluidframework/driver-base': 2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/driver-definitions': 2.0.0-rc.4.0.0
       '@fluidframework/driver-utils': 2.0.0-rc.4.0.0(debug@4.3.4)
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': 2.0.0-rc.4.0.0(debug@4.3.4)
-      '@fluidframework/server-local-server': 4.0.1
-      '@fluidframework/server-services-client': 4.0.1
-      '@fluidframework/server-services-core': 4.0.1
-      '@fluidframework/server-test-utils': 4.0.1
+      '@fluidframework/server-local-server': 4.0.0
+      '@fluidframework/server-services-client': 4.0.0
+      '@fluidframework/server-services-core': 4.0.0
+      '@fluidframework/server-test-utils': 4.0.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.4.0.0
       jsrsasign: 11.1.0
       uuid: 9.0.1
@@ -22624,7 +22624,7 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/odsp-doclib-utils': 2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/odsp-driver-definitions': 2.0.0-rc.4.0.0
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.4.0.0
       node-fetch: 2.7.0
@@ -22805,10 +22805,10 @@ packages:
       '@fluidframework/driver-base': 2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/driver-definitions': 2.0.0-rc.4.0.0
       '@fluidframework/driver-utils': 2.0.0-rc.4.0.0(debug@4.3.4)
-      '@fluidframework/gitresources': 4.0.1
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/gitresources': 4.0.0
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 4.0.1
+      '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': 2.0.0-rc.4.0.0
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
@@ -22911,6 +22911,22 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/server-lambdas-driver@4.0.0:
+    resolution: {integrity: sha512-3RM55xj1PrlUBYjGbtiBTMk8oFcNKUa+aofTBcoYiJsNvI7qOSifRvgl7TBLxPKLBSjZ25NjYBo0NXSG0p0l5A==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/server-services-client': 4.0.0
+      '@fluidframework/server-services-core': 4.0.0
+      '@fluidframework/server-services-telemetry': 4.0.0
+      assert: 2.1.0
+      async: 3.2.5
+      events: 3.3.0
+      lodash: 4.17.21
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   /@fluidframework/server-lambdas-driver@4.0.1:
     resolution: {integrity: sha512-sgNwuqSfvCvbHPc3GEagZIBCdEm79xr9IULIKrb/AcFdRuLnnH+pEWANW7SxhUhij+EKHrF6js4JkVozkkrjiw==}
     dependencies:
@@ -22932,13 +22948,13 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 1.1.0
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 4.0.1
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/gitresources': 4.0.0
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 4.0.1
-      '@fluidframework/server-services-client': 4.0.1
-      '@fluidframework/server-services-core': 4.0.1
-      '@fluidframework/server-services-telemetry': 4.0.1
+      '@fluidframework/server-lambdas-driver': 4.0.0
+      '@fluidframework/server-services-client': 4.0.0
+      '@fluidframework/server-services-core': 4.0.0
+      '@fluidframework/server-services-telemetry': 4.0.0
       '@types/semver': 7.5.6
       assert: 2.1.0
       async: 3.2.5
@@ -23029,12 +23045,12 @@ packages:
     resolution: {integrity: sha512-/Da91g+VnTUJu8Byp58csSRGsjLB9Ju+a0788Ag/IcwUBjYEDUWe8jlCLCdnNOScZnFW9W88R+F2RTC0LFlMOg==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-base': 4.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 4.0.1(debug@4.3.4)
-      '@fluidframework/server-services-client': 4.0.1
-      '@fluidframework/server-services-core': 4.0.1
-      '@fluidframework/server-services-telemetry': 4.0.1
+      '@fluidframework/server-lambdas': 4.0.0(debug@4.3.4)
+      '@fluidframework/server-services-client': 4.0.0
+      '@fluidframework/server-services-core': 4.0.0
+      '@fluidframework/server-services-telemetry': 4.0.0
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/lodash': 4.14.202
