@@ -7,13 +7,13 @@ import {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
-	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
 	IContainerContext,
 	ILoader,
 	ILoaderOptions,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";

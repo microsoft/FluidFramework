@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISharedMap, SharedMap } from "../../index.js";
+import { type ISharedMap, SharedMap } from "../../index.js";
 
 function createLocalMap(id: string): ISharedMap {
 	const map = SharedMap.create(

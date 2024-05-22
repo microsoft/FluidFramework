@@ -43,7 +43,6 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	iterateCursorField,
-	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
@@ -191,6 +190,7 @@ export {
 	EncodedChangeAtomId,
 	taggedAtomId,
 	taggedOptAtomId,
+	offsetChangeAtomId,
 	replaceAtomRevisions,
 } from "./rebase/index.js";
 

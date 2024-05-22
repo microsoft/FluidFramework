@@ -32,6 +32,7 @@ import { TreeNode, Unhydrated } from "./types.js";
  * 2. Deduplicate the safe and unsafe types (possibly by having the safe one call the unsafe ones, or some other trick).
  * 3. Add type tests that check that the two copies of these types produce identical results.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
@@ -58,7 +59,7 @@ export type TreeObjectNodeUnsafe<
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 		: unknown;
@@ -166,7 +167,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**
@@ -190,3 +191,5 @@ export interface FieldSchemaUnsafe<
 	 */
 	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any */

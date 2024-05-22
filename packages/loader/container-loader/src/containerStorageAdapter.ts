@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
@@ -79,6 +80,7 @@ export class ContainerStorageAdapter
 	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
 	 */
 	public constructor(
+		// eslint-disable-next-line import/no-deprecated
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 		/**
@@ -157,7 +159,7 @@ export class ContainerStorageAdapter
 				this.loadingGroupIdSnapshotsFromPendingState[
 					snapshotFetchOptions.loadingGroupIds[0]
 				];
-			assert(localSnapshot !== undefined, "Local snapshot must be present");
+			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
 		} else {
@@ -171,7 +173,10 @@ export class ContainerStorageAdapter
 
 		// Track the latest snapshot for each loading group id
 		const loadingGroupIds = snapshotFetchOptions?.loadingGroupIds;
-		assert(snapshot.sequenceNumber !== undefined, "Snapshot must have sequence number");
+		assert(
+			snapshot.sequenceNumber !== undefined,
+			0x971 /* Snapshot must have sequence number */,
+		);
 		if (loadingGroupIds !== undefined) {
 			for (const loadingGroupId of loadingGroupIds) {
 				// Do we actually want to update the stored snapshot?
@@ -230,6 +235,7 @@ export class ContainerStorageAdapter
  */
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
+		// eslint-disable-next-line import/no-deprecated
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -242,6 +248,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.verifyStorage().readBlob(blobId);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private verifyStorage(): IDetachedBlobStorage {
 		if (this.detachedStorage === undefined) {
 			throw new UsageError("Real storage calls not allowed in Unattached container");

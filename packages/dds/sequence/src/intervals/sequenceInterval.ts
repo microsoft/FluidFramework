@@ -473,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(

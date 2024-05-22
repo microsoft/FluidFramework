@@ -4,9 +4,10 @@
 
 ```ts
 
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
@@ -21,7 +22,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export const SharedCounter: ISharedObjectKind<ISharedCounter>;
+export const SharedCounter: ISharedObjectKind<ISharedCounter> & SharedObjectKind<ISharedCounter>;
 
 // @alpha
 export type SharedCounter = ISharedCounter;

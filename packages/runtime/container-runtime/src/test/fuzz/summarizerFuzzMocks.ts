@@ -77,7 +77,7 @@ export class MockContainerRuntimeForSummarizer
 	extends MockContainerRuntimeForReconnection
 	implements ISummarizerRuntime, ISummarizerInternalsProvider
 {
-	public readonly logger = createChildLogger();
+	public readonly baseLogger = createChildLogger();
 	public readonly summarizerClientId: string | undefined;
 	public readonly summarizer: Summarizer;
 
@@ -99,8 +99,8 @@ export class MockContainerRuntimeForSummarizer
 		});
 
 		this.summarizerClientElection = new MockSummarizerClientElection(this.clientId);
-		this.connectedState = new MockConnectedState(this.logger, this.clientId);
-		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+		this.connectedState = new MockConnectedState(this.baseLogger, this.clientId);
+		this.summaryCollection = new SummaryCollection(this.deltaManager, this.baseLogger);
 
 		const summaryConfiguration: ISummaryConfiguration = {
 			...DefaultSummaryConfiguration,
@@ -121,7 +121,7 @@ export class MockContainerRuntimeForSummarizer
 			this.summarizerClientElection,
 			this.connectedState,
 			this.summaryCollection,
-			this.logger,
+			this.baseLogger,
 			async () => this.summarizer,
 			new MockThrottler(),
 		);
@@ -196,7 +196,6 @@ export class MockContainerRuntimeForSummarizer
 			submitOpDuration: 0,
 			uploadDuration: 0,
 			generateDuration: 0,
-			forcedFullTree: false,
 			summaryTree: {
 				type: SummaryType.Tree,
 				tree: {},

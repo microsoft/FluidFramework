@@ -555,7 +555,7 @@ function sandwichRebaseWithCompose<TChangeset>(
 
 function sandwichRebaseWithoutCompose<TChangeset>(
 	sourceEdits: TaggedChange<TChangeset>[],
-	rollbacks: TaggedChange<any>[],
+	rollbacks: TaggedChange<TChangeset>[],
 	editToRebaseOver: TaggedChange<TChangeset>,
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ): TaggedChange<TChangeset>[] {

@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -169,7 +172,7 @@ export interface IDataStore {
  * @alpha
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
 
@@ -398,7 +401,7 @@ export interface IFluidParentContext
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
 	/**

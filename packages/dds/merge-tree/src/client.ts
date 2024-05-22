@@ -9,17 +9,18 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
@@ -1083,7 +1084,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		serializer: IFluidSerializer,
 		catchUpMsgs: ISequencedDocumentMessage[],
 	): ISummaryTreeWithStats {
-		const deltaManager = runtime.deltaManager;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
 		const minSeq = deltaManager.minimumSequenceNumber;
 
 		// Catch up to latest MSN, if we have not had a chance to do it.

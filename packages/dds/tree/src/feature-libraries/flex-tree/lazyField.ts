@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { StableId } from "@fluidframework/id-compressor";
 
 import {
 	CursorLocationType,
@@ -22,7 +21,6 @@ import {
 import {
 	assertValidIndex,
 	assertValidRangeIndices,
-	brand,
 	disposeSymbol,
 	fail,
 } from "../../util/index.js";
@@ -36,7 +34,6 @@ import {
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
-import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
 import { Context } from "./context.js";
@@ -44,7 +41,6 @@ import {
 	FlexTreeEntityKind,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeNodeKeyField,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
@@ -298,7 +294,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		return this.map((x) => x);
 	}
 
-	private sequenceEditor(): SequenceFieldEditBuilder {
+	public sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.getFieldPathForEditing();
 		const fieldEditor = this.context.checkout.editor.sequenceField(fieldPath);
 		return fieldEditor;
@@ -329,15 +325,6 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	public removeAt(index: number): void {
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.remove(index, 1);
-	}
-
-	public removeRange(start?: number, end?: number): void {
-		const fieldEditor = this.sequenceEditor();
-		const { length } = this;
-		const removeStart = start ?? 0;
-		const removeEnd = Math.min(length, end ?? length);
-		assertValidRangeIndices(removeStart, removeEnd, this);
-		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 
 	public moveToStart(sourceIndex: number): void;
@@ -568,36 +555,6 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class LazyNodeKeyField<TTypes extends FlexAllowedTypes>
-	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
-	implements FlexTreeNodeKeyField
-{
-	public constructor(
-		context: Context,
-		schema: FlexFieldSchema<typeof FieldKinds.nodeKey, TTypes>,
-		cursor: ITreeSubscriptionCursor,
-		fieldAnchor: FieldAnchor,
-	) {
-		super(context, schema, cursor, fieldAnchor);
-	}
-
-	public get localNodeKey(): LocalNodeKey {
-		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
-		// forest rather than getting the StableNodeKey and the compressing it.
-		return this.context.nodeKeyManager.localizeNodeKey(this.stableNodeKey);
-	}
-
-	public get stableNodeKey(): StableNodeKey {
-		const cursor = this[cursorSymbol];
-		cursor.enterNode(0);
-		assert(cursor.type === nodeKeyTreeIdentifier, 0x7b2 /* invalid node key type */);
-		const stableKey = cursor.value;
-		assert(typeof stableKey === "string", 0x7b3 /* invalid node key type */);
-		cursor.exitNode();
-		return brand(stableKey as StableId);
-	}
-}
-
 export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.forbidden,
 	TTypes
@@ -605,14 +562,17 @@ export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyFie
 
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => LazyField<any, TTypes>;
 
 const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],

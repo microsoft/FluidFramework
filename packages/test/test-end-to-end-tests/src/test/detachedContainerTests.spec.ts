@@ -17,7 +17,7 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";

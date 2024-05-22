@@ -149,14 +149,14 @@ describe("internalScheme", () => {
 			[false, "^2.0.0-internal.2.2.1", undefined],
 			[false, "~2.0.0-internal.2.2.1", undefined],
 		];
-		cases.forEach(([isInternal, input, allowAnyPrereleaseId]) => {
+		for (const [isInternal, input, allowAnyPrereleaseId] of cases) {
 			it(`${input} is ${isInternal ? "" : "not "}internal${
 				allowAnyPrereleaseId ? " when allowAnyPrereleaseId is true" : ""
 			}`, () =>
 				(isInternal ? assert.isTrue : assert.isFalse)(
 					isInternalVersionRange(input, allowAnyPrereleaseId),
 				));
-		});
+		}
 	});
 
 	describe("converting FROM internal scheme", () => {
