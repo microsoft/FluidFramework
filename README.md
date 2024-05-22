@@ -174,13 +174,12 @@ This section contains common workflows and patterns to increase inner dev loop e
 ### Build
 
 - `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
-- `npm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process.
-- `npm run build:fast -- <path>` to build only a specific part of the repository.
-- `npm run build` within a package directory to build that package.
-- `npm run build:compile` for cross-package compilation.
-- `npm run format` to format the code.
+- `pnpm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process. Incremental builds tend to leave extra files laying around, so running a clean is sometimes needed to cleanup ghost tests
+- `pnpm run build:fast -- <path>` to build only a specific part of the repository.
+- `pnpm run build` within a package directory to build that package.
+- `pnpm run build:compile` for cross-package compilation.
+- `pnpm run format` to format the code.
 - `npx fluid-build -t build <NAME_OF_PACKAGES>` to build a single package or multiple space-separated packages along with all their dependencies.
-- `npx fluid-build -t prettier:fix <NAME_OF_PACKAGES>` to automatically apply Prettier fixes to every file in the specified package(s). This works for a single package or multiple space-separated packages and is useful if your format-on-save functionality is not working.
 
 ### Debug
 
@@ -190,7 +189,7 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Troubleshooting
 
-- Mysterious build failures, especially with no changes? `pnpm clean <package>`
+- Mysterious build failures, especially with no changes? `pnpm clean`
 - If debugging becomes slow or hangs, clean the repo with `git clean -xdf` to remove extraneous files.
 
 ## Testing
