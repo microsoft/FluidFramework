@@ -154,13 +154,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
  */
 
 import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools";
-export type MakeUnusedImportErrorsGoAway = TypeOnly<0> |  MinimalType<0> | FullType<0>;
 
 import type * as old from "${previousPackageName}${
 				previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 			}";
 
 import type * as current from "../../index.js";
+
+export type MakeUnusedImportErrorsGoAway = TypeOnly<0> |  MinimalType<0> | FullType<0> | typeof old | typeof current;
 `,
 		];
 
