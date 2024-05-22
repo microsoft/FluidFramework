@@ -9,6 +9,7 @@ import {
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ISegment } from "./mergeTreeNodes.js";
 
@@ -219,12 +220,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		endOffset?: number,
 		channel?: string,
 	): { offset: number; key: AttributionKey }[] | undefined {
-		assert(startOffset >= 0 && startOffset < this._length, "startOffset should be valid");
-		assert(
-			endOffset === undefined ||
-				(endOffset >= 0 && endOffset < this._length && startOffset <= endOffset),
-			"endOffset should be valid",
-		);
+		if (startOffset < 0 || startOffset >= this._length) {
+			throw new UsageError("startOffset should be valid and in range");
+		}
+		if (
+			endOffset !== undefined &&
+			(endOffset < 0 || endOffset >= this._length || startOffset > endOffset)
+		) {
+			throw new UsageError("endOffset should be valid and in range");
+		}
 
 		if (channel !== undefined) {
 			const subCollection = this.channels?.[channel];
