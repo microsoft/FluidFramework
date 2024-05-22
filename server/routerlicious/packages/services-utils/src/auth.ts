@@ -6,7 +6,7 @@
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
-import { ITokenClaims, IUser, ScopeType } from "@fluidframework/driver-definitions";
+import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { decode, sign } from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import {

@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler } from "express";
 import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
-import { ITokenClaims } from "@fluidframework/driver-definitions";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { validateTokenClaims } from "@fluidframework/server-services-utils";
 import { handleResponse } from "@fluidframework/server-services-shared";

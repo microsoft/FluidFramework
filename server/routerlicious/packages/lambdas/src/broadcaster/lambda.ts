@@ -9,7 +9,7 @@ import {
 	ISignalClient,
 	ISignalMessage,
 	MessageType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 
 import {
 	extractBoxcar,

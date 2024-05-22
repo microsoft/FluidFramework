@@ -9,7 +9,7 @@ import {
 	ISnapshotTreeEx,
 	SummaryType,
 	SummaryObject,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 
 /**

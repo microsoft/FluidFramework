@@ -9,7 +9,7 @@ import {
 	IDocumentSystemMessage,
 	IProtocolState,
 	IUser,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
 	IProducer,
 	IRawOperationMessage,

@@ -9,7 +9,7 @@ import {
 	IConnected,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
 import {

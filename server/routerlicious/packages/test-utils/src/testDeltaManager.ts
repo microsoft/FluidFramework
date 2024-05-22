@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaService } from "@fluidframework/server-services-core";
 
 /**

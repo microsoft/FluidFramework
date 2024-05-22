@@ -4,7 +4,7 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService } from "@fluidframework/server-services-core";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";

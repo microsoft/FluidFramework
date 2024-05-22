@@ -10,7 +10,7 @@ import {
 	IDocumentMessage,
 	IDocumentSystemMessage,
 	MessageType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
 	BoxcarType,
 	IBoxcarMessage,

@@ -9,7 +9,7 @@ import {
 	ICreateTreeParams,
 } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IWholeSummaryBlob,
 	IWholeSummaryPayload,

@@ -4,7 +4,7 @@
  */
 
 import { IBlob, ITree, ITreeEntry } from "@fluidframework/gitresources";
-import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IWholeFlatSummaryBlob,
 	IWholeFlatSummaryTreeEntry,

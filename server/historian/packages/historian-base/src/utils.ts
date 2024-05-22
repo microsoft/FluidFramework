@@ -8,7 +8,7 @@ import { parse } from "path";
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
-import { ITokenClaims } from "@fluidframework/driver-definitions";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { decode } from "jsonwebtoken";

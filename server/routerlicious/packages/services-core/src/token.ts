@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser, ScopeType } from "@fluidframework/driver-definitions";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 
 /**
  * Method signature for a token generator

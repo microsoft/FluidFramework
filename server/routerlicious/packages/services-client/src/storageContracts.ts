@@ -8,7 +8,7 @@ import {
 	ISummaryHandle,
 	ISummaryTree as BaseSummaryTree,
 	SummaryObject,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /*
  *

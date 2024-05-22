@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,

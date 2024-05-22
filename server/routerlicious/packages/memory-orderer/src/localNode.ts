@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	IDatabaseManager,

@@ -10,7 +10,7 @@ import {
 	ISignalMessage,
 	MessageType,
 	NackErrorType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 
 // TODO: documentation
 // eslint-disable-next-line jsdoc/require-description

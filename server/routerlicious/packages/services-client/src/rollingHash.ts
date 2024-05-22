@@ -6,7 +6,7 @@
 import {
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import { str } from "crc-32";
 
 // default hash/seed value.

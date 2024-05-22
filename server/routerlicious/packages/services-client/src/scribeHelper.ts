@@ -9,7 +9,7 @@ import {
 	ITreeEntry,
 	FileMode,
 	TreeEntry,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 
 /**

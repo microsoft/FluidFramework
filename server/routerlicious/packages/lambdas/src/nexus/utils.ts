@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectionMode, ISentSignalMessage } from "@fluidframework/driver-definitions";
+import type { ConnectionMode, ISentSignalMessage } from "@fluidframework/protocol-definitions";
 import { NetworkError, canSummarize, canWrite } from "@fluidframework/server-services-client";
 import type { ILogger } from "@fluidframework/server-services-core";
 import {

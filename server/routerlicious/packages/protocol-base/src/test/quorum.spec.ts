@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { strict as assert } from "assert";
 import { Quorum } from "../quorum";
 

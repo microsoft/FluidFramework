@@ -19,7 +19,7 @@ import {
 	IClient,
 	IDocumentMessage,
 	type ISentSignalMessage,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";

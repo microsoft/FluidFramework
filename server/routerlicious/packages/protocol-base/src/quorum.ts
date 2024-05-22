@@ -15,7 +15,7 @@ import {
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISequencedProposal,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Structure for tracking proposals that have been sequenced but not approved yet.

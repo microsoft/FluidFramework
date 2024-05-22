@@ -11,7 +11,7 @@ import {
 	type ISignalClient,
 	type ITokenClaims,
 	type ConnectionMode,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
 	NetworkError,
 	isNetworkError,

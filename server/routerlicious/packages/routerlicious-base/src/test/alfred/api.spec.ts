@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { ScopeType } from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
 import { DeltaService, DocumentDeleteService } from "../../alfred/services";

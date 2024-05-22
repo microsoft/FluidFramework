@@ -7,7 +7,7 @@ import {
 	IClientConfiguration,
 	INackContent,
 	NackErrorType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/protocol-definitions";
 
 // Deli lambda configuration
 /**

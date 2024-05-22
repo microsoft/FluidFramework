@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import {
 	IDocumentManager,

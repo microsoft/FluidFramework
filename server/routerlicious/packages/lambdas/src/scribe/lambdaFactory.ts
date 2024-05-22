@@ -23,7 +23,7 @@ import {
 	MongoManager,
 	runWithRetry,
 } from "@fluidframework/server-services-core";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
