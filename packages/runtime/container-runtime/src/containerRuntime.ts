@@ -9,6 +9,7 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -17,7 +18,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -27,12 +27,14 @@ import {
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
@@ -47,6 +49,10 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -58,23 +64,17 @@ import type {
 } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -1791,6 +1791,9 @@ export class ContainerRuntime
 				orderedClientCollection,
 				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
 			);
 
 			this.summarizerClientElection = new SummarizerClientElection(
@@ -2224,7 +2227,7 @@ export class ContainerRuntime
 		);
 
 		// Is document schema explicit control on?
-		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2238,10 +2241,10 @@ export class ContainerRuntime
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
-			message: explitiSchemaControl
+			message: explicitSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
-			lastMessage: explitiSchemaControl ? message : undefined,
+			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
 		};
 
@@ -3611,12 +3614,9 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
-			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
-			// state of all the nodes.
-			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree || forcedFullTree,
+					fullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -3693,7 +3693,6 @@ export class ContainerRuntime
 				summaryTree,
 				summaryStats,
 				generateDuration: trace.trace().duration,
-				forcedFullTree,
 			} as const;
 
 			continueResult = checkContinue();
@@ -3912,13 +3911,13 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
-				? this.idCompressor?.takeUnfinalizedCreationRange()
+				? this._idCompressor.takeUnfinalizedCreationRange()
 				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
-			if (idRange?.ids !== undefined) {
+			if (idRange.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
@@ -3963,6 +3962,10 @@ export class ContainerRuntime
 		}
 
 		const type = containerRuntimeMessage.type;
+		assert(
+			type !== ContainerMessageType.IdAllocation,
+			"IdAllocation should be submitted directly to outbox.",
+		);
 		const message: BatchMessage = {
 			contents: serializedContent,
 			metadata,
@@ -3971,44 +3974,36 @@ export class ContainerRuntime
 		};
 
 		try {
-			// If `message` is an allocation op, then we are in the resubmit path and we must redirect the allocation
-			// op into the correct batch to avoid ranges being finalized out of order.
-			// Otherwise, submit an IdAllocation op if any IDs have been generated since the last op was submitted, as
-			// any of the other op types may contain those IDs and thus depend on the allocation op being sent first.
-			if (type === ContainerMessageType.IdAllocation) {
-				this.outbox.submitIdAllocation(message);
+			this.submitIdAllocationOpIfNeeded(false);
+
+			// Allow document schema controller to send a message if it needs to propose change in document schema.
+			// If it needs to send a message, it will call provided callback with payload of such message and rely
+			// on this callback to do actual sending.
+			const contents = this.documentsSchemaController.maybeSendSchemaMessage();
+			if (contents) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SchemaChangeProposal",
+					refSeq: contents.refSeq,
+					version: contents.version,
+					newRuntimeSchema: JSON.stringify(contents.runtime),
+					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+				});
+				const msg: ContainerRuntimeDocumentSchemaMessage = {
+					type: ContainerMessageType.DocumentSchemaChange,
+					contents,
+				};
+				this.outbox.submit({
+					contents: JSON.stringify(msg),
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				});
+			}
+
+			if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
-				this.submitIdAllocationOpIfNeeded();
-
-				// Allow document schema controller to send a message if it needs to propose change in document schema.
-				// If it needs to send a message, it will call provided callback with payload of such message and rely
-				// on this callback to do actual sending.
-				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
-				if (contents) {
-					this.logger.sendTelemetryEvent({
-						eventName: "SchemaChangeProposal",
-						refSeq: contents.refSeq,
-						version: contents.version,
-						newRuntimeSchema: JSON.stringify(contents.runtime),
-						sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-						oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
-					});
-					const msg: ContainerRuntimeDocumentSchemaMessage = {
-						type: ContainerMessageType.DocumentSchemaChange,
-						contents,
-					};
-					this.outbox.submit({
-						contents: JSON.stringify(msg),
-						referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					});
-				}
-
-				if (type === ContainerMessageType.BlobAttach) {
-					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
-					this.outbox.submitBlobAttach(message);
-				} else {
-					this.outbox.submit(message);
-				}
+				this.outbox.submit(message);
 			}
 
 			if (!this.currentlyBatching()) {

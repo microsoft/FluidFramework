@@ -25,7 +25,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IClientDetails } from "@fluidframework/protocol-definitions";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -227,6 +227,7 @@ export interface ILoaderServices {
 
 	/**
 	 * Blobs storage for detached containers.
+	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
@@ -241,6 +242,8 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  * @alpha
+ *
+ * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;
@@ -248,6 +251,11 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 	 * Return an array of all blob IDs present in storage
 	 */
 	getBlobIds(): string[];
+
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 };
 
 /**

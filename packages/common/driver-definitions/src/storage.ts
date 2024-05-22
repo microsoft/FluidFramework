@@ -25,7 +25,7 @@ import type {
 	ISummaryTree,
 	ITokenClaims,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "./protocol/index.js";
 
 import type { IAnyDriverError } from "./driverError.js";
 import type { IResolvedUrl } from "./urlResolver.js";

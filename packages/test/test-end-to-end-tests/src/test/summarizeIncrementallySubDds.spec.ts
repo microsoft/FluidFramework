@@ -11,26 +11,29 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/inte
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
-	MessageType,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

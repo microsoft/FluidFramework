@@ -10,14 +10,18 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
+} from '@fluidframework/datastore-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+	createSingleBlobSummary,
+} from '@fluidframework/shared-object-base/internal';
 import {
 	IEventSampler,
 	ITelemetryLoggerPropertyBags,

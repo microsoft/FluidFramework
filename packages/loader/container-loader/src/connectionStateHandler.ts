@@ -7,7 +7,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,

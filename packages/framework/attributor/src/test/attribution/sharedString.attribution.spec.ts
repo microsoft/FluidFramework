@@ -23,10 +23,10 @@ import {
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	type IChannelServices,
+	type Jsonable,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+	type IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,
@@ -34,7 +34,7 @@ import {
 	SummaryType,
 	type IQuorumClients,
 	type ISequencedClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,

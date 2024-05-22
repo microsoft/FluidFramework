@@ -9,10 +9,10 @@ import {
 	type ITree,
 	NodeFromSchema,
 	SchemaFactory,
-	SharedTree,
 	Tree,
 	TreeConfiguration,
 } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

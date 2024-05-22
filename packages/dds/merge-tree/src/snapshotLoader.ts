@@ -9,11 +9,11 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,

@@ -28,7 +28,7 @@ import {
 	TokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

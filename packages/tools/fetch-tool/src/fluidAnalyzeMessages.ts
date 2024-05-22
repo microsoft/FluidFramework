@@ -10,14 +10,14 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
 	ISummaryAck,
 	ISummaryNack,
 	ISummaryProposal,
 	MessageType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";

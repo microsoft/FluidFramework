@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { sequenceConfig } from "./config.js";
 import { Mark, MarkList } from "./types.js";
 import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
@@ -31,9 +30,6 @@ export class MarkListFactory {
 	}
 
 	public pushContent(mark: Mark): void {
-		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
-			return;
-		}
 		if (isNoopMark(mark) && mark.changes === undefined && !isTombstone(mark)) {
 			this.pushOffset(mark.count);
 			return;

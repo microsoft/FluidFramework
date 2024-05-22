@@ -15,7 +15,6 @@ import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
 	SummarizerStopReason,
@@ -27,7 +26,7 @@ import {
 	IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -193,15 +192,11 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		// TODO:#4670: Make this compat-version-specific.
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				runtimeOptions,
 			},
 		);
 		const logger = createChildLogger();

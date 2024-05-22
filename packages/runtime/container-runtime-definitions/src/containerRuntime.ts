@@ -9,16 +9,16 @@ import type {
 	FluidObject,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleContext,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type IClientDetails,
-	type IDocumentMessage,
 	type ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	type FlushMode,
 	type IContainerRuntimeBase,

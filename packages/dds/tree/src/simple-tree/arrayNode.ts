@@ -385,7 +385,7 @@ const TreeNodeWithArrayFeatures = (() => {
  * To update this class delete all members and reapply the "implement interface" refactoring.
  * As these signatures get formatted to be over three times as many lines with prettier (which is not helpful), it is also suppressed.
  */
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
@@ -422,7 +422,7 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	toString(): string;
 	values(): IterableIterator<T>;
 }
-/* eslint-enable @typescript-eslint/explicit-member-accessibility */
+/* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
 /**
  * Attempts to coerce the given property key to an integer index property.

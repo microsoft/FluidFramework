@@ -4,21 +4,22 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
-export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>>;
+export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>> & SharedObjectKind<IConsensusRegisterCollection<any>>;
 
 // @alpha
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;

@@ -12,7 +12,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";
 import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";

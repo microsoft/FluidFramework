@@ -5,9 +5,10 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
+	ITelemetryContext,
+	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
@@ -59,8 +60,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC on / off. */
-export const runGCKey = "Fluid.GarbageCollection.RunGC";
 /** Config key to turn GC sweep on / off. */
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
@@ -333,8 +332,6 @@ export interface IGarbageCollector {
 	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
-	/** Tells whether the GC state in summary needs to be reset in the next summary. */
-	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
 	/** Tells whether tombstone feature is enabled and enforced. */
@@ -422,24 +419,6 @@ export interface IGarbageCollectorCreateParams {
  */
 export interface IGCRuntimeOptions {
 	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "enableGCSweep" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
 	 *
@@ -481,8 +460,7 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
+	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
 	 */
 	readonly gcEnabled: boolean;
 	/**
@@ -490,11 +468,6 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
-	/**
-	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
-	 * disabled via runtime options or feature flags.
-	 */
-	readonly shouldRunGC: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

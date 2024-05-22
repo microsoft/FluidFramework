@@ -8,7 +8,8 @@ import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { BlobTreeEntry } from "@fluidframework/driver-utils/internal";
-import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
+import { ITree } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

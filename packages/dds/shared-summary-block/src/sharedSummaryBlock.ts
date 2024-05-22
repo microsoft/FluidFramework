@@ -4,16 +4,19 @@
  */
 
 import {
+	Jsonable,
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ISharedSummaryBlock } from "./interfaces.js";
 

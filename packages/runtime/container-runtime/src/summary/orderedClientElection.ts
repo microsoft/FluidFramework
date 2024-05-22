@@ -9,7 +9,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
@@ -351,6 +351,7 @@ export class OrderedClientElection
 		/** Serialized state from summary or current sequence number at time of load if new. */
 		initialState: ISerializedElection | number,
 		private readonly isEligibleFn: (c: ITrackedClient) => boolean,
+		private readonly recordPerformanceEvents: boolean = false,
 	) {
 		super();
 		let initialClient: ILinkedClient | undefined;
@@ -410,17 +411,42 @@ export class OrderedClientElection
 	 * Note that this function does no eligibility or suitability checks. If we get here, then
 	 * we will set _electedClient, and we will set _electedParent if this is an interactive client.
 	 */
-	private tryElectingClient(client: ILinkedClient | undefined, sequenceNumber: number): void {
+	private tryElectingClient(
+		client: ILinkedClient | undefined,
+		sequenceNumber: number,
+		reason: string,
+	): void {
+		this.sendPerformanceEvent(
+			"TryElectingClient",
+			client,
+			sequenceNumber,
+			false /* forceSend */,
+			reason,
+		);
 		let change = false;
 		const isSummarizerClient = client?.client.details.type === summarizerClientType;
 		const prevClient = this._electedClient;
 		if (this._electedClient !== client) {
+			this.sendPerformanceEvent(
+				"ClientElected",
+				client,
+				sequenceNumber,
+				true /* forceSend */,
+				reason,
+			);
 			// Changing the elected client. Record the sequence number and note that we have to fire an event.
 			this._electionSequenceNumber = sequenceNumber;
 			this._electedClient = client;
 			change = true;
 		}
 		if (this._electedParent !== client && !isSummarizerClient) {
+			this.sendPerformanceEvent(
+				"InteractiveClientElected",
+				client,
+				sequenceNumber,
+				true /* forceSend */,
+				reason,
+			);
 			// Changing the elected parent as well.
 			this._electedParent = client;
 			change = true;
@@ -430,8 +456,26 @@ export class OrderedClientElection
 		}
 	}
 
-	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
+	private tryElectingParent(
+		client: ILinkedClient | undefined,
+		sequenceNumber: number,
+		reason: string,
+	): void {
+		this.sendPerformanceEvent(
+			"TryElectingParent",
+			client,
+			sequenceNumber,
+			false /* forceSend */,
+			reason,
+		);
 		if (this._electedParent !== client) {
+			this.sendPerformanceEvent(
+				"ParentElected",
+				client,
+				sequenceNumber,
+				true /* forceSend */,
+				reason,
+			);
 			this._electedParent = client;
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
@@ -462,6 +506,7 @@ export class OrderedClientElection
 	 * @param sequenceNumber - sequence number when client was added
 	 */
 	private addClient(client: ILinkedClient, sequenceNumber: number): void {
+		this.sendPerformanceEvent("AddClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount++;
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
@@ -472,10 +517,10 @@ export class OrderedClientElection
 				this._electedClient === undefined ||
 				(!electedClientIsSummarizer && newClientIsSummarizer)
 			) {
-				this.tryElectingClient(client, sequenceNumber);
+				this.tryElectingClient(client, sequenceNumber, "AddClient");
 			} else if (this._electedParent === undefined && !newClientIsSummarizer) {
 				// This is an odd case. If the _electedClient is set, the _electedParent should be as well.
-				this.tryElectingParent(client, sequenceNumber);
+				this.tryElectingParent(client, sequenceNumber, "AddClient");
 			}
 		}
 	}
@@ -487,6 +532,7 @@ export class OrderedClientElection
 	 * @param sequenceNumber - sequence number when client was removed
 	 */
 	private removeClient(client: ILinkedClient, sequenceNumber: number): void {
+		this.sendPerformanceEvent("RemoveClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount--;
 			if (this._electedClient === client) {
@@ -497,14 +543,18 @@ export class OrderedClientElection
 					if (this._electedClient.client.details.type !== summarizerClientType) {
 						throw new UsageError("Elected client should be a summarizer client 1");
 					}
-					this.tryElectingClient(this._electedParent, sequenceNumber);
+					this.tryElectingClient(
+						this._electedParent,
+						sequenceNumber,
+						"RemoveSummarizerClient",
+					);
 				} else {
 					// 2. The _electedClient is an interactive client that has left the quorum.
 					// Automatically shift to next oldest client.
 					const nextClient =
 						this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
 						this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
-					this.tryElectingClient(nextClient, sequenceNumber);
+					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				}
 			} else if (this._electedParent === client) {
 				// Removing the _electedParent (but not _electedClient).
@@ -516,7 +566,7 @@ export class OrderedClientElection
 				const nextParent =
 					this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
 					this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
-				this.tryElectingParent(nextParent, sequenceNumber);
+				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
 		}
 	}
@@ -534,11 +584,11 @@ export class OrderedClientElection
 			this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
 			this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
 		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
-			this.tryElectingClient(nextClient, sequenceNumber);
+			this.tryElectingClient(nextClient, sequenceNumber, "IncrementElectedClient");
 		} else {
 			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
 			// Changing the _electedParent will stop the summarizer.
-			this.tryElectingParent(nextClient, sequenceNumber);
+			this.tryElectingParent(nextClient, sequenceNumber, "IncrementElectedClient");
 		}
 	}
 
@@ -549,11 +599,11 @@ export class OrderedClientElection
 	public resetElectedClient(sequenceNumber: number): void {
 		const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
 		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
-			this.tryElectingClient(firstClient, sequenceNumber);
+			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {
 			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
 			// Changing the _electedParent will stop the summarizer.
-			this.tryElectingParent(firstClient, sequenceNumber);
+			this.tryElectingParent(firstClient, sequenceNumber, "ResetElectedClient");
 		}
 	}
 
@@ -570,5 +620,26 @@ export class OrderedClientElection
 			electedClientId: this.electedClient?.clientId,
 			electedParentId: this.electedParent?.clientId,
 		};
+	}
+
+	private sendPerformanceEvent(
+		eventName: string,
+		client: ILinkedClient | undefined,
+		sequenceNumber: number,
+		forceSend: boolean = false,
+		reason?: string,
+	) {
+		if (this.recordPerformanceEvents || forceSend) {
+			this.logger.sendPerformanceEvent({
+				eventName,
+				clientId: client?.clientId,
+				sequenceNumber,
+				electedClientId: this.electedClient?.clientId,
+				electedParentId: this.electedParent?.clientId,
+				isEligible: client !== undefined ? this.isEligibleFn(client) : false,
+				isSummarizerClient: client?.client.details.type === summarizerClientType,
+				reason,
+			});
+		}
 	}
 }

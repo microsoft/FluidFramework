@@ -12,12 +12,16 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ITreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -27,19 +31,14 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -293,7 +292,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
 
