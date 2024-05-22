@@ -44,8 +44,9 @@ export class Lazy<T> {
  * @alpha
  */
 export class LazyPromise<T> implements Promise<T> {
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get [Symbol.toStringTag](): string {
-		return this.getPromise()[Symbol.toStringTag];
+		return "[object LazyPromise]";
 	}
 
 	private result: Promise<T> | undefined;
