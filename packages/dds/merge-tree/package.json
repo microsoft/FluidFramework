@@ -161,6 +161,52 @@
 		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttributionCollection": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITrackingGroup": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SegmentGroup": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SortedSegmentSet": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_Trackable": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeSegmentDelta": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

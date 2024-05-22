@@ -279,6 +279,10 @@ export interface IAttributionCollection<T> {
     clone(): IAttributionCollection<T>;
     getAll(): IAttributionCollectionSpec<T>;
     getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
+    getKeysInOffsetRange(startOffset: number, endOffset?: number, channel?: string): {
+        offset: number;
+        key: AttributionKey;
+    }[] | undefined;
     readonly length: number;
     // (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;

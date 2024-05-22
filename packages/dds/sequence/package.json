@@ -187,6 +187,38 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"RemovedClassDeclaration_SharedString": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedStringFactory": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISequenceDeltaRange": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SubSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_ISharedString": {
 				"backCompat": false
 			},
@@ -195,6 +227,21 @@
 			},
 			"ClassDeclaration_SharedStringClass": {
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_IntervalRevertible": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceDeltaEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringRevertible": {
+				"forwardCompat": false
 			}
 		}
 	}
