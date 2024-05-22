@@ -11,7 +11,7 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
+import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
@@ -102,8 +102,37 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
+			const socketConnectionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.SocketConnection,
+				{},
+			);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
+
+			//
+			webSocket.on("disconnect", (reason: DisconnectReason) => {
+				// The following should be considered as normal disconnects and not logged as errors.
+				// For more information about each reason, see https://socket.io/docs/v4/server-socket-instance/#disconnect
+				const isOk = [
+					// server used socket.disconnect()
+					"server namespace disconnect",
+					// client used socket.disconnect()
+					"client namespace disconnect",
+					// server shutting down
+					"server shutting down",
+					// connection closed for normal reasons
+					"transport close",
+				].includes(reason);
+				socketConnectionMetric.setProperties({
+					reason,
+					transport: socket.conn.transport.name,
+				});
+				if (isOk) {
+					socketConnectionMetric.success("Socket connection ended");
+				} else {
+					socketConnectionMetric.error("Socket connection closed", reason);
+				}
+			});
 
 			// Server side listening for ping events
 			webSocket.on("ping", (cb) => {
