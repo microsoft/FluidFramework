@@ -30,7 +30,6 @@ export {
 	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
-	runGCTestKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,

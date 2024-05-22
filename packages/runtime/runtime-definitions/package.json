@@ -76,7 +76,8 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/id-compressor": "workspace:~"
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -110,6 +111,9 @@
 			},
 			"InterfaceDeclaration_IFluidParentContext": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITelemetryContext": {
 				"backCompat": false
 			},
 			"RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {

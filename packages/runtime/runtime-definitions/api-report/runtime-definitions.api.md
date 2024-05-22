@@ -30,6 +30,7 @@ import type { ITree } from '@fluidframework/driver-definitions/internal';
 import type { IUser } from '@fluidframework/driver-definitions';
 import type { SummaryTree } from '@fluidframework/driver-definitions/internal';
 import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils/internal';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -417,12 +418,14 @@ export interface ISummaryTreeWithStats {
 
 // @alpha
 export interface ITelemetryContext {
-    // @deprecated
-    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
-    // @deprecated
-    serialize(): string;
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
+}
+
+// @internal
+export interface ITelemetryContextExt {
+    set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyTypeExt>): void;
 }
 
 // @alpha

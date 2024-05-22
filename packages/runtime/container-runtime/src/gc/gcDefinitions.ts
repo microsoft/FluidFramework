@@ -81,8 +81,6 @@ export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStor
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
-/** Config key to turn GC on / off for testing. */
-export const runGCTestKey = "Fluid.GarbageCollection.Test.RunGC";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -334,8 +332,6 @@ export interface IGarbageCollector {
 	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
-	/** Tells whether the GC state in summary needs to be reset in the next summary. */
-	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
 	/** Tells whether tombstone feature is enabled and enforced. */
@@ -472,11 +468,6 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
-	/**
-	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
-	 * disabled via runtime options or feature flags.
-	 */
-	readonly shouldRunGC: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

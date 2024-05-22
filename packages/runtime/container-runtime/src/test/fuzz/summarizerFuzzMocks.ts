@@ -195,7 +195,6 @@ export class MockContainerRuntimeForSummarizer
 			submitOpDuration: 0,
 			uploadDuration: 0,
 			generateDuration: 0,
-			forcedFullTree: false,
 			summaryTree: {
 				type: SummaryType.Tree,
 				tree: {},

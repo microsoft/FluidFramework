@@ -33,10 +33,11 @@ import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContextExt } from '@fluidframework/runtime-definitions/internal';
 import { ITree } from '@fluidframework/driver-definitions/internal';
 import { SummaryObject } from '@fluidframework/driver-definitions';
 import { SummaryType } from '@fluidframework/driver-definitions';
-import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -224,11 +225,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 }
 
 // @internal (undocumented)
-export class TelemetryContext implements ITelemetryContext {
-    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
+export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+    get(prefix: string, property: string): TelemetryEventPropertyTypeExt;
     serialize(): string;
-    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyTypeExt>): void;
 }
 
 // @internal

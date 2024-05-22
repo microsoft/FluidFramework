@@ -4,6 +4,7 @@
 
 ```ts
 
+import { CompatibilityMode } from '@fluidframework/fluid-static/internal';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
@@ -23,11 +24,11 @@ export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 // @internal
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;

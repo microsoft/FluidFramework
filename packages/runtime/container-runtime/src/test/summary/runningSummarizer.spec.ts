@@ -263,7 +263,6 @@ describe("Runtime", () => {
 					summaryStats: emptySummaryStats,
 					handle: "test-handle",
 					clientSequenceNumber: lastClientSeq,
-					forcedFullTree: false,
 				} as const;
 			}
 
