@@ -135,7 +135,6 @@ describe("mixinAttributor", () => {
 		(context.deltaManager as MockDeltaManager).emit("op", op);
 		const { summary } = await containerRuntime.summarize({
 			fullTree: true,
-			trackState: false,
 			runGC: false,
 		});
 
@@ -269,7 +268,6 @@ describe("mixinAttributor", () => {
 
 				const { summary } = await containerRuntime.summarize({
 					fullTree: true,
-					trackState: false,
 					runGC: false,
 				});
 				assert(summary.tree[".attributor"] === undefined);
