@@ -19,9 +19,9 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
-import { TestSnapshotCache } from "./testSnapshotCache.js";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
