@@ -17,6 +17,5 @@ import { NodeData } from "./types.js";
  * @internal
  */
 export interface MapTree extends NodeData {
-	readonly value?: NodeData["value"];
 	readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
