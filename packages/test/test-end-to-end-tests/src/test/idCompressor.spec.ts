@@ -17,11 +17,11 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -608,11 +608,52 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 				superResubmit(content, localOpMetadata);
 			};
 
+			// important allocation to test the ordering of generate, takeNext, generate, retakeOutstanding, takeNext.
+			// correctness here relies on mutation in retaking if we want the last takeNext to return an empty range
+			// which it must be if we want to avoid overlapping range bugs
+			simulateAllocation(sharedMapContainer1);
+
 			container1.connect();
 			await waitForContainerConnection(container1);
 			await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
 		});
 	}
+
+	it("Reentrant ops do not cause resubmission of ID allocation ops", async () => {
+		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
+
+		const simulateAllocation = (map: ISharedMap) => {
+			const idCompressor = getIdCompressor(map);
+			const id = idCompressor.generateCompressedId();
+			idPairs.push([id, idCompressor]);
+		};
+
+		container1.disconnect();
+
+		sharedMapContainer2.set("key", "first");
+
+		let invokedCount = 0;
+		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as any).processCore = (
+			message: ISequencedDocumentMessage,
+			local: boolean,
+			localOpMetadata: unknown,
+		) => {
+			if (invokedCount === 0) {
+				// Force reentrancy during first op processing to cause batch manager rebase (which should skip rebasing allocation ops)
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant1");
+				simulateAllocation(sharedMapContainer1);
+				sharedMapContainer1.set("key", "reentrant2");
+			}
+			superProcessCore(message, local, localOpMetadata);
+			invokedCount++;
+		};
+
+		container1.connect();
+		await waitForContainerConnection(container1);
+		await assureAlignment([sharedMapContainer1, sharedMapContainer2], idPairs);
+	});
 
 	// IdCompressor is at container runtime level, which means that individual DDSs
 	// in the same container and different DataStores should have the same underlying compressor state

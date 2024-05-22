@@ -44,7 +44,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 					},
 				},
 				gcOptions: {
-					gcAllowed: true,
 					runGCInTestMode: deleteUnreferencedContent,
 				},
 			},
@@ -83,26 +82,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 		}
 
 		/**
-		 * Retrieves the storage Id from the given reference map of blobIds. Note that this only works if the given
-		 * localId blobs are mapped to the same storageId.
-		 */
-		function getStorageIdFromReferenceMap(
-			referenceNodeStateMap: Map<string, "referenced" | "unreferenced">,
-			localBlobIds: string[],
-		): string {
-			let storageId: string | undefined;
-			referenceNodeStateMap.forEach((state, nodePath) => {
-				if (localBlobIds.includes(nodePath)) {
-					return;
-				}
-				assert(storageId === undefined, "Unexpected blob node in reference state map");
-				storageId = nodePath;
-			});
-			assert(storageId !== undefined, "No storage id node in reference state map");
-			return storageId;
-		}
-
-		/**
 		 * Loads a container from the itemId of the container. We need to do this instead of loading a container
 		 * normally because - When a detached container is attached after attachment blobs have been added, a .tmp
 		 * extension is added to the end of the filename. Since the ODSP test driver assumes the filename will always
@@ -125,6 +104,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
+			// Skip these tests for drivers / services that do not support attachment blobs.
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}

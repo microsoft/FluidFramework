@@ -23,7 +23,6 @@ import {
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { LocalNodeKey } from "../node-key/index.js";
 import {
 	Any,
 	FlexAllowedTypes,
@@ -47,7 +46,6 @@ import {
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
-	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
@@ -71,7 +69,7 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
-import { LazyNodeKeyField, makeField } from "./lazyField.js";
+import { makeField } from "./lazyField.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
@@ -350,7 +348,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
 		for (const [key, value] of this.entries()) {
@@ -463,48 +461,17 @@ export function propertyNameFromFieldKey<T extends string>(key: T): PropertyName
 	return key as PropertyNameFromFieldKey<T>;
 }
 
-export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
-	extends LazyTreeNode<TSchema>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
-		// TODO: Optimize this to avoid allocating the field object.
-
-		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.objectNodeFields.get(key);
-
-		if (fieldSchema === undefined) {
-			return undefined;
-		}
-
-		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
-		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
-		// assert(
-		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
-		// 	"invalid node key field",
-		// );
-
-		if (this.context.nodeKeyFieldKey === undefined) {
-			return undefined;
-		}
-
-		return field.localNodeKey;
-	}
-}
-
 export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyObjectNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
+): LazyTreeNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
 	const objectNodeClass = getOrCreate(cachedStructClasses, schema, () =>
 		buildStructClass(schema),
 	);
-	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyObjectNode<TSchema> &
+	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyTreeNode<TSchema> &
 		FlexTreeObjectNodeTyped<TSchema>;
 }
 
@@ -515,7 +482,7 @@ const cachedStructClasses = new WeakMap<
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyObjectNode<FlexObjectNodeSchema>
+	) => LazyTreeNode<FlexObjectNodeSchema>
 >();
 
 function getBoxedField(
@@ -535,7 +502,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-) => LazyObjectNode<TSchema> {
+) => LazyTreeNode<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
@@ -605,7 +572,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyObjectNode<TSchema> {
+	class CustomStruct extends LazyTreeNode<TSchema> {
 		public constructor(
 			context: Context,
 			cursor: ITreeSubscriptionCursor,

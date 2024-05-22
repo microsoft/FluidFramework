@@ -5,10 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
-import { IDirectory } from "../../interfaces.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
+import type { IDirectory } from "../../interfaces.js";
+
+/**
+ * Asserts that the 2 provided directories have equivalent contents.
+ */
 export async function assertEquivalentDirectories(
 	first: IDirectory,
 	second: IDirectory,

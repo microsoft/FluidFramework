@@ -40,7 +40,6 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 			SharedStringFactory.Attributes,
 		);
 		await sharedString.load(services);
-		await sharedString.loaded;
 		return sharedString;
 	}
 

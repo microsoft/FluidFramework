@@ -8,10 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../base.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { BaseCommand } from "../../library";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	static readonly description =

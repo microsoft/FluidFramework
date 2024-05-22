@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,

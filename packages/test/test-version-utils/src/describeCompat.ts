@@ -10,6 +10,8 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
+import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { testBaseVersion } from "./baseVersion.js";
 import {
 	CompatConfig,
@@ -17,7 +19,13 @@ import {
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
 } from "./compatConfig.js";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import {
+	CompatKind,
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
@@ -70,14 +78,14 @@ function createCompatSuite(
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  })
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  });
 					} catch (error) {
@@ -102,6 +110,11 @@ function createCompatSuite(
 					resetAfterEach = options?.resetAfterEach ?? true;
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+					}
+					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
+						(provider.driver as OdspTestDriver).setPersistedCache(
+							options.persistedCache,
+						);
 					}
 					return provider;
 				}, apis);
@@ -178,6 +191,8 @@ export interface ITestObjectProviderOptions {
 	resetAfterEach?: boolean;
 	/** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
 	syncSummarizer?: boolean;
+	/** Persisted Cache provided by ODSP */
+	persistedCache?: IPersistedCache;
 }
 
 /**

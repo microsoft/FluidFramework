@@ -76,11 +76,6 @@ function buildPendingMessageContent(
 }
 
 /**
- * Tag for op local metadata to indicate that the op is an id allocation.
- */
-export const idAllocationIndicator = Symbol("idAllocationIndicator");
-
-/**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
  * batches along with the messages.
@@ -146,7 +141,7 @@ export class PendingStateManager implements IDisposable {
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,
-				"saved op should already have a sequence number",
+				0x97c /* saved op should already have a sequence number */,
 			);
 			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
 		});
@@ -386,23 +381,15 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
-		const messagesToReplay: IPendingMessage[] = [];
-		// The following places all id allocations to the front of the queue while maintaining their
-		// partial order and that of the rest of the ops. Since id allocations are guaranteed to
-		// never be in batches with non-id allocation ops, this code does not need to worry about batch boundaries
-		// as they will naturally be maintained.
-		filterMessagesInto(this.pendingMessages, messagesToReplay, true);
-		filterMessagesInto(this.pendingMessages, messagesToReplay, false);
-		this.pendingMessages.clear();
+		let remainingPendingMessagesCount = this.pendingMessages.length;
 
-		assert(
-			messagesToReplay.length === initialPendingMessagesCount &&
-				this.pendingMessages.isEmpty(),
-			"All messages should be moved to messagesToReplay queue",
-		);
-
-		for (let i = 0; i < messagesToReplay.length; i++) {
-			let pendingMessage = messagesToReplay[i];
+		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
+		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
+		// which must not be replayed.
+		while (remainingPendingMessagesCount > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let pendingMessage = this.pendingMessages.shift()!;
+			remainingPendingMessagesCount--;
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
@@ -415,14 +402,14 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
-					i < messagesToReplay.length - 1,
+					remainingPendingMessagesCount > 0,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
 				const batch: IPendingBatchMessage[] = [];
 
-				// batch end may be last pending message
-				while (i < messagesToReplay.length) {
+				// check is >= because batch end may be last pending message
+				while (remainingPendingMessagesCount >= 0) {
 					batch.push({
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
@@ -432,8 +419,11 @@ export class PendingStateManager implements IDisposable {
 					if (pendingMessage.opMetadata?.batch === false) {
 						break;
 					}
-					assert(i < messagesToReplay.length - 1, 0x555 /* No batch end found */);
-					pendingMessage = messagesToReplay[++i];
+					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
+
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pendingMessage = this.pendingMessages.shift()!;
+					remainingPendingMessagesCount--;
 					assert(
 						pendingMessage.opMetadata?.batch !== true,
 						0x556 /* Batch start needs a corresponding batch end */,
@@ -462,20 +452,6 @@ export class PendingStateManager implements IDisposable {
 				count: initialPendingMessagesCount,
 				clientId: this.stateHandler.clientId(),
 			});
-		}
-	}
-}
-
-function filterMessagesInto(
-	src: Deque<IPendingMessage>,
-	dst: IPendingMessage[],
-	addIdAllocations: boolean,
-): void {
-	for (let i = 0; i < src.length; i++) {
-		const pendingMessage = src.get(i);
-		assert(pendingMessage !== undefined, "pendingMessage should be in queue");
-		if ((pendingMessage?.localOpMetadata === idAllocationIndicator) === addIdAllocations) {
-			dst.push(pendingMessage);
 		}
 	}
 }

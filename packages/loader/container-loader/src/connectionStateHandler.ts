@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import {
 	type TelemetryEventCategory,
@@ -660,9 +660,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 			this._clientId = this.pendingClientId;
 		} else if (value === ConnectionState.Disconnected) {
-			// Clear pending state immediately to prepare for reconnect
-			this._pendingClientId = undefined;
-
 			if (this.joinTimer.hasTimer) {
 				this.stopjoinTimer();
 			}
@@ -691,8 +688,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 		}
 
-		// Report transition before we propagate event across layers
+		// Report transition
 		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
+
+		// Clear pending state immediately to prepare for reconnect
+		// Do it after calling connectionStateChanged() above, such that our telemetry contains pendingClientId on disconnect events
+		// and we can pair attempts to connect with disconnects (that's the only ID we have if connection did not move far enough before being disconnected)
+		if (value === ConnectionState.Disconnected) {
+			this._pendingClientId = undefined;
+		}
 	}
 
 	protected get membership(): IMembership | undefined {

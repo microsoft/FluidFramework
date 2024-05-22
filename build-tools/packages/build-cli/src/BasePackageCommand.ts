@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
-import { BaseCommand } from "./base.js";
 import {
 	PackageFilterOptions,
 	PackageKind,
@@ -16,8 +15,9 @@ import {
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
-} from "./filter.js";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
+} from "./filter";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
+import { BaseCommand } from "./library";
 
 /**
  * Commands that run operations per project.

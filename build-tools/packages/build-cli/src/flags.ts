@@ -29,17 +29,8 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./library/index.js";
-import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
-
-/**
- * A re-usable CLI flag to parse the root directory of the Fluid repo.
- */
-export const rootPathFlag = Flags.custom({
-	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-	env: "_FLUID_ROOT_",
-	hidden: true,
-});
+import type { DependencyUpdateType } from "./library";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse release groups.

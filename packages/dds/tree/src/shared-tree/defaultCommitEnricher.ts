@@ -106,11 +106,11 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,
-			"Invalid resubmit phase start during incomplete resubmit phase",
+			0x957 /* Invalid resubmit phase start during incomplete resubmit phase */,
 		);
 		assert(
 			toResubmit.length === this.inFlightQueue.length,
-			"Unexpected resubmit of more or fewer commits than are in flight",
+			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
 		);
 		if (this.latestInFlightCommitWithStaleEnrichments === -1) {
 			// No in-flight commits have stale enrichments, so we can resubmit them as is
@@ -161,7 +161,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	public onSequencedCommitApplied(isLocal: boolean): void {
 		if (isLocal) {
 			// The oldest in-flight commit has been sequenced
-			assert(this.inFlightQueue.length > 0, "Sequencing of unknown local commit");
+			assert(this.inFlightQueue.length > 0, 0x959 /* Sequencing of unknown local commit */);
 			this.inFlightQueue.shift();
 			if (this.latestInFlightCommitWithStaleEnrichments >= 0) {
 				this.latestInFlightCommitWithStaleEnrichments -= 1;

@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
-	ApiLevel,
-	knownApiLevels,
-	isKnownApiLevel,
-} from "./apiLevel.js";
-export { ApiTag } from "./apiTag.js";
+export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel";
+export { ApiTag } from "./apiTag";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
@@ -18,12 +14,17 @@ export {
 	getDefaultBumpTypeForBranch,
 	getReleaseSourceForReleaseGroup,
 	generateReleaseBranchName,
-} from "./branches.js";
-export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
-export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
-export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets.js";
-export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
-export { Repository } from "./git.js";
+} from "./branches";
+export { getDisplayDate, getDisplayDateRelative } from "./dates";
+export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
+export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
+export {
+	unscopedPackageNameString,
+	BaseCommand,
+	GenerateEntrypointsCommand,
+} from "./commands";
+export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
+export { Repository } from "./git";
 export {
 	ensureDevDependencyExists,
 	filterVersionsOlderThan,

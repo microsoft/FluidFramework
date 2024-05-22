@@ -5,6 +5,7 @@
 
 import { assert } from "chai";
 import { Test } from "mocha";
+
 import {
 	BenchmarkArguments,
 	isParentProcess,

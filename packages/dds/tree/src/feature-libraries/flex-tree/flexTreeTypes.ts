@@ -329,6 +329,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the keys returned.
 	 */
 	keys(): IterableIterator<FieldKey>;
 
@@ -337,6 +339,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the values returned.
 	 */
 	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
 
@@ -347,6 +351,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
 	 *
 	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link FlexTreeMapNode} (a.k.a. `[Symbol.Iterator]()`).
+	 *
+	 * No guarantees are made regarding the order of the entries returned.
 	 */
 	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
 
@@ -364,6 +370,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
 
@@ -600,7 +607,6 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"tryGetField",
 	"type",
 	"value",
-	"localNodeKey",
 	"boxedIterator",
 	"iterator",
 	"getBoxed",
@@ -1002,8 +1008,6 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeRequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeOptionalField<Types>
-	: Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: FlexTreeField;
 
 /**
@@ -1060,9 +1064,6 @@ export type FlexTreeUnboxFieldInner<
 	? FlexTreeUnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
-	Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: // TODO: forbidden
 	  unknown;
 

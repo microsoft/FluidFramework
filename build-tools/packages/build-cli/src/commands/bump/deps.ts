@@ -10,8 +10,7 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../base.js";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,
@@ -21,6 +20,7 @@ import {
 	testModeFlag,
 } from "../../flags.js";
 import {
+	BaseCommand,
 	// eslint-disable-next-line import/no-deprecated
 	MonoRepoKind,
 	generateBumpDepsBranchName,

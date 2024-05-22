@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base.js";
+import { BaseCommand } from "../../library";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on

@@ -36,7 +36,7 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": [
 			"error",
 			{
-				allowExpressions: false,
+				allowExpressions: true,
 				allowTypedFunctionExpressions: true,
 				allowHigherOrderFunctions: true,
 				allowDirectConstAssertionInArrowFunctions: true,
@@ -92,6 +92,11 @@ module.exports = {
 		"unicorn/template-indent": "off",
 
 		/**
+		 * Disabled because it is incompatible with prettier.
+		 */
+		"unicorn/number-literal-case": "off",
+
+		/**
 		 * The rule seems to crash on some of our code
 		 */
 		"unicorn/expiring-todo-comments": "off",
@@ -100,8 +105,19 @@ module.exports = {
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.
+		 *
+		 * @see https://typescript-eslint.io/rules/no-explicit-any
 		 */
-		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-explicit-any": [
+			"error",
+			{
+				/**
+				 * For certain cases, like rest parameters, any is required to allow arbitrary argument types.
+				 * @see https://typescript-eslint.io/rules/no-explicit-any/#ignorerestargs
+				 */
+				ignoreRestArgs: true,
+			},
+		],
 
 		/**
 		 * Requires explicit typing for anything exported from a module. Explicit types for function return

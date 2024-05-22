@@ -10,14 +10,14 @@ import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
-import { BaseCommand } from "../../base.js";
 import {
 	ApiLevel,
+	BaseCommand,
 	getApiExports,
 	isKnownApiLevel,
 	knownApiLevels,
-} from "../../library/index.js";
-import type { CommandLogger } from "../../logging.js";
+} from "../../library";
+import type { CommandLogger } from "../../logging";
 
 const maxConcurrency = 4;
 

@@ -13,12 +13,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedObjectSequenceFactory } from "../sequenceFactory.js";
-import { SharedObjectSequence } from "../sharedObjectSequence.js";
+import { SharedObjectSequenceFactory, type SharedObjectSequence } from "../sequenceFactory.js";
+import { SharedObjectSequenceClass } from "../sharedObjectSequence.js";
 
 function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const sequence = new SharedObjectSequence(
+	const sequence = new SharedObjectSequenceClass(
 		dataStoreRuntime,
 		id,
 		SharedObjectSequenceFactory.Attributes,

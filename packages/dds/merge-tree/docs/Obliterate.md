@@ -46,7 +46,7 @@ The first clause handles concurrent inserts before the removal is sequenced, and
 However, there is a way to view obliterate's semantics as a special case of a "move" operation,
 which preserves content identity such that concurrently inserted segments will be inserted to the range at its current location.
 A main motivator here from the app perspective might be the idea that if user 1 cut and pastes an entire paragraph to a different section of the document
-whiler user 2 edits it, the desired merge outcome would likely be for user 2's edit to apply to the paragraph in its new location.
+while user 2 edits it, the desired merge outcome would likely be for user 2's edit to apply to the paragraph in its new location.
 Roughly, anywhere an application would want obliterate merge semantics on user delete of some content,
 the same application would want move semantics if the user instead cut and pasted the content somewhere else.
 
@@ -219,7 +219,7 @@ function insertingWalk(args /* mostly omitted */, op) {
 	let moveUpperBound = Number.POSITIVE_INFINITY;
 	let movedSegment: ISegment | undefined = undefined;
 	const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
-	const findAdjacedMovedSegment = (seg) => {
+	const findAdjacentMovedSegment = (seg) => {
 		if (seg.movedSeq && seg.movedSeq > op.referenceSequenceNumber) {
 			movedSegment = seg;
 			return false;
@@ -232,11 +232,11 @@ function insertingWalk(args /* mostly omitted */, op) {
 		// happened, no need to continue.
 		return moveUpperBound > smallestSeqMoveOp;
 	};
-	forwardExcursion(insertSegment, findAdjacedMovedSegment);
+	forwardExcursion(insertSegment, findAdjacentMovedSegment);
 	const furtherMovedSegment = movedSegment;
 	currentMin = Number.POSITIVE_INFINITY;
 	movedSeg = undefined;
-	backwardExcursion(insertSegment, findAdjacedMovedSegment);
+	backwardExcursion(insertSegment, findAdjacentMovedSegment);
 	const nearerMovedSegment = movedSegment;
 	if (
 		(nearerMovedSegment && breakEndpointTie(nearerMovedSegment, insertSegment, op)) ||
@@ -642,7 +642,7 @@ Both outcomes are reasonable; clients 1 and 2 effectively expressed opposing des
 ```
 
 Client 1's op succeeds without conflict, giving intermediate state order of the paragraphs "14523".
-Then client 2's op has a start endpoint targetting a tombstoned segment for paragraph 3, so it only affects paragraph 4.
+Then client 2's op has a start endpoint targeting a tombstoned segment for paragraph 3, so it only affects paragraph 4.
 The final state is "15423" since merge-tree chose near-merge-later.
 
 If the ops are sequenced in the other order, the final state would instead be "15234".

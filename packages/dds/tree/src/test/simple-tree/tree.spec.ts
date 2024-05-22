@@ -10,6 +10,8 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { getView } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -101,5 +103,31 @@ describe("class-tree tree", () => {
 		assert.equal(child.length, 1);
 		const child2 = child[0];
 		assert.equal(child2, "a");
+	});
+
+	describe("field defaults", () => {
+		it("adds identifier to unpopulated identifier fields.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			const nodeKeyManager = createMockNodeKeyManager();
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: undefined,
+			}));
+			const root = getView(config, nodeKeyManager).root;
+			assert.equal(root.identifier, "a110ca7e-add1-4000-8000-000000000000");
+		});
+
+		it("populates field when no field defaulter is provided.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				testOptionalField: schema.optional(schema.string),
+			});
+			const nodeKeyManager = createMockNodeKeyManager();
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				testOptionalField: undefined,
+			}));
+			const root = getView(config, nodeKeyManager).root;
+			assert.equal(root.testOptionalField, undefined);
+		});
 	});
 });

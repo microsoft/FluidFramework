@@ -6,10 +6,9 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap } from "./interfaces.js";
@@ -81,7 +80,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
  * Entrypoint for {@link ISharedMap} creation.
  * @alpha
  */
-export const SharedMap: ISharedObjectKind<ISharedMap> = createSharedObjectKind(MapFactory);
+export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
 
 /**
  * Entrypoint for {@link ISharedMap} creation.

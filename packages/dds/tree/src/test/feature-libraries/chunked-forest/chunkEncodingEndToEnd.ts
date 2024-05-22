@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	ChangesetLocalId,
@@ -41,10 +41,8 @@ import {
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
 import {
 	MockTreeCheckout,
 	flexTreeViewWithContent,
@@ -107,7 +105,6 @@ describe("End to end chunked encoding", () => {
 				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
 				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
 				createMockNodeKeyManager(),
-				brand(nodeKeyFieldKey),
 			);
 		}
 
@@ -145,6 +142,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
@@ -173,6 +172,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
