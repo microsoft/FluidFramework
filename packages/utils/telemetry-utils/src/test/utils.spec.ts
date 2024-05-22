@@ -172,7 +172,7 @@ describe("Sampling", () => {
 		);
 	});
 
-	it("Events are not logged if DisableSampling telemetry flag is set to true but skipLoggingWhenSamplingIsDisabled is provided as false", () => {
+	it("Events are not logged if DisableSampling telemetry flag is set to true but skipLoggingWhenSamplingIsDisabled is provided as true", () => {
 		const injectedSettings = {
 			"Fluid.Telemetry.DisableSampling": true,
 		};
