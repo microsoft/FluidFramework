@@ -4,7 +4,9 @@
  */
 
 import { expect } from 'chai';
+
 import {
+	RestOrArray,
 	filter,
 	find,
 	getOrCreate,
@@ -12,9 +14,8 @@ import {
 	map,
 	memoizeGetter,
 	reduce,
-	RestOrArray,
 	unwrapRestOrArray,
-} from '../Common';
+} from '../Common.js';
 
 describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {

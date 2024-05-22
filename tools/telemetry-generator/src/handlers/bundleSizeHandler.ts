@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-module.exports = function handler(fileData, logger) {
+module.exports = function handler(fileData, logger): void {
 	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
 	// - logger is an ITelemetryBufferedLogger. Call its send() method to write the output telemetry
 	//   events.
@@ -19,6 +19,7 @@ module.exports = function handler(fileData, logger) {
 			asset.name.toLowerCase().endsWith(".js") === true
 		) {
 			logger.send({
+				namespace: "FFEngineering", // Transfer the telemetry associated with bundle size measurement to namespace "FFEngineering"
 				category: "performance",
 				eventName: "Benchmark",
 				benchmarkType: "BundleSize",

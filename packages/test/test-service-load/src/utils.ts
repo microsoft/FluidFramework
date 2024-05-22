@@ -5,68 +5,65 @@
 
 import crypto from "crypto";
 import fs from "fs";
+
 import {
+	DriverEndpoint,
+	ITelemetryBufferedLogger,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
-	OdspTestDriver,
 } from "@fluid-private/test-drivers";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITelemetryBufferedLogger,
-	ITestDriver,
-	TestDriverTypes,
-	DriverEndpoint,
-} from "@fluidframework/test-driver-definitions";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+
+import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
-} from "./optionsMatrix";
-import { pkgName, pkgVersion } from "./packageVersion";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+} from "./optionsMatrix.js";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = (minLogLevel?: LogLevel) =>
-		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-				const logger = getTestLogger?.();
-				assert(logger !== undefined, "Expected getTestLogger to return something");
-				return new FileLogger(logger, minLogLevel);
-			} else {
-				return new FileLogger(undefined, minLogLevel);
-			}
-		});
+	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
+		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+			const logger = getTestLogger?.();
+			assert(logger !== undefined, "Expected getTestLogger to return something");
+			return new FileLogger(logger);
+		} else {
+			return new FileLogger(undefined);
+		}
+	});
 
-	public static async createLogger(
-		dimensions: {
-			driverType: string;
-			driverEndpointName: string | undefined;
-			profile: string;
-			runId: number | undefined;
-		},
-		minLogLevel: LogLevel = LogLevel.default,
-	) {
-		const logger = await this.loggerP(minLogLevel);
+	public static async createLogger(dimensions: {
+		driverType: string;
+		driverEndpointName: string | undefined;
+		profile: string;
+		runId: number | undefined;
+	}) {
 		return createChildLogger({
-			logger,
+			logger: await this.loggerP,
 			properties: {
 				all: dimensions,
 			},
@@ -74,17 +71,15 @@ class FileLogger implements ITelemetryBufferedLogger {
 	}
 
 	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
-		await (await this.loggerP()).flush(runInfo);
+		await (await this.loggerP).flush(runInfo);
 	}
 
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
+	public readonly minLogLevel: LogLevel = LogLevel.verbose;
 
-	private constructor(
-		private readonly baseLogger?: ITelemetryBufferedLogger,
-		public readonly minLogLevel?: LogLevel,
-	) {}
+	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
@@ -186,16 +181,12 @@ export async function initialize(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
-	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
-	const logger = await createLogger(
-		{
-			driverType: testDriver.type,
-			driverEndpointName: testDriver.endpointName,
-			profile: profileName,
-			runId: undefined,
-		},
-		minLogLevel,
-	);
+	const logger = await createLogger({
+		driverType: testDriver.type,
+		driverEndpointName: testDriver.endpointName,
+		profile: profileName,
+		runId: undefined,
+	});
 
 	logger.sendTelemetryEvent({
 		eventName: "RunConfigOptions",
@@ -203,7 +194,6 @@ export async function initialize(
 			loaderOptions,
 			containerOptions,
 			configurations: { ...globalConfigurations, ...configurations },
-			logLevel: minLogLevel,
 		}),
 	});
 
@@ -226,9 +216,11 @@ export async function initialize(
 		);
 		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
-		await Promise.all(
-			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
-		);
+		if (dsm !== undefined) {
+			await Promise.all(
+				[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
+			);
+		}
 	}
 
 	const testId = testIdn ?? Date.now().toString();
@@ -303,6 +295,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
 
 /**

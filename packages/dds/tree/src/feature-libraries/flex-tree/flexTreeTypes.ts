@@ -3,28 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
-import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
-import { Assume, FlattenKeys } from "../../util/index.js";
-import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import {
-	FlexFieldSchema,
-	LazyItem,
-	FlexTreeNodeSchema,
+	AnchorNode,
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeValue,
+	anchorSlot,
+} from "../../core/index.js";
+import { Assume, FlattenKeys } from "../../util/index.js";
+import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
+import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
+import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
+import {
+	Any,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	Any,
-	FlexObjectNodeFields,
-	FlexListToUnion,
+	FlexFieldSchema,
 	FlexList,
+	FlexListToUnion,
+	FlexMapNodeSchema,
+	FlexObjectNodeFields,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	LazyItem,
+	LeafNodeSchema,
 } from "../typed-schema/index.js";
-import { FieldKinds } from "../default-schema/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { EditableTreeEvents } from "./treeEvents.js";
+
 import { FlexTreeContext } from "./context.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
+
+/**
+ * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.
+ * @remarks This always points to a "real" {@link FlexTreeNode} (i.e. a `LazyTreeNode`), never to a "raw" node.
+ */
+export const flexTreeSlot = anchorSlot<FlexTreeNode>();
 
 /**
  * Indicates that an object is a flex tree.
@@ -78,7 +91,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	readonly schema: TSchema;
 
 	/**
-	 * A common context of a "forest" of EditableTrees.
+	 * A common context of a "forest" of FlexTrees.
 	 */
 	readonly context: FlexTreeContext;
 
@@ -121,12 +134,6 @@ export enum TreeStatus {
 }
 
 /**
- * {@inheritdoc TreeNode.[onNextChange]}
- * @internal
- */
-export const onNextChange = Symbol("onNextChange");
-
-/**
  * Generic tree node API.
  *
  * Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
@@ -155,15 +162,26 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	/**
 	 * {@inheritDoc ISubscribable#on}
 	 */
-	on<K extends keyof EditableTreeEvents>(
+	on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void;
 
 	/**
 	 * Gets a field of this node, if it is not empty.
 	 */
 	tryGetField(key: FieldKey): undefined | FlexTreeField;
+
+	/**
+	 * Get the field for `key`.
+	 * @param key - which entry to look up.
+	 *
+	 * @remarks
+	 * All fields implicitly exist, so `getBoxed` can be called with any key and will always return a field.
+	 * Even if the field is empty, it will still be returned, and can be edited to insert content if allowed by the field kind.
+	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate afield in the empty case.
+	 */
+	getBoxed(key: FieldKey): FlexTreeField;
 
 	/**
 	 * The field this tree is in, and the index within that field.
@@ -178,21 +196,14 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	boxedIterator(): IterableIterator<FlexTreeField>;
 
 	/**
-	 * Subscribe to the next change that affects this node's children.
-	 * @returns a function which will deregister the registered event.
-	 * It has no effect if the event was already deregistered.
+	 * The anchor node associated with this node
+	 *
 	 * @remarks
-	 * The given function will be run the next time that this node's direct children change.
-	 * It will only be run once, and thereafter automatically deregistered.
-	 * It does not run in response to changes beneath this node's direct children.
-	 * This event fires after the tree has been mutated but before {@link EditableTreeEvents.afterChange}.
-	 * Only one subscriber may register to this event at the same time.
-	 * @privateRemarks
-	 * This event allows the proxy-based API that is built on top of the editable tree to maintain invariants
-	 * around "hydrating" proxies that were created with schema-provided factory functions.
-	 * It is not a public API and thus the symbol for this property is not exported.
+	 * The ref count keeping this alive is owned by the FlexTreeNode:
+	 * if holding onto this anchor for longer than the FlexTreeNode might be alive,
+	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
-	[onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+	readonly anchorNode: AnchorNode;
 }
 
 /**
@@ -239,8 +250,8 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 
 	/**
 	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
-	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 * This is defined to mean that both are in the same flex tree, and are the same field on the same node.
+	 * This is more than just a reference comparison because unlike FlexTree nodes, fields are not cached on anchors and can be duplicated.
 	 *
 	 * @privateRemarks
 	 * TODO:
@@ -248,6 +259,18 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
 	 */
 	isSameAs(other: FlexTreeField): boolean;
+
+	/**
+	 * Gets a node of this field by its index without unboxing.
+	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
+	 *
+	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
+	 * or index \>= sequence.length.
+	 *
+	 * @remarks
+	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 */
+	boxedAt(index: number): FlexTreeNode | undefined;
 }
 
 // #region Node Kinds
@@ -306,6 +329,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `keys` will yield only the keys of fields which contain one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the keys returned.
 	 */
 	keys(): IterableIterator<FieldKey>;
 
@@ -314,6 +339,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
+	 *
+	 * No guarantees are made regarding the order of the values returned.
 	 */
 	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
 
@@ -324,6 +351,8 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
 	 *
 	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link FlexTreeMapNode} (a.k.a. `[Symbol.Iterator]()`).
+	 *
+	 * No guarantees are made regarding the order of the entries returned.
 	 */
 	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
 
@@ -341,6 +370,7 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
 
@@ -566,6 +596,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
  * @internal
  */
 export const reservedObjectNodeFieldPropertyNames = [
+	"anchorNode",
 	"constructor",
 	"context",
 	"is",
@@ -576,9 +607,9 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"tryGetField",
 	"type",
 	"value",
-	"localNodeKey",
 	"boxedIterator",
 	"iterator",
+	"getBoxed",
 ] as const;
 
 /**
@@ -715,14 +746,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
 	/**
-	 * Gets a node of this field by its index without unboxing.
-	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
-	 *
-	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
-	 * or index \>= array.length.
-	 *
-	 * @remarks
-	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 * {@inheritdoc FlexTreeField.boxedAt}
 	 */
 	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 
@@ -739,6 +763,22 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
+
+	/**
+	 * Get an editor for this sequence.
+	 */
+	sequenceEditor(): SequenceFieldEditBuilder;
+
+	/*
+	 * TODO:
+	 * Remove these editing methods and replace their use with use of `sequenceEditor`.
+	 * These editing methods replicate the API exposed by simple-tree, but using flex-tree types.
+	 * As these methods just re-abstract the lower level SequenceFieldEditBuilder API, they add little value.
+	 * Migrating the logic implementing them to simple-tree (and having it just use `sequenceEditor` directly)
+	 * avoids duplicating the API surface (and documentation), as well as makes it simpler to implement the desired user facing validation and errors
+	 * since simple-tree becomes responsible for all the validation and can produce usage errors in terms of the public package API.
+	 */
+	// #region Editing Methods
 
 	/**
 	 * Inserts new item(s) at a specified location.
@@ -766,16 +806,6 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	removeAt(index: number): void;
-
-	/**
-	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
-	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if `start` is not in the range [0, `list.length`).
-	 * @throws Throws if `end` is less than `start`.
-	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
-	 */
-	removeRange(start?: number, end?: number): void;
 
 	/**
 	 * Moves the specified item to the start of the sequence.
@@ -899,6 +929,8 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 
+	// #endregion
+
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
 	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
@@ -976,8 +1008,6 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeRequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeOptionalField<Types>
-	: Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: FlexTreeField;
 
 /**
@@ -1034,9 +1064,6 @@ export type FlexTreeUnboxFieldInner<
 	? FlexTreeUnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
-	Kind extends typeof FieldKinds.nodeKey
-	? FlexTreeNodeKeyField
 	: // TODO: forbidden
 	  unknown;
 

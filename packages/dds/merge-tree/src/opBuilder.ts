@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTreeNodes";
+import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
+	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
-	MergeTreeDeltaType,
-	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
-} from "./ops";
-import { PropertySet } from "./properties";
+	IMergeTreeRemoveMsg,
+	MergeTreeDeltaType,
+} from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties
@@ -35,7 +35,7 @@ export function createAnnotateMarkerOp(
 	}
 
 	return {
-		props,
+		props: { ...props },
 		relativePos1: { id, before: true },
 		relativePos2: { id },
 		type: MergeTreeDeltaType.ANNOTATE,
@@ -59,7 +59,7 @@ export function createAnnotateRangeOp(
 	return {
 		pos1: start,
 		pos2: end,
-		props,
+		props: { ...props },
 		type: MergeTreeDeltaType.ANNOTATE,
 	};
 }

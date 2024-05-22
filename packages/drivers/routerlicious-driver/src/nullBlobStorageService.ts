@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -11,10 +14,6 @@ import * as api from "@fluidframework/protocol-definitions";
  * Does not read/write anything.
  */
 export class NullBlobStorageService implements IDocumentStorageService {
-	public get repositoryUrl(): string {
-		throw new Error("Invalid operation");
-	}
-
 	public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}

@@ -1,5 +1,194 @@
 # @fluidframework/container-definitions
 
+## 2.0.0-rc.4.0.0
+
+### Major Changes
+
+-   Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Here are breaking changes in Audience behavior:
+
+    1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
+    2. IAudience interface implements getSelf() method and "selfChanged" event.
+    3. IContainerContext.audience is no longer optional
+    4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
+
+    -   If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
+        -   "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
+        -   "Fluid.Container.DisableJoinSignalWait"
+
+### Minor Changes
+
+-   Type Erase IFluidDataStoreRuntime.deltaManager [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Make IFluidDataStoreRuntime.deltaManager have an opaque type.
+    Marks the following types which were reachable from it as alpha:
+
+    -   IConnectionDetails
+    -   IDeltaSender
+    -   IDeltaManagerEvents
+    -   IDeltaManager
+    -   IDeltaQueueEvents
+    -   IDeltaQueue
+    -   ReadOnlyInfo
+
+    As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
+
+    Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   container-definitions: IContainerContext.getSpecifiedCodeDetails() removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    IContainerContext.getSpecifiedCodeDetails() was deprecated in 0.42 and has now been removed.
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   container-definitions: Deprecate IDeltaManager.inbound and IDeltaManager.outbound ([#19636](https://github.com/microsoft/FluidFramework/issues/19636)) [305c0f4346](https://github.com/microsoft/FluidFramework/commits/305c0f4346d08cba3d345d9698e35c0a1517b31a)
+
+    `IDeltaManager.inbound` was deprecated because it was not very useful to the customer and there are pieces of
+    functionality that can break the core runtime if used improperly. For example, summarization and processing batches. Do
+    not use the apis on this if possible. Data loss/corruption may occur in these scenarios in which
+    `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` get called.
+
+    Deprecated `IDeltaManager.outbound` as it was not very useful to the customer and there are pieces of functionality
+    that can break the core runtime if used improperly. For example, generation of batches and chunking. Op batching and
+    chunking can be broken. Data loss/corruption may occur in these scenarios in which `IDeltaManger.inbound.pause()` or
+    `IDeltaManager.inbound.resume()` get called.
+
+    ### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect
+        use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect
+        use `IContainer.connect`.
+
+-   container-loader: Behavior change: IContainer.attach will be made retriable in the next release ([#19246](https://github.com/microsoft/FluidFramework/issues/19246)) [3d5dfb28d4](https://github.com/microsoft/FluidFramework/commits/3d5dfb28d47b55943c6a92ec50530e6fa86b0568)
+
+    The `attach` function on IContainer has been modified such that the container stay open on non-fatal errors. On failure of attach the developer should inspect IContainer.closed to see if the container has been closed. If not closed, the developer can retry calling attach.
+
+    The functionality is currently behind a configuration `Fluid.Container.RetryOnAttachFailure` which can be set to `true` to enable the new functionality.
+
+    In the next release we will default to the new behavior, and it will be possible to disable this behavior by setting `Fluid.Container.RetryOnAttachFailure` to `false`
+
+-   driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
+
+    `ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
+
+-   driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+
+    The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
+-   container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
+
+    ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+-   Updated @fluidframework/protocol-definitions [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.2.0.
+
+    [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#320)
+
+-   Updated server dependencies [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
+
+    The following Fluid server dependencies have been updated to the latest version, 4.0.0.
+    [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/3.0.0.md)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
 ## 2.0.0-internal.8.0.0
 
 ### Major Changes

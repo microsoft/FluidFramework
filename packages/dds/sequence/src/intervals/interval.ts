@@ -2,21 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { SequencePlace } from "../intervalCollection";
-import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-const reservedIntervalIdKey = "intervalId";
+import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
+
+import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -88,7 +89,7 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 		return serializedInterval;
 	}

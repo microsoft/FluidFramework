@@ -7,7 +7,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
@@ -31,10 +31,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 	}
 
 	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-		throw new Error("Invalid operation");
-	}
-
-	public get repositoryUrl(): string {
 		throw new Error("Invalid operation");
 	}
 }

@@ -1,10 +1,8 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	// Use Bundler over Node16 as there are no tests run under Node.js.
+	"extends": "../../../common/build/build-common/tsconfig.bundler.json",
 	"compilerOptions": {
-		"module": "esnext",
-		"target": "es6",
-		"outDir": "lib",
-		"jsx": "react",
+		"outDir": "./lib",
 		"types": [
 			"jest",
 			"puppeteer",

@@ -135,6 +135,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 

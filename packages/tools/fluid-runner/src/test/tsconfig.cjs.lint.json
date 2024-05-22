@@ -1,0 +1,10 @@
+{
+	// This config should only be used for linting special case cjs files.
+	"extends": "./tsconfig.cjs.json",
+	"include": ["./**/*.cjs.*"],
+	"compilerOptions": {
+		"outDir": "../../dist/test",
+		"module": "CommonJS",
+		"moduleResolution": "Bundler",
+	},
+}

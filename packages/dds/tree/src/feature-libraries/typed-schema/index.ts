@@ -50,5 +50,3 @@ export {
 	ExtractItemType,
 	NormalizeLazyItem,
 } from "./flexList.js";
-
-export { ArrayToUnion } from "./typeUtils.js";

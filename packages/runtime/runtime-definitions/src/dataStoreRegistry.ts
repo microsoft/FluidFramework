@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
+import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 
 /**
  * A single registry entry that may be used to create data stores

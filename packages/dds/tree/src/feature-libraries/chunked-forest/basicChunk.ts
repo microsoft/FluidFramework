@@ -3,21 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeNodeSchemaIdentifier,
 	CursorLocationType,
+	FieldKey,
 	FieldUpPath,
-	UpPath,
-	TreeValue,
-	Value,
-	TreeType,
 	PathRootPrefix,
+	TreeNodeSchemaIdentifier,
+	TreeType,
+	TreeValue,
+	UpPath,
+	Value,
 } from "../../core/index.js";
-import { fail, ReferenceCountedBase } from "../../util/index.js";
-import { prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
+import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
+
+import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -57,7 +59,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		return new BasicChunkCursor([this], [], [], [], [], [dummyRoot], 0, 0, 0, undefined);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const v of this.fields.values()) {
 			for (const child of v) {
 				child.referenceRemoved();

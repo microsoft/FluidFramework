@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 const defaultFailMessage = 'Assertion failed';
@@ -21,7 +21,7 @@ export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
 /**
  * Telemetry properties decorated on all SharedTree events.
  */
-export interface SharedTreeTelemetryProperties extends ITelemetryProperties {
+export interface SharedTreeTelemetryProperties extends ITelemetryBaseProperties {
 	readonly isSharedTreeEvent: true;
 }
 

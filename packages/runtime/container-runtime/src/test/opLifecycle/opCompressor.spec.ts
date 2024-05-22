@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../..";
-import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle";
+
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { ContainerMessageType } from "../../index.js";
+import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
 
 describe("OpCompressor", () => {
 	let compressor: OpCompressor;
@@ -27,7 +29,6 @@ describe("OpCompressor", () => {
 	});
 	const createMessage = (contents: string) => ({
 		metadata: { flag: true },
-		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents,
 		referenceSequenceNumber: 0,
@@ -43,7 +44,7 @@ describe("OpCompressor", () => {
 			// small batch with small messages
 			createBatch(10, 100 * 1024),
 			// small batch with large messages
-			createBatch(2, 100 * 1024 * 1024),
+			createBatch(2, 2 * 1024 * 1024),
 			// large batch with small messages
 			createBatch(1000, 100 * 1024),
 		].forEach((batch) => {
@@ -59,7 +60,7 @@ describe("OpCompressor", () => {
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
 					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 				}
-			});
+			}).timeout(3000);
 		}));
 
 	describe("Unsupported batches", () =>

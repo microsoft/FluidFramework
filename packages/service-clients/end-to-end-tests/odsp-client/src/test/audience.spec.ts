@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { OdspClient } from "@fluid-experimental/odsp-client";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, IOdspLoginCredentials } from "./OdspClientFactory";
-import { waitForMember } from "./utils";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
+
+import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -121,8 +122,8 @@ describe("Fluid audience", () => {
 		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		assert.notStrictEqual(
-			partner?.userId,
-			originalSelf?.userId,
+			partner?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 	});

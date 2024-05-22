@@ -4,14 +4,15 @@
  */
 
 import {
+	IChannel,
 	IChannelAttributes,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
-	IChannel,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { pkgVersion } from "./packageVersion";
-import { SharedJson1 } from "./json1";
+} from "@fluidframework/datastore-definitions/internal";
+
+import { SharedJson1 } from "./json1.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @internal

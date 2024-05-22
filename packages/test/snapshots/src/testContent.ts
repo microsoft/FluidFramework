@@ -5,7 +5,10 @@
 
 import fs from "fs";
 import nodePath from "path";
+
 import * as Mocha from "mocha";
+
+import { _dirname } from "./dirname.cjs";
 
 export interface TestContent {
 	exists: boolean;
@@ -22,7 +25,7 @@ export function getTestContent(subPath?: string): TestContent {
 		};
 	}
 	// Relative to this generated js file being executed
-	path = nodePath.join(__dirname, "..", path);
+	path = nodePath.join(_dirname, "..", path);
 	if (fs.existsSync(path)) {
 		return {
 			exists: true,

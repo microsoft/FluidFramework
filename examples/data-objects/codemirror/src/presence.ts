@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import CodeMirror from "codemirror";
 

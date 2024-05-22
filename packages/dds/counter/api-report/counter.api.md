@@ -4,16 +4,10 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
@@ -28,19 +22,9 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(op: unknown): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
-    static getFactory(): IChannelFactory;
-    increment(incrementAmount: number): void;
-    // (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    get value(): number;
-}
+export const SharedCounter: ISharedObjectKind<ISharedCounter> & SharedObjectKind<ISharedCounter>;
+
+// @alpha
+export type SharedCounter = ISharedCounter;
 
 ```

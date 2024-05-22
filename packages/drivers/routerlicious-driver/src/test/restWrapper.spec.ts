@@ -4,16 +4,18 @@
  */
 
 import assert from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { RateLimiter } from "@fluidframework/driver-utils";
+
+import { RateLimiter } from "@fluidframework/driver-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import nock from "nock";
+
+import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
-} from "../restWrapper";
-import { RouterliciousErrorTypes } from "../errorUtils";
-import { DefaultTokenProvider } from "../defaultTokenProvider";
-import { ITokenResponse } from "../tokens";
+} from "../restWrapper.js";
+import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
@@ -44,7 +46,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	let restWrapper: RouterliciousOrdererRestWrapper;
 	const logger = new MockLogger();
-	beforeEach(async () => {
+	beforeEach(() => {
 		// reset auth mocking
 		tokenQueue = [token1, token2, token3];
 		// reset throttling mocking
@@ -58,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			};
 			return newToken;
 		};
-		restWrapper = await RouterliciousOrdererRestWrapper.load(
+		restWrapper = RouterliciousOrdererRestWrapper.load(
 			toInstrumentedR11sOrdererTokenFetcher(
 				"dummytenantid",
 				"dummydocumentid",

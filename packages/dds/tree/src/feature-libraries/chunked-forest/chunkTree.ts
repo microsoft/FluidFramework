@@ -3,29 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeFieldStoredSchema,
-	ITreeCursorSynchronous,
-	mapCursorFields,
-	TreeNodeSchemaIdentifier,
-	Value,
-	TreeValue,
-	TreeStoredSchemaSubscription,
 	CursorLocationType,
-	TreeStoredSchema,
-	StoredSchemaCollection,
+	FieldKey,
+	ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchema,
+	TreeStoredSchemaSubscription,
+	TreeValue,
+	Value,
+	mapCursorFields,
+	Multiplicity,
 } from "../../core/index.js";
-import { FullSchemaPolicy } from "../modular-schema/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
-import { TreeChunk, tryGetChunk } from "./chunk.js";
+import { FullSchemaPolicy } from "../modular-schema/index.js";
+
 import { BasicChunk } from "./basicChunk.js";
-import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
+import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
 export interface Disposable {
 	/**
@@ -263,7 +265,7 @@ export function tryShapeFromFieldSchema(
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
+	const kind = policy.fieldKinds.get(type.kind) ?? fail("missing FieldKind");
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}

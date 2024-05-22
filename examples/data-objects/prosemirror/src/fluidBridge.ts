@@ -5,22 +5,22 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils";
-import { createInsertSegmentOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
 import {
-	SharedString,
-	SequenceDeltaEvent,
+	ISegment,
 	ISequenceDeltaRange,
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
-	reservedRangeLabelsKey,
+	SequenceDeltaEvent,
+	SharedString,
 	TextSegment,
-	ISegment,
-} from "@fluidframework/sequence";
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
-	Schema,
 	Fragment,
+	Schema,
 	Slice,
 	// Slice,
 } from "prosemirror-model";

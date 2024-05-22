@@ -3,22 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IEventSampler,
-	ISampledTelemetryLogger,
-	ITelemetryLoggerExt,
-	createChildLogger,
-	createSampledLogger,
-	formatTick,
-} from "@fluidframework/telemetry-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import { IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { performance } from "@fluid-internal/client-utils";
+import {
+	IEventSampler,
+	ITelemetryLoggerExt,
+	ISampledTelemetryLogger,
+	createChildLogger,
+	createSampledLogger,
+	formatTick,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
@@ -78,6 +81,11 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
+	/** Count of no-ops sent by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private noOpCountForTelemetry = 0;
+	/** Cumulative size of the ops processed by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private processedOpSizeForTelemetry = 0;
+
 	private readonly logger: ITelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
@@ -86,9 +94,37 @@ class OpPerfTelemetry {
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
+	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
+	private readonly opsLogger: ISampledTelemetryLogger;
+
+	/**
+	 * Create an instance of OpPerfTelemetry which starts monitoring and generating telemetry related to op performance.
+	 *
+	 * @param clientId - The clientId of the current container.
+	 * @param deltaManager - DeltaManager instance to monitor.
+	 * @param containerRuntimeEvents - Emitter of events for the container runtime.
+	 * @param logger - Telemetry logger to write events to.
+	 */
 	public constructor(
+		/**
+		 * The clientId of the current container.
+		 *
+		 * @remarks Until the container connects to the server and receives an ack for its own join op, this can be undefined.
+		 * It gets updated in response to event changes once the value provided by the server is available.
+		 * If the container loses its connection, this could be the last known clientId.
+		 */
 		private clientId: string | undefined,
+		/**
+		 * DeltaManager instance to monitor.
+		 */
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		/**
+		 * Emitter of events for the container runtime.
+		 */
+		containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
+		/**
+		 * Telemetry logger to write events to.
+		 */
 		logger: ITelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
@@ -115,13 +151,28 @@ class OpPerfTelemetry {
 		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
 		this.opLatencyLogger = createSampledLogger(logger);
 
+		const opsEventSampler: IEventSampler = (() => {
+			let eventCount = 0;
+			return {
+				sample: () => {
+					eventCount++;
+					const shouldSample =
+						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					if (shouldSample) {
+						eventCount = 0;
+						this.noOpCountForTelemetry = 0;
+						this.processedOpSizeForTelemetry = 0;
+					}
+					return shouldSample;
+				},
+			};
+		})();
+		this.opsLogger = createSampledLogger(logger, opsEventSampler);
+
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
-
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
-
 		this.deltaManager.on("connect", (details, opsBehind) => {
-			this.clientId = details.clientId;
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
@@ -200,6 +251,9 @@ class OpPerfTelemetry {
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
 			}
+			if (isRuntimeMessage(message) && typeof message.contents === "string") {
+				this.processedOpSizeForTelemetry += message.contents.length;
+			}
 		});
 
 		this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
@@ -216,6 +270,10 @@ class OpPerfTelemetry {
 					duration,
 				});
 			}
+		});
+
+		containerRuntimeEvents.on("connected", (newClientId) => {
+			this.clientId = newClientId;
 		});
 	}
 
@@ -272,6 +330,12 @@ class OpPerfTelemetry {
 				opPerfData: {},
 			});
 		}
+
+		if (message.type === MessageType.NoOp) {
+			// Count the number of no-ops submitted by this client.
+			// The value is reset when we log the OpStats sampled event.
+			this.noOpCountForTelemetry++;
+		}
 	}
 
 	private afterProcessingOp(message: ISequencedDocumentMessage) {
@@ -305,6 +369,7 @@ class OpPerfTelemetry {
 
 		if (
 			this.clientId === message.clientId &&
+			message.type === MessageType.Operation &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -342,8 +407,28 @@ class OpPerfTelemetry {
 					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
 				...latencyData.opPerfData,
 			});
+
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
+		}
+
+		if (isRuntimeMessage(message)) {
+			// Sampled logging of Ops that have been processed by the current client, the NoOp sent and the
+			// size of the ops processed within one sampling window of this log event.
+			// This data will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+			this.opsLogger.sendPerformanceEvent({
+				eventName: "OpStats",
+				// Logging as 'details' property to avoid adding new column name to the log tables */
+				details: {
+					// Count of the ops processed by the current client. Note: these counts are after
+					// compression/grouping/chunking (if enabled) of the ops.
+					processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
+					// Cumulative size of all the ops processed by the current client since the last OpStats event log
+					processedOpSize: this.processedOpSizeForTelemetry,
+					// Count of all the NoOp sent by the current client since the last OpStats event log
+					submitedNoOpCount: this.noOpCountForTelemetry,
+				},
+			});
 		}
 	}
 }
@@ -369,10 +454,19 @@ export interface IPerfSignalReport {
 	trackingSignalSequenceNumber: number | undefined;
 }
 
+/**
+ * Starts monitoring and generation of telemetry related to op performance.
+ *
+ * @param clientId - The clientId of the current container.
+ * @param deltaManager - DeltaManager instance to monitor.
+ * @param containerRuntimeEvents - Emitter of events for the container runtime.
+ * @param logger - Telemetry logger to write events to.
+ */
 export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
 	logger: ITelemetryLoggerExt,
-) {
-	new OpPerfTelemetry(clientId, deltaManager, logger);
+): void {
+	new OpPerfTelemetry(clientId, deltaManager, containerRuntimeEvents, logger);
 }

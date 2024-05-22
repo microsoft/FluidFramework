@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { fail } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { EmptyObject } from "../feature-libraries/index.js";
-import { SchemaFactory } from "./schemaFactory.js";
-import {
-	InsertableObjectFromSchemaRecord,
-	NodeFromSchema,
-	NodeKind,
-	ObjectFromSchemaRecord,
-	TreeNodeSchemaClass,
-} from "./schemaTypes.js";
+import { fail } from "../util/index.js";
+
+import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+import { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
+import { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./objectNode.js";
 
 /**
  * Create a schema for a node with no state.
@@ -23,6 +20,8 @@ import { TreeNode } from "./types.js";
  * Enums are a common example of this pattern.
  * @internal
  */
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function singletonSchema<TScope extends string, TName extends string | number>(
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
@@ -46,7 +45,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const toReturn: TreeNodeSchemaClass<
-		`${TScope}.${TName}`,
+		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
 		NodeType,
 		object & InsertableObjectFromSchemaRecord<EmptyObject>,
@@ -83,6 +82,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * Maybe just provide `SchemaFactory.nested` to east creating nested scopes?
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(
 	factory: SchemaFactory<TScope>,
 	members: TEnum,
@@ -103,6 +103,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[inverse.get(value) ?? fail("missing enum value")]({}) as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
@@ -150,6 +151,7 @@ export function typedObjectValues<TKey extends string, TValues>(
  * ```
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<TScope extends string, const Members extends string>(
 	factory: SchemaFactory<TScope>,
 	members: Members[],
@@ -160,6 +162,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 	}
 
 	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Members>(value: TValue) => {
 		return new out[value]({}) as NodeFromSchema<
 			ReturnType<typeof singletonSchema<TScope, TValue>>
@@ -181,6 +184,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 // TODO: Why does this one generate an invalid d.ts file if exported?
 // Tracked by https://github.com/microsoft/TypeScript/issues/56718
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,

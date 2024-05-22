@@ -1,12 +1,40 @@
 {
 	"v1": {
-		"libraries": ["fluid-framework", "@fluidframework/counter"],
-		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/tinylicious-client"],
-		"utilities": ["@fluidframework/azure-service-utils"]
+		"FluidFramework": {
+			"Audience": {
+				"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
+				"Types": ["Myself"]
+			},
+			"Container": {
+				"Interfaces": ["ContainerSchema", "IFluidContainer"]
+			},
+			"DDSes": {
+				"Map": {
+					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
+					"Classes": ["SharedMap"]
+				},
+				"Tree": { "Interfaces": ["ITree"] }
+			}
+		},
+		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/tinylicious-client"]
 	},
 	"v2": {
-		"libraries": ["fluid-framework"],
-		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"],
-		"utilities": ["@fluidframework/azure-service-utils"]
+		"FluidFramework": {
+			"Audience": {
+				"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
+				"Types": ["Myself"]
+			},
+			"Container": {
+				"Interfaces": ["ContainerSchema", "IFluidContainer"]
+			},
+			"DDSes": {
+				"Map": {
+					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
+					"Classes": ["SharedMap"]
+				},
+				"Tree": { "Interfaces": ["ITree"] }
+			}
+		},
+		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"]
 	}
 }

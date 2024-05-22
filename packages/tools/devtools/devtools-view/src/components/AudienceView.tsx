@@ -2,21 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import { Divider } from "@fluentui/react-components";
 import {
 	AudienceSummary,
 	GetAudienceSummary,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type IDevtoolsMessage,
 	type InboundHandlers,
-} from "@fluidframework/devtools-core";
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { useMessageRelay } from "../MessageRelayContext";
-import { AudienceStateTable } from "./AudienceStateTable";
-import { AudienceHistoryTable } from "./AudienceHistoryTable";
-import { Waiting } from "./Waiting";
+import React from "react";
+
+import { useMessageRelay } from "../MessageRelayContext.js";
+
+import { AudienceHistoryTable } from "./AudienceHistoryTable.js";
+import { AudienceStateTable } from "./AudienceStateTable.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer

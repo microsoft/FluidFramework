@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { MapWithExpiration } from "../mapWithExpiration";
+
+import { MapWithExpiration } from "../mapWithExpiration.js";
 
 describe("MapWithExpiration", () => {
 	let clock: SinonFakeTimers;
@@ -282,16 +284,26 @@ describe("MapWithExpiration", () => {
 		);
 
 		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
-			for (const thisArg of thisArgs) {
-				for (const map of maps) {
+			const testCaseRunner = new (class {
+				runTestCase(map: Map<any, any>, thisArg: any) {
 					map.set(1, "one");
+
+					// eslint-disable-next-line @typescript-eslint/no-this-alias
+					const thisOutside = this;
+
 					map.forEach(() => {
-						assert.notEqual(
+						assert.equal(
 							this,
-							thisArg,
+							thisOutside,
 							"Expected 'this' to be unchanged for arrow fn",
 						);
 					}, thisArg);
+				}
+			})();
+
+			for (const thisArg of thisArgs) {
+				for (const map of maps) {
+					testCaseRunner.runTestCase(map, thisArg);
 				}
 			}
 		});

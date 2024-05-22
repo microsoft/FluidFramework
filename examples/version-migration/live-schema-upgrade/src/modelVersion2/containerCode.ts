@@ -4,12 +4,12 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
 import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter.js";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
 const diceCounterId = "dice-counter";

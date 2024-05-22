@@ -7,7 +7,6 @@ export {
 	compareLocalNodeKeys,
 	LocalNodeKey,
 	StableNodeKey,
-	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
 } from "./nodeKey.js";
 

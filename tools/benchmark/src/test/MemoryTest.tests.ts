@@ -4,8 +4,9 @@
  */
 
 import { expect } from "chai";
-import { BenchmarkType, isParentProcess } from "../Configuration";
+
 import { benchmarkMemory } from "..";
+import { BenchmarkType, isParentProcess } from "../Configuration";
 
 describe("`benchmarkMemory` function", () => {
 	describe("uses `before` and `after`", () => {

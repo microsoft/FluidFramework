@@ -3,37 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	LoggingError,
-} from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	Deferred,
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/core-utils";
+} from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import {
+	isFluidError,
+	ITelemetryLoggerExt,
+	LoggingError,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IAckSummaryResult,
-	INackSummaryResult,
 	IBroadcastSummaryResult,
-	ISummarizeResults,
-	ISummarizeHeuristicData,
+	INackSummaryResult,
+	IRefreshSummaryAckOptions,
 	ISubmitSummaryOptions,
+	ISummarizeHeuristicData,
+	ISummarizeResults,
+	ISummaryCancellationToken,
+	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
-	ISummaryCancellationToken,
 	SummaryGeneratorTelemetry,
-	SubmitSummaryFailureData,
-} from "./summarizerTypes";
-import { IClientSummaryWatcher } from "./summaryCollection";
+	type IRetriableFailureError,
+} from "./summarizerTypes.js";
+import { IClientSummaryWatcher } from "./summaryCollection.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }
@@ -124,8 +128,10 @@ const summarizeErrors = {
 	disconnect: "Summary cancelled due to summarizer or main client disconnect",
 } as const;
 
+export type SummarizeErrorCode = keyof typeof summarizeErrors;
+
 // Helper functions to report failures and return.
-export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
+export const getFailMessage = (errorCode: SummarizeErrorCode) =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
@@ -147,7 +153,7 @@ export class SummarizeResultBuilder {
 	 */
 	public fail(
 		message: string,
-		error: any,
+		error: IRetriableFailureError,
 		submitFailureResult?: SubmitSummaryFailureData,
 		nackSummaryResult?: INackSummaryResult,
 	) {
@@ -181,12 +187,11 @@ export class SummarizeResultBuilder {
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
-export class RetriableSummaryError extends LoggingError {
-	public readonly canRetry = this.retryAfterSeconds !== undefined;
+export class RetriableSummaryError extends LoggingError implements IRetriableFailureError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
 	}
@@ -204,6 +209,9 @@ export class SummaryGenerator {
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
+		private readonly refreshLatestSummaryCallback: (
+			options: IRefreshSummaryAckOptions,
+		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -215,9 +223,8 @@ export class SummaryGenerator {
 	/**
 	 * Generates summary and listens for broadcast and ack/nack.
 	 * Returns true for ack, false for nack, and undefined for failure or timeout.
-	 * @param reason - reason for summarizing
-	 * @param options - refreshLatestAck to fetch summary ack info from server,
-	 * fullTree to generate tree without any summary handles even if unchanged
+	 * @param summaryOptions - options controlling how the summary is generated or submitted.
+	 * @param resultsBuilder - optional, result builder to use to build pass or fail result.
 	 */
 	public summarize(
 		summaryOptions: ISubmitSummaryOptions,
@@ -267,8 +274,8 @@ export class SummaryGenerator {
 		 * be provided. For op broadcast failures, only errors / properties should be provided.
 		 */
 		const fail = (
-			errorCode: keyof typeof summarizeErrors,
-			error?: any,
+			errorCode: SummarizeErrorCode,
+			error: IRetriableFailureError,
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
@@ -277,7 +284,8 @@ export class SummaryGenerator {
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
 			const category =
-				cancellationToken.cancelled || error?.errorType === DriverErrorTypes.offlineError
+				cancellationToken.cancelled ||
+				(isFluidError(error) && error?.errorType === DriverErrorTypes.offlineError)
 					? "generic"
 					: "error";
 
@@ -287,11 +295,9 @@ export class SummaryGenerator {
 					...properties,
 					reason,
 					category,
-					retryAfterSeconds:
-						submitFailureResult?.retryAfterSeconds ??
-						nackSummaryResult?.retryAfterSeconds,
+					retryAfterSeconds: error.retryAfterSeconds,
 				},
-				error ?? reason,
+				error,
 			); // disconnect & summaryAckTimeout do not have proper error.
 
 			resultsBuilder.fail(reason, error, submitFailureResult, nackSummaryResult);
@@ -323,9 +329,11 @@ export class SummaryGenerator {
 			);
 
 			if (summaryData.stage !== "submit") {
-				return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps, {
+				const errorCode: SummarizeErrorCode = "submitSummaryFailure";
+				const retriableError =
+					summaryData.error ?? new RetriableSummaryError(getFailMessage(errorCode));
+				return fail(errorCode, retriableError, summarizeTelemetryProps, {
 					stage: summaryData.stage,
-					retryAfterSeconds: getRetryDelaySecondsFromError(summaryData.error),
 				});
 			}
 
@@ -339,7 +347,7 @@ export class SummaryGenerator {
 			 * state change of multiple data stores. So, the total number of data stores that are summarized should not
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
-			if (!submitSummaryOptions.fullTree && !summaryData.forcedFullTree) {
+			if (!submitSummaryOptions.fullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
@@ -359,10 +367,18 @@ export class SummaryGenerator {
 			summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
 			resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 		} catch (error) {
-			return fail("submitSummaryFailure", error, undefined /* properties */, {
-				stage: "unknown",
-				retryAfterSeconds: getRetryDelaySecondsFromError(error),
-			});
+			return fail(
+				"submitSummaryFailure",
+				wrapError(
+					error,
+					(message) =>
+						new RetriableSummaryError(message, getRetryDelaySecondsFromError(error)),
+				),
+				undefined /* properties */,
+				{
+					stage: "unknown",
+				},
+			);
 		} finally {
 			if (summaryData === undefined) {
 				this.heuristicData.recordAttempt();
@@ -381,10 +397,17 @@ export class SummaryGenerator {
 				cancellationToken,
 			);
 			if (waitBroadcastResult.result === "cancelled") {
-				return fail("disconnect");
+				const errorCode: SummarizeErrorCode = "disconnect";
+				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitBroadcastResult.result !== "done") {
-				return fail("summaryOpWaitTimeout");
+				// The summary op may not have been received within the timeout due to a transient error. So,
+				// fail with a retriable error to re-attempt the summary if possible.
+				const errorCode: SummarizeErrorCode = "summaryOpWaitTimeout";
+				return fail(
+					errorCode,
+					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
+				);
 			}
 			const summarizeOp = waitBroadcastResult.value;
 
@@ -410,10 +433,17 @@ export class SummaryGenerator {
 				cancellationToken,
 			);
 			if (waitAckNackResult.result === "cancelled") {
-				return fail("disconnect");
+				const errorCode: SummarizeErrorCode = "disconnect";
+				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitAckNackResult.result !== "done") {
-				return fail("summaryAckWaitTimeout");
+				const errorCode: SummarizeErrorCode = "summaryAckWaitTimeout";
+				// The summary ack may not have been received within the timeout due to a transient error. So,
+				// fail with a retriable error to re-attempt the summary if possible.
+				return fail(
+					errorCode,
+					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
+				);
 			}
 			const ackNackOp = waitAckNackResult.value;
 			this.pendingAckTimer.clear();
@@ -435,6 +465,14 @@ export class SummaryGenerator {
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,
 				});
+				// This processes the summary ack of the successful summary. This is so that the next summary does not
+				// start before the ack of the previous summary is processed.
+				await this.refreshLatestSummaryCallback({
+					proposalHandle: summarizeOp.contents.handle,
+					ackHandle: ackNackOp.contents.handle,
+					summaryRefSeq: summarizeOp.referenceSequenceNumber,
+					summaryLogger,
+				});
 				resultsBuilder.receivedSummaryAckOrNack.resolve({
 					success: true,
 					data: {
@@ -449,11 +487,16 @@ export class SummaryGenerator {
 				const errorMessage = summaryNack?.message;
 				const retryAfterSeconds = summaryNack?.retryAfter;
 
+				const errorCode: SummarizeErrorCode = "summaryNack";
+
 				// pre-0.58 error message prefix: summaryNack
-				const error = new LoggingError(`Received summaryNack`, {
+				const error = new RetriableSummaryError(
+					getFailMessage(errorCode),
 					retryAfterSeconds,
-					errorMessage,
-				});
+					{
+						errorMessage,
+					},
+				);
 
 				assert(
 					getRetryDelaySecondsFromError(error) === retryAfterSeconds,
@@ -461,11 +504,11 @@ export class SummaryGenerator {
 				);
 				// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
 				return fail(
-					"summaryNack",
+					errorCode,
 					error,
 					{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
 					undefined /* submitFailureResult */,
-					{ summaryNackOp: ackNackOp, ackNackDuration, retryAfterSeconds },
+					{ summaryNackOp: ackNackOp, ackNackDuration },
 				);
 			}
 		} finally {

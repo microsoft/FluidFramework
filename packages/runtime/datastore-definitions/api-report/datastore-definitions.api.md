@@ -4,29 +4,27 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/core-interfaces';
+import type { AttachState } from '@fluidframework/container-definitions';
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { IAudience } from '@fluidframework/container-definitions';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions/internal';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import type { IQuorumClients } from '@fluidframework/protocol-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -38,22 +36,22 @@ export interface IChannel extends IFluidLoadable {
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
-// @public
+// @alpha
 export interface IChannelAttributes {
     readonly packageVersion?: string;
     readonly snapshotFormatVersion: string;
     readonly type: string;
 }
 
-// @public
-export interface IChannelFactory {
+// @alpha
+export interface IChannelFactory<out TChannel = unknown> {
     readonly attributes: IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
     readonly type: string;
 }
 
-// @public
+// @alpha
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
@@ -61,14 +59,14 @@ export interface IChannelServices {
     objectStorage: IChannelStorageService;
 }
 
-// @public
+// @alpha
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @public
+// @alpha
 export interface IDeltaConnection {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -79,17 +77,21 @@ export interface IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): void;
 }
 
-// @public
+// @alpha
 export interface IDeltaHandler {
-    applyStashedOp(message: any): unknown;
+    applyStashedOp(message: any): void;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
 }
 
-// @public
+// @alpha
+export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+// @alpha @sealed
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)
@@ -100,8 +102,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly connected: boolean;
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
+    readonly deltaManager: IDeltaManagerErased;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
@@ -113,19 +114,19 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }
 
-// @public
+// @alpha
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;

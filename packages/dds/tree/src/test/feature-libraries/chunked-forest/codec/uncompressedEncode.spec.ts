@@ -4,17 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
-import { testTrees } from "../../../cursorTestSuite.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
+import { testTrees } from "../../../cursorTestSuite.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 describe("uncompressedEncode", () => {
 	// TODO: test non size 1 batches
@@ -23,7 +24,7 @@ describe("uncompressedEncode", () => {
 			it(name, () => {
 				const input = cursorForJsonableTreeField([jsonable]);
 				const context = { encodeType: TreeCompressionStrategy.Uncompressed };
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
 				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);

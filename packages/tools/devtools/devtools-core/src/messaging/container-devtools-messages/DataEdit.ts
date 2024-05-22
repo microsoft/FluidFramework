@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type HasContainerKey } from "../../CommonInterfaces";
-import { type SharedObjectEdit } from "../../data-visualization";
-import { type IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey } from "../../CommonInterfaces.js";
+import { type SharedObjectEdit } from "../../data-visualization/index.js";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link DataEdit.Message}.

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	EmptyKey,
 	FieldKey,
@@ -19,11 +20,11 @@ import {
 import {
 	Any,
 	FieldKinds,
-	LeafNodeSchema,
+	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexFieldSchema,
 	FlexTreeNodeSchema,
+	LeafNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
 import {
@@ -60,7 +61,7 @@ describe("storedToViewSchema", () => {
 		] as const;
 		for (const [name, field] of roundTrip) {
 			it(name, () => {
-				const converted = fieldSchemaFromStoredSchema(field, schemaMap);
+				const converted = fieldSchemaFromStoredSchema(field.stored, schemaMap);
 				assert(converted.equals(field));
 			});
 		}
@@ -84,7 +85,7 @@ describe("storedToViewSchema", () => {
 					[
 						brand<FieldKey>("foo"),
 						{
-							kind: { identifier: FieldKinds.required.identifier },
+							kind: FieldKinds.required.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 						} satisfies TreeFieldStoredSchema,
 					],
@@ -96,7 +97,7 @@ describe("storedToViewSchema", () => {
 					[
 						brand<FieldKey>("foo"),
 						{
-							kind: { identifier: FieldKinds.optional.identifier },
+							kind: FieldKinds.optional.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("Recursive")]),
 						} satisfies TreeFieldStoredSchema,
 					],
@@ -109,19 +110,19 @@ describe("storedToViewSchema", () => {
 					[
 						EmptyKey,
 						{
-							kind: { identifier: FieldKinds.required.identifier },
+							kind: FieldKinds.required.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 						} satisfies TreeFieldStoredSchema,
 					],
 				] satisfies [FieldKey, TreeFieldStoredSchema][]),
 			);
 			const schemaMap = new MapNodeStoredSchema({
-				kind: { identifier: FieldKinds.optional.identifier },
+				kind: FieldKinds.optional.identifier,
 				types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 			});
 			const stored = {
 				rootFieldSchema: {
-					kind: { identifier: FieldKinds.optional.identifier },
+					kind: FieldKinds.optional.identifier,
 					types: new Set<TreeNodeSchemaIdentifier>([brand("map"), brand("object")]),
 				},
 				nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([

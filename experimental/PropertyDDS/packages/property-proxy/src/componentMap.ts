@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	BaseProperty,
 	MapProperty,
+	PropertyFactory,
 	ReferenceMapProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "./propertyProxy";
-import { PropertyProxyErrors } from "./errors";
-import { forceType, Utilities } from "./utilities";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyProxy } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.

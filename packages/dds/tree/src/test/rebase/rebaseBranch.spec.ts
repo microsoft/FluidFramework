@@ -4,7 +4,9 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 // Allow importing from these specific files which are being tested:
 import {
 	GraphCommit,
@@ -130,8 +132,16 @@ describe("rebaseBranch", () => {
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2, 3], intentions: [4], outputContext: [1, 2, 3, 4] },
-			{ inputContext: [1, 2, 3, 4], intentions: [5], outputContext: [1, 2, 3, 4, 5] },
+			{
+				inputContext: [1, 2, 3],
+				intentions: [4],
+				outputContext: [1, 2, 3, 4],
+			},
+			{
+				inputContext: [1, 2, 3, 4],
+				intentions: [5],
+				outputContext: [1, 2, 3, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
@@ -158,8 +168,16 @@ describe("rebaseBranch", () => {
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2], intentions: [4], outputContext: [1, 2, 4] },
-			{ inputContext: [1, 2, 4], intentions: [5], outputContext: [1, 2, 4, 5] },
+			{
+				inputContext: [1, 2],
+				intentions: [4],
+				outputContext: [1, 2, 4],
+			},
+			{
+				inputContext: [1, 2, 4],
+				intentions: [5],
+				outputContext: [1, 2, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);

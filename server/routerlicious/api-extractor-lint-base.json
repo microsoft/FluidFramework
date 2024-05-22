@@ -53,10 +53,10 @@
 	},
 	// Bundle local dependencies so we can validate cross-package relationships
 	"bundledPackages": [
-		"@fluidframework/.*",
-		"@fluid-internal/.*",
-		"@fluid-experimental/.*",
-		"@fluid-private/.*",
-		"@fluid-tools/.*"
+		"@fluidframework/*",
+		"@fluid-internal/*",
+		"@fluid-experimental/*",
+		"@fluid-private/*",
+		"@fluid-tools/*"
 	]
 }

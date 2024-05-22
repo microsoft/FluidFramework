@@ -4,28 +4,33 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
-export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
+export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>> & SharedObjectKind<IConsensusRegisterCollection<any>>;
+
+// @alpha
+export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
+
+// @alpha
+export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): () => void;
-    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusRegisterCollection<T>;
-    static getFactory(): ConsensusRegisterCollectionFactory;
+    protected applyStashedOp(): void;
     // (undocumented)
     keys(): string[];
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -40,14 +45,13 @@ export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegis
 }
 
 // @alpha
-export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
+export class ConsensusRegisterCollectionFactory implements IChannelFactory<IConsensusRegisterCollection> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
     // (undocumented)
     static Type: string;
@@ -69,13 +73,8 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
 
-// @alpha
-export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
-    // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    // (undocumented)
-    load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
-}
+// @alpha @deprecated
+export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
 // @alpha
 export enum ReadPolicy {

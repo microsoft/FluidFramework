@@ -5,11 +5,12 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IVectorConsumer } from "@tiny-calc/nano";
-import { Handle, isHandleValid } from "./handletable";
-import { PermutationVector, PermutationSegment } from "./permutationvector";
-import { ensureRange } from "./range";
+
+import { Handle, isHandleValid } from "./handletable.js";
+import { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import { ensureRange } from "./range.js";
 
 /**
  * Used by PermutationVector to cache position -\> handle lookups.

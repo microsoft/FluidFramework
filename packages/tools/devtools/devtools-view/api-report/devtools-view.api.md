@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IDevtoolsMessage } from '@fluidframework/devtools-core';
-import { IMessageRelay } from '@fluidframework/devtools-core';
-import { IMessageRelayEvents } from '@fluidframework/devtools-core';
+import { IDevtoolsMessage } from '@fluidframework/devtools-core/internal';
+import { IMessageRelay } from '@fluidframework/devtools-core/internal';
+import { IMessageRelayEvents } from '@fluidframework/devtools-core/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { default as React_2 } from 'react';
@@ -23,6 +23,9 @@ export interface DevtoolsPanelProps {
 }
 
 export { IMessageRelay }
+
+// @internal
+export const isTelemetryOptInEnabled: () => boolean;
 
 export { ITelemetryBaseEvent }
 

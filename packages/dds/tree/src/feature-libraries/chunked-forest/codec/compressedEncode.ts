@@ -3,34 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	CursorLocationType,
 	FieldKey,
-	TreeFieldStoredSchema,
+	FieldKindIdentifier,
 	ITreeCursorSynchronous,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
-	FieldKindIdentifier,
 } from "../../../core/index.js";
 import { fail, getOrCreate } from "../../../util/index.js";
 import { type FlexFieldKind } from "../../modular-schema/index.js";
+
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
 	handleShapesAndIdentifiers,
 } from "./chunkEncodingGeneric.js";
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import {
-	version,
-	EncodedChunkShape,
-	EncodedValueShape,
-	EncodedAnyShape,
-	EncodedNestedArray,
-	EncodedFieldBatch,
-} from "./format.js";
 import { FieldBatch } from "./fieldBatch.js";
+import {
+	EncodedAnyShape,
+	EncodedChunkShape,
+	EncodedFieldBatch,
+	EncodedNestedArray,
+	EncodedValueShape,
+	version,
+} from "./format.js";
 
 /**
  * Encode data from `FieldBatch` in into an `EncodedChunk`.
@@ -175,7 +177,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: FieldEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeField(cursor, cache, outputBuffer);
 	}
@@ -185,7 +187,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: NodeEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeNode(cursor, cache, outputBuffer);
 	}
@@ -195,7 +197,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		cache: EncoderCache,
 		outputBuffer: BufferFormat,
 		shape: NodesEncoder,
-	) {
+	): void {
 		outputBuffer.push(shape.shape);
 		shape.encodeNodes(cursor, cache, outputBuffer);
 	}
@@ -326,7 +328,7 @@ export class InlineArrayShape
 		shapes(this.inner.shape);
 	}
 
-	public get shape() {
+	public get shape(): this {
 		return this;
 	}
 }

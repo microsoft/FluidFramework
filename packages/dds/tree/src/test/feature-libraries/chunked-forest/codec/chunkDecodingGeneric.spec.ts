@@ -6,17 +6,10 @@
 import { strict as assert, fail } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
-import {
-	DecoderContext,
-	decode,
-	readStreamIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 
-import {
-	EncodedFieldBatchGeneric,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
+import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
@@ -24,11 +17,18 @@ import {
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
-import { ReferenceCountedBase } from "../../../../util/index.js";
+import {
+	DecoderContext,
+	decode,
+	readStreamIdentifier,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import {
+	EncodedFieldBatchGeneric,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
 import { TreeChunk } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
-import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
+import { ReferenceCountedBase } from "../../../../util/index.js";
 
 const Constant = Type.Literal(0);
 const StringShape = Type.String();
@@ -65,7 +65,7 @@ class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected dispose(): void {}
+	protected onUnreferenced(): void {}
 }
 
 class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
@@ -83,7 +83,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected dispose(): void {}
+	protected onUnreferenced(): void {}
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<

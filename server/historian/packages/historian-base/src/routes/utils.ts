@@ -17,6 +17,7 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
+	runWithRetry,
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IDocumentManager,
@@ -93,9 +94,37 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
-			await cache?.set(isEphemeralKey, isEphemeral);
+			await runWithRetry(
+				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
+				"utils.createGitService.set" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			).catch((error) => {
+				Lumberjack.error(
+					`Error setting ${isEphemeralKey} in redis`,
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+			});
 		} else {
-			isEphemeral = await cache?.get(isEphemeralKey);
+			await runWithRetry<boolean>(
+				async () => cache?.get(isEphemeralKey) /* api */,
+				"utils.createGitService.get" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			)
+				.then((value) => {
+					isEphemeral = value;
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						`Error getting ${isEphemeralKey} from redis`,
+						getLumberBaseProperties(documentId, tenantId),
+						error,
+					);
+				});
 			if (typeof isEphemeral !== "boolean") {
 				// If isEphemeral was not in the cache, fetch the value from database
 				try {
@@ -160,6 +189,7 @@ export function queryParamToString(value: any): string {
 }
 
 export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
 			const reqTenantId = request.params.tenantId;
@@ -189,6 +219,7 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 					);
 				}
 			}
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),

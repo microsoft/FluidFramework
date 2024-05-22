@@ -8,12 +8,14 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy";
-import { ICompressionStorageConfig } from "./compressionTypes";
-import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob";
-import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter";
+
+import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
+
+import { ICompressionStorageConfig } from "./compressionTypes.js";
+import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
+import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 
 export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFactoryProxy {
 	constructor(

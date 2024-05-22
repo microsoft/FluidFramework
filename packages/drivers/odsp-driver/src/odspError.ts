@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";
-import { IOdspSocketError } from "./contracts";
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { IFluidErrorBase, getCircularReplacer } from "@fluidframework/telemetry-utils/internal";
+
+import { IOdspSocketError } from "./contracts.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
@@ -31,9 +32,13 @@ export function errorObjectFromSocketError(
 				: undefined, // responseText
 		);
 
-		error.addTelemetryProperties({ odspError: true, relayServiceError: true });
+		error.addTelemetryProperties({
+			odspError: true,
+			relayServiceError: true,
+			scenarioName: handler,
+		});
 		return error;
-	} catch (error) {
+	} catch {
 		return new NonRetryableError(
 			"Internal error: errorObjectFromSocketError",
 			OdspErrorTypes.fileNotFoundOrAccessDeniedError,

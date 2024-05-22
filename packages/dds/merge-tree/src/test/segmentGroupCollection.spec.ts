@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ISegment } from "../mergeTreeNodes";
-import { TextSegment } from "../textSegment";
+
+import { ISegment } from "../mergeTreeNodes.js";
+import { TextSegment } from "../textSegment.js";
 
 describe("segmentGroupCollection", () => {
 	let segment: ISegment;

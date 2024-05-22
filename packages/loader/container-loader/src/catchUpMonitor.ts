@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /** @see CatchUpMonitor for usage */

@@ -153,7 +153,20 @@ module.exports = {
 			},
 		],
 		"import/no-unused-modules": "error",
-		"import/order": "error",
+		"import/order": [
+			"error",
+			{
+				"newlines-between": "always",
+				"alphabetize": {
+					order: "asc",
+					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
+					// another huge set of changes to order things case-insensitively, we'll just
+					// use the rule with this config for now. This decision should be considered
+					// pragmatic and not a statement of preference, and we should revisit this.
+					caseInsensitive: false,
+				},
+			},
+		],
 
 		// eslint-plugin-unicorn
 		"unicorn/better-regex": "error",
@@ -334,7 +347,8 @@ module.exports = {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
 		"import/resolver": {
-			typescript: {
+			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
+			node: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 			},
 		},

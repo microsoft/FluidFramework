@@ -16,6 +16,7 @@ import {
 	Bar,
 	CartesianGrid,
 	ComposedChart,
+	Label,
 	Legend,
 	Line,
 	ResponsiveContainer,
@@ -23,7 +24,8 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { ThemeOption, useThemeContext } from "../../ThemeHelper";
+
+import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -236,8 +238,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					dy={16}
 					textAnchor="end"
 					fill={graphColorPalette.axisTick}
-					transform="rotate(-35)"
-					fontSize={16}
+					transform="rotate(-20)"
+					fontSize={14}
 				>
 					{payload.value}
 				</text>
@@ -254,7 +256,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 
 		return (
 			<g>
-				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
@@ -395,7 +397,9 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
+				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+					<Label value="Timestamp" offset={12} position="bottom" />
+				</XAxis>
 				<YAxis tick={<CustomizedYAxisTick />} />
 				<Tooltip
 					contentStyle={{

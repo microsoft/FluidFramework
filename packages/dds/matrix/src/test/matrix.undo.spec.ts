@@ -4,16 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
-	MockEmptyDeltaConnection,
-	MockStorage,
 	MockContainerRuntimeFactory,
-} from "@fluidframework/test-runtime-utils";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { TestConsumer } from "./testconsumer";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { MatrixItem, SharedMatrix } from "../index.js";
+
+import { TestConsumer } from "./testconsumer.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
+import { expectSize, extract, matrixFactory } from "./utils.js";
 
 [false, true].forEach((isSetCellPolicyFWW: boolean) => {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
@@ -410,20 +414,20 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					);
 
 					// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					dataStoreRuntime.local = true;
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({
+						attachState: AttachState.Detached,
+					});
 
 					// Load the summary into a newly created 2nd SharedMatrix.
-					const matrix2 = new SharedMatrix<T>(
+					const matrix2 = await matrixFactory.load(
 						dataStoreRuntime,
 						`load(${matrix.id})`,
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
+						{
+							deltaConnection: new MockEmptyDeltaConnection(),
+							objectStorage,
+						},
+						matrixFactory.attributes,
 					);
-					await matrix2.load({
-						deltaConnection: new MockEmptyDeltaConnection(),
-						objectStorage,
-					});
 
 					// Vet that the 2nd matrix is equivalent to the original.
 					//
@@ -453,12 +457,10 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 				beforeEach("createMatrix", async () => {
 					dataStoreRuntime = new MockFluidDataStoreRuntime();
-					matrix1 = new SharedMatrix(
-						dataStoreRuntime,
-						"matrix1",
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
-					);
+					matrix1 = matrixFactory.create(dataStoreRuntime, "matrix1");
+					if (isSetCellPolicyFWW) {
+						matrix1.switchSetCellPolicy();
+					}
 
 					// Attach a new IMatrixConsumer
 					consumer1 = new TestConsumer(matrix1);
@@ -523,12 +525,11 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 					// Create and connect the first SharedMatrix.
 					const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-					matrix1 = new SharedMatrix(
-						dataStoreRuntime1,
-						"matrix1",
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
-					);
+					matrix1 = matrixFactory.create(dataStoreRuntime1, "matrix1");
+					if (isSetCellPolicyFWW) {
+						matrix1.switchSetCellPolicy();
+					}
+
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 					matrix1.connect({
 						deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -540,12 +541,11 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 					// Create and connect the second SharedMatrix.
 					const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-					matrix2 = new SharedMatrix(
-						dataStoreRuntime2,
-						"matrix2",
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
-					);
+					matrix2 = matrixFactory.create(dataStoreRuntime2, "matrix2");
+					if (isSetCellPolicyFWW) {
+						matrix2.switchSetCellPolicy();
+					}
+
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 					matrix2.connect({
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),

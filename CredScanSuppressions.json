@@ -1,0 +1,9 @@
+{
+	"tool": "Credential Scanner",
+	"suppressions": [
+		{
+			"file": "server/routerlicious/packages/routerlicious/config/telegraf/telegraf.conf",
+			"_justification": "Sample username password placeholders as part of code comments"
+		}
+	]
+}

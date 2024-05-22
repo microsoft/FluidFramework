@@ -123,7 +123,7 @@ export {
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeTypeSet,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -136,11 +136,14 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	SchemaAndPolicy,
+	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {
@@ -153,10 +156,14 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -182,6 +189,10 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
+	offsetChangeAtomId,
+	replaceAtomRevisions,
 } from "./rebase/index.js";
 
 export {
@@ -192,9 +203,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export {
-	Revertible,
-	RevertibleKind,
-	RevertibleStatus,
-	RevertibleResult,
-} from "./revertible/index.js";
+export { Revertible, RevertibleStatus } from "./revertible/index.js";

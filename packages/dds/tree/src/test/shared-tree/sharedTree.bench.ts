@@ -2,47 +2,53 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+
 import {
-	benchmark,
 	BenchmarkTimer,
 	BenchmarkType,
+	benchmark,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+
+import { rootFieldKey } from "../../core/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
-	jsonableTreeFromCursor,
+	TreeCompressionStrategy,
 	cursorForTypedData,
 	cursorForTypedTreeData,
+	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
 import {
-	insert,
-	TestTreeProviderLite,
-	toJsonableTree,
-	flexTreeViewWithContent,
-	checkoutWithContent,
-} from "../utils.js";
-import { FlexTreeView } from "../../shared-tree/index.js";
-import { rootFieldKey } from "../../core/index.js";
-import {
-	deepPath,
-	deepSchema,
 	JSDeepTree,
 	JSWideTree,
+	deepPath,
+	deepSchema,
 	localFieldKey,
 	makeDeepContent,
 	makeJsDeepTree,
-	makeWideContentWithEndValue,
 	makeJsWideTreeWithEndValue,
+	makeWideContentWithEndValue,
 	readDeepCursorTree,
-	readDeepEditableTree,
+	readDeepFlexTree,
 	readDeepTreeAsJSObject,
 	readWideCursorTree,
-	readWideEditableTree,
+	readWideFlexTree,
 	readWideTreeAsJSObject,
 	wideRootSchema,
 	wideSchema,
 } from "../scalableTestTrees.js";
+import {
+	TestTreeProviderLite,
+	checkoutWithContent,
+	flexTreeViewWithContent,
+	insert,
+	toJsonableTree,
+} from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -56,6 +62,12 @@ const nodesCountDeep = [
 	[10, BenchmarkType.Perspective],
 	[100, BenchmarkType.Measurement],
 ];
+
+// TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -179,17 +191,17 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 	});
-	describe("EditableTree bench", () => {
+	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
-				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
+				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
-					const { depth, value } = readDeepEditableTree(tree);
+					const { depth, value } = readDeepFlexTree(tree);
 					assert.equal(depth, numberOfNodes);
 					assert.equal(value, 1);
 				},
@@ -200,7 +212,7 @@ describe("SharedTree benchmarks", () => {
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
-				title: `Wide Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
+				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					const numbers = [];
 					for (let index = 0; index < numberOfNodes; index++) {
@@ -213,7 +225,7 @@ describe("SharedTree benchmarks", () => {
 					});
 				},
 				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideEditableTree(tree);
+					const { nodesCount, sum } = readWideFlexTree(tree);
 					assert.equal(sum, expected);
 					assert.equal(nodesCount, numberOfNodes);
 					readWideCursorTree(tree);
@@ -340,7 +352,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const provider = new TestTreeProviderLite();
+						const provider = new TestTreeProviderLite(1, factory);
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
@@ -365,41 +377,74 @@ describe("SharedTree benchmarks", () => {
 	// In practice, this computation is distributed across peers, so the actual time reported is
 	// divided by the number of peers.
 	describe("rebasing commits", () => {
-		const commitCounts = [1, 10, 20];
-		const nbPeers = 5;
-		for (const nbCommits of commitCounts) {
-			const test = benchmark({
-				type: BenchmarkType.Measurement,
-				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
+		// Each commit generates 2 ops (one for the changeset and one for the UUID minting
+		const opsPerCommit = 2;
+		const sampleSize = 10;
+		// Number of peers that are generating commits.
+		const peerCounts = [2, 4];
+		// Number of commits that are generated in the amount of time it takes of a single commit to round-trip.
+		// E.g., 10 is equivalent to all of the following (and more):
+		// - generating 5 edits per second with a 2000ms round-trip time
+		// - generating 10 edits per second with a 1000ms round-trip time
+		// - generating 100 edits per second with a 100ms round-trip time
+		const commitCounts = [1, 5, 10];
+		for (const peerCount of peerCounts) {
+			for (const commitCount of commitCounts) {
+				const test = benchmark({
+					type: BenchmarkType.Measurement,
+					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+							const provider = new TestTreeProviderLite(peerCount, factory);
 
-						// Setup
-						const provider = new TestTreeProviderLite(nbPeers);
-						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
-							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
-								const peer = provider.trees[iPeer];
-								insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+							// This is the start of the stream of commits.
+							// Earlier commits are less out of date and therefore not representative.
+							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
 							}
-						}
 
-						// Measure
-						const before = state.timer.now();
-						provider.processMessages();
-						const after = state.timer.now();
-						// Divide the duration by the number of peers so we get the average time per peer.
-						duration = state.timer.toSeconds(before, after) / nbPeers;
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
-			});
+							// This block generates commits that are all out of date to the same degree
+							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+									provider.processMessages(opsPerCommit);
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
+							}
 
-			if (!isInPerformanceTestingMode) {
-				test.timeout(5000);
+							// This block measures commits that are all out of date to the same degree.
+							// We could theoretically measure the time it takes for a single commit to be processed,
+							// but averaging over multiple commits gives a more stable result.
+							let timeSum = 0;
+							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
+								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+									const before = state.timer.now();
+									provider.processMessages(opsPerCommit);
+									const after = state.timer.now();
+									timeSum += state.timer.toSeconds(before, after);
+									// We still generate commits because it affects local branch rebasing
+									const peer = provider.trees[iPeer];
+									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+								}
+							}
+
+							// We want the average time it would take one peer to process one incoming edit
+							duration = timeSum / (peerCount * peerCount * sampleSize);
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+
+				if (!isInPerformanceTestingMode) {
+					test.timeout(5000);
+				}
 			}
 		}
 	});

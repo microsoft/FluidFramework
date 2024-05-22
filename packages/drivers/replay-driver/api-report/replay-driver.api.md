@@ -5,17 +5,17 @@
 ```ts
 
 import * as api from '@fluidframework/protocol-definitions';
-import * as api_2 from '@fluidframework/driver-definitions';
+import * as api_2 from '@fluidframework/driver-definitions/internal';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
+import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -57,16 +57,6 @@ export interface IFileSnapshot {
     tree: ITree;
 }
 
-// @internal (undocumented)
-export class OpStorage extends ReadDocumentStorageServiceBase {
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-    // (undocumented)
-    readBlob(blobId: string): Promise<ArrayBufferLike>;
-}
-
 // @internal
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // (undocumented)
@@ -79,8 +69,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 }

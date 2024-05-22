@@ -3,24 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	MockContainerRuntime,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory, SharedMap } from "../../map";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { IDirectory } from "../../interfaces";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	type IDirectory,
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedDirectory,
+	SharedMap,
+} from "../../index.js";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	let containerRuntime1: MockContainerRuntime;
 	let containerRuntime2: MockContainerRuntime;
 
-	[
+	for (const testConfig of [
 		{
 			options: {
 				flushMode: FlushMode.Immediate,
@@ -34,13 +40,15 @@ describe("Rebasing", () => {
 			},
 			name: "FlushMode TurnBased with grouped batching",
 		},
-	].forEach((testConfig) => {
+	]) {
 		describe(`SharedMap - ${testConfig.name}`, () => {
-			let map1: SharedMap;
-			let map2: SharedMap;
+			let map1: ISharedMap;
+			let map2: ISharedMap;
 
 			beforeEach("createMaps", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+				const factory = SharedMap.getFactory();
+
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -48,7 +56,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				map1 = new SharedMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
+				map1 = factory.create(dataStoreRuntime1, "shared-map-1");
 				map1.connect(services1);
 
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -58,7 +66,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				map2 = new SharedMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
+				map2 = factory.create(dataStoreRuntime2, "shared-map-2");
 				map2.connect(services2);
 			});
 
@@ -98,11 +106,13 @@ describe("Rebasing", () => {
 		});
 
 		describe(`SharedDirectory - ${testConfig.name}`, () => {
-			let dir1: SharedDirectory;
-			let dir2: SharedDirectory;
+			let dir1: ISharedDirectory;
+			let dir2: ISharedDirectory;
 
 			beforeEach("createDirectories", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+				const factory = SharedDirectory.getFactory();
+
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -110,11 +120,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				dir1 = new SharedDirectory(
-					"shared-directory-1",
-					dataStoreRuntime1,
-					DirectoryFactory.Attributes,
-				);
+				dir1 = factory.create(dataStoreRuntime1, "shared-directory-1");
 				dir1.connect(services1);
 
 				// Create the second SharedMap.
@@ -125,42 +131,40 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				dir2 = new SharedDirectory(
-					"shared-directory-2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
-				);
+				dir2 = factory.create(dataStoreRuntime2, "shared-directory-2");
 				dir2.connect(services2);
 			});
 
-			const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
+			const areDirectoriesEqual = (
+				a: IDirectory | undefined,
+				b: IDirectory | undefined,
+			): void => {
 				if (a === undefined || b === undefined) {
 					assert.strictEqual(a, b, "Both directories should be undefined");
 					return;
 				}
 
-				const leftKeys = Array.from(a.keys());
-				const rightKeys = Array.from(b.keys());
+				const leftKeys = [...a.keys()];
+				const rightKeys = [...b.keys()];
 				assert.strictEqual(
 					leftKeys.length,
 					rightKeys.length,
 					"Number of keys should be the same",
 				);
-				leftKeys.forEach((key) => {
+				for (const key of leftKeys) {
 					assert.strictEqual(a.get(key), b.get(key), "Key values should be the same");
-				});
+				}
 
-				const leftSubdirectories = Array.from(a.subdirectories());
-				const rightSubdirectories = Array.from(b.subdirectories());
+				const leftSubdirectories = [...a.subdirectories()];
+				const rightSubdirectories = [...b.subdirectories()];
 				assert.strictEqual(
 					leftSubdirectories.length,
 					rightSubdirectories.length,
 					"Number of subdirectories should be the same",
 				);
 
-				leftSubdirectories.forEach(([name]) =>
-					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
-				);
+				for (const [name] of leftSubdirectories)
+					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name));
 			};
 
 			it("Rebasing ops maintains eventual consistency", () => {
@@ -203,5 +207,5 @@ describe("Rebasing", () => {
 				areDirectoriesEqual(dir1, dir2);
 			});
 		});
-	});
+	}
 });

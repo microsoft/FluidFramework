@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
@@ -17,6 +18,7 @@ import {
 } from "../core/index.js";
 import { Events, ISubscribable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
+
 import { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:
@@ -202,7 +204,7 @@ export interface BindPolicy {
  *
  * @internal
  */
-export const indexSymbol = Symbol("editable-tree-binder:index");
+export const indexSymbol = Symbol("flex-tree-binder:index");
 
 /**
  * A syntax node for the bind language
@@ -431,7 +433,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		tree: BindTree,
 		listener: Listener,
 		callTree: CallTree,
-	) {
+	): void {
 		if (tree.children.size === 0) {
 			callTree.listeners.add(listener);
 		} else {
@@ -460,7 +462,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		tree: BindTree,
 		listener: Listener,
 		callTree?: CallTree,
-	) {
+	): void {
 		const foundTree = callTree ?? this.findRoot(contextType, tree.field);
 		if (foundTree !== undefined) {
 			if (tree.children.size === 0) {
@@ -795,7 +797,7 @@ class BufferingDataBinder<E extends Events<E>>
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
 		const unsortedVisitors: BufferingPathVisitor[] = Array.from(this.visitorLocations.keys());
 		const sortFn = this.options.sortAnchorsFn ?? (() => 0);
-		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
+		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor): number => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
 			assert(pathA !== undefined, 0x6dd /* pathA expected to be defined */);

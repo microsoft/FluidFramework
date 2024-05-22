@@ -5,21 +5,21 @@
 
 import { strict as assert } from "assert";
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedCell } from "@fluidframework/cell";
+import type { ISharedCell } from "@fluidframework/cell/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { ISharedString, SharedString } from "@fluidframework/sequence/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";
@@ -28,7 +28,9 @@ const cellId = "cellKey";
 const mapId = "mapKey";
 
 describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedString, SharedCell } = apis.dds;
+	const { SequenceDeltaEvent } = apis.dataRuntime.packages.sequence;
+
 	const registry: ChannelFactoryRegistry = [
 		[stringId, SharedString.getFactory()],
 		[string2Id, SharedString.getFactory()],
@@ -51,9 +53,13 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 	let sharedString: SharedString;
 	let sharedString2: SharedString;
 	let sharedDir: SharedDirectory;
-	let sharedCell: SharedCell;
-	let sharedMap: SharedMap;
-	let changedEventData: (IValueChanged | Serializable<unknown>)[];
+	let sharedCell: ISharedCell;
+	let sharedMap: ISharedMap;
+	let changedEventData: (
+		| IValueChanged
+		| Serializable<unknown>
+		| InstanceType<typeof SequenceDeltaEvent>
+	)[];
 	let containerRuntime: ContainerRuntime;
 	let error: Error | undefined;
 
@@ -73,19 +79,19 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
-		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
+		sharedString = await dataObject.getSharedObject<ISharedString>(stringId);
+		sharedString2 = await dataObject.getSharedObject<ISharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
-		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];
-		sharedString.on("sequenceDelta", (changed, _local, _target) => {
-			changedEventData.push(changed);
+		sharedString.on("sequenceDelta", (event, _target) => {
+			changedEventData.push(event);
 		});
-		sharedString2.on("sequenceDelta", (changed, _local, _target) => {
-			changedEventData.push(changed);
+		sharedString2.on("sequenceDelta", (event, _target) => {
+			changedEventData.push(event);
 		});
 		sharedDir.on("valueChanged", (changed, _local, _target) => {
 			changedEventData.push(changed);
@@ -93,8 +99,8 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		sharedCell.on("valueChanged", (value) => {
 			changedEventData.push(value);
 		});
-		sharedCell.on("delete", (value) => {
-			changedEventData.push(value);
+		sharedCell.on("delete", () => {
+			changedEventData.push(undefined);
 		});
 		sharedMap.on("valueChanged", (value) => {
 			changedEventData.push(value);

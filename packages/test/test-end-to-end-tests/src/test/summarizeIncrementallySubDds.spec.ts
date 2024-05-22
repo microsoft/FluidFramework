@@ -4,39 +4,44 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	MessageType,
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
+
 import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds
@@ -188,7 +193,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 }
 
 // Test DDS factory for the tree dds
-class TestTreeDDSFactory implements IChannelFactory {
+class TestTreeDDSFactory implements IChannelFactory<TestIncrementalSummaryTreeDDS> {
 	public static readonly Type = "incrementalTreeDDS";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -211,7 +216,7 @@ class TestTreeDDSFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<TestIncrementalSummaryTreeDDS> {
-		const sharedObject = new TestIncrementalSummaryTreeDDS(
+		const sharedObject = new TestIncrementalSummaryTreeDDSClass(
 			id,
 			runtime,
 			attributes,
@@ -225,7 +230,7 @@ class TestTreeDDSFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryTreeDDS {
-		return new TestIncrementalSummaryTreeDDS(id, document, this.attributes, "TestTreeDDS");
+		return new TestIncrementalSummaryTreeDDSClass(id, document, this.attributes, "TestTreeDDS");
 	}
 }
 
@@ -247,17 +252,16 @@ interface ICreateTreeNodeOp {
 	type: "treeOp";
 }
 
+const TestIncrementalSummaryTreeDDS = createSharedObjectKind(TestTreeDDSFactory);
+export type TestIncrementalSummaryTreeDDS = TestIncrementalSummaryTreeDDSClass;
+
 // Creates trees that can be incrementally summarized
 // Each op creates a new child node for any node in the tree.
 // The data of the tree is stored in the node's header blob
 // Any node and its subsequent children that do not change are summarized as a summary handle
 // This tree is written in a simple recursive structure.
 // The test below should indicate how the DDS can be used.
-class TestIncrementalSummaryTreeDDS extends SharedObject {
-	static getFactory(): IChannelFactory {
-		return new TestTreeDDSFactory();
-	}
-
+class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	public readonly rootNodeName = "rootNode";
 	private readonly root: ITreeNode = {
 		children: [],
@@ -460,7 +464,9 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 describeCompat(
 	"Incremental summaries can be generated for DDS content",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 		let provider: ITestObjectProvider;
 		const defaultFactory = new TestFluidObjectFactory([
 			[
@@ -497,8 +503,7 @@ describeCompat(
 				container,
 				defaultFactory,
 				summaryVersion,
-				getContainerRuntimeApi(pkgVersion, pkgVersion)
-					.ContainerRuntimeFactoryWithDefaultDataStore,
+				getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore,
 			);
 			return createSummarizerResult.summarizer;
 		}

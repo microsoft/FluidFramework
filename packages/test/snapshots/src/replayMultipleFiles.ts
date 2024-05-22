@@ -6,24 +6,27 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import nodePath from "path";
+
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "./packageVersion";
-import { validateSnapshots } from "./validateSnapshots";
-import { getMetadata, writeMetadataFile } from "./metadata";
-import { getTestContent } from "./testContent";
+
+import { _dirname } from "./dirname.cjs";
+import { getMetadata, writeMetadataFile } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
+import { getTestContent } from "./testContent.js";
+import { validateSnapshots } from "./validateSnapshots.js";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
 	// Correct if executing from working directory of package root
 	const testCollateral = getTestContent("snapshotTestContent");
-	let workerPath = "./dist/replayWorker.js";
+	let workerPath = "./lib/replayWorker.js";
 	if (fs.existsSync(workerPath) && testCollateral.exists) {
 		return [testCollateral.path, workerPath];
 	}
 	// Relative to this generated js file being executed
-	workerPath = nodePath.join(__dirname, "..", workerPath);
+	workerPath = nodePath.join(_dirname, "..", workerPath);
 	assert(
 		fs.existsSync(workerPath),
 		`Cannot find worker js or test content file: ${workerPath}, ${testCollateral.path}`,

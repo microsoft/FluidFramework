@@ -6,19 +6,19 @@
 import { strict as assert } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
-import {
-	handleShapesAndIdentifiers,
-	IdentifierToken,
-	Shape,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 
+import { unionOptions } from "../../../../codec/index.js";
 import {
 	Counter,
 	DeduplicationTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
-import { unionOptions } from "../../../../codec/index.js";
+import {
+	IdentifierToken,
+	Shape,
+	handleShapesAndIdentifiers,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 
 export const Constant = Type.Literal(0);
 

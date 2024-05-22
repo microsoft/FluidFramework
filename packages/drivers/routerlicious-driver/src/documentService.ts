@@ -4,31 +4,40 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import * as api from "@fluidframework/driver-definitions";
-import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import * as api from "@fluidframework/driver-definitions/internal";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { RouterliciousErrorTypes } from "./errorUtils";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentStorageService } from "./documentStorageService";
-import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
-import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider } from "./tokens";
+
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
+import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { GitManager } from "./gitManager.js";
+import { Historian } from "./historian.js";
+import { NullBlobStorageService } from "./nullBlobStorageService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
-} from "./restWrapper";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { GitManager } from "./gitManager";
-import { Historian } from "./historian";
-import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSnapshot } from "./contracts";
+} from "./restWrapper.js";
+import { RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider } from "./tokens.js";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -42,9 +51,9 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
-// eslint-disable-next-line import/namespace
 export class DocumentService
 	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
 	implements api.IDocumentService
 {
 	private lastDiscoveredAt: number = Date.now();
@@ -113,7 +122,7 @@ export class DocumentService
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
-					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.storageRestWrapper = RouterliciousStorageRestWrapper.load(
 						this.tenantId,
 						this.storageTokenFetcher,
 						this.logger,
@@ -165,7 +174,7 @@ export class DocumentService
 				const rateLimiter = new RateLimiter(
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,

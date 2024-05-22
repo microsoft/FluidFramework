@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+	SharedNumberSequence,
+	SparseMatrix,
+	positionToRowCol,
+	rowColToPosition,
+} from "@fluid-experimental/sequence-deprecated";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	SequenceDeltaEvent,
-	ReferencePosition,
 	PropertySet,
+	ReferencePosition,
+	SequenceDeltaEvent,
 	SharedString,
 	createEndpointIndex,
-} from "@fluidframework/sequence";
-import {
-	positionToRowCol,
-	rowColToPosition,
-	SparseMatrix,
-	SharedNumberSequence,
-} from "@fluid-experimental/sequence-deprecated";
+} from "@fluidframework/sequence/internal";
+
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";
 import { ConfigKey } from "./configKey.js";

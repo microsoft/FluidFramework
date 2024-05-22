@@ -3,45 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	ITreeSubscriptionCursor,
-	IEditableForest,
-	ITreeSubscriptionCursorState,
-	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
-	FieldKey,
-	DetachedField,
-	AnchorSet,
-	UpPath,
 	Anchor,
-	ITreeCursor,
+	AnchorSet,
 	CursorLocationType,
-	TreeNodeSchemaIdentifier,
-	MapTree,
-	getMapTreeField,
+	DeltaVisitor,
+	DetachedField,
 	FieldAnchor,
+	FieldKey,
 	FieldUpPath,
 	ForestEvents,
-	PathRootPrefix,
-	DeltaVisitor,
-	Range,
-	PlaceIndex,
-	Value,
+	IEditableForest,
+	ITreeCursor,
 	ITreeCursorSynchronous,
-	aboveRootPlaceholder,
+	ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
+	MapTree,
+	PathRootPrefix,
+	PlaceIndex,
 	ProtoNodes,
+	Range,
+	TreeNavigationResult,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchemaSubscription,
+	UpPath,
+	Value,
+	aboveRootPlaceholder,
+	getMapTreeField,
 } from "../../core/index.js";
+import { createEmitter } from "../../events/index.js";
 import {
-	brand,
-	fail,
+	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
-	assertNonNegativeSafeInteger,
+	brand,
+	fail,
 } from "../../util/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor.js";
-import { createEmitter } from "../../events/index.js";
 
 function makeRoot(): MapTree {
 	return {
@@ -99,12 +100,6 @@ export class ObjectForest implements IEditableForest {
 			this.activeVisitor === undefined,
 			0x76c /* Must release existing visitor before acquiring another */,
 		);
-		this.events.emit("beforeChange");
-
-		assert(
-			this.currentCursors.size === 0,
-			0x374 /* No cursors can be current when modifying forest */,
-		);
 
 		// Note: This code uses cursors, however it also modifies the tree.
 		// In general this is not safe, but this code happens to only modify the tree below the current cursor location,
@@ -114,6 +109,20 @@ export class ObjectForest implements IEditableForest {
 
 		const cursor: Cursor = this.allocateCursor();
 		cursor.setToAboveDetachedSequences();
+
+		/**
+		 * Called before each edit to allow cursor cleanup to happen and ensure that there are no unexpected cursors.
+		 * This is required for each change since there may be app facing change event handlers which create cursors.
+		 */
+		const preEdit = (): void => {
+			this.events.emit("beforeChange");
+			assert(
+				this.currentCursors.size === 1,
+				0x374 /* No cursors can be current when modifying forest */,
+			);
+			assert(this.currentCursors.has(cursor), "unexpected cursor while editing");
+		};
+
 		const visitor = {
 			forest: this,
 			cursor,
@@ -124,13 +133,15 @@ export class ObjectForest implements IEditableForest {
 					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
+				preEdit();
 				this.forest.delete(detachedField);
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
+				preEdit();
 				this.forest.add(content, destination);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
@@ -147,6 +158,7 @@ export class ObjectForest implements IEditableForest {
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				preEdit();
 				assertNonNegativeSafeInteger(count);
 				if (count === 0) {
 					return;
@@ -176,6 +188,7 @@ export class ObjectForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				preEdit();
 				const [parent, key] = cursor.getParent();
 				assert(
 					destination === undefined ||

@@ -4,20 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
-import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
-import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
-import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
-import { noopValidator } from "../../../codec/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
-import { Editor, makeEditMinter } from "../../editMinter.js";
-import { failCodec, testRevisionTagCodec } from "../../utils.js";
+
+import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import {
+	ChangeFamily,
+	RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
+import { singleJsonCursor } from "../../../domains/index.js";
+import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import { Commit } from "../../../shared-tree-core/index.js";
+import { brand } from "../../../util/index.js";
+import { Editor, makeEditMinter } from "../../editMinter.js";
+import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
+import { failCodecFamily, mintRevisionTag } from "../../utils.js";
+
+import {
+	editManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
-	editManagerFactory,
 } from "./editManagerTestUtils.js";
 
 describe("EditManager - Bench", () => {
@@ -40,20 +49,20 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<any, TChange>;
-		readonly mintChange: () => TChange;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-		jsonValidator: noopValidator,
-	});
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily);
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
 			.insert(0, singleJsonCursor(1));
 	};
 
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const families: Family<any>[] = [
 		{
 			name: "TestChange",
@@ -64,7 +73,12 @@ describe("EditManager - Bench", () => {
 		{
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
-			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
+			mintChange: (revision) => {
+				const change = makeEditMinter(defaultFamily, sequencePrepend)();
+				return revision !== undefined
+					? defaultFamily.rebaser.changeRevision(change, revision)
+					: change;
+			},
 			maxEditCount: 350,
 		},
 	];
@@ -235,4 +249,58 @@ describe("EditManager - Bench", () => {
 			});
 		});
 	}
+
+	describe("No concurrency", () => {
+		describe("Many local edits", () => {
+			for (const [type, count] of [
+				[BenchmarkType.Perspective, 1],
+				[BenchmarkType.Perspective, 10],
+				[BenchmarkType.Perspective, 100],
+				[BenchmarkType.Perspective, 1000],
+			]) {
+				benchmark({
+					type,
+					title: `Process the sequencing of ${count} local commits`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
+							const manager = editManagerFactory(family);
+							// Subscribe to the local branch to emulate the behavior of SharedTree
+							manager.localBranch.on("afterChange", ({ change }) => {});
+							const sequencedEdits: Commit<TestChange>[] = [];
+							for (let iChange = 0; iChange < count; iChange++) {
+								const revision = mintRevisionTag();
+								manager.localBranch.apply(TestChange.emptyChange, revision);
+								sequencedEdits.push({
+									change: TestChange.emptyChange,
+									revision,
+									sessionId: manager.localSessionId,
+								});
+							}
+
+							// Measure
+							const before = state.timer.now();
+							for (let iChange = 0; iChange < count; iChange++) {
+								manager.addSequencedChange(
+									sequencedEdits[iChange],
+									brand(iChange + 1),
+									brand(0),
+								);
+							}
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+			}
+		});
+	});
 });

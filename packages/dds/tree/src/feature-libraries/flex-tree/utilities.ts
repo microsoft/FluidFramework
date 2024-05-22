@@ -5,13 +5,14 @@
 
 import {
 	AnchorNode,
-	AnchorSet,
 	DetachedField,
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,
+	type SchemaAndPolicy,
 } from "../../core/index.js";
-import { TreeStatus } from "./flexTreeTypes.js";
+
+import { TreeStatus, type FlexTreeEntity } from "./flexTreeTypes.js";
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
  * @param detachedField - the detached field you want to check.
@@ -31,22 +32,22 @@ export function treeStatusFromDetachedField(detachedField: DetachedField): TreeS
  * @param anchorNode - the {@link AnchorNode} to get the {@link TreeStatus} of.
  * @returns - the {@link TreeStatus} of the anchorNode provided.
  */
-export function treeStatusFromAnchorCache(anchors: AnchorSet, anchorNode: AnchorNode): TreeStatus {
+export function treeStatusFromAnchorCache(anchorNode: AnchorNode): TreeStatus {
 	const cache = anchorNode.slots.get(detachedFieldSlot);
+	const { generationNumber } = anchorNode.anchorSet;
 	if (cache === undefined) {
 		// If the cache is undefined, set the cache and return the treeStatus based on the detached field.
 		return treeStatusFromDetachedField(
-			getCachedUpdatedDetachedField(anchorNode, anchors.generationNumber),
+			getCachedUpdatedDetachedField(anchorNode, generationNumber),
 		);
 	} else {
 		// If the cache is up to date, return the treeStatus based on the cached detached field.
-		const currentGenerationNumber = anchors.generationNumber;
-		if (cache.generationNumber === currentGenerationNumber) {
+		if (cache.generationNumber === generationNumber) {
 			return treeStatusFromDetachedField(cache.detachedField);
 		}
 		// If the cache is not up to date, update the cache and return the treeStatus based on the updated detached field.
 		return treeStatusFromDetachedField(
-			getCachedUpdatedDetachedField(anchorNode, currentGenerationNumber),
+			getCachedUpdatedDetachedField(anchorNode, generationNumber),
 		);
 	}
 }
@@ -71,4 +72,16 @@ export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
 export interface DetachedFieldCache {
 	generationNumber: number;
 	detachedField: DetachedField;
+}
+
+/**
+ * Utility function to get a {@link SchemaAndPolicy} object from a {@link FlexTreeNode} or {@link FlexTreeField}.
+ * @param nodeOrField - {@link FlexTreeNode} or {@link FlexTreeField} to get the schema and policy from.
+ * @returns A {@link SchemaAndPolicy} object with the stored schema and policy from the node or field provided.
+ */
+export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
+	return {
+		schema: nodeOrField.context.checkout.storedSchema,
+		policy: nodeOrField.context.schema.policy,
+	};
 }

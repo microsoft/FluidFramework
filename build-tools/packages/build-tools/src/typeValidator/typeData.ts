@@ -63,9 +63,9 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 
 	if (Node.isIdentifier(node)) {
 		const typeData: TypeData[] = [];
-		node.getDefinitionNodes().forEach((d) =>
-			typeData.push(...getNodeTypeData(d, namespacePrefix)),
-		);
+		node
+			.getDefinitionNodes()
+			.forEach((d) => typeData.push(...getNodeTypeData(d, namespacePrefix)));
 		return typeData;
 	}
 
@@ -81,7 +81,7 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 			namespacePrefix !== undefined
 				? `${namespacePrefix}.${node.getName()}`
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  node.getName()!;
+					node.getName()!;
 
 		const docs = Node.isVariableDeclaration(node)
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()

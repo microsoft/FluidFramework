@@ -5,8 +5,12 @@
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	mintCommit,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	EncodedRevisionTag,
@@ -15,6 +19,10 @@ export {
 	ChangeAtomId,
 	ChangeAtomIdMap,
 	SessionIdSchema,
+	taggedAtomId,
+	taggedOptAtomId,
+	offsetChangeAtomId,
+	replaceAtomRevisions,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

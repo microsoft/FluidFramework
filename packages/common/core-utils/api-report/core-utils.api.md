@@ -60,6 +60,12 @@ export interface IPromiseTimerResult {
     timerResult: "timeout" | "cancel";
 }
 
+// @internal
+export const isObject: (value: unknown) => value is object;
+
+// @internal
+export const isPromiseLike: (value: unknown) => value is PromiseLike<unknown>;
+
 // @internal (undocumented)
 export interface ITimer {
     clear(): void;
@@ -132,7 +138,7 @@ export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTime
 
 // @internal
 export class Timer implements ITimer {
-    constructor(defaultTimeout: number, defaultHandler: () => void, getCurrentTick?: () => number);
+    constructor(defaultTimeout: number, defaultHandler: () => void, exceptionHandler?: ((error: unknown) => void) | undefined);
     clear(): void;
     get hasTimer(): boolean;
     restart(ms?: number, handler?: () => void): void;

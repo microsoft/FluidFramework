@@ -4,25 +4,29 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	makeAnonChange,
+	RevisionMetadataSource,
 	RevisionTag,
-	tagChange,
 	TaggedChange,
+	makeAnonChange,
+	mapTaggedChange,
+	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
-import { fail } from "../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema/index.js";
-import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
+import { fail } from "../util/index.js";
+
 import {
-	FieldStateTree,
-	generatePossibleSequenceOfEdits,
-	ChildStateGenerator,
 	BoundFieldChangeRebaser,
-	makeIntentionMinter,
+	ChildStateGenerator,
+	FieldStateTree,
 	NamedChangeset,
+	generatePossibleSequenceOfEdits,
+	makeIntentionMinter,
 } from "./exhaustiveRebaserUtils.js";
+import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;
@@ -61,10 +65,12 @@ function rebaseTagged<TChangeset>(
 	rebasePath: TaggedChange<TChangeset>[],
 ): TaggedChange<TChangeset> {
 	let currChange = change;
-	const revisionInfo = defaultRevInfosFromChanges(rebasePath);
+	const revisionInfo = defaultRevInfosFromChanges([...rebasePath, change]);
 	for (const base of rebasePath) {
-		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]);
-		currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
+		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+			base.revision,
+		]);
+		currChange = tagChange(rebase(currChange, base, metadata), currChange.revision);
 	}
 
 	return currChange;
@@ -176,11 +182,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
 							const rollbacks = sourceEdits.map((change) =>
-								tagRollbackInverse(
-									fieldRebaser.invert(change),
-									`rollback-${change.revision}` as unknown as RevisionTag,
-									change.revision,
-								),
+								invert(fieldRebaser, change),
 							);
 							rollbacks.reverse();
 
@@ -219,6 +221,221 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
+	describe("rebaseLeftDistributivity: A ↷ (B ○ C) = (A ↷ B) ↷ C", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const localEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"local-rev-",
+						intentionMinter,
+					),
+				);
+				const trunkEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						2,
+						"trunk-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [{ description: name, changeset: edit }] of localEdits) {
+					for (const namedEditsToRebaseOver of trunkEdits) {
+						const title = `Rebase ${name} over edits for left distributivity ${JSON.stringify(
+							namedEditsToRebaseOver.map(({ description }) => description),
+						)}`;
+
+						innerFixture(title, () => {
+							verifyRebaseLeftDistributivity<TChangeset>(
+								edit,
+								namedEditsToRebaseOver,
+								fieldRebaser,
+							);
+						});
+					}
+				}
+			});
+		}
+	});
+
+	describe.skip("rebaseRightDistributivity: (A ○ B) ↷ C = (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)))", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const localEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						2,
+						"local-rev-",
+						intentionMinter,
+					),
+				);
+				const trunkEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"trunk-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [
+					{ description: name1, changeset: edit1 },
+					{ description: name2, changeset: edit2 },
+				] of localEdits) {
+					for (const namedEditsToRebaseOver of trunkEdits) {
+						const title = `Rebase ${name1} and ${name2} over edits to check for right distributivity ${JSON.stringify(
+							namedEditsToRebaseOver[0].description,
+						)}`;
+
+						innerFixture(title, () => {
+							verifyRebaseRightDistributivity<TChangeset>(
+								[edit1, edit2],
+								namedEditsToRebaseOver[0],
+								fieldRebaser,
+							);
+						});
+					}
+				}
+			});
+		}
+	});
+
+	describe("rebaseOverUndoRedoPair: ((A ↷ B) ↷ B⁻¹) ↷ B = A ↷ B", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const localEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"local-rev-",
+						intentionMinter,
+					),
+				);
+				const trunkEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"trunk-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [{ description: name, changeset: edit }] of localEdits) {
+					for (const namedEditsToRebaseOver of trunkEdits) {
+						const title = `Rebase ${name} over undo redo pair ${JSON.stringify(
+							namedEditsToRebaseOver.map(({ description }) => description),
+						)}`;
+
+						innerFixture(title, () => {
+							verifyRebaseOverUndoRedoPair<TChangeset>(
+								edit,
+								namedEditsToRebaseOver[0],
+								fieldRebaser,
+							);
+						});
+					}
+				}
+			});
+		}
+	});
+
+	describe("rebaseOverDoUndoPairIsNoOp: (A ↷ B) ↷ B⁻¹ = A", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const localEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"local-rev-",
+						intentionMinter,
+					),
+				);
+				const trunkEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"trunk-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [{ description: name, changeset: edit }] of localEdits) {
+					for (const namedEditsToRebaseOver of trunkEdits) {
+						const title = `Rebase ${name} over do undo pair ${JSON.stringify(
+							namedEditsToRebaseOver.map(({ description }) => description),
+						)}`;
+
+						innerFixture(title, () => {
+							verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
+								edit,
+								namedEditsToRebaseOver[0],
+								fieldRebaser,
+							);
+						});
+					}
+				}
+			});
+		}
+	});
+
+	describe("rebaseOverEmpty: A ↷ ε = A", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const localEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"local-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [{ description: name, changeset: edit }] of localEdits) {
+					const title = `Rebase ${name} over empty change`;
+
+					innerFixture(title, () => {
+						verifyRebaseOverEmpty<TChangeset>(edit, fieldRebaser);
+					});
+				}
+			});
+		}
+	});
+
+	describe("rebaseEmpty: ε ↷ A = ε", () => {
+		for (const initialState of initialStates) {
+			const intentionMinter = makeIntentionMinter();
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				const trunkEdits = Array.from(
+					generatePossibleSequenceOfEdits(
+						initialState,
+						generateChildStates,
+						1,
+						"trunk-rev-",
+						intentionMinter,
+					),
+				);
+				for (const [{ description: name, changeset: edit }] of trunkEdits) {
+					const title = `Rebase empty change over ${name}`;
+
+					innerFixture(title, () => {
+						verifyRebaseEmpty<TChangeset>(edit, fieldRebaser);
+					});
+				}
+			});
+		}
+	});
+
 	describe("Compose associativity", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
@@ -237,6 +454,50 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					innerFixture(title, () => {
 						const edits = namedSourceEdits.map(({ changeset }) => changeset);
 						verifyComposeAssociativity(edits, fieldRebaser);
+					});
+				}
+			});
+		}
+	});
+
+	describe("composeWithEmpty: A ○ ε = ε ○ A = A", () => {
+		for (const initialState of initialStates) {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					generateChildStates,
+					1,
+					"rev-",
+				)) {
+					const title = `for ${JSON.stringify(
+						namedSourceEdits.map(({ description }) => description),
+					)}`;
+
+					innerFixture(title, () => {
+						const edit = namedSourceEdits[0].changeset;
+						verifyComposeWithEmptyIsNoOp(edit, fieldRebaser);
+					});
+				}
+			});
+		}
+	});
+
+	describe("composeWithInverse: A ○ A⁻¹ = ε", () => {
+		for (const initialState of initialStates) {
+			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					generateChildStates,
+					1,
+					"rev-",
+				)) {
+					const title = `for ${JSON.stringify(
+						namedSourceEdits.map(({ description }) => description),
+					)}`;
+
+					innerFixture(title, () => {
+						const edit = namedSourceEdits[0].changeset;
+						verifyComposeWithInverseEqualsEmpty(edit, fieldRebaser);
 					});
 				}
 			});
@@ -262,11 +523,12 @@ function sandwichRebaseWithCompose<TChangeset>(
 			...sourceEdits.slice(0, i),
 		];
 		const rebaseMetadata = rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges(rebasePath),
+			defaultRevInfosFromChanges([...rebasePath, edit]),
+			edit.revision,
 			[editToRebaseOver.revision],
 		);
 		const rebasedEdit = tagChange(
-			fieldRebaser.rebaseComposed(rebaseMetadata, edit.change, currentComposedEdit),
+			fieldRebaser.rebaseComposed(rebaseMetadata, edit, currentComposedEdit),
 			edit.revision,
 		);
 		rebasedEditsWithCompose.push(rebasedEdit);
@@ -278,9 +540,14 @@ function sandwichRebaseWithCompose<TChangeset>(
 		const composeMetadata = defaultRevisionMetadataFromChanges(compositionScope);
 		currentComposedEdit = makeAnonChange(
 			fieldRebaser.compose(
-				[rollbacks[sourceEdits.length - i - 1], currentComposedEdit, rebasedEdit],
+				rollbacks[sourceEdits.length - i - 1],
+				currentComposedEdit,
 				composeMetadata,
 			),
+		);
+
+		currentComposedEdit = makeAnonChange(
+			fieldRebaser.compose(currentComposedEdit, rebasedEdit, composeMetadata),
 		);
 	}
 	return rebasedEditsWithCompose;
@@ -288,7 +555,7 @@ function sandwichRebaseWithCompose<TChangeset>(
 
 function sandwichRebaseWithoutCompose<TChangeset>(
 	sourceEdits: TaggedChange<TChangeset>[],
-	rollbacks: TaggedChange<any>[],
+	rollbacks: TaggedChange<TChangeset>[],
 	editToRebaseOver: TaggedChange<TChangeset>,
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ): TaggedChange<TChangeset>[] {
@@ -317,14 +584,11 @@ function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 
 	// Rebase over the composition of base edits
 	const metadata = rebaseRevisionMetadataFromInfo(
-		defaultRevInfosFromChanges(editsToRebaseOver),
+		defaultRevInfosFromChanges([...editsToRebaseOver, edit]),
+		edit.revision,
 		editsToRebaseOver.map(({ revision }) => revision),
 	);
-	const rebaseWithCompose = fieldRebaser.rebaseComposed(
-		metadata,
-		edit.change,
-		...editsToRebaseOver,
-	);
+	const rebaseWithCompose = fieldRebaser.rebaseComposed(metadata, edit, ...editsToRebaseOver);
 
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assertDeepEqual(
@@ -338,7 +602,7 @@ function verifyComposeAssociativity<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ) {
 	const metadata = defaultRevisionMetadataFromChanges(edits);
-	const singlyComposed = makeAnonChange(fieldRebaser.compose(edits, metadata));
+	const singlyComposed = makeAnonChange(composeArray(fieldRebaser, edits, metadata));
 	const leftPartialCompositions: TaggedChange<TChangeset>[] = [
 		edits.at(0) ?? fail("Expected at least one edit"),
 	];
@@ -346,10 +610,8 @@ function verifyComposeAssociativity<TChangeset>(
 		leftPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
-					[
-						leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
-						edits[i],
-					],
+					leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+					edits[i],
 					metadata,
 				),
 			),
@@ -363,10 +625,8 @@ function verifyComposeAssociativity<TChangeset>(
 		rightPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
-					[
-						edits[i],
-						rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
-					],
+					edits[i],
+					rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
 					metadata,
 				),
 			),
@@ -378,6 +638,223 @@ function verifyComposeAssociativity<TChangeset>(
 	assertDeepEqual(rightPartialCompositions.at(-1), singlyComposed);
 }
 
+const emptyRevisionTag = "empty" as unknown as RevisionTag;
+
+function verifyComposeWithInverseEqualsEmpty<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const metadata = defaultRevisionMetadataFromChanges([edit]);
+
+	const change = tagChange(edit.change, edit.revision);
+	const changeset = fieldRebaser.compose(change, invert(fieldRebaser, change), metadata);
+	assert(fieldRebaser.isEmpty !== undefined);
+	fieldRebaser.isEmpty(changeset);
+}
+
+function verifyComposeWithEmptyIsNoOp<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const metadata = defaultRevisionMetadataFromChanges([edit]);
+
+	const emptyChange = tagChange(fieldRebaser.createEmpty(), emptyRevisionTag);
+	const changeset = fieldRebaser.compose(edit, emptyChange, metadata);
+	const changeset2 = fieldRebaser.compose(emptyChange, edit, metadata);
+
+	const composedEditWithEmpty = tagChange(changeset, edit.revision);
+	const composedEmptyWithEdit = tagChange(changeset2, edit.revision);
+	assert(fieldRebaser.assertChangesetsEquivalent !== undefined);
+	fieldRebaser.assertChangesetsEquivalent(composedEditWithEmpty, edit);
+	fieldRebaser.assertChangesetsEquivalent(composedEmptyWithEdit, edit);
+}
+
+function verifyRebaseLeftDistributivity<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	namedEditsToRebaseOver: NamedChangeset<TChangeset>[],
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assert(namedEditsToRebaseOver.length >= 2, "expected at least 2 edits");
+	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
+	const revInfo = defaultRevInfosFromChanges([...editsToRebaseOver, edit]);
+
+	const editB = editsToRebaseOver[0];
+	const editC = editsToRebaseOver[1];
+	const rebaseMetaData = rebaseRevisionMetadataFromInfo(revInfo, edit.revision, [
+		editB.revision,
+		editC.revision,
+	]);
+	const actualChange = tagChange(
+		fieldRebaser.rebaseComposed(rebaseMetaData, edit, editB, editC),
+		edit.revision,
+	);
+	let expectedChangeset: TChangeset = edit.change;
+	for (const editToRebaseOver of editsToRebaseOver) {
+		expectedChangeset = fieldRebaser.rebase(
+			mapTaggedChange(edit, expectedChangeset),
+			editToRebaseOver,
+		);
+	}
+	const expectedChange = tagChange(expectedChangeset, edit.revision);
+
+	assertDeepEqual(actualChange, expectedChange);
+}
+
+function verifyRebaseRightDistributivity<TChangeset>(
+	edits: TaggedChange<TChangeset>[],
+	namedEditToRebaseOver: NamedChangeset<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assert(edits.length >= 2, "expected at least 2 edits");
+	const editToRebaseOver = namedEditToRebaseOver.changeset;
+	const metadata = defaultRevisionMetadataFromChanges([editToRebaseOver]);
+	const editA = edits[0];
+	const editB = edits[1];
+	const editC = {
+		change: editToRebaseOver.change,
+		revision: namedEditToRebaseOver.changeset.revision,
+		metadata,
+	};
+
+	// (A ○ B) ↷ C
+	const actualChange = rebaseTagged(
+		fieldRebaser.rebase,
+		makeAnonChange(fieldRebaser.compose(editA, editB)),
+		[editC],
+	);
+
+	const editRebasedOverC = rebaseTagged(fieldRebaser.rebase, editA, [editC]);
+	const invertedEdit = tagRollbackInverse(
+		fieldRebaser.invert(editA, true),
+		undefined,
+		editA.revision,
+	);
+	// (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)))
+	const expectedChange = makeAnonChange(
+		fieldRebaser.compose(
+			editRebasedOverC,
+			rebaseTagged(fieldRebaser.rebase, editB, [
+				makeAnonChange(
+					fieldRebaser.compose(
+						makeAnonChange(fieldRebaser.compose(invertedEdit, editC)),
+						editRebasedOverC,
+					),
+				),
+			]),
+		),
+	);
+
+	assertDeepEqual(actualChange, expectedChange);
+}
+
+function verifyRebaseOverUndoRedoPair<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	namedEditToRebaseOver: NamedChangeset<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	const editB = namedEditToRebaseOver.changeset;
+
+	const inverseEditB = fieldRebaser.invert(editB, true);
+
+	// ((A ↷ B) ↷ B⁻¹) ↷ B
+	const actualChange = tagChange(
+		fieldRebaser.rebase(
+			mapTaggedChange(
+				edit,
+				fieldRebaser.rebase(
+					mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
+					tagRollbackInverse(
+						inverseEditB,
+						`rollback-${editB.revision}` as unknown as RevisionTag,
+						editB.revision,
+					),
+				),
+			),
+			editB,
+		),
+		edit.revision,
+	);
+
+	// A ↷ B
+	const expectedChange = tagChange(fieldRebaser.rebase(edit, editB), edit.revision);
+	assertDeepEqual(actualChange, expectedChange);
+}
+
+function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	namedEditToRebaseOver: NamedChangeset<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	const editB = namedEditToRebaseOver.changeset;
+
+	const invertedEditB = fieldRebaser.invert(editB, true);
+	// (A ↷ B) ↷ B⁻¹
+	const actualChange = tagChange(
+		fieldRebaser.rebase(
+			mapTaggedChange(edit, fieldRebaser.rebase(edit, editB)),
+			tagChange(invertedEditB, editB.revision),
+		),
+		edit.revision,
+	);
+
+	const expectedChange = tagChange(edit.change, edit.revision);
+	if (fieldRebaser.assertChangesetsEquivalent !== undefined) {
+		fieldRebaser.assertChangesetsEquivalent(actualChange, expectedChange);
+	} else {
+		assertDeepEqual(actualChange, expectedChange);
+	}
+}
+
+function verifyRebaseOverEmpty<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const emptyChange = tagChange(fieldRebaser.createEmpty(), emptyRevisionTag);
+	const actualChange = tagChange(fieldRebaser.rebase(edit, emptyChange), edit.revision);
+	const expectedChange = tagChange(edit.change, edit.revision);
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assertDeepEqual(actualChange, expectedChange);
+}
+
+function verifyRebaseEmpty<TChangeset>(
+	edit: TaggedChange<TChangeset>,
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+) {
+	const emptyChange = tagChange(fieldRebaser.createEmpty(), emptyRevisionTag);
+	const actualChange = rebaseTagged(fieldRebaser.rebase, emptyChange, [edit]);
+	assert(fieldRebaser.isEmpty !== undefined);
+	assert(fieldRebaser.isEmpty(actualChange.change));
+}
+
 function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {
 	return fieldRebaser.assertEqual ?? ((a, b) => assert.deepEqual(a, b));
+}
+
+function composeArray<TChangeset>(
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+	changes: TaggedChange<TChangeset>[],
+	metadata: RevisionMetadataSource,
+): TChangeset {
+	let composed: TChangeset = fieldRebaser.createEmpty();
+	for (const change of changes) {
+		composed = fieldRebaser.compose(makeAnonChange(composed), change, metadata);
+	}
+
+	return composed;
+}
+
+function invert<TChangeset>(
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+	change: TaggedChange<TChangeset>,
+): TaggedChange<TChangeset> {
+	const revision = `rollback-${change.revision}` as unknown as RevisionTag;
+	return tagRollbackInverse(
+		fieldRebaser.inlineRevision(fieldRebaser.invert(change, true), revision),
+		revision,
+		change.revision,
+	);
 }

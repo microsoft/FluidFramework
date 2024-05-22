@@ -3,21 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
-import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
+} from "@fluidframework/runtime-definitions/internal";
+import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
+
+import {
+	GCFeatureMatrix,
+	GCVersion,
+	IGCMetadata,
+	gcVersionUpgradeToV4Key,
+	nextGCVersion,
+	stableGCVersion,
+} from "./gcDefinitions.js";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
-} from "./gcSummaryDefinitions";
+} from "./gcSummaryDefinitions.js";
 
 export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	if (!metadata) {
@@ -25,6 +34,14 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 		return 0;
 	}
 	return metadata.gcFeature ?? 0;
+}
+
+/** Indicates what GC version is in effect for new GC data being written in this session */
+export function getGCVersionInEffect(configProvider: IConfigProvider): number {
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
+		? nextGCVersion
+		: stableGCVersion;
 }
 
 /**
@@ -263,8 +280,21 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-export function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/** Reformats a request URL to match expected format for a GC node path */
+export function urlToGCNodePath(url: string): string {
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+}
+
+/**
+ * Pulls out the first path segment and formats it as a GC Node path
+ * e.g. "/dataStoreId/ddsId" yields "/dataStoreId"
+ */
+export function dataStoreNodePathOnly(subDataStorePath: string): string {
+	return `/${subDataStorePath.split("/")[1]}`;
 }
 
 /**

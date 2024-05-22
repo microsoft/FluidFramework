@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	FieldKey,
 	ITreeCursorSynchronous,
@@ -11,16 +12,17 @@ import {
 	forEachField,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
-import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
+
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
-	NodeEncoder,
-	KeyedFieldEncoder,
-	FieldEncoder,
 	EncoderCache,
+	FieldEncoder,
+	KeyedFieldEncoder,
+	NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
+import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -106,7 +108,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 	}
 
-	public get shape() {
+	public get shape(): NodeShape {
 		return this;
 	}
 }
@@ -127,27 +129,30 @@ export function encodeFieldShapes(
 	]);
 }
 
-function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {
+function encodeIdentifier(
+	identifier: string,
+	identifiers: DeduplicationTable<string>,
+): string | number {
 	return identifiers.valueToIndex.get(identifier) ?? identifier;
 }
 
 function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
-) {
+): string | number | undefined {
 	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
 }
 
 function encodeOptionalFieldShape(
 	shape: FieldEncoder | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number | undefined {
 	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
 }
 
 function dedupShape(
 	shape: Shape<EncodedChunkShape>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number {
 	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
 }

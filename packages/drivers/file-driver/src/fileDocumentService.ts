@@ -4,17 +4,18 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import * as api from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
+
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 /**
  * The DocumentService manages the different endpoints for connecting to
  * underlying storage for file document service.
  */
-// eslint-disable-next-line import/namespace
 export class FileDocumentService
 	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
 	implements api.IDocumentService
 {
 	constructor(

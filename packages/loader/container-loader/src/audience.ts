@@ -2,16 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/core-utils";
-import { IAudienceOwner } from "@fluidframework/container-definitions";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IAudienceEvents, ISelf } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.
  */
-export class Audience extends EventEmitter implements IAudienceOwner {
+export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
+	private _currentClientId: string | undefined;
 
 	constructor() {
 		super();
@@ -19,12 +22,28 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 		super.setMaxListeners(0);
 	}
 
-	public on(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-	public on(event: string, listener: (...args: any[]) => void): this {
-		return super.on(event, listener);
+	public getSelf(): ISelf | undefined {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: this.getMember(this._currentClientId),
+			  };
+	}
+
+	public setCurrentClientId(clientId: string): void {
+		if (this._currentClientId !== clientId) {
+			const oldId = this._currentClientId;
+			this._currentClientId = clientId;
+			// this.getMember(clientId) could resolve to undefined in these two cases:
+			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
+			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId, client: this.getMember(clientId) } satisfies ISelf,
+			);
+		}
 	}
 
 	/**
@@ -61,14 +80,20 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 	}
 
 	/**
-	 * Retrieves all the members in the audience
+	 * Retrieves all the members in the audience.
+	 *
+	 * @remarks When the container is disconnected, this will keep returning the audience as it was last seen before the
+	 * container disconnected.
 	 */
 	public getMembers(): Map<string, IClient> {
 		return new Map(this.members);
 	}
 
 	/**
-	 * Retrieves a specific member of the audience
+	 * Retrieves a specific member of the audience.
+	 *
+	 * @remarks When the container is disconnected, this will keep returning members from the audience as it was last seen
+	 * before the container disconnected.
 	 */
 	public getMember(clientId: string): IClient | undefined {
 		return this.members.get(clientId);

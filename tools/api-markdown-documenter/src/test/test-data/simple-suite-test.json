@@ -1,7 +1,7 @@
 {
 	"metadata": {
 		"toolPackage": "@microsoft/api-extractor",
-		"toolVersion": "7.38.3",
+		"toolVersion": "7.42.3",
 		"schemaVersion": 1011,
 		"oldestForwardsCompatibleVersion": 1001,
 		"tsdocConfig": {
@@ -162,7 +162,7 @@
 	},
 	"kind": "Package",
 	"canonicalReference": "simple-suite-test!",
-	"docComment": "/**\n * Test package\n *\n * @remarks\n *\n * This remarks block includes a bulleted list!\n *\n * - Bullet 1\n *\n * - Bullet 2\n *\n * And an ordered list for good measure!\n *\n * 1. List item 1\n *\n * 2. List item 2\n *\n * 3. List item 3\n *\n * Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:\n *\n * - Good link (no alias): {@link TestClass}\n *\n * - Good link (with alias): {@link testFunction | function alias text}\n *\n * - Bad link (no alias): {@link InvalidItem}\n *\n * - Bad link (with alias): {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered}\n *\n * @example\n *\n * A test example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @packageDocumentation\n */\n",
+	"docComment": "/**\n * <b>Test package</b>\n *\n * @remarks\n *\n * This remarks block includes a bulleted list!\n *\n * - Bullet 1\n *\n * - Bullet 2\n *\n * And an ordered list for good measure!\n *\n * 1. List item 1\n *\n * 2. List item 2\n *\n * 3. List item 3\n *\n * Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:\n *\n * - Good link (no alias): {@link TestClass}\n *\n * - Good link (with alias): {@link testFunction | function alias text}\n *\n * - Bad link (no alias): {@link InvalidItem}\n *\n * - Bad link (with alias): {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered}\n *\n * @example\n *\n * A test example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @packageDocumentation\n */\n",
 	"name": "simple-suite-test",
 	"preserveMemberOrder": false,
 	"members": [
@@ -175,7 +175,7 @@
 				{
 					"kind": "Class",
 					"canonicalReference": "simple-suite-test!TestAbstractClass:class",
-					"docComment": "/**\n * A test abstract class.\n *\n * @public\n */\n",
+					"docComment": "/**\n * A test abstract class.\n *\n * {@label test-class}\n *\n * @public\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -191,7 +191,7 @@
 						{
 							"kind": "Constructor",
 							"canonicalReference": "simple-suite-test!TestAbstractClass:constructor(1)",
-							"docComment": "/**\n * This is a constructor.\n */\n",
+							"docComment": "/**\n * This is a {@customTag constructor}.\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",
@@ -620,7 +620,7 @@
 						{
 							"kind": "Property",
 							"canonicalReference": "simple-suite-test!TestClass#testClassGetterProperty:member",
-							"docComment": "/**\n * Test class getter-only property\n *\n * @remarks\n *\n * Here are some remarks about the getter-only property\n *\n * @virtual\n */\n",
+							"docComment": "/**\n * Test class property with both a getter and a setter.\n *\n * @remarks\n *\n * Here are some remarks about the getter-only property\n *\n * @virtual\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",
@@ -632,10 +632,10 @@
 								},
 								{
 									"kind": "Content",
-									"text": ";"
+									"text": ";\n\nset testClassGetterProperty(newValue: number);"
 								}
 							],
-							"isReadonly": true,
+							"isReadonly": false,
 							"isOptional": false,
 							"releaseTag": "Public",
 							"name": "testClassGetterProperty",
@@ -875,24 +875,20 @@
 					"excerptTokens": [
 						{
 							"kind": "Content",
-							"text": "testConstWithEmptyDeprecatedBlock = "
+							"text": "testConstWithEmptyDeprecatedBlock: "
 						},
 						{
 							"kind": "Content",
-							"text": "\"I have a `@deprecated` tag with an empty comment block.\""
+							"text": "string"
 						}
 					],
 					"fileUrlPath": "dist/TestConst.d.ts",
-					"initializerTokenRange": {
-						"startIndex": 1,
-						"endIndex": 2
-					},
 					"isReadonly": true,
 					"releaseTag": "Public",
 					"name": "testConstWithEmptyDeprecatedBlock",
 					"variableTypeTokenRange": {
-						"startIndex": 0,
-						"endIndex": 0
+						"startIndex": 1,
+						"endIndex": 2
 					}
 				},
 				{
@@ -999,7 +995,25 @@
 					"excerptTokens": [
 						{
 							"kind": "Content",
-							"text": "export declare function testFunction<TTypeParameter>(testParameter: "
+							"text": "export declare function testFunction<TTypeParameter extends "
+						},
+						{
+							"kind": "Reference",
+							"text": "TestInterface",
+							"canonicalReference": "simple-suite-test!TestInterface:interface"
+						},
+						{
+							"kind": "Content",
+							"text": " = "
+						},
+						{
+							"kind": "Reference",
+							"text": "TestInterface",
+							"canonicalReference": "simple-suite-test!TestInterface:interface"
+						},
+						{
+							"kind": "Content",
+							"text": ">(testParameter: "
 						},
 						{
 							"kind": "Content",
@@ -1028,8 +1042,8 @@
 					],
 					"fileUrlPath": "dist/TestFunction.d.ts",
 					"returnTypeTokenRange": {
-						"startIndex": 5,
-						"endIndex": 6
+						"startIndex": 9,
+						"endIndex": 10
 					},
 					"releaseTag": "Alpha",
 					"overloadIndex": 1,
@@ -1037,16 +1051,16 @@
 						{
 							"parameterName": "testParameter",
 							"parameterTypeTokenRange": {
-								"startIndex": 1,
-								"endIndex": 2
+								"startIndex": 5,
+								"endIndex": 6
 							},
 							"isOptional": false
 						},
 						{
 							"parameterName": "testOptionalParameter",
 							"parameterTypeTokenRange": {
-								"startIndex": 3,
-								"endIndex": 4
+								"startIndex": 7,
+								"endIndex": 8
 							},
 							"isOptional": true
 						}
@@ -1055,12 +1069,12 @@
 						{
 							"typeParameterName": "TTypeParameter",
 							"constraintTokenRange": {
-								"startIndex": 0,
-								"endIndex": 0
+								"startIndex": 1,
+								"endIndex": 2
 							},
 							"defaultTypeTokenRange": {
-								"startIndex": 0,
-								"endIndex": 0
+								"startIndex": 3,
+								"endIndex": 4
 							}
 						}
 					],
@@ -1337,6 +1351,66 @@
 							"releaseTag": "Public",
 							"overloadIndex": 1,
 							"parameters": []
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "simple-suite-test!TestInterface#getterProperty:member",
+							"docComment": "/**\n * A test getter-only interface property.\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get getterProperty(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "getterProperty",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "simple-suite-test!TestInterface#setterProperty:member",
+							"docComment": "/**\n * A test property with a getter and a setter.\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get setterProperty(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n\nset setterProperty(newValue: boolean);"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "setterProperty",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
 						},
 						{
 							"kind": "PropertySignature",

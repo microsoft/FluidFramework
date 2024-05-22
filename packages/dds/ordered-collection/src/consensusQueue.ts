@@ -4,14 +4,13 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
 	IChannelAttributes,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
-import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
-import { IOrderedCollection } from "./interfaces";
-import { SnapshotableArray } from "./snapshotableArray";
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+
+import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
+import { IOrderedCollection } from "./interfaces.js";
+import { SnapshotableArray } from "./snapshotableArray.js";
 
 /**
  * An JS array based queue implementation that is the backing data structure for ConsensusQueue
@@ -35,27 +34,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
  * @alpha
  */
-export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
-	/**
-	 * Create a new consensus queue
-	 *
-	 * @param runtime - data store runtime the new consensus queue belongs to
-	 * @param id - optional name of theconsensus queue
-	 * @returns newly create consensus queue (but not attached yet)
-	 */
-	public static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, ConsensusQueueFactory.Type) as ConsensusQueue<T>;
-	}
-
-	/**
-	 * Get a factory for ConsensusQueue to register with the data store.
-	 *
-	 * @returns a factory that creates and load ConsensusQueue
-	 */
-	public static getFactory(): IChannelFactory {
-		return new ConsensusQueueFactory();
-	}
-
+export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
 	/**
 	 * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
 	 * be provided

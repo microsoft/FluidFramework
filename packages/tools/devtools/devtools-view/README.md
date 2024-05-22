@@ -62,7 +62,7 @@ These run using [mocha](https://mochajs.org/).
 This is particularly important for ensuring we meet our visual accessibility requirements.
 
 The test modules for these tests are written using [Storybook "stories"](https://storybook.js.org/docs/react/writing-stories/introduction)
-and live under `src/screenshot-tests`.
+and live under `src/test/screenshot`.
 The corresponding screenshot assets live under `./__screenshots__`.
 
 To run only the visual regression tests, run `npm run test:screenshots` from a terminal within this directory.
@@ -71,7 +71,7 @@ To run only the visual regression tests, run `npm run test:screenshots` from a t
 
 To add a new test story, do the following:
 
-1. Add a new file under the `src/screenshot-tests/stories` using the following naming convention: `<name-of-the-component-being-tested>.stories.tsx`.
+1. Add a new file under the `src/test/screenshot/stories` using the following naming convention: `<name-of-the-component-being-tested>.stories.tsx`.
     - The idea is to have a 1-1 mapping of stories modules to components.
       Each stories module may contain any number of stories, where each story maps to a single test.
 2. Add the top-level story module boilerplate.

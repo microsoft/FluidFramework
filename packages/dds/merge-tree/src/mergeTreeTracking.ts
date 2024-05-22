@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference";
-import { ISegment } from "./mergeTreeNodes";
+import { LocalReferencePosition } from "./localReference.js";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { SortedSegmentSet } from "./sortedSegmentSet";
+import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**
  * @alpha

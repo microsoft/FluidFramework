@@ -4,20 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IContainerRuntimeBase,
-	IGarbageCollectionData,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+	IGarbageCollectionData,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
-import { IFluidDataStoreRuntime, IChannel } from "@fluidframework/datastore-definitions";
-import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 
 describe("FluidDataStoreRuntime Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;

@@ -2,31 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+} from "@fluidframework/aqueduct/internal";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
+	type FluidObject,
+	type IFluidLoadable,
+	type IRequest,
+	type IResponse,
+} from "@fluidframework/core-interfaces";
+import { type IDirectory } from "@fluidframework/map/internal";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import type {
+	CompatibilityMode,
 	ContainerSchema,
+	DataObjectClass,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
-	SharedObjectClass,
-} from "./types";
+} from "./types.js";
 import {
-	InternalDataObjectClass,
 	isDataObjectClass,
-	isSharedObjectClass,
+	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
-} from "./utils";
+} from "./utils.js";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -37,7 +47,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 }
 
 /**
@@ -50,11 +60,12 @@ class RootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
-	public get IRootDataObject() {
+
+	public get IRootDataObject(): IRootDataObject {
 		return this;
 	}
 
-	private get initialObjectsDir() {
+	private get initialObjectsDir(): IDirectory {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
 		if (dir === undefined) {
 			throw new Error("InitialObjects sub-directory was not initialized");
@@ -68,18 +79,20 @@ class RootDataObject
 	 *
 	 * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
 	 */
-	protected async initializingFirstTime(props: RootDataObjectProps) {
+	protected async initializingFirstTime(props: RootDataObjectProps): Promise<void> {
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 
 		// Create initial objects provided by the developer
 		const initialObjectsP: Promise<void>[] = [];
-		Object.entries(props.initialObjects).forEach(([id, objectClass]) => {
-			const createObject = async () => {
-				const obj = await this.create(objectClass);
+		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
+			const createObject = async (): Promise<void> => {
+				const obj = await this.create<IFluidLoadable>(
+					objectClass as SharedObjectKind<IFluidLoadable>,
+				);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
-		});
+		}
 
 		await Promise.all(initialObjectsP);
 	}
@@ -90,12 +103,13 @@ class RootDataObject
 	 *
 	 * @see {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		// We will always load the initial objects so they are available to the developer
 		const loadInitialObjectsP: Promise<void>[] = [];
-		for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
-			const loadDir = async () => {
-				const obj = await value.get();
+		for (const [key, value] of this.initialObjectsDir.entries()) {
+			const loadDir = async (): Promise<void> => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				const obj: unknown = await value.get();
 				Object.assign(this._initialObjects, { [key]: obj });
 			};
 			loadInitialObjectsP.push(loadDir());
@@ -117,27 +131,28 @@ class RootDataObject
 	/**
 	 * {@inheritDoc IRootDataObject.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
-		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject<T>(objectClass);
-		} else if (isSharedObjectClass(objectClass)) {
-			return this.createSharedObject<T>(objectClass);
+	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
+		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
+		if (isDataObjectClass(internal)) {
+			return this.createDataObject(internal);
+		} else if (isSharedObjectKind(internal)) {
+			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: InternalDataObjectClass<T>,
+		dataObjectClass: DataObjectClass<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as unknown as T;
+		return entryPoint as T;
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: SharedObjectClass<T>,
+		sharedObjectClass: ISharedObjectKind<T>,
 	): T {
 		const factory = sharedObjectClass.getFactory();
 		const obj = this.runtime.createChannel(undefined, factory.type);
@@ -148,12 +163,16 @@ class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
+ * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} for a container with a single
+ * {@link IRootDataObject}, which is constructed from the provided schema.
+ *
  * @internal
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
+	compatibilityMode: CompatibilityMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatibilityMode);
 }
 
 /**
@@ -176,7 +195,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	constructor(schema: ContainerSchema) {
+	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -185,7 +204,10 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{},
 			registryEntries,
 		);
-		const provideEntryPoint = async (containerRuntime: IContainerRuntime) => {
+		const provideEntryPoint = async (
+			containerRuntime: IContainerRuntime,
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): Promise<FluidObject> => {
 			const entryPoint =
 				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
@@ -193,7 +215,11 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			}
 			return entryPoint.get();
 		};
-		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+		const getDefaultObject = async (
+			request: IRequest,
+			runtime: IContainerRuntime,
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
@@ -207,13 +233,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: true,
-			},
+			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
@@ -223,7 +243,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	/**
 	 * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
 			initialObjects: this.initialObjects,

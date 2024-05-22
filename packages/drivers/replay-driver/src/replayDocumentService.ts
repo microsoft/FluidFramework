@@ -4,11 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import * as api from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
-import { ReplayController } from "./replayController";
-import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
+
+import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
+import { ReplayController } from "./replayController.js";
+import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection.js";
 
 /**
  * The Replay document service dummies out the snapshot and the delta storage.
@@ -16,9 +17,9 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  * and emitting them with a pre determined delay
  * @internal
  */
-// eslint-disable-next-line import/namespace
 export class ReplayDocumentService
 	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
 	implements api.IDocumentService
 {
 	public static async create(

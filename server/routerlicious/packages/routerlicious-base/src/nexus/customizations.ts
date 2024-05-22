@@ -4,6 +4,7 @@
  */
 
 import {
+	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
 	ITokenRevocationManager,
@@ -11,6 +12,7 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 /**
  * @internal
@@ -22,4 +24,11 @@ export interface INexusResourcesCustomizations {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
+	clusterDrainingChecker?: IClusterDrainingChecker;
+	redisClientConnectionManager?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
 }

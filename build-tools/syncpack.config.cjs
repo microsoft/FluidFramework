@@ -90,19 +90,14 @@ module.exports = {
 				"typescript",
 				"vue",
 				"webpack-dev-server",
-
-				// Required due to use of "unstable" tree component APIs
-				"@fluentui/react-components",
-
-				// Later versions break some tests; needs investigation
-				"@oclif/test",
 			],
 			packages: ["**"],
 			range: "~",
 		},
 
 		{
-			label: "Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
+			label:
+				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
 				"@fluid-private/readme-command",
 				"@fluid-tools/build-cli",
@@ -156,7 +151,8 @@ module.exports = {
 		},
 
 		{
-			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			label:
+				"Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",

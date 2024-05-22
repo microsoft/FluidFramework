@@ -1,6 +1,11 @@
 # @fluidframework/tree
 
-For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
+A [tree](<https://en.wikipedia.org/wiki/Tree_(data_structure)>) data structure for the [Fluid Framework](https://fluidframework.com/).
+
+The contents of this package are also reported as part of the [`fluid-framework` package](https://www.npmjs.com/package/fluid-framework) which provides an alternative way to consume the functionality from this package.
+
+[SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
+and some of the implications of those goals for developers working on this package.
 
 ## Status
 
@@ -12,7 +17,13 @@ Notable consideration that early adopters should be wary of:
 -   SharedTree currently has unbounded memory growth:
     -   Removed content is retained forever.
     -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
--   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+-   All changes are atomized by the `visitDelta` function.
+    This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes.
+    Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+-   Some documentation (such as this readme and [the roadmap](docs/roadmap.md)) are out of date.
+    The [API documentation](https://fluidframework.com/docs/api/v2/tree) which is derived from the documentation comments in the source code should be more up to date.
+
+More details on the development status of various features can be found in the [roadmap](docs/roadmap.md).
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -89,11 +100,12 @@ This tree serves to get these feature into the hands of users much faster than c
 
 This package can be developed using any of the [regular workflows for working on Fluid Framework](../../../README.md) and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
 
+-   Follow the [Setup and Building](../../../README.md#setup-and-building) instructions.
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
--   Build the Client release group as normal (for example: `pnpm i && npm run build:fast` in the repository root).
--   After editing the tree project, run `npm run build` in its directory.
--   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
+-   Build the the tree package as normal (for run example: `pnpm i && pnpm run build` in the `tree` directory).
+-   After editing the tree project, run `npm run build` (still in the `tree`) directory.
+-   Run and debug tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
 

@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { createSharedMapWithInterception } from "../map";
+
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { createSharedMapWithInterception } from "../map/index.js";
 
 describe("Shared Map with Interception", () => {
 	describe("Simple User Attribution", () => {
@@ -19,7 +21,7 @@ describe("Shared Map with Interception", () => {
 		const userAttributes = { userId: "Fake User" };
 		const documentId = "fakeId";
 		const attributionKey = (key: string) => `${key}.attribution`;
-		let sharedMap: SharedMap;
+		let sharedMap: ISharedMap;
 		let dataStoreContext: IFluidDataStoreContext;
 
 		function orderSequentially(callback: () => void): void {
@@ -31,8 +33,10 @@ describe("Shared Map with Interception", () => {
 		}
 
 		beforeEach(() => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedMap = new SharedMap(documentId, dataStoreRuntime, MapFactory.Attributes);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SharedMap.getFactory()],
+			});
+			sharedMap = SharedMap.create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {
@@ -42,7 +46,7 @@ describe("Shared Map with Interception", () => {
 
 		// Verifies that the props are stored correctly in the given map under a key derived from the
 		// given key - under attributionKey(key).
-		function verifyMapAttribution(map: SharedMap, key: string, value: string, props?: any) {
+		function verifyMapAttribution(map: ISharedMap, key: string, value: string, props?: any) {
 			assert.equal(
 				map.get(key),
 				value,
@@ -107,7 +111,7 @@ describe("Shared Map with Interception", () => {
 		 */
 		it("should assert if set is called on the wrapper from the callback causing infinite recursion", async () => {
 			// eslint-disable-next-line prefer-const
-			let sharedMapWithInterception: SharedMap;
+			let sharedMapWithInterception: ISharedMap;
 
 			let useWrapper: boolean = true;
 			// If useWrapper above is true, this interception callback that calls a set on the wrapped object

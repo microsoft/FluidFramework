@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
+import { EventEmitter } from "@fluid-example/example-utils";
 import {
 	BuildNode,
 	Change,
@@ -16,7 +15,6 @@ import {
 	TreeView,
 	TreeViewNode,
 } from "@fluid-experimental/tree";
-
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

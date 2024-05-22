@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 
 import {
-	FlexListToNonLazyArray,
-	FlexListToLazyArray,
-	normalizeFlexListLazy,
-	LazyItem,
 	ArrayHasFixedLength,
-	normalizeFlexListEager,
-	markEager,
 	FlexList,
-	isLazy,
+	FlexListToLazyArray,
+	FlexListToNonLazyArray,
 	FlexListToUnion,
+	LazyItem,
+	isLazy,
+	markEager,
+	normalizeFlexListEager,
+	normalizeFlexListLazy,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/typed-schema/flexList.js";

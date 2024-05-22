@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/** Interface to make it easier to parse json returned from the timeline REST API */
+/**
+ * Interface to make it easier to parse json returned from the timeline REST API
+ */
 interface ParsedJob {
 	stageName: string;
 	startTime: number;
@@ -13,7 +15,7 @@ interface ParsedJob {
 	result: string;
 }
 
-module.exports = function handler(fileData, logger) {
+module.exports = function handler(fileData, logger): void {
 	// - fileData is a JSON object obtained by calling JSON.parse() on the contents of a file.
 	// In this particular handler, we are using the timeline REST API to retrieve the status of the pipeline:
 	// Ex. https://dev.azure.com/fluidframework/internal/_apis/build/builds/<buildId>/timeline?api-version=6.0-preview.1
@@ -22,10 +24,10 @@ module.exports = function handler(fileData, logger) {
 	if (fileData.records?.length === undefined || fileData.records?.length === 0) {
 		console.log(`could not locate records info`);
 	}
-	if (process.env.BUILD_ID !== undefined) {
-		console.log("BUILD_ID", process.env.BUILD_ID);
-	} else {
+	if (process.env.BUILD_ID === undefined) {
 		console.log("BUILD_ID not defined.");
+	} else {
+		console.log("BUILD_ID", process.env.BUILD_ID);
 	}
 
 	// Note: type == "Task" would include tasks from the stages in the result set. It might be interesting in the future - for now we will only collect stages.
@@ -54,7 +56,9 @@ module.exports = function handler(fileData, logger) {
 		if (job.stageName === "runAfterAll") {
 			continue;
 		}
+
 		logger.send({
+			namespace: "FFEngineering", // Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 			category: "performance",
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",

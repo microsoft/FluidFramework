@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree.js";
+export {
+	ITree,
+	TreeView,
+	TreeViewEvents,
+	TreeConfiguration,
+	ITreeConfigurationOptions,
+	SchemaIncompatible,
+} from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -16,7 +23,6 @@ export {
 	ImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeMapNode,
 	TreeLeafValue,
 	type,
 	WithType,
@@ -24,16 +30,34 @@ export {
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
-	InsertableObjectFromSchemaRecord,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
 	NodeBuilderData,
-	ObjectFromSchemaRecord,
+	DefaultProvider,
+	type FieldProps,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
-export { SchemaFactory } from "./schemaFactory.js";
-export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
+export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export { getFlexNode } from "./proxyBinding.js";
+export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeNodeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
-export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+export {
+	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
+} from "./typesUnsafe.js";
+export { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export { getProxyForField, InsertableContent } from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -47,7 +71,15 @@ export {
 export {
 	RecursiveObject as test_RecursiveObject,
 	base as test_RecursiveObject_base,
+	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";
+export { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
+export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+	TreeObjectNode,
+	setField,
+} from "./objectNode.js";
+export { TreeMapNode } from "./mapNode.js";

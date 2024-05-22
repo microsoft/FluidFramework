@@ -4,8 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
-import { SharedMatrix } from "../index";
+
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+
+import { SharedMatrix } from "../index.js";
+
+/**
+ * Convenience export of SharedMatrix's factory for usage in tests.
+ */
+export const matrixFactory = SharedMatrix.getFactory();
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 

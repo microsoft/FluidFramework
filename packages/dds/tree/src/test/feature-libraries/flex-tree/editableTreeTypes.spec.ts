@@ -4,31 +4,46 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
+	SchemaBuilder,
 	jsonArray,
 	jsonObject,
 	jsonRoot,
 	jsonSchema,
 	leaf,
-	SchemaBuilder,
 } from "../../../domains/index.js";
-
 import {
-	FlexTreeSequenceField,
-	FlexTreeTypedNode,
 	FlexTreeField,
-	FlexTreeRequiredField,
+	FlexTreeMapNode,
 	FlexTreeNode,
+	FlexTreeObjectNode,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
 	FlexTreeUnboxNodeUnion,
-	FlexTreeMapNode,
-	FlexTreeTypedField,
-	FlexTreeObjectNode,
-	IsArrayOfOne,
 	FlexTreeUnknownUnboxed,
+	IsArrayOfOne,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import {
+	Any,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	LeafNodeSchema,
+} from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
 import {
 	areSafelyAssignable,
 	isAssignableTo,
@@ -36,23 +51,8 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../../util/index.js";
-import { EmptyKey, FieldKey } from "../../../core/index.js";
-import {
-	FieldKinds,
-	Any,
-	FlexFieldNodeSchema,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
-	FlexAllowedTypes,
-	ArrayToUnion,
-} from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
 
-describe("editableTreeTypes", () => {
+describe("flexTreeTypes", () => {
 	/**
 	 * Example showing narrowing and exhaustive matches.
 	 */
@@ -342,8 +342,6 @@ describe("editableTreeTypes", () => {
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexAllowedTypes>, FlexTreeNode>
 			>;
-
-			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 

@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
 import { averageTwoValues, sumDirect } from "./benchmarks.js";
-import { generateTwitterJsonByByteSize, Twitter } from "./twitter.js";
 import { Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
+import { Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
 
 /**
  * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.
@@ -16,8 +18,11 @@ import { clone } from "./jsObjectUtil.js";
 export function jsObjectBench(
 	data: {
 		name: string;
+		// TODO: Use something other than `any`
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		getJson: () => any;
 		dataConsumer: (directObj: any, calculate: (...operands: any[]) => void) => any;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}[],
 ) {
 	for (const { name, getJson, dataConsumer } of data) {

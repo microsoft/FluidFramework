@@ -2,9 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { StatsCompilation } from "webpack";
 
-import { BundleBuddyConfig, BundleSummaries, WebpackStatsProcessor } from "../BundleBuddyTypes";
+import {
+	BundleBuddyConfig,
+	BundleSummaries,
+	WebpackStatsProcessor,
+} from "../BundleBuddyTypes";
 import { runProcessorsOnStatsFile } from "../utilities/runProcessorOnStatsFile";
 import { BundleFileData } from "./getBundleFilePathsFromFolder";
 
@@ -20,7 +25,9 @@ export interface GetBundleSummariesArgs {
 	) => Promise<BundleBuddyConfig | undefined> | (BundleBuddyConfig | undefined);
 }
 
-export async function getBundleSummaries(args: GetBundleSummariesArgs): Promise<BundleSummaries> {
+export async function getBundleSummaries(
+	args: GetBundleSummariesArgs,
+): Promise<BundleSummaries> {
 	const result: BundleSummaries = new Map();
 
 	const pendingAsyncWork = args.bundlePaths.map(async (bundle) => {

@@ -5,29 +5,30 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { ITreeCursorSynchronous, JsonableTree } from "../core/index.js";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
+import { ITreeCursorSynchronous, JsonableTree, Multiplicity } from "../core/index.js";
+import { leaf } from "../domains/index.js";
 import {
+	AllowedTypesToFlexInsertableTree,
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FullSchemaPolicy,
-	Multiplicity,
-	SchemaLibrary,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	FullSchemaPolicy,
+	InsertableFlexField,
+	SchemaBuilderBase,
+	SchemaLibrary,
+	cursorForJsonableTreeNode,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	jsonableTreeFromFieldCursor,
-	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
-	AllowedTypesToFlexInsertableTree,
-	InsertableFlexField,
-	intoStoredSchemaCollection,
 } from "../feature-libraries/index.js";
 import { TreeContent } from "../shared-tree/index.js";
-import { leaf, SchemaBuilder } from "../domains/index.js";
 
 interface TestTree {
 	readonly name: string;
@@ -52,7 +53,7 @@ function testField<T extends FlexFieldSchema>(
 	rootField: T,
 	data: InsertableFlexField<T>,
 ): TestTree {
-	const schema = new SchemaBuilder({
+	const schema = new SchemaBuilderBase(FieldKinds.required, {
 		scope: name,
 		lint: { rejectForbidden: false, rejectEmpty: false },
 		libraries: [schemaLibrary],
@@ -92,7 +93,10 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 	};
 }
 
-const builder = new SchemaBuilder({ scope: "test" });
+const builder = new SchemaBuilderBase(FieldKinds.required, {
+	scope: "test",
+	libraries: [leaf.library],
+});
 export const minimal = builder.object("minimal", {});
 export const hasMinimalValueField = builder.object("hasMinimalValueField", {
 	field: minimal,
@@ -107,30 +111,33 @@ export const hasAnyValueField = builder.object("hasAnyValueField", {
 	field: Any,
 });
 export const hasOptionalField = builder.object("hasOptionalField", {
-	field: builder.optional(leaf.number),
+	field: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 });
 export const allTheFields = builder.object("allTheFields", {
-	optional: builder.optional(leaf.number),
+	optional: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 	valueField: leaf.number,
-	sequence: builder.sequence(leaf.number),
+	sequence: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
 export const anyFields = builder.object("anyFields", {
-	optional: builder.optional(Any),
+	optional: FlexFieldSchema.create(FieldKinds.optional, [Any]),
 	valueField: Any,
-	sequence: builder.sequence(Any),
+	sequence: FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 });
 export const escapedFieldProperties = builder.object("escapedFieldProperties", {
-	value: builder.optional(leaf.number),
-	set: builder.optional(leaf.number),
-	setValue: builder.optional(leaf.number),
-	field: builder.optional(leaf.number),
+	value: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
+	set: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
+	setValue: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
+	field: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 });
 
-export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
+export const numericMap = builder.map(
+	"numericMap",
+	FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
+);
 
 type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
-export const anyMap = builder.map("anyMap", builder.sequence(Any));
+export const anyMap = builder.map("anyMap", FlexFieldSchema.create(FieldKinds.sequence, [Any]));
 
 export const recursiveType = builder.objectRecursive("recursiveType", {
 	field: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
@@ -140,12 +147,17 @@ export const library = builder.intoLibrary();
 export const storedLibrary = intoStoredSchemaCollection(library);
 
 export const testTrees: readonly TestTree[] = [
-	testField("empty", library, SchemaBuilder.optional([]), undefined),
+	testField("empty", library, FlexFieldSchema.create(FieldKinds.optional, []), undefined),
 	testTree("null", library, leaf.null, null),
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, leaf.number, 5),
 	testTree("handle", library, leaf.handle, new MockHandle(5)),
-	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),
+	testField(
+		"numericSequence",
+		library,
+		FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
+		[1, 2, 3],
+	),
 	testTree("true boolean", library, leaf.boolean, true),
 	testTree("false boolean", library, leaf.boolean, false),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {
@@ -209,8 +221,7 @@ export const testTrees: readonly TestTree[] = [
 	testTree("numericMap-full", library, numericMap, {
 		a: 5,
 		b: 6,
-		// TODO: SchemaAware API for map nodes, and remove this cast
-	} as any),
+	}),
 
 	testTree("anyMap-full", library, anyMap, {
 		a: [
@@ -218,8 +229,7 @@ export const testTrees: readonly TestTree[] = [
 			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 2 },
 		],
 		b: [{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 3 }],
-		// TODO: SchemaAware API for map nodes, and remove this cast
-	} as any),
+	}),
 
 	testTree("recursiveType-empty", library, recursiveType, { field: undefined }),
 	testTree("recursiveType-recursive", library, recursiveType, { field: { field: undefined } }),

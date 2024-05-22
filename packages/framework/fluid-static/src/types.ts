@@ -3,8 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { type SharedObjectKind } from "@fluidframework/shared-object-base";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+/**
+ * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
+ * @public
+ */
+export type CompatibilityMode = "1" | "2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -15,49 +27,45 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
- * @public
  */
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
 
 /**
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
- * @public
+ *
+ * @privateRemarks
+ * There are some edge cases in TypeScript where the order of the members in a union matter.
+ * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
+ * In this case, its better to have the desired match and/or the simpler type first.
+ * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
-	| DataObjectClass<T>
-	| SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+	| ISharedObjectKind<T>
+	| DataObjectClass<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
- * @public
+ * @privateRemarks
+ * Having both `factory` and constructor is redundant.
+ * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
-	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
-} & LoadableObjectCtor<T>;
+export interface DataObjectClass<T extends IFluidLoadable> {
+	readonly factory: IFluidDataStoreFactory;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	new (...args: any[]): T;
+}
 
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `SharedObject`.
+ * Represents properties that can be attached to a container.
  * @public
  */
-export type SharedObjectClass<T extends IFluidLoadable> = {
-	readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
-
-/**
- * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
- *
- * @typeParam T - The class of the loadable object.
- * @public
- */
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+export type ContainerAttachProps<T = unknown> = T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
@@ -87,7 +95,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: Record<string, SharedObjectKind>;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -99,7 +107,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	dynamicObjectTypes?: LoadableObjectClass<any>[];
+	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
 /**
@@ -127,7 +135,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
 /**
@@ -193,7 +201,7 @@ export interface IServiceAudience<M extends IMember>
 	 * member object.  The implementation may choose to exclude certain connections from the returned map.
 	 * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
 	 */
-	getMembers(): Map<string, M>;
+	getMembers(): ReadonlyMap<string, M>;
 
 	/**
 	 * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
@@ -211,12 +219,12 @@ export interface IConnection {
 	/**
 	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
 	 */
-	id: string;
+	readonly id: string;
 
 	/**
 	 * Whether the connection is in read or read/write mode.
 	 */
-	mode: "write" | "read";
+	readonly mode: "write" | "read";
 }
 
 /**
@@ -229,16 +237,16 @@ export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	readonly id: string;
 
 	/**
 	 * The set of connections the user has made, e.g. from multiple tabs or devices.
 	 */
-	connections: IConnection[];
+	readonly connections: IConnection[];
 }
 
 /**
  * An extended member object that includes currentConnection
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };

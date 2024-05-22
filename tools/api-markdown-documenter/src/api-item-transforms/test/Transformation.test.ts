@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as Path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
 	type ApiFunction,
@@ -33,15 +35,15 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 	UnorderedListNode,
-} from "../../documentation-domain";
-import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
-import { apiItemToSections } from "../TransformApiItem";
+} from "../../documentation-domain/index.js";
+import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
+import { apiItemToSections } from "../TransformApiItem.js";
 import {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-} from "../configuration";
-import { betaWarningSpan, wrapInSection } from "../helpers";
-import { transformApiModel } from "../TransformApiModel";
+} from "../configuration/index.js";
+import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
+import { transformApiModel } from "../TransformApiModel.js";
 
 /**
  * Sample "default" configuration.
@@ -50,9 +52,10 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
-// Relative to dist/api-item-transforms/test
+// Relative to lib/api-item-transforms/test
+const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testDataDirectoryPath = Path.resolve(
-	__dirname,
+	dirname,
 	"..",
 	"..",
 	"..",
@@ -188,6 +191,33 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 								"typescript",
 							),
+							new ParagraphNode([
+								new SectionNode(
+									[
+										new TableNode(
+											[
+												new TableBodyRowNode([
+													TableBodyCellNode.createFromPlainText(
+														"TTypeParameter",
+													),
+													TableBodyCellNode.createFromPlainText(
+														"A test type parameter",
+													),
+												]),
+											],
+											new TableHeaderRowNode([
+												TableHeaderCellNode.createFromPlainText(
+													"Parameter",
+												),
+												TableHeaderCellNode.createFromPlainText(
+													"Description",
+												),
+											]),
+										),
+									],
+									HeadingNode.createFromPlainText("Type Parameters"),
+								),
+							]),
 						],
 						{
 							title: "Signature",
@@ -339,15 +369,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					wrapInSection(
 						[
+							// Summary section
 							wrapInSection([
 								ParagraphNode.createFromPlainText("Test optional property"),
 							]),
+							// Signature section
 							wrapInSection(
 								[
 									FencedCodeBlockNode.createFromPlainText(
 										"testOptionalInterfaceProperty?: number;",
 										"typescript",
 									),
+									new ParagraphNode([
+										new SpanNode([
+											SpanNode.createFromPlainText("Type: ", { bold: true }),
+											SpanNode.createFromPlainText("number"),
+										]),
+									]),
 								],
 								{
 									title: "Signature",
@@ -427,6 +465,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// Table row for `foo`
@@ -441,6 +480,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// No entry should be included for `baz` because it is `@alpha`
@@ -449,6 +489,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							TableHeaderCellNode.createFromPlainText("Variable"),
 							TableHeaderCellNode.createFromPlainText("Alerts"),
 							TableHeaderCellNode.createFromPlainText("Modifiers"),
+							TableHeaderCellNode.createFromPlainText("Type"),
 							TableHeaderCellNode.createFromPlainText("Description"),
 						]),
 					),
@@ -601,12 +642,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												CodeSpanNode.createFromPlainText("readonly"),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
 										TableHeaderCellNode.createFromPlainText("Modifiers"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),
@@ -682,11 +725,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"./test-package#world-variable",
 												),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),

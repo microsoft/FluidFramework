@@ -8,7 +8,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 <div class="jumbotron text-center">
   <h1 class="display-4"><strong>Real-time. Multiuser. Collaboration.</strong></h1>
   <p class="lead">Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.</p>
-  <p><iframe width="560" height="315" src="https://www.youtube.com/embed/uL2nMYk6WTQ?si=sQWCs32OnUfzylv1%22" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></p>
+  <p><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/uL2nMYk6WTQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></p>
   <p><a class="cta link-button get-started" style="background-color: #0066b8 !important; text-decoration: none;" href="/docs/start/quick-start/">Get started with Fluid Framework today!</a></p>
 </div>
 
@@ -211,7 +211,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                     const rollButton = elem.querySelector(".roll");
                     const diceElem = elem.querySelector(".dice");
 
-                    // Set the value at our dataKey with a random number between 1 and 6.
+                    // Set the value on the persisted Dice object to a random number between 1 and 6.
                     rollButton.onclick = () => {
                         dice.value = Math.floor(Math.random() * 6) + 1;
                     };
@@ -225,7 +225,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                     };
                     updateDice();
 
-                    // Use the changed event to trigger the rerender whenever the value changes.
+                    // Use the afterChange event to trigger a rerender whenever the value changes.
                     Tree.on(dice, "afterChange", updateDice);
                     // Setting "fluidStarted" is just for our test automation
                     window["fluidStarted"] = true;

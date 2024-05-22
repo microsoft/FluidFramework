@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
-	DriverError,
-	IDriverErrorBase,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
+	IDriverErrorBase,
+	DriverError,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP Error types.

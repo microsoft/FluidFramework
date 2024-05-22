@@ -123,12 +123,20 @@ But this is broken into the following internal sequences:
 graph LR
     A[ApiModel]
     B[Documentation AST]
-    C[Markdown]
+    C[raw Markdown]
+    D[raw HTML]
+    E[HTML AST]
 
-    A -- transformApiModel --> B
-    B -- renderDocumentAsMarkdown --> C
-    A -.- renderApiModelAsMarkdown -.-> C
+    A-->|transformApiModel|B
+    B-->|MarkdownRenderer.renderDocument|C
+    B-->|HtmlRenderer.renderDocument*|D
+    B-->|documentToHtml*|E
+
+    A-.->|MarkdownRenderer.renderApiModel|C
+    A-.->|HtmlRenderer.renderApiModel*|D
 ```
+
+**Note:** APIs above marked with an `*` are in preview, and may change without notice.
 
 For more details on the interior `Documentation AST` ([Abstract Syntax Tree][]) domain, see [Documentation Domain](#documentation-domain) below.
 
@@ -166,6 +174,11 @@ It will accept any `Documentation Domain` tree as input, and transform each node
 If you would like to add rendering support for a custom `Documentation Domain` node type, simply provide a rendering handler associated with that node's `type` value.
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
+
+## ToHtml Transformation
+
+This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
+The main entry-point for this functionality is `documentToHtml`.
 
 ## HtmlRenderer
 

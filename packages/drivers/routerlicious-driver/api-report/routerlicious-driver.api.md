@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -39,9 +39,14 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
+}
+
+// @alpha
+export interface IRouterliciousResolvedUrl extends IResolvedUrl {
+    createAsEphemeral?: boolean;
+    routerliciousResolvedUrl: true;
 }
 
 // @public
@@ -65,9 +70,7 @@ export interface ITokenService {
 // @internal
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
-import { ITree, TreeEntry, ITreeEntry } from "@fluidframework/protocol-definitions";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
@@ -114,6 +118,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		// "telemetryDocumentId" is not a deterministic property (random guid), so we need to set it to something consistent
 		if (metadata.telemetryDocumentId !== undefined) {
 			metadata.telemetryDocumentId = "x";
+		}
+		// default was not written before, now it's written in.
+		if (metadata.documentSchema !== undefined) {
+			metadata.documentSchema = undefined;
 		}
 		content = JSON.stringify(metadata);
 	}

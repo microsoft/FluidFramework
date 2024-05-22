@@ -4,27 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockStorage,
 	MockEmptyDeltaConnection,
-} from "@fluidframework/test-runtime-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { IntervalIndex } from "../intervalIndex";
-import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection, Side } from "../intervalCollection.js";
+import { IntervalIndex } from "../intervalIndex/index.js";
+import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { ISharedString, SharedStringClass } from "../sharedString.js";
+
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -57,7 +61,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 }
 
 function assertIntervalEquals(
-	string: SharedString,
+	string: ISharedString,
 	interval: SequenceInterval | undefined,
 	endpoints: { start: number; end: number },
 ): void {
@@ -75,12 +79,12 @@ function assertIntervalEquals(
 }
 
 describe("SharedString interval collections", () => {
-	let sharedString: SharedString;
+	let sharedString: ISharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -88,19 +92,18 @@ describe("SharedString interval collections", () => {
 	});
 
 	describe("in a connected state with a remote SharedString", () => {
-		let sharedString2: SharedString;
+		let sharedString2: SharedStringClass;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(() => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
 			};
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -110,8 +113,7 @@ describe("SharedString interval collections", () => {
 
 			// Create and connect a second SharedString.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			dataStoreRuntime2.options = {
 				intervalStickinessEnabled: true,
 			};
@@ -120,7 +122,7 @@ describe("SharedString interval collections", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -556,7 +558,7 @@ describe("SharedString interval collections", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			const sharedString3 = new SharedString(
+			const sharedString3 = new SharedStringClass(
 				dataStoreRuntime3,
 				"shared-string-3",
 				SharedStringFactory.Attributes,
@@ -598,7 +600,7 @@ describe("SharedString interval collections", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			const sharedString3 = new SharedString(
+			const sharedString3 = new SharedStringClass(
 				dataStoreRuntime3,
 				"shared-string-3",
 				SharedStringFactory.Attributes,
@@ -848,22 +850,10 @@ describe("SharedString interval collections", () => {
 		});
 
 		it("propagates delete op to second runtime", async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-
-			// Connect the first SharedString.
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			const services1: IChannelServices = {
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
-			sharedString.initializeLocal();
-			sharedString.connect(services1);
-
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
-			const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
-			sharedString2 = new SharedString(
+			containerRuntimeFactory.createContainerRuntime(runtime2);
+			sharedString2 = new SharedStringClass(
 				runtime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -906,14 +896,13 @@ describe("SharedString interval collections", () => {
 			};
 
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const sharedString3 = new SharedString(
+			const sharedString3 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-3",
 				SharedStringFactory.Attributes,
 			);
 
 			await sharedString3.load(services);
-			await sharedString3.loaded;
 
 			const collection2 = sharedString3.getIntervalCollection("test");
 
@@ -1096,7 +1085,7 @@ describe("SharedString interval collections", () => {
 		it("test IntervalCollection creation events", () => {
 			let createCalls1 = 0;
 			const createInfo1: { local: boolean; label: string }[] = [];
-			const createCallback1 = (label: string, local: boolean, target: SharedString) => {
+			const createCallback1 = (label: string, local: boolean, target: ISharedString) => {
 				assert.strictEqual(target, sharedString, "Expected event to target sharedString");
 				createInfo1[createCalls1++] = { local, label };
 			};
@@ -1104,7 +1093,7 @@ describe("SharedString interval collections", () => {
 
 			let createCalls2 = 0;
 			const createInfo2: { local: boolean; label: string }[] = [];
-			const createCallback2 = (label: string, local: boolean, target: SharedString) => {
+			const createCallback2 = (label: string, local: boolean, target: ISharedString) => {
 				assert.strictEqual(target, sharedString2, "Expected event to target sharedString2");
 				createInfo2[createCalls2++] = { local, label };
 			};
@@ -1133,7 +1122,7 @@ describe("SharedString interval collections", () => {
 
 			containerRuntimeFactory.processAllMessages();
 
-			const verifyCreateEvents = (s: SharedString, createInfo, infoArray) => {
+			const verifyCreateEvents = (s: ISharedString, createInfo, infoArray) => {
 				let i = 0;
 				const labels = s.getIntervalCollectionLabels();
 				for (const label of labels) {
@@ -1230,8 +1219,7 @@ describe("SharedString interval collections", () => {
 	describe("reconnect", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
-		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let sharedString2: SharedString;
+		let sharedString2: ISharedString;
 
 		let collection1: IIntervalCollection<SequenceInterval>;
 		let collection2: IIntervalCollection<SequenceInterval>;
@@ -1251,8 +1239,8 @@ describe("SharedString interval collections", () => {
 
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
-			sharedString2 = new SharedString(
+			containerRuntimeFactory.createContainerRuntime(runtime2);
+			sharedString2 = new SharedStringClass(
 				runtime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -1564,14 +1552,14 @@ describe("SharedString interval collections", () => {
 				intervalStickinessEnabled: true,
 				mergeTreeReferencesCanSlideToEndpoint: true,
 			};
-			sharedString = new SharedString(
+			sharedString = new SharedStringClass(
 				dataStoreRuntime1,
 				"shared-string-1",
 				SharedStringFactory.Attributes,
 			);
 
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -2005,6 +1993,108 @@ describe("SharedString interval collections", () => {
 			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+		});
+
+		it("slides backward reference to correct position when remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(1, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it("slides backward reference to correct position when remove multiple segments is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+			// (AYYYXXXB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.insertText(1, "XXX");
+			sharedString.insertText(1, "YYY");
+			sharedString.removeText(1, 8);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it("slides backward reference to correct position when start of string remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.Before };
+
+			const collection = sharedString.getIntervalCollection("test");
+			const interval = collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(0, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(interval.start.getSegment()?.constructor.name, "StartOfTreeSegment");
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it.skip("slides forward reference to correct position when remove of end of string is unacked", () => {
+			dataStoreRuntime1.options.mergeTreeReferencesCanSlideToEndpoint = false;
+			sharedString.insertText(0, "ABC");
+
+			// (ABC]
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = 0;
+			const end = 2;
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
+
+			sharedString.removeText(1, 3);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 		});
 	});
 });

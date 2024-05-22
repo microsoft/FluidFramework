@@ -1,5 +1,90 @@
 # @fluidframework/odsp-driver-definitions
 
+## 2.0.0-rc.4.0.0
+
+Dependency updates only.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
+-   odsp-driver: Removed deprecated implementation of SingleRT feature ([#18690](https://github.com/microsoft/FluidFramework/issues/18690)) [430205cff1](https://github.com/microsoft/FluidFramework/commits/430205cff1ba8a1a7b13b4d42d12babaae596708)
+
+    Removed the deprecated logic of creating sharing-links with container attach (called SingleRT) which was enabled via enableShareLinkWithCreate flag in HostStoragePolicy. This change removes SharingLinkTypes interface definition, removes other deprecated properties from the odsp-driver's resolvedUrl object and also removes the enableShareLinkWithCreate flag. The newer version of SingleRT feature continues to exist, which can be enabled via enableSingleRequestForShareLinkWithCreate feature flag in HostStoragePolicy.
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
 ## 2.0.0-internal.8.0.0
 
 Dependency updates only.

@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IOdspUrlParts,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
-	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils";
+	toInstrumentedOdspStorageTokenFetcher,
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
@@ -46,7 +48,7 @@ export async function getFileLink(
 		return maybeFileLinkCacheEntry;
 	}
 
-	const fileLinkGenerator = async function () {
+	const fileLinkGenerator = async function (): Promise<string> {
 		let fileLinkCore: string;
 		try {
 			let retryCount = 0;
@@ -60,10 +62,13 @@ export async function getFileLink(
 				"getShareLink",
 				logger,
 				{
+					// TODO: use a stronger type
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					onRetry(delayInMs: number, error: any) {
 						retryCount++;
 						if (retryCount === 5) {
 							if (error !== undefined && typeof error === "object") {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								error.canRetry = false;
 								throw error;
 							}
@@ -72,10 +77,10 @@ export async function getFileLink(
 					},
 				},
 			);
-		} catch (err) {
+		} catch (error) {
 			// Delete from the cache to permit retrying later.
 			fileLinkCache.delete(cacheKey);
-			throw err;
+			throw error;
 		}
 
 		// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
@@ -106,17 +111,12 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
-					true /* throwOnNullToken */,
 				);
 				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
-				assert(
-					storageToken !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
-				);
 
 				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
 				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
@@ -144,7 +144,9 @@ async function getFileLinkCore(
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const sharingInfo = await response.content.json();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const directUrl = sharingInfo?.d?.directUrl;
 				if (typeof directUrl !== "string") {
 					// This will retry once in getWithRetryForTokenRefresh
@@ -156,6 +158,7 @@ async function getFileLinkCore(
 				}
 				return directUrl;
 			});
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			event.end({ ...additionalProps, attempts });
 			return fileLink;
 		},
@@ -183,10 +186,11 @@ interface FileItemLite {
 	sharepointIds: IGraphSharepointIds;
 }
 
-const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLite =>
-	typeof maybeFileItemLite.webUrl === "string" &&
-	typeof maybeFileItemLite.webDavUrl === "string" &&
-	typeof maybeFileItemLite.sharepointIds === "object";
+const isFileItemLite = (maybeFileItemLite: unknown): maybeFileItemLite is FileItemLite =>
+	typeof (maybeFileItemLite as Partial<FileItemLite>).webUrl === "string" &&
+	typeof (maybeFileItemLite as Partial<FileItemLite>).webDavUrl === "string" &&
+	// TODO: stronger check
+	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds === "object";
 
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
@@ -199,21 +203,16 @@ async function getFileItemLite(
 		{ eventName: "odspFileLink", requestName: "getFileItemLite" },
 		async (event) => {
 			let attempts = 0;
-			let additionalProps;
+			let additionalProps: ITelemetryBaseProperties | undefined;
 			const fileItem = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 				const { siteUrl, driveId, itemId } = odspUrlParts;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
-					true /* throwOnNullToken */,
 				);
 				const storageToken = await storageTokenFetcher(options, "GetFileItemLite");
-				assert(
-					storageToken !== null,
-					0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */,
-				);
 
 				const { url, headers } = getUrlAndHeadersWithAuth(
 					`${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,
@@ -224,7 +223,7 @@ async function getFileItemLite(
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
-				const responseJson = await response.content.json();
+				const responseJson: unknown = await response.content.json();
 				if (!isFileItemLite(responseJson)) {
 					// This will retry once in getWithRetryForTokenRefresh
 					throw new NonRetryableError(

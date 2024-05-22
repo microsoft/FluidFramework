@@ -3,30 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ICriticalContainerError,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import {
-	IAnyDriverError,
-	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	IDocumentService,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
+	IAnyDriverError,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	canRetryOnError,
-	createWriteError,
-	createGenericNetworkError,
-	getRetryDelayFromError,
-	logNetworkFailure,
-	isRuntimeMessage,
 	calculateMaxWaitTime,
-} from "@fluidframework/driver-utils";
+	canRetryOnError,
+	createGenericNetworkError,
+	createWriteError,
+	getRetryDelayFromError,
+	isRuntimeMessage,
+	logNetworkFailure,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -36,31 +33,33 @@ import {
 	INack,
 	INackContent,
 	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
 	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
 	MessageType,
 	ScopeType,
-	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	formatTick,
-	GenericError,
-	isFluidError,
 	ITelemetryLoggerExt,
-	normalizeError,
+	GenericError,
 	UsageError,
-} from "@fluidframework/telemetry-utils";
+	formatTick,
+	generateStack,
+	isFluidError,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
-	ReconnectMode,
+	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
-	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { SignalType } from "./protocol";
-import { isDeltaStreamConnectionForbiddenError } from "./utils";
+	ReconnectMode,
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { SignalType } from "./protocol.js";
+import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;
@@ -203,6 +202,9 @@ export class ConnectionManager implements IConnectionManager {
 	private pendingConnection: IPendingConnection | undefined;
 	private connection: IDocumentDeltaConnection | undefined;
 
+	/** Details about connection. undefined if there is no active connection. */
+	private _connectionDetails?: IConnectionDetailsInternal;
+
 	/** file ACL - whether user has only read-only access to a file */
 	private _readonlyPermissions: boolean | undefined;
 
@@ -229,7 +231,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
-	private _connectionProps: ITelemetryProperties = {};
+	private _connectionProps: ITelemetryBaseProperties = {};
 
 	private _disposed = false;
 
@@ -255,6 +257,12 @@ export class ConnectionManager implements IConnectionManager {
 	public get clientId() {
 		return this.connection?.clientId;
 	}
+
+	/** Details about connection. undefined if there is no active connection. */
+	public get connectionDetails() {
+		return this._connectionDetails;
+	}
+
 	/**
 	 * Automatic reconnecting enabled or disabled.
 	 * If set to Never, then reconnecting will never be allowed.
@@ -290,7 +298,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * Returns set of props that can be logged in telemetry that provide some insights / statistics
 	 * about current or last connection (if there is no connection at the moment)
 	 */
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return this.connection !== undefined
 			? this._connectionProps
 			: {
@@ -505,21 +513,7 @@ export class ConnectionManager implements IConnectionManager {
 	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
-		if (this.connection !== undefined) {
-			return; // Connection attempt already completed successfully
-		}
-
-		let pendingConnectionMode;
-		if (this.pendingConnection !== undefined) {
-			pendingConnectionMode = this.pendingConnection.connectionMode;
-			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
-			assert(
-				this.pendingConnection === undefined,
-				0x344 /* this.pendingConnection should be undefined */,
-			);
-		}
-		// If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
-		let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
+		let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
 		// if we have any non-acked ops from last connection, reconnect as "write".
 		// without that we would connect in view-only mode, which will result in immediate
@@ -530,8 +524,32 @@ export class ConnectionManager implements IConnectionManager {
 			requestedMode = "write";
 		}
 
+		if (this.connection !== undefined || this.pendingConnection !== undefined) {
+			// Connection attempt already completed successfully or is in progress
+			// In general, there should be no issues if the modes do not match:
+			// If at some point it was Ok to connect as "read" (i.e. there were no pending ops we had to track),
+			// then it should be Ok to use "read" connection even if for some reason request came in to connect as "write"
+			// (though that should never happen)
+			// The opposite should be fine as well: we may have had idle "write" connection, and request to reconnect came in,
+			// using default "read" mode.
+			// That all said, let's understand better where such mismatches are coming from.
+			const mode = this.connection?.mode ?? this.pendingConnection?.connectionMode;
+			if (mode !== requestedMode) {
+				this.logger.sendTelemetryEvent({
+					eventName: "ConnectionModeMismatch",
+					connected: this.connection !== undefined,
+					mode,
+					requestedMode,
+					stack: generateStack(),
+				});
+			}
+			return;
+		}
+
 		const docService = this.serviceProvider();
 		assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
+
+		this.props.establishConnectionHandler(reason);
 
 		let connection: IDocumentDeltaConnection | undefined;
 
@@ -556,7 +574,6 @@ export class ConnectionManager implements IConnectionManager {
 			connectionMode: requestedMode,
 		};
 
-		this.props.establishConnectionHandler(reason);
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -644,6 +661,12 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
+				// so break out of the re-connecting while-loop after first attempt
+				if (this.reconnectMode !== ReconnectMode.Enabled) {
+					return;
+				}
+
 				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				// If the error told us to wait or browser signals us that we are offline, then calculate the time we
@@ -654,8 +677,12 @@ export class ConnectionManager implements IConnectionManager {
 				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
 					delayMs = calculateMaxWaitTime(delayMs, origError);
 				}
-				// Raise event in case the delay was there.
-				this.props.reconnectionDelayHandler(delayMs, origError);
+
+				// Raise event in case the delay was there from the error.
+				if (retryDelayFromError !== undefined) {
+					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
 				await new Promise<void>((resolve) => {
 					setTimeout(resolve, delayMs);
 				});
@@ -747,6 +774,7 @@ export class ConnectionManager implements IConnectionManager {
 		const connection = this.connection;
 		// Avoid any re-entrancy - clear object reference
 		this.connection = undefined;
+		this._connectionDetails = undefined;
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
@@ -778,7 +806,10 @@ export class ConnectionManager implements IConnectionManager {
 		);
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
-		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
+		this.logger.sendTelemetryEvent({
+			eventName: "ConnectionCancelReceived",
+			reason: reason.text,
+		});
 		this.props.cancelConnectionHandler({
 			text: `Cancel Pending Connection due to ${reason.text}`,
 			error: reason.error,
@@ -899,9 +930,9 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		const details = ConnectionManager.detailsFromConnection(connection, reason);
-		details.checkpointSequenceNumber = checkpointSequenceNumber;
-		this.props.connectHandler(details);
+		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
+		this._connectionDetails.checkpointSequenceNumber = checkpointSequenceNumber;
+		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;
 
@@ -1065,7 +1096,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			this.connection.submitSignal(content, targetClientId);
 		} else {

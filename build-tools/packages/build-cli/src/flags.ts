@@ -2,30 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind } from "./library";
+
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ * @deprecated should switch to ReleaseGroup.  Currently the only difference is "azure" not in ReleaseGroup.
+ */
+// eslint-disable-next-line import/no-deprecated
+function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+	// eslint-disable-next-line import/no-deprecated
+	for (const [, flag] of Object.entries(MonoRepoKind)) {
+		yield flag;
+	}
+}
 
 import {
+	VersionBumpType,
+	VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
-	VersionBumpType,
-	VersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./lib";
-import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
-
-/**
- * A re-usable CLI flag to parse the root directory of the Fluid repo.
- */
-export const rootPathFlag = Flags.custom({
-	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-	env: "_FLUID_ROOT_",
-	hidden: true,
-});
+import type { DependencyUpdateType } from "./library";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse release groups.
@@ -231,13 +236,13 @@ export const skipCheckFlag = Flags.boolean({
 export const selectionFlags = {
 	all: Flags.boolean({
 		description:
-			"Run on all packages and release groups. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on all packages and release groups. Cannot be used with --dir, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["dir", "packages", "releaseGroup", "releaseGroupRoot"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
 		description:
-			"Run on the package in this directory. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on the package in this directory. Cannot be used with --all, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
@@ -280,6 +285,14 @@ export interface selectionFlags {
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
 }
+
+export const defaultSelectionKinds = ["dir", "all"] as const;
+
+/**
+ * A type representing the possible ways a command can set its default selection criteria when no selection flags are
+ * used.
+ */
+export type PackageSelectionDefault = (typeof defaultSelectionKinds)[number] | undefined;
 
 /**
  * A set of flags that can be used to filter selected packages in the repo.

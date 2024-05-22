@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import axios from "axios";
 
 import { AzureMember } from "@fluidframework/azure-client";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import axios from "axios";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
@@ -21,7 +21,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 	 */
 	public constructor(
 		private readonly azFunctionUrl: string,
-		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+		private readonly user?: Pick<AzureMember, "id" | "name" | "additionalDetails">,
 	) {}
 
 	public async fetchOrdererToken(
@@ -51,8 +51,8 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 			params: {
 				tenantId,
 				documentId,
-				userId: this.user?.userId,
-				userName: this.user?.userName,
+				id: this.user?.id,
+				name: this.user?.name,
 				additionalDetails: this.user?.additionalDetails as unknown,
 			},
 		});

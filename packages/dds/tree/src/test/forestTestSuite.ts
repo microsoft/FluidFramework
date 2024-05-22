@@ -6,38 +6,48 @@
 import { strict as assert } from "assert";
 
 import {
-	IEditableForest,
-	initializeForest,
-	moveToDetachedField,
-	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DetachedField,
+	DetachedFieldIndex,
+	EmptyKey,
 	FieldKey,
+	FieldUpPath,
+	ForestRootId,
+	IEditableForest,
+	ITreeCursor,
 	JsonableTree,
-	mapCursorField,
-	rootFieldKey,
+	TreeNavigationResult,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	UpPath,
 	clonePath,
-	ITreeCursor,
-	EmptyKey,
-	FieldUpPath,
-	DetachedFieldIndex,
-	ForestRootId,
-	DetachedField,
 	detachedFieldAsKey,
-	DeltaFieldChanges,
-	DeltaMark,
-	DeltaFieldMap,
-	TreeStoredSchemaRepository,
+	initializeForest,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
-	jsonSchema,
 	jsonRoot,
-	singleJsonCursor,
-	SchemaBuilder,
+	jsonSchema,
 	leaf,
+	singleJsonCursor,
 } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeNode,
+	cursorForTypedTreeData,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	isNeverField,
+	jsonableTreeFromCursor,
+} from "../feature-libraries/index.js";
 import {
 	IdAllocator,
 	JsonCompatible,
@@ -45,16 +55,8 @@ import {
 	idAllocatorFromMaxId,
 	mapIterable,
 } from "../util/index.js";
-import {
-	FieldKinds,
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	defaultSchemaPolicy,
-	isNeverField,
-	cursorForTypedTreeData,
-	FlexFieldSchema,
-	intoStoredSchema,
-} from "../feature-libraries/index.js";
+
+import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 import {
 	applyTestDelta,
 	expectEqualFieldPaths,
@@ -62,7 +64,6 @@ import {
 	jsonSequenceRootSchema,
 	testRevisionTagCodec,
 } from "./utils.js";
-import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 
 /**
  * Configuration for the forest test suite.
@@ -82,10 +83,10 @@ export interface ForestTestConfiguration {
 	skipCursorErrorCheck?: true;
 }
 
-const jsonDocumentSchema = new SchemaBuilder({
+const jsonDocumentSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "jsonDocumentSchema",
 	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+}).intoSchema(jsonRoot);
 
 const buildId = { minor: 42 };
 const buildId2 = { minor: 442 };
@@ -119,7 +120,10 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new TreeStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = FlexFieldSchema.create(FieldKinds.optional, jsonRoot);
+					const rootFieldSchema = FlexFieldSchema.create(
+						FieldKinds.optional,
+						jsonRoot,
+					).stored;
 					schema.apply({
 						nodeSchema: new Map(
 							mapIterable(jsonSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -545,7 +549,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		describe("can apply deltas with", () => {
 			if (!config.skipCursorErrorCheck) {
-				it("ensures cursors are cleared before applying deltas", () => {
+				it("ensures cursors are cleared before applying changes", () => {
 					const forest = factory(
 						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 					);
@@ -557,7 +561,43 @@ export function testForest(config: ForestTestConfiguration): void {
 					const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
 					assert.throws(() => applyTestDelta(delta, forest));
 				});
+
+				it("ensures cursors created in events during delta processing are cleared", () => {
+					const forest = factory(
+						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
+					);
+					initializeForest(forest, [singleJsonCursor(1)], testRevisionTagCodec);
+
+					const log: string[] = [];
+					forest.on("beforeChange", () => {
+						const cursor = forest.allocateCursor();
+						moveToDetachedField(forest, cursor);
+						log.push("beforeChange");
+					});
+
+					const mark: DeltaMark = { count: 1, detach: detachId };
+					const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
+					assert.throws(() => applyTestDelta(delta, forest));
+					assert.deepEqual(log, ["beforeChange"]);
+				});
 			}
+
+			it("beforeChange events", () => {
+				const forest = factory(
+					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
+				);
+				initializeForest(forest, [singleJsonCursor(1)], testRevisionTagCodec);
+
+				const log: string[] = [];
+				forest.on("beforeChange", () => {
+					log.push("beforeChange");
+				});
+
+				const mark: DeltaMark = { count: 1, detach: detachId };
+				const delta: DeltaFieldMap = new Map([[rootFieldKey, { local: [mark] }]]);
+				applyTestDelta(delta, forest);
+				assert.deepEqual(log, ["beforeChange"]);
+			});
 
 			it("set fields as remove and insert", () => {
 				const forest = factory(
@@ -968,12 +1008,17 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.deepEqual(actual, expected);
 			});
 			it("when moving the last node in the field", () => {
-				const builder = new SchemaBuilder({ scope: "moving" });
-				const root = builder.object("root", {
-					x: SchemaBuilder.sequence(leaf.number),
-					y: SchemaBuilder.sequence(leaf.number),
+				const builder = new SchemaBuilderBase(FieldKinds.sequence, {
+					scope: "moving",
+					libraries: [leaf.library],
 				});
-				const schema = builder.intoSchema(builder.optional(root));
+				const root = builder.object("root", {
+					x: leaf.number,
+					y: leaf.number,
+				});
+				const schema = builder.intoSchema(
+					FlexFieldSchema.create(FieldKinds.optional, [root]),
+				);
 
 				const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(schema)));
 				initializeForest(

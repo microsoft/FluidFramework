@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../core/index.js";
 import {
+	Context,
 	FlexFieldSchema,
+	FlexTreeContext,
 	FlexTreeSchema,
 	FlexTreeTypedField,
-	FlexTreeContext,
 	NodeKeyManager,
 	getTreeContext,
-	Context,
 } from "../feature-libraries/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
-import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
+
+import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
@@ -26,7 +26,7 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
  */
 export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.flexTree}.
+	 * Context for controlling the FlexTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -42,7 +42,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	readonly checkout: ITreeCheckout;
 
 	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 * Get a typed view of the tree content using the flex-tree API.
 	 */
 	readonly flexTree: FlexTreeTypedField<TRoot>;
 
@@ -68,7 +68,7 @@ export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends Fle
  */
 export class CheckoutFlexTreeView<
 	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends ITreeCheckout = ITreeCheckout,
+	out TCheckout extends TreeCheckout = TreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
@@ -77,16 +77,10 @@ export class CheckoutFlexTreeView<
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 		private readonly onDispose?: () => void,
 	) {
-		this.context = getTreeContext(
-			schema,
-			this.checkout.forest,
-			this.checkout.editor,
-			nodeKeyManager,
-			nodeKeyFieldKey,
-		);
+		this.context = getTreeContext(schema, this.checkout, nodeKeyManager);
+		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
@@ -95,13 +89,16 @@ export class CheckoutFlexTreeView<
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new CheckoutFlexTreeView(
-			branch,
-			this.schema,
-			this.nodeKeyManager,
-			this.nodeKeyFieldKey,
-		);
+		return new CheckoutFlexTreeView(branch, this.schema, this.nodeKeyManager);
 	}
 }
+
+/**
+ * Maps the context of every {@link CheckoutFlexTreeView} to the view.
+ * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
+ */
+// TODO: use something other than `any`
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();

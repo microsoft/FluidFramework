@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "./handles";
+import type { IFluidHandle } from "./handles.js";
 
 /**
  * @public
@@ -22,7 +22,7 @@ export interface IProvideFluidLoadable {
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
-	handle: IFluidHandle;
+	readonly handle: IFluidHandle;
 }
 
 /**

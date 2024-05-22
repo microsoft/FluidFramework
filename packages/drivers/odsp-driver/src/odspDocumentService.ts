@@ -3,40 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	createChildMonitoringContext,
-	MonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	IResolvedUrl,
-	IDocumentStorageService,
-	IDocumentServicePolicies,
 	IDocumentServiceEvents,
-} from "@fluidframework/driver-definitions";
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	HostStoragePolicy,
+	IEntry,
+	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	IEntry,
-	HostStoragePolicy,
-	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { HostStoragePolicyInternal } from "./contracts";
-import { IOdspCache } from "./odspCache";
-import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getOdspResolvedUrl } from "./odspUtils";
-import { isOdcOrigin } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OpsCache } from "./opsCaching";
-import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
-import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream";
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { HostStoragePolicyInternal } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { IOdspCache } from "./odspCache.js";
+import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService.js";
+import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
+import { hasOdcOrigin } from "./odspUrlHelper.js";
+import { getOdspResolvedUrl } from "./odspUtils.js";
+import { OpsCache } from "./opsCaching.js";
+import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -56,6 +57,8 @@ export class OdspDocumentService
 	private odspSocketModuleLoaded: boolean = false;
 
 	/**
+	 * Creates a new OdspDocumentService instance.
+	 *
 	 * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
 	 * @param getStorageToken - function that can provide the storage token. This is is also referred to as
 	 * the "Vroom" token in SPO.
@@ -133,20 +136,20 @@ export class OdspDocumentService
 			// load in storage-only mode if a file version is specified
 			storageOnly: odspResolvedUrl.fileVersion !== undefined,
 			summarizeProtocolTree: true,
+			supportGetSnapshotApi: true,
 		};
 
 		this.mc = createChildMonitoringContext({
 			logger,
 			properties: {
 				all: {
-					odc: isOdcOrigin(
-						new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin,
-					),
+					odc: hasOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl)),
 				},
 			},
 		});
 
 		this.hostPolicy = hostPolicy;
+		this.hostPolicy.supportGetSnapshotApi = this._policies.supportGetSnapshotApi;
 		if (this.clientIsSummarizer) {
 			this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
 		}
@@ -155,7 +158,7 @@ export class OdspDocumentService
 	public get resolvedUrl(): IResolvedUrl {
 		return this.odspResolvedUrl;
 	}
-	public get policies() {
+	public get policies(): IDocumentServicePolicies {
 		return this._policies;
 	}
 
@@ -265,7 +268,7 @@ export class OdspDocumentService
 	 * import this later on when required.
 	 * @returns The delta stream object.
 	 */
-	private async getDelayLoadedDeltaStream() {
+	private async getDelayLoadedDeltaStream(): Promise<OdspDelayLoadedDeltaStream> {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
@@ -294,22 +297,22 @@ export class OdspDocumentService
 		return this.odspDelayLoadedDeltaStream;
 	}
 
-	public dispose(error?: any) {
+	public dispose(error?: unknown): void {
 		// Error might indicate mismatch between client & server knowledge about file
 		// (OdspErrorTypes.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
 		// In such case client cached info is stale and has to be removed.
-		if (error !== undefined) {
-			this.epochTracker.removeEntries().catch(() => {});
-		} else {
+		if (error === undefined) {
 			this._opsCache?.flushOps();
+		} else {
+			this.epochTracker.removeEntries().catch(() => {});
 		}
 		this._opsCache?.dispose();
 		// Only need to dipose this, if it is already loaded.
 		this.odspDelayLoadedDeltaStream?.dispose();
 	}
 
-	protected get opsCache() {
+	protected get opsCache(): OpsCache | undefined {
 		if (this._opsCache) {
 			return this._opsCache;
 		}
@@ -328,11 +331,11 @@ export class OdspDocumentService
 			this.mc.logger,
 			// ICache
 			{
-				write: async (key: string, opsData: string) => {
+				write: async (key: string, opsData: string): Promise<void> => {
 					return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
 				},
 				read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
-				remove: () => {
+				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},
 			},
@@ -345,7 +348,7 @@ export class OdspDocumentService
 
 	// Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
 	// We use it to notify caching layer of how stale is snapshot stored in cache.
-	protected opsReceived(ops: ISequencedDocumentMessage[]) {
+	protected opsReceived(ops: ISequencedDocumentMessage[]): void {
 		// No need for two clients to save same ops
 		if (ops.length === 0 || this.odspResolvedUrl.summarizer) {
 			return;

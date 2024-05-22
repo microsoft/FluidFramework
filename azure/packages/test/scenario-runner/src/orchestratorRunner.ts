@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import commander from "commander";
 
-import { TestOrchestrator } from "./TestOrchestrator";
+import { TestOrchestrator } from "./TestOrchestrator.js";
 
 async function main() {
 	commander

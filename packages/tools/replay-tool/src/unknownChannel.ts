@@ -4,21 +4,21 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore/internal";
 import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-	IChannelAttributes,
-	IChannelServices,
 	IChannel,
-} from "@fluidframework/datastore-definitions";
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreContext,
+	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
 	constructor(

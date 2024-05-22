@@ -5,20 +5,20 @@
 
 /* eslint-disable no-inner-declarations */
 
-import { SchemaBuilder } from "../../../domains/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
-	InsertableFlexNode,
 	FlexFieldSchema,
 	FlexTreeNodeSchema,
+	InsertableFlexNode,
 } from "../../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../../util/index.js";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 
 // Schema
-export const stringTaskSchema = builder.fieldNode("StringTask", builder.string);
+export const stringTaskSchema = builder.fieldNode("StringTask", leaf.string);
 // Polymorphic recursive schema:
 export const listTaskSchema = builder.objectRecursive("ListTask", {
 	items: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [

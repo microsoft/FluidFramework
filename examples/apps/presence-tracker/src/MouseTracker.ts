@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { ISignaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IMember, IServiceAudience } from "fluid-framework";
+import type { IAzureAudience } from "@fluidframework/azure-client";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { IMember } from "fluid-framework";
 
 export interface IMouseTrackerEvents extends IEvent {
 	(event: "mousePositionChanged", listener: () => void): void;
@@ -48,17 +49,17 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	};
 
 	constructor(
-		public readonly audience: IServiceAudience<IMember>,
-		private readonly signaler: Signaler,
+		public readonly audience: IAzureAudience,
+		private readonly signaler: ISignaler,
 	) {
 		super();
 
 		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-			const clientIdMap = this.posMap.get(member.userId);
+			const clientIdMap = this.posMap.get(member.id);
 			if (clientIdMap !== undefined) {
 				clientIdMap.delete(clientId);
 				if (clientIdMap.size === 0) {
-					this.posMap.delete(member.userId);
+					this.posMap.delete(member.id);
 				}
 			}
 			this.emit("mousePositionChanged");
@@ -87,7 +88,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	 */
 	private sendMouseSignal(position: IMousePosition) {
 		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.audience.getMyself()?.id,
 			pos: position,
 		});
 	}
@@ -98,7 +99,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 			member.connections.forEach((connection) => {
 				const position = this.getMousePresenceForUser(userId, connection.id);
 				if (position !== undefined) {
-					statuses.set((member as any).userName, position);
+					statuses.set(member.name, position);
 				}
 			});
 		});

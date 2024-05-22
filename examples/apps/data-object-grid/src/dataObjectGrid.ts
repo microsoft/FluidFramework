@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { Serializable } from "@fluidframework/datastore-definitions";
-
+import type { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
 
-import { registryEntries, dataObjectRegistry } from "./dataObjectRegistry.js";
+import { dataObjectRegistry, registryEntries } from "./dataObjectRegistry.js";
 
 /**
  * Interface for the data object grid data object.

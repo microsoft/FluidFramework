@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid/minimal', 'prettier'],
+	extends: ['@fluidframework/eslint-config-fluid/minimal-deprecated', 'prettier'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)

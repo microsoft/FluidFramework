@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
+	PropertySet,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
-	PropertySet,
-} from "@fluidframework/merge-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test";
-import { SubSequence } from "../sharedSequence";
+} from "@fluidframework/merge-tree/internal";
+import { TestClient } from "@fluidframework/merge-tree/internal/test";
+
+import { SubSequence } from "../sharedSequence.js";
 
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 const verbose = true;

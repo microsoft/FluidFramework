@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-const {
-	createNodesFromPlainText,
-	DocumentationParentNodeBase,
-} = require("@fluid-tools/api-markdown-documenter");
+import { DocumentationParentNodeBase } from "@fluid-tools/api-markdown-documenter";
 
 /**
  * The {@link @fluid-tools/api-markdown-documenter#DocumentationNode."type"} of {@link AlertNode}.
  */
-const alertNodeType = "Alert";
+export const alertNodeType = "Alert";
 
 /**
  * A block of content representing a notice that should be highlighted for the user.
@@ -30,7 +27,7 @@ const alertNodeType = "Alert";
  *
  * @public
  */
-class AlertNode extends DocumentationParentNodeBase {
+export class AlertNode extends DocumentationParentNodeBase {
 	/**
 	 * @param {@fluid-tools/api-markdown-documenter#DocumentationNode[]} children - Child node content.
 	 * @param {string} alertKind - The kind of alert.
@@ -44,20 +41,4 @@ class AlertNode extends DocumentationParentNodeBase {
 		this.alertKind = alertKind;
 		this.title = title;
 	}
-
-	/**
-	 * Generates an `AlertNode` from the provided string.
-	 *
-	 * @param {string} text - The node's text content.
-	 * @param {string} alertKind - The kind of alert.
-	 * @param {string | undefined} title - (Optional) Title text for the alert.
-	 */
-	static createFromPlainText(text, alertKind, title) {
-		return new AlertNode(createNodesFromPlainText(text), alertKind, title);
-	}
 }
-
-module.exports = {
-	AlertNode,
-	alertNodeType,
-};

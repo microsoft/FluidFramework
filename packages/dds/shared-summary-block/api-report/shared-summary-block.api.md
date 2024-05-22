@@ -4,17 +4,10 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ISharedSummaryBlock extends ISharedObject {
@@ -23,39 +16,10 @@ export interface ISharedSummaryBlock extends ISharedObject {
 }
 
 // @alpha
-export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSummaryBlock;
-    get<T>(key: string): Jsonable<T>;
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    protected onDisconnect(): void;
-    // (undocumented)
-    protected processCore(message: ISequencedDocumentMessage, local: boolean): void;
-    set<T>(key: string, value: Jsonable<T>): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-}
+export const SharedSummaryBlock: ISharedObjectKind<ISharedSummaryBlock> & SharedObjectKind<ISharedSummaryBlock>;
 
-// @internal @sealed
-export class SharedSummaryBlockFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
-    // (undocumented)
-    static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
-    // (undocumented)
-    get type(): string;
-}
+// @alpha
+export type SharedSummaryBlock = ISharedSummaryBlock;
 
 // (No @packageDocumentation comment for this package)
 

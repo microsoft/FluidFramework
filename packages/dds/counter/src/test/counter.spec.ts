@@ -4,19 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { type ISharedCounter, SharedCounter } from "../index";
-import { CounterFactory } from "../counterFactory";
+} from "@fluidframework/test-runtime-utils/internal";
 
-class TestSharedCounter extends SharedCounter {
+import { CounterFactory } from "../counterFactory.js";
+import { type ISharedCounter, SharedCounter } from "../index.js";
+import { SharedCounter as SharedCounterClass } from "../counter.js";
+
+class TestSharedCounter extends SharedCounterClass {
 	public testApplyStashedOp(content: unknown): void {
 		this.applyStashedOp(content);
 	}
@@ -106,7 +110,10 @@ describe("SharedCounter", () => {
 				const services = MockSharedObjectServices.createFromSummary(
 					testCounter.getAttachSummary().summary,
 				);
-				const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
+				const testCounter2 = factory.create(
+					dataStoreRuntime,
+					"counter2",
+				) as SharedCounterClass;
 				await testCounter2.load(services);
 
 				// Verify that the new SharedCounter has the correct value.
@@ -127,7 +134,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
@@ -213,7 +220,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

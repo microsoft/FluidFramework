@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as os from "os";
 import * as path from "path";
 
 import { commonOptionString, parseOption } from "../common/commonOptions";
+import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
 import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
@@ -323,11 +325,11 @@ export function parseOptions(argv: string[]) {
 
 	// If we are building, and don't have a task name, default to "build"
 	if (options.build !== false && options.buildTaskNames.length === 0) {
-		options.buildTaskNames.push("build");
+		options.buildTaskNames.push(defaultBuildTaskName);
 	}
 
 	// Add the "clean" task if --clean is specified
 	if (options.clean) {
-		options.buildTaskNames.push("clean");
+		options.buildTaskNames.push(defaultCleanTaskName);
 	}
 }

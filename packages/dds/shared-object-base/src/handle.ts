@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISharedObject } from "./types";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+
+import { ISharedObject } from "./types.js";
 
 /**
  * Handle for a shared object.

@@ -4,106 +4,37 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
-	ISummarizer,
 	ISummarizeResults,
-} from "@fluidframework/container-runtime";
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { seqFromTree } from "@fluidframework/runtime-utils";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { seqFromTree } from "@fluidframework/runtime-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
-	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "../packageVersion.js";
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
-// Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: false },
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
-
-class TestDataObject1 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly matrixKey = "SharedMatrix";
-	public matrix!: SharedMatrix;
-
-	protected async initializingFirstTime() {
-		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-		this.root.set(this.matrixKey, sharedMatrix.handle);
-		sharedMatrix.insertRows(0, 3);
-		sharedMatrix.insertCols(0, 3);
-	}
-
-	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-		assert(matrixHandle !== undefined, "SharedMatrix not found");
-		this.matrix = await matrixHandle.get();
-	}
-}
-
-const dataStoreFactory1 = new DataObjectFactory(
-	TestDataObjectType1,
-	TestDataObject1,
-	[SharedMatrix.getFactory()],
-	[],
-	[],
-);
-
-const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
-	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-]);
-
-const containerRuntimeFactoryWithDefaultDataStore =
-	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
-
-const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-	containerRuntimeFactoryWithDefaultDataStore,
-	{
-		defaultFactory: dataStoreFactory1,
-		registryEntries: registryStoreEntries,
-		runtimeOptions,
-	},
-);
-
-async function createSummarizer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	summaryVersion?: string,
-): Promise<ISummarizer> {
-	const createSummarizerResult = await createSummarizerFromFactory(
-		provider,
-		container,
-		dataStoreFactory1,
-		summaryVersion,
-		containerRuntimeFactoryWithDefaultDataStore,
-		registryStoreEntries,
-	);
-	return createSummarizerResult.summarizer;
-}
 
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.
@@ -111,7 +42,74 @@ async function createSummarizer(
 describeCompat(
 	"Summarizer fetches expected number of times",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { SharedMatrix } = apis.dds;
+		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		class TestDataObject1 extends DataObject {
+			public get _root() {
+				return this.root;
+			}
+
+			public get _context() {
+				return this.context;
+			}
+
+			private readonly matrixKey = "SharedMatrix";
+			public matrix!: SharedMatrix;
+
+			protected async initializingFirstTime() {
+				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
+				this.root.set(this.matrixKey, sharedMatrix.handle);
+				sharedMatrix.insertRows(0, 3);
+				sharedMatrix.insertCols(0, 3);
+			}
+
+			protected async hasInitialized() {
+				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+				assert(matrixHandle !== undefined, "SharedMatrix not found");
+				this.matrix = await matrixHandle.get();
+			}
+		}
+
+		const dataStoreFactory1 = new DataObjectFactory(
+			TestDataObjectType1,
+			TestDataObject1,
+			[SharedMatrix.getFactory()],
+			[],
+			[],
+		);
+
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+		]);
+
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+				runtimeOptions,
+			},
+		);
+
+		async function createSummarizer(
+			testObjectProvider: ITestObjectProvider,
+			container: IContainer,
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
+			const createSummarizerResult = await createSummarizerFromFactory(
+				testObjectProvider,
+				container,
+				dataStoreFactory1,
+				summaryVersion,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				registryStoreEntries,
+			);
+			return createSummarizerResult.summarizer;
+		}
+
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
 		let mainDataStore: TestDataObject1;
@@ -262,6 +260,13 @@ describeCompat(
 		});
 
 		it("Second summarizer from latest should not fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7894
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizer1 = await createSummarizer(provider, mainContainer);
 
 			const versionWrap1 = await incrementCellValueAndRunSummary(
@@ -307,6 +312,13 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
 			const versionWrap1 = await incrementCellValueAndRunSummary(
 				summarizerClient,
@@ -363,55 +375,61 @@ describeCompat(
 			newSummarizerClient.close();
 		});
 
-		it("Summarizer succeeds after Summarizer fails", async () => {
-			// Create new summarizer
-			const summarizer = await createSummarizer(provider, mainContainer);
+		itExpects(
+			"Summarizer succeeds after Summarizer fails",
+			[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+			async () => {
+				// Create new summarizer
+				const summarizer = await createSummarizer(provider, mainContainer);
 
-			// Second summary should be discarded
-			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
-			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-			let lastSummaryVersion: string | undefined;
-			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-					containerRuntime.storage,
+				// Second summary should be discarded
+				const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+				let lastSummaryVersion: string | undefined;
+				const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
+						containerRuntime.storage,
+					);
+					const response = await uploadSummaryUploaderFunc(summary, context);
+					// Close summarizer so that it does not submit SummaryOp
+					summarizer.close();
+					// ODSP has single commit summary enabled by default and
+					// will update the summary version even without the summary op.
+					if (provider.driver.type === "odsp") {
+						lastSummaryVersion = response;
+					}
+					return response;
+				};
+				containerRuntime.storage.uploadSummaryWithContext = func;
+
+				const result2: ISummarizeResults = summarizer.summarizeOnDemand({
+					reason: "test2",
+				});
+				assert((await result2.summarySubmitted).success === false, "Summary should fail");
+				await provider.ensureSynchronized();
+
+				const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
+				assert(value === 1, "Value matches expected");
+
+				const secondSummarizer = await createSummarizer(
+					provider,
+					mainContainer,
+					lastSummaryVersion,
 				);
-				const response = await uploadSummaryUploaderFunc(summary, context);
-				// Close summarizer so that it does not submit SummaryOp
-				summarizer.close();
-				// ODSP has single commit summary enabled by default and
-				// will update the summary version even without the summary op.
-				if (provider.driver.type === "odsp") {
-					lastSummaryVersion = response;
-				}
-				return response;
-			};
-			containerRuntime.storage.uploadSummaryWithContext = func;
+				let versionWrap = await incrementCellValueAndRunSummary(
+					secondSummarizer,
+					2 /* expectedMatrixCellValue */,
+				);
+				assert(versionWrap.fetchCount === 0, "No fetch should have happened");
 
-			const result2: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test2" });
-			assert((await result2.summarySubmitted).success === false, "Summary should fail");
-			await provider.ensureSynchronized();
-
-			const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
-			assert(value === 1, "Value matches expected");
-
-			const secondSummarizer = await createSummarizer(
-				provider,
-				mainContainer,
-				lastSummaryVersion,
-			);
-			let versionWrap = await incrementCellValueAndRunSummary(
-				secondSummarizer,
-				2 /* expectedMatrixCellValue */,
-			);
-			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-
-			versionWrap = await incrementCellValueAndRunSummary(
-				secondSummarizer,
-				3 /* expectedMatrixCellValue */,
-			);
-			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-			await provider.ensureSynchronized();
-			secondSummarizer.close();
-		});
+				versionWrap = await incrementCellValueAndRunSummary(
+					secondSummarizer,
+					3 /* expectedMatrixCellValue */,
+				);
+				assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+				await provider.ensureSynchronized();
+				secondSummarizer.close();
+			},
+		);
 	},
 );

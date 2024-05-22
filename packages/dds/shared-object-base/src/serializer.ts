@@ -6,12 +6,22 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import {
+	generateHandleContextPath,
+	isSerializedHandle,
+	isFluidHandle,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
+
+import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**
@@ -104,8 +114,9 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify(input: any, bind: IFluidHandle) {
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
+	public stringify(input: unknown, bind: IFluidHandle) {
+		const bindInternal = toFluidHandleInternal(bind);
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
@@ -115,12 +126,11 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: any, bind: IFluidHandle) => {
-		// Detect if 'value' is an IFluidHandle.
-		const handle = value?.IFluidHandle;
-
+	private readonly encodeValue = (value: unknown, bind: IFluidHandleInternal) => {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return handle !== undefined ? this.serializeHandle(handle, bind) : value;
+		return isFluidHandle(value)
+			? this.serializeHandle(toFluidHandleInternal(value), bind)
+			: value;
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
@@ -157,9 +167,9 @@ export class FluidSerializer implements IFluidSerializer {
 		// is a non-null object.
 		const maybeReplaced = replacer(input, context);
 
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
-		if (maybeReplaced !== input) {
+		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
 			return maybeReplaced;
 		}
 
@@ -190,7 +200,7 @@ export class FluidSerializer implements IFluidSerializer {
 		return clone ?? input;
 	}
 
-	protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
+	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {
 		bind.bind(handle);
 		return {
 			type: "__fluid_handle__",

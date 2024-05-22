@@ -64,7 +64,7 @@ params:
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      Fluid Framework 2.0 beta is available now! <a href="https://devblogs.microsoft.com/microsoft365dev/announcing-fluid-framework-2-0-beta/"> Learn more.</a>
+      Fluid Framework 2.0 preview is available now! <a href="https://aka.ms/fluid/preview_blog"><u>Learn more.</u></a>
 
 menu:
   main:
@@ -77,7 +77,9 @@ menu:
     - name: "Community"
       url: "/community/"
       weight: -60
-
+    - name: "Support"
+      url: "/Support/"
+      weight: -20
   old_section:
     - identifier: "quick-start"
       name: "Quick Start"

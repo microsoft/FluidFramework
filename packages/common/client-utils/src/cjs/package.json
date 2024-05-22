@@ -1,0 +1,7 @@
+{
+	"type": "commonjs",
+	"browser": {
+		"./indexNode.js": "./indexBrowser.js",
+		"./indexNode.d.ts": "./indexBrowser.d.ts"
+	}
+}

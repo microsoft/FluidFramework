@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { leaf, SchemaBuilder } from "../../../domains/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import { FieldKinds, FlexFieldSchema } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "example" });

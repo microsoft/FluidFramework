@@ -4,22 +4,25 @@
  */
 
 import assert from "assert";
-import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	createAndAttachContainer,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-// eslint-disable-next-line import/no-internal-modules
-import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
+} from "@fluidframework/test-utils/internal";
+
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";
@@ -79,7 +82,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const ac = new AbortController();
 			let blob: IFluidHandle<ArrayBufferLike>;
 			try {
@@ -102,7 +105,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			assert.strictEqual(blob.isAttached, false);
@@ -125,7 +128,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
 				notifyImminentClosure: true,
@@ -140,7 +143,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			const testKey = "a blob";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
 			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
@@ -151,7 +154,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 
 		it("removes multiple pending blobs after attached and acked", async function () {
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
@@ -170,8 +173,8 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let container: IContainer;
 		let detachedBlobStorage: MockDetachedBlobStorage;
 		let detachedDataStore: ITestFluidObject;
-		let map: SharedMap;
-		let directory: SharedDirectory;
+		let map: ISharedMap;
+		let directory: ISharedDirectory;
 		let text: string;
 		let blobHandle: IFluidHandle<ArrayBufferLike>;
 
@@ -194,7 +197,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			blobHandle = await detachedDataStore.runtime.uploadBlob(stringToBuffer(text, "utf-8"));
 		});
 
-		const checkForDetachedHandles = (dds: SharedMap | SharedDirectory) => {
+		const checkForDetachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -209,7 +212,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			assert.strictEqual(blobHandle.isAttached, false, "blob handle should be detached");
 		};
 
-		const checkForAttachedHandles = (dds: SharedMap | SharedDirectory) => {
+		const checkForAttachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,
@@ -255,7 +258,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set("map", map.handle);
 			map.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			checkForAttachedHandles(map);
 		});
 
@@ -263,7 +266,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set(directoryId, directory.handle);
 			directory.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			checkForAttachedHandles(directory);
 		});
 
@@ -280,7 +283,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(mapId, map.handle);
 			assert.strictEqual(
 				map.handle.isAttached,
@@ -307,7 +310,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(directoryId, directory.handle);
 			assert.strictEqual(
 				directory.handle.isAttached,

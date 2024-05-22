@@ -65,7 +65,7 @@ export interface IClient {
     user: IUser;
 }
 
-// @public
+// @alpha
 export interface IClientConfiguration {
     blockSize: number;
     maxMessageSize: number;
@@ -94,7 +94,7 @@ export type ICommittedProposal = {
     commitSequenceNumber: number;
 } & IApprovedProposal;
 
-// @internal
+// @alpha
 export interface IConnect {
     client: IClient;
     driverVersion?: string;
@@ -142,7 +142,7 @@ export interface IDocumentAttributes {
     sequenceNumber: number;
 }
 
-// @public
+// @alpha
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
@@ -273,9 +273,7 @@ export interface IQuorumProposalsEvents {
 }
 
 // @internal
-export interface ISentSignalMessage extends ISignalMessageBase {
-    targetClientId?: string;
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 // @public
 export interface ISequencedClient {
@@ -350,6 +348,7 @@ export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
     referenceSequenceNumber?: number;
+    targetClientId?: string;
     type?: string;
 }
 
@@ -359,6 +358,7 @@ export interface ISnapshotTree {
     blobs: {
         [path: string]: string;
     };
+    groupId?: string;
     // (undocumented)
     id?: string;
     // (undocumented)
@@ -445,6 +445,7 @@ export interface ISummaryTokenClaims {
 
 // @public
 export interface ISummaryTree {
+    groupId?: string;
     // (undocumented)
     tree: {
         [path: string]: SummaryObject;
@@ -454,7 +455,7 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public
+// @alpha
 export interface ITokenClaims {
     documentId: string;
     exp: number;
@@ -488,6 +489,7 @@ export interface ITrace {
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
+    groupId?: string;
     id?: string;
     unreferenced?: true;
 }

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+
 import { Format } from "./format.js";
 
 /**

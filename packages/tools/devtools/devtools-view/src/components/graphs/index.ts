@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export type { DynamicComposedChartProps, GraphDataSet } from "./DynamicComposedChart";
-export { DynamicComposedChart } from "./DynamicComposedChart";
+export type { DynamicComposedChartProps, GraphDataSet } from "./DynamicComposedChart.js";
+export { DynamicComposedChart } from "./DynamicComposedChart.js";
