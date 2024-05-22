@@ -25,6 +25,8 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
+import { TestSnapshotCache } from "./testSnapshotCache.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -115,15 +117,19 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		}
 	};
 
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider();
+	const persistedCache = new TestSnapshotCache();
+	beforeEach("setup", async function () {
+		provider = getTestObjectProvider({ persistedCache });
+		if (!supportsDataVirtualization(provider)) {
+			this.skip();
+		}
+	});
+	afterEach(async () => {
+		persistedCache.reset();
 	});
 
 	const loadingGroupId = "loadingGroupId";
 	it("Load datastore via groupId with snapshot in the future, with seq < all the ops", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
@@ -159,7 +165,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
-
+		clearCacheIfOdsp(provider, persistedCache);
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{
@@ -208,9 +214,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	it("Load datastore via groupId with snapshot in the future, with seq > some ops", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
@@ -256,6 +259,8 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const handleAS = mainObjectS._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		assert(handleAS !== undefined, "handleA2 should not be undefined");
 		const dataObjectAS = await handleAS.get();
+
+		clearCacheIfOdsp(provider, persistedCache);
 
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
@@ -317,14 +322,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			},
 		],
 		async () => {
-			if (provider.driver.type !== "local") {
-				provider.logger?.send({
-					category: "error",
-					eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-					error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
-				});
-				return;
-			}
 			// Load basic container stuff
 			const container = await provider.createContainer(runtimeFactory, {
 				configProvider: configProvider({
@@ -363,19 +360,19 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			dataObjectA._root.set("B", "B");
 			summarizer.close();
 
-			const { summarizer: summarizer1, container: container1 } =
-				await createSummarizerFromFactory(
-					provider,
-					container,
-					dataObjectFactory,
-					summaryVersion,
-					undefined,
-					undefined,
-					undefined,
-					configProvider({
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
-					}),
-				);
+			clearCacheIfOdsp(provider, persistedCache);
+			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
+				provider,
+				container,
+				dataObjectFactory,
+				summaryVersion,
+				undefined,
+				undefined,
+				undefined,
+				configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
+			);
 
 			const { summarizer: summarizer2, container: container2 } =
 				await createSummarizerFromFactory(
@@ -409,6 +406,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 			// Make sure that summarizer1 gets the op
 			const waitForOp = new Deferred<void>();
+			if (dataObjectA1._root.get("C") === "C") {
+				waitForOp.resolve();
+			}
 			dataObjectA1._root.on("valueChanged", (changed) => {
 				if (changed.key === "C") {
 					waitForOp.resolve();
@@ -442,9 +442,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	);
 
 	it("Load datastore via groupId getting a snapshot older than snapshot we loaded from", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
@@ -481,12 +478,17 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// Summarize
 		await provider.ensureSynchronized();
 		const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
-
+		clearCacheIfOdsp(provider, persistedCache);
+		const olderSnapshot = await containerRuntime.storage.getSnapshot?.({
+			versionId: summaryVersion1,
+			loadingGroupIds: [loadingGroupId],
+		});
 		dataObjectA._root.set("B", "B");
 
 		await provider.ensureSynchronized();
 		const { summaryVersion: summaryVersion2 } = await summarizeNow(summarizer);
 
+		clearCacheIfOdsp(provider, persistedCache);
 		// Load the container with the second summary
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
@@ -504,10 +506,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectA2Handle !== undefined, "dataObjectA2Handle should not be undefined");
 
 		assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot not defined for runtime2");
-		const olderSnapshot = await runtime2.storage.getSnapshot({
-			versionId: summaryVersion1,
-			loadingGroupIds: [loadingGroupId],
-		});
 		overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
 		// TODO: update when this assert changes to a hex.
 		await assert.rejects(
