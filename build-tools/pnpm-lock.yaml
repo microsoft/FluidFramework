@@ -45,7 +45,7 @@ importers:
         version: 7.22.24
       '@microsoft/api-extractor':
         specifier: ^7.43.1
-        version: 7.43.7(@types/node@18.18.6)
+        version: 7.43.1(@types/node@18.18.6)
       c8:
         specifier: ^7.14.0
         version: 7.14.0
@@ -102,7 +102,7 @@ importers:
         version: link:../bundle-size-tools
       '@microsoft/api-extractor':
         specifier: ^7.43.1
-        version: 7.43.7(@types/node@18.18.6)
+        version: 7.43.1(@types/node@18.18.6)
       '@oclif/core':
         specifier: ^3.26.5
         version: 3.26.5
@@ -492,7 +492,7 @@ importers:
         version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.43.1
-        version: 7.43.7(@types/node@18.18.6)
+        version: 7.43.1(@types/node@18.18.6)
       '@types/msgpack-lite':
         specifier: ^0.1.8
         version: 0.1.8
@@ -623,7 +623,7 @@ importers:
         version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.43.1
-        version: 7.43.7(@types/node@18.18.6)
+        version: 7.43.1(@types/node@18.18.6)
       '@oclif/test':
         specifier: ^3.2.12
         version: 3.2.12
@@ -2063,7 +2063,7 @@ packages:
       '@fluid-tools/version-tools': 0.37.0
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/bundle-size-tools': 0.37.0
-      '@microsoft/api-extractor': 7.43.7(@types/node@18.18.6)
+      '@microsoft/api-extractor': 7.43.1(@types/node@18.18.6)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
       '@oclif/plugin-commands': 3.3.1
@@ -2486,7 +2486,7 @@ packages:
     dependencies:
       '@inquirer/type': 1.2.1
       '@types/mute-stream': 0.0.4
-      '@types/node': 20.12.8
+      '@types/node': 20.11.30
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       chalk: 4.1.2
@@ -2659,26 +2659,26 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model@7.28.17(@types/node@18.18.6):
-    resolution: {integrity: sha512-b2AfLP33oEVtWLeNavSBRdyDa8sKlXjN4pdhBnC4HLontOtjILhL1ERAmZObF4PWSyChnnC2vjb47C9WKCFRGg==}
+  /@microsoft/api-extractor-model@7.28.14(@types/node@18.18.6):
+    resolution: {integrity: sha512-Bery/c8A8SsKPSvA82cTTuy/+OcxZbLRmKhPkk91/AJOQzxZsShcrmHFAGeiEqSIrv1nPZ3tKq9kfMLdCHmsqg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.3.0(@types/node@18.18.6)
+      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.6)
     transitivePeerDependencies:
       - '@types/node'
 
-  /@microsoft/api-extractor@7.43.7(@types/node@18.18.6):
-    resolution: {integrity: sha512-t5M8BdnS+TmroUA/Z9HJXExS9iL4pK9I3yGu9PsXVTXPmcVXlBlA1CVI7TjRa1jwm+vusG/+sbX1/t5UkJhQMg==}
+  /@microsoft/api-extractor@7.43.1(@types/node@18.18.6):
+    resolution: {integrity: sha512-ohg40SsvFFgzHFAtYq5wKJc8ZDyY46bphjtnSvhSSlXpPTG7GHwyyXkn48UZiUCBwr2WC7TRC1Jfwz7nreuiyQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.17(@types/node@18.18.6)
+      '@microsoft/api-extractor-model': 7.28.14(@types/node@18.18.6)
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.3.0(@types/node@18.18.6)
+      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.6)
       '@rushstack/rig-package': 0.5.2
-      '@rushstack/terminal': 0.11.0(@types/node@18.18.6)
-      '@rushstack/ts-command-line': 4.21.0(@types/node@18.18.6)
+      '@rushstack/terminal': 0.10.1(@types/node@18.18.6)
+      '@rushstack/ts-command-line': 4.19.2(@types/node@18.18.6)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.8
@@ -3162,8 +3162,8 @@ packages:
       semver: 7.3.8
       z-schema: 5.0.5
 
-  /@rushstack/node-core-library@4.3.0(@types/node@18.18.6):
-    resolution: {integrity: sha512-JuNZ7lwaYQ4R1TugpryyWBn4lIxK+L7fF+muibFp0by5WklG22nsvH868fuBoZMLo5FqAs6WFOifNos4PJjWSA==}
+  /@rushstack/node-core-library@4.1.0(@types/node@18.18.6):
+    resolution: {integrity: sha512-qz4JFBZJCf1YN5cAXa1dP6Mki/HrsQxc/oYGAGx29dF2cwF2YMxHoly0FBhMw3IEnxo5fMj0boVfoHVBkpkx/w==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -3184,15 +3184,15 @@ packages:
       resolve: 1.22.8
       strip-json-comments: 3.1.1
 
-  /@rushstack/terminal@0.11.0(@types/node@18.18.6):
-    resolution: {integrity: sha512-LKz7pv0G9Py5uULahNSixK1pTqIIKd103pAGhDW51YfzPojvmO5wfITe0PEUNAJZjuufN/KgeRW83dJo1gL2rQ==}
+  /@rushstack/terminal@0.10.1(@types/node@18.18.6):
+    resolution: {integrity: sha512-C6Vi/m/84IYJTkfzmXr1+W8Wi3MmBjVF/q3za91Gb3VYjKbpALHVxY6FgH625AnDe5Z0Kh4MHKWA3Z7bqgAezA==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
       '@types/node':
         optional: true
     dependencies:
-      '@rushstack/node-core-library': 4.3.0(@types/node@18.18.6)
+      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.6)
       '@types/node': 18.18.6
       supports-color: 8.1.1
 
@@ -3209,10 +3209,10 @@ packages:
       string-argv: 0.3.1
     dev: true
 
-  /@rushstack/ts-command-line@4.21.0(@types/node@18.18.6):
-    resolution: {integrity: sha512-z38FLUCn8M9FQf19gJ9eltdwkvc47PxvJmVZS6aKwbBAa3Pis3r3A+ZcBCVPNb9h/Tbga+i0tHdzoSGUoji9GQ==}
+  /@rushstack/ts-command-line@4.19.2(@types/node@18.18.6):
+    resolution: {integrity: sha512-cqmXXmBEBlzo9WtyUrHtF9e6kl0LvBY7aTSVX4jfnBfXWZQWnPq9JTFPlQZ+L/ZwjZ4HrNwQsOVvhe9oOucZkw==}
     dependencies:
-      '@rushstack/terminal': 0.11.0(@types/node@18.18.6)
+      '@rushstack/terminal': 0.10.1(@types/node@18.18.6)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.1
@@ -3815,7 +3815,7 @@ packages:
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       mkdirp: 3.0.1
       path-browserify: 1.0.1
     dev: false
@@ -3994,6 +3994,11 @@ packages:
 
   /@types/node@18.18.7:
     resolution: {integrity: sha512-bw+lEsxis6eqJYW8Ql6+yTqkE6RuFtsQPSe5JxXbqYRFQEER5aJA9a5UH9igqDWm3X4iLHIKOHlnAXLM4mi7uQ==}
+    dependencies:
+      undici-types: 5.26.5
+
+  /@types/node@20.11.30:
+    resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
     dependencies:
       undici-types: 5.26.5
 
@@ -6660,7 +6665,7 @@ packages:
     dependencies:
       '@typescript-eslint/utils': 6.21.0(eslint@8.57.0)(typescript@5.1.6)
       eslint: 8.57.0
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       natural-compare-lite: 1.4.0
     transitivePeerDependencies:
       - supports-color
