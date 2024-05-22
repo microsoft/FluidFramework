@@ -208,6 +208,8 @@ export class SocketIoPingPongLatencyTracker {
 
 	private logMetric(): void {
 		const averageMS = this.sumMs / this.count;
+		this.sumMs = 0;
+		this.count = 0;
 		if (this.logAsLumberMetric) {
 			const metric = Lumberjack.newLumberMetric(LumberEventName.SocketPingPong, {
 				...this.metricProperties,
