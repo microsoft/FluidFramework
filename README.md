@@ -220,8 +220,6 @@ npm run test
 - To run a single test within a module, add `.only` to `it` or `describe`. To exclude a test, use `.skip`.
 - You can use `ts-mocha` to quickly run specific test files without needing to make the whole project compile. For more details on test filtering using CLI arguments, refer to the [Mocha documentation](https://mochajs.org/#command-line-usage).
 
-#### Important Notes
-
 - Our test setup generally requires building before running the tests.
 - Incremental builds may leave extra files, which can result in ghost tests. To avoid this, consider running a clean build with the following command:
 
