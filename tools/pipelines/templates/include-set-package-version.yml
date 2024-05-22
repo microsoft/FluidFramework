@@ -43,8 +43,8 @@ parameters:
 # Set version
 steps:
 
-  # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
-  # with the next group of steps.
+# These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
+# with the next group of steps.
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
   - template: include-install-pnpm.yml
     parameters:
