@@ -206,6 +206,10 @@ module.exports = {
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				// False positive?
+				"^packages/test/test-end-to-end-tests/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
