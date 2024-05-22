@@ -11,7 +11,7 @@ import {
 	IStream,
 	IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";

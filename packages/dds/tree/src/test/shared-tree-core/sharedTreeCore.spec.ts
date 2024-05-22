@@ -9,7 +9,7 @@ import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

@@ -17,7 +17,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

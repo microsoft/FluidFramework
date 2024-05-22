@@ -4,7 +4,7 @@
  */
 
 import { type AudienceClientMetadata } from "@fluidframework/devtools-core/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/driver-definitions";
 
 /**
  * Represents a single audience user, aggregating their client connections.

@@ -15,8 +15,9 @@ import {
 	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
+	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

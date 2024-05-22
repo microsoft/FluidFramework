@@ -10,7 +10,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,

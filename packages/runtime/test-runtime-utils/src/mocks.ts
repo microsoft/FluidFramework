@@ -24,7 +24,7 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IChannelServices,
 	IChannelStorageService,
@@ -42,10 +42,9 @@ import {
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	ITreeEntry,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,

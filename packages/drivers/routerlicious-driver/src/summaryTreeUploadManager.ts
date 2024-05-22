@@ -7,12 +7,8 @@ import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/clie
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import {
-	ISnapshotTreeEx,
-	ISummaryTree,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
