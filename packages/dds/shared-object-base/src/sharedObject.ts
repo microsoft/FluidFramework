@@ -21,10 +21,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

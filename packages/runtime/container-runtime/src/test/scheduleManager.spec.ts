@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 

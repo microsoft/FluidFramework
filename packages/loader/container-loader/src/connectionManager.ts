@@ -14,6 +14,15 @@ import {
 	IDocumentService,
 	DriverErrorTypes,
 	IAnyDriverError,
+	IClientConfiguration,
+	IDocumentMessage,
+	INack,
+	INackContent,
+	ISequencedDocumentSystemMessage,
+	ISignalClient,
+	ITokenClaims,
+	MessageType,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -27,19 +36,10 @@ import {
 import {
 	ConnectionMode,
 	IClient,
-	IClientConfiguration,
 	IClientDetails,
-	IDocumentMessage,
-	INack,
-	INackContent,
 	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ISignalClient,
 	ISignalMessage,
-	ITokenClaims,
-	MessageType,
-	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,

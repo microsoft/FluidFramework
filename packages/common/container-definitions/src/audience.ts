@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
  * @alpha

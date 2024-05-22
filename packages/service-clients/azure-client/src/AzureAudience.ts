@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
+import { type IClient, type IUser } from "@fluidframework/driver-definitions";
 
 import { type AzureMember, type AzureUser } from "./interfaces.js";
 

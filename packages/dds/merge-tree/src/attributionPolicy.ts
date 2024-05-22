@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";

@@ -26,7 +26,7 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {

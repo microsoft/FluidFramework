@@ -9,9 +9,8 @@ import {
 	DriverHeader,
 	IResolvedUrl,
 	IUrlResolver,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
-import { ScopeType } from "@fluidframework/protocol-definitions";
-
 import { generateToken } from "./auth.js";
 
 /**

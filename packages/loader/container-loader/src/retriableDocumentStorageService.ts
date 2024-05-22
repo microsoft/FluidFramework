@@ -12,15 +12,12 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,
