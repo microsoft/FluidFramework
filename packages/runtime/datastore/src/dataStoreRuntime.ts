@@ -26,14 +26,13 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	type ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
@@ -945,13 +944,27 @@ export class FluidDataStoreRuntime
 		//  "The data store should be locally visible when generating attach summary",
 		// );
 
-		for (const [contextId, context] of this.contexts) {
-			if (!(context instanceof LocalChannelContextBase)) {
-				throw new LoggingError("Should only be called with local channel handles");
-			}
+		const visitedContexts = new Set<string>();
+		let visitedLength = -1;
+		while (visitedLength !== visitedContexts.size) {
+			// detect changes in the visitedContexts set, as on visiting a context
+			// it could could make contexts available by removing other contexts
+			// from the notBoundedChannelContextSet, so we need to ensure those get processed as well.
+			// only once the loop can run with no new contexts added to the visitedContexts set do we
+			// know for sure all possible contexts have been visited.
+			visitedLength = visitedContexts.size;
+			for (const [contextId, context] of this.contexts) {
+				if (!(context instanceof LocalChannelContextBase)) {
+					throw new LoggingError("Should only be called with local channel handles");
+				}
 
-			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				visitor(contextId, context);
+				if (
+					!visitedContexts.has(contextId) &&
+					!this.notBoundedChannelContextSet.has(contextId)
+				) {
+					visitor(contextId, context);
+					visitedContexts.add(contextId);
+				}
 			}
 		}
 	}

@@ -21,7 +21,7 @@
 import fs from "node:fs";
 import process from "node:process";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { Sanitizer } from "./sanitizer.js";
 

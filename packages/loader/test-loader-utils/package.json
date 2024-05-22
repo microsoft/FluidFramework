@@ -48,8 +48,7 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0"
+		"@fluidframework/driver-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

@@ -49,6 +49,10 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -60,16 +64,12 @@ import type {
 } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
@@ -2227,7 +2227,7 @@ export class ContainerRuntime
 		);
 
 		// Is document schema explicit control on?
-		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2241,10 +2241,10 @@ export class ContainerRuntime
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
-			message: explitiSchemaControl
+			message: explicitSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
-			lastMessage: explitiSchemaControl ? message : undefined,
+			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
 		};
 

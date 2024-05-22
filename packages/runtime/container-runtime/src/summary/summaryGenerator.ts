@@ -11,9 +11,8 @@ import {
 	IPromiseTimerResult,
 	Timer,
 } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	isFluidError,
 	ITelemetryLoggerExt,

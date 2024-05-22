@@ -26,7 +26,7 @@ import {
 	IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

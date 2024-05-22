@@ -18,13 +18,13 @@ import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/interna
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions/internal';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';

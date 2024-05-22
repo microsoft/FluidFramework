@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Signaler } from "@fluid-experimental/data-objects";
+import { ISignaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IEvent } from "@fluidframework/core-interfaces";
@@ -50,7 +50,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 	constructor(
 		public readonly audience: IAzureAudience,
-		private readonly signaler: Signaler,
+		private readonly signaler: ISignaler,
 	) {
 		super();
 

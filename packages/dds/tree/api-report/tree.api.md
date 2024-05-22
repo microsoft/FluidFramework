@@ -1265,7 +1265,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 // @internal
 export interface MapTree extends NodeData {
     // (undocumented)
-    fields: Map<FieldKey, MapTree[]>;
+    readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
 
 // @internal
@@ -1308,7 +1308,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
 // @internal
 export interface NodeData {
     readonly type: TreeNodeSchemaIdentifier;
-    value?: TreeValue;
+    readonly value?: TreeValue;
 }
 
 // @internal (undocumented)

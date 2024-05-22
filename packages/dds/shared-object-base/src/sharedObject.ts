@@ -21,10 +21,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -47,6 +45,7 @@ import { v4 as uuid } from "uuid";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
+import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -778,9 +777,23 @@ export abstract class SharedObject<
 		incrementBy: number,
 		telemetryContext?: ITelemetryContext,
 	) {
-		const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ??
-			0) as number;
-		telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+		if (telemetryContext !== undefined) {
+			// TelemetryContext needs to implment a get function
+			assert(
+				"get" in telemetryContext && typeof telemetryContext.get === "function",
+				"received context must have a get function",
+			);
+
+			const prevTotal = ((telemetryContext as TelemetryContext).get(
+				this.telemetryContextPrefix,
+				propertyName,
+			) ?? 0) as number;
+			telemetryContext.set(
+				this.telemetryContextPrefix,
+				propertyName,
+				prevTotal + incrementBy,
+			);
+		}
 	}
 }
 
