@@ -183,7 +183,6 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Debug
 
-- Use "Debug Current Mocha Test" for unit tests in Visual Studio Code. If this doesn't work, "Debug Current Test (JS)" is a workaround, although you will have to set breakpoints in js files for other packages.
 - You can also use the VSCode JS debug terminal, then run the test as normal.
 - Sometimes, uncommitted changes can cause build failures. Committing changes might be necessary to resolve such issues.
 
