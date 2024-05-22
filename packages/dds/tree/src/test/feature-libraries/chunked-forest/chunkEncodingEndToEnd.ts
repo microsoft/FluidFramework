@@ -34,13 +34,13 @@ import {
 	ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
-	createMockNodeKeyManager,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
 import {
@@ -104,7 +104,7 @@ describe("End to end chunked encoding", () => {
 				schema,
 				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
 				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
-				createMockNodeKeyManager(),
+				new MockNodeKeyManager(),
 			);
 		}
 
