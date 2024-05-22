@@ -58,7 +58,7 @@ export const options: FastBuildOptions = {
 	all: false,
 	worker: false,
 	workerThreads: false,
-	workerMemoryLimit: -1,
+	workerMemoryLimit: Number.POSITIVE_INFINITY,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
