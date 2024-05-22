@@ -13,7 +13,7 @@
  */
 type requireAssignableTo<_A extends B, B> = true;
 
-/**
+/*
  * Type meta-functions which takes in a type, and removes some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
@@ -35,8 +35,6 @@ type requireAssignableTo<_A extends B, B> = true;
  * FullType can be explicitly opted into to test the type unmodified.
  * This will cause issues with symbols, enums, and classes with private or protected members.
  */
-export const typeOnly =
-	'import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools"';
 
 type ValueOf<T> = T[keyof T];
 type OnlySymbols<T> = T extends symbol ? T : never;
