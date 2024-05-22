@@ -410,10 +410,10 @@ export function generateCompatibilityTestCases(
 		if (typePreprocessor !== undefined) {
 			if (oldTypeData.tags.has("sealed")) {
 				// If the type was `@sealed` then only the code declaring it is allowed to create implementations.
-				// This means that the case having the new (current) version of the type,
+				// This means that the case of having the new (current) version of the type,
 				// but trying to implement it based on the old version should not occur and is not a supported usage.
-				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change,
-				// and the type tests to detect and error on such changes can be skipped, which is what this check does.
+				// This means that adding members to sealed types, as well as making their members have more specific types is allowed as a non-breaking change.
+				// This check implements skipping generation of type tests which would flag such changes to sealed types as errors.
 			} else {
 				testString.push(
 					`/*`,
