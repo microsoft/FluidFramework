@@ -173,8 +173,6 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Build
 
-Understood. I'll make sure both points are clear about the space-separated packages. Here is the revised version:
-
 - `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
 - `npm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process.
 - `npm run build:fast -- <path>` to build only a specific part of the repository.
