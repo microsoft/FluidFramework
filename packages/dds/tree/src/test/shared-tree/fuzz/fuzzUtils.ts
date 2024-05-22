@@ -8,8 +8,8 @@ import { join as pathJoin } from "path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
-	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";

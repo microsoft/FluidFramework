@@ -23,15 +23,12 @@ import {
 	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
 	type ISnapshotTree,
-	ISummaryTree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
@@ -1431,9 +1428,6 @@ describe("Runtime", () => {
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				chunkSizeInBytes: 800 * 1024,
-				gcOptions: {
-					gcAllowed: true,
-				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
 			};

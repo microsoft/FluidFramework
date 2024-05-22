@@ -11,11 +11,8 @@ import { AttachState, type ICriticalContainerError } from "@fluidframework/conta
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { type IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
-	type ISequencedDocumentMessage,
-	type ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 

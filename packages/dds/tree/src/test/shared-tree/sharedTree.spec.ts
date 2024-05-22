@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -25,6 +25,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -38,12 +40,12 @@ import {
 	FlexFieldSchema,
 	FlexTreeSchema,
 	FlexTreeTypedField,
+	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
 	TreeStatus,
 	ViewSchema,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -89,12 +91,12 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-}) as ISharedObjectKind<SharedTree>;
+}) as ISharedObjectKind<unknown> as ISharedObjectKind<SharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -803,8 +805,20 @@ describe("SharedTree", () => {
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
 		// If we do then this test should be updated to use that code path.
-		const t1 = provider.trees[0] as unknown as { editManager?: EditManager<any, any, any> };
-		const t2 = provider.trees[1] as unknown as { editManager?: EditManager<any, any, any> };
+		const t1 = provider.trees[0] as unknown as {
+			editManager?: EditManager<
+				ChangeFamilyEditor,
+				unknown,
+				ChangeFamily<ChangeFamilyEditor, unknown>
+			>;
+		};
+		const t2 = provider.trees[1] as unknown as {
+			editManager?: EditManager<
+				ChangeFamilyEditor,
+				unknown,
+				ChangeFamily<ChangeFamilyEditor, unknown>
+			>;
+		};
 		assert(
 			t1.editManager !== undefined && t2.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
@@ -1892,5 +1906,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
+	return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
 }

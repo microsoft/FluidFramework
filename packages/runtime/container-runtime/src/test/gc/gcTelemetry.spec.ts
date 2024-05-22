@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
@@ -74,7 +74,6 @@ describe("GC Telemetry Tracker", () => {
 		const configs: IGarbageCollectorConfigs = {
 			gcEnabled: true,
 			sweepEnabled: false,
-			shouldRunGC: true,
 			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,

@@ -14,7 +14,8 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createNewFluidFile } from "../createFile.js";
@@ -30,31 +31,31 @@ import { mockFetchOk } from "./mockFetch.js";
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
-	const documentAttributes: api.IDocumentAttributes = {
+	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = (): api.ISummaryTree => {
-		const summary: api.ISummaryTree = {
-			type: api.SummaryType.Tree,
+	const createSummary = (): ISummaryTree => {
+		const summary: ISummaryTree = {
+			type: SummaryType.Tree,
 			tree: {},
 		};
 
 		summary.tree[".app"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: blobContent,
 				},
 			},
 		};
 		summary.tree[".protocol"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: JSON.stringify(documentAttributes),
 				},
 			},

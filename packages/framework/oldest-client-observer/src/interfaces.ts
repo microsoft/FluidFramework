@@ -5,7 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IQuorumClients } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/driver-definitions";
 
 /**
  * Events emitted by {@link IOldestClientObservable}.

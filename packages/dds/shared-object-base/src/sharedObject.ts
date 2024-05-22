@@ -7,28 +7,27 @@ import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IFluidHandle,
-	type IFluidHandleInternal,
 	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces/internal";
+	type ErasedType,
+} from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IChannelServices,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	IChannelAttributes,
 	type IChannelFactory,
-	IChannelServices,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -46,6 +45,7 @@ import { v4 as uuid } from "uuid";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
+import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -777,16 +777,39 @@ export abstract class SharedObject<
 		incrementBy: number,
 		telemetryContext?: ITelemetryContext,
 	) {
-		const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ??
-			0) as number;
-		telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+		if (telemetryContext !== undefined) {
+			// TelemetryContext needs to implment a get function
+			assert(
+				"get" in telemetryContext && typeof telemetryContext.get === "function",
+				"received context must have a get function",
+			);
+
+			const prevTotal = ((telemetryContext as TelemetryContext).get(
+				this.telemetryContextPrefix,
+				propertyName,
+			) ?? 0) as number;
+			telemetryContext.set(
+				this.telemetryContextPrefix,
+				propertyName,
+				prevTotal + incrementBy,
+			);
+		}
 	}
 }
 
 /**
  * Defines a kind of shared object.
  * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
- * @public
+ *
+ * @remarks
+ * For use internally and in the "encapsulated API".
+ * See {@link SharedObjectKind} for the type erased version for use in the public declarative API.
+ *
+ * @privateRemarks
+ * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
+ * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
+ * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**
@@ -824,13 +847,34 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 /**
+ * Defines a kind of shared object.
+ * @remarks
+ * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
+ * See {@link @fluidframework/fluid-static#IFluidContainer.create} and {@link @fluidframework/fluid-static#ContainerSchema} for details.
+ * @privateRemarks
+ * Part of the "declarative API".
+ * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
+ * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
+ * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SharedObjectKind<out TSharedObject = unknown>
+	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {}
+
+/**
  * Utility for creating ISharedObjectKind instances.
+ * @remarks
+ * This takes in a class which implements IChannelFactory,
+ * and uses it to return a a single value which is intended to be used as the APi entry point for the corresponding shared object type.
+ * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
+ * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal
  */
 export function createSharedObjectKind<TSharedObject>(
-	factory: (new () => IChannelFactory<TSharedObject>) & { Type: string },
-): ISharedObjectKind<TSharedObject> {
-	return {
+	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
+): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
+	const result: ISharedObjectKind<TSharedObject> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -839,4 +883,6 @@ export function createSharedObjectKind<TSharedObject>(
 			return runtime.createChannel(id, factory.Type) as TSharedObject;
 		},
 	};
+
+	return result as typeof result & SharedObjectKind<TSharedObject>;
 }

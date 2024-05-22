@@ -8,9 +8,9 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { UpPath, rootFieldKey } from "../../core/index.js";
 import {
-	TreeStatus,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
+	MockNodeKeyManager,
+	TreeStatus,
 } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
@@ -187,7 +187,7 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: id,
@@ -224,7 +224,7 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
 				nodeKeyManager.generateLocalNodeKey(),
 			);
@@ -260,9 +260,9 @@ describe("treeNodeApi", () => {
 							myNumber: 1,
 						},
 					});
-					const log: any[][] = [];
+					const log: unknown[][] = [];
 
-					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
+					const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
 						log.push(args);
 					});
 
@@ -296,8 +296,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				root.rootObject = new myObject({
 					myNumber: 2,
@@ -316,8 +316,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				root.rootObject.myNumber++;
 
@@ -344,9 +344,9 @@ describe("treeNodeApi", () => {
 							myNumber: 1,
 						},
 					]);
-					const log: any[][] = [];
+					const log: unknown[][] = [];
 
-					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
+					const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
 						log.push(args);
 					});
 
@@ -374,8 +374,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				root.insertAtEnd({ myNumber: 2 });
 
@@ -392,8 +392,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				root[0].myNumber++;
 
@@ -415,10 +415,10 @@ describe("treeNodeApi", () => {
 				let a1DeepChanges = 0;
 				let a2ShallowChanges = 0;
 				let a2DeepChanges = 0;
-				Tree.on(root.array1, "nodeChanged", (...args: any[]) => a1ShallowChanges++);
-				Tree.on(root.array1, "treeChanged", (...args: any[]) => a1DeepChanges++);
-				Tree.on(root.array2, "nodeChanged", (...args: any[]) => a2ShallowChanges++);
-				Tree.on(root.array2, "treeChanged", (...args: any[]) => a2DeepChanges++);
+				Tree.on(root.array1, "nodeChanged", () => a1ShallowChanges++);
+				Tree.on(root.array1, "treeChanged", () => a1DeepChanges++);
+				Tree.on(root.array2, "nodeChanged", () => a2ShallowChanges++);
+				Tree.on(root.array2, "treeChanged", () => a2DeepChanges++);
 
 				root.array2.moveToEnd(0, root.array1);
 
@@ -455,9 +455,9 @@ describe("treeNodeApi", () => {
 							],
 						]),
 					);
-					const log: any[][] = [];
+					const log: unknown[][] = [];
 
-					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
+					const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
 						log.push(args);
 					});
 
@@ -500,8 +500,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				root.set("a", { myNumber: 2 });
 
@@ -524,8 +524,8 @@ describe("treeNodeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+				Tree.on(root, "nodeChanged", () => shallowChanges++);
+				Tree.on(root, "treeChanged", () => deepChanges++);
 
 				const mapEntry = root.get("a");
 				if (mapEntry === undefined) {
@@ -573,11 +573,11 @@ describe("treeNodeApi", () => {
 			let shallowChanges = 0;
 			let deepChanges = 0;
 			// Deep changes subscription on the root
-			Tree.on(root, "treeChanged", (...args: any[]) => {
+			Tree.on(root, "treeChanged", () => {
 				deepChanges++;
 			});
 			// Shallow changes subscription on the object property of the root
-			Tree.on(root.rootObject, "nodeChanged", (...args: any[]) => {
+			Tree.on(root.rootObject, "nodeChanged", () => {
 				shallowChanges++;
 			});
 
@@ -662,8 +662,8 @@ describe("treeNodeApi", () => {
 
 			let shallowChanges = 0;
 			let deepChanges = 0;
-			Tree.on(root, "nodeChanged", (...args: any[]) => shallowChanges++);
-			Tree.on(root, "treeChanged", (...args: any[]) => deepChanges++);
+			Tree.on(root, "nodeChanged", () => shallowChanges++);
+			Tree.on(root, "treeChanged", () => deepChanges++);
 
 			const branch = checkout.fork();
 			branch.editor

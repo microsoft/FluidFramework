@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	Marker,
 	MergeTreeDeltaRevertible,
@@ -18,7 +18,7 @@ import {
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

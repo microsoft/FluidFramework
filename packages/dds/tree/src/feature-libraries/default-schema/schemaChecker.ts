@@ -12,7 +12,6 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	type SchemaAndPolicy,
-	getMapTreeField,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
 import { fail } from "../../util/index.js";
@@ -55,7 +54,7 @@ export function isNodeInSchema(
 		}
 		const uncheckedFieldsFromNode = new Set(node.fields.keys());
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			const nodeField = getMapTreeField(node, fieldKey, false);
+			const nodeField = node.fields.get(fieldKey) ?? [];
 			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
@@ -84,7 +83,7 @@ export function isNodeInSchema(
 }
 
 export function isFieldInSchema(
-	childNodes: MapTree[],
+	childNodes: readonly MapTree[],
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {

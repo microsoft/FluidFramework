@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { IFluidSerializer } from "../serializer.js";

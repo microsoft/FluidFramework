@@ -56,9 +56,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container: newContainer } = await client.getContainer(containerId, schema));
+				({ container: newContainer } = await client.getContainer(containerId, schema, "2"));
 			} else {
-				({ container: newContainer } = await client.createContainer(schema));
+				({ container: newContainer } = await client.createContainer(schema, "2"));
 				containerId = await newContainer.attach();
 			}
 
@@ -69,7 +69,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			const resources = client.getContainer(containerId, schema);
+			const resources = client.getContainer(containerId, schema, "2");
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -100,9 +100,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema));
+				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
@@ -118,7 +118,7 @@ for (const testOpts of testMatrix) {
 			map1Create.set("new-key", "new-value");
 			const valueCreate: string | undefined = map1Create.get("new-key");
 
-			const { container: containerGet } = await client.getContainer(containerId, schema);
+			const { container: containerGet } = await client.getContainer(containerId, schema, "2");
 			const map1Get = containerGet.initialObjects.map1;
 			const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 			assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
@@ -146,9 +146,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, doSchema));
+				({ container } = await client.getContainer(containerId, doSchema, "2"));
 			} else {
-				({ container } = await client.createContainer(doSchema));
+				({ container } = await client.createContainer(doSchema, "2"));
 				containerId = await container.attach();
 			}
 
@@ -169,7 +169,11 @@ for (const testOpts of testMatrix) {
 				"container returns the wrong type for mdo2",
 			);
 
-			const { container: containerGet } = await client.getContainer(containerId, doSchema);
+			const { container: containerGet } = await client.getContainer(
+				containerId,
+				doSchema,
+				"2",
+			);
 			const initialObjectsGet = containerGet.initialObjects;
 			assert(
 				initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -206,9 +210,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, doSchema));
+				({ container } = await client.getContainer(containerId, doSchema, "2"));
 			} else {
-				({ container } = await client.createContainer(doSchema));
+				({ container } = await client.createContainer(doSchema, "2"));
 				containerId = await container.attach();
 			}
 
@@ -233,7 +237,11 @@ for (const testOpts of testMatrix) {
 				"container returns the wrong type for mdo3",
 			);
 
-			const { container: containerGet } = await client.getContainer(containerId, doSchema);
+			const { container: containerGet } = await client.getContainer(
+				containerId,
+				doSchema,
+				"2",
+			);
 			const initialObjectsGet = containerGet.initialObjects;
 			assert(
 				initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -272,7 +280,7 @@ for (const testOpts of testMatrix) {
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(doSchema));
+				({ container } = await client.createContainer(doSchema, "2"));
 
 				const initialObjectsCreate = container.initialObjects;
 				const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
@@ -295,7 +303,11 @@ for (const testOpts of testMatrix) {
 				}
 			}
 
-			const { container: containerGet } = await client.getContainer(containerId, doSchema);
+			const { container: containerGet } = await client.getContainer(
+				containerId,
+				doSchema,
+				"2",
+			);
 			const initialObjectsGet = containerGet.initialObjects;
 			const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
 
@@ -331,9 +343,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, dynamicSchema));
+				({ container } = await client.getContainer(containerId, dynamicSchema, "2"));
 			} else {
-				({ container } = await client.createContainer(dynamicSchema));
+				({ container } = await client.createContainer(dynamicSchema, "2"));
 				containerId = await container.attach();
 			}
 

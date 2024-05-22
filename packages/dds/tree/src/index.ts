@@ -123,6 +123,7 @@ export {
 	Events,
 	IsEvent,
 	ISubscribable,
+	Off,
 	createEmitter,
 	IEmitter,
 	NoListenersCallback,
