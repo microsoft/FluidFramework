@@ -180,13 +180,11 @@ This section contains common workflows and patterns to increase inner dev loop e
 -   `pnpm run build:compile` for cross-package compilation.
 -   `pnpm run format` to format the code.
 
--   `npm i -g @fluidframework/build-tools` to install `fluid-build` if it is not installed.
--   `fluid-build --vscode` to output error message to work with default problem matcher in vscode.
+-   `fluid-build --vscode` to output error message to work with default problem matcher in vscode. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
 
 #### Multi package setup
 
--   `npm i -g @fluidframework/build-tools` to install `fluid-build` if it is not installed.
--   `fluid-build -t build <NAME_OF_PACKAGES>` to build a multiple space-separated packages along with all their dependencies.
+-   `fluid-build -t build <NAME_OF_PACKAGES>` to build a multiple space-separated packages along with all their dependencies. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
 
 ### Debug
 
