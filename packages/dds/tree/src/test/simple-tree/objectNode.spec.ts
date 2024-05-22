@@ -83,6 +83,7 @@ describe("ObjectNode", () => {
 				constructor: schemaFactory.number,
 			}) {}
 
+			// @ts-expect-error TODO
 			const n = hydrate(Schema, { constructor: 5 });
 
 			const x = n.constructor;
