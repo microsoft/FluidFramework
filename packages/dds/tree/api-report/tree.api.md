@@ -1001,9 +1001,9 @@ export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
-    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 } & {
-    readonly [Property in keyof T as HasDefault<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
 // @public

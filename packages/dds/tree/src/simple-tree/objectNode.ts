@@ -100,16 +100,13 @@ export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = {
-	// Field might not have a default, so make it required:
+	// Field might have a default, so allow optional.
+	readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+} & {
+	// Field might not have a default, so make it required.
 	readonly [Property in keyof T as HasDefault<T[Property]> extends false
 		? Property
 		: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
-} & {
-	// Field might have a default, so allow optional.
-	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-	readonly [Property in keyof T as HasDefault<T[Property]> extends true
-		? Property
-		: never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
 /**
