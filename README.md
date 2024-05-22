@@ -180,6 +180,9 @@ This section contains common workflows and patterns to increase inner dev loop e
 -   `pnpm run build:compile` for cross-package compilation.
 -   `pnpm run format` to format the code.
 
+-   `npm i -g @fluidframework/build-tools` to install `fluid-build` if it is not installed.
+-   `fluid-build --vscode` to output error message to work with default problem matcher in vscode.
+
 #### Multi package setup
 
 -   `npm i -g @fluidframework/build-tools` to install `fluid-build` if it is not installed.
@@ -188,6 +191,7 @@ This section contains common workflows and patterns to increase inner dev loop e
 ### Debug
 
 -   You can also use the VSCode JS debug terminal, then run the test as normal.
+
 -   Sometimes, uncommitted changes can cause build failures. Committing changes might be necessary to resolve such issues.
 
 ### Troubleshooting
