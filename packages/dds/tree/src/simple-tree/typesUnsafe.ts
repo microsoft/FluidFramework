@@ -167,13 +167,16 @@ export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T exte
 export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 > = {
-	// Field might have a default, so allow optional.
-	readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
-} & {
-	// Field might not have a default, so make it required.
+	// Field might not have a default, so make it required:
 	readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false
 		? Property
 		: never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+} & {
+	// Field might have a default, so allow optional.
+	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
+	readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends true
+		? Property
+		: never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
 /**
