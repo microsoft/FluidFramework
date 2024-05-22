@@ -173,13 +173,16 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Build
 
-- `pnpm install` from repo root if dependencies need to be installed (e.g., new clone, you just pulled from main, etc.)
-- `pnpm run build:fast` from repo root. This matches CI. This should build incrementally.
-- `pnpm run build:fast -- <path>` to just build that part of the repo
-- `pnpm run build` in a package directory
-- `pnpm run build:compile` for cross package compiling
-- `pnpm run format` to format code using Prettier, or `pnpm -r run format` to format all packages
+Understood. I'll make sure both points are clear about the space-separated packages. Here is the revised version:
 
+- `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
+- `npm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process.
+- `npm run build:fast -- <path>` to build only a specific part of the repository.
+- `npm run build` within a package directory to build that package.
+- `npm run build:compile` for cross-package compilation.
+- `npm run format` to format the code.
+- `npx fluid-build -t build <NAME_OF_PACKAGES>` to build a single package or multiple space-separated packages along with all their dependencies.
+- `npx fluid-build -t prettier:fix <NAME_OF_PACKAGES>` to automatically apply Prettier fixes to every file in the specified package(s). This works for a single package or multiple space-separated packages and is useful if your format-on-save functionality is not working.
 
 ### Debug
 
