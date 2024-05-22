@@ -49,7 +49,6 @@ export async function create(
 	const opsCountTelemetryEnabled =
 		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
 
-	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
 	const operationsDbManager = new MongoManager(factory, false);
@@ -82,6 +81,7 @@ export async function create(
 
 	if (softDeletionEnabled) {
 		let globalDb;
+		// Database connection for global db if enabled
 		if (globalDbEnabled) {
 			const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
 			const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
