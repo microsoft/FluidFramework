@@ -338,7 +338,7 @@ function typeDataFromFile(
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					log.warning(
-						`skipping overload for ${fullName}; only the last signature will be used.`,
+						`Skipping overload for ${fullName}; only the last signature will be used.`,
 					);
 				}
 				typeData.set(fullName, typeDefinition);
