@@ -84,7 +84,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly telemetryTracker: GCTelemetryTracker;
 	readonly mc: MonitoringContext;
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
-	readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
+	readonly getBaseSnapshotData: () => Promise<IGarbageCollectionSnapshotData | undefined>;
 	readonly tombstones: string[];
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
@@ -1242,7 +1242,7 @@ describe("Garbage Collection Tests", () => {
 				const garbageCollector = createGCOverride(stableGCVersion);
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
-				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				const baseSnapshotData = await garbageCollector.getBaseSnapshotData();
 				assert(
 					baseSnapshotData !== undefined,
 					"base snapshot was not initialized correctly",
@@ -1280,7 +1280,7 @@ describe("Garbage Collection Tests", () => {
 				const garbageCollector = createGCOverride(stableGCVersion - 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
-				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				const baseSnapshotData = await garbageCollector.getBaseSnapshotData();
 				assert(
 					baseSnapshotData !== undefined,
 					"base snapshot was not initialized correctly",
@@ -1326,7 +1326,7 @@ describe("Garbage Collection Tests", () => {
 				const garbageCollector = createGCOverride(stableGCVersion + 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
-				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				const baseSnapshotData = await garbageCollector.getBaseSnapshotData();
 				assert(
 					baseSnapshotData !== undefined,
 					"base snapshot was not initialized correctly",
@@ -1377,7 +1377,7 @@ describe("Garbage Collection Tests", () => {
 					false /** gcStateInBaseSnapshot */,
 				);
 
-				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+				const baseSnapshotData = await garbageCollector.getBaseSnapshotData();
 				assert(baseSnapshotData === undefined, "base snapshot was should not be available");
 
 				// Initialize from the base state and validate the following:
@@ -2195,7 +2195,7 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
-		const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+		const baseSnapshotData = await garbageCollector.getBaseSnapshotData();
 		assert(
 			baseSnapshotData === undefined,
 			"base snapshot should not be defined for old snapshots where we wrote the gc data in the channels",
