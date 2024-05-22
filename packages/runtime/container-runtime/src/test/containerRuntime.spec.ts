@@ -23,13 +23,10 @@ import {
 	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
 	type ISnapshotTree,
-	ISummaryTree,
 	MessageType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,

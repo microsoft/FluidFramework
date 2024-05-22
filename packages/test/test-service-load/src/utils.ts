@@ -28,7 +28,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/driver-definitions";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 

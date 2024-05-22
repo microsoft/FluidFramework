@@ -42,10 +42,9 @@ import {
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	ITreeEntry,
-	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
+import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,

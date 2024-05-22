@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -13,7 +13,6 @@ import {
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
 import {
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	type SummaryObject,

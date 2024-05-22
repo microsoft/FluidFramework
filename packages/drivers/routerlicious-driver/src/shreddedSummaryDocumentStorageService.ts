@@ -8,15 +8,12 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

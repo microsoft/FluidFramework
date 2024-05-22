@@ -20,12 +20,10 @@ import {
 import {
 	ISummaryBlob,
 	ISummaryTree,
-	ITree,
-	ITreeEntry,
 	SummaryObject,
 	SummaryType,
-	TreeEntry,
 } from "@fluidframework/driver-definitions";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryStats,
 	ISummaryTreeWithStats,

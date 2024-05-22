@@ -285,14 +285,14 @@ export interface ISequencedDocumentMessage {
 	/**
 	 * Experimental field for storing the rolling hash at sequence number.
 	 *
-	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
+	 * @deprecated Use ISequencedDocumentMessageExperimental instead.
 	 */
 	expHash1?: string;
 
 	/**
 	 * The compression algorithm that was used to compress contents of this message.
 	 *
-	 * @deprecated Use {@link ISequencedDocumentMessageExperimental} instead.
+	 * @deprecated Use ISequencedDocumentMessageExperimental instead.
 	 */
 	compression?: string;
 }

@@ -10,9 +10,9 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IDocumentService,
 	IDocumentStorageService,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree, IVersion } from "@fluidframework/driver-definitions";
-
 import { formatNumber } from "./fluidAnalyzeMessages.js";
 import {
 	dumpSnapshotStats,

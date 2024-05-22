@@ -45,6 +45,15 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
+	ICommittedProposal,
+	IDocumentAttributes,
+	IDocumentMessage,
+	IQuorumProposals,
+	ISequencedProposal,
+	ISnapshotTree,
+	ISummaryContent,
+	IVersion,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -60,20 +69,11 @@ import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
 	IClientDetails,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
 	IQuorumClients,
-	IQuorumProposals,
 	ISequencedClient,
 	ISequencedDocumentMessage,
-	ISequencedProposal,
 	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	IVersion,
-	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {

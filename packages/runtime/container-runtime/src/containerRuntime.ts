@@ -49,6 +49,10 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -60,14 +64,10 @@ import type {
 } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";

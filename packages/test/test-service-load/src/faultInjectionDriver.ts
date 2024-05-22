@@ -17,14 +17,11 @@ import {
 	IResolvedUrl,
 	ISnapshotFetchOptions,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	IClient,
 	IDocumentMessage,
 	INack,
-	ISummaryTree,
 	NackErrorType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {

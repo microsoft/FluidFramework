@@ -7,12 +7,11 @@ import { strict as assert } from "assert";
 
 import { IsoBuffer, Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
+import { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
 import {
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	ITree,
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";

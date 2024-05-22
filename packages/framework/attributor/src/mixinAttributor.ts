@@ -14,11 +14,13 @@ import { type IContainerRuntime } from "@fluidframework/container-runtime-defini
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type IDocumentMessage,
 	type IQuorumClients,
 	type ISequencedDocumentMessage,
-	type ISnapshotTree,
 } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentMessage,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,

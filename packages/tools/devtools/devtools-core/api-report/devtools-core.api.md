@@ -6,7 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { IClient } from '@fluidframework/protocol-definitions';
+import { IClient } from '@fluidframework/driver-definitions';
 import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';

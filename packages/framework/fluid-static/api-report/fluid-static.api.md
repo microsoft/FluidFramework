@@ -6,7 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IClient } from '@fluidframework/protocol-definitions';
+import { IClient } from '@fluidframework/driver-definitions';
 import { IContainer } from '@fluidframework/container-definitions/internal';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';

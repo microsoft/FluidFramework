@@ -4,10 +4,12 @@
 
 ```ts
 
-import * as api from '@fluidframework/driver-definitions/internal';
 import { IClient } from '@fluidframework/driver-definitions';
 import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
@@ -85,17 +87,17 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 }
 
 // @internal
-export class ReplayDocumentService extends TypedEventEmitter<api.IDocumentServiceEvents> implements api.IDocumentService {
-    constructor(controller: api.IDocumentStorageService, deltaStorage: api.IDocumentDeltaConnection);
-    connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection>;
-    connectToStorage(): Promise<api.IDocumentStorageService>;
+export class ReplayDocumentService extends TypedEventEmitter<IDocumentServiceEvents> implements IDocumentService {
+    constructor(controller: IDocumentStorageService, deltaStorage: IDocumentDeltaConnection);
+    connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
+    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToStorage(): Promise<IDocumentStorageService>;
     // (undocumented)
-    static create(documentService: api.IDocumentService, controller: ReplayController): Promise<api.IDocumentService>;
+    static create(documentService: IDocumentService, controller: ReplayController): Promise<IDocumentService>;
     // (undocumented)
     dispose(): void;
     // (undocumented)
-    get resolvedUrl(): api.IResolvedUrl;
+    get resolvedUrl(): IResolvedUrl;
 }
 
 // @internal (undocumented)
