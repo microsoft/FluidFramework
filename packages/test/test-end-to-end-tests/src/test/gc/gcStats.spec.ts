@@ -18,7 +18,7 @@ import {
 	IGCStats,
 } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {

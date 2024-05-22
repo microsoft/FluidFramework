@@ -10,11 +10,8 @@ import {
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISummaryTree,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,

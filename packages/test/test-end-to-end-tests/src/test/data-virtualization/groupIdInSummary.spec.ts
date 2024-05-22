@@ -16,8 +16,8 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,

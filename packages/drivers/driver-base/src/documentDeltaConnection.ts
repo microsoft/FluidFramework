@@ -9,20 +9,20 @@ import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
 	IClientConfiguration,
 	IConnect,
 	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import {
+	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,

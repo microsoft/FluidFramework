@@ -13,11 +13,11 @@ import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/protocol-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
+import { IUser } from '@fluidframework/driver-definitions';
+import { ScopeType } from '@fluidframework/driver-definitions/internal';
 
 // @public
 export class AzureClient {

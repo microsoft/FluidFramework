@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentAttributes,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
-
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	convertSnapshotInfoToSnapshot,

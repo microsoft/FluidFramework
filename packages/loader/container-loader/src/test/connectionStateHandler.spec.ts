@@ -8,13 +8,8 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	ISequencedClient,
-	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import { IClientConfiguration, ITokenClaims } from "@fluidframework/driver-definitions/internal";
 import {
 	TelemetryEventCategory,
 	createChildLogger,

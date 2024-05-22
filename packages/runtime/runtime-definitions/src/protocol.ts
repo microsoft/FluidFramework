@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
+import type { ISignalMessage } from "@fluidframework/driver-definitions";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * An envelope wraps the contents with the intended target

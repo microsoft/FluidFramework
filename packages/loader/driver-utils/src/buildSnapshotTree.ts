@@ -12,7 +12,7 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
 function flattenCore(

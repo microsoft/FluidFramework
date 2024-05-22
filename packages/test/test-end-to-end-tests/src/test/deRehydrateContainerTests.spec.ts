@@ -15,12 +15,8 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
-import {
-	IDocumentAttributes,
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";

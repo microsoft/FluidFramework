@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { type ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {

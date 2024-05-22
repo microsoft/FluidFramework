@@ -4,13 +4,12 @@
  */
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-	ISummaryTree,
 	ITree,
 	SummaryTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 import type {

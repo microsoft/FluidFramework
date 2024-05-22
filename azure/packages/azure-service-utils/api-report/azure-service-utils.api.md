@@ -4,8 +4,8 @@
 
 ```ts
 
-import { IUser } from '@fluidframework/protocol-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
+import { IUser } from '@fluidframework/driver-definitions';
+import { ScopeType } from '@fluidframework/driver-definitions/internal';
 
 // @alpha
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;

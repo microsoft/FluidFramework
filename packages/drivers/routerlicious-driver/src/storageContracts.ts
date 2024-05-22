@@ -4,7 +4,7 @@
  */
 
 import * as git from "@fluidframework/gitresources";
-import * as api from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
@@ -56,7 +56,7 @@ export interface ISummaryUploadManager {
 	 * @returns Id of created tree as a string.
 	 */
 	writeSummaryTree(
-		summaryTree: api.ISummaryTree,
+		summaryTree: ISummaryTree,
 		parentHandle: string,
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,

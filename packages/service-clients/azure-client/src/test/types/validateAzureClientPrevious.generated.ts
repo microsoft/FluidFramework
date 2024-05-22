@@ -466,34 +466,6 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenClaims": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_ITokenClaims():
-    TypeOnly<old.ITokenClaims>;
-declare function use_current_InterfaceDeclaration_ITokenClaims(
-    use: TypeOnly<current.ITokenClaims>): void;
-use_current_InterfaceDeclaration_ITokenClaims(
-    get_old_InterfaceDeclaration_ITokenClaims());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_ITokenClaims": {"backCompat": false}
- */
-declare function get_current_InterfaceDeclaration_ITokenClaims():
-    TypeOnly<current.ITokenClaims>;
-declare function use_old_InterfaceDeclaration_ITokenClaims(
-    use: TypeOnly<old.ITokenClaims>): void;
-use_old_InterfaceDeclaration_ITokenClaims(
-    get_current_InterfaceDeclaration_ITokenClaims());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_ITokenProvider():
@@ -544,59 +516,3 @@ declare function use_old_InterfaceDeclaration_ITokenResponse(
     use: TypeOnly<old.ITokenResponse>): void;
 use_old_InterfaceDeclaration_ITokenResponse(
     get_current_InterfaceDeclaration_ITokenResponse());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IUser():
-    TypeOnly<old.IUser>;
-declare function use_current_InterfaceDeclaration_IUser(
-    use: TypeOnly<current.IUser>): void;
-use_current_InterfaceDeclaration_IUser(
-    get_old_InterfaceDeclaration_IUser());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"backCompat": false}
- */
-declare function get_current_InterfaceDeclaration_IUser():
-    TypeOnly<current.IUser>;
-declare function use_old_InterfaceDeclaration_IUser(
-    use: TypeOnly<old.IUser>): void;
-use_old_InterfaceDeclaration_IUser(
-    get_current_InterfaceDeclaration_IUser());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"forwardCompat": false}
- */
-declare function get_old_EnumDeclaration_ScopeType():
-    TypeOnly<old.ScopeType>;
-declare function use_current_EnumDeclaration_ScopeType(
-    use: TypeOnly<current.ScopeType>): void;
-use_current_EnumDeclaration_ScopeType(
-    get_old_EnumDeclaration_ScopeType());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"backCompat": false}
- */
-declare function get_current_EnumDeclaration_ScopeType():
-    TypeOnly<current.ScopeType>;
-declare function use_old_EnumDeclaration_ScopeType(
-    use: TypeOnly<old.ScopeType>): void;
-use_old_EnumDeclaration_ScopeType(
-    get_current_EnumDeclaration_ScopeType());
