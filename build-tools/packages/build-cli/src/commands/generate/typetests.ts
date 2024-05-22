@@ -13,7 +13,6 @@ import {
 	type TypeData,
 	buildTestCase,
 	getFullTypeName,
-	getNodeTypeData,
 	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -21,7 +20,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
-import { ModuleKind, Project, type SourceFile } from "ts-morph";
+import { JSDoc, ModuleKind, Node, Project, type SourceFile, SyntaxKind } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand";
 import type { PackageSelectionDefault } from "../../flags";
 import {
@@ -324,18 +323,22 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
  * @param log - A logger to use.
  * @returns The mapping between type name and its type data.
  */
-function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> {
+function typeDataFromFile(
+	file: SourceFile,
+	log: Logger,
+	namespacePrefix?: string,
+): Map<string, TypeData> {
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
 
 	for (const declarations of exportedDeclarations.values()) {
 		for (const declaration of declarations) {
-			for (const typeDefinition of getNodeTypeData(declaration)) {
+			for (const typeDefinition of getNodeTypeData(declaration, log, namespacePrefix)) {
 				const fullName = getFullTypeName(typeDefinition);
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					log.warning(
-						`Skipping overload for ${fullName}; only the last signature will be used.`,
+						`skipping overload for ${fullName}; only the last signature will be used.`,
 					);
 				}
 				typeData.set(fullName, typeDefinition);
@@ -343,6 +346,95 @@ function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> 
 		}
 	}
 	return typeData;
+}
+
+function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): TypeData[] {
+	/*
+        handles namespaces e.g.
+        export namespace foo{
+            export type first: "first";
+            export type second: "second";
+        }
+        this will prefix foo and generate two type data:
+        foo.first and foo.second
+    */
+	if (Node.isModuleDeclaration(node)) {
+		const typeData: TypeData[] = [];
+		for (const s of node.getStatements()) {
+			// only get type data for nodes that are exported from the namespace
+			if (Node.isExportable(s) && s.isExported()) {
+				typeData.push(...getNodeTypeData(s, log, node.getName()));
+			}
+		}
+		return typeData;
+	}
+
+	/*
+        handles variable statements: const foo:number=0, bar:number = 0;
+        this just grabs the declarations: foo:number=0 and bar:number
+        which we can make type data from
+    */
+	if (Node.isVariableStatement(node)) {
+		const typeData: TypeData[] = [];
+		for (const dec of node.getDeclarations()) {
+			typeData.push(...getNodeTypeData(dec, log, namespacePrefix));
+		}
+		return typeData;
+	}
+
+	if (Node.isIdentifier(node)) {
+		const typeData: TypeData[] = [];
+		for (const definition of node.getDefinitionNodes()) {
+			typeData.push(...getNodeTypeData(definition, log, namespacePrefix));
+		}
+		return typeData;
+	}
+
+	if (
+		Node.isClassDeclaration(node) ||
+		Node.isEnumDeclaration(node) ||
+		Node.isInterfaceDeclaration(node) ||
+		Node.isTypeAliasDeclaration(node) ||
+		Node.isVariableDeclaration(node) ||
+		Node.isFunctionDeclaration(node)
+	) {
+		const name =
+			namespacePrefix === undefined
+				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					node.getName()!
+				: `${namespacePrefix}.${node.getName()}`;
+
+		const docs = Node.isVariableDeclaration(node)
+			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
+			: node.getJsDocs();
+
+		const typeData: TypeData[] = [
+			{
+				name,
+				kind: node.getKindName(),
+				node,
+				tags: getTags(docs),
+			},
+		];
+		return typeData;
+	}
+
+	if (Node.isSourceFile(node)) {
+		return [...typeDataFromFile(node, log, namespacePrefix).values()];
+	}
+
+	throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
+}
+
+function getTags(docs: JSDoc[]): ReadonlySet<string> {
+	const tags: string[] = [];
+	for (const comment of docs) {
+		for (const tag of comment.getTags()) {
+			const name = tag.getTagName();
+			tags.push(name);
+		}
+	}
+	return new Set(tags);
 }
 
 /**
