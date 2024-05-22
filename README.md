@@ -179,7 +179,11 @@ This section contains common workflows and patterns to increase inner dev loop e
 -   `pnpm run build` within a package directory to build that package.
 -   `pnpm run build:compile` for cross-package compilation.
 -   `pnpm run format` to format the code.
--   `npx fluid-build -t build <NAME_OF_PACKAGES>` to build a single package or multiple space-separated packages along with all their dependencies.
+
+
+#### Multi package setup
+-   `npm i -g @fluidframework/build-tools` to install `fluid-build` if it is not installed.
+-   `fluid-build -t build <NAME_OF_PACKAGES>` to build a multiple space-separated packages along with all their dependencies.
 
 ### Debug
 
