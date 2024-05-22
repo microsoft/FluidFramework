@@ -533,7 +533,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 
 // @public
 export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off;
 }
 
 // @public
@@ -609,6 +609,9 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @public
+export type Off = () => void;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
