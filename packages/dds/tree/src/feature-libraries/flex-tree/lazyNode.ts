@@ -90,10 +90,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
-	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
-	anchorNode.slots.set(flexTreeSlot, output);
-	anchorNode.on("afterDestroy", cleanupTree);
-	return output;
+	return buildSubclass(context, schema, cursor, anchorNode, anchor);
 }
 
 function cleanupTree(anchor: AnchorNode): void {

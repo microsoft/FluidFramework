@@ -6,7 +6,7 @@
 
 import { IOdspTokens } from '@fluidframework/odsp-doclib-utils/internal';
 import { IPublicClientConfig } from '@fluidframework/odsp-doclib-utils/internal';
-import { ITree } from '@fluidframework/protocol-definitions';
+import { ITree } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export const gcBlobPrefix = "__gc";

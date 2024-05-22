@@ -22,14 +22,13 @@ import {
 	Replayer,
 } from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
 	ITree,
 	ITreeEntry,
 	MessageType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";

@@ -10,7 +10,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,

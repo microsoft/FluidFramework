@@ -4,20 +4,24 @@
 
 ```ts
 
-import * as api from '@fluidframework/protocol-definitions';
-import * as api_2 from '@fluidframework/driver-definitions/internal';
-import { IClient } from '@fluidframework/protocol-definitions';
+import { IClient } from '@fluidframework/driver-definitions';
+import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryHandle } from '@fluidframework/driver-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import { ITree } from '@fluidframework/protocol-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
+import { ITree } from '@fluidframework/driver-definitions/internal';
+import { IVersion } from '@fluidframework/driver-definitions/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -60,17 +64,17 @@ export interface IFileSnapshot {
 // @internal
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // (undocumented)
-    createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
-    downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
-    abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
+    abstract getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
+    abstract getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @internal
@@ -79,21 +83,21 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     abstract getStartingOpSequence(): Promise<number>;
     abstract initStorage(documentService: IDocumentService): Promise<boolean>;
     abstract isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean;
-    abstract replay(emitter: (op: api.ISequencedDocumentMessage[]) => void, fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
+    abstract replay(emitter: (op: ISequencedDocumentMessage[]) => void, fetchedOps: ISequencedDocumentMessage[]): Promise<void>;
 }
 
 // @internal
-export class ReplayDocumentService extends TypedEventEmitter<api_2.IDocumentServiceEvents> implements api_2.IDocumentService {
-    constructor(controller: api_2.IDocumentStorageService, deltaStorage: api_2.IDocumentDeltaConnection);
-    connectToDeltaStorage(): Promise<api_2.IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<api_2.IDocumentDeltaConnection>;
-    connectToStorage(): Promise<api_2.IDocumentStorageService>;
+export class ReplayDocumentService extends TypedEventEmitter<IDocumentServiceEvents> implements IDocumentService {
+    constructor(controller: IDocumentStorageService, deltaStorage: IDocumentDeltaConnection);
+    connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
+    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToStorage(): Promise<IDocumentStorageService>;
     // (undocumented)
-    static create(documentService: api_2.IDocumentService, controller: ReplayController): Promise<api_2.IDocumentService>;
+    static create(documentService: IDocumentService, controller: ReplayController): Promise<IDocumentService>;
     // (undocumented)
     dispose(): void;
     // (undocumented)
-    get resolvedUrl(): api_2.IResolvedUrl;
+    get resolvedUrl(): IResolvedUrl;
 }
 
 // @internal (undocumented)

@@ -9,7 +9,7 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { ScopeType } from '@fluidframework/protocol-definitions';
+import { ScopeType } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export const createTinyliciousCreateNewRequest: (documentId?: string) => IRequest;

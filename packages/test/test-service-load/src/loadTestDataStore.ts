@@ -22,7 +22,7 @@ import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

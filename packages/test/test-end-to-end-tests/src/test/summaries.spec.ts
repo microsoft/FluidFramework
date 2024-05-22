@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreFactory,
