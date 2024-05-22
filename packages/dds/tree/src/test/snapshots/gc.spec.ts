@@ -102,19 +102,9 @@ describe("Garbage Collection", () => {
 			// Remove the last added handles.
 			this.tree1View.handles.removeRange(0, lastElementIndex + 1);
 
-			// Remove the deleted routes from expected routes.
-			const skip = true;
-
-			// TODO: ADO#4700 Currently deleted handles will never leave
-			// the summary of a tree because they will be persisted forever
-			// in the repair data. Eventually, repair data should be
-			// automatically cleaned up after some condition, and this test
-			// should be updated to hit that condition.
-			if (!skip) {
-				this._expectedRoutes = this._expectedRoutes.filter(
-					(route) => !deletedHandleRoutes.includes(route),
-				);
-			}
+			this._expectedRoutes = this._expectedRoutes.filter(
+				(route) => !deletedHandleRoutes.includes(route),
+			);
 			this.containerRuntimeFactory.processAllMessages();
 
 			// Send an op so the minimum sequence number moves past the segment which got removed.
