@@ -44,4 +44,14 @@ stages:
         - packages/dds/tree
         testFileTarName: tree
         testCommand: test:stress
+      - name: "@fluidframework/map"
+        affectedPaths:
+        - packages/dds/map
+        testFileTarName: map
+        testCommand: test:stress
+      - name: "@fluidframework/matrix"
+        affectedPaths:
+        - packages/dds/matrix
+        testFileTarName: matrix
+        testCommand: test:stress
       testWorkspace: ${{ variables.testWorkspace }}
