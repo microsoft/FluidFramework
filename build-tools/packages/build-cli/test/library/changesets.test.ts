@@ -14,8 +14,7 @@ import {
 	loadChangesets,
 } from "../../src/library/changesets.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const changesetsPath = path.resolve(__dirname, "../data");
 assert.isTrue(existsSync(changesetsPath));

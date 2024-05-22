@@ -17,8 +17,7 @@ import {
 } from "../src/filter.js";
 import { Context } from "../src/library/index.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 chai.use(assertArrays);
 

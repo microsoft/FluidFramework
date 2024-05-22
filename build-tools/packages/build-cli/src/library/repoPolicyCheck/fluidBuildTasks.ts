@@ -225,6 +225,9 @@ function eslintGetScriptDependencies(
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
+			// Ideally this would use import() instead of require() but refactoring this function to deal with the async
+			// import is a larger change that can be done at a later time if needed.
+
 			// eslint-disable-next-line  @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {

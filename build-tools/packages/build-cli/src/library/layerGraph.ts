@@ -13,8 +13,7 @@ import { readJsonSync } from "fs-extra/esm";
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface ILayerInfo {
 	deps?: string[];
@@ -595,7 +594,6 @@ ${lines.join(newline)}
 	}
 
 	public static load(root: string, packages: Package[], info?: string): LayerGraph {
-		// eslint-disable-next-line unicorn/prefer-module
 		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
 		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
 		return new LayerGraph(root, layerData, packages);
