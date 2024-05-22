@@ -188,8 +188,8 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Troubleshooting
 
-- Mysterious build failures, especially with no changes? `pnpm clean`
-- If debugging becomes slow or hangs, clean the repo with `git clean -xdf` to remove extraneous files.
+- `pnpm clean` if random build failures, especially with no changes
+- `git clean -xdf` to remove extraneous files if debugging becomes slow or hangs.
 
 ## Testing
 
