@@ -18,8 +18,8 @@ import {
 } from "@fluidframework/build-tools";
 import * as JSON5 from "json5";
 import { TsConfigJson } from "type-fest";
-import { Handler, readFile } from "./common";
-import { FluidBuildDatabase } from "./fluidBuildDatabase";
+import { Handler, readFile } from "./common.js";
+import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
  * Get and cache the tsc check ignore setting

@@ -16,8 +16,8 @@ import {
 	getApiExports,
 	isKnownApiLevel,
 	knownApiLevels,
-} from "../../library";
-import type { CommandLogger } from "../../logging";
+} from "../../library/index.js";
+import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
 

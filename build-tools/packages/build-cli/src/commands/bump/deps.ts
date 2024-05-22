@@ -10,7 +10,7 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,

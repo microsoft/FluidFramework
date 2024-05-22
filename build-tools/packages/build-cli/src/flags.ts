@@ -29,8 +29,8 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import type { DependencyUpdateType } from "./library";
-import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
+import type { DependencyUpdateType } from "./library/index.js";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.

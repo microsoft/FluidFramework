@@ -7,11 +7,11 @@ import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { MonoRepo, Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { mkdirpSync, writeFileSync } from "fs-extra";
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { filterPackages, parsePackageFilterFlags } from "../filter";
-import { filterFlags, releaseGroupFlag } from "../flags";
-import { BaseCommand, getTarballName } from "../library";
+import { mkdirpSync } from "fs-extra";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { filterPackages, parsePackageFilterFlags } from "../filter.js";
+import { filterFlags, releaseGroupFlag } from "../flags.js";
+import { BaseCommand, getTarballName } from "../library/index.js";
 import {
 	type Feed,
 	feeds,

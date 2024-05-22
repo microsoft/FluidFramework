@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../library";
+import { BaseCommand } from "../../library/index.js";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	static readonly description =

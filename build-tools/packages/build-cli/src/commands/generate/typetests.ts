@@ -24,14 +24,14 @@ import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
 import { ModuleKind, Project, type SourceFile } from "ts-morph";
-import { PackageCommand } from "../../BasePackageCommand";
-import type { PackageSelectionDefault } from "../../flags";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../../flags.js";
 import {
 	ApiLevel,
 	ensureDevDependencyExists,
 	knownApiLevels,
 	unscopedPackageNameString,
-} from "../../library";
+} from "../../library/index.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
