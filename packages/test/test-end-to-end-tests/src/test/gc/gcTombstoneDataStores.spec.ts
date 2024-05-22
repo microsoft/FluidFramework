@@ -30,7 +30,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,

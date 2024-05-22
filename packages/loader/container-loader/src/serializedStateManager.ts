@@ -14,14 +14,12 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import {
 	type IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	MonitoringContext,
 	PerformanceEvent,

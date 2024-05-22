@@ -107,7 +107,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/gitresources": "^4.0.0",
 		"@fluidframework/protocol-base": "^4.0.0",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2",
 		"lz4js": "^0.2.0",

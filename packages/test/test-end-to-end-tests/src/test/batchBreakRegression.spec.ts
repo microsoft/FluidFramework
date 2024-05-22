@@ -20,9 +20,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

@@ -12,7 +12,7 @@ import {
 import { stub, type SinonStub } from "sinon";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
