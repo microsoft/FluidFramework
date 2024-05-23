@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 import { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
