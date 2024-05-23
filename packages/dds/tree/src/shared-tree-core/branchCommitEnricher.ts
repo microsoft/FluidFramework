@@ -17,7 +17,7 @@ export class BranchCommitEnricher<TChange> {
 	private readonly enricher: ChangeEnricherReadonlyCheckout<TChange>;
 	/**
 	 * Maps each local commit to the corresponding enriched commit.
-	 * Entries are added then the commits are prepared (before being applied and submitted).
+	 * Entries are added when the commits are prepared (before being applied and submitted).
 	 * Entries are removed when the commits are retrieved for submission (after being applied).
 	 * It's possible an entry will linger in the map indefinitely if it is never retrieved for submission.
 	 * This would happen if applying a commit were to fail and the commit were not retrieved/purged after the failure.

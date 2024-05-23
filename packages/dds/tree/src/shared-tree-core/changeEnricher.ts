@@ -12,7 +12,7 @@ import { disposeSymbol } from "../util/index.js";
  * This is similar to a {@link TreeCheckout} in that it represents the state of the tree at a specific revision.
  * But unlike a `TreeCheckout`...
  * - It is not backed by a branch because the `CommitEnricher` that owns it controls which revision it should represent.
- * - The host application has no knowledge of it, so applying changes to it has not impact on the application.
+ * - The host application has no knowledge of it, so applying changes to it has no impact on the application.
  * - It need not maintain any state or indexes that do not play a role in enriching changes.
  *
  * See implementations for examples.
