@@ -11,6 +11,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
 
@@ -21,8 +22,8 @@ describe("Reconnection", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let map1: ISharedMap;
-		let map2: ISharedMap;
+		let map1: ISharedMap & ISharedObject;
+		let map2: ISharedMap & ISharedObject;
 
 		beforeEach("createMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();

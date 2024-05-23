@@ -23,6 +23,7 @@ import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { EditType } from "../CommonInterfaces.js";
 
@@ -179,7 +180,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	const sharedMap = sharedObject as ISharedMap;
+	const sharedMap = sharedObject as IFluidLoadable as ISharedMap;
 
 	const children: Record<string, VisualChildNode> = {};
 	for (const [key, value] of sharedMap) {
@@ -188,7 +189,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	}
 
 	return {
-		fluidObjectId: sharedMap.id,
+		fluidObjectId: sharedObject.id,
 		children,
 		metadata: {
 			size: sharedMap.size,

@@ -10,7 +10,7 @@ import {
 	DataObjectFactory,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { MapFactory, SharedMap } from "@fluidframework/map/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
 import { type ContainerSchema } from "../types.js";
@@ -43,7 +43,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 		assert.strictEqual(sharedObjects.length, 2, "We should have 2 shared objects");
 
 		const types = sharedObjects.map((item) => item.type);
-		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
+		assert.strictEqual(types[0], SharedMap.getFactory().type, "SharedMap should be included");
 		assert.strictEqual(
 			types[1],
 			SharedString.getFactory().type,
@@ -65,7 +65,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 		assert.strictEqual(sharedObjects.length, 2, "We should have 2 shared objects");
 
 		const types = sharedObjects.map((item) => item.type);
-		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
+		assert.strictEqual(types[0], SharedMap.getFactory().type, "SharedMap should be included");
 		assert.strictEqual(
 			types[1],
 			SharedString.getFactory().type,

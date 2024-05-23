@@ -24,8 +24,8 @@ import type { Serializable } from "@fluidframework/datastore-definitions/interna
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { type ISharedMap, MapFactory } from "../../index.js";
-
+import type { SharedMap } from "../../map.js";
+import { MapFactory } from "../../mapFactory.js";
 import { _dirname } from "./dirname.cjs";
 
 interface Clear {
@@ -48,7 +48,7 @@ type Operation = SetKey | DeleteKey | Clear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
+async function assertMapsAreEquivalent(a: SharedMap, b: SharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);

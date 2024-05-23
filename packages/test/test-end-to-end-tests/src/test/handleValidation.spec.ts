@@ -150,11 +150,11 @@ const ddsTypes: aDDSFactory[] = [
 		type: "https://graph.microsoft.com/types/map",
 		createDDS(runtime, apis) {
 			const { SharedMap } = apis.dds;
-			const map = runtime.createChannel(undefined, SharedMap.getFactory().type);
+			const map = SharedMap.create(runtime);
 			return this.downCast(map);
 		},
 		downCast(channel): aDDSType {
-			const map = channel as ISharedMap;
+			const map = channel as ISharedMap & IChannel;
 			return {
 				id: map.id,
 				async storeHandle(handle: IFluidHandle) {

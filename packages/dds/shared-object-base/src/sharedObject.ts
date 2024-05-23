@@ -15,6 +15,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
+	type IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	IChannelAttributes,
@@ -843,7 +844,7 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * @privateRemarks
 	 * This can only be used with a `MockFluidDataStoreRuntime` when that mock is created with a `registry` containing a factory for this shared object.
 	 */
-	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject & IChannel;
 }
 
 /**
@@ -879,8 +880,8 @@ export function createSharedObjectKind<TSharedObject>(
 			return new factory();
 		},
 
-		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
-			return runtime.createChannel(id, factory.Type) as TSharedObject;
+		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject & IChannel {
+			return runtime.createChannel(id, factory.Type) as TSharedObject & IChannel;
 		},
 	};
 

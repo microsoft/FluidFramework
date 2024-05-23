@@ -468,14 +468,14 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
-// @alpha @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+// @beta @sealed
+export interface ISharedMap extends IEventProvider<ISharedMapEvents>, Map<string, any>, IFluidLoadable {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed
-export interface ISharedMapEvents extends ISharedObjectEvents {
+// @beta @sealed
+export interface ISharedMapEvents extends IErrorEvent {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
@@ -585,7 +585,7 @@ export interface ITreeConfigurationOptions {
     enableSchemaValidation?: boolean;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
@@ -804,11 +804,8 @@ export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObject
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
-// @alpha
-export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind_2<ISharedMap>;
-
-// @alpha
-export type SharedMap = ISharedMap;
+// @beta
+export const SharedMap: SharedObjectKind<ISharedMap>;
 
 // @public
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {

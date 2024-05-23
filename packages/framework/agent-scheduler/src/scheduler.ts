@@ -30,6 +30,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
@@ -68,7 +69,7 @@ export class AgentScheduler
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	) {
-		let root: ISharedMap;
+		let root: ISharedMap & ISharedObject;
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
 		if (!existing) {
 			root = SharedMap.create(runtime, "root");
@@ -77,7 +78,7 @@ export class AgentScheduler
 			consensusRegisterCollection.bindToContext();
 			root.set(schedulerId, consensusRegisterCollection.handle);
 		} else {
-			root = (await runtime.getChannel("root")) as ISharedMap;
+			root = (await runtime.getChannel("root")) as ISharedMap & ISharedObject;
 			const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(
 				root,
 				schedulerId,

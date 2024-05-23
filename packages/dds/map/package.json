@@ -151,6 +151,17 @@
 		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedMap": {
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_MapFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedMap": {
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -81,7 +81,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 
 // @alpha
 export interface ISharedObjectKind<TSharedObject> {
-    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject & IChannel;
     getFactory(): IChannelFactory<TSharedObject>;
 }
 

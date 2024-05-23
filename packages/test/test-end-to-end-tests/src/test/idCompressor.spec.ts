@@ -35,6 +35,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -138,7 +139,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		}
 
 		private readonly sharedMapKey = "map";
-		public map!: ISharedMap;
+		public map!: ISharedMap & ISharedObject;
 
 		private readonly sharedCellKey = "sharedCell";
 		public sharedCell!: ISharedCell;
@@ -152,7 +153,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		}
 
 		protected async hasInitialized() {
-			const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.sharedMapKey);
+			const mapHandle = this.root.get<IFluidHandle<ISharedMap & ISharedObject>>(
+				this.sharedMapKey,
+			);
 			assert(mapHandle !== undefined, "SharedMap not found");
 			this.map = await mapHandle.get();
 
@@ -188,9 +191,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	let container2: IContainer;
 	let mainDataStore: TestDataObject;
 
-	let sharedMapContainer1: ISharedMap;
-	let sharedMapContainer2: ISharedMap;
-	let sharedMapContainer3: ISharedMap;
+	let sharedMapContainer1: ISharedMap & ISharedObject;
+	let sharedMapContainer2: ISharedMap & ISharedObject;
+	let sharedMapContainer3: ISharedMap & ISharedObject;
 
 	let sharedCellContainer1: ISharedCell;
 
@@ -475,7 +478,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	});
 
 	async function assureAlignment(
-		maps: ISharedMap[],
+		maps: (ISharedMap & ISharedObject)[],
 		idPairs: [SessionSpaceCompressedId, IIdCompressor][],
 	) {
 		maps.forEach((map) => {
@@ -569,7 +572,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		)}`, async () => {
 			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 
-			const simulateAllocation = (map: ISharedMap) => {
+			const simulateAllocation = (map: ISharedMap & ISharedObject) => {
 				const idCompressor = getIdCompressor(map);
 				const id = idCompressor.generateCompressedId();
 				idPairs.push([id, idCompressor]);
@@ -622,7 +625,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	it("Reentrant ops do not cause resubmission of ID allocation ops", async () => {
 		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 
-		const simulateAllocation = (map: ISharedMap) => {
+		const simulateAllocation = (map: ISharedMap & ISharedObject) => {
 			const idCompressor = getIdCompressor(map);
 			const id = idCompressor.generateCompressedId();
 			idPairs.push([id, idCompressor]);

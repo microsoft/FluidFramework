@@ -24,6 +24,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -40,7 +41,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 
 	let dataObject1: ITestFluidObject;
-	let sharedMap1: ISharedMap;
+	let sharedMap1: ISharedMap & ISharedObject;
 	let sharedMap2: ISharedMap;
 	let sharedMap3: ISharedMap;
 
@@ -364,8 +365,8 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("attaches if referring SharedMap becomes attached or is already attached", async () => {
-		const detachedMap1: ISharedMap = SharedMap.create(dataObject1.runtime);
-		const detachedMap2: ISharedMap = SharedMap.create(dataObject1.runtime);
+		const detachedMap1 = SharedMap.create(dataObject1.runtime);
+		const detachedMap2 = SharedMap.create(dataObject1.runtime);
 
 		// When an unattached map refers to another unattached map, both remain unattached
 		detachedMap1.set("newSharedMap", detachedMap2.handle);

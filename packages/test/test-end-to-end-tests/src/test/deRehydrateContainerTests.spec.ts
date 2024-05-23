@@ -32,6 +32,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { pkgVersion } from "../packageVersion.js";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -352,7 +353,7 @@ describeCompat(
 				const channel = defaultDataStore.runtime.createChannel(
 					"test1",
 					"https://graph.microsoft.com/types/map",
-				) as ISharedMap;
+				) as ISharedMap & ISharedObject;
 				channel.bindToContext();
 				const { baseSnapshot: baseSnapshot2, snapshotBlobs: snapshotBlobs2 } =
 					getSnapshotInfoFromSerializedContainer(container);
@@ -428,7 +429,9 @@ describeCompat(
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<
+					ISharedMap & ISharedObject
+				>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -481,7 +484,9 @@ describeCompat(
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<
+					ISharedMap & ISharedObject
+				>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -533,7 +538,9 @@ describeCompat(
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<
+					ISharedMap & ISharedObject
+				>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -951,7 +958,8 @@ describeCompat(
 					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
 				const rootOfDds2 =
 					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
+				const dds2Handle: IFluidHandle<ISharedMap & ISharedObject> | undefined =
+					rootOfDds2.get(dds2Key);
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 				const dds2FromRC = await dds2Handle.get();
 				assert(dds2FromRC, "ddd2 should have been serialized properly");
@@ -977,7 +985,7 @@ describeCompat(
 					const dds2 = defaultDataStore.runtime.createChannel(
 						ddsId,
 						SharedMap.getFactory().type,
-					) as ISharedMap;
+					) as ISharedMap & ISharedObject;
 					const dataStore2Key = "dataStore2";
 					dds2.set(dataStore2Key, dataStore2.handle);
 
@@ -996,7 +1004,7 @@ describeCompat(
 						);
 					const rootOfDds2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
+					const dds2Handle: IFluidHandle<ISharedMap & ISharedObject> | undefined =
 						rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();
@@ -1036,10 +1044,8 @@ describeCompat(
 
 					// Create another not bounded dds
 					const ddsId = "notbounddds";
-					const dds2 = dataStore2.runtime.createChannel(
-						ddsId,
-						SharedMap.getFactory().type,
-					) as ISharedMap;
+
+					const dds2 = SharedMap.create(dataStore2.runtime, ddsId);
 					const rootOfDataStore2 =
 						await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Key = "dds2";
@@ -1070,7 +1076,7 @@ describeCompat(
 
 					const rootOfDds2 =
 						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
+					const dds2Handle: IFluidHandle<ISharedMap & ISharedObject> | undefined =
 						rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();

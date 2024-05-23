@@ -18,6 +18,7 @@ import {
 	SharedString,
 	reservedTileLabelsKey,
 } from "@fluidframework/sequence/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
@@ -45,7 +46,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 		return this;
 	}
 
-	private root: ISharedMap | undefined;
+	private root: (ISharedMap & ISharedObject) | undefined;
 	private _text: SharedString | undefined;
 
 	public get text() {
@@ -70,7 +71,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 			this.root.bindToContext();
 		}
 
-		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		this.root = (await this.runtime.getChannel("root")) as ISharedMap & ISharedObject;
 		this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
 	}
 }

@@ -46,7 +46,7 @@ import type {
 	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedObject, type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -1097,7 +1097,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				((await channel.handle.get()) as SharedObject).bindToContext();
 				defaultDataStore.root.set("someDataStore", dataStore.handle);
-				(channel as ISharedMap).set(testKey, testValue);
+				(channel as ISharedMap & ISharedObject).set(testKey, testValue);
 			},
 		);
 
@@ -1136,7 +1136,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				((await channel.handle.get()) as SharedObject).bindToContext();
 				defaultDataStore.root.set("someDataStore", dataStore.handle);
-				(channel as ISharedMap).set(testKey, testValue);
+				(channel as ISharedMap & ISharedObject).set(testKey, testValue);
 			},
 		);
 
@@ -1159,7 +1159,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				((await channel.handle.get()) as SharedObject).bindToContext();
 				assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
-				(channel as ISharedMap).set(testKey, testValue);
+				(channel as ISharedMap & ISharedObject).set(testKey, testValue);
 			},
 		);
 
@@ -1745,7 +1745,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				((await channel.handle.get()) as SharedObject).bindToContext();
 				defaultDataStore.root.set("someDataStore", dataStore.handle);
-				(channel as ISharedMap).set(testKey, testValue);
+				(channel as ISharedMap & ISharedObject).set(testKey, testValue);
 			},
 		);
 

@@ -43,6 +43,7 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISharedMap } from '@fluidframework/map/internal';
+import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISummarizer } from '@fluidframework/container-runtime/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/driver-definitions';
@@ -217,7 +218,7 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
     // (undocumented)
     readonly context: IFluidDataStoreContext;
     // (undocumented)
-    getSharedObject<T = any>(id: string): Promise<T>;
+    getSharedObject<T = any>(id: string): Promise<T & ISharedObject>;
     // (undocumented)
     root: ISharedMap;
     // (undocumented)
@@ -307,7 +308,7 @@ export class TestFluidObject implements ITestFluidObject {
     readonly channel: IFluidDataStoreChannel;
     // (undocumented)
     readonly context: IFluidDataStoreContext;
-    getSharedObject<T = any>(id: string): Promise<T>;
+    getSharedObject<T = any>(id: string): Promise<T & ISharedObject>;
     // (undocumented)
     get handle(): IFluidHandle<this>;
     // (undocumented)
@@ -319,7 +320,7 @@ export class TestFluidObject implements ITestFluidObject {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    root: ISharedMap;
+    root: ISharedMap & ISharedObject;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }

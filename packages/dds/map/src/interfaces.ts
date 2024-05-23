@@ -5,9 +5,11 @@
 
 import type {
 	IDisposable,
+	IErrorEvent,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import type {
 	ISharedObject,
@@ -17,7 +19,7 @@ import type {
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
- * @alpha
+ * @beta
  */
 export interface IValueChanged {
 	/**
@@ -302,9 +304,9 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
- * @alpha
+ * @beta
  */
-export interface ISharedMapEvents extends ISharedObjectEvents {
+export interface ISharedMapEvents extends IErrorEvent {
 	/**
 	 * Emitted when a key is set or deleted.
 	 *
@@ -346,11 +348,14 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
- * @alpha
+ * @beta
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap
+	extends IEventProvider<ISharedMapEvents>,
+		// TODO: Use `unknown` instead (breaking change).
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		Map<string, any>,
+		IFluidLoadable {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from

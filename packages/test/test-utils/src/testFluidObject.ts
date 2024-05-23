@@ -21,6 +21,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ITestFluidObject } from "./interfaces.js";
 
@@ -43,7 +44,7 @@ export class TestFluidObject implements ITestFluidObject {
 		return this.innerHandle;
 	}
 
-	public root!: ISharedMap;
+	public root!: ISharedMap & ISharedObject;
 	private readonly innerHandle: IFluidHandle<this>;
 	private initializeP: Promise<void> | undefined;
 
@@ -67,7 +68,7 @@ export class TestFluidObject implements ITestFluidObject {
 	 * Retrieves a shared object with the given id.
 	 * @param id - The id of the shared object to retrieve.
 	 */
-	public async getSharedObject<T = any>(id: string): Promise<T> {
+	public async getSharedObject<T = any>(id: string): Promise<T & ISharedObject> {
 		if (this.factoryEntriesMap === undefined) {
 			throw new Error("Shared objects were not provided during creation.");
 		}
@@ -75,7 +76,7 @@ export class TestFluidObject implements ITestFluidObject {
 		for (const key of this.factoryEntriesMap.keys()) {
 			if (key === id) {
 				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as Promise<T>;
+				return handle?.get() as Promise<T & ISharedObject>;
 			}
 		}
 
@@ -106,7 +107,7 @@ export class TestFluidObject implements ITestFluidObject {
 				this.root.bindToContext();
 			}
 
-			this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+			this.root = (await this.runtime.getChannel("root")) as ISharedMap & ISharedObject;
 		};
 
 		if (this.initializeP === undefined) {

@@ -72,6 +72,19 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
 // eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { SharedMap as OriginalSharedMap } from "@fluidframework/map/internal";
+
+/**
+ * Entrypoint for {@link @fluidframework/map#ISharedMap} creation.
+ * @privateRemarks
+ * See note on SharedTree.
+ * @beta
+ */
+// Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
+// eslint-disable-next-line import/export
+export const SharedMap: SharedObjectKind<ISharedMap> = OriginalSharedMap;
+
 // #endregion Custom re-exports
 // #endregion Public exports
 
@@ -89,7 +102,7 @@ export type {
 	IValueChanged,
 } from "@fluidframework/map/internal";
 
-export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+export { SharedDirectory } from "@fluidframework/map/internal";
 
 export type {
 	DeserializeCallback,
