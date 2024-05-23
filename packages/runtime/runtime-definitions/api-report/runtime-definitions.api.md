@@ -303,10 +303,10 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @public
+// @alpha
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
-    type: string;
+    readonly type: string;
 }
 
 // @alpha
