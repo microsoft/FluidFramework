@@ -227,7 +227,7 @@ describe("loader unit test", () => {
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
-	it("ConnectionStateHandler overwrites", () => {
+	it("ConnectionStateHandler feature gate overrides", () => {
 		const configProvider = wrapConfigProviderWithDefaults(
 			undefined, // original provider
 			{
