@@ -401,7 +401,7 @@ function mapToMapTree(
  * @param schema - The schema associated with the value.
  * @param nodeKeyManager - See {@link NodeKeyManager}.
  */
-export function objectToMapTree(
+function objectToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,

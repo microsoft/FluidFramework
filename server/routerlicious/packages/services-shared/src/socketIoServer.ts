@@ -11,7 +11,7 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
+import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
@@ -22,6 +22,10 @@ import {
 } from "./socketIoRedisConnection";
 
 class SocketIoSocket implements core.IWebSocket {
+	private readonly eventListeners: { event: string; listener: () => void }[] = [];
+
+	private isDisposed = false;
+
 	public get id(): string {
 		return this.socket.id;
 	}
@@ -29,23 +33,44 @@ class SocketIoSocket implements core.IWebSocket {
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
-		this.socket.on(event, listener);
+		if (!this.isDisposed) {
+			this.eventListeners.push({ event, listener });
+			this.socket.on(event, listener);
+		}
 	}
 
 	public async join(id: string): Promise<void> {
-		return this.socket.join(id);
+		if (!this.isDisposed) {
+			return this.socket.join(id);
+		}
 	}
 
 	public emit(event: string, ...args: any[]) {
-		this.socket.emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.emit(event, ...args);
+		}
 	}
 
 	public emitToRoom(roomId: string, event: string, ...args: any[]) {
-		this.socket.nsp.to(roomId).emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.nsp.to(roomId).emit(event, ...args);
+		}
 	}
 
 	public disconnect(close?: boolean) {
-		this.socket.disconnect(close);
+		if (!this.isDisposed) {
+			this.socket.disconnect(close);
+		}
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+		if (!this.socket.disconnected) {
+			this.disconnect(true);
+		}
+		for (const { event, listener } of this.eventListeners) {
+			this.socket.off(event, listener);
+		}
 	}
 }
 
@@ -77,11 +102,40 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
+			const socketConnectionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.SocketConnection,
+				{},
+			);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 
+			//
+			webSocket.on("disconnect", (reason: DisconnectReason) => {
+				// The following should be considered as normal disconnects and not logged as errors.
+				// For more information about each reason, see https://socket.io/docs/v4/server-socket-instance/#disconnect
+				const isOk = [
+					// server used socket.disconnect()
+					"server namespace disconnect",
+					// client used socket.disconnect()
+					"client namespace disconnect",
+					// server shutting down
+					"server shutting down",
+					// connection closed for normal reasons
+					"transport close",
+				].includes(reason);
+				socketConnectionMetric.setProperties({
+					reason,
+					transport: socket.conn.transport.name,
+				});
+				if (isOk) {
+					socketConnectionMetric.success("Socket connection ended");
+				} else {
+					socketConnectionMetric.error("Socket connection closed", reason);
+				}
+			});
+
 			// Server side listening for ping events
-			socket.on("ping", (cb) => {
+			webSocket.on("ping", (cb) => {
 				if (typeof cb === "function") {
 					cb();
 				}
