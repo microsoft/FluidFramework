@@ -193,7 +193,8 @@ const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
 const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
 const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
 
-const rootChange1a = buildChangeset([
+const mainEditor = family.buildEditor(() => undefined);
+const rootChange1a = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA,
@@ -214,7 +215,7 @@ const rootChange1a = buildChangeset([
 	},
 ]);
 
-const rootChange1aGeneric: ModularChangeset = buildChangeset([
+const rootChange1aGeneric: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA0A,
@@ -229,7 +230,7 @@ const rootChange1aGeneric: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rootChange1b: ModularChangeset = buildChangeset([
+const rootChange1b: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA,
@@ -250,7 +251,7 @@ const rootChange1b: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rootChange1bGeneric: ModularChangeset = buildChangeset([
+const rootChange1bGeneric: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA0A,
@@ -265,7 +266,7 @@ const rootChange1bGeneric: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rebasedChange: ModularChangeset = buildChangeset([
+const rebasedChange: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA,
@@ -286,7 +287,7 @@ const rebasedChange: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rebasedChangeGeneric: ModularChangeset = buildChangeset([
+const rebasedChangeGeneric: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA0A,
@@ -301,7 +302,7 @@ const rebasedChangeGeneric: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rootChange2: ModularChangeset = buildChangeset([
+const rootChange2: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA,
@@ -322,7 +323,7 @@ const rootChange2: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rootChange2Generic: ModularChangeset = buildChangeset([
+const rootChange2Generic: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA0A,
@@ -337,7 +338,7 @@ const rootChange2Generic: ModularChangeset = buildChangeset([
 	},
 ]);
 
-const rootChange3: ModularChangeset = buildChangeset([
+const rootChange3: ModularChangeset = mainEditor.buildChanges([
 	{
 		type: "field",
 		field: pathA,
