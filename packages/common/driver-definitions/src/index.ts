@@ -118,3 +118,16 @@ export {
 	SummaryType,
 	TreeEntry,
 } from "./protocol/index.js";
+export type {
+	IGitAuthor,
+	IGitBlob,
+	IGitCommitDetails,
+	IGitCommitHash,
+	IGitCommitter,
+	IGitCreateBlobParams,
+	IGitCreateBlobResponse,
+	IGitCreateTreeEntry,
+	IGitCreateTreeParams,
+	IGitTree,
+	IGitTreeEntry,
+} from "./git/index.js";
