@@ -68,6 +68,18 @@ export function cursorFromNodeData(
 	allowedTypes: ImplicitAllowedTypes,
 	nodeKeyManager: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
+): CursorWithNode<MapTree>;
+export function cursorFromNodeData(
+	data: InsertableContent | undefined,
+	allowedTypes: ImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): CursorWithNode<MapTree> | undefined;
+export function cursorFromNodeData(
+	data: InsertableContent | undefined,
+	allowedTypes: ImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
@@ -94,8 +106,24 @@ export function cursorFromFieldData(
 	data: InsertableContent,
 	schema: FieldSchema,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): CursorWithNode<MapTree> {
+	schemaValidationPolicy?: SchemaAndPolicy,
+): CursorWithNode<MapTree>;
+export function cursorFromFieldData(
+	data: InsertableContent | undefined,
+	schema: FieldSchema,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): CursorWithNode<MapTree> | undefined;
+export function cursorFromFieldData(
+	data: InsertableContent | undefined,
+	schema: FieldSchema,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): CursorWithNode<MapTree> | undefined {
+	if (data === undefined) {
+		return undefined;
+	}
+
 	// TODO: array node content should not go through here since sequence fields don't exist at this abstraction layer.
 	const mappedContent = Array.isArray(data)
 		? arrayToMapTreeFields(data, schema.allowedTypeSet, nodeKeyManager, schemaValidationPolicy)
@@ -127,9 +155,23 @@ export function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): MapTree {
-	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree;
+export function nodeDataToMapTree(
+	data: InsertableContent | undefined,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree | undefined;
+export function nodeDataToMapTree(
+	data: InsertableContent | undefined,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree | undefined {
+	if (data === undefined) {
+		return undefined;
+	}
 
 	const schema = getType(data, allowedTypes);
 

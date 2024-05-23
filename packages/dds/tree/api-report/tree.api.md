@@ -671,6 +671,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
     is<TSchema extends FlexFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
     isSameAs(other: FlexTreeField): boolean;
     readonly key: FieldKey;
+    readonly length: number;
     readonly parent?: FlexTreeNode;
 }
 
