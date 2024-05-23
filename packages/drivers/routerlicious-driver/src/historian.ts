@@ -4,7 +4,7 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import {
+import type {
 	IGitBlob,
 	IGitCommitDetails,
 	IGitCreateBlobParams,

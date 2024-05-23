@@ -5,7 +5,7 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IGitTree, IGitTreeEntry } from "@fluidframework/driver-definitions/internal";
+import type { IGitTree, IGitTreeEntry } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	FileMode,

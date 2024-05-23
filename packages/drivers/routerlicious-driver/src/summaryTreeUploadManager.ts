@@ -5,7 +5,7 @@
 
 import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
+import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
