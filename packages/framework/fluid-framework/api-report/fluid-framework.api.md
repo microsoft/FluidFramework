@@ -24,7 +24,6 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/in
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
@@ -151,6 +150,13 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @public
+export interface IBranchOrigin {
+    id: string;
+    minimumSequenceNumber: number;
+    sequenceNumber: number;
+}
 
 // @public
 export interface IConnection {
@@ -366,6 +372,27 @@ export enum IntervalType {
     Transient = 4
 }
 
+// @public
+export interface ISequencedDocumentMessage {
+    clientId: string | null;
+    clientSequenceNumber: number;
+    // @deprecated
+    compression?: string;
+    contents: unknown;
+    data?: string;
+    // @deprecated
+    expHash1?: string;
+    metadata?: unknown;
+    minimumSequenceNumber: number;
+    origin?: IBranchOrigin;
+    referenceSequenceNumber: number;
+    sequenceNumber: number;
+    serverMetadata?: unknown;
+    timestamp: number;
+    traces?: ITrace[];
+    type: string;
+}
+
 // @alpha
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
@@ -533,12 +560,19 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 
 // @public
 export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off;
 }
 
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
+}
+
+// @public
+export interface ITrace {
+    action: string;
+    service: string;
+    timestamp: number;
 }
 
 // @public
@@ -609,6 +643,9 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @public
+export type Off = () => void;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {

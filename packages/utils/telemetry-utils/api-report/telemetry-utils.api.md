@@ -13,7 +13,7 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
@@ -41,7 +41,7 @@ export function createChildMonitoringContext(props: Parameters<typeof createChil
 export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt;
 
 // @internal
-export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
+export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler, skipLoggingWhenSamplingIsDisabled?: boolean): ISampledTelemetryLogger;
 
 // @internal
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {

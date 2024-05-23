@@ -7,7 +7,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -469,18 +469,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				});
 			}
 			this.applyForConnectedState("addMemberEvent");
-		} else if (clientId === this.clientId) {
-			// If we see our clientId and it's not also our pending ID, it's our own join op
-			// being replayed, so start the timer in case our previous client is still in quorum
-			assert(
-				!this.waitingForLeaveOp,
-				0x5d2 /* Unexpected join op with current clientId while waiting */,
-			);
-			assert(
-				this.connectionState !== ConnectionState.Connected,
-				0x5d3 /* Unexpected join op with current clientId while connected */,
-			);
-			this.prevClientLeftTimer.restart();
 		}
 	}
 
@@ -528,7 +516,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 	private receivedRemoveMemberEvent(clientId: string) {
 		// If the client which has left was us, then finish the timer.
-		if (this.clientId === clientId) {
+		if (this.clientId === clientId && this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("removeMemberEvent");
 		}
@@ -741,8 +729,24 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			this.receivedAddMemberEvent(this.pendingClientId!);
 		}
 
+		assert(
+			!this.waitingForLeaveOp,
+			"leave timer can't be set as we have not had access to quorum",
+		);
+
+		// This check is required for scenario of loading container from pending state, and ensuring there is no way
+		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
-		if (this.clientId !== undefined && this.hasMember(this.clientId)) {
+		// This mimicks check in setConnectionState()
+		// Note that we are not consulting this.handler.shouldClientJoinWrite() here
+		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
+		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
+		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,
+		// we might wait even if we could avoid such wait.
+		if (
+			this._clientId !== undefined &&
+			protocol.quorum?.getMember(this._clientId) !== undefined
+		) {
 			this.prevClientLeftTimer.restart();
 		}
 	}

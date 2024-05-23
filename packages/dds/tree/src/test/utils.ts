@@ -100,7 +100,6 @@ import {
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
-	createMockNodeKeyManager,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -108,6 +107,7 @@ import {
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
+	MockNodeKeyManager,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -698,7 +698,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
-		args?.nodeKeyManager ?? createMockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -733,7 +733,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
-	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
+	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
@@ -1134,7 +1134,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		tree.checkout,
 		viewSchema,
 		onDispose ?? (() => {}),
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -1187,12 +1187,12 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 

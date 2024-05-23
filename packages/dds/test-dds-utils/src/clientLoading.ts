@@ -8,7 +8,7 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,

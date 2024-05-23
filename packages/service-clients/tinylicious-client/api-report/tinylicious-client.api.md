@@ -12,7 +12,7 @@ import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/protocol-definitions';
+import { IUser } from '@fluidframework/driver-definitions';
 
 export { ITelemetryBaseEvent }
 

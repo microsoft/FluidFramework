@@ -27,7 +27,7 @@ import {
 	HostStoragePolicy,
 	IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IUser } from "@fluidframework/protocol-definitions";
+import { IUser } from "@fluidframework/driver-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";

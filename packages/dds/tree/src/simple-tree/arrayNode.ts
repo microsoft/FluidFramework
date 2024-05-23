@@ -21,7 +21,6 @@ import {
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
-	FactoryContent,
 	InsertableContent,
 	getOrCreateNodeProxy,
 	markContentType,
@@ -277,20 +276,6 @@ function getSequenceField<
 	TSimpleType extends ImplicitAllowedTypes,
 >(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
 	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
-}
-
-// Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
-// typed data prior to forwarding to 'LazySequence.insert*()'.
-function contextualizeInsertedArrayContent(
-	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-	sequenceField: FlexTreeSequenceField<FlexAllowedTypes>,
-): FactoryContent {
-	return prepareContentForInsert(
-		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-		),
-		sequenceField.context.checkout.forest,
-	);
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -595,9 +580,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		const sequenceField = getSequenceField(this);
-		const content = contextualizeInsertedArrayContent(
-			value as readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-			sequenceField,
+
+		const content = prepareContentForInsert(
+			(
+				value as readonly (
+					| InsertableContent
+					| IterableTreeArrayContent<InsertableContent>
+				)[]
+			).flatMap((c) => (c instanceof IterableTreeArrayContent ? Array.from(c) : [c])),
+			sequenceField.context.checkout.forest,
 		);
 
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),

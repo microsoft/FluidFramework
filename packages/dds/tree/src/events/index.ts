@@ -8,6 +8,7 @@ export {
 	EventEmitter,
 	Events,
 	ISubscribable,
+	Off,
 	IsEvent,
 	TransformEvents,
 	UnionToIntersection,

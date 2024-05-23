@@ -13,7 +13,7 @@ import {
 	OdspErrorTypes,
 	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { ICreateFileResponse } from "./contracts.js";
