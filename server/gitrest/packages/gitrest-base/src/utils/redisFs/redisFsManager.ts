@@ -24,7 +24,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
 import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
-import { FsPromisesBase } from "../filesystems";
+import { FsPromisesBase } from "../fileSystemBase";
 import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
 import {
 	executeRedisFsApiWithMetric,

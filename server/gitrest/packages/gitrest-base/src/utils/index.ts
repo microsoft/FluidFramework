@@ -18,13 +18,9 @@ export {
 	IStorageDirectoryConfig,
 	IStorageRoutingId,
 } from "./definitions";
+export { FsPromisesBase } from "./fileSystemBase";
 export { SystemErrors } from "./fileSystemHelper";
-export {
-	FsPromisesBase,
-	MemFsManagerFactory,
-	NodeFsManagerFactory,
-	RedisFsManagerFactory,
-} from "./filesystems";
+export { MemFsManagerFactory, NodeFsManagerFactory, RedisFsManagerFactory } from "./filesystems";
 export {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
