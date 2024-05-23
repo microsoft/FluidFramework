@@ -115,6 +115,14 @@
 		},
 		"patchedDependencies": {
 			"jssm@5.97.1": "patches/jssm@5.97.1.patch"
+		},
+		"updateConfig": {
+			"ignoreDependencies": [
+				"latest-version",
+				"read-pkg-up",
+				"type-fest",
+				"typescript"
+			]
 		}
 	}
 }

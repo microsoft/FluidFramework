@@ -41,7 +41,7 @@ export function createChildMonitoringContext(props: Parameters<typeof createChil
 export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt;
 
 // @internal
-export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
+export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler, skipLoggingWhenSamplingIsDisabled?: boolean): ISampledTelemetryLogger;
 
 // @internal
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {

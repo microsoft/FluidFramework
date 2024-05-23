@@ -1281,10 +1281,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const container: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
@@ -1460,10 +1457,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message after rehydration",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,

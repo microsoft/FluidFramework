@@ -75,10 +75,5 @@
 		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "
-	},
-	"pnpm": {
-		"updateConfig": {
-			"ignoreDependencies": ["typescript"]
-		}
 	}
 }

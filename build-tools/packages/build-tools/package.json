@@ -86,10 +86,5 @@
 	},
 	"engines": {
 		"node": ">=18.17.1"
-	},
-	"pnpm": {
-		"updateConfig": {
-			"ignoreDependencies": ["type-fest", "typescript"]
-		}
 	}
 }

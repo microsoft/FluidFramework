@@ -218,6 +218,7 @@ jobs:
             # logic will be centralized outside of CI in the future.
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+            echo "@fluid-tools:registry=${{ variables.devFeed }}" >> ./.npmrc
 
             # This scope must be loaded from the "build" feed
             echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
@@ -248,7 +249,7 @@ jobs:
         # ADO feeds have latency on the order of minutes before packages are available downstream. See:
         # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
         # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
-        retryCountOnTaskFailure: 5
+        retryCountOnTaskFailure: 10
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
@@ -313,6 +314,7 @@ jobs:
 
         - task: Npm@1
           displayName: 'npm install - extra dependencies for test files'
+          retryCountOnTaskFailure: 10
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}

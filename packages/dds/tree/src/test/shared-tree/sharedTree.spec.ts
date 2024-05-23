@@ -40,12 +40,12 @@ import {
 	FlexFieldSchema,
 	FlexTreeSchema,
 	FlexTreeTypedField,
+	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
 	TreeStatus,
 	ViewSchema,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -1906,5 +1906,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
+	return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
 }
