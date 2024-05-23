@@ -26,7 +26,7 @@ import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
 	FieldKind,
 	createFieldSchema,
-	ImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
@@ -35,30 +35,34 @@ import {
 	cursorFromFieldData,
 	cursorFromNodeData,
 	nodeDataToMapTree as nodeDataToMapTreeBase,
-	objectToMapTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createMockNodeKeyManager, createNodeKeyManager } from "../../feature-libraries/index.js";
-
-/**
- * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
- * convenience.
- */
-function nodeDataToMapTree(
-	tree: InsertableContent,
-	allowedTypes: ImplicitAllowedTypes,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): MapTree {
-	return nodeDataToMapTreeBase(
-		tree,
-		normalizeAllowedTypes(allowedTypes),
-		createMockNodeKeyManager(),
-		schemaValidationPolicy,
-	);
-}
+import { createNodeKeyManager, MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("toMapTree", () => {
+	let nodeKeyManager: MockNodeKeyManager;
+	beforeEach(() => {
+		nodeKeyManager = new MockNodeKeyManager();
+	});
+
+	/**
+	 * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
+	 * convenience.
+	 */
+	function nodeDataToMapTree(
+		tree: InsertableContent,
+		allowedTypes: ImplicitAllowedTypes,
+		schemaValidationPolicy?: SchemaAndPolicy,
+	): MapTree {
+		return nodeDataToMapTreeBase(
+			tree,
+			normalizeAllowedTypes(allowedTypes),
+			nodeKeyManager,
+			schemaValidationPolicy,
+		);
+	}
+
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
@@ -188,7 +192,64 @@ describe("toMapTree", () => {
 	});
 
 	describe("array", () => {
-		it("Non-empty array", () => {
+		it("Empty", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("array", schemaFactory.number);
+
+			const tree: number[] = [];
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Simple array", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("array", [
+				schemaFactory.number,
+				schemaFactory.handle,
+			]);
+
+			const handle = new MockHandle<boolean>(true);
+			const tree = [42, handle, 37];
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						EmptyKey,
+						[
+							{
+								type: leaf.number.name,
+								value: 42,
+								fields: new Map(),
+							},
+							{
+								type: leaf.handle.name,
+								value: handle,
+								fields: new Map(),
+							},
+							{
+								type: leaf.number.name,
+								value: 37,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Complex array", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -254,25 +315,133 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty array", () => {
+		it("Recursive array", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("array", schemaFactory.number);
+			const schema = schemaFactory.arrayRecursive("array", [
+				schemaFactory.number,
+				() => schema,
+			]);
 
-			const tree: number[] = [];
+			const tree = [42, [1, 2], 37];
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.array"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						EmptyKey,
+						[
+							{
+								type: leaf.number.name,
+								value: 42,
+								fields: new Map(),
+							},
+							{
+								type: brand("test.array"),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										EmptyKey,
+										[
+											{
+												type: leaf.number.name,
+												value: 1,
+												fields: new Map(),
+											},
+											{
+												type: leaf.number.name,
+												value: 2,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+							{
+								type: leaf.number.name,
+								value: 37,
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Throws on `undefined` entries when null is not allowed", () => {
+			const schemaFactory = new SchemaFactory("test");
+			assert.throws(
+				() =>
+					nodeDataToMapTree(
+						[42, undefined] as number[],
+						schemaFactory.array(schemaFactory.number),
+					),
+				/Received unsupported array entry value: undefined/,
+			);
+		});
+
+		it("Throws on schema-incompatible entries", () => {
+			const schemaFactory = new SchemaFactory("test");
+
+			assert.throws(
+				() =>
+					nodeDataToMapTree(
+						["Hello world", true],
+						schemaFactory.array(schemaFactory.string),
+					),
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
+	});
+
+	describe("map", () => {
+		it("Empty map", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", [schemaFactory.number]);
+
+			const tree = new Map<string, number>();
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
 			assert.deepEqual(actual, expected);
 		});
-	});
 
-	describe("map", () => {
-		it("Non-empty map", () => {
+		it("Simple map", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", [schemaFactory.number, schemaFactory.string]);
+
+			const entries: [string, InsertableContent][] = [
+				["a", 42],
+				["b", "Hello world"],
+				["c", 37],
+			];
+			const tree = new Map<string, InsertableContent>(entries);
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.map"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[
+						brand("b"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Complex Map", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -289,8 +458,7 @@ describe("toMapTree", () => {
 				["a", 42],
 				["b", "Hello world"],
 				["c", null],
-				["d", undefined as unknown as InsertableContent], // Should be skipped in output
-				["e", { age: 37, name: "Jill" }],
+				["d", { age: 37, name: "Jill" }],
 			];
 			const tree = new Map<string, InsertableContent>(entries);
 
@@ -306,7 +474,7 @@ describe("toMapTree", () => {
 					],
 					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
 					[
-						brand("e"),
+						brand("d"),
 						[
 							{
 								type: brand(childObjectSchema.identifier),
@@ -341,74 +509,48 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty map", () => {
+		it("Undefined map entries are omitted", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.map("map", [schemaFactory.number]);
 
-			const tree = new Map<string, number>();
+			const entries: [string, InsertableContent][] = [
+				["a", 42],
+				["b", undefined as unknown as InsertableContent], // Should be skipped in output
+				["c", 37],
+			];
+			const tree = new Map<string, InsertableContent>(entries);
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
-				fields: new Map<FieldKey, MapTree[]>(),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("Throws on schema-incompatible entries", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", schemaFactory.string);
+
+			const entries: [string, InsertableContent][] = [
+				["a", "Hello world"],
+				["b", true], // Boolean input is not allowed by the schema
+			];
+			const tree = new Map<string, InsertableContent>(entries);
+
+			assert.throws(
+				() => nodeDataToMapTree(tree, schema),
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
 	});
 
 	describe("object", () => {
-		describe("objectToMapTree", () => {
-			it("Populates identifier field with the default identifier provider", () => {
-				const schemaFactory = new SchemaFactory("test");
-				const schema = schemaFactory.object("object", {
-					a: schemaFactory.identifier,
-				});
-
-				const tree = {};
-				const nodeKeyManager = createMockNodeKeyManager();
-
-				const actual = objectToMapTree(tree, schema, nodeKeyManager);
-
-				const expected: MapTree = {
-					type: brand("test.object"),
-					fields: new Map<FieldKey, MapTree[]>([
-						[
-							brand("a"),
-							[
-								{
-									type: leaf.string.name,
-									value: nodeKeyManager.getId(0),
-									fields: new Map(),
-								},
-							],
-						],
-					]),
-				};
-
-				assert.deepEqual(actual, expected);
-			});
-
-			it("Populates optional field with the default optional provider.", () => {
-				const schemaFactory = new SchemaFactory("test");
-				const schema = schemaFactory.object("object", {
-					a: schemaFactory.optional(schemaFactory.string),
-				});
-
-				const tree = {};
-
-				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
-
-				const expected: MapTree = {
-					type: brand("test.object"),
-					fields: new Map<FieldKey, MapTree[]>(),
-				};
-
-				assert.deepEqual(actual, expected);
-			});
-		});
-
 		it("Empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
@@ -427,20 +569,18 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Non-empty object", () => {
+		it("Simple object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
 				a: schemaFactory.string,
 				b: schemaFactory.optional(schemaFactory.number),
 				c: schemaFactory.boolean,
-				d: schemaFactory.optional(schemaFactory.number),
 			});
 
 			const tree = {
 				a: "Hello world",
 				b: 42,
 				c: false,
-				d: undefined, // Should be skipped in output
 			};
 
 			const actual = nodeDataToMapTree(tree, [schema]);
@@ -454,6 +594,105 @@ describe("toMapTree", () => {
 					],
 					[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Complex object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const childSchema = schemaFactory.object("child-object", {
+				foo: schemaFactory.number,
+			});
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.string,
+				b: childSchema,
+				c: schemaFactory.array(schemaFactory.boolean),
+			});
+
+			const tree = {
+				a: "Hello world",
+				b: {
+					foo: 42,
+				},
+				c: [true, false],
+			};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[
+						brand("b"),
+						[
+							{
+								type: brand("test.child-object"),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										brand("foo"),
+										[{ type: leaf.number.name, value: 42, fields: new Map() }],
+									],
+								]),
+							},
+						],
+					],
+					[
+						brand("c"),
+						[
+							{
+								type: brand('test.Array<["com.fluidframework.leaf.boolean"]>'),
+								fields: new Map<FieldKey, MapTree[]>([
+									[
+										EmptyKey,
+										[
+											{
+												type: leaf.boolean.name,
+												value: true,
+												fields: new Map(),
+											},
+											{
+												type: leaf.boolean.name,
+												value: false,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Undefined properties are omitted", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.number),
+				b: schemaFactory.optional(schemaFactory.number),
+				c: schemaFactory.optional(schemaFactory.number),
+			});
+
+			const tree = {
+				a: 42,
+				// b is implicitly omitted - should be skipped in output.
+				c: undefined, // Explicitly set to undefined - Should be skipped in output
+			};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 				]),
 			};
 
@@ -489,6 +728,53 @@ describe("toMapTree", () => {
 					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
 					[brand("d"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
 				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Populates identifier field with the default identifier provider", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.identifier,
+			});
+
+			const tree = {};
+
+			const actual = nodeDataToMapTree(tree, schema);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[
+							{
+								type: leaf.string.name,
+								value: nodeKeyManager.getId(0),
+								fields: new Map(),
+							},
+						],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Populates optional field with the default optional provider.", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.string),
+			});
+
+			const tree = {};
+
+			const actual = nodeDataToMapTree(tree, schema);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
 			assert.deepEqual(actual, expected);

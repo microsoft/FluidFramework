@@ -10,14 +10,13 @@ import {
 	IQuorumSnapshot,
 	ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
+import { ISequencedDocumentMessage, ISignalMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {

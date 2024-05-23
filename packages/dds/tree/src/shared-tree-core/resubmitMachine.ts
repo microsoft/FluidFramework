@@ -6,17 +6,10 @@
 import { GraphCommit } from "../core/index.js";
 
 /**
- * A component that can be used by a {@link SharedTreeCore} to enrich outbound commits.
+ * Encapsulates a state machine that can be used by a {@link SharedTreeCore} manage resubmit phases,
+ * especially dealing with the proper updating of enrichments on resubmitted commits.
  */
-export interface CommitEnricher<TChange> {
-	/**
-	 * Enriches a commit with adequate refreshers.
-	 * Assumes that the commit will be submitted before the next call to `onSequencedCommitApplied()`.
-	 * @param commit - the commit to enrich. Not mutated.
-	 * @returns the enriched commit. Possibly the same as the one passed in.
-	 */
-	enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange>;
-
+export interface ResubmitMachine<TChange> {
 	/**
 	 * Must be called before calling `enrichCommit` as part of a resubmit phase.
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
@@ -27,9 +20,22 @@ export interface CommitEnricher<TChange> {
 	prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void;
 
 	/**
+	 * @returns the next commit that should be resubmitted.
+	 *
+	 * Throws when invoked outside of a resubmit phase.
+	 */
+	peekNextCommit(): GraphCommit<TChange>;
+
+	/**
 	 * Is true iff the commit enricher is currently in a resubmit phase.
 	 */
 	readonly isInResubmitPhase: boolean;
+
+	/**
+	 * Must be when a commit is submitted or resubmitted.
+	 * @param commit - the (enriched) commit (re)submitted. Not mutated.
+	 */
+	onCommitSubmitted(commit: GraphCommit<TChange>): void;
 
 	/**
 	 * Must be called after a sequenced commit is applied.

@@ -192,15 +192,5 @@
 				"description": "Release commands are used to manage the Fluid release process."
 			}
 		}
-	},
-	"pnpm": {
-		"updateConfig": {
-			"ignoreDependencies": [
-				"latest-version",
-				"read-pkg-up",
-				"type-fest",
-				"typescript"
-			]
-		}
 	}
 }

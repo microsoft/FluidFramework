@@ -10,7 +10,7 @@ import { IContainerContext } from '@fluidframework/container-definitions/interna
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import type { IDeltaManagerErased } from '@fluidframework/datastore-definitions/internal';
-import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -24,19 +24,19 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
-import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
-import { ISummaryBlob } from '@fluidframework/protocol-definitions';
+import { ISummaryBlob } from '@fluidframework/driver-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContextExt } from '@fluidframework/runtime-definitions/internal';
-import { ITree } from '@fluidframework/protocol-definitions';
-import { SummaryObject } from '@fluidframework/protocol-definitions';
-import { SummaryType } from '@fluidframework/protocol-definitions';
+import { ITree } from '@fluidframework/driver-definitions/internal';
+import { SummaryObject } from '@fluidframework/driver-definitions';
+import { SummaryType } from '@fluidframework/driver-definitions';
 import type { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal (undocumented)

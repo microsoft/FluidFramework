@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,

@@ -104,7 +104,7 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"debug": "^4.3.4",
 		"uuid": "^9.0.0"
 	},
