@@ -65,7 +65,30 @@ export type TypeOnly<T> = T extends number
 					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
 				};
 
+/**
+ * Type preprocessing function selected with the `@type-test-minimal` tag.
+ *
+ * This throws away even more type information that the default {@link TypeOnly} option, resulting in only the most minimal of type compatibility testing.
+ * Currently this minimal level of compatibility resting only includes existence of the type and does not preserve any details.
+ *
+ * This can be used for cases where {@link TypeOnly} preserves too much information, resulting in equivalent copies of a type being considered unequal to themselves.
+ *
+ * @privateRemarks
+ * See `selectTypePreprocessor` for selection logic.
+ */
 export type MinimalType<T> = 0;
+
+/**
+ * Type preprocessing function selected with the `@type-test-full` tag.
+ *
+ * This allows opting into full type compatibility: two types will only be considered compatible if they are assignable unmodified.
+ *
+ * Typically this cannot be used on any type that reference any classes, symbols or const enums defined in the set of packages being tested for compatibility:
+ * doing so would cause false positives (errors) when comparing a type to an identical one from its published package.
+ *
+ * @privateRemarks
+ * See `selectTypePreprocessor` for selection logic.
+ */
 export type FullType<T> = T;
 
 // Checks //
