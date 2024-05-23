@@ -729,8 +729,24 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			this.receivedAddMemberEvent(this.pendingClientId!);
 		}
 
+		assert(
+			!this.waitingForLeaveOp,
+			"leave timer can't be set as we have not had access to quorum",
+		);
+
+		// This check is required for scenario of loading container from pending state, and ensuring there is no way
+		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
-		if (this.clientId !== undefined && this.hasMember(this.clientId)) {
+		// This mimicks check in setConnectionState()
+		// Note that we are not consulting this.handler.shouldClientJoinWrite() here
+		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
+		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
+		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,
+		// we might wait even if we could avoid such wait.
+		if (
+			this._clientId !== undefined &&
+			protocol.quorum?.getMember(this._clientId) !== undefined
+		) {
 			this.prevClientLeftTimer.restart();
 		}
 	}
