@@ -187,6 +187,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly closeContainer: (error?: ICriticalContainerError) => void;
+	// If true, don't return local ids for uploaded blobs. This is to support scenarios where blobs
+	// created may be used by clients running 1.x or older versions which didn't support local ids.
+	private readonly noLocalIds: boolean;
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -212,6 +215,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
 		readonly closeContainer: (error?: ICriticalContainerError) => void;
+		readonly noLocalIds: boolean;
 	}) {
 		super();
 		const {
@@ -224,6 +228,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			runtime,
 			stashedBlobs,
 			closeContainer,
+			noLocalIds,
 		} = props;
 		this.routeContext = routeContext;
 		this.getStorage = getStorage;
@@ -231,6 +236,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.closeContainer = closeContainer;
+		this.noLocalIds = noLocalIds;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -424,8 +430,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					this.deletePendingBlobMaybe(id);
 			  }
 			: undefined;
+
+		// If noLocalIds is true, return the storage id if it exists. This will ensure that
+		// clients running 1.x or older versions can read this blob because those versions didn't
+		// support local ids for blobs created in attached state.
+		let idForHandle = id;
+		if (this.noLocalIds) {
+			idForHandle = this.redirectTable.get(id) ?? id;
+		}
 		return new BlobHandle(
-			`${BlobManager.basePath}/${id}`,
+			`${BlobManager.basePath}/${idForHandle}`,
 			this.routeContext,
 			async () => this.getBlob(id),
 			callback,

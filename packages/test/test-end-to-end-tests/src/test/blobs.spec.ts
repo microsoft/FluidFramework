@@ -50,7 +50,13 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContainerConfig {
+function makeTestContainerConfig(
+	provider: ITestObjectProvider,
+	registry: ChannelFactoryRegistry,
+): ITestContainerConfig {
+	// When running in cross client compat mode, disable returning local Ids for attachment blobs
+	// because that is not supported by 1.x.
+	const noLocalIdsForAttachmentBlobs = provider.type === "TestObjectProviderWithVersionedLoad";
 	return {
 		runtimeOptions: {
 			summaryOptions: {
@@ -67,6 +73,7 @@ function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContain
 					},
 				},
 			},
+			noLocalIdsForAttachmentBlobs,
 		},
 		registry,
 	};
@@ -84,17 +91,18 @@ const ContainerCloseUsageError: ExpectedEvents = {
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
-	const testContainerConfig = makeTestContainerConfig([
-		["sharedString", SharedString.getFactory()],
-	]);
-
 	let provider: ITestObjectProvider;
+	let testContainerConfig: ITestContainerConfig;
+
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
+		testContainerConfig = makeTestContainerConfig(provider, [
+			["sharedString", SharedString.getFactory()],
+		]);
 	});
 
 	it("attach sends an op", async function () {
@@ -124,14 +132,9 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("can get remote attached blob", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
 		const testString = "this is a test string";
 		const testKey = "a blob";
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-
 		const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
 
 		const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
@@ -141,17 +144,23 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
 
 		await provider.ensureSynchronized();
-
 		const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
-		assert(blobHandle);
+		assert(blobHandle !== undefined, "Blob not found in second container");
 		assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
+
+		// Upload another blob with the same content to validate that fetching remote
+		// de-duped blobs work as expected.
+		const testKey2 = "a blob";
+		const blob2 = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+		dataStore1._root.set(testKey2, blob2);
+
+		await provider.ensureSynchronized();
+		const blobHandle2 = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey2);
+		assert(blobHandle2 !== undefined, "Blob 2 not found in second container");
+		assert.strictEqual(bufferToString(await blobHandle2.get(), "utf-8"), testString);
 	});
 
 	it("round trip blob handle on shared string property", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const testString = "this is a test string";
@@ -273,17 +282,18 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 // tests above when the LTS version is bumped > 0.47
 describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
-	const testContainerConfig = makeTestContainerConfig([
-		["sharedString", SharedString.getFactory()],
-	]);
-
 	let provider: ITestObjectProvider;
+	let testContainerConfig: ITestContainerConfig;
+
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
+		testContainerConfig = makeTestContainerConfig(provider, [
+			["sharedString", SharedString.getFactory()],
+		]);
 	});
 
 	// this test relies on an internal function that has been renamed (snapshot -> summarize)
@@ -353,7 +363,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	for (const getDetachedBlobStorage of [undefined, () => new MockDetachedBlobStorage()]) {
-		serializationTests({ getDetachedBlobStorage, testContainerConfig });
+		serializationTests({ getDetachedBlobStorage });
 	}
 
 	// regression test for https://github.com/microsoft/FluidFramework/issues/9702
@@ -420,10 +430,8 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 
 function serializationTests({
 	getDetachedBlobStorage,
-	testContainerConfig,
 }: {
 	getDetachedBlobStorage?: () => IDetachedBlobStorage;
-	testContainerConfig: ITestContainerConfig;
 }) {
 	return describeCompat(
 		`Detached Container Serialization ${
@@ -432,10 +440,12 @@ function serializationTests({
 		"NoCompat",
 		(getTestObjectProvider) => {
 			let provider: ITestObjectProvider;
+			let testContainerConfig: ITestContainerConfig;
 			let detachedBlobStorage: IDetachedBlobStorage | undefined;
 			beforeEach(async function () {
 				provider = getTestObjectProvider();
 				detachedBlobStorage = getDetachedBlobStorage?.();
+				testContainerConfig = makeTestContainerConfig(provider, []);
 			});
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(

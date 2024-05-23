@@ -478,6 +478,14 @@ export interface IContainerRuntimeOptions {
 	 * are engaged as they become available, without giving legacy clients any chance to fail predictably.
 	 */
 	readonly explicitSchemaControl?: boolean;
+
+	/**
+	 * When this property is set to true, the blob manager will not return local ids for attachment
+	 * blobs that it uploads. It will instead return the id returned by storage after the blob has
+	 * been uploaded. This is added to ensure that clients running versions 1.x and older can read blobs
+	 * created by clients running versions 2.x. 1.x didn't support local ids for attachment blobs.
+	 */
+	readonly noLocalIdsForAttachmentBlobs?: boolean;
 }
 
 /**
@@ -801,6 +809,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
+			noLocalIdsForAttachmentBlobs = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -1007,6 +1016,7 @@ export class ContainerRuntime
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableGroupedBatching,
 				explicitSchemaControl,
+				noLocalIdsForAttachmentBlobs,
 			},
 			containerScope,
 			logger,
@@ -1694,6 +1704,7 @@ export class ContainerRuntime
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
+			noLocalIds: runtimeOptions.noLocalIdsForAttachmentBlobs,
 		});
 
 		this.scheduleManager = new ScheduleManager(

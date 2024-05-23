@@ -94,6 +94,7 @@ export class MockRuntime
 			runtime: this,
 			stashedBlobs: stashed[1],
 			closeContainer: () => (this.closed = true),
+			noLocalIds: false,
 		});
 	}
 

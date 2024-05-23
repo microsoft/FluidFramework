@@ -732,6 +732,7 @@ export interface IContainerRuntimeOptions {
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes?: number;
+    readonly noLocalIdsForAttachmentBlobs?: boolean;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
