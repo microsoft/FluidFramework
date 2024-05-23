@@ -514,6 +514,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					nodeClusterConfig,
+					customizations?.customCreateSocketIoAdapter,
 			  )
 			: new services.SocketIoWebServerFactory(
 					redisClientConnectionManagerForPub,
@@ -521,6 +522,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					socketIoAdapterConfig,
 					httpServerConfig,
 					socketIoConfig,
+					customizations?.customCreateSocketIoAdapter,
 			  );
 
 		return new NexusResources(
