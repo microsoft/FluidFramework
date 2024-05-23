@@ -12,6 +12,7 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -73,6 +74,51 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * @param key - The key of the element to remove from the map.
 	 */
 	delete(key: string): void;
+
+	/**
+	 * Returns an iterable of keys in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the keys returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	keys(): IterableIterator<string>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the values returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the entries returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+
+	/**
+	 * Executes the provided function once per each key/value pair in this map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.
+	 * If your usage scenario depends on consistent ordering, you will need to account for this.
+	 */
+	forEach(
+		callbackfn: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			key: string,
+			map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+		) => void,
+		// Typing inherited from `ReadonlyMap`.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		thisArg?: any,
+	): void;
 }
 
 const handler: ProxyHandler<TreeMapNode> = {
@@ -86,7 +132,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 > {
 	public static readonly kind = NodeKind.Map;
 
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		return this.entries();
 	}
 	public delete(key: string): void {
@@ -127,6 +173,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			content,
 			classSchema.info as ImplicitAllowedTypes,
 			node.context.nodeKeyManager,
+			getSchemaAndPolicy(node),
 		);
 
 		node.set(key, cursor);
@@ -143,7 +190,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public forEach<TThis extends TreeMapNode<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		for (const field of getFlexNode(this).boxedIterator()) {
 			const node = getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
@@ -159,6 +206,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,
@@ -199,7 +247,7 @@ export function mapSchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexMapNodeSchema;
 		}
 
@@ -256,7 +304,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		throw rawError("Iterating maps with forEach");
 	}

@@ -131,7 +131,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
 	 */
-	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>) {}
+	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): void {}
 
 	/**
 	 * The most derived constructor (the one invoked with the `new` operator, not a parent class constructor invoked with as `super`) used to construct an instance of this type.

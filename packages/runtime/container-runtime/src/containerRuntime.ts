@@ -9,6 +9,7 @@ import {
 	IAudience,
 	ISelf,
 	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
@@ -17,7 +18,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -27,12 +27,14 @@ import {
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
@@ -47,6 +49,10 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -58,23 +64,16 @@ import type {
 } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -88,6 +87,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -1188,6 +1188,8 @@ export class ContainerRuntime
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	private readonly maxConsecutiveReconnects: number;
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
@@ -1348,7 +1350,8 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLoggerExt,
+		// Create a custom ITelemetryBaseLogger to output telemetry events.
+		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -1389,6 +1392,7 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
+		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,
 			namespace: "ContainerRuntime",
@@ -1787,6 +1791,9 @@ export class ContainerRuntime
 				orderedClientCollection,
 				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
 			);
 
 			this.summarizerClientElection = new SummarizerClientElection(
@@ -1859,7 +1866,7 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		logger.sendTelemetryEvent({
+		this.logger.sendTelemetryEvent({
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});
@@ -2220,7 +2227,7 @@ export class ContainerRuntime
 		);
 
 		// Is document schema explicit control on?
-		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2234,10 +2241,10 @@ export class ContainerRuntime
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
-			message: explitiSchemaControl
+			message: explicitSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
-			lastMessage: explitiSchemaControl ? message : undefined,
+			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
 		};
 
@@ -3238,7 +3245,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.mc.logger.sendTelemetryEvent({
+			summaryLogger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -3435,7 +3442,6 @@ export class ContainerRuntime
 		const {
 			fullTree = false,
 			finalAttempt = false,
-			refreshLatestAck,
 			summaryLogger,
 			latestSummaryRefSeqNum,
 		} = options;
@@ -3454,16 +3460,6 @@ export class ContainerRuntime
 		});
 
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
-
-		// We close the summarizer and download a new snapshot and reload the container
-		if (refreshLatestAck === true) {
-			return this.prefetchLatestSummaryThenClose(
-				createChildLogger({
-					logger: summaryNumberLogger,
-					properties: { all: { safeSummary: true } },
-				}),
-			);
-		}
 
 		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
 		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
@@ -3560,7 +3556,7 @@ export class ContainerRuntime
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
-						error: new LoggingError(
+						error: new RetriableSummaryError(
 							`Summarizer node state inconsistent with summarizer state.`,
 						),
 					};
@@ -3612,18 +3608,15 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
-			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
-			// state of all the nodes.
-			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree || forcedFullTree,
+					fullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -3633,7 +3626,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3700,7 +3693,6 @@ export class ContainerRuntime
 				summaryTree,
 				summaryStats,
 				generateDuration: trace.trace().duration,
-				forcedFullTree,
 			} as const;
 
 			continueResult = checkContinue();
@@ -3708,7 +3700,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3735,7 +3727,7 @@ export class ContainerRuntime
 				return {
 					stage: "generate",
 					...generateSummaryData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3758,7 +3750,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: new LoggingError(continueResult.error),
+					error: new RetriableSummaryError(continueResult.error),
 				};
 			}
 
@@ -3769,7 +3761,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 
@@ -3786,7 +3778,7 @@ export class ContainerRuntime
 				return {
 					stage: "upload",
 					...uploadData,
-					error: wrapError(error, (msg) => new LoggingError(msg)),
+					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
 			return submitData;
@@ -3919,13 +3911,13 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges = false): void {
+	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
 		if (this._idCompressor) {
 			const idRange = resubmitOutstandingRanges
-				? this.idCompressor?.takeUnfinalizedCreationRange()
+				? this._idCompressor.takeUnfinalizedCreationRange()
 				: this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
-			if (idRange?.ids !== undefined) {
+			if (idRange.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
@@ -3970,6 +3962,10 @@ export class ContainerRuntime
 		}
 
 		const type = containerRuntimeMessage.type;
+		assert(
+			type !== ContainerMessageType.IdAllocation,
+			"IdAllocation should be submitted directly to outbox.",
+		);
 		const message: BatchMessage = {
 			contents: serializedContent,
 			metadata,
@@ -3978,44 +3974,36 @@ export class ContainerRuntime
 		};
 
 		try {
-			// If `message` is an allocation op, then we are in the resubmit path and we must redirect the allocation
-			// op into the correct batch to avoid ranges being finalized out of order.
-			// Otherwise, submit an IdAllocation op if any IDs have been generated since the last op was submitted, as
-			// any of the other op types may contain those IDs and thus depend on the allocation op being sent first.
-			if (type === ContainerMessageType.IdAllocation) {
-				this.outbox.submitIdAllocation(message);
+			this.submitIdAllocationOpIfNeeded(false);
+
+			// Allow document schema controller to send a message if it needs to propose change in document schema.
+			// If it needs to send a message, it will call provided callback with payload of such message and rely
+			// on this callback to do actual sending.
+			const contents = this.documentsSchemaController.maybeSendSchemaMessage();
+			if (contents) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SchemaChangeProposal",
+					refSeq: contents.refSeq,
+					version: contents.version,
+					newRuntimeSchema: JSON.stringify(contents.runtime),
+					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+				});
+				const msg: ContainerRuntimeDocumentSchemaMessage = {
+					type: ContainerMessageType.DocumentSchemaChange,
+					contents,
+				};
+				this.outbox.submit({
+					contents: JSON.stringify(msg),
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				});
+			}
+
+			if (type === ContainerMessageType.BlobAttach) {
+				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+				this.outbox.submitBlobAttach(message);
 			} else {
-				this.submitIdAllocationOpIfNeeded();
-
-				// Allow document schema controller to send a message if it needs to propose change in document schema.
-				// If it needs to send a message, it will call provided callback with payload of such message and rely
-				// on this callback to do actual sending.
-				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
-				if (contents) {
-					this.logger.sendTelemetryEvent({
-						eventName: "SchemaChangeProposal",
-						refSeq: contents.refSeq,
-						version: contents.version,
-						newRuntimeSchema: JSON.stringify(contents.runtime),
-						sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-						oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
-					});
-					const msg: ContainerRuntimeDocumentSchemaMessage = {
-						type: ContainerMessageType.DocumentSchemaChange,
-						contents,
-					};
-					this.outbox.submit({
-						contents: JSON.stringify(msg),
-						referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					});
-				}
-
-				if (type === ContainerMessageType.BlobAttach) {
-					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
-					this.outbox.submitBlobAttach(message);
-				} else {
-					this.outbox.submit(message);
-				}
+				this.outbox.submit(message);
 			}
 
 			if (!this.currentlyBatching()) {
@@ -4224,7 +4212,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			await this.fetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotAndClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -4233,8 +4221,6 @@ export class ContainerRuntime
 				},
 				readAndParseBlob,
 			);
-
-			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -4243,54 +4229,16 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage to refresh the cache as a performance optimization and closes the
-	 * summarizer to reload from new state.
-	 * @param summaryLogger - logger to use when fetching snapshot from storage
-	 * @returns a generic summarization error
+	 * Fetches the latest snapshot from storage and closes the container. This is done in cases where
+	 * the last known snapshot is older than the latest one. This will ensure that the latest snapshot
+	 * is downloaded and we don't end up loading snapshot from cache.
 	 */
-	private async prefetchLatestSummaryThenClose(
-		summaryLogger: ITelemetryLoggerExt,
-	): Promise<IBaseSummarizeResult> {
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-
-		// This is a performance optimization as the same parent is likely to be elected again, and would use its
-		// cache to fetch the snapshot instead of the network.
-		await this.fetchLatestSnapshotFromStorage(
-			summaryLogger,
-			{
-				eventName: "RefreshLatestSummaryFromServerFetch",
-			},
-			readAndParseBlob,
-		);
-
-		await this.closeStaleSummarizer();
-
-		return {
-			stage: "base",
-			error: new LoggingError("summary state stale - Unsupported option 'refreshLatestAck'"),
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
-		};
-	}
-
-	private async closeStaleSummarizer(): Promise<void> {
-		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-		await delay(this.closeSummarizerDelayMs);
-		this._summarizer?.stop("latestSummaryStateStale");
-		this.disposeFn();
-	}
-
-	/**
-	 * Downloads the latest snapshot from storage.
-	 * By default, it also closes the container after downloading the snapshot. However, this may be
-	 * overridden via options.
-	 */
-	private async fetchLatestSnapshotFromStorage(
+	private async fetchLatestSnapshotAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return PerformanceEvent.timedExecAsync(
+	) {
+		await PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -4329,13 +4277,12 @@ export class ContainerRuntime
 				stats.snapshotVersion = versions[0].id;
 
 				perfEvent.end(stats);
-				return {
-					snapshotTree: maybeSnapshot,
-					versionId: versions[0].id,
-					latestSnapshotRefSeq,
-				};
 			},
 		);
+
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {

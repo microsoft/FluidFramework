@@ -80,6 +80,7 @@ export const unionOptions: ObjectOptions = {
  * ```
  * where only a single property of `EncodedOperation` is populated for a given encoded value.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends any[], TResult> {
 	private readonly library: ReadonlyMap<
 		keyof TUnion,

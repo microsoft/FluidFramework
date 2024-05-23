@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Utility function to check if any blobs under a snapshot tree is missing and if so, then return

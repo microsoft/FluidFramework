@@ -4,19 +4,19 @@
  */
 
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -119,7 +119,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @public
+ * @alpha
  */
 export interface IDeltaHandler {
 	/**
@@ -174,7 +174,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @public
+ * @alpha
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -213,7 +213,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @public
+ * @alpha
  */
 export interface IChannelStorageService {
 	/**
@@ -234,7 +234,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @public
+ * @alpha
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -268,7 +268,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @public
+ * @alpha
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**

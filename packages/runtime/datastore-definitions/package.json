@@ -69,35 +69,26 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
-		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-rc.3.0.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.43.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IFluidDataStoreRuntime": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IChannel": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

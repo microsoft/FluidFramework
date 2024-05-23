@@ -10,15 +10,17 @@ import type {
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import type {
+	IAnyDriverError,
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
+	ITokenClaims,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	IClientDetails,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.

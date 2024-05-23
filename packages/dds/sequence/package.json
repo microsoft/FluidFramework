@@ -133,8 +133,8 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -149,12 +149,12 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-rc.3.0.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-rc.4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.43.1",
 		"@types/diff": "^3.5.1",
@@ -175,7 +175,7 @@
 		"random-js": "^2.1.0",
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -191,20 +191,56 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedIntervalCollection": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSegmentSequence": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSequence": {
-				"forwardCompat": false
-			},
 			"RemovedClassDeclaration_SharedStringFactory": {
 				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISequenceDeltaRange": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SubSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISharedString": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedString": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedStringClass": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IntervalRevertible": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceDeltaEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceEvent": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceMaintenanceEvent": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringRevertible": {
 				"forwardCompat": false
 			}
 		}

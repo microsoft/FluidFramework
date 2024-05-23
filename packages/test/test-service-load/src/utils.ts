@@ -28,7 +28,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
@@ -295,6 +295,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
 
 /**

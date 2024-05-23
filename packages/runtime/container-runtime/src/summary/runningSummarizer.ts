@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	MonitoringContext,
 	UsageError,
@@ -38,9 +38,11 @@ import {
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	SummarizerStopReason,
+	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
+	RetriableSummaryError,
 	SummarizeReason,
 	SummarizeResultBuilder,
 	SummaryGenerator,
@@ -474,7 +476,6 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				this.trySummarizeOnce(
 					// summarizeProps
 					{ summarizeReason: "lastSummary" },
-					// ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
 					{},
 				);
 			}
@@ -627,9 +628,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				this.beforeSummaryAction();
 			},
 			async () => {
-				return this.mc.config.getBoolean("Fluid.Summarizer.UseDynamicRetries")
-					? this.trySummarizeWithRetries(reason)
-					: this.trySummarizeWithStaticAttempts(reason);
+				return this.trySummarizeWithRetries(reason);
 			},
 			() => {
 				this.afterSummaryAction();
@@ -637,92 +636,6 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		).catch((error) => {
 			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
 		});
-	}
-
-	/**
-	 * Tries to summarize 2 times with pre-defined summary options. If an attempt fails with "retryAfterSeconds"
-	 * param, that attempt is tried once more.
-	 */
-	private async trySummarizeWithStaticAttempts(reason: SummarizeReason) {
-		const attemptOptions: ISummarizeOptions[] = [
-			{ refreshLatestAck: false, fullTree: false },
-			{ refreshLatestAck: true, fullTree: false },
-		];
-		let summaryAttempts = 0;
-		let summaryAttemptsPerPhase = 0;
-		let summaryAttemptPhase = 0;
-		let error: any;
-		while (summaryAttemptPhase < attemptOptions.length) {
-			if (this.cancellationToken.cancelled) {
-				return;
-			}
-
-			// We only want to attempt 1 summary when reason is "lastSummary"
-			if (++summaryAttempts > 1 && reason === "lastSummary") {
-				return;
-			}
-
-			summaryAttemptsPerPhase++;
-
-			const summarizeOptions = attemptOptions[summaryAttemptPhase];
-			const summarizeProps: ISummarizeTelemetryProperties = {
-				summarizeReason: reason,
-				summaryAttempts,
-				summaryAttemptsPerPhase,
-				summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
-				...summarizeOptions,
-			};
-			const summaryLogger = createChildLogger({
-				logger: this.mc.logger,
-				properties: { all: summarizeProps },
-			});
-			const summaryOptions: ISubmitSummaryOptions = {
-				...summarizeOptions,
-				summaryLogger,
-				cancellationToken: this.cancellationToken,
-				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
-			};
-
-			// Note: no need to account for cancellationToken.waitCancelled here, as
-			// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
-			const resultSummarize = this.generator.summarize(summaryOptions);
-			const ackNackResult = await resultSummarize.receivedSummaryAckOrNack;
-			if (ackNackResult.success) {
-				return;
-			}
-
-			error = ackNackResult.error;
-
-			// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
-			// Retry the same step only once per retryAfter response.
-			const submitResult = await resultSummarize.summarySubmitted;
-			const delaySeconds = !submitResult.success
-				? submitResult.data?.retryAfterSeconds
-				: ackNackResult.data?.retryAfterSeconds;
-			if (delaySeconds === undefined || summaryAttemptsPerPhase > 1) {
-				summaryAttemptPhase++;
-				summaryAttemptsPerPhase = 0;
-			}
-
-			if (delaySeconds !== undefined) {
-				this.mc.logger.sendPerformanceEvent({
-					eventName: "SummarizeAttemptDelay",
-					duration: delaySeconds,
-					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
-					...summarizeProps,
-				});
-				await delay(delaySeconds * 1000);
-			}
-		}
-		this.mc.logger.sendErrorEvent(
-			{
-				eventName: "SummarizeFailed",
-				maxAttempts: attemptOptions.length,
-				summaryAttempts: summaryAttemptPhase,
-			},
-			error,
-		);
-		this.stopSummarizerCallback("failToSummarize");
 	}
 
 	/**
@@ -773,7 +686,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
-		let error: any;
+		let error: IRetriableFailureError | undefined;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -793,22 +706,18 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				break;
 			}
 
-			// Update max attempts and retry params from the failure result.
-			// If submit summary failed, use the params from "summarySubmitted" result. Else, use the params
-			// from "receivedSummaryAckOrNack" result.
+			// Update max attempts from the failure result.
+			// If submit summary failed, use maxAttemptsForSubmitFailures. Else use the defaultMaxAttempts.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
 			const submitSummaryResult = await results.summarySubmitted;
-			if (!submitSummaryResult.success) {
-				maxAttempts = this.maxAttemptsForSubmitFailures;
-				retryAfterSeconds = submitSummaryResult.data?.retryAfterSeconds;
-			} else {
-				maxAttempts = defaultMaxAttempts;
-				retryAfterSeconds = ackNackResult.data?.retryAfterSeconds;
-			}
+			maxAttempts = !submitSummaryResult.success
+				? this.maxAttemptsForSubmitFailures
+				: defaultMaxAttempts;
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
 			error = ackNackResult.error;
+			retryAfterSeconds = error.retryAfterSeconds;
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
@@ -817,27 +726,26 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			};
 			this.emit("summarize", eventProps);
 
-			// If the failure doesn't have "retryAfterSeconds" or the max number of attempts have been done, we're done.
+			// Break if the failure doesn't have "retryAfterSeconds" or we are one less from max number of attempts.
+			// Note that the final attempt if "retryAfterSeconds" does exist happens outside of the do..while loop.
 			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts - 1) {
 				done = true;
 			}
 
-			// If the failure has "retryAfterSeconds", add a delay of that time. In this case, a final attempt will
-			// take place and we need to wait for "retryAfterSeconds" before that.
-			if (retryAfterSeconds !== undefined) {
+			// If the failure has "retryAfterSeconds", add a delay of that time before starting the next attempt.
+			if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
 				this.mc.logger.sendPerformanceEvent({
 					eventName: "SummarizeAttemptDelay",
-					duration: retryAfterSeconds,
-					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
+					duration: retryAfterSeconds * 1000,
+					summaryNackDelay: ackNackResult.data !== undefined, // This will only be defined only for nack failures.
 					stage: submitSummaryResult.data?.stage,
-					dynamicRetries: true, // To differentiate this telemetry from regular retry logic
 					...attemptResult.summarizeProps,
 				});
 				await delay(retryAfterSeconds * 1000);
 			}
 		} while (!done);
 
-		// If summarize attempt did not fail, emit "summarize" event and return. A failed attempt may be retried below.
+		// If the attempt was successful, emit "summarize" event and return. A failed attempt may be retried below.
 		if (status !== "failure") {
 			this.emit("summarize", { result: status, currentAttempt, maxAttempts });
 			return results;
@@ -888,7 +796,10 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	) {
 		const results = await this.trySummarizeWithRetries(reason);
 		if (results === undefined) {
-			resultsBuilder.fail("Summarization was canceled", undefined);
+			resultsBuilder.fail(
+				"Summarization was canceled",
+				new RetriableSummaryError("Summarization was canceled"),
+			);
 			return resultsBuilder.build();
 		}
 		const submitResult = await results.summarySubmitted;
@@ -906,7 +817,10 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
 		if (this.stopping) {
-			resultsBuilder.fail("RunningSummarizer stopped or disposed", undefined);
+			resultsBuilder.fail(
+				"RunningSummarizer stopped or disposed",
+				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
+			);
 			return resultsBuilder.build();
 		}
 		// Check for concurrent summary attempts. If one is found,
@@ -944,7 +858,9 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			// Override existing enqueued summarize attempt.
 			this.enqueuedSummary.resultsBuilder.fail(
 				"Aborted; overridden by another enqueue summarize attempt",
-				undefined,
+				new RetriableSummaryError(
+					"Summary was overridden by another enqueue summarize attempt",
+				),
 			);
 			this.enqueuedSummary = undefined;
 			overridden = true;
@@ -995,7 +911,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		if (this.enqueuedSummary !== undefined) {
 			this.enqueuedSummary.resultsBuilder.fail(
 				"RunningSummarizer stopped or disposed",
-				undefined,
+				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
 			);
 			this.enqueuedSummary = undefined;
 		}

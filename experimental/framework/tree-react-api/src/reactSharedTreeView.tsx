@@ -5,21 +5,23 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
-import type { DataObjectClass } from "@fluidframework/fluid-static";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
-	configuredSharedTree,
-	typeboxValidator,
 	type ITree,
 	type SchemaCompatibilityStatus,
 	type TreeConfiguration,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	type ImplicitFieldSchema,
-} from "@fluidframework/tree/internal";
+} from "@fluidframework/tree";
+import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
@@ -31,12 +33,6 @@ const SharedTree = configuredSharedTree({
 });
 
 /**
- * TODO: once we add options to factory (for example controlling the write format),
- * apps will need a way to provide those.
- */
-export const factory: IChannelFactory = SharedTree.getFactory();
-
-/**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
@@ -46,7 +42,7 @@ export const factory: IChannelFactory = SharedTree.getFactory();
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
 	treeConfiguration: TreeConfiguration<TSchema>,
-): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable> {
+): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> {
 	return treeDataObjectInternal(key, treeConfiguration);
 }
 
@@ -60,10 +56,10 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	key: string,
 	treeConfiguration: TreeConfiguration<TSchema>,
-): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
-	return class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
+	class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
 		public readonly key = key;
 		public readonly config = treeConfiguration;
 
@@ -73,7 +69,8 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 			[SharedTree.getFactory()],
 			{},
 		);
-	};
+	}
+	return createDataObjectKind(SchemaAwareTreeDataObject);
 }
 
 /**
@@ -161,7 +158,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 	}
 
 	protected override async initializingFirstTime(): Promise<void> {
-		const tree = this.runtime.createChannel(undefined, factory.type) as ITree;
+		const tree = SharedTree.create(this.runtime);
 		this.#tree = await tree.viewWith(this.config);
 		// Initialize the tree content and schema.
 		this.#tree.initialize(this.config.initialTree());

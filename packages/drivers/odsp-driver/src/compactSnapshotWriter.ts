@@ -5,12 +5,8 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
-	IBlob,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+import { ISnapshot, IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
@@ -82,8 +78,8 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
 		}
-		if (snapshotTree.groupId !== undefined) {
-			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
+		if (value.groupId !== undefined) {
+			addDictionaryStringProperty(treeNode, "groupId", value.groupId);
 		}
 	}
 

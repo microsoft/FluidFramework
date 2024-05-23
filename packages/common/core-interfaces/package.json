@@ -81,10 +81,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-rc.3.0.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.43.1",
 		"@types/node": "^18.19.0",
@@ -92,29 +92,9 @@
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedVariableDeclaration_isFluidPackage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IFluidHandle": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IProvideFluidHandle": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IProvideFluidLoadable": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IFluidLoadable": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

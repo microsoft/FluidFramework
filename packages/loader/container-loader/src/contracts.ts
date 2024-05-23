@@ -12,16 +12,18 @@ import {
 	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
+import {
+	IContainerPackageInfo,
+	IClientConfiguration,
+	IDocumentMessage,
+	ISignalClient,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
-	IClientConfiguration,
 	IClientDetails,
-	IDocumentMessage,
 	ISequencedDocumentMessage,
-	ISignalClient,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",

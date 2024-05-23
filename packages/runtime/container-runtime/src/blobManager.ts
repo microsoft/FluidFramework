@@ -14,18 +14,18 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
+	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
 	SummaryTreeBuilder,
@@ -96,7 +96,7 @@ export interface IBlobManagerLoadInfo {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "logger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -233,7 +233,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.closeContainer = closeContainer;
 
 		this.mc = createChildMonitoringContext({
-			logger: this.runtime.logger,
+			logger: this.runtime.baseLogger,
 			namespace: "BlobManager",
 		});
 

@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-
-import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ITaskManager } from "../interfaces.js";
-import { TaskManager } from "../taskManager.js";
+import { TaskManagerClass } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
@@ -27,7 +27,7 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
 		objectStorage: new MockStorage(),
 	};
 
-	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
+	const taskManager = new TaskManagerClass(id, dataStoreRuntime, TaskManagerFactory.Attributes);
 	taskManager.connect(services);
 	return taskManager;
 }
@@ -35,13 +35,13 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
 function createDetachedTaskManager(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): { taskManager: TaskManager; attach: () => Promise<void> } {
+): { taskManager: TaskManagerClass; attach: () => Promise<void> } {
 	// Create a detached TaskManager.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const clientId = dataStoreRuntime.clientId;
 
-	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
+	const taskManager = new TaskManagerClass(id, dataStoreRuntime, TaskManagerFactory.Attributes);
 	const attach = async () => {
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -76,7 +76,10 @@ describe("TaskManager", () => {
 		it("Can create a connected TaskManager", () => {
 			assert.ok(taskManager1, "Could not create a task manager");
 			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok((taskManager1 as TaskManager).connected, "TaskManager should be connected");
+			assert.ok(
+				(taskManager1 as TaskManagerClass).connected,
+				"TaskManager should be connected",
+			);
 		});
 
 		describe("Volunteering for a task", () => {
@@ -495,7 +498,7 @@ describe("TaskManager", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager1 = new TaskManager(
+			taskManager1 = new TaskManagerClass(
 				"task-manager-1",
 				dataStoreRuntime1,
 				TaskManagerFactory.Attributes,
@@ -584,7 +587,7 @@ describe("TaskManager", () => {
 	});
 
 	describe("Detached/Attach", () => {
-		let taskManager1: TaskManager;
+		let taskManager1: TaskManagerClass;
 		let attachTaskManager1: () => Promise<void>;
 		// let taskManager2: ITaskManager;
 		// let attachTaskManager2: () => void;
@@ -877,8 +880,8 @@ describe("TaskManager", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let taskManager1: TaskManager;
-		let taskManager2: TaskManager;
+		let taskManager1: TaskManagerClass;
+		let taskManager2: TaskManagerClass;
 
 		beforeEach(async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -890,7 +893,7 @@ describe("TaskManager", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager1 = new TaskManager(
+			taskManager1 = new TaskManagerClass(
 				"task-manager-1",
 				dataStoreRuntime1,
 				TaskManagerFactory.Attributes,
@@ -904,7 +907,7 @@ describe("TaskManager", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager2 = new TaskManager(
+			taskManager2 = new TaskManagerClass(
 				"task-manager-2",
 				dataStoreRuntime2,
 				TaskManagerFactory.Attributes,

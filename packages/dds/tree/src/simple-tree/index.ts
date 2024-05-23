@@ -10,6 +10,7 @@ export {
 	TreeConfiguration,
 	TreeViewConfiguration,
 	SchemaCompatibilityStatus,
+	ITreeConfigurationOptions,
 } from "./tree.js";
 export {
 	TreeNodeSchema,

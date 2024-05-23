@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
@@ -20,6 +20,8 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorTypes,
+	IDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
@@ -28,11 +30,9 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
-	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,

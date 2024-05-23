@@ -39,7 +39,6 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -47,17 +46,17 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.38.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-rc.3.0.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-rc.4.0.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
 		"broken": {}

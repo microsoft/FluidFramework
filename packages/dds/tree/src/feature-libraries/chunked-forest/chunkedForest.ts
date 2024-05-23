@@ -89,7 +89,6 @@ export class ChunkedForest implements IEditableForest {
 			this.activeVisitor === undefined,
 			0x76a /* Must release existing visitor before acquiring another */,
 		);
-		this.events.emit("beforeChange");
 
 		if (this.roots.isShared()) {
 			this.roots = this.roots.clone();
@@ -116,12 +115,13 @@ export class ChunkedForest implements IEditableForest {
 					0x76b /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
+				this.forest.events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
+				this.forest.events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
 				this.forest.events.emit("afterRootFieldCreated", destination);
@@ -139,6 +139,7 @@ export class ChunkedForest implements IEditableForest {
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.events.emit("beforeChange");
 				const sourceField = this.forest.roots.fields.get(source) ?? [];
 				this.forest.roots.fields.delete(source);
 				if (sourceField.length === 0) {
@@ -158,6 +159,7 @@ export class ChunkedForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				this.forest.events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 

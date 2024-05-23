@@ -7,16 +7,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
@@ -41,7 +40,11 @@ import {
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
+import {
+	DefaultResubmitMachine,
+	ExplicitCoreCodecVersions,
+	SharedTreeCore,
+} from "../shared-tree-core/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
@@ -50,10 +53,9 @@ import {
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
-import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
-import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -227,6 +229,7 @@ export class SharedTree
 				throw error;
 			},
 		);
+		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
@@ -238,15 +241,11 @@ export class SharedTree
 			telemetryContextPrefix,
 			schema,
 			defaultSchemaPolicy,
-			new DefaultCommitEnricher(
+			new DefaultResubmitMachine(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
-				() => {
-					return new SharedTreeChangeEnricher(
-						forest.clone(schema, new AnchorSet()),
-						removedRoots.clone(),
-					);
-				},
+				changeEnricher,
 			),
+			changeEnricher,
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -436,13 +435,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;

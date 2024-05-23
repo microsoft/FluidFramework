@@ -80,9 +80,18 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
+		const policy = {
+			...defaultSchemaPolicy,
+			// TODO: Sort out option spec policy here while deciding API for TreeConfiguration / TreeViewConfiguration.
+			// This is duped with a default constant right now.
+			validateSchema: config.options?.enableSchemaValidation ?? false,
+		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, nodeKeyManager);
-		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
+		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
+			schema: checkout.storedSchema,
+			policy,
+		});
+		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,

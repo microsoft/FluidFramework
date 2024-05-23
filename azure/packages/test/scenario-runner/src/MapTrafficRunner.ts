@@ -70,7 +70,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 			logger,
 			{ eventName: "ContainerLoad", clientId: runConfig.childId },
 			async (_event) => {
-				return ac.getContainer(runConfig.docId, schema);
+				return ac.getContainer(runConfig.docId, schema, "2");
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);

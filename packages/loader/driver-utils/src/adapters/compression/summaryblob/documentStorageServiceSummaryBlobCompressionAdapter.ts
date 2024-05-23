@@ -8,16 +8,16 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	IVersion,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import { compress, decompress } from "lz4js";
 
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";

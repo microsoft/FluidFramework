@@ -80,16 +80,15 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0"
+		"@fluidframework/driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
-		"@fluidframework/container-definitions-previous": "npm:@fluidframework/container-definitions@2.0.0-rc.3.0.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/container-definitions-previous": "npm:@fluidframework/container-definitions@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.43.1",
 		"copyfiles": "^2.4.1",
@@ -97,37 +96,9 @@
 		"eslint-plugin-deprecation": "~2.0.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedEnumDeclaration_ContainerErrorType": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IPendingLocalState": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IContainer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IContainerContext": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IAudience": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IAudienceOwner": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ILoaderHeader": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

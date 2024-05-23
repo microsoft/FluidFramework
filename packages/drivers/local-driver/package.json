@@ -109,7 +109,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-base": "^4.0.0",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^4.0.0",
 		"@fluidframework/server-services-client": "^4.0.0",
@@ -123,11 +122,11 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-rc.3.0.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-rc.4.0.0",
 		"@microsoft/api-extractor": "^7.43.1",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
@@ -144,7 +143,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"socket.io-client": "^4.7.3",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
 		"broken": {}
