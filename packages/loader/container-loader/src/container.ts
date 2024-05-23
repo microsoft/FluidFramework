@@ -526,6 +526,15 @@ export class Container
 				0x969 /* not connected yet */,
 			);
 
+			// Track membership changes and update connection state accordingly
+			// We do this call here, instead of doing it in initializeProtocolState() due to pendingLocalState.
+			// When we load from stashed state, we let connectionStateHandler know about clientId from previous container instance.
+			// But we will play trailing ops from snapshot, including potentially playing join & leave ops for that same clientId!
+			// In other words, if connectionStateHandler has access to Quorum early in load sequence, it will see events (in stashed ops mode)
+			// in the order that is not possible in real life, that it may not expect.
+			// Ideally, we should supply pendingLocalState?.clientId here as well, not in constructor, but it does not matter (at least today)
+			this.connectionStateHandler.initProtocol(this.protocolHandler);
+
 			// Propagate current connection state through the system.
 			const readonly = this.readOnlyInfo.readonly ?? false;
 			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
@@ -1870,9 +1879,6 @@ export class Container
 		protocol.quorum.on("error", (error) => {
 			protocolLogger.sendErrorEvent(error);
 		});
-
-		// Track membership changes and update connection state accordingly
-		this.connectionStateHandler.initProtocol(protocol);
 
 		protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
 			if (proposal.key === "code" || proposal.key === "code2") {
