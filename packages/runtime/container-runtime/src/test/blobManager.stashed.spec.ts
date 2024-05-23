@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager.js";

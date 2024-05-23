@@ -39,7 +39,8 @@
 				},
 				"tinylicious": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.ForceWriteConnection": [true, false]
 					}
 				}
 			},

@@ -17,11 +17,11 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,

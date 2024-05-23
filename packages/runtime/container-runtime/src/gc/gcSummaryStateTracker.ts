@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	ISummaryTreeWithStats,
 	ISummarizeResult,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
@@ -16,7 +16,7 @@ import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/in
 
 import { IRefreshSummaryResult } from "../summary/index.js";
 
-import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
+import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 
@@ -38,16 +38,10 @@ export interface IGCSummaryTrackingData {
  * On summarize, it decides whether to write new state or re-use previous summary's state.
  */
 export class GCSummaryStateTracker {
-	// This is the version of GC data in the latest summary being tracked.
-	private latestSummaryGCVersion: GCVersion;
-
 	// Keeps track of the GC data from the latest summary successfully acked by the server.
 	private latestSummaryData: IGCSummaryTrackingData | undefined;
 	// Keeps track of the GC data from the last summary submitted to the server but not yet acked.
 	private pendingSummaryData: IGCSummaryTrackingData | undefined;
-
-	// Tracks whether there was GC was run in latest summary being tracked.
-	private wasGCRunInLatestSummary: boolean;
 
 	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
 	// to unreferenced or vice-versa.
@@ -69,58 +63,9 @@ export class GCSummaryStateTracker {
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"shouldRunGC" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+			"gcEnabled" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
 		>,
-		// Tells whether GC was run in the base snapshot this container loaded from.
-		wasGCRunInBaseSnapshot: boolean,
-	) {
-		this.wasGCRunInLatestSummary = wasGCRunInBaseSnapshot;
-		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
-		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion =
-			this.configs.gcVersionInBaseSnapshot ?? this.configs.gcVersionInEffect;
-	}
-
-	/**
-	 * Tells whether the GC state needs to be reset. This can happen under 3 conditions:
-	 *
-	 * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
-	 * it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
-	 *
-	 * 2. The base snapshot does not have GC state but GC is enabled. This will happen the very first time GC runs on
-	 * a document and the first time GC is enabled after is was disabled before.
-	 *
-	 * 3. GC is enabled and the latest summary state is refreshed from a snapshot that had GC disabled and vice-versa.
-	 *
-	 * Note that the state will be reset only once for the first summary generated after this returns true. After that,
-	 * this will return false.
-	 */
-	public get doesGCStateNeedReset(): boolean {
-		return this.wasGCRunInLatestSummary !== this.configs.shouldRunGC;
-	}
-
-	/**
-	 * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
-	 *
-	 * 1. GC was enabled and is now disabled. The GC state needs to be removed and everything becomes referenced.
-	 *
-	 * 2. GC was disabled and is now enabled. The GC state needs to be regenerated and added to summary.
-	 *
-	 * 3. GC is enabled and the latest summary state is refreshed from a snapshot that had GC disabled and vice-versa.
-	 *
-	 * 4. The GC version in the latest summary is different from the current GC version. This can happen if:
-	 *
-	 * 4.1. The summary this client loaded with has data from a different GC version.
-	 *
-	 * 4.2. This client's latest summary was updated from a snapshot that has a different GC version.
-	 */
-	public get doesSummaryStateNeedReset(): boolean {
-		return (
-			this.doesGCStateNeedReset ||
-			(this.configs.shouldRunGC &&
-				this.latestSummaryGCVersion !== this.configs.gcVersionInEffect)
-		);
-	}
+	) {}
 
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
@@ -152,7 +97,7 @@ export class GCSummaryStateTracker {
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
-		if (!this.configs.shouldRunGC) {
+		if (!this.configs.gcEnabled) {
 			return;
 		}
 
@@ -283,25 +228,14 @@ export class GCSummaryStateTracker {
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		if (!result.isSummaryTracked) {
+		if (!this.configs.gcEnabled || !result.isSummaryTracked) {
 			return;
 		}
 
-		// If the summary is tracked, this client is the one that generated it. So, update wasGCRunInLatestSummary.
-		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
-		// true in scenarios where GC is currently disabled but enabled in the snapshot we loaded from.
-		this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
-
-		if (!this.configs.shouldRunGC) {
-			return;
-		}
-
-		this.latestSummaryGCVersion = this.configs.gcVersionInEffect;
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
 		this.fullGCModeForAutoRecovery = false;
-		return;
 	}
 
 	/**

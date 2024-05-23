@@ -5,38 +5,39 @@
 ```ts
 
 import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import type { IDeltaManagerErased } from '@fluidframework/datastore-definitions';
-import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDeltaManagerErased } from '@fluidframework/datastore-definitions/internal';
+import type { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import type { IFluidHandleErased } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
-import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
-import { ISummaryBlob } from '@fluidframework/protocol-definitions';
-import { ISummaryStats } from '@fluidframework/runtime-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
-import { SummaryObject } from '@fluidframework/protocol-definitions';
-import { SummaryType } from '@fluidframework/protocol-definitions';
-import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import { ISummaryBlob } from '@fluidframework/driver-definitions';
+import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContextExt } from '@fluidframework/runtime-definitions/internal';
+import { ITree } from '@fluidframework/driver-definitions/internal';
+import { SummaryObject } from '@fluidframework/driver-definitions';
+import { SummaryType } from '@fluidframework/driver-definitions';
+import type { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -224,11 +225,11 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 }
 
 // @internal (undocumented)
-export class TelemetryContext implements ITelemetryContext {
-    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
+export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+    get(prefix: string, property: string): TelemetryEventPropertyTypeExt;
     serialize(): string;
-    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyTypeExt>): void;
 }
 
 // @internal

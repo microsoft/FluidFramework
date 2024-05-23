@@ -195,8 +195,10 @@ export class DocumentPartition {
 		}
 	}
 
-	private updateActivityTime() {
-		this.activityTimeoutTime =
+	private updateActivityTime(activityTime?: number) {
+		const cacluatedActivityTimeout =
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
+		this.activityTimeoutTime =
+			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
 	}
 }

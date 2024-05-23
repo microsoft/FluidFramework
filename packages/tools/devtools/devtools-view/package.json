@@ -79,7 +79,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
@@ -138,7 +137,7 @@
 		"rimraf": "^4.4.0",
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
-		"typescript": "~5.1.6",
+		"typescript": "~5.3.3",
 		"vite": "^4.5.2"
 	},
 	"fluid": {

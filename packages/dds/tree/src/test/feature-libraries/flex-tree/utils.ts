@@ -18,13 +18,13 @@ import {
 	FlexAllowedTypes,
 	FlexFieldKind,
 	FlexTreeSchema,
-	createMockNodeKeyManager,
+	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
-	return getTreeContext(schema, new MockTreeCheckout(forest), createMockNodeKeyManager());
+	return getTreeContext(schema, new MockTreeCheckout(forest), new MockNodeKeyManager());
 }
 
 /**

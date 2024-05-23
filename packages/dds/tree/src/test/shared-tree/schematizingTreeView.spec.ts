@@ -10,9 +10,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	SchemaBuilderBase,
-	createMockNodeKeyManager,
 	intoStoredSchema,
+	MockNodeKeyManager,
+	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UpdateType } from "../../shared-tree/schematizeTree.js";
@@ -30,8 +30,8 @@ import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
-const flexConfig = toFlexConfig(config, createMockNodeKeyManager());
-const flexConfigGeneralized = toFlexConfig(configGeneralized, createMockNodeKeyManager());
+const flexConfig = toFlexConfig(config, new MockNodeKeyManager());
+const flexConfigGeneralized = toFlexConfig(configGeneralized, new MockNodeKeyManager());
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -49,7 +49,7 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
 		const error: SchematizeError | undefined = view.error;
 		assert(error instanceof SchematizeError);
@@ -63,7 +63,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		assert.equal(view.error, undefined);
 		const root = view.root;
 		assert.equal(root, 5);
@@ -92,7 +92,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Modify root", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
 		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
 		assert.equal(view.root, 5);
@@ -102,14 +102,13 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [
 			["rootChanged", 6],
-			// This checkout editing setup does not produce batch events.
-			// ["afterBatch", 6],
+			["afterBatch", 6],
 		]);
 	});
 
 	it("Schema becomes incompatible then comparable", () => {
 		const checkout = checkoutWithContent(flexConfig);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
@@ -147,7 +146,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
-			createMockNodeKeyManager(),
+			new MockNodeKeyManager(),
 		);
 		const log: [string, unknown][] = [];
 		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
@@ -172,7 +171,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open incompatible document", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
 		const error: SchematizeError | undefined = view.error;
 		assert(error instanceof SchematizeError);
@@ -196,7 +195,7 @@ describe("SchematizingSimpleTreeView", () => {
 			initialTree: undefined,
 		};
 		const checkout = checkoutWithContent(emptyContent);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
 		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
 
@@ -214,7 +213,7 @@ describe("SchematizingSimpleTreeView", () => {
 		const sf = new SchemaFactory(undefined);
 		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
 		const treeContent = new TreeConfiguration(TestObject, () => new TestObject({ value: 3 }));
-		const nodeKeyManager = createMockNodeKeyManager();
+		const nodeKeyManager = new MockNodeKeyManager();
 		const view = new SchematizingSimpleTreeView(
 			checkoutWithContent(toFlexConfig(treeContent, nodeKeyManager)),
 			treeContent,

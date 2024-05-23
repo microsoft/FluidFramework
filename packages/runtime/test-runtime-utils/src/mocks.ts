@@ -15,24 +15,26 @@ import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
-	IChannel,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
+	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
@@ -40,12 +42,12 @@ import {
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	ITreeEntry,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,

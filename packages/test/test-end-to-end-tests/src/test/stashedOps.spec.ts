@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -31,7 +31,7 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
@@ -62,6 +62,20 @@ import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
+
+/** For a negative test, takes in the ideal expectation (which should NOT be met), and the current wrong one, and asserts on them both */
+function assertCurrentAndIdealExpectations(
+	actual: any,
+	expected: { ideal: any; currentButWrong: any },
+	message?: string,
+) {
+	assert.equal(
+		actual,
+		expected.currentButWrong,
+		`Current (wrong) behavior is not as expected. ${message}`,
+	);
+	assert.notEqual(actual, expected.ideal, `Ideal behavior is unexpectedly met. ${message}`);
+}
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -1267,10 +1281,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const container: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
@@ -1446,10 +1457,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message after rehydration",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
@@ -1915,7 +1923,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	it("get pending state without close doesn't duplicate ops", async () => {
+	it("repeated getPendingLocalState across multiple connections doesn't duplicate ops", async () => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
@@ -1995,6 +2003,138 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
+		it(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				true, // Do send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
+			// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+			// 2. container2 - load with pendingLocalState. There's no way to correlate the local ops from container1 (clientId A) with the remote ops from container1 (clientId B).
+			//
+			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
+			const obj = JSON.parse(pendingLocalState);
+			obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+			const pendingLocalStateAdjusted = JSON.stringify(obj);
+
+			// load with pending ops with bogus clientId, which makes it impossible (today) to correlate the local ops and they're resent
+			const container2 = await loader.resolve({ url }, pendingLocalStateAdjusted);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+			await provider.ensureSynchronized();
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
+
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await container2.deltaManager.inbound.pause();
+			await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await container3.deltaManager.inbound.pause();
+			container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+
+			container2.deltaManager.flush();
+			container3.deltaManager.flush();
+			await delay(0); // Yield to allow the ops to be submitted before resuming
+			container2.deltaManager.inbound.resume();
+			container3.deltaManager.inbound.resume();
+
+			// At this point, both rehydrated containers should have submitted the same Counter op.
+			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,
+			// but that is not yet implemented.
+			await provider.ensureSynchronized();
+
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
+
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// Rehydrate the first time - counter increment will be resubmitted on container2's new clientId
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+			assert.strictEqual(counter1.value, incrementValue);
+			assert.strictEqual(counter2.value, incrementValue);
+
+			// Rehydrate the second time - first counter increment is unrecognizable,
+			// so it will be resubmitted again here on container3's new clientId
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
 	});
 });
 

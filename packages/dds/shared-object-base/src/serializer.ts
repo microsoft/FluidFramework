@@ -6,8 +6,8 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
@@ -21,7 +21,7 @@ import {
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IFluidSerializer {
 	/**
@@ -167,9 +167,9 @@ export class FluidSerializer implements IFluidSerializer {
 		// is a non-null object.
 		const maybeReplaced = replacer(input, context);
 
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
-		if (maybeReplaced !== input) {
+		// If either input or the replaced result is a Fluid Handle, there is no need to descend further.
+		// IFluidHandles are always leaves in the object graph, and the code below cannot deal with IFluidHandle's structure.
+		if (isFluidHandle(input) || isFluidHandle(maybeReplaced)) {
 			return maybeReplaced;
 		}
 
