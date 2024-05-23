@@ -18,6 +18,5 @@ export {
 	makeHandlesSerializable,
 	parseHandles,
 	serializeHandles,
-	bindHandles,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
