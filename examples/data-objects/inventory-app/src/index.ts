@@ -14,5 +14,5 @@ import type { Inventory } from "./schema.js";
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
 	(tree: IReactTreeDataObject<typeof Inventory>) =>
-		React.createElement(tree.TreeViewComponent, { viewComponent: MainView }),
+		React.createElement(tree.TreeViewComponent, { ViewComponent: MainView }),
 );

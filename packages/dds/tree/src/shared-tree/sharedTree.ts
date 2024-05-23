@@ -49,7 +49,6 @@ import {
 	TreeView,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
 import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -321,7 +320,6 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 	}
 

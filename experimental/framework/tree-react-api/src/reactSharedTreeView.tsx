@@ -206,7 +206,7 @@ function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 	);
 
 	React.useEffect(() => {
-		const updateCompatibility = () => {
+		const updateCompatibility = (): void => {
 			setCompatibility(view.compatibility);
 		};
 
@@ -219,15 +219,17 @@ function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 
 function useViewRoot<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
-): TreeFieldFromImplicitField<TSchema> | null {
-	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | null>(null);
+): TreeFieldFromImplicitField<TSchema> | undefined {
+	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | undefined>(
+		undefined,
+	);
 
 	React.useEffect(() => {
-		const updateRoot = () => {
+		const updateRoot = (): void => {
 			if (view.compatibility.canView) {
 				setRoot(view.root);
 			} else {
-				setRoot(null);
+				setRoot(undefined);
 			}
 		};
 
@@ -254,6 +256,7 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);
+	const upgradeSchema = React.useCallback((): void => view.upgradeSchema(), [view]);
 
 	// Note: this policy is on the stricter side and ensures that clients will only be able to submit edits when their view schema
 	// exactly matches the document's stored schema.
@@ -263,10 +266,10 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
 	if (!compatibility.isExactMatch) {
 		const Error = ErrorComponent ?? TreeErrorComponent;
-		return <Error compatibility={compatibility} upgradeSchema={() => view.upgradeSchema()} />;
+		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
 	}
 
-	if (root === null) {
+	if (root === undefined) {
 		return <div>View not set</div>;
 	}
 
@@ -297,7 +300,7 @@ function TreeErrorComponent({
 }: {
 	compatibility: SchemaCompatibilityStatus;
 	upgradeSchema: () => void;
-}) {
+}): React.JSX.Element {
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (compatibility.canUpgrade) {
 		return (

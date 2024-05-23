@@ -653,6 +653,14 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
+// @public
+export interface SchemaCompatibilityStatus {
+    readonly canInitialize: boolean;
+    readonly canUpgrade: boolean;
+    readonly canView: boolean;
+    readonly isExactMatch: boolean;
+}
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);

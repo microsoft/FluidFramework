@@ -10,7 +10,7 @@ import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
-import { SchemaIncompatible } from '@fluidframework/tree/internal';
+import { SchemaCompatibilityStatus } from '@fluidframework/tree/internal';
 import { TreeConfiguration } from '@fluidframework/tree/internal';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree/internal';
 import { TreeNode } from '@fluidframework/tree';
@@ -30,7 +30,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 // @public
 export interface SchemaIncompatibleProps {
-    readonly error: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly upgradeSchema: () => void;
 }
 
@@ -44,8 +44,8 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(key:
 
 // @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
-    readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
-    readonly viewComponent: React_2.FC<{
+    readonly ErrorComponent?: React_2.FC<SchemaIncompatibleProps>;
+    readonly ViewComponent: React_2.FC<{
         root: TreeFieldFromImplicitField<TSchema>;
     }>;
 }
