@@ -140,7 +140,19 @@ interface RootedProxyPaths {
 export function prepareContentForInsert(
 	content: InsertableContent,
 	forest: IForestSubscription,
-): FactoryContent {
+): FactoryContent;
+export function prepareContentForInsert(
+	content: InsertableContent | undefined,
+	forest: IForestSubscription,
+): FactoryContent | undefined;
+export function prepareContentForInsert(
+	content: InsertableContent | undefined,
+	forest: IForestSubscription,
+): FactoryContent | undefined {
+	if (content === undefined) {
+		return undefined;
+	}
+
 	if (isReadonlyArray(content)) {
 		return prepareArrayContentForInsert(content, forest);
 	}
@@ -238,7 +250,21 @@ export function extractFactoryContent(
 		path: UpPath;
 		onVisitProxy: (path: UpPath, proxy: TreeNode) => void;
 	},
-): FactoryContent {
+): FactoryContent;
+export function extractFactoryContent(
+	input: InsertableContent | undefined,
+	visitProxies?: {
+		path: UpPath;
+		onVisitProxy: (path: UpPath, proxy: TreeNode) => void;
+	},
+): FactoryContent | undefined;
+export function extractFactoryContent(
+	input: InsertableContent | undefined,
+	visitProxies?: {
+		path: UpPath;
+		onVisitProxy: (path: UpPath, proxy: TreeNode) => void;
+	},
+): FactoryContent | undefined {
 	let content: FactoryContent;
 	const rawFlexNode = tryGetFlexNode(input);
 	if (rawFlexNode !== undefined) {
