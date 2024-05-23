@@ -555,9 +555,5 @@ function selectTypePreprocessor(typeData: TypeData): string | undefined {
 	if (typeData.tags.has("type-test-full")) {
 		return "FullType";
 	}
-	if (typeData.tags.has("internal")) {
-		// Skip type tests for `@internal` types, unless they explicitly opted in via another tag.
-		return undefined;
-	}
 	return "TypeOnly";
 }
