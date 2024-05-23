@@ -551,7 +551,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 }
 
 // @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => unknown ? true : false;
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {

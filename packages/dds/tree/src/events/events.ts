@@ -19,10 +19,10 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 	: never;
 
 /**
- * `true` iff the given type is an acceptable shape for an {@link Listeners | event} listener
+ * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
  * @public
  */
-export type IsListener<TListener> = TListener extends (...args: any[]) => unknown ? true : false;
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 /**
  * Used to specify the kinds of events emitted by a {@link Listenable}.
@@ -46,7 +46,7 @@ export type Listeners<T extends object> = {
 };
 
 /**
- * Converts an {@link Listeners} type (i.e. the event registry for a {@link Listenable}) into a type consumable
+ * Converts a {@link Listeners} type (i.e. the event registry for a {@link Listenable}) into a type consumable
  * by an IEventProvider from `@fluidframework/core-interfaces`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
@@ -66,11 +66,11 @@ export type Listeners<T extends object> = {
  */
 export type TransformListeners<
 	TListeners extends Listeners<TListeners>,
-	Target extends IEvent = IEvent,
+	TTarget extends IEvent = IEvent,
 > = {
 	[P in keyof Listeners<TListeners>]: (event: P, listener: TListeners[P]) => void;
 } extends Record<string | number | symbol, infer Z>
-	? UnionToIntersection<Z> & Target
+	? UnionToIntersection<Z> & TTarget
 	: never;
 
 /**

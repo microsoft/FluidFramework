@@ -1055,7 +1055,7 @@ export interface ISharedTreeEditor extends IDefaultEditBuilder {
 }
 
 // @public
-export type IsListener<TListener> = TListener extends (...args: any[]) => unknown ? true : false;
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @internal (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: TreeStoredSchema, field: TreeFieldStoredSchema): boolean;
