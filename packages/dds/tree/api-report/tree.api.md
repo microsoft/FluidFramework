@@ -1066,7 +1066,7 @@ export function isNeverField(policy: FullSchemaPolicy, originalData: TreeStoredS
 
 // @public
 export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off;
 }
 
 // @public
@@ -1378,6 +1378,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
     // (undocumented)
     readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 }
+
+// @public
+export type Off = () => void;
 
 // @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
