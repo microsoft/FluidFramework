@@ -218,6 +218,7 @@ jobs:
             # logic will be centralized outside of CI in the future.
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+            echo "@fluid-tools:registry=${{ variables.devFeed }}" >> ./.npmrc
 
             # This scope must be loaded from the "build" feed
             echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
