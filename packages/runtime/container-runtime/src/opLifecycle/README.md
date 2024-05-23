@@ -2,22 +2,22 @@
 
 ## Table of contents
 
-- [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
-  - [Table of contents](#table-of-contents)
-  - [Introduction](#introduction)
-    - [How batching works](#how-batching-works)
-  - [Compression](#compression)
-  - [Grouped batching](#grouped-batching)
-    - [Changes in op semantics](#changes-in-op-semantics)
-  - [Chunking for compression](#chunking-for-compression)
-  - [Disabling in case of emergency](#disabling-in-case-of-emergency)
-  - [Example configs](#example-configs)
-  - [Note about performance and latency](#note-about-performance-and-latency)
-  - [How it works](#how-it-works)
-  - [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
-  - [How the overall op flow works](#how-the-overall-op-flow-works)
-    - [Outbound](#outbound)
-    - [Inbound](#inbound)
+-   [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
+    -   [Table of contents](#table-of-contents)
+    -   [Introduction](#introduction)
+        -   [How batching works](#how-batching-works)
+    -   [Compression](#compression)
+    -   [Grouped batching](#grouped-batching)
+        -   [Changes in op semantics](#changes-in-op-semantics)
+    -   [Chunking for compression](#chunking-for-compression)
+    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
+    -   [Example configs](#example-configs)
+    -   [Note about performance and latency](#note-about-performance-and-latency)
+    -   [How it works](#how-it-works)
+    -   [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
+    -   [How the overall op flow works](#how-the-overall-op-flow-works)
+        -   [Outbound](#outbound)
+        -   [Inbound](#inbound)
 
 ## Introduction
 
