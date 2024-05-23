@@ -55,6 +55,9 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 	public async readFile(
 		...args: Parameters<typeof fsPromises.readFile>
 	): ReturnType<typeof fsPromises.readFile> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.readFileCore(...args);
 	}
 	/**
@@ -92,49 +95,79 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 	public async unlink(
 		...args: Parameters<typeof fsPromises.unlink>
 	): ReturnType<typeof fsPromises.unlink> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.unlinkCore(...args);
 	}
 	public async readdir(
 		...args: Parameters<typeof fsPromises.readdir>
 	): ReturnType<typeof fsPromises.readdir> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.readdirCore(...args);
 	}
 	public async mkdir(
 		...args: Parameters<typeof fsPromises.mkdir>
 	): ReturnType<typeof fsPromises.mkdir> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.mkdirCore(...args);
 	}
 	public async rmdir(
 		...args: Parameters<typeof fsPromises.rmdir>
 	): ReturnType<typeof fsPromises.rmdir> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.rmdirCore(...args);
 	}
 	public async stat(
 		...args: Parameters<typeof fsPromises.stat>
 	): ReturnType<typeof fsPromises.stat> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.statCore(...args);
 	}
 	public async lstat(
 		...args: Parameters<typeof fsPromises.lstat>
 	): ReturnType<typeof fsPromises.lstat> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.lstatCore(...args);
 	}
 	public async readlink(
 		...args: Parameters<typeof fsPromises.readlink>
 	): ReturnType<typeof fsPromises.readlink> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.readlinkCore(...args);
 	}
 	public async symlink(
 		...args: Parameters<typeof fsPromises.symlink>
 	): ReturnType<typeof fsPromises.symlink> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.symlinkCore(...args);
 	}
 	public async chmod(
 		...args: Parameters<typeof fsPromises.chmod>
 	): ReturnType<typeof fsPromises.chmod> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.chmodCore(...args);
 	}
 	public async rm(...args: Parameters<typeof fsPromises.rm>): ReturnType<typeof fsPromises.rm> {
+		if (args[0] === undefined) {
+			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
+		}
 		return this.rmCore(...args);
 	}
 }

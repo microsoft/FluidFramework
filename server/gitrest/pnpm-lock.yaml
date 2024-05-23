@@ -87,7 +87,7 @@ importers:
       debug: ^4.3.4
       eslint: ~8.55.0
       express: ^4.19.2
-      isomorphic-git: ^1.14.0
+      isomorphic-git: ^1.25.10
       json-stringify-safe: ^5.0.1
       nconf: ^0.11.4
       prettier: ~3.0.3
@@ -106,7 +106,7 @@ importers:
       cors: 2.8.5
       debug: 4.3.4
       express: 4.19.2
-      isomorphic-git: 1.21.0
+      isomorphic-git: 1.25.10
       json-stringify-safe: 5.0.1
       nconf: 0.11.4
       uuid: 3.4.0
@@ -174,7 +174,7 @@ importers:
       express: ^4.19.2
       ioredis: ^5.2.3
       ioredis-mock: ^8.9.0
-      isomorphic-git: ^1.14.0
+      isomorphic-git: ^1.25.10
       json-stringify-safe: ^5.0.1
       lorem-ipsum: ^1.0.6
       memfs: ^3.4.12
@@ -209,7 +209,7 @@ importers:
       debug: 4.3.4
       express: 4.19.2
       ioredis: 5.3.2
-      isomorphic-git: 1.21.0
+      isomorphic-git: 1.25.10
       json-stringify-safe: 5.0.1
       memfs: 3.4.13
       nconf: 0.11.4
@@ -3991,8 +3991,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /async-lock/1.4.0:
-    resolution: {integrity: sha512-coglx5yIWuetakm3/1dsX9hxCNox22h7+V80RQOu2XUUMidtArxKoZoOtHUPuR84SycKTXzgGzAUR5hJxujyJQ==}
+  /async-lock/1.4.1:
+    resolution: {integrity: sha512-Az2ZTpuytrtqENulXwO3GGv1Bztugx6TT37NIo7imr/Qo0gsYiGtSdBa2B6fsXhTpVZDNfu1Qn3pk531e3q+nQ==}
     dev: false
 
   /async-mutex/0.3.2:
@@ -4864,6 +4864,7 @@ packages:
   /crc-32/1.2.2:
     resolution: {integrity: sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==}
     engines: {node: '>=0.8'}
+    hasBin: true
     dev: false
 
   /cross-spawn/7.0.3:
@@ -6738,15 +6739,9 @@ packages:
       minimatch: 6.2.0
     dev: true
 
-  /ignore/5.2.4:
-    resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
-    engines: {node: '>= 4'}
-    dev: false
-
   /ignore/5.3.0:
     resolution: {integrity: sha512-g7dmpshy+gD7mh88OC9NwSGTKoc3kyLAZQRU1mt53Aw/vnvfXnbC+F/7F7QoYVKbV+KNvJx8wArewKy1vXMtlg==}
     engines: {node: '>= 4'}
-    dev: true
 
   /immediate/3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -7186,19 +7181,20 @@ packages:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
 
-  /isomorphic-git/1.21.0:
-    resolution: {integrity: sha512-ZqCAUM63CYepA3fB8H7NVyPSiOkgzIbQ7T+QPrm9xtYgQypN9JUJ5uLMjB5iTfomdJf3mdm6aSxjZwnT6ubvEA==}
+  /isomorphic-git/1.25.10:
+    resolution: {integrity: sha512-IxGiaKBwAdcgBXwIcxJU6rHLk+NrzYaaPKXXQffcA0GW3IUrQXdUPDXDo+hkGVcYruuz/7JlGBiuaeTCgIgivQ==}
     engines: {node: '>=12'}
+    hasBin: true
     dependencies:
-      async-lock: 1.4.0
+      async-lock: 1.4.1
       clean-git-ref: 2.0.1
       crc-32: 1.2.2
       diff3: 0.0.3
-      ignore: 5.2.4
+      ignore: 5.3.0
       minimisted: 2.0.1
       pako: 1.0.11
       pify: 4.0.1
-      readable-stream: 3.6.0
+      readable-stream: 3.6.2
       sha.js: 2.4.11
       simple-get: 4.0.1
     dev: false
@@ -7913,15 +7909,15 @@ packages:
 
   /minimist/1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
+    dev: true
 
   /minimist/1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
-    dev: true
 
   /minimisted/2.0.1:
     resolution: {integrity: sha512-1oPjfuLQa2caorJUM8HV8lGgWCc0qqAO1MNv/k05G4qslmsndV/5WdNZrqCiyqiz3wohia2Ij2B7w2Dr7/IyrA==}
     dependencies:
-      minimist: 1.2.7
+      minimist: 1.2.8
     dev: false
 
   /minipass-collect/1.0.2:
