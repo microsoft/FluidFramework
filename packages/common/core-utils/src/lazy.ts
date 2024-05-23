@@ -4,6 +4,27 @@
  */
 
 /**
+ * Takes a callback function and returns a function that when called will only invoke that callback once.
+ * Subsequent calls will return the same cached value without reinvoking the callback.
+ * @param callbackFn - The callback to onceify
+ * @returns The onceified function
+ * @internal
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const onceifyFunction = <T extends (...args: any) => any>(callbackFn: T): T => {
+	// Wrap in an object to distinguish the case that ReturnType<T> is void
+	let resultObject: { result: ReturnType<T> } | undefined;
+	return ((...args) => {
+		if (resultObject === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			resultObject = { result: callbackFn(args) };
+		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return resultObject.result;
+	}) as T;
+};
+
+/**
  * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable.
  * @internal
  */

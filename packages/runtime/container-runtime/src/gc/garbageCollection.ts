@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, onceifyFunction, Timer } from "@fluidframework/core-utils/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -111,7 +111,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private deletedNodes: Set<string> = new Set();
 
 	// Promise when resolved returns the GC data data in the base snapshot.
-	private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
+	private readonly getBaseSnapshotData: () => Promise<IGarbageCollectionSnapshotData | undefined>;
 	// Promise when resolved initializes the GC state from the data in the base snapshot.
 	private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
 	// The GC details generated from the base snapshot.
@@ -225,52 +225,44 @@ export class GarbageCollector implements IGarbageCollector {
 			this.getNodePackagePath,
 		);
 
-		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
-		// it involves fetching blobs from storage which is expensive.
-		this.baseSnapshotDataP = new LazyPromise<IGarbageCollectionSnapshotData | undefined>(
-			async () => {
-				if (baseSnapshot === undefined) {
+		// Get the GC data from the base snapshot. Ensure we only do this once since it
+		// involves fetching blobs from storage which is expensive.
+		this.getBaseSnapshotData = onceifyFunction(async () => {
+			if (baseSnapshot === undefined) {
+				return undefined;
+			}
+
+			try {
+				// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
+				const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+				if (gcSnapshotTree === undefined) {
+					// back-compat - Older documents get their gc data reset for simplicity as there are few of them
+					// incremental gc summary will not work with older gc data as well
 					return undefined;
 				}
 
-				try {
-					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
-					if (gcSnapshotTree === undefined) {
-						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
-						// incremental gc summary will not work with older gc data as well
-						return undefined;
-					}
+				const snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 
-					const snapshotData = await getGCDataFromSnapshot(
-						gcSnapshotTree,
-						readAndParseBlob,
-					);
-
-					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
-					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
-					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
-					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
-						return {
-							gcState: undefined,
-							tombstones: undefined,
-							deletedNodes: snapshotData.deletedNodes,
-						};
-					}
-					return snapshotData;
-				} catch (error) {
-					const dpe = DataProcessingError.wrapIfUnrecognized(
-						error,
-						"FailedToInitializeGC",
-					);
-					dpe.addTelemetryProperties({
-						gcConfigs: JSON.stringify(this.configs),
-					});
-					throw dpe;
+				// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
+				// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
+				// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
+				// brought back. The deletedNodes info is needed to identify when these nodes are used.
+				if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
+					return {
+						gcState: undefined,
+						tombstones: undefined,
+						deletedNodes: snapshotData.deletedNodes,
+					};
 				}
-			},
-		);
+				return snapshotData;
+			} catch (error) {
+				const dpe = DataProcessingError.wrapIfUnrecognized(error, "FailedToInitializeGC");
+				dpe.addTelemetryProperties({
+					gcConfigs: JSON.stringify(this.configs),
+				});
+				throw dpe;
+			}
+		});
 
 		/**
 		 * Set up the initializer which initializes the GC state from the data in base snapshot. It sets up GC data
@@ -291,7 +283,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * 2. A summary that was generated with GC disabled.
 			 * 3. A summary that was generated before GC even existed.
 			 */
-			const baseSnapshotData = await this.baseSnapshotDataP;
+			const baseSnapshotData = await this.getBaseSnapshotData();
 			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
 
 			if (baseSnapshotData?.gcState === undefined) {
@@ -322,7 +314,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
 		// used to initialize the GC state of all the nodes in the container.
 		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			const baseSnapshotData = await this.baseSnapshotDataP;
+			const baseSnapshotData = await this.getBaseSnapshotData();
 			if (baseSnapshotData?.gcState === undefined) {
 				return {};
 			}
@@ -360,7 +352,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * to work with - The GC state would have been generated using a timestamp which is part of the snapshot.
 	 */
 	public async initializeBaseState(): Promise<void> {
-		const baseSnapshotData = await this.baseSnapshotDataP;
+		const baseSnapshotData = await this.getBaseSnapshotData();
 		/**
 		 * The base snapshot data will not be present if the container is loaded from:
 		 * 1. The first summary created by the detached container.

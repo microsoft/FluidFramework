@@ -96,6 +96,9 @@ export class LazyPromise<T> implements Promise<T> {
 // @internal
 export const NumberComparer: IComparer<number>;
 
+// @internal
+export const onceifyFunction: <T extends (...args: any) => any>(callbackFn: T) => T;
+
 // @alpha
 export class PromiseCache<TKey, TResult> {
     constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
