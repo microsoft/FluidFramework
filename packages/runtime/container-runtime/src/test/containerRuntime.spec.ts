@@ -1449,6 +1449,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: false,
 				explicitSchemaControl: false,
+				noLocalIdsForAttachmentBlobs: false,
 			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
