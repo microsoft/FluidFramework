@@ -88,17 +88,17 @@ export function sideFromSequencePlace(place: SequencePlace): Side {
  *
  * @param place - The SequencePlace used as an expected position of a sequence endpoint.
  *
- * @param ifEnd - The position to expect if `place` is "end". This is not currently consistent.
+ * @param posIfEnd - The position to expect if `place` is "end". This is not currently consistent.
  * Sometimes it is string.length, sometimes it is -1.
  */
 export function expectedPositionFromSequencePlace(
 	place: SequencePlace,
-	ifEnd: number = -1,
+	posIfEnd: number = -1,
 ): number {
 	if (place === "start") {
 		return 0;
 	} else if (place === "end") {
-		return ifEnd;
+		return posIfEnd;
 	} else if (typeof place === "object") {
 		return place.pos;
 	} else {
