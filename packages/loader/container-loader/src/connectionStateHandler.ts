@@ -516,7 +516,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 	private receivedRemoveMemberEvent(clientId: string) {
 		// If the client which has left was us, then finish the timer.
-		if (this.clientId === clientId) {
+		if (this.clientId === clientId && this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("removeMemberEvent");
 		}

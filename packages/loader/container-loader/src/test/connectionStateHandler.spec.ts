@@ -1144,6 +1144,7 @@ describe("ConnectionStateHandler Tests", () => {
 			true, // readClientsWaitForJoinSignal
 		);
 
+		// Typical flow to reach connected state ("read" connection)
 		connectionStateHandler.establishingConnection({ text: "initial connect" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
@@ -1155,14 +1156,17 @@ describe("ConnectionStateHandler Tests", () => {
 
 		connectionStateHandler.receivedDisconnectEvent({ text: "disconnect" });
 
+		// Another read client is joining, but we don't yet receive its join signal (so not yet in connected state)
 		connectionDetails2.mode = "read";
 		connectionStateHandler.establishingConnection({ text: "initial connect" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails2);
 
-		// Clear Audience
+		// Simulate how ConnectionStateHandler observes reconnection flow.
+		// It will see Audience being fully cleared, and then repopulated with new state
 		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
 
-		// We connected to different front-end, it still things that first client is there!
+		// We connected to different front-end, it may not processed yet leave signal for first connection,
+		// and thus it appears in the Audience again.
 		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
 		connectionStateHandler_receivedJoinSignalEvent(connectionDetails2);
 
@@ -1173,7 +1177,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 2 should be in connected state",
 		);
 
-		// This shold not cause any trouble.
+		// This should  not cause any trouble.
 		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
 
 		// Timeout should not raise any error as timer should be cleared
