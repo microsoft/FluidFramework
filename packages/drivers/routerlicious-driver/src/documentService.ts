@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceEvents,
+	IDocumentServicePolicies,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -70,7 +71,7 @@ export class DocumentService
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
 
-	private _policies: api.IDocumentServicePolicies | undefined;
+	private _policies: IDocumentServicePolicies | undefined;
 
 	public get resolvedUrl() {
 		return this._resolvedUrl;
@@ -102,7 +103,7 @@ export class DocumentService
 
 	private documentStorageService: DocumentStorageService | undefined;
 
-	public get policies(): api.IDocumentServicePolicies | undefined {
+	public get policies(): IDocumentServicePolicies | undefined {
 		return this._policies ?? {};
 	}
 
