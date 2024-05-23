@@ -608,6 +608,7 @@
                     "@fluid*/*/test*",
                     "@fluid*/*/internal/test*",
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }

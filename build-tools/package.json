@@ -112,6 +112,14 @@
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"
+		},
+		"updateConfig": {
+			"ignoreDependencies": [
+				"latest-version",
+				"read-pkg-up",
+				"type-fest",
+				"typescript"
+			]
 		}
 	}
 }
