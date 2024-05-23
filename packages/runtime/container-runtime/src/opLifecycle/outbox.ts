@@ -254,7 +254,7 @@ export class Outbox {
 			return;
 		}
 
-		// Did we disconnect?
+		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {

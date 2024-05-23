@@ -2,26 +2,28 @@
 
 ## Table of contents
 
--   [Introduction](#introduction)
-    -   [How batching works](#how-batching-works)
--   [Compression](#compression)
--   [Grouped batching](#grouped-batching)
-    -   [Risks](#risks)
--   [Chunking for compression](#chunking-for-compression)
--   [Disabling in case of emergency](#disabling-in-case-of-emergency)
--   [Example configs](#example-configs)
--   [Note about performance and latency](#note-about-performance-and-latency)
--   [How it works](#how-it-works)
--   [How grouped batching works](#how-grouped-batching-works)
--   [How the overall op flow works](#How-the-overall-op-flow-works)
-    -   [Outbound](#outbound)
-    -   [Inbound](#inbound)
+-   [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
+    -   [Table of contents](#table-of-contents)
+    -   [Introduction](#introduction)
+        -   [How batching works](#how-batching-works)
+    -   [Compression](#compression)
+    -   [Grouped batching](#grouped-batching)
+        -   [Changes in op semantics](#changes-in-op-semantics)
+    -   [Chunking for compression](#chunking-for-compression)
+    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
+    -   [Example configs](#example-configs)
+    -   [Note about performance and latency](#note-about-performance-and-latency)
+    -   [How it works](#how-it-works)
+    -   [How grouped batching works](#how-grouped-batching-works)
+    -   [How the overall op flow works](#how-the-overall-op-flow-works)
+        -   [Outbound](#outbound)
+        -   [Inbound](#inbound)
 
 ## Introduction
 
 There is a current limitation regarding the size of the payload a Fluid client can send and receive. [The limit is 1MB per payload](https://github.com/microsoft/FluidFramework/issues/9023) and it is currently enforced explicitly with the `BatchTooLarge` error which closes the container.
 
-There are two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes how to enable/disable them, along with a brief description of how they work. The features are enabled by default.
+There are three features which can be used to work around this size limit: "grouped batching", "batch compression", and "compressed batch chunking". This document describes how to enable/disable them, along with a brief description of how they work. The features are enabled by default.
 
 By default, the runtime is configured with a max batch size of `716800` bytes, which is lower than the 1MB limit. The reason for the lower value is to account for possible overhead from the op envelope and metadata.
 
@@ -66,47 +68,30 @@ As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into 
 
 Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
+Compressing a batch yields a batch of the same size, but only the first message has any content - the compressed payload containing all the original batch's content.
+The rest of the batch's messages are empty placeholders to reserve sequence numbers for the compressed messages.
+
 ## Grouped batching
 
-The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is **off by default**. This option will group all batch messages under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given the sequence number of the parent "grouped" message.
+With Grouped Batching enabled (it's on by default), all batch messages are combined under a single "grouped" message _before compression_. Upon receiving this new "grouped" message, the batch messages will be extracted, and they each will be given the same sequence number - that of the parent "grouped" message.
 
-The purpose for enabling grouped batching on top of compression is that regular compression won't include the empty messages in the chunks. Thus, if we have batches with many messages (i.e. more than 4k), we will go over the batch size limit just on empty op envelopes alone.
+The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. Without grouped batching, a batch with many messages (i.e. more than 4k) will go over the batch size limit just on empty op envelopes alone.
+
+Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+
+Grouped Batching can be disabled by setting `IContainerRuntimeOptions.enableGroupedBatching` to `false`.
 
 See [below](#how-grouped-batching-works) for an example.
 
-### Risks
+### Changes in op semantics
 
-This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.7.0.0" or later). Containers created with this option may not open in future versions of the framework.
+Grouped Batching changed a couple of expectations around message structure and runtime layer expectations. Specifically:
 
-This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
-and verifying that the following expectation changes won't have any effects:
-
--   batch messages observed at the runtime layer will not match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
--   messages within the same batch will have the same sequence number
--   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
--   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
-
-Grouped batching may become problematic for batches which contain reentrant ops. This is the case when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the reentrant op will have a different reference sequence number than the rest of the ops in the batch, resulting in a different view of the state of the data model.
-
-Therefore, when grouped batching is enabled, all batches with reentrant ops are rebased to the current reference sequence number and resubmitted to the data stores so that all ops are in agreement about the state of the data model and ensure eventual consistency.
-
-### How to enable
-
-**This feature is disabled by default**
-
-If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        (...)
-        enableGroupedBatching: true,
-        (...)
-    }
-```
-
-In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
-
-Grouped batching is only relevant for `FlushMode.TurnBased` as it only targets the number of ops in a batch. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+-   Batch messages observed at the runtime layer no longer match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
+-   Messages within the same batch now have the same sequence number
+-   Once the ContainerRuntime ungroups the batch, the client sequence numbers on the resulting messages can only be used to order messages with that batch (having the same sequenceNumber)
+-   When grouped batching is enabled, a batch with reentrant ops must rebase its messages to the current reference sequence number and resubmit them to the data stores before flushing.
+    -   "Reentrant ops" occur when changes are made to a DDS inside a DDS 'onChanged' event handler. Without rebasing, the reentrant op would have a different reference sequence number than the rest of the ops in the batch, which can lead to inconsistency when applied on remote clients against the batch's reference sequence number. In other words, all ops in a batch must be in agreement about the state of the data model to ensure eventual consistency.
 
 ## Chunking for compression
 
@@ -120,33 +105,24 @@ Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as
 
 ## Disabling in case of emergency
 
-If the features are enabled using the configs, they can be disabled at runtime via feature gates as following:
+Compression and Chunking configuration can be overridden via feature gates to force-disable them:
 
 -   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
--   `Fluid.ContainerRuntime.DisableGroupedBatching` - if set to true, will disable grouped batching.
 -   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
 ## Example configs
 
-By default, the runtime is configured with the following values related to compression and chunking:
+By default, the runtime is [configured](..\containerRuntime.ts#L572) with the following values related to compression and chunking:
 
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        compressionOptions: {
-            minimumBatchSizeInBytes: 614400,
-            compressionAlgorithm: CompressionAlgorithms.lz4,
-        },
-        chunkSizeInBytes: 204800,
-        maxBatchSizeInBytes: 716800,
-    }
-```
-
-To enable grouped batching, use the following property:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        enableGroupedBatching: true,
-    }
+```typescript
+const runtimeOptions: IContainerRuntimeOptions = {
+	compressionOptions: {
+		minimumBatchSizeInBytes: 614400,
+		compressionAlgorithm: CompressionAlgorithms.lz4,
+	},
+	chunkSizeInBytes: 204800,
+	maxBatchSizeInBytes: 716800,
+};
 ```
 
 ## Note about performance and latency
