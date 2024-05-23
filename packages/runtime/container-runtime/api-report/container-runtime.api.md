@@ -41,7 +41,7 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';

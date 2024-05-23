@@ -70,7 +70,6 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -88,6 +87,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
