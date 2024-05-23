@@ -92,6 +92,7 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
@@ -873,6 +874,9 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
+				// WARNING: logger on this context should not including getters like containerConnectionState above (on this.subLogger),
+				// as that will result in attempt to dereference this.connectionStateHandler from this call while it's still undefined.
+				mc: loggerToMonitoringContext(subLogger),
 				connectionStateChanged: (value, oldState, reason) => {
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
