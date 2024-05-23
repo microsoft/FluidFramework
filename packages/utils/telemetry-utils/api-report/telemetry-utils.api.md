@@ -110,7 +110,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 }
 
 // @internal
-export const getCircularReplacer: () => (key: string, value: unknown) => any;
+export const getCircularReplacer: () => ((key: string, value: unknown) => any);
 
 // @internal
 export const hasErrorInstanceId: (x: unknown) => x is {
