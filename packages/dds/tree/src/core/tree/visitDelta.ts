@@ -104,7 +104,7 @@ export function visitDelta(
 	processBuilds(delta.build, detachConfig, visitor);
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
-	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
+	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor, latestRevision);
 	const attachConfig: PassConfig = {
 		func: attachPass,
 		latestRevision,
@@ -168,6 +168,7 @@ function transferRoots(
 	mapToUpdate: Map<ForestRootId, unknown>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
+	revision?: RevisionTag,
 ): void {
 	type AtomizedNodeRename = Omit<Delta.DetachedNodeRename, "count">;
 	let nextBatch = rootTransfers.flatMap(({ oldId, newId, count }) => {
@@ -202,7 +203,7 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
-			newRootId = detachedFieldIndex.createEntry(newId);
+			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {
 				mapToUpdate.delete(oldRootId);
