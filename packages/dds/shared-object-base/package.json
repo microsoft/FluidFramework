@@ -147,6 +147,11 @@
 		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_bindHandles": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

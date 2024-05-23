@@ -298,28 +298,16 @@ use_old_EnumDeclaration_ValueType(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_bindHandles": {"forwardCompat": false}
+ * "RemovedFunctionDeclaration_bindHandles": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_bindHandles():
-    TypeOnly<typeof old.bindHandles>;
-declare function use_current_FunctionDeclaration_bindHandles(
-    use: TypeOnly<typeof current.bindHandles>): void;
-use_current_FunctionDeclaration_bindHandles(
-    get_old_FunctionDeclaration_bindHandles());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_bindHandles": {"backCompat": false}
+ * "RemovedFunctionDeclaration_bindHandles": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_bindHandles():
-    TypeOnly<typeof current.bindHandles>;
-declare function use_old_FunctionDeclaration_bindHandles(
-    use: TypeOnly<typeof old.bindHandles>): void;
-use_old_FunctionDeclaration_bindHandles(
-    get_current_FunctionDeclaration_bindHandles());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
