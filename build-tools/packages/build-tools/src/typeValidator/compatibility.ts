@@ -14,7 +14,7 @@
 type requireAssignableTo<_A extends B, B> = true;
 
 /*
- * Type meta-functions which takes in a type, and removes some of its type information to get structural typing.
+ * Type meta-functions which take in a type and remove some of its type information to get structural typing.
  * This is necessary since TypeScript does not always treat identical declarations of the same type in two different places as assignable.
  *
  * The most common case of this is with classes where [private and protected members trigger nominal typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#private-and-protected-members-in-classes).
