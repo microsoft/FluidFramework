@@ -1304,7 +1304,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Create a local value and serialize it.
+		// Create a local value.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
 
 		// Set the value locally.
