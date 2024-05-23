@@ -56,7 +56,7 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch<BatchMessage[]>): IBatch<[BatchMessage]> {
+	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.content.length >= 1000) {

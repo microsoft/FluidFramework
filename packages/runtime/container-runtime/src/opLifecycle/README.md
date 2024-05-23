@@ -2,22 +2,22 @@
 
 ## Table of contents
 
--   [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
-    -   [Table of contents](#table-of-contents)
-    -   [Introduction](#introduction)
-        -   [How batching works](#how-batching-works)
-    -   [Compression](#compression)
-    -   [Grouped batching](#grouped-batching)
-        -   [Changes in op semantics](#changes-in-op-semantics)
-    -   [Chunking for compression](#chunking-for-compression)
-    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
-    -   [Example configs](#example-configs)
-    -   [Note about performance and latency](#note-about-performance-and-latency)
-    -   [How it works](#how-it-works)
-    -   [How grouped batching works](#how-grouped-batching-works)
-    -   [How the overall op flow works](#how-the-overall-op-flow-works)
-        -   [Outbound](#outbound)
-        -   [Inbound](#inbound)
+- [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
+  - [Table of contents](#table-of-contents)
+  - [Introduction](#introduction)
+    - [How batching works](#how-batching-works)
+  - [Compression](#compression)
+  - [Grouped batching](#grouped-batching)
+    - [Changes in op semantics](#changes-in-op-semantics)
+  - [Chunking for compression](#chunking-for-compression)
+  - [Disabling in case of emergency](#disabling-in-case-of-emergency)
+  - [Example configs](#example-configs)
+  - [Note about performance and latency](#note-about-performance-and-latency)
+  - [How it works](#how-it-works)
+  - [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
+  - [How the overall op flow works](#how-the-overall-op-flow-works)
+    - [Outbound](#outbound)
+    - [Inbound](#inbound)
 
 ## Introduction
 
@@ -133,7 +133,92 @@ In general, compression offers a trade-off between higher compute costs, lower b
 
 ## How it works
 
-Compression currently works as a runtime layer over the regular op sending/receiving pipeline.
+Virtualization works as an intermediate step in the Runtime layer, as the closest step to sending/receiving ops via the Loader layer.
+
+Given the following baseline batch:
+
+```
++---------------+---------------+---------------+---------------+---------------+
+| Op 1          | Op 2          | Op 3          | Op 4          | Op 5          |
+| Contents: "a" | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" |
++---------------+---------------+---------------+---------------+---------------+
+```
+
+Grouped batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
+|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Compressed batch:
+
+```
++-------------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Logical   +------------------------------------------------------------------------------------+ |
+| Compression: 'lz4'     Contents: | Type: "groupedBatch"                                                               | |
+| Compressed buffer: "wxyz"        | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
+|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  +------------------------------------------------------------------------------------+ |
++-------------------------------------------------------------------------------------------------------------------------+
+```
+
+Can produce the following chunks:
+
+```
++------------------------------------------------+
+| Chunk 1/2    Contents: +---------------------+ |
+|                        | +-----------------+ | |
+|                        | | Contents: "wx" | | |
+|                        | +-----------------+ | |
+|                        +---------------------+ |
++------------------------------------------------+
+```
+
+```
++-----------------------------------------------+
+| Chunk 2/2    Contents: +--------------------+ |
+|                        | +----------------+ | |
+|                        | | Contents: "yz" | | |
+|                        | +----------------+ | |
+|                        +--------------------+ |
++-----------------------------------------------+
+```
+
+The chunks are sent to service to be sequenced, and broadcast to all clients.
+
+-   On the receiving end, the client will accumulate chunks 1 through n-1 and keep them in memory (in this example, it's just Chunk 1).
+-   When the final chunk is received, the original large, decompressed op will be rebuilt, and the runtime will then process the batch as if it is a compressed batch.
+
+Decompressed batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
+| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Ungrouped batch:
+
+```
++-----------------+-----------------+-----------------+-----------------+-----------------+
+| Op 1            | Op 2            | Op 3            | Op 4            | Op 5            |
+| Contents: "a"   | Contents: "b"   | Contents: "c"   | Contents: "d"   | Contents: "e"   |
+| SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
+| ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
++-----------------+-----------------+-----------------+-----------------+-----------------+
+```
+
+## How it works (Grouped Batching disabled)
 
 If we have a batch with a size larger than the configured minimum required for compression (in the example let’s say it’s 850 bytes), as following:
 
@@ -205,97 +290,6 @@ This will produce the following batches:
 ```
 
 The first 2 chunks are sent in their own batches, while the last chunk is the first op in the last batch which contains the ops reserving the required sequence numbers.
-
-Notice that the sequence numbers don’t matter here, as all ops will be based off the same reference sequence number, so the sequence number will be recalculated for all, without additional work.
-
-Additionally, as compression preserves the original uncompressed batch layout in terms of the number of ops by using empty ops to reserve the sequence numbers, this ensures that the clients will always receive the exact count of ops to rebuild the uncompressed batch sequentially.
-
-On the receiving end, the client will accumulate chunks 1 and 2 and keep them in memory. When chunk 3 is received, the original large, decompressed op will be rebuilt, and the runtime will then process the batch as if it is a compressed batch.
-
-## How grouped batching works
-
-Given the following baseline batch:
-
-```
-+---------------+---------------+---------------+---------------+---------------+
-| Op 1          | Op 2          | Op 3          | Op 4          | Op 5          |
-| Contents: "a" | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" |
-+---------------+---------------+---------------+---------------+---------------+
-```
-
-Grouped batch:
-
-```
-+---------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
-| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
-|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
-|                                  +----------------+---------------+---------------+---------------+---------------+ |
-+---------------------------------------------------------------------------------------------------------------------+
-```
-
-Compressed batch:
-
-```
-+-------------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +------------------------------------------------------------------------------------+ |
-| Compression: 'lz4'               | Type: "groupedBatch"                                                               | |
-|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
-|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
-|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
-|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
-|                                  +------------------------------------------------------------------------------------+ |
-+-------------------------------------------------------------------------------------------------------------------------+
-```
-
-Can produce the following chunks:
-
-```
-+------------------------------------------------+
-| Chunk 1/2    Contents: +---------------------+ |
-|                        | +-----------------+ | |
-|                        | | Contents: "abc" | | |
-|                        | +-----------------+ | |
-|                        +---------------------+ |
-+------------------------------------------------+
-```
-
-```
-+-----------------------------------------------+
-| Chunk 2/2    Contents: +--------------------+ |
-|                        | +----------------+ | |
-|                        | | Contents: "de" | | |
-|                        | +----------------+ | |
-|                        +--------------------+ |
-+-----------------------------------------------+
-```
-
--   Send to service
--   Service acks ops sent
--   Receive chunks from service
--   Recompile to the compression step
-
-Decompressed batch:
-
-```
-+---------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
-| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
-| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
-|                                  +----------------+---------------+---------------+---------------+---------------+ |
-+---------------------------------------------------------------------------------------------------------------------+
-```
-
-Ungrouped batch:
-
-```
-+-----------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1            | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "a"   | Contents: "b"   | Contents: "c"   | Contents: "d"   | Contents: "e"   |
-| SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
-| ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
-+-----------------+-----------------+-----------------+-----------------+-----------------+
-```
 
 ## How the overall op flow works
 
