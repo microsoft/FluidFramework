@@ -111,8 +111,10 @@ export class OpSplitter {
 	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
+	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch which can be sent over the wire
+	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
