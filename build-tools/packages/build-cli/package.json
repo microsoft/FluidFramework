@@ -88,7 +88,7 @@
 		"human-id": "^4.0.0",
 		"inquirer": "^8.2.5",
 		"json5": "^2.2.3",
-		"jssm": "5.97.1",
+		"jssm": "5.98.2",
 		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
 		"node-fetch": "^3.3.2",

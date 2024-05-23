@@ -114,7 +114,7 @@
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
-			"jssm@5.97.1": "patches/jssm@5.97.1.patch"
+			"jssm@5.98.2": "patches/jssm@5.98.2.patch"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [
