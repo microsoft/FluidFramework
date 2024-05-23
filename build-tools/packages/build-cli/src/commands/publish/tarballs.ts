@@ -12,8 +12,7 @@ import { Gunzip } from "fflate";
 import { readFile } from "fs-extra";
 import globby from "globby";
 import latestVersion from "latest-version";
-import { BaseCommand } from "../../base";
-import { getTarballName } from "../../library";
+import { BaseCommand, getTarballName } from "../../library";
 
 interface TarballMetadata {
 	name: string;
