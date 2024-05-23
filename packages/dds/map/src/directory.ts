@@ -38,7 +38,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker } from "./localValues.js";
+import { LocalValueMaker, makeSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -1305,8 +1305,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Create a local value.
+		// Create a local value and serialize it.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
+		const serializableValue = makeSerializable(
+			localValue,
+			this.serializer,
+			this.directory.handle,
+		);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -1320,7 +1325,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: { type: localValue.type, value: localValue.value as unknown },
+			value: serializableValue,
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;
