@@ -110,7 +110,7 @@ export class WorkerPool {
 
 				// Workers accumulate memory use over time.
 				// Since recreating workers fixes this, but takes time,
-				// recreate them when the memory use becomes too high.
+				// recreate them only when the memory use becomes too high.
 
 				// As a heuristic to avoid memory pressure, lower threshold if running out of memory.
 				const currentMemoryLimit = Math.min(this.memoryUsageLimit, freemem());
@@ -118,7 +118,7 @@ export class WorkerPool {
 				if (
 					// Don't keep worker if using more than currentMemoryLimit bytes of memory.
 					(res.memoryUsage?.rss ?? 0) > currentMemoryLimit ||
-					// Incase memoryUsage is not available,
+					// In case memoryUsage is not available,
 					// or as a last result when something other than this worker is using up all the memory
 					// kill the worker if there is less than 2 GB of memory free.
 					freemem() < 2 * 1024 * 1024 * 1024
