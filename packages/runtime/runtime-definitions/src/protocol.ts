@@ -48,10 +48,10 @@ export interface ISignalEnvelope {
 
 /**
  * Represents ISignalMessage with its type.
- * @public
+ * @alpha
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-	type: string;
+	readonly type: string;
 }
 
 /**
