@@ -11,8 +11,8 @@ import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
+	MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -31,6 +31,7 @@ const JoinSignalTimeoutMs = 10000;
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
 	logger: ITelemetryLoggerExt;
+	mc: MonitoringContext;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,
@@ -92,10 +93,10 @@ export function createConnectionStateHandler(
 	deltaManager: IDeltaManager<any, any>,
 	clientId?: string,
 ) {
-	const mc = loggerToMonitoringContext(inputs.logger);
+	const config = inputs.mc.config;
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
+		config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
+		config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,
@@ -188,6 +189,9 @@ class ConnectionStateHandlerPassThrough
 
 	public get logger() {
 		return this.inputs.logger;
+	}
+	public get mc() {
+		return this.inputs.mc;
 	}
 	public connectionStateChanged(
 		value: ConnectionState,

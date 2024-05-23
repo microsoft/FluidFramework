@@ -13,6 +13,7 @@ import { IClientConfiguration, ITokenClaims } from "@fluidframework/driver-defin
 import {
 	TelemetryEventCategory,
 	createChildLogger,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
@@ -141,6 +142,7 @@ describe("ConnectionStateHandler Tests", () => {
 			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
+		const logger = createChildLogger();
 		handlerInputs = {
 			maxClientLeaveWaitTime: expectedTimeout,
 			shouldClientJoinWrite: () => shouldClientJoinWrite,
@@ -152,7 +154,8 @@ describe("ConnectionStateHandler Tests", () => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
 			connectionStateChanged: () => {},
-			logger: createChildLogger(),
+			logger,
+			mc: loggerToMonitoringContext(logger),
 			clientShouldHaveLeft: (clientId: string) => {},
 			onCriticalError: (error) => {
 				// eslint-disable-next-line @typescript-eslint/no-throw-literal
