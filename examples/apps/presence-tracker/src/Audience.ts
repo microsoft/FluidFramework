@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
-import { TinyliciousMember, TinyliciousUser } from "@fluidframework/tinylicious-client/internal";
+import type { AzureMember, AzureUser } from "@fluidframework/azure-client/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 
-export function createMockServiceMember(audienceMember: IClient): TinyliciousMember {
-	const tinyliciousUser = audienceMember.user as TinyliciousUser;
+export function createMockServiceMember(audienceMember: IClient): AzureMember {
+	const azureUser = audienceMember.user as AzureUser;
 
-	if (tinyliciousUser === undefined) {
-		throw new Error("Specified user was not of type TinyliciousUser");
+	if (azureUser === undefined) {
+		throw new Error("Specified user was not of type azureUser");
 	}
 
 	return {
-		id: tinyliciousUser.id,
-		name: tinyliciousUser.name,
+		id: azureUser.id,
+		name: azureUser.name,
 		connections: [],
 	};
 }

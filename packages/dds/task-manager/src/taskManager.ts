@@ -8,14 +8,18 @@ import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
 

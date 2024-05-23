@@ -14,12 +14,8 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	IClient,
-} from "@fluidframework/protocol-definitions";
+import { IResolvedUrl, IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, IClient } from "@fluidframework/driver-definitions";
 
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";

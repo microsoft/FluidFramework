@@ -11,6 +11,7 @@ import { fail, getOrCreate } from "../util/index.js";
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
 	k: infer U,
 ) => unknown
@@ -21,6 +22,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
  * `true` iff the given type is an acceptable shape for an event
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 /**
@@ -67,7 +69,7 @@ export type Events<E> = {
  */
 export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
 	[P in keyof Events<E>]: (event: P, listener: E[P]) => void;
-} extends Record<any, infer Z>
+} extends Record<string | number | symbol, infer Z>
 	? UnionToIntersection<Z> & Target
 	: never;
 
@@ -93,11 +95,19 @@ export interface ISubscribable<E extends Events<E>> {
 	 * Register an event listener.
 	 * @param eventName - the name of the event
 	 * @param listener - the handler to run when the event is fired by the emitter
-	 * @returns a function which will deregister the listener when run. This function has undefined behavior
-	 * if called more than once.
+	 * @returns a {@link Off | function} which will deregister the listener when called.
+	 * This function has undefined behavior if called more than once.
 	 */
-	on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+	on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off;
 }
+
+/**
+ * A function that, when called, will deregister an event listener subscription that was previously registered.
+ * @remarks
+ * It is returned by the {@link ISubscribable.on | event registration function} when event registration occurs.
+ * @public
+ */
+export type Off = () => void;
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
@@ -191,18 +201,14 @@ export interface HasListeners<E extends Events<E>> {
  *     this.events.emit("loaded");
  *   }
  *
- *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+ *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
  *     return this.events.on(eventName, listener);
  *   }
  * }
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
-	// TODO: because the inner data-structure here is a set, adding the same callback twice does not error,
-	// but only calls it once, and unsubscribing will stop calling it all together.
-	// This is surprising since it makes subscribing and unsubscribing not inverses (but instead both idempotent).
-	// This might be desired, but if so the documentation should indicate it.
-	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
+	private readonly listeners = new Map<keyof E, Map<Off, (...args: any[]) => E[keyof E]>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
@@ -213,9 +219,9 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
 			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
-			for (const listener of [...listeners]) {
+			for (const [off, listener] of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
-				if (listeners.has(listener)) {
+				if (listeners.has(off)) {
 					listener(...argArray);
 				}
 			}
@@ -230,7 +236,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args;
 			const resultArray: ReturnType<E[K]>[] = [];
-			for (const listener of listeners.values()) {
+			for (const listener of [...listeners.values()]) {
 				resultArray.push(listener(...argArray));
 			}
 			return resultArray;
@@ -249,26 +255,25 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
 	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
-		getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
-		return () => this.off(eventName, listener);
-	}
-
-	private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
-		const listeners =
-			this.listeners.get(eventName) ??
-			// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
-			fail(
-				"Event has no listeners. Event deregistration functions may only be invoked once.",
+	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off {
+		const off: Off = () => {
+			const listeners =
+				this.listeners.get(eventName) ??
+				// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
+				fail(
+					"Event has no listeners. Event deregistration functions may only be invoked once.",
+				);
+			assert(
+				listeners.delete(off),
+				0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
 			);
-		assert(
-			listeners.delete(listener),
-			0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
-		);
-		if (listeners.size === 0) {
-			this.listeners.delete(eventName);
-			this.noListeners?.(eventName);
-		}
+			if (listeners.size === 0) {
+				this.listeners.delete(eventName);
+				this.noListeners?.(eventName);
+			}
+		};
+		getOrCreate(this.listeners, eventName, () => new Map()).set(off, listener);
+		return off;
 	}
 
 	public hasListeners(eventName?: keyof Events<E>): boolean {

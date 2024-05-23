@@ -8,12 +8,8 @@ import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import {
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.

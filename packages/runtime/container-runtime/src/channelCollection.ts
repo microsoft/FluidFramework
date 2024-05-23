@@ -20,14 +20,12 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -42,6 +40,7 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

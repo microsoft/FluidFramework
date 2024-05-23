@@ -4,12 +4,12 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @internal (undocumented)

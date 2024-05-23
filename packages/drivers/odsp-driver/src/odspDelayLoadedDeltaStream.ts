@@ -30,7 +30,7 @@ import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	IFluidErrorBase,
 	MonitoringContext,
@@ -148,7 +148,7 @@ export class OdspDelayLoadedDeltaStream {
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
 				? // eslint-disable-next-line unicorn/no-null
 				  Promise.resolve(null)
-				: this.getWebsocketToken!(options);
+				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
 				throw this.annotateConnectionError(

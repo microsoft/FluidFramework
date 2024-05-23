@@ -11,7 +11,6 @@ import { ICodecOptions, IJsonCodec, makeCodecFamily } from "../../../codec/index
 import {
 	FieldChangeHandler,
 	genericFieldKind,
-	FieldChange,
 	ModularChangeset,
 	FieldKindWithEditor,
 	RelevantRemovedRootsFromChild,
@@ -29,6 +28,7 @@ import {
 	EncodedModularChangeset,
 	FieldChangeRebaser,
 	FieldEditor,
+	EditDescription,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -46,9 +46,9 @@ import {
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
 	ChangeAtomIdMap,
-	taggedAtomId,
 	Multiplicity,
 	replaceAtomRevisions,
+	FieldUpPath,
 } from "../../../core/index.js";
 import {
 	brand,
@@ -90,7 +90,8 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
-	compose: (change1, change2, composeChild) => composeChild(change1, change2),
+	compose: (change1, change2, composeChild) =>
+		change1 === undefined && change2 === undefined ? undefined : composeChild(change1, change2),
 	invert: (change) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
@@ -130,7 +131,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
-	isEmpty: (change) => change === undefined,
+
+	// We create changesets by composing an empty single node field with a change to the child.
+	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
+	isEmpty: (change) => false,
 	createEmpty: () => undefined,
 };
 
@@ -178,232 +182,196 @@ const valueChange1b: ValueChangeset = { old: 0, new: 2 };
 const valueChange2: ValueChangeset = { old: 1, new: 2 };
 
 const nodeId1: NodeId = { localId: brand(1) };
-const nodeChange1a: NodeChangeset = {
-	fieldChanges: new Map([
-		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
-	]),
-};
-
-const nodeChanges1b: NodeChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange1b),
-			},
-		],
-		[
-			fieldB,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange1a),
-			},
-		],
-	]),
-};
-
 const nodeId2: NodeId = { localId: brand(2) };
-const nodeChanges2: NodeChangeset = {
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange2),
-			},
-		],
-		[
-			fieldB,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange1a),
-			},
-		],
-	]),
-};
 
-const nodeId3: NodeId = { localId: brand(3) };
-const nodeChange3: NodeChangeset = {
-	fieldChanges: new Map([
-		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
-	]),
-};
+const pathA: FieldUpPath = { parent: undefined, field: fieldA };
+const pathA0: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+const pathB: FieldUpPath = { parent: undefined, field: fieldB };
+const pathB0: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
+const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
+const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
+const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
 
-const nodeId4: NodeId = { localId: brand(4) };
-const nodeChange4: NodeChangeset = {
-	fieldChanges: new Map([
-		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
-	]),
-	nodeExistsConstraint: {
-		violated: false,
+const rootChange1a = buildChangeset([
+	{
+		type: "field",
+		field: pathA,
+		fieldKind: singleNodeField.identifier,
+		change: brand(undefined),
 	},
-};
-
-const nodeChangeWithoutFieldChanges: NodeChangeset = {
-	nodeExistsConstraint: {
-		violated: false,
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
 	},
-};
+	{
+		type: "field",
+		field: pathB,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+]);
 
-const rootChange1a: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeChange1a]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId1),
-			},
-		],
-		[
-			fieldB,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange2),
-			},
-		],
-	]),
-};
+const rootChange1aGeneric: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+	{
+		type: "field",
+		field: pathB,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+]);
 
-const rootChange1aGeneric: ModularChangeset = {
-	nodeChanges: new Map([[nodeId1.revision, new Map([[nodeId1.localId, nodeChange1a]])]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1)),
-			},
-		],
-		[
-			fieldB,
-			{
-				fieldKind: valueField.identifier,
-				change: brand(valueChange2),
-			},
-		],
-	]),
-};
+const rootChange1b: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA,
+		fieldKind: singleNodeField.identifier,
+		change: brand(undefined),
+	},
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1b),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rootChange1b: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeChanges1b]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId1),
-			},
-		],
-	]),
-};
+const rootChange1bGeneric: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1b),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rootChange1bGeneric: ModularChangeset = {
-	nodeChanges: new Map([[nodeId1.revision, new Map([[nodeId1.localId, nodeChanges1b]])]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1)),
-			},
-		],
-	]),
-};
+const rebasedChange: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA,
+		fieldKind: singleNodeField.identifier,
+		change: brand(undefined),
+	},
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rebasedChange: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeChanges2]]),
-	fieldChanges: new Map([
-		[fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeId1) }],
-	]),
-};
+const rebasedChangeGeneric: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rebasedChangeGeneric: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeChanges2]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1)),
-			},
-		],
-	]),
-};
+const rootChange2: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA,
+		fieldKind: singleNodeField.identifier,
+		change: brand(undefined),
+	},
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rootChange2: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId2.revision, nodeId2.localId, nodeChanges2]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId2),
-			},
-		],
-	]),
-};
+const rootChange2Generic: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange2),
+	},
+	{
+		type: "field",
+		field: pathA0B,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rootChange2Generic: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId2.revision, nodeId2.localId, nodeChanges2]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: genericFieldKind.identifier,
-				change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId2)),
-			},
-		],
-	]),
-};
+const rootChange3: ModularChangeset = buildChangeset([
+	{
+		type: "field",
+		field: pathA,
+		fieldKind: singleNodeField.identifier,
+		change: brand(undefined),
+	},
+	{
+		type: "field",
+		field: pathA0A,
+		fieldKind: valueField.identifier,
+		change: brand(valueChange1a),
+	},
+]);
 
-const rootChange3: ModularChangeset = {
-	nodeChanges: nestedMapFromFlatList([[nodeId3.revision, nodeId3.localId, nodeChange3]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId3),
-			},
-		],
-	]),
-};
+const rootChange4: ModularChangeset = family.compose([
+	tagChangeInline(rootChange3, tag1),
+	makeAnonChange(buildExistsConstraint(pathA0)),
+]);
 
-const dummyMaxId = 10;
 const dummyRevisionTag = mintRevisionTag();
-const rootChange4: ModularChangeset = {
-	maxId: brand(dummyMaxId),
-	revisions: [{ revision: dummyRevisionTag }],
-	nodeChanges: nestedMapFromFlatList([[nodeId4.revision, nodeId4.localId, nodeChange4]]),
-	fieldChanges: new Map([
-		[
-			fieldA,
-			{
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId4),
-			},
-		],
-	]),
-};
 
-const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
-	maxId: brand(dummyMaxId),
-	revisions: [{ revision: dummyRevisionTag }],
-	nodeChanges: nestedMapFromFlatList([
-		[nodeId4.revision, nodeId4.localId, nodeChangeWithoutFieldChanges],
-	]),
-	fieldChanges: new Map([
-		[
-			fieldA,
+const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
+	tagChangeInline(
+		buildChangeset([
 			{
+				type: "field",
+				field: pathA,
 				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId4),
+				change: brand(undefined),
 			},
-		],
-	]),
-};
+		]),
+		dummyRevisionTag,
+	),
+	makeAnonChange(buildExistsConstraint(pathA0)),
+]);
 
 const node1 = singleJsonCursor(1);
 const objectNode = singleJsonCursor({});
@@ -456,27 +424,32 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ specific", () => {
-			const expectedCompose: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, composedNodeChange],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: singleNodeField.identifier,
-							change: brand(nodeId1),
-						},
-					],
-					[
-						fieldB,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
-				]),
-			};
+			const expectedCompose = buildChangeset([
+				{
+					type: "field",
+					field: pathA,
+					fieldKind: singleNodeField.identifier,
+					change: brand(undefined),
+				},
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(composedValues),
+				},
+				{
+					type: "field",
+					field: pathA0B,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange1a),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange2),
+				},
+			]);
 
 			const composed = family.compose([
 				makeAnonChange(rootChange1a),
@@ -487,27 +460,33 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ generic", () => {
-			const expectedCompose: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, composedNodeChange],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: singleNodeField.identifier,
-							change: brand(nodeId1),
-						},
-					],
-					[
-						fieldB,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
-				]),
-			};
+			const expectedCompose = buildChangeset([
+				{
+					type: "field",
+					field: pathA,
+					fieldKind: singleNodeField.identifier,
+					change: brand(undefined),
+				},
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(composedValues),
+				},
+				{
+					type: "field",
+					field: pathA0B,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange1a),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange2),
+				},
+			]);
+
 			assert.deepEqual(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
 				expectedCompose,
@@ -515,27 +494,33 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ specific", () => {
-			const expectedCompose: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, composedNodeChange],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: singleNodeField.identifier,
-							change: brand(nodeId1),
-						},
-					],
-					[
-						fieldB,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
-				]),
-			};
+			const expectedCompose = buildChangeset([
+				{
+					type: "field",
+					field: pathA,
+					fieldKind: singleNodeField.identifier,
+					change: brand(undefined),
+				},
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(composedValues),
+				},
+				{
+					type: "field",
+					field: pathA0B,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange1a),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange2),
+				},
+			]);
+
 			assert.deepEqual(
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
 				expectedCompose,
@@ -543,29 +528,27 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ generic", () => {
-			const expectedCompose: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, composedNodeChange],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: genericFieldKind.identifier,
-							change: brand(
-								genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1),
-							),
-						},
-					],
-					[
-						fieldB,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
-				]),
-			};
+			const expectedCompose = buildChangeset([
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(composedValues),
+				},
+				{
+					type: "field",
+					field: pathA0B,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange1a),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange2),
+				},
+			]);
+
 			assert.deepEqual(
 				family.compose([
 					makeAnonChange(rootChange1aGeneric),
@@ -576,44 +559,33 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose tagged changes", () => {
-			const change1A: FieldChange = {
-				fieldKind: valueField.identifier,
-				change: brand(valueChange1a),
-			};
-
-			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
-				{
-					nodeChanges: new Map(),
-					fieldChanges: new Map([[fieldA, change1A]]),
-				},
+			const change1 = tagChangeInline(
+				buildChangeset([
+					{
+						type: "field",
+						field: pathA,
+						fieldKind: valueField.identifier,
+						change: brand(valueChange1a),
+					},
+				]),
 				tag1,
 			);
 
-			const nodeChange2: NodeChangeset = {
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
+			const change2 = tagChangeInline(
+				buildChangeset([
+					{
+						type: "field",
+						field: pathB,
+						fieldKind: singleNodeField.identifier,
+						change: brand(undefined),
+					},
+					{
+						type: "field",
+						field: pathB0A,
+						fieldKind: valueField.identifier,
+						change: brand(valueChange2),
+					},
 				]),
-			};
-
-			const change2B: FieldChange = {
-				fieldKind: singleNodeField.identifier,
-				change: brand(nodeId2),
-			};
-
-			deepFreeze(change2B);
-			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
-				{
-					nodeChanges: nestedMapFromFlatList([
-						[nodeId2.revision, nodeId2.localId, nodeChange2],
-					]),
-					fieldChanges: new Map([[fieldB, change2B]]),
-				},
 				tag2,
 			);
 
@@ -633,10 +605,10 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const taggedNodeId2: NodeId = taggedAtomId(nodeId2, tag2);
+			const nodeId: NodeId = { revision: tag2, localId: brand(0) };
 			const expected: ModularChangeset = {
 				nodeChanges: nestedMapFromFlatList([
-					[taggedNodeId2.revision, taggedNodeId2.localId, expectedNodeChange],
+					[nodeId.revision, nodeId.localId, expectedNodeChange],
 				]),
 				fieldChanges: new Map([
 					[
@@ -650,11 +622,12 @@ describe("ModularChangeFamily", () => {
 						fieldB,
 						{
 							fieldKind: singleNodeField.identifier,
-							change: brand(taggedNodeId2),
+							change: brand(nodeId),
 						},
 					],
 				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
+				maxId: brand(0),
 			};
 
 			assert.deepEqual(composed, expected);
@@ -896,52 +869,46 @@ describe("ModularChangeFamily", () => {
 		const valueInverse1: ValueChangeset = { old: 1, new: 0 };
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
-		const nodeInverse: NodeChangeset = {
-			fieldChanges: new Map([
-				[
-					fieldA,
-					{
-						fieldKind: valueField.identifier,
-						change: brand(valueInverse1),
-					},
-				],
-			]),
-		};
-
 		it("specific", () => {
-			const expectedInverse: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeInverse],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: singleNodeField.identifier,
-							change: brand(nodeId1),
-						},
-					],
-					[fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
-				]),
-			};
+			const expectedInverse = buildChangeset([
+				{
+					type: "field",
+					field: pathA,
+					fieldKind: singleNodeField.identifier,
+					change: brand(undefined),
+				},
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(valueInverse1),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueInverse2),
+				},
+			]);
 
 			assert.deepEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
 		});
 
 		it("generic", () => {
-			const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1);
-			const expectedInverse: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeInverse],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{ fieldKind: genericFieldKind.identifier, change: brand(fieldChange) },
-					],
-					[fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
-				]),
-			};
+			const expectedInverse = buildChangeset([
+				{
+					type: "field",
+					field: pathA0A,
+					fieldKind: valueField.identifier,
+					change: brand(valueInverse1),
+				},
+				{
+					type: "field",
+					field: pathB,
+					fieldKind: valueField.identifier,
+					change: brand(valueInverse2),
+				},
+			]);
 
 			assert.deepEqual(
 				family.invert(makeAnonChange(rootChange1aGeneric), false),
@@ -1148,7 +1115,7 @@ describe("ModularChangeFamily", () => {
 			nested: NodeId[];
 		}
 
-		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>> = {
 			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
@@ -1158,7 +1125,7 @@ describe("ModularChangeFamily", () => {
 					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
 				];
 			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
+		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
 		const hasRemovedRootsRefsField = new FieldKindWithEditor(
 			fieldKind,
 			Multiplicity.Single,
@@ -1226,6 +1193,7 @@ describe("ModularChangeFamily", () => {
 				shallow: [a1],
 				nested: [nodeId1],
 			};
+
 			const input: ModularChangeset = {
 				nodeChanges: nestedMapFromFlatList([
 					[nodeId1.revision, nodeId1.localId, nodeChangeFromHasRemovedRootsRefs(changeB)],
@@ -1553,4 +1521,16 @@ function tagChangeInline(
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
 	return tagChange(inlineRevision(change, revision), revision);
+}
+
+function buildChangeset(edits: EditDescription[]): ModularChangeset {
+	const editor = family.buildEditor(() => undefined);
+	return editor.buildChanges(edits);
+}
+
+function buildExistsConstraint(path: UpPath): ModularChangeset {
+	const edits: ModularChangeset[] = [];
+	const editor = family.buildEditor((change) => edits.push(change));
+	editor.addNodeExistsConstraint(path);
+	return edits[0];
 }

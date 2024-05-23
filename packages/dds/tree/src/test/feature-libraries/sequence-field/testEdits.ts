@@ -11,7 +11,13 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
+import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionTag,
+	asChangeAtomId,
+	offsetChangeAtomId,
+} from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -51,7 +57,13 @@ export const cases: {
 		createMoveOutMark(1, brand(0)),
 		createAttachAndDetachMark(createMoveInMark(1, brand(0)), createRemoveMark(1, brand(1))),
 	],
-	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
+	return: createReturnChangeset(
+		1,
+		3,
+		0,
+		{ revision: tag, localId: brand(1) },
+		{ revision: tag, localId: brand(0) },
+	),
 	transient_insert: [
 		{ count: 1 },
 		createAttachAndDetachMark(createInsertMark(2, brand(1)), createRemoveMark(2, brand(2))),
@@ -105,16 +117,17 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id);
+	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id, brand(id + count));
 }
 
 function createReturnChangeset(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detachEvent: SF.CellId,
+	detachCellId: SF.CellId,
+	attachCellId: SF.CellId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachEvent);
+	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachCellId, attachCellId);
 }
 
 function createModifyChangeset(index: number, change: NodeId): SF.Changeset {
@@ -134,7 +147,7 @@ function createModifyDetachedChangeset(
 
 /**
  * @param count - The number of nodes inserted.
- * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * @param cellId - The first cell to insert the content into.
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
@@ -222,19 +235,20 @@ function createRemoveMark(
 
 /**
  * @param count - The number of nodes to move.
- * @param markId - The id to associate with the marks.
+ * @param detachId - The id to associate with first emptied cell.
  * Defines how later edits refer the emptied cells.
+ * The destination cells are assigned IDs with a `ChangesetLocalId` that is `count` greater.
  * @param overrides - Any additional properties to add to the mark.
  * @returns A pair of marks, the first for moving out, the second for moving in.
  */
 function createMoveMarks(
 	count: number,
-	markId: ChangesetLocalId | ChangeAtomId,
+	detachId: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.CellMark<(SF.MoveOut & SF.MoveIn) | { changes?: NodeId }>>,
 ): [moveOut: SF.CellMark<SF.MoveOut>, moveIn: SF.CellMark<SF.MoveIn>] {
-	const moveOut = createMoveOutMark(count, markId, overrides);
+	const moveOut = createMoveOutMark(count, detachId, overrides);
 	const { changes: _, ...overridesWithNoChanges } = overrides ?? {};
-	const moveIn = createMoveInMark(count, markId, overridesWithNoChanges);
+	const moveIn = createMoveInMark(count, detachId, overridesWithNoChanges);
 	return [moveOut, moveIn];
 }
 
@@ -263,42 +277,42 @@ function createMoveOutMark(
 
 /**
  * @param count - The number of nodes moved in.
- * @param cellId - The first cell to move the content into (potentially includes lineage information).
- * Also defines the ChangeAtomId to associate with the mark.
+ * @param moveId - The ID associated with the first node being moved.
+ * By default, the destination cell will be assigned an ID with a local ID that is equal to `moveId + count`.
  * @param overrides - Any additional properties to add to the mark.
  */
 function createMoveInMark(
 	count: number,
-	cellId: ChangesetLocalId | SF.CellId,
+	moveId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.MoveIn>>,
 ): SF.CellMark<SF.MoveIn> {
-	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
+	const moveIdObject = asChangeAtomId(moveId);
 	const mark: SF.CellMark<SF.MoveIn> = {
 		type: "MoveIn",
-		id: cellIdObject.localId,
-		cellId: cellIdObject,
+		id: moveIdObject.localId,
+		cellId: offsetChangeAtomId(moveIdObject, count),
 		count,
 	};
-	if (cellIdObject.revision !== undefined) {
-		mark.revision = cellIdObject.revision;
+	if (moveIdObject.revision !== undefined) {
+		mark.revision = moveIdObject.revision;
 	}
 	return { ...mark, ...overrides };
 }
 
 /**
  * @param count - The number of nodes to attach.
- * @param markId - The id to associate with the mark.
+ * @param moveId - The ID associated with the first node being moved.
  * @param cellId - The cell to return the nodes to.
  * If undefined, the mark targets populated cells and is therefore muted.
  * @param overrides - Any additional properties to add to the mark.
  */
 function createReturnToMark(
 	count: number,
-	markId: ChangesetLocalId | ChangeAtomId,
+	moveId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.MoveIn>>,
 ): SF.CellMark<SF.MoveIn> {
-	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
+	const atomId = asChangeAtomId(moveId);
 	const mark: SF.CellMark<SF.MoveIn> = {
 		type: "MoveIn",
 		id: atomId.localId,

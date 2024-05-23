@@ -7,13 +7,13 @@
 import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
 import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils/internal';
 import type { IRandom } from '@fluid-private/stochastic-test-utils';
-import type { ISharedObject } from '@fluidframework/shared-object-base';
+import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils/internal';
 import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils/internal';
 import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';

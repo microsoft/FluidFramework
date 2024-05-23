@@ -173,7 +173,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -212,7 +211,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
 		"broken": {
@@ -263,6 +262,18 @@
 			"RemovedInterfaceDeclaration_IRetriableFailureResult": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IGenerateSummaryTreeResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISubmitSummaryOpResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IUploadSummaryResult": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SubmitSummaryResult": {
+				"backCompat": false
 			}
 		}
 	}

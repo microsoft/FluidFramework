@@ -77,7 +77,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -93,7 +93,7 @@
 		"eslint-plugin-deprecation": "~2.0.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
 		"broken": {
@@ -111,6 +111,9 @@
 			},
 			"InterfaceDeclaration_IFluidParentContext": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITelemetryContext": {
 				"backCompat": false
 			},
 			"RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {

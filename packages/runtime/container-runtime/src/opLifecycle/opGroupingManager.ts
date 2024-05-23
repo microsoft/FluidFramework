@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IBatch } from "./definitions.js";

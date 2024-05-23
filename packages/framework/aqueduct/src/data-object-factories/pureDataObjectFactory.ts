@@ -15,7 +15,7 @@ import {
 import {
 	type IChannelFactory,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	type IContainerRuntimeBase,
 	type IDataStore,

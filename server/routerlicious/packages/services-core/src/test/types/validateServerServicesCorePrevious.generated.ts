@@ -857,6 +857,7 @@ declare function get_current_InterfaceDeclaration_IDeliState():
 declare function use_old_InterfaceDeclaration_IDeliState(
     use: TypeOnly<old.IDeliState>): void;
 use_old_InterfaceDeclaration_IDeliState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeliState());
 
 /*

@@ -12,7 +12,7 @@ import { hydrate, pretty } from "./utils.js";
 const schemaFactory = new SchemaFactory("test");
 
 describe("List", () => {
-	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
+	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
@@ -262,9 +262,11 @@ describe("List", () => {
 					target: readonly string[],
 					value: boolean,
 				): readonly string[] => {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(target as any)[Symbol.isConcatSpreadable] = value;
 
 					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(target as any)[Symbol.isConcatSpreadable],
 						value,
 						"[Symbol.isConcatSpreadable] must be settable",
@@ -368,7 +370,7 @@ describe("List", () => {
 
 				type IterativeFn = (
 					callback: (...args: any[]) => unknown,
-					...args: unknown[]
+					...args: any[]
 				) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
@@ -388,7 +390,7 @@ describe("List", () => {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
 					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
-						return function (...args: unknown[]) {
+						return function (...args: any[]) {
 							const result = callback(...args);
 
 							// Other than the 'array' parameter, the arguments should be identical.  To make
@@ -423,7 +425,7 @@ describe("List", () => {
 						) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
-								...args: unknown[]
+								...args: any[]
 							) => unknown;
 							const actualArgs: unknown[][] = [];
 							const actualResult = actualFn.apply(subject, [
@@ -696,12 +698,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any)[0] = "a";
 			});
 		});
@@ -710,12 +714,14 @@ describe("List", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 
 			subject.insertAtStart("a", "b", "c");
 
 			assert.throws(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(subject as any).length = 0;
 			});
 		});

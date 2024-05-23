@@ -98,7 +98,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
@@ -129,9 +129,31 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_DataObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidContainer": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_InitialObjects": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ContainerSchema": {
+				"backCompat": false
+			}
+		}
 	}
 }

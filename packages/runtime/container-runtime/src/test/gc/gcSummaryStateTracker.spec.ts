@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
@@ -22,164 +22,13 @@ type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSumm
 };
 
 describe("GCSummaryStateTracker tests", () => {
-	describe("Summary state reset", () => {
-		// In these tests, Persisted = gcVersionInBaseSnapshot. Current = gcVersionInEffect.
-		it("Persisted < Current: Do Need Reset", async () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 0,
-					gcVersionInEffect: 1,
-				},
-				true /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-			assert.equal(
-				tracker.doesSummaryStateNeedReset,
-				true,
-				"Should need reset: Persisted GC Version was old",
-			);
-
-			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-
-			assert.equal(
-				tracker.doesSummaryStateNeedReset,
-				false,
-				"Shouldn't need reset after first summary",
-			);
-		});
-
-		it("Persisted === Current: Don't Need Reset", () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 1,
-					gcVersionInEffect: 1,
-				},
-				true /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-			assert.equal(
-				tracker.doesSummaryStateNeedReset,
-				false,
-				"Shouldn't need reset: GC Versions match",
-			);
-		});
-
-		it("Persisted > Current: Do Need Reset", async () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 2,
-					gcVersionInEffect: 1,
-				},
-				true /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-
-			// This covers the case where we rolled back an upgrade. Containers that successfully "upgraded" (reset)
-			// shouldn't need to do it again.
-			assert.equal(
-				tracker.doesSummaryStateNeedReset,
-				true,
-				"Should need reset: Persisted GC Version is not old",
-			);
-
-			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-			assert.equal(
-				tracker.doesSummaryStateNeedReset,
-				false,
-				"Shouldn't need reset after first summary",
-			);
-		});
-	});
-
-	describe("GC state reset", () => {
-		it("wasGCRunInBaseSnapshot = false, shouldRunGC = false: Don't Need Reset", () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: false,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 1,
-					gcVersionInEffect: 1,
-				},
-				false /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, false, "Shouldn't need reset");
-		});
-
-		it("wasGCRunInBaseSnapshot = true, shouldRunGC = false: Do Need Reset", async () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: false,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 1,
-					gcVersionInEffect: 1,
-				},
-				true /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
-
-			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-			assert.equal(
-				tracker.doesGCStateNeedReset,
-				false,
-				"Shouldn't need reset after first summary",
-			);
-		});
-
-		it("wasGCRunInBaseSnapshot = false, shouldRunGC = true: Do Need Reset", async () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 1,
-					gcVersionInEffect: 1,
-				},
-				false /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
-
-			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-
-			assert.equal(
-				tracker.doesGCStateNeedReset,
-				false,
-				"Shouldn't need reset after first summary",
-			);
-		});
-
-		it("wasGCRunInBaseSnapshot = true, shouldRunGC = true: Don't Need Reset", () => {
-			const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: false,
-					gcVersionInBaseSnapshot: 1,
-					gcVersionInEffect: 1,
-				},
-				true /* wasGCRunInBaseSnapshot */,
-			) as any;
-			assert.equal(tracker.doesGCStateNeedReset, false, "Shouldn't need reset");
-		});
-	});
-
 	it("Autorecovery: requesting Full GC", async () => {
-		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-			{
-				shouldRunGC: true,
-				tombstoneMode: false,
-				gcVersionInBaseSnapshot: 1,
-				gcVersionInEffect: 1,
-			},
-			false /* wasGCRunInBaseSnapshot */,
-		) as any;
+		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker({
+			gcEnabled: true,
+			tombstoneMode: false,
+			gcVersionInBaseSnapshot: 1,
+			gcVersionInEffect: 1,
+		}) as any;
 		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
 
 		tracker.autoRecovery.requestFullGCOnNextRun();
@@ -219,15 +68,12 @@ describe("GCSummaryStateTracker tests", () => {
 
 		beforeEach(async () => {
 			// Creates a summary state tracker and initialize it.
-			summaryStateTracker = new GCSummaryStateTracker(
-				{
-					shouldRunGC: true,
-					tombstoneMode: true,
-					gcVersionInBaseSnapshot: nextGCVersion,
-					gcVersionInEffect: nextGCVersion,
-				},
-				false /* wasGCRunInBaseSnapshot */,
-			);
+			summaryStateTracker = new GCSummaryStateTracker({
+				gcEnabled: true,
+				tombstoneMode: true,
+				gcVersionInBaseSnapshot: nextGCVersion,
+				gcVersionInEffect: nextGCVersion,
+			});
 
 			summaryStateTracker.initializeBaseState({
 				gcState: initialGCState,
@@ -349,15 +195,12 @@ describe("GCSummaryStateTracker tests", () => {
 			deletedAttachmentBlobCount: 0,
 		};
 
-		const summaryStateTracker = new GCSummaryStateTracker(
-			{
-				shouldRunGC: true,
-				tombstoneMode: true,
-				gcVersionInBaseSnapshot: nextGCVersion,
-				gcVersionInEffect: nextGCVersion,
-			},
-			false /* wasGCRunInBaseSnapshot */,
-		);
+		const summaryStateTracker = new GCSummaryStateTracker({
+			gcEnabled: true,
+			tombstoneMode: true,
+			gcVersionInBaseSnapshot: nextGCVersion,
+			gcVersionInEffect: nextGCVersion,
+		});
 
 		let expectedUpdatedDataStoreCount = updatedDataStoreCount;
 		// Update the state from GC stats and validate it's the same as updatedDataStoreCount.

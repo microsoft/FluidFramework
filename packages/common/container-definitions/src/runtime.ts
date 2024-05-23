@@ -11,18 +11,18 @@ import type {
 import type {
 	IDocumentStorageService,
 	ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	IVersion,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	IVersion,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";

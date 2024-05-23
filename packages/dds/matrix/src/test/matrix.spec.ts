@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

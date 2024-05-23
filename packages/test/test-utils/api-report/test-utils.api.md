@@ -9,7 +9,7 @@ import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct/internal';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IContainer } from '@fluidframework/container-definitions/internal';
@@ -24,7 +24,7 @@ import { IFluidCodeDetails } from '@fluidframework/container-definitions/interna
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions/internal';
@@ -45,7 +45,7 @@ import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISharedMap } from '@fluidframework/map/internal';
 import { ISummarizer } from '@fluidframework/container-runtime/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
@@ -118,7 +118,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 // @internal (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
-    Primed = 0,
+    Primed = 0,// default
     // (undocumented)
     Test = 1
 }

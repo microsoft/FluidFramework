@@ -5,6 +5,8 @@
 
 import { strict as assert } from "assert";
 
+
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
 

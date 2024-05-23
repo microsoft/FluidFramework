@@ -7,13 +7,9 @@ import { strict as assert } from "assert";
 
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	ITree,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ITree, MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";

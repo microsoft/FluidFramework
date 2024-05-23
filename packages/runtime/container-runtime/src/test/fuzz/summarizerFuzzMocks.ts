@@ -4,15 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -196,7 +195,6 @@ export class MockContainerRuntimeForSummarizer
 			submitOpDuration: 0,
 			uploadDuration: 0,
 			generateDuration: 0,
-			forcedFullTree: false,
 			summaryTree: {
 				type: SummaryType.Tree,
 				tree: {},
