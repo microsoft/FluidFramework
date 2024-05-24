@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/order */
+
 /**
  * @fileoverview Declaration of the PropertyFactory class.
  * Responsible for creating property sets and registering property templates
@@ -105,6 +107,8 @@ const {
 } = require("./properties/valueMapProperty");
 
 const { LazyLoadedProperties } = require("./properties/lazyLoadedProperties");
+
+/* eslint-enable import/order */
 
 /**
  * Creates an instance of the TemplateValidator

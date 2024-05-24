@@ -11,7 +11,10 @@ import {
 	concatGarbageCollectionStates,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	gcBlobPrefix,
@@ -20,7 +23,6 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

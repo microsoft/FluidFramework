@@ -4,6 +4,7 @@
  */
 
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+
 import type { TestSnapshotCache } from "./testSnapshotCache.js";
 
 export function supportsDataVirtualization(provider: ITestObjectProvider) {

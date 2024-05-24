@@ -22,8 +22,6 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IQuorumClients,
@@ -33,6 +31,8 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

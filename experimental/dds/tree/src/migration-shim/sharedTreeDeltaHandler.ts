@@ -5,8 +5,8 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
-import { MessageType } from '@fluidframework/driver-definitions/internal';
 import { type ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { MessageType } from '@fluidframework/driver-definitions/internal';
 
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';

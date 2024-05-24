@@ -38,6 +38,16 @@ import {
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	IClient,
+	IClientDetails,
+	IQuorumClients,
+	ISequencedClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
@@ -66,16 +76,6 @@ import {
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
-import {
-	IClient,
-	IClientDetails,
-	IQuorumClients,
-	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -114,6 +114,11 @@ import {
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import {
+	serializeMemoryDetachedBlobStorage,
+	createMemoryDetachedBlobStorage,
+	tryInitializeMemoryDetachedBlobStorage,
+} from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -138,11 +143,6 @@ import {
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
 } from "./utils.js";
-import {
-	serializeMemoryDetachedBlobStorage,
-	createMemoryDetachedBlobStorage,
-	tryInitializeMemoryDetachedBlobStorage,
-} from "./memoryBlobStorage.js";
 
 const detachedContainerRefSeqNumber = 0;
 
