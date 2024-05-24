@@ -236,6 +236,7 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
+		ignorePackage?: (packageInfo: { name: string; version: string; dev: boolean }) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {
@@ -254,6 +255,9 @@ export class FluidBuildDatabase {
 		// Note that combinedDependencies (as of 2024-05-13) does not consider peer
 		// dependencies that could be linked.
 		for (const dep of pkg.combinedDependencies) {
+			if (ignorePackage?.(dep) ?? false) {
+				continue;
+			}
 			const depPackageName = dep.name;
 			const depBuildScripts = this.packageBuildScripts.get(depPackageName);
 			if (depBuildScripts !== undefined) {
