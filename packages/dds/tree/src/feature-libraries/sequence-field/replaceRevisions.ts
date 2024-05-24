@@ -6,7 +6,15 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
-import { Changeset, HasRevisionTag, Mark, MarkEffect, NoopMarkType } from "./types.js";
+import {
+	Changeset,
+	HasMoveFields,
+	HasRevisionTag,
+	Mark,
+	MarkEffect,
+	NoopMarkType,
+} from "./types.js";
+import { MoveMarkEffect } from "./helperTypes.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -54,31 +62,54 @@ function updateEffect<TMark extends MarkEffect>(
 				attach: updateEffect(mark.attach, revisionsToReplace, newRevision),
 				detach: updateEffect(mark.detach, revisionsToReplace, newRevision),
 			};
-		case "Insert":
 		case "MoveIn":
 		case "MoveOut":
+			return updateMoveEffect<TMark & MoveMarkEffect>(
+				// For some reason, TypeScript is not able to infer that `mark` cannot be a `NoopMark` here.
+				mark as MoveMarkEffect,
+				revisionsToReplace,
+				newRevision,
+			);
+		case "Insert":
 		case "Remove":
-			return updateEffectRevision(mark, revisionsToReplace, newRevision);
+			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
 		default:
 			unreachableCase(type);
 	}
 }
 
-function updateEffectRevision<TMark extends MarkEffect & HasRevisionTag>(
-	effect: TMark,
+function updateMoveEffect<TEffect extends HasMoveFields>(
+	effect: TEffect,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
-): TMark {
-	return revisionsToReplace.has(effect.revision)
-		? effectWithRevision(effect, newRevision)
-		: effect;
+): TEffect {
+	return effect.finalEndpoint !== undefined &&
+		revisionsToReplace.has(effect.finalEndpoint.revision)
+		? updateRevision(
+				{
+					...effect,
+					finalEndpoint: updateRevision(
+						effect.finalEndpoint,
+						revisionsToReplace,
+						newRevision,
+					),
+				},
+				revisionsToReplace,
+				newRevision,
+		  )
+		: updateRevision(effect, revisionsToReplace, newRevision);
 }
 
-function effectWithRevision<TEffect extends MarkEffect & HasRevisionTag>(
-	effect: TEffect,
-	revision: RevisionTag | undefined,
-): TEffect {
-	const updated = { ...effect, revision };
+function updateRevision<T extends HasRevisionTag>(
+	input: T,
+	revisionsToReplace: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): T {
+	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
+}
+
+function withRevision<T extends HasRevisionTag>(input: T, revision: RevisionTag | undefined): T {
+	const updated = { ...input, revision };
 	if (revision === undefined) {
 		delete updated.revision;
 	}
