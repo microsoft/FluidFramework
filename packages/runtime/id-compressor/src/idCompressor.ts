@@ -6,7 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, createChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	LoggingError,
+} from "@fluidframework/telemetry-utils";
 import {
 	IdCreationRange,
 	IIdCompressor,

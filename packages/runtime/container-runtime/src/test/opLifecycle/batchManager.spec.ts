@@ -23,7 +23,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager's soft limit: a bunch of small messages", () => {
 		const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
+		const batchManager = new BatchManager({ hardLimit, softLimit, canRebase: true });
 
 		// Can push one large message
 		assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -52,7 +52,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager's soft limit: single large message", () => {
 		const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
+		const batchManager = new BatchManager({ hardLimit, softLimit, canRebase: true });
 
 		// Can push one large message, even above soft limit
 		assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -76,7 +76,7 @@ describe("BatchManager", () => {
 	});
 
 	it("BatchManager: no soft limit", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		const third = Math.floor(hardLimit / 3) + 1;
 		const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
 
@@ -108,7 +108,11 @@ describe("BatchManager", () => {
 	});
 
 	it("BatchManager: soft limit is higher than hard limit", () => {
-		const batchManager = new BatchManager({ hardLimit, softLimit: hardLimit * 2 });
+		const batchManager = new BatchManager({
+			hardLimit,
+			softLimit: hardLimit * 2,
+			canRebase: true,
+		});
 		const twoThird = Math.floor((hardLimit * 2) / 3);
 		const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
 		const largeMessage = {
