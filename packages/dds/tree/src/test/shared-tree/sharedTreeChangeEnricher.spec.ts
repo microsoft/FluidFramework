@@ -87,7 +87,7 @@ export function setupEnricher() {
 		schema,
 		removedRoots,
 	) as SharedTreeReadonlyChangeEnricher & TestChangeEnricher;
-	const fork = enricher.fork();
+	const fork = enricher.fork() as SharedTreeMutableChangeEnricher & TestChangeEnricher;
 	return { enricher, fork };
 }
 
