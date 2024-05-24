@@ -14,15 +14,13 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	IDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

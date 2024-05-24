@@ -4,6 +4,7 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -13,7 +14,6 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,

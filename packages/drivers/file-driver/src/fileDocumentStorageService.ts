@@ -7,15 +7,10 @@ import fs from "fs";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	buildSnapshotTree,
-	convertSummaryTreeToSnapshotITree,
-} from "@fluidframework/driver-utils/internal";
-import {
 	ISnapshotTree,
 	IVersion,
 	ITree,
@@ -23,7 +18,10 @@ import {
 	TreeEntry,
 	IBlob,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	buildSnapshotTree,
+	convertSummaryTreeToSnapshotITree,
+} from "@fluidframework/driver-utils/internal";
 import {
 	IFileSnapshot,
 	ReadDocumentStorageServiceBase,

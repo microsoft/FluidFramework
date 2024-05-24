@@ -24,18 +24,18 @@ import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import {
 	type ITree,
 	SchemaFactory,
 	TreeConfiguration,
 	type TreeView,
 	disposeSymbol,
 } from "@fluidframework/tree";
-import {
-	type ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;

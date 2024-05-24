@@ -15,13 +15,13 @@ import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import type { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,14 +21,13 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
+
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 

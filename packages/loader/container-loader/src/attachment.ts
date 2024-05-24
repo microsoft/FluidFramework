@@ -5,9 +5,9 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";

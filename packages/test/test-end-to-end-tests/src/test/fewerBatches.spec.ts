@@ -9,9 +9,9 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
