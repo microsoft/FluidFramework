@@ -122,6 +122,7 @@ export {
 	ModularChangeFamily,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	updateRefreshers,
 	NodeId,
 	FieldChangeEncodingContext,
 	FieldKindConfiguration,
@@ -195,14 +196,14 @@ export {
 
 export {
 	compareLocalNodeKeys,
-	LocalNodeKey,
 	createNodeKeyManager,
-	createMockNodeKeyManager,
-	StableNodeKey,
+	isStableNodeKey,
+	LocalNodeKey,
+	MockNodeKeyManager,
 	NodeKeyIndex,
 	NodeKeyManager,
-	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
+	StableNodeKey,
 } from "./node-key/index.js";
 
 export {
@@ -210,7 +211,6 @@ export {
 	Required,
 	Optional,
 	Sequence,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	DefaultChangeset,
@@ -225,6 +225,8 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	SchemaValidationErrors,
+	isNodeInSchema,
 } from "./default-schema/index.js";
 
 export {
@@ -268,7 +270,6 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
 	PropertyNameFromFieldKey,
 	ReservedObjectNodeFieldPropertyNames,
 	ReservedObjectNodeFieldPropertyNamePrefixes,
@@ -277,6 +278,7 @@ export {
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	getSchemaAndPolicy,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";

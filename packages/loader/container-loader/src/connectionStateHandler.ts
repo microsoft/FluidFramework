@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
+import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
+	MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
-	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -32,6 +31,7 @@ const JoinSignalTimeoutMs = 10000;
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
 	logger: ITelemetryLoggerExt;
+	mc: MonitoringContext;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,
@@ -52,7 +52,7 @@ export interface IConnectionStateHandlerInputs {
 	clientShouldHaveLeft: (clientId: string) => void;
 
 	/** Some critical error was hit. Container should be closed and error logged. */
-	onCriticalError: (error: ICriticalContainerError) => void;
+	onCriticalError: (error: unknown) => void;
 }
 
 /**
@@ -93,10 +93,10 @@ export function createConnectionStateHandler(
 	deltaManager: IDeltaManager<any, any>,
 	clientId?: string,
 ) {
-	const mc = loggerToMonitoringContext(inputs.logger);
+	const config = inputs.mc.config;
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
+		config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
+		config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,
@@ -190,6 +190,9 @@ class ConnectionStateHandlerPassThrough
 	public get logger() {
 		return this.inputs.logger;
 	}
+	public get mc() {
+		return this.inputs.mc;
+	}
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
@@ -214,7 +217,7 @@ class ConnectionStateHandlerPassThrough
 		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 
-	public onCriticalError(error: ICriticalContainerError) {
+	public onCriticalError(error: unknown) {
 		return this.inputs.onCriticalError(error);
 	}
 }
@@ -373,21 +376,19 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		clientIdFromPausedSession?: string,
 	) {
 		this._clientId = clientIdFromPausedSession;
+		const errorHandler = (error) => this.handler.onCriticalError(error);
 		this.prevClientLeftTimer = new Timer(
 			// Default is 5 min for which we are going to wait for its own "leave" message. This is same as
 			// the max time on server after which leave op is sent.
 			this.handler.maxClientLeaveWaitTime ?? 300000,
 			() => {
-				try {
-					assert(
-						this.connectionState !== ConnectionState.Connected,
-						0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
-					);
-					this.applyForConnectedState("timeout");
-				} catch (error) {
-					this.handler.onCriticalError(normalizeError(error));
-				}
+				assert(
+					this.connectionState !== ConnectionState.Connected,
+					0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
+				);
+				this.applyForConnectedState("timeout");
 			},
+			errorHandler,
 		);
 
 		this.joinTimer = new Timer(
@@ -410,6 +411,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					details,
 				);
 			},
+			errorHandler,
 		);
 	}
 
@@ -471,18 +473,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				});
 			}
 			this.applyForConnectedState("addMemberEvent");
-		} else if (clientId === this.clientId) {
-			// If we see our clientId and it's not also our pending ID, it's our own join op
-			// being replayed, so start the timer in case our previous client is still in quorum
-			assert(
-				!this.waitingForLeaveOp,
-				0x5d2 /* Unexpected join op with current clientId while waiting */,
-			);
-			assert(
-				this.connectionState !== ConnectionState.Connected,
-				0x5d3 /* Unexpected join op with current clientId while connected */,
-			);
-			this.prevClientLeftTimer.restart();
 		}
 	}
 
@@ -530,7 +520,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 	private receivedRemoveMemberEvent(clientId: string) {
 		// If the client which has left was us, then finish the timer.
-		if (this.clientId === clientId) {
+		if (this.clientId === clientId && this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("removeMemberEvent");
 		}
@@ -662,9 +652,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 			this._clientId = this.pendingClientId;
 		} else if (value === ConnectionState.Disconnected) {
-			// Clear pending state immediately to prepare for reconnect
-			this._pendingClientId = undefined;
-
 			if (this.joinTimer.hasTimer) {
 				this.stopjoinTimer();
 			}
@@ -693,8 +680,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			}
 		}
 
-		// Report transition before we propagate event across layers
+		// Report transition
 		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
+
+		// Clear pending state immediately to prepare for reconnect
+		// Do it after calling connectionStateChanged() above, such that our telemetry contains pendingClientId on disconnect events
+		// and we can pair attempts to connect with disconnects (that's the only ID we have if connection did not move far enough before being disconnected)
+		if (value === ConnectionState.Disconnected) {
+			this._pendingClientId = undefined;
+		}
 	}
 
 	protected get membership(): IMembership | undefined {
@@ -739,8 +733,24 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			this.receivedAddMemberEvent(this.pendingClientId!);
 		}
 
+		assert(
+			!this.waitingForLeaveOp,
+			"leave timer can't be set as we have not had access to quorum",
+		);
+
+		// This check is required for scenario of loading container from pending state, and ensuring there is no way
+		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
-		if (this.clientId !== undefined && this.hasMember(this.clientId)) {
+		// This mimicks check in setConnectionState()
+		// Note that we are not consulting this.handler.shouldClientJoinWrite() here
+		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
+		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
+		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,
+		// we might wait even if we could avoid such wait.
+		if (
+			this._clientId !== undefined &&
+			protocol.quorum?.getMember(this._clientId) !== undefined
+		) {
 			this.prevClientLeftTimer.restart();
 		}
 	}

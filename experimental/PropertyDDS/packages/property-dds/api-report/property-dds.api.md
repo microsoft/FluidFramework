@@ -4,17 +4,19 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { NodeProperty } from '@fluid-experimental/property-properties';
 import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal (undocumented)
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
@@ -166,7 +168,7 @@ export const enum OpKind {
 }
 
 // @internal
-export class PropertyTreeFactory implements IChannelFactory {
+export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -257,6 +259,9 @@ export class SharedPropertyTree extends SharedObject {
     // (undocumented)
     useMH: boolean;
 }
+
+// @internal
+export const SharedPropertyTreeKind: ISharedObjectKind<SharedPropertyTree> & SharedObjectKind<SharedPropertyTree>;
 
 // @internal (undocumented)
 export interface SharedPropertyTreeOptions {

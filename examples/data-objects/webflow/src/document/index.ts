@@ -120,7 +120,7 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
-const endOfTextReference = createDetachedLocalReferencePosition();
+const endOfTextReference = createDetachedLocalReferencePosition(undefined);
 const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {

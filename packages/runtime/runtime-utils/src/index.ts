@@ -12,7 +12,14 @@ export {
 	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
-export { ISerializedHandle, isSerializedHandle, isFluidHandle } from "./handles.js";
+export {
+	ISerializedHandle,
+	isSerializedHandle,
+	isFluidHandle,
+	toFluidHandleErased,
+	toFluidHandleInternal,
+	FluidHandleBase,
+} from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";
 export { RequestParser } from "./requestParser.js";
@@ -35,3 +42,5 @@ export {
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
+export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
+export { toDeltaManagerErased, toDeltaManagerInternal } from "./deltaManager.js";

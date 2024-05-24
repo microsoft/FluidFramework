@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { v4 as uuid } from "uuid";
 
@@ -32,7 +32,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
-		private readonly _quantity: SharedCell<number>,
+		private readonly _quantity: ISharedCell<number>,
 	) {
 		super();
 		// this._name.on("sequenceDelta", () =>{
@@ -56,7 +56,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
-		const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
+		const quantityCell: ISharedCell<number> = SharedCell.create(this.runtime);
 		quantityCell.set(quantity);
 		const id = uuid();
 		this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });

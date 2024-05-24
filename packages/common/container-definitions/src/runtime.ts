@@ -11,18 +11,18 @@ import type {
 import type {
 	IDocumentStorageService,
 	ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	IVersion,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ISummaryContent,
 	ISummaryTree,
-	IVersion,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
@@ -260,4 +260,15 @@ export interface IGetPendingLocalStateProps {
 	 * be preserved and collected.
 	 */
 	readonly stopBlobAttachingSignal?: AbortSignal;
+
+	/**
+	 * Date to be used as the starting time of a session. This date is updated in case we refresh the
+	 * base snapshot since we won't be referencing ops older than the new snapshot.
+	 */
+	readonly sessionExpiryTimerStarted?: number;
+
+	/**
+	 * Snapshot sequence number. It will help the runtime to know which ops should still be stashed.
+	 */
+	readonly snapshotSequenceNumber?: number;
 }

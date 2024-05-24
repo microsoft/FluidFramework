@@ -73,6 +73,7 @@ export function makeMessageCodecs<TChangeset>(
 		[undefined, v1Codec],
 		[1, v1Codec],
 		[2, makeV1CodecWithVersion(changeCodecs.resolve(2).json, revisionTagCodec, options, 2)],
+		[3, makeV1CodecWithVersion(changeCodecs.resolve(3).json, revisionTagCodec, options, 3)],
 	]);
 }
 
@@ -85,7 +86,7 @@ function makeV1CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 1 | 2,
+	version: 1 | 2 | 3,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -106,22 +107,36 @@ function makeV1CodecWithVersion<TChangeset>(
 				context: MessageEncodingContext,
 			) => {
 				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, { originatorId }),
+					revision: revisionTagCodec.encode(commit.revision, {
+						originatorId,
+						revision: undefined,
+					}),
 					originatorId,
 					changeset: changeCodec.encode(commit.change, {
 						originatorId,
 						schema: context.schema,
+						revision: commit.revision,
 					}),
 					version,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
 			decode: (encoded: JsonCompatibleReadOnly) => {
-				const { revision, originatorId, changeset } = encoded as unknown as Message;
+				const {
+					revision: encodedRevision,
+					originatorId,
+					changeset,
+				} = encoded as unknown as Message;
+
+				const revision = revisionTagCodec.decode(encodedRevision, {
+					originatorId,
+					revision: undefined,
+				});
+
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision, { originatorId }),
-						change: changeCodec.decode(changeset, { originatorId }),
+						revision,
+						change: changeCodec.decode(changeset, { originatorId, revision }),
 					},
 					sessionId: originatorId,
 				};

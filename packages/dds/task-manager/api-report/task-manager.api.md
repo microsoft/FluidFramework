@@ -4,16 +4,10 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
@@ -40,29 +34,10 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 // @alpha
 export type TaskEventListener = (taskId: string) => void;
 
-// @alpha @sealed
-export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    abandon(taskId: string): void;
-    // (undocumented)
-    protected applyStashedOp(content: any): void;
-    assigned(taskId: string): boolean;
-    canVolunteer(): boolean;
-    complete(taskId: string): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    protected initializeLocalCore(): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onConnect(): void;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    queued(taskId: string): boolean;
-    protected reSubmitCore(): void;
-    subscribed(taskId: string): boolean;
-    subscribeToTask(taskId: string): void;
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    volunteerForTask(taskId: string): Promise<boolean>;
-}
+// @alpha
+export const TaskManager: ISharedObjectKind<ITaskManager> & SharedObjectKind<ITaskManager>;
+
+// @alpha
+export type TaskManager = ITaskManager;
 
 ```

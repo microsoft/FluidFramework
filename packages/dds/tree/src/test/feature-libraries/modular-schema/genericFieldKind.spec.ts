@@ -8,11 +8,10 @@ import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 import {
 	GenericChangeset,
-	genericFieldKind,
 	CrossFieldManager,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries/index.js";
-import { makeAnonChange, DeltaFieldChanges } from "../../../core/index.js";
+import { DeltaFieldChanges } from "../../../core/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	EncodingTestData,
@@ -24,6 +23,7 @@ import {
 	FieldChangeEncodingContext,
 	NodeId,
 	RebaseRevisionMetadata,
+	genericChangeHandler,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -38,6 +38,7 @@ const nodeId4: NodeId = { localId: brand(4) };
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
+	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
 	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
@@ -88,9 +89,9 @@ describe("GenericField", () => {
 					nodeChange: TestNodeId.create(nodeId2, TestChange.mint([], 2)),
 				},
 			];
-			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				makeAnonChange(changeA),
-				makeAnonChange(changeB),
+			const actual = genericChangeHandler.rebaser.compose(
+				changeA,
+				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -134,9 +135,9 @@ describe("GenericField", () => {
 					nodeChange: TestNodeId.create(nodeId4, TestChange.mint([], 4)),
 				},
 			];
-			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				makeAnonChange(changeA),
-				makeAnonChange(changeB),
+			const actual = genericChangeHandler.rebaser.compose(
+				changeA,
+				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -178,9 +179,9 @@ describe("GenericField", () => {
 					nodeChange: TestNodeId.create(nodeId2, TestChange.mint([], 2)),
 				},
 			];
-			const actual = genericFieldKind.changeHandler.rebaser.rebase(
+			const actual = genericChangeHandler.rebaser.rebase(
 				changeA,
-				makeAnonChange(changeB),
+				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -220,9 +221,9 @@ describe("GenericField", () => {
 					nodeChange: TestNodeId.create(nodeId2, TestChange.mint([], 2)),
 				},
 			];
-			const actual = genericFieldKind.changeHandler.rebaser.rebase(
+			const actual = genericChangeHandler.rebaser.rebase(
 				changeA,
-				makeAnonChange(changeB),
+				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -253,13 +254,12 @@ describe("GenericField", () => {
 				nodeChange: nodeId2,
 			},
 		];
-		const taggedChange = makeAnonChange(forward);
-		const actual = genericFieldKind.changeHandler.rebaser.invert(
-			taggedChange,
+		const actual = genericChangeHandler.rebaser.invert(
+			forward,
 			true,
 			idAllocatorFromMaxId(),
 			crossFieldManager,
-			defaultRevisionMetadataFromChanges([taggedChange]),
+			defaultRevisionMetadataFromChanges([]),
 		);
 		assert.deepEqual(actual, expected);
 	});
@@ -286,8 +286,8 @@ describe("GenericField", () => {
 			],
 		};
 
-		const actual = genericFieldKind.changeHandler.intoDelta(
-			makeAnonChange(input),
+		const actual = genericChangeHandler.intoDelta(
+			input,
 			TestNodeId.deltaFromChild,
 			MemoizedIdRangeAllocator.fromNextId(),
 		);
@@ -295,7 +295,7 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const baseContext = { originatorId: "session1" as SessionId };
+		const baseContext = { originatorId: "session1" as SessionId, revision: undefined };
 
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
@@ -325,23 +325,23 @@ describe("GenericField", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(testRevisionTagCodec),
+			genericChangeHandler.codecsFactory(testRevisionTagCodec),
 			encodingTestData,
 		);
 	});
 
 	it("build child change", () => {
-		const change0 = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1);
-		const change1 = genericFieldKind.changeHandler.editor.buildChildChange(1, nodeId2);
-		const change2 = genericFieldKind.changeHandler.editor.buildChildChange(2, nodeId3);
+		const change0 = genericChangeHandler.editor.buildChildChange(0, nodeId1);
+		const change1 = genericChangeHandler.editor.buildChildChange(1, nodeId2);
+		const change2 = genericChangeHandler.editor.buildChildChange(2, nodeId3);
 		assert.deepEqual(change0, [{ index: 0, nodeChange: nodeId1 }]);
 		assert.deepEqual(change1, [{ index: 1, nodeChange: nodeId2 }]);
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeId3 }]);
 	});
 
 	it("relevantRemovedRoots", () => {
-		const actual = genericFieldKind.changeHandler.relevantRemovedRoots(
-			makeAnonChange([
+		const actual = genericChangeHandler.relevantRemovedRoots(
+			[
 				{
 					index: 0,
 					nodeChange: nodeId1,
@@ -350,7 +350,7 @@ describe("GenericField", () => {
 					index: 2,
 					nodeChange: nodeId2,
 				},
-			]),
+			],
 			(child) =>
 				child === nodeId1
 					? [{ minor: 42 }]

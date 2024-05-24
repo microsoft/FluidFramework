@@ -7,8 +7,6 @@ import {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as winston from "winston";
 import { ICache } from "./definitions";
 
 /**
@@ -30,10 +28,7 @@ export class RedisCache implements ICache {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("Redis Cache Error:", error);
-			Lumberjack.error("Redis Cache Error", undefined, error);
-		});
+		redisClientConnectionManager.addErrorHandler(undefined, "Redis Cache Error");
 	}
 
 	public async get<T>(key: string): Promise<T> {

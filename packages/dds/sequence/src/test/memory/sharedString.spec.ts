@@ -8,10 +8,14 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory } from "../../sequenceFactory.js";
-import { SharedString } from "../../sharedString.js";
+import { SharedStringClass } from "../../sharedString.js";
 
 function createLocalSharedString(id: string) {
-	return new SharedString(new MockFluidDataStoreRuntime(), id, SharedStringFactory.Attributes);
+	return new SharedStringClass(
+		new MockFluidDataStoreRuntime(),
+		id,
+		SharedStringFactory.Attributes,
+	);
 }
 
 describe("SharedString memory usage", () => {

@@ -47,7 +47,7 @@ export function generateFuzzyCombinedChange<TChange>(
 		switch (operation) {
 			case Operation.Rebase:
 				change = rebase(
-					change,
+					makeAnonChange(change),
 					makeAnonChange(changeGenerator(random.real())),
 					revisionMetadataSourceFromInfo([]),
 				);

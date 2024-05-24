@@ -12,7 +12,6 @@ import {
 	EncodedRevisionTag,
 	RevisionMetadataSource,
 	RevisionTag,
-	TaggedChange,
 } from "../../core/index.js";
 import { IdAllocator, Invariant } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
@@ -41,7 +40,7 @@ export interface FieldChangeHandler<
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
 	intoDelta(
-		change: TaggedChange<TChangeset>,
+		change: TChangeset,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
 	): DeltaFieldChanges;
@@ -62,7 +61,7 @@ export interface FieldChangeHandler<
 	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
 	 */
 	readonly relevantRemovedRoots: (
-		change: TaggedChange<TChangeset>,
+		change: TChangeset,
 		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 	) => Iterable<DeltaDetachedNodeId>;
 
@@ -78,15 +77,12 @@ export interface FieldChangeHandler<
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
-	 * Every child included in the composed change must be the result of a call to `composeChild`,
-	 * and should be tagged with the revision of its parent change.
-	 * Children which were the result of an earlier call to `composeChild` should be tagged with
-	 * undefined revision if later passed as an argument to `composeChild`.
+	 * Every child included in the composed change must be the result of a call to `composeChild`.
 	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
-		change1: TaggedChange<TChangeset>,
-		change2: TaggedChange<TChangeset>,
+		change1: TChangeset,
+		change2: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -98,7 +94,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * See `ChangeRebaser` for details.
 	 */
 	invert(
-		change: TaggedChange<TChangeset>,
+		change: TChangeset,
 		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -111,7 +107,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	rebase(
 		change: TChangeset,
-		over: TaggedChange<TChangeset>,
+		over: TChangeset,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -123,6 +119,12 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * @returns `change` with any empty child node changesets removed.
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
+
+	replaceRevisions(
+		change: TChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevisions: RevisionTag | undefined,
+	): TChangeset;
 }
 
 /**
@@ -135,10 +137,9 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
-		compose: (change1, change2, _composeChild, _genId) =>
-			data.compose(change1.change, change2.change),
-		invert: (change, _invertChild, _genId) => data.invert(change.change),
-		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
+		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
+		invert: (change, _invertChild, _genId) => data.invert(change),
+		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
 	});
 }
 
@@ -150,6 +151,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		prune: (change) => change,
+		replaceRevisions: (change) => change,
 	};
 }
 
@@ -214,6 +216,7 @@ export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	readonly getRevisionToRebase: () => RevisionTag | undefined;
 	readonly getBaseRevisions: () => RevisionTag[];
 }
 

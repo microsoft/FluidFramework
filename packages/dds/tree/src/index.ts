@@ -123,6 +123,7 @@ export {
 	Events,
 	IsEvent,
 	ISubscribable,
+	Off,
 	createEmitter,
 	IEmitter,
 	NoListenersCallback,
@@ -174,7 +175,6 @@ export {
 	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
-	nodeKeyFieldKey,
 	SchemaLintConfiguration,
 	TreeStatus,
 	FlexTreeFieldNode,
@@ -240,7 +240,6 @@ export {
 	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
-	SharedTreeFactory,
 	SharedTreeOptions,
 	ITreeCheckoutFork,
 	CheckoutEvents,
@@ -262,6 +261,8 @@ export {
 	TreeApi,
 	TransactionConstraint,
 	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./shared-tree/index.js";
 
 export {
@@ -273,6 +274,7 @@ export {
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
+	ITreeConfigurationOptions,
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
@@ -304,7 +306,9 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
+	DefaultProvider,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
@@ -374,7 +378,7 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
+	NodeKeyManager,
 	CollectOptions,
 	TypedFields,
 	UnbrandedName,
@@ -386,7 +390,6 @@ export {
 	// These names also are collision prone.
 	Required,
 	Optional,
-	NodeKeyFieldKind,
 	Identifier,
 	Forbidden,
 	Sequence,

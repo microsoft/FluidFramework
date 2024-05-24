@@ -58,24 +58,6 @@ const baseSharedStringModel = {
 		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
 };
 
-const annotateConfig = {
-	weights: {
-		addText: 2,
-		removeRange: 1,
-		annotateRange: 1,
-		obliterateRange: 1,
-		revertWeight: 2,
-		addInterval: 2,
-		deleteInterval: 2,
-		changeInterval: 2,
-	},
-};
-
-const annotateSharedStringModel = {
-	...baseModel,
-	generatorFactory: () => take(100, makeSharedStringOperationGenerator(annotateConfig)),
-};
-
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
 		{ ...baseSharedStringModel, workloadName: "default" },
@@ -150,16 +132,6 @@ describe.skip("SharedString fuzz testing with rebased batches and reconnect", ()
 			},
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
-		},
-	);
-});
-
-// Skipped due to eventual consistency issues with undefined properties - AB#7805, #7806
-describe.skip("SharedString fuzz testing with annotates", () => {
-	createDDSFuzzSuite(
-		{ ...annotateSharedStringModel, workloadName: "SharedString with annotates" },
-		{
-			...defaultFuzzOptions,
 		},
 	);
 });

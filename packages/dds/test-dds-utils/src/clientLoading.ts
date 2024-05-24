@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
@@ -72,7 +72,7 @@ export function createLoadData(
 ): ClientLoadData {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	return {
-		minimumSequenceNumber: client.dataStoreRuntime.deltaManager.lastSequenceNumber,
+		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 		summaries: {
 			summary: client.channel.getAttachSummary().summary,
 			idCompressorSummary:

@@ -10,14 +10,11 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -215,7 +212,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				return response;
 			},
 			undefined, // workers
-			undefined, // recordHeapSize
 			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		const bufferValue = stringToBuffer(blob.content, blob.encoding);

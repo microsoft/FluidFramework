@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
+import { type IUser } from "@fluidframework/driver-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
@@ -176,7 +176,7 @@ export interface AzureMember<T = any> extends IMember {
 	/**
 	 * {@inheritDoc AzureUser.name}
 	 */
-	userName: string;
+	name: string;
 
 	/**
 	 * {@inheritDoc AzureUser.additionalDetails}

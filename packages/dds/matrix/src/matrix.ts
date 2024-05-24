@@ -3,13 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import {
+	IEvent,
+	IEventThisPlaceHolder,
+	type IEventProvider,
+} from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	type IChannel,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -18,13 +23,17 @@ import {
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
@@ -40,7 +49,6 @@ import {
 } from "./ops.js";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
-import { SharedMatrixFactory } from "./runtime.js";
 import { deserializeBlob } from "./serialization.js";
 import { SparseArray2D } from "./sparsearray2d.js";
 import { IUndoConsumer } from "./types.js";
@@ -77,7 +85,7 @@ export interface ISharedMatrixEvents<T> extends IEvent {
 	 *
 	 * - `conflictingValue` - The value that this client tried to set in the cell and got ignored due to conflict.
 	 *
-	 * - `target` - The {@link SharedMatrix} itself.
+	 * - `target` - The {@link ISharedMatrix} itself.
 	 */
 	(
 		event: "conflict",
@@ -104,13 +112,81 @@ export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
 		IMatrixReader<MatrixItem<T>>,
-		IMatrixWriter<MatrixItem<T>> {
+		IMatrixWriter<MatrixItem<T>>,
+		IChannel {
+	/**
+	 * Inserts columns into the matrix.
+	 * @param colStart - Index of the first column to insert.
+	 * @param count - Number of columns to insert.
+	 * @remarks
+	 * Inserting 0 columns is a noop.
+	 */
 	insertCols(colStart: number, count: number): void;
+	/**
+	 * Removes columns from the matrix.
+	 * @param colStart - Index of the first column to remove.
+	 * @param count - Number of columns to remove.
+	 * @remarks
+	 * Removing 0 columns is a noop.
+	 */
 	removeCols(colStart: number, count: number): void;
+	/**
+	 * Inserts rows into the matrix.
+	 * @param rowStart - Index of the first row to insert.
+	 * @param count - Number of rows to insert.
+	 * @remarks
+	 * Inserting 0 rows is a noop.
+	 */
 	insertRows(rowStart: number, count: number): void;
+	/**
+	 * Removes rows from the matrix.
+	 * @param rowStart - Index of the first row to remove.
+	 * @param count - Number of rows to remove.
+	 * @remarks
+	 * Removing 0 rows is a noop.
+	 */
 	removeRows(rowStart: number, count: number): void;
 
+	/**
+	 * Sets a range of cells in the matrix.
+	 * Cells are set in consecutive columns between `colStart` and `colStart + colCount - 1`.
+	 * When `values` has larger size than `colCount`, the extra values are inserted in subsequent rows
+	 * a la text-wrapping.
+	 * @param rowStart - Index of the row to start setting cells.
+	 * @param colStart - Index of the column to start setting cells.
+	 * @param colCount - Number of columns to set before wrapping to subsequent rows (if `values` has more items)
+	 * @param values - Values to insert.
+	 * @remarks
+	 * This is not currently more efficient than calling `setCell` for each cell.
+	 */
+	setCells(
+		rowStart: number,
+		colStart: number,
+		colCount: number,
+		values: readonly MatrixItem<T>[],
+	): void;
+
+	/**
+	 * Attach an {@link IUndoConsumer} to the matrix.
+	 * @param consumer - Undo consumer which will receive revertibles from the matrix.
+	 */
 	openUndo(consumer: IUndoConsumer): void;
+
+	/**
+	 * Whether the current conflict resolution policy is first-write win (FWW).
+	 * See {@link ISharedMatrix.switchSetCellPolicy} for more details.
+	 */
+	isSetCellConflictResolutionPolicyFWW(): boolean;
+
+	/**
+	 * Change the conflict resolution policy for setCell operations to first-write win (FWW).
+	 *
+	 * This API only switches from LWW to FWW and not from FWW to LWW.
+	 *
+	 * @privateRemarks
+	 * The next SetOp which is sent will communicate this policy to other clients.
+	 */
+	switchSetCellPolicy(): void;
 }
 
 /**
@@ -131,10 +207,6 @@ export class SharedMatrix<T = any>
 	implements ISharedMatrix<T>
 {
 	private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
-
-	public static getFactory() {
-		return new SharedMatrixFactory();
-	}
 
 	/**
 	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
@@ -172,12 +244,10 @@ export class SharedMatrix<T = any>
 		runtime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
-		_isSetCellConflictResolutionPolicyFWW?: boolean,
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
 
-		this.setCellLwwToFwwPolicySwitchOpSeqNumber =
-			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
+		this.setCellLwwToFwwPolicySwitchOpSeqNumber = -1;
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
@@ -219,13 +289,6 @@ export class SharedMatrix<T = any>
 	}
 	private get colHandles() {
 		return this.cols.handleCache;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
 	}
 
 	// #region IMatrixProducer
@@ -396,7 +459,7 @@ export class SharedMatrix<T = any>
 			localSeq,
 			rowsRef,
 			colsRef,
-			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -412,11 +475,20 @@ export class SharedMatrix<T = any>
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
 	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
+		if (this.reentrantCount !== 0) {
+			// Validate that applications don't submit edits in response to matrix change notifications. This is unsupported.
+			throw new UsageError("Reentrancy detected in SharedMatrix.");
+		}
 		this.reentrantCount++;
-		callback();
-		this.reentrantCount--;
-		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
+		try {
+			callback();
+		} finally {
+			this.reentrantCount--;
+		}
+		assert(
+			this.reentrantCount === 0,
+			0x85e /* indicates a problem with the reentrancy tracking code. */,
+		);
 	}
 
 	private submitVectorMessage(
@@ -626,7 +698,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
@@ -724,6 +796,7 @@ export class SharedMatrix<T = any>
 					this.submitColMessage(
 						this.cols.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
@@ -732,6 +805,7 @@ export class SharedMatrix<T = any>
 					this.submitRowMessage(
 						this.rows.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
@@ -975,10 +1049,6 @@ export class SharedMatrix<T = any>
 		}
 	};
 
-	/**
-	 * Api to switch Set Op policy from Last Writer Win to First Writer Win. It only switches from LWW to FWW
-	 * and not from FWW to LWW. The next SetOp which is sent will communicate this policy to other clients.
-	 */
 	public switchSetCellPolicy() {
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1) {
 			if (this.isAttached()) {

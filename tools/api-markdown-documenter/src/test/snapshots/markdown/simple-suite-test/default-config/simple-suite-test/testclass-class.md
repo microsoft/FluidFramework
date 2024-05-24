@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # TestClass
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestClass](./simple-suite-test/testclass-class)
@@ -102,6 +100,8 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 #### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
@@ -118,6 +118,8 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](./simple-suite-test#testmappedtype-typealias)
+
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
 Test class property with both a getter and a setter.
@@ -129,6 +131,8 @@ Test class property with both a getter and a setter.
 get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
+
+**Type:** number
 
 #### Remarks {#testclassgetterproperty-remarks}
 
@@ -144,6 +148,8 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+**Type:** TTypeParameterB
+
 #### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
@@ -157,6 +163,8 @@ Test static class property
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
+
+**Type:** (foo: number) =&gt; string
 
 ## Method Details
 

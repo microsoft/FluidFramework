@@ -233,7 +233,6 @@ The event ends after a summary ack op is received in response to this attempt's 
 The event cancels in response to a summary nack op for this attempt, an error along the way, or if the client disconnects while summarizing.
 
 -   `reason` - reason code for attempting to summarize.
--   `refreshLatestAck` - flag indicating whether the attempt should ask the server for the latest summary ack handle or not.
 -   `fullTree` - flag indicating whether the attempt should generate a full summary tree without any handles for unchanged subtrees.
 -   `timeSinceLastAttempt` - time in ms since the last summary attempt (whether it failed or succeeded) for this client.
 -   `timeSinceLastSummary` - time in ms since the last successful summary attempt for this client.
@@ -361,33 +360,11 @@ Fires if too many ops (7000 by default) have been processed since the last summa
 
 Fires if, after a previous `SummaryStatus:Behind` event, a summary ack is received
 
-### RefreshLatestSummaryGetSnapshot
-
-> Performance
-
-This event fires while fetching a snapshot from storage during the summarizer refresh latest summary flow. This happens when `refreshLatestAck` parameter is passed to summarize, or a summary ack was received with a handle that the client does not have local state for.
-
--   `ackHandle` - handle of the summary ack
--   `fetchLatest` - true if triggered by `refreshLatestAck`, false if triggered by handling a summary ack handle.
--   `summaryRefSeq` - reference sequence number of the summary
-
-### WaitingForSeq
-
-> Performance
-
-This event fires when the sequence number of the latest summary (equivalent to the reference sequence number of its summary op) exceeds the current sequence number at the time of the summarize attempt. When this happens, we process ops until we are caught up. Then we pause the inbound ops like normal.
-
-Although this should be unlikely, it is possible only when `refreshLatestAck` is true. Because we are asking the server for the latest successful summary, it may be that we haven't caught up to the latest summary yet.
-
--   `lastSequenceNumber` - last observed sequence number at the time of waiting.
--   `targetSequenceNumber` - sequence number that we are waiting for. This is the sequence number found in the latest summary that we are aware of.
--   `lastKnownSeqNumber` - last known sequence number by the DeltaManager. This can be relevant to give an idea of the current DeltaManager state vs. runtime state at the time of trying to summarize.
-
 ### LastSequenceMismatch
 
 > Error
 
-Fires on summary submit if the summary sequence number does not match the sequence number of the last message processsed by the Delta Manager.
+Fires on summary submit if the summary sequence number does not match the sequence number of the last message processed by the Delta Manager.
 
 -   `error` - error message containing the mismatched sequence numbers
 

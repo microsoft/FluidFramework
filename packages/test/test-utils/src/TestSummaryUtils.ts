@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
@@ -189,9 +189,6 @@ export async function summarizeNow(
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
-		if (typeof submitResult.error !== "string") {
-			submitResult.error.data = submitResult.data;
-		}
 		throw submitResult.error;
 	}
 	assert(

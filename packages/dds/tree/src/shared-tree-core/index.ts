@@ -19,6 +19,15 @@ export {
 	SummaryElementStringifier,
 } from "./sharedTreeCore.js";
 
+export { ResubmitMachine } from "./resubmitMachine.js";
+export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
+
+export {
+	ChangeEnricherReadonlyCheckout,
+	ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
+} from "./changeEnricher.js";
+
 export { TransactionStack } from "./transactionStack.js";
 
 export { makeEditManagerCodec } from "./editManagerCodecs.js";

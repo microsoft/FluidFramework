@@ -7,16 +7,17 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
@@ -51,8 +52,8 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 
 describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (Primitive data)", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
+		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
@@ -70,8 +71,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedCell (JSON data)", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCell.getFactory()] });
+		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<object>;
 
 		sharedCell.set({ test: undefined });
 
@@ -97,12 +98,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedCounter", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		sharedCounter.increment(37);
 
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
@@ -119,8 +116,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedDirectory", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = SharedDirectory.getFactory().create(runtime, "test-directory");
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedDirectory.getFactory()] });
+		const sharedDirectory = SharedDirectory.create(runtime, "test-directory");
 
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
@@ -229,8 +226,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedMap", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
+		const sharedMap = SharedMap.create(runtime, "test-map");
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
@@ -287,12 +284,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedMatrix", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMatrix = new SharedMatrix(
-			runtime,
-			"test-matrix",
-			SharedMatrix.getFactory().attributes,
-		);
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedMatrix.getFactory()] });
+		const sharedMatrix = SharedMatrix.create(runtime, "test-matrix");
 		sharedMatrix.insertRows(0, 2);
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
@@ -306,7 +299,10 @@ describe("DefaultVisualizers unit tests", () => {
 			c: false,
 		});
 
-		const result = await visualizeSharedMatrix(sharedMatrix, visualizeChildData);
+		const result = await visualizeSharedMatrix(
+			sharedMatrix as unknown as ISharedObject,
+			visualizeChildData,
+		);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: "test-matrix",
@@ -370,12 +366,8 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedString", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
+		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		const result = await visualizeSharedString(sharedString, visualizeChildData);
@@ -828,18 +820,14 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedTree: Handle at the root", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
@@ -872,18 +860,14 @@ describe("DefaultVisualizers unit tests", () => {
 	it("SharedTree: Handle", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		class RootNodeSchema extends builder.object("root-item", {

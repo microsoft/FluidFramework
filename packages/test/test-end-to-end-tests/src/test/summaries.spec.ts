@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreFactory,
@@ -44,6 +44,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { SinonSandbox, createSandbox } from "sinon";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -120,9 +121,18 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	}
 
+	let sandbox: SinonSandbox;
+	before(() => {
+		sandbox = createSandbox();
+	});
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
+	});
+
+	afterEach(() => {
+		sandbox.restore();
 	});
 
 	it("On demand summaries", async () => {
@@ -505,6 +515,54 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
 	});
+
+	itExpects(
+		"attempt last summary if parent container disconnects",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_Op",
+				summarizeReason: "lastSummary",
+			},
+		],
+		async function () {
+			const container = await createContainer(provider, {});
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "enabled",
+							minOpsForLastSummaryAttempt: 1, // This is the key setting
+							maxTime: 60 * 1000,
+							maxOps: 1000,
+							minIdleTime: 60 * 1000,
+							maxIdleTime: 60 * 1000,
+							runtimeOpWeight: 1,
+							nonRuntimeOpWeight: 0.1,
+							initialSummarizerDelayMs: 0,
+							maxAckWaitTime: 60 * 1000,
+							maxOpsSinceLastSummary: 1000,
+						},
+					},
+				},
+			});
+			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
+
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+
+			const directory1 = defaultDataStore._root;
+			directory1.set("key", "value");
+			await provider.ensureSynchronized();
+
+			const summarizerRunProm = summarizer.run("test");
+			summarizer.stop("parentNotConnected");
+			await flushPromises();
+			await summarizerRunProm;
+
+			assert.strictEqual(submitSumarySpy.calledOnce, true, "expect a final summary to run");
+		},
+	);
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
@@ -538,13 +596,12 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: createChildLogger(),
+					summaryLogger: createChildLogger({ logger: mockLogger }),
 				})
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) =>
-					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
+				(event) => event.eventName === "SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
@@ -808,7 +865,6 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		// Summarize third time
 		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({
 			reason: "test3",
-			refreshLatestAck: true,
 		});
 		const submitResult3 = await result3.summarySubmitted;
 		assert(submitResult3.success, "on-demand summary3 should submit");

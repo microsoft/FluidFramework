@@ -122,8 +122,8 @@ describe("Fluid audience", () => {
 		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
 		assert.notStrictEqual(
-			partner?.userId,
-			originalSelf?.userId,
+			partner?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 	});

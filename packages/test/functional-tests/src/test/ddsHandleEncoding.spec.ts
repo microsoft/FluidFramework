@@ -15,20 +15,22 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
-import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -114,7 +116,7 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
-			new SharedStringFactory(),
+			SharedString.getFactory(),
 			(dds) => {
 				dds.insertMarker(0, ReferenceType.Simple, { marker: handle });
 			},

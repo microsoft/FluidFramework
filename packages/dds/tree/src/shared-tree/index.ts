@@ -42,4 +42,6 @@ export {
 	TreeApi,
 	TransactionConstraint,
 	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./treeApi.js";

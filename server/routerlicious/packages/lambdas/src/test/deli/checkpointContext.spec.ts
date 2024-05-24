@@ -45,7 +45,6 @@ describe("Routerlicious", () => {
 						signalClientConnectionNumber: 0,
 						lastSentMSN: 0,
 						nackMessages: undefined,
-						successfullyStartedLambdas: [],
 						checkpointTimestamp: Date.now(),
 					},
 					deliCheckpointMessage: queuedMessage,

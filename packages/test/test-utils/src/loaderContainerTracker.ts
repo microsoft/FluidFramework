@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaQueue } from "@fluidframework/container-definitions";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaQueue,
+	IContainer,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
@@ -13,12 +16,8 @@ import {
 } from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
