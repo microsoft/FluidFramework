@@ -283,7 +283,7 @@ describe("Schema Comparison", () => {
 			testOrder(compareTwoRepo, [[valueTestTree, emptyTestTree], [anyTestTree]]);
 		});
 
-		it("Repositories with mismatched fields are not incomparable.", () => {
+		it("Repositories with mismatched fields are incomparable.", () => {
 			validateOrdering(
 				compareTwoRepo,
 				[[valueTestTree, emptyTree], [anyTestTree]],
