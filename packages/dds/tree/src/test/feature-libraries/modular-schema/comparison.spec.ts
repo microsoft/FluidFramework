@@ -260,7 +260,7 @@ describe("Schema Comparison", () => {
 			schema: anyTreeWithoutValue,
 		};
 
-		it("Incorporating additional fields should result in a superset", () => {
+		it("Incorporating additional node schema should result in a superset", () => {
 			// When repo B has more fields than repo A (with the remaining fields the same), regardless
 			// of whether the additional fields are required or optional, repo B should always be considered
 			// the superset of repo A.
@@ -283,7 +283,7 @@ describe("Schema Comparison", () => {
 			testOrder(compareTwoRepo, [[valueTestTree, emptyTestTree], [anyTestTree]]);
 		});
 
-		it("Repositories with mismatched fields are not incomparable.", () => {
+		it("Repositories with mismatched fields are incomparable.", () => {
 			validateOrdering(
 				compareTwoRepo,
 				[[valueTestTree, emptyTree], [anyTestTree]],
