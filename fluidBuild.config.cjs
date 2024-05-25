@@ -207,7 +207,8 @@ module.exports = {
 				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
-				// False positive?
+				// This can be removed once the client release group is using build-tools 0.39.0+.
+				// See https://github.com/microsoft/FluidFramework/pull/21238
 				"^packages/test/test-end-to-end-tests/package.json",
 			],
 			"html-copyright-file-header": [
