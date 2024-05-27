@@ -25,7 +25,7 @@ import type {
 	ISummaryTree,
 	ITokenClaims,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "./protocol/index.js";
 
 import type { IAnyDriverError } from "./driverError.js";
 import type { IResolvedUrl } from "./urlResolver.js";
@@ -467,6 +467,8 @@ export enum FetchSource {
 }
 
 /**
+ * A "Full" container Snapshot, including ISnapshotTree, blobs and outstanding ops (and other metadata)
+ *
  * @alpha
  */
 export interface ISnapshot {

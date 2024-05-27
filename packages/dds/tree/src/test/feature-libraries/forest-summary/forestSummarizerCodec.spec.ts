@@ -47,7 +47,7 @@ const testFieldChunks: TreeChunk[] = chunkField(
 assert(testFieldChunks.length === 1);
 const testFieldChunk: TreeChunk = testFieldChunks[0];
 
-const malformedData: [string, any][] = [
+const malformedData: [string, unknown][] = [
 	[
 		"additional piece of data in entry",
 		new Map([[rootFieldKey, [testFieldChunk.cursor(), "additional data"]]]),
@@ -101,10 +101,7 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(
-					() => codec.encode(data as unknown as FieldSet, context),
-					"malformed data",
-				);
+				assert.throws(() => codec.encode(data as FieldSet, context), "malformed data");
 			});
 		}
 	});

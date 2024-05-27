@@ -42,6 +42,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -454,7 +455,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			testChannelId,
 			SharedMap.getFactory().type,
 		);
-		testChannel.handle.attachGraph();
+		toFluidHandleInternal(testChannel.handle).attachGraph();
 		await containerP;
 		await defPromise.promise;
 	});

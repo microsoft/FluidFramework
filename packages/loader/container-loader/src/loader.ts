@@ -25,7 +25,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IClientDetails } from "@fluidframework/protocol-definitions";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -41,7 +41,10 @@ import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
-import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -224,6 +227,7 @@ export interface ILoaderServices {
 
 	/**
 	 * Blobs storage for detached containers.
+	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
@@ -238,6 +242,8 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  * @alpha
+ *
+ * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;
@@ -245,6 +251,11 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 	 * Return an array of all blob IDs present in storage
 	 */
 	getBlobIds(): string[];
+
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 };
 
 /**
@@ -335,7 +346,7 @@ export class Loader implements IHostLoader {
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
 			return this.resolveCore(
 				request,
-				pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
 			);
 		});
 	}

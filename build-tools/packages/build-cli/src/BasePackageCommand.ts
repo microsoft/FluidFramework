@@ -7,8 +7,6 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
-
-import { BaseCommand } from "./base";
 import {
 	PackageFilterOptions,
 	PackageKind,
@@ -18,7 +16,8 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter";
-import { filterFlags, selectionFlags } from "./flags";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
+import { BaseCommand } from "./library";
 
 /**
  * Commands that run operations per project.
@@ -35,6 +34,13 @@ export abstract class PackageCommand<
 		...filterFlags,
 		...BaseCommand.flags,
 	};
+
+	/**
+	 * The default to use as selection criteria when none is explicitly provided by the user. This enables commands
+	 * without flags to operate on a collection of packages by default that make sense based on the command.
+	 */
+	protected abstract get defaultSelection(): PackageSelectionDefault;
+	protected abstract set defaultSelection(value: PackageSelectionDefault);
 
 	protected filterOptions: PackageFilterOptions | undefined;
 	protected selectionOptions: PackageSelectionCriteria | undefined;
@@ -67,7 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags(): void {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.defaultSelection);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 

@@ -41,7 +41,7 @@ export function testChangeEditManagerFactory(options: {
 }
 
 export function editManagerFactory<TChange = TestChange>(
-	family: ChangeFamily<any, TChange>,
+	family: ChangeFamily<ChangeFamilyEditor, TChange>,
 	options: {
 		sessionId?: SessionId;
 	} = {},

@@ -19,7 +19,7 @@
  */
 
 import { type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IDisposable } from "@fluidframework/core-interfaces";
+import { type IDisposable, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,
@@ -186,7 +186,7 @@ function mapContainerProps(
 	return {
 		container: innerContainer,
 		containerKey,
-		containerData: container.initialObjects,
+		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};
 }
 

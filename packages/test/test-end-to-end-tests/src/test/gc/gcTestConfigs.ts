@@ -16,7 +16,6 @@ export const defaultGCConfig: ITestContainerConfig = {
 		summaryOptions: {
 			summaryConfigOverrides: { state: "disabled" },
 		},
-		gcOptions: { gcAllowed: true },
 	},
 	loaderProps: { configProvider: createTestConfigProvider() },
 };

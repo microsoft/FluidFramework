@@ -41,13 +41,10 @@ export function createDocument(
 		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
 		: sections;
 
-	const frontMatter = generateFrontMatter(documentItem, config);
-
 	return new DocumentNode({
 		apiItem: documentItem,
 		children: contents,
 		documentPath: getDocumentPathForApiItem(documentItem, config),
-		frontMatter,
 	});
 }
 
@@ -69,30 +66,6 @@ export function getTsdocNodeTransformationOptions(
 			resolveSymbolicLink(contextApiItem, codeDestination, config),
 		logger: config.logger,
 	};
-}
-
-/**
- * Helper function to generate the front matter based on the provided configuration.
- */
-function generateFrontMatter(
-	documentItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): string | undefined {
-	if (config.frontMatter === undefined) {
-		return undefined;
-	}
-
-	if (typeof config.frontMatter === "string") {
-		return config.frontMatter;
-	}
-
-	if (typeof config.frontMatter !== "function") {
-		throw new TypeError(
-			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
-		);
-	}
-
-	return config.frontMatter(documentItem);
 }
 
 /**

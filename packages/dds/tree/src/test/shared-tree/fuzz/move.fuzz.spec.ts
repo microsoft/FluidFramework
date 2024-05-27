@@ -12,7 +12,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	EditGeneratorOpWeights,
@@ -53,7 +53,7 @@ describe("Fuzz - move", () => {
 		factory: new SharedTreeTestFactory(() => undefined),
 		generatorFactory,
 		reducer: fuzzReducer,
-		validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
+		validateConsistency: validateFuzzTreeConsistency,
 	};
 
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();

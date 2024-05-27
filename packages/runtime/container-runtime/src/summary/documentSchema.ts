@@ -628,7 +628,7 @@ export class DocumentsSchemaController {
 		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
 		this.documentSchema = schema as IDocumentSchemaCurrent;
 		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
-		assert(this.sessionSchema.refSeq === sequenceNumber, "seq#");
+		assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
 		// legacy behavior is automatically off for the document once someone sends a schema op -
 		// from now on it's fully controlled by ops.

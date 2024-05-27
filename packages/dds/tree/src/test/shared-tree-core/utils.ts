@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions } from "../../codec/index.js";
@@ -19,7 +22,13 @@ import {
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import {
+	ChangeEnricherReadonlyCheckout,
+	ResubmitMachine,
+	SharedTreeBranch,
+	SharedTreeCore,
+	Summarizable,
+} from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "assert";
 
@@ -43,6 +52,8 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
+		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
+		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	) {
 		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 		const codecOptions: ICodecOptions = {
@@ -67,10 +78,16 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			id,
 			schema,
 			defaultSchemaPolicy,
+			resubmitMachine,
+			enricher,
 		);
 	}
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 		return super.getLocalBranch();
+	}
+
+	public get preparedCommitsCount(): number {
+		return this.commitEnricher.preparedCommitsCount;
 	}
 }

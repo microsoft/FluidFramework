@@ -39,6 +39,7 @@ function visit(
 }
 
 type CallSignatures<T> = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[K in keyof T]: T[K] extends (...args: any) => any ? [K, ...Parameters<T[K]>] : never;
 };
 type PropType<T> = T[keyof T];
@@ -72,7 +73,7 @@ function testVisit(
 			// assert.deepStrictEqual([name, ...args], expected[callIndex]);
 			callIndex += 1;
 		};
-	const visitor: DeltaVisitor = {} as any;
+	const visitor: DeltaVisitor = {} as unknown as DeltaVisitor;
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
@@ -1066,7 +1067,7 @@ describe("visitDelta", () => {
 			assert.equal(index.entries().next().done, true);
 		});
 
-		it("for changes to repair data", () => {
+		it("for changes to detached trees", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 			const refresherId = { minor: 42 };
 			const buildId = { minor: 43 };

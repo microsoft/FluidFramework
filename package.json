@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -62,10 +62,10 @@
 		"format:changed:next": "pretty-quick --branch next",
 		"format:repo": "npm run prettier:repo:fix",
 		"generate:packageList": "fluid-build --task generate:packageList",
-		"generate:packageList:internal-build": "flub list --no-private -g client --feed internal-build --outFile feeds/internal-build.txt",
-		"generate:packageList:internal-dev": "flub list --no-private -g client --feed internal-dev --outFile feeds/internal-dev.txt",
-		"generate:packageList:internal-test": "flub list --no-private -g client --feed internal-test --outFile feeds/internal-test.txt",
-		"generate:packageList:public": "flub list --no-private -g client --feed public --outFile feeds/public.txt",
+		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
+		"generate:packageList:internal-dev": "flub list client --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
+		"generate:packageList:internal-test": "flub list client --no-private --feed internal-test --outFile feeds/internal-test.txt",
+		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
@@ -155,14 +155,14 @@
 		"@biomejs/biome": "^1.6.2",
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "0.38.0-259537",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.38.0-259537",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
@@ -180,12 +180,12 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"engines": {
 		"node": ">=18.17.1",
-		"pnpm": "7"
+		"pnpm": "8"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -379,7 +379,8 @@
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
 			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
-			"markdown-magic is provided by another dependency so is ignored here."
+			"markdown-magic is provided by another dependency so is ignored here.",
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
@@ -390,11 +391,12 @@
 			"ignoreMissing": [
 				"@types/node",
 				"fluid-framework",
-				"markdown-magic"
+				"markdown-magic",
+				"@aws-sdk/*"
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.42.3": "patches/@microsoft__api-extractor@7.42.3.patch"
+			"@microsoft/api-extractor@7.43.1": "patches/@microsoft__api-extractor@7.43.1.patch"
 		}
 	}
 }

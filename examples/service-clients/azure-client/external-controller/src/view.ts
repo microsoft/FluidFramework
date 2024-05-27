@@ -24,7 +24,7 @@ function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
 	wrapperDiv.append(diceCharDiv, rollButton);
 
 	// Get the current value of the shared data to update the view whenever it changes.
-	const updateDiceChar = () => {
+	const updateDiceChar = (): void => {
 		// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
 		diceCharDiv.textContent = String.fromCodePoint(0x267f + diceRoller.value);
 		diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
@@ -50,25 +50,29 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 	const audienceDiv = document.createElement("div");
 	audienceDiv.style.fontSize = "20px";
 
-	const onAudienceChanged = () => {
-		const members = audience.getMembers();
+	const onAudienceChanged = (): void => {
+		const members = audience.getMembers() as ReadonlyMap<
+			string,
+			AzureMember<ICustomUserDetails>
+		>;
 		const self = audience.getMyself();
 		const memberStrings: string[] = [];
 		const useAzure = process.env.FLUID_CLIENT === "azure";
 
-		members.forEach((member: AzureMember<ICustomUserDetails>) => {
-			if (member.userId !== self?.userId) {
+		for (const member of members.values()) {
+			if (member.id !== self?.id) {
 				if (useAzure) {
-					const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
+					const memberString = `${member.name}: {Gender: ${member.additionalDetails?.gender},
                         Email: ${member.additionalDetails?.email}}`;
 					memberStrings.push(memberString);
 				} else {
-					memberStrings.push(member.userName);
+					memberStrings.push(member.name);
 				}
 			}
-		});
+		}
+
 		audienceDiv.innerHTML = `
-            Current User: ${self?.userName} <br />
+            Current User: ${self?.name} <br />
             Other Users: ${memberStrings.join(", ")}
         `;
 	};
@@ -76,7 +80,7 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 	onAudienceChanged();
 	audience.on("membersChanged", onAudienceChanged);
 
-	wrapperDiv.appendChild(audienceDiv);
+	wrapperDiv.append(audienceDiv);
 	return wrapperDiv;
 }
 
@@ -84,7 +88,9 @@ export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	audience?: IAzureAudience,
 ): HTMLDivElement {
-	const diceRollerViews = diceRollerControllers.map(makeDiceRollerView);
+	const diceRollerViews = diceRollerControllers.map((controller) =>
+		makeDiceRollerView(controller),
+	);
 	const audienceView = makeAudienceView(audience);
 
 	const wrapperDiv = document.createElement("div");

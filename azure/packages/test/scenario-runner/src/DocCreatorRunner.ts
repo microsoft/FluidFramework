@@ -59,8 +59,8 @@ export class DocCreatorRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -76,7 +76,7 @@ export class DocCreatorRunner extends ScenarioRunner<
 				logger,
 				{ eventName: "create" },
 				async () => {
-					return ac.createContainer(schema);
+					return ac.createContainer(schema, "2");
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));

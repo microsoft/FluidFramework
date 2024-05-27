@@ -5,8 +5,10 @@
 
 import { strict as assert } from "assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { ICodecOptions } from "../../codec/index.js";
 import {
+	DeltaDetachedNodeId,
 	TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
@@ -19,13 +21,21 @@ import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
 	ModularChangeset,
+	TreeChunk,
 	cursorForJsonableTreeNode,
 	fieldKinds,
+	type SchemaChange,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
+import {
+	SharedTreeChangeFamily,
+	updateRefreshers,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/sharedTreeChangeFamily.js";
+import {
+	SharedTreeChange,
+	SharedTreeInnerChange,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
 import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
 
@@ -232,5 +242,140 @@ describe("SharedTreeChangeFamily", () => {
 				);
 			});
 		}
+	});
+
+	describe("updateRefreshers", () => {
+		// The tests below heavily mock the inputs to updateRefreshers.
+		// This is done to simplify the tests, but it also has the effect of reducing their dependency on the
+		// ModularChangeset format and on the behavior of the helper functions that operate on it.
+		// ModularChangeset instances that are used as input are mocked to represent the list of relevant node IDs that
+		// they need refreshers for.
+		// ModularChangeset instances that are used as output are mocked to represent the list refreshers that are
+		// included in them. The refreshers themselves are mocked using unique strings.
+		const idInForest1: DeltaDetachedNodeId = { minor: 1 };
+		const idInForest2: DeltaDetachedNodeId = { minor: 2 };
+		const idNotInForest: DeltaDetachedNodeId = { minor: 3 };
+		const refresher1: TreeChunk = "refresher1" as unknown as TreeChunk;
+		const refresher2: TreeChunk = "refresher2" as unknown as TreeChunk;
+		const schemaChange: SharedTreeInnerChange = {
+			type: "schema",
+			innerChange: "MockSchemaChange" as unknown as SchemaChange,
+		};
+
+		function updateDataChangeRefreshers(
+			change: ModularChangeset,
+			getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+			removedRoots: Iterable<DeltaDetachedNodeId>,
+			requireRefreshers: boolean,
+		): ModularChangeset {
+			const output: TreeChunk[] = [];
+			const relevantToChange = new Set<string>(change as unknown as string[]);
+			for (const id of removedRoots) {
+				// Check that the removed root is indeed relevant to the change
+				assert.equal(relevantToChange.has(id as unknown as string), true);
+				const tree = getDetachedNode(id);
+				if (tree === undefined) {
+					if (requireRefreshers) {
+						throw new Error("Missing tree");
+					}
+				} else {
+					output.push(tree);
+				}
+			}
+			return output as unknown as ModularChangeset;
+		}
+		function testUpdateRefreshers(input: SharedTreeChange): SharedTreeChange {
+			deepFreeze(input);
+			return updateRefreshers(
+				input,
+				// Mock for getDetachedNode
+				(id): TreeChunk | undefined => {
+					switch (id) {
+						case idInForest1:
+							return refresher1;
+						case idInForest2:
+							return refresher2;
+						default:
+							return undefined;
+					}
+				},
+				// Mock for relevantRemovedRootsFromDataChange
+				(change: ModularChangeset): DeltaDetachedNodeId[] =>
+					change as unknown as DeltaDetachedNodeId[],
+				updateDataChangeRefreshers,
+			);
+		}
+		it("updates all data changes", () => {
+			const input: SharedTreeChange = {
+				changes: [
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					schemaChange,
+					{ innerChange: [idInForest2] as unknown as ModularChangeset, type: "data" },
+				],
+			};
+			const updated = testUpdateRefreshers(input);
+			assert.deepEqual(updated, {
+				changes: [
+					{ innerChange: [refresher1], type: "data" },
+					schemaChange,
+					{ innerChange: [refresher2], type: "data" },
+				],
+			});
+		});
+		it("excludes refreshers from later changes if they are included in earlier changes", () => {
+			const input: SharedTreeChange = {
+				changes: [
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					schemaChange,
+					{
+						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
+					schemaChange,
+					{
+						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
+				],
+			};
+			const updated = testUpdateRefreshers(input);
+			assert.deepEqual(updated, {
+				changes: [
+					{ innerChange: [refresher1], type: "data" },
+					schemaChange,
+					{ innerChange: [refresher2], type: "data" },
+					schemaChange,
+					{ innerChange: [], type: "data" },
+				],
+			});
+		});
+		it("throws for missing refreshers in first data change", () => {
+			const input: SharedTreeChange = {
+				changes: [
+					{ innerChange: [idNotInForest] as unknown as ModularChangeset, type: "data" },
+				],
+			};
+			assert.throws(() => testUpdateRefreshers(input));
+		});
+		it("tolerates missing refreshers in later data changes", () => {
+			const input: SharedTreeChange = {
+				changes: [
+					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					schemaChange,
+					{
+						innerChange: [idNotInForest, idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
+				],
+			};
+			const updated = testUpdateRefreshers(input);
+			assert.deepEqual(updated, {
+				changes: [
+					{ innerChange: [refresher1], type: "data" },
+					schemaChange,
+					{ innerChange: [refresher2], type: "data" },
+				],
+			});
+		});
 	});
 });

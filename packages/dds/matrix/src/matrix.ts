@@ -11,10 +11,10 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	type IChannel,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -26,11 +26,14 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
@@ -456,7 +459,7 @@ export class SharedMatrix<T = any>
 			localSeq,
 			rowsRef,
 			colsRef,
-			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -472,11 +475,20 @@ export class SharedMatrix<T = any>
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
 	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
+		if (this.reentrantCount !== 0) {
+			// Validate that applications don't submit edits in response to matrix change notifications. This is unsupported.
+			throw new UsageError("Reentrancy detected in SharedMatrix.");
+		}
 		this.reentrantCount++;
-		callback();
-		this.reentrantCount--;
-		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
+		try {
+			callback();
+		} finally {
+			this.reentrantCount--;
+		}
+		assert(
+			this.reentrantCount === 0,
+			0x85e /* indicates a problem with the reentrancy tracking code. */,
+		);
 	}
 
 	private submitVectorMessage(
@@ -686,7 +698,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').

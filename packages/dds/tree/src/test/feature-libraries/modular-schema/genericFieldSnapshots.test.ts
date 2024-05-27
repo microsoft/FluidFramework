@@ -9,7 +9,7 @@ import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schem
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { snapshotSessionId } from "../../snapshots/testTrees.js";
-import { brand } from "../../../index.js";
+import { brand } from "../../../util/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 

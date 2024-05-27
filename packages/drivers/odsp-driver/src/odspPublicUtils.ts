@@ -4,7 +4,8 @@
  */
 
 import { IsoBuffer, hashFile } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Creates a unique and stable id for a document stored in ODSP which doesn't expose the driveId and itemId of

@@ -19,6 +19,7 @@ import {
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -61,7 +62,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 		await args.ensureSynchronized();
 		await args.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		await cb(container, dataStore, map);
 

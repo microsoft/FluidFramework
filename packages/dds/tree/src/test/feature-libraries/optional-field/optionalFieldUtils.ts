@@ -58,8 +58,8 @@ export const Change = {
 	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
-		src: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
+		src: RegisterId | ChangesetLocalId | ChangeAtomId,
+		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
 	): OptionalChangeset | ProtoChange => {
 		if (dst === "self") {
 			return {
@@ -152,7 +152,7 @@ export const Change = {
 		const changeset: Mutable<OptionalChangeset> = { moves, childChanges };
 		for (const changeLike of changes) {
 			if ("type" in changeLike === false) {
-				const change = changeLike as OptionalChangeset;
+				const change = changeLike;
 				// Note: this will stack overflow if there are too many moves.
 				moves.push(...change.moves);
 				// Note: this will stack overflow if there are too many child changes.

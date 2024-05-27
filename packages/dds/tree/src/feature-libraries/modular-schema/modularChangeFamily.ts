@@ -37,7 +37,7 @@ import {
 	makeDetachedNodeId,
 	mapCursorField,
 	revisionMetadataSourceFromInfo,
-	tagChange,
+	type ChangeAtomId,
 } from "../../core/index.js";
 import {
 	IdAllocationState,
@@ -459,7 +459,6 @@ export class ModularChangeFamily
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
-	 * @param repairStore - The store to query for repair data.
 	 */
 	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
@@ -622,7 +621,7 @@ export class ModularChangeFamily
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 
-		const getBaseRevisions = () =>
+		const getBaseRevisions = (): RevisionTag[] =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
 
 		const rebaseMetadata: RebaseRevisionMetadata = {
@@ -741,7 +740,7 @@ export class ModularChangeFamily
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
-			) => {
+			): ChangeAtomId => {
 				crossFieldTable.nodeIdPairs.push([child, baseChild, stateChange]);
 				return (
 					child ??
@@ -1041,7 +1040,15 @@ function replaceIdMapRevisions<T>(
 	);
 }
 
-function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
+interface BuildsDestroysAndRefreshers {
+	readonly allBuilds: ChangeAtomIdMap<TreeChunk>;
+	readonly allDestroys: ChangeAtomIdMap<number>;
+	readonly allRefreshers: ChangeAtomIdMap<TreeChunk>;
+}
+
+function composeBuildsDestroysAndRefreshers(
+	changes: TaggedChange<ModularChangeset>[],
+): BuildsDestroysAndRefreshers {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 	const allDestroys: ChangeAtomIdMap<number> = new Map();
 	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
@@ -1058,7 +1065,7 @@ function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChanges
 				);
 				for (const [id, chunk] of innerMap) {
 					// Check for duplicate builds and prefer earlier ones.
-					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
+					// This can happen in compositions of commits that needed to include detached tree refreshers (e.g., undos):
 					// In that case, it's possible for the refreshers to contain different trees because the latter
 					// refresher may already reflect the changes made by the commit that includes the earlier
 					// refresher. This composition includes the changes made by the commit that includes the
@@ -1156,25 +1163,18 @@ function invertBuilds(
  * @param fieldKinds - The field kinds to delegate to.
  */
 export function* relevantRemovedRoots(
-	{ change, revision }: TaggedChange<ModularChangeset>,
+	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
-	yield* relevantRemovedRootsFromFields(
-		change.fieldChanges,
-		revision,
-		change.nodeChanges,
-		fieldKinds,
-	);
+	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
-	revision: RevisionTag | undefined,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
-		const fieldRevision = fieldChange.revision ?? revision;
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
 			const nodeChangeset = tryGetFromNestedMap(nodeChanges, node.revision, node.localId);
@@ -1182,30 +1182,31 @@ function* relevantRemovedRootsFromFields(
 			if (nodeChangeset.fieldChanges !== undefined) {
 				yield* relevantRemovedRootsFromFields(
 					nodeChangeset.fieldChanges,
-					fieldRevision,
 					nodeChanges,
 					fieldKinds,
 				);
 			}
 		};
-		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
+		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
 
 /**
  * Adds any refreshers missing from the provided change that are relevant to the change and
  * removes any refreshers from the provided change that are not relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
  * @param change - The change that possibly has missing or superfluous refreshers. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
+ * @param requireRefreshers - when true, this function enforces that all relevant removed roots have a
+ * corresponding build or refresher.
  */
 export function updateRefreshers(
 	change: ModularChangeset,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
+	requireRefreshers: boolean = true,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
@@ -1238,8 +1239,11 @@ export function updateRefreshers(
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, 0x8cd /* detached node should exist */);
-		setInNestedMap(refreshers, root.major, root.minor, node);
+		if (node === undefined) {
+			assert(!requireRefreshers, 0x8cd /* detached node should exist */);
+		} else {
+			setInNestedMap(refreshers, root.major, root.minor, node);
+		}
 	}
 
 	const {
@@ -1308,7 +1312,9 @@ export function intoDelta(
 	return rootDelta;
 }
 
-function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>) {
+function copyDetachedNodes(
+	detachedNodes: ChangeAtomIdMap<TreeChunk>,
+): DeltaDetachedNodeBuild[] | undefined {
 	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
 	forEachInNestedMap(detachedNodes, (chunk, major, minor) => {
 		if (chunk.topLevelLength > 0) {
@@ -1326,9 +1332,6 @@ function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>) {
 
 /**
  * @param change - The change to convert into a delta.
- * @param repairStore - The store to query for repair data.
- * @param path - The path of the node being altered by the change as defined by the input context.
- * Undefined for the root and for nodes that do not exist in the input context.
  */
 function intoDeltaImpl(
 	change: FieldChangeMap,
@@ -1397,7 +1400,7 @@ export function rebaseRevisionMetadataFromInfo(
 		}
 	}
 
-	const getBaseRevisions = () => filteredRevisions;
+	const getBaseRevisions = (): RevisionTag[] => filteredRevisions;
 	return {
 		...revisionMetadataSourceFromInfo(revInfos),
 		getRevisionToRebase: () => revisionToRebase,
@@ -1542,10 +1545,10 @@ function newCrossFieldManager<T>(
 	currentFieldKey: T,
 	allowInval = true,
 ): CrossFieldManagerI<T> {
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): CrossFieldMap<unknown> =>
 		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
 
-	const getDependents = (target: CrossFieldTarget) =>
+	const getDependents = (target: CrossFieldTarget): CrossFieldMap<T> =>
 		target === CrossFieldTarget.Source
 			? crossFieldTable.srcDependents
 			: crossFieldTable.dstDependents;
@@ -1711,7 +1714,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(modularChange);
 	}
 
-	public submitChanges(changes: EditDescription[]) {
+	public submitChanges(changes: EditDescription[]): void {
 		const modularChange = this.buildChanges(changes);
 		this.applyChange(modularChange);
 	}

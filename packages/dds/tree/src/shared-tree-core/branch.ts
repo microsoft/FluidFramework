@@ -91,7 +91,8 @@ export function getChangeReplaceType(
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange> {
+export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange>
+	extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
@@ -119,6 +120,23 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
+}
+
+/**
+ * Events related to branch trimming.
+ *
+ * @remarks
+ * Trimming is a very specific kind of mutation which is the only allowed mutations to branches.
+ * References to commits from other commits are removed so that the commit objects can be GC'd by the JS engine.
+ * This happens by changing a commit's parent property to undefined, which drops all commits that are in its "ancestry".
+ * It is done as a performance optimization when it is determined that commits are no longer needed for future computation.
+ */
+export interface BranchTrimmingEvents {
+	/**
+	 * Fired when some contiguous range of commits beginning with the "global tail" of this branch are trimmed from the branch.
+	 * This happens by deleting the parent pointer to the last commit in that range. This event can be fired at any time.
+	 */
+	ancestryTrimmed(trimmedRevisions: RevisionTag[]): void;
 }
 
 /**
@@ -153,20 +171,27 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
+	private readonly unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
+	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly branchTrimmer?: ISubscribable<BranchTrimmingEvents>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
 			this.apply(change, mintRevisionTag()),
 		);
+		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
+			this.emit("ancestryTrimmed", commit);
+		});
 	}
 
 	/**
@@ -227,7 +252,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Begin a transaction on this branch. If the transaction is committed via {@link commitTransaction},
 	 * all commits made since this call will be squashed into a single head commit.
-	 * @param repairStore - the repair store associated with this transaction
 	 */
 	public startTransaction(): void {
 		this.assertNotDisposed();
@@ -371,7 +395,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(this.head, this.changeFamily, this.mintRevisionTag);
+		const fork = new SharedTreeBranch(
+			this.head,
+			this.changeFamily,
+			this.mintRevisionTag,
+			this.branchTrimmer,
+		);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -470,7 +499,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branch: SharedTreeBranch<TEditor, TChange>,
 		onto: SharedTreeBranch<TEditor, TChange>,
 		upTo = onto.getHead(),
-	) {
+	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;
 		if (head === upTo) {
 			return undefined;
@@ -506,6 +535,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		while (this.isTransacting()) {
 			this.abortTransaction();
 		}
+
+		this.unsubscribeBranchTrimmer?.();
 
 		this.disposed = true;
 		this.emit("dispose");

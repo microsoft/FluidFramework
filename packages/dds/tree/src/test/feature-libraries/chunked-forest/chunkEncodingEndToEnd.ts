@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
 	ChangesetLocalId,
@@ -34,18 +34,20 @@ import {
 	ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
-	createMockNodeKeyManager,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	nodeKeyFieldKey,
+	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import { ForestType } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
+import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
+import {
+	MockTreeCheckout,
+	flexTreeViewWithContent,
+	numberSequenceRootSchema,
+} from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -100,10 +102,9 @@ describe("End to end chunked encoding", () => {
 			);
 			return getTreeContext(
 				schema,
-				editableForest,
-				dummyEditor,
-				createMockNodeKeyManager(),
-				brand(nodeKeyFieldKey),
+				// Note: deliberately passing an editor that doesn't have the property for schema edition; test doesn't need it
+				new MockTreeCheckout(editableForest, dummyEditor as unknown as ISharedTreeEditor),
+				new MockNodeKeyManager(),
 			);
 		}
 
@@ -132,7 +133,7 @@ describe("End to end chunked encoding", () => {
 		flexTree.flexTree.insertAt(0, chunk.cursor());
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -141,6 +142,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
@@ -160,7 +163,7 @@ describe("End to end chunked encoding", () => {
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			flexTree.context.forest as IEditableForest,
+			flexTree.context.checkout.forest as IEditableForest,
 			revisionTagCodec,
 			fieldBatchCodec,
 			context,
@@ -169,6 +172,8 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
+			// TODO: use something other than `any`
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const insertedChunk = decode((content as any).fields);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());

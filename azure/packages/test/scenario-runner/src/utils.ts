@@ -24,8 +24,8 @@ import { v4 as uuid } from "uuid";
 import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
 
 export interface AzureClientConfig {
-	userId?: string;
-	userName?: string;
+	id?: string;
+	name?: string;
 	logger?: ITelemetryLoggerExt;
 }
 
@@ -63,25 +63,25 @@ export function convertConfigToScriptParams<T extends IRunConfig>(config: T): st
 
 export function createAzureTokenProvider(
 	fnUrl: string,
-	userID?: string,
-	userName?: string,
+	id?: string,
+	name?: string,
 	// eslint-disable-next-line import/no-deprecated
 ): AzureFunctionTokenProvider {
 	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-		userId: userID ?? "foo",
-		userName: userName ?? "bar",
+		id: id ?? "foo",
+		name: name ?? "bar",
 	});
 }
 
 export function createInsecureTokenProvider(
 	tenantKey: string,
-	userID?: string,
-	userName?: string,
+	id?: string,
+	name?: string,
 ): InsecureTokenProvider {
 	const user: IUser & { name: string } = {
-		id: userID ?? "foo",
-		name: userName ?? "bar",
+		id: id ?? "foo",
+		name: name ?? "bar",
 	};
 	return new InsecureTokenProvider(tenantKey, user);
 }
@@ -133,8 +133,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 			}
 			tokenProvider = createInsecureTokenProvider(
 				connectionConfig.key,
-				config.userId,
-				config.userName,
+				config.id,
+				config.name,
 			);
 		} else {
 			/* Secure Token Provider (Azure Function) */
@@ -143,8 +143,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 			}
 			tokenProvider = createAzureTokenProvider(
 				connectionConfig.functionUrl,
-				config.userId,
-				config.userName,
+				config.id,
+				config.name,
 			);
 		}
 		connectionProps = {

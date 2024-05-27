@@ -213,6 +213,17 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
 	],
+	[
+		3,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
 ]);
 
 /**
@@ -246,10 +257,6 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
 /**
  * @internal
  */
-export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
-/**
- * @internal
- */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
  * @internal
@@ -266,7 +273,6 @@ export const FieldKinds: {
 	readonly required: Required;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeKey: NodeKeyFieldKind;
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, identifier, forbidden };
+} = { required, optional, sequence, identifier, forbidden };

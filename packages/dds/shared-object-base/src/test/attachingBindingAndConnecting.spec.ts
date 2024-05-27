@@ -10,18 +10,18 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntimeEvents,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
-	type IFluidDataStoreRuntime,
-	type IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IFluidSerializer } from "../serializer.js";

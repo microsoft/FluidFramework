@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-object-base",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Data object base for synchronously and lazily loaded object scenarios",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,17 +72,17 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "0.38.0-259537",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.38.0-259537",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.3.3"
 	},
 	"typeValidation": {
 		"disabled": true,

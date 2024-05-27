@@ -13,18 +13,13 @@ import {
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
