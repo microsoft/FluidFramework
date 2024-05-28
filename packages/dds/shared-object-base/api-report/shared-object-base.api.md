@@ -29,6 +29,9 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal'
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
+export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;
+
+// @internal
 export function createSharedObjectKind<TSharedObject>(factory: (new () => IChannelFactory<TSharedObject>) & {
     readonly Type: string;
 }): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject>;
