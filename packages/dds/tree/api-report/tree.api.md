@@ -422,13 +422,13 @@ export type EmptyObject = {};
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 
 // @internal
-export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends { [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; }[keyof { [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; }]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
     readonly value: TValue;
-}) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
-    readonly value: Members;
-}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
-    readonly value: Members;
-})>;
+}) & ({ [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; } extends infer T extends Record<string, string> ? { readonly [Property in keyof T]: TreeNodeSchemaClass<ScopedSchemaName<TScope, { [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; }[Property]>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: { [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; }[Property];
+    }, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+        readonly value: { [key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key] extends string ? Members[key] : string; }[Property];
+    }); } : never);
 
 // @internal
 export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {
