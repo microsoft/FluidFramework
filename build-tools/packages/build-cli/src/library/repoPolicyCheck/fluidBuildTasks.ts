@@ -227,9 +227,6 @@ async function eslintGetScriptDependencies(
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// TODO: Ideally loading the eslint config should use import() instead of require() but right now policy resolvers
-			// are synchronous. If they are made async in the future, then this code should be updated to use dynamic import.
-
 			config = import(`file://${path.resolve(eslintConfig)}`) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
