@@ -11,7 +11,7 @@
         -   [Changes in op semantics](#changes-in-op-semantics)
     -   [Chunking for compression](#chunking-for-compression)
     -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
-    -   [Example configs](#example-configs)
+    -   [Configuration](#configuration)
     -   [Note about performance and latency](#note-about-performance-and-latency)
     -   [How it works](#how-it-works)
     -   [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
@@ -31,7 +31,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches are never interleaved, nested or interrupted and they are processed in isolation without interleaving of ops from other clients.
 
-The way batches are formed is governed by the `FlushMode` setting of the `ContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
+The way batches are formed is governed by the `FlushMode` setting of the `IContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
 
 ```
 export enum FlushMode {
@@ -68,14 +68,14 @@ As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into 
 
 Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
-Compressing a batch yields a batch of the same size, but only the first message has any content - the compressed payload containing all the original batch's content.
-The rest of the batch's messages are empty placeholders to reserve sequence numbers for the compressed messages.
+Compressing a batch yields a batch with the same number of messages. It compresses all the content, shifting the compressed payload into the first op,
+leaving the rest of the batch's messages as empty placeholders to reserve sequence numbers for the compressed messages.
 
 ## Grouped batching
 
 With Grouped Batching enabled (it's on by default), all batch messages are combined under a single "grouped" message _before compression_. Upon receiving this new "grouped" message, the batch messages will be extracted, and they each will be given the same sequence number - that of the parent "grouped" message.
 
-The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. Without grouped batching, a batch with many messages (i.e. more than 4k) will go over the batch size limit just on empty op envelopes alone.
+The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. These empty messages are not free to transmit, can trigger service throttling, and in extreme cases can _still_ result in a batch too large (from empty op envelopes alone).
 
 Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
@@ -88,10 +88,10 @@ See [below](#how-grouped-batching-works) for an example.
 Grouped Batching changed a couple of expectations around message structure and runtime layer expectations. Specifically:
 
 -   Batch messages observed at the runtime layer no longer match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
--   Messages within the same batch now have the same sequence number
 -   Once the ContainerRuntime ungroups the batch, the client sequence numbers on the resulting messages can only be used to order messages with that batch (having the same sequenceNumber)
--   When grouped batching is enabled, a batch with reentrant ops must rebase its messages to the current reference sequence number and resubmit them to the data stores before flushing.
-    -   "Reentrant ops" occur when changes are made to a DDS inside a DDS 'onChanged' event handler. Without rebasing, the reentrant op would have a different reference sequence number than the rest of the ops in the batch, which can lead to inconsistency when applied on remote clients against the batch's reference sequence number. In other words, all ops in a batch must be in agreement about the state of the data model to ensure eventual consistency.
+-   Messages within the same batch now all share the same sequence number
+-   All ops in a batch must also have the same reference sequence number to ensure eventualy consistency of the model. The runtime will "rebase" ops in a batch with different ref sequence number to satisfy that requirement.
+    -   What causes ops in a single JS turn (and thus in a batch) to have different reference sequence number? "Op reentrancy", where changes are made to a DDS inside a DDS 'onChanged' event handler.
 
 ## Chunking for compression
 
@@ -110,20 +110,10 @@ Compression and Chunking configuration can be overridden via feature gates to fo
 -   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
 -   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
-## Example configs
+## Configuration
 
-By default, the runtime is [configured](..\containerRuntime.ts#L572) with the following values related to compression and chunking:
-
-```typescript
-const runtimeOptions: IContainerRuntimeOptions = {
-	compressionOptions: {
-		minimumBatchSizeInBytes: 614400,
-		compressionAlgorithm: CompressionAlgorithms.lz4,
-	},
-	chunkSizeInBytes: 204800,
-	maxBatchSizeInBytes: 716800,
-};
-```
+These features are configured via `IContainerRuntimeOptions`, passed to the `ContainerRuntime.loadRuntime` function.
+Default values are specified in code in [containerRuntime.ts](../containerRuntime.ts).
 
 ## Note about performance and latency
 
