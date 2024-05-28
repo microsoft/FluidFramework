@@ -4,14 +4,12 @@
  */
 
 import { Package } from "@fluidframework/build-tools";
-
-// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
-import { test as oclifTest } from "@oclif/test";
-const test = oclifTest.loadConfig({ root: import.meta.url });
-
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
+import { initializeCommandTestFunction } from "../init.js";
+
+const test = initializeCommandTestFunction(import.meta.url);
 chai.use(assertArrays);
 
 interface jsonOutput {

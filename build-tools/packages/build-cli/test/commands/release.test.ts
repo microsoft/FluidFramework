@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
-import { test as oclifTest } from "@oclif/test";
-const test = oclifTest.loadConfig({ root: import.meta.url });
-
 import { FluidReleaseMachine } from "../../src/machines/index.js";
+import { initializeCommandTestFunction } from "../init.js";
 
+const test = initializeCommandTestFunction(import.meta.url);
 const knownUnhandledStates: string[] = [
 	// Known unhandled states can be added here temporarily during development.
 ];

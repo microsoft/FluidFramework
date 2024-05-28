@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
-import { expect, test as oclifTest } from "@oclif/test";
-const test = oclifTest.loadConfig({ root: import.meta.url });
+import { expect } from "@oclif/test";
+
+import { initializeCommandTestFunction } from "../../init.js";
+const test = initializeCommandTestFunction(import.meta.url);
 
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.
