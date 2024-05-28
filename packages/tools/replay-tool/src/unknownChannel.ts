@@ -48,7 +48,6 @@ class UnknownChannel implements IChannel {
 
 	public getAttachSummary(
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		return {
@@ -68,10 +67,9 @@ class UnknownChannel implements IChannel {
 
 	public async summarize(
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return this.getAttachSummary(fullTree, trackState, telemetryContext);
+		return this.getAttachSummary(fullTree, telemetryContext);
 	}
 
 	public isAttached() {

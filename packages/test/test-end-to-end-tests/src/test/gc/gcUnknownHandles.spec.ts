@@ -78,7 +78,7 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	 */
 	async function getGCNodesFromSummary() {
 		await provider.ensureSynchronized();
-		const { summary } = await summarizerRuntime.summarize({ runGC: true, trackState: false });
+		const { summary } = await summarizerRuntime.summarize({ runGC: true });
 		const gcState = getGCStateFromSummary(summary);
 		assert(gcState !== undefined, "GC tree is not available in the summary");
 		return new Set(Object.keys(gcState));

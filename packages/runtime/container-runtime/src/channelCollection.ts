@@ -1095,7 +1095,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public async summarize(
 		fullTree: boolean,
-		trackState: boolean,
+		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const summaryBuilder = new SummaryTreeBuilder();
@@ -1118,11 +1118,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					return context.attachState === AttachState.Attached;
 				})
 				.map(async ([contextId, context]) => {
-					const contextSummary = await context.summarize(
-						fullTree,
-						trackState,
-						telemetryContext,
-					);
+					const contextSummary = await context.summarize(fullTree, telemetryContext);
 					summaryBuilder.addWithStats(contextId, contextSummary);
 				}),
 		);

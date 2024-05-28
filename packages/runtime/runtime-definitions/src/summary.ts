@@ -115,7 +115,6 @@ export interface IExperimentalIncrementalSummaryContext {
  */
 export type SummarizeInternalFn = (
 	fullTree: boolean,
-	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
@@ -182,14 +181,9 @@ export interface ISummarizerNode {
 	/**
 	 * Calls the internal summarize function and handles internal state tracking.
 	 * @param fullTree - true to skip optimizations and always generate the full tree
-	 * @param trackState - indicates whether the summarizer node should track the state of the summary or not
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
 	 */
-	summarize(
-		fullTree: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummarizeResult>;
+	summarize(fullTree: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
 	/**
 	 * Checks if there are any additional path parts for children that need to
 	 * be loaded from the base summary. Additional path parts represent parts
@@ -241,9 +235,6 @@ export interface ISummarizerNode {
  * `usedRoutes`: The routes in this node that are currently in use.
  *
  * `getGCData`: A new API that can be used to get the garbage collection data for this node.
- *
- * `summarize`: Added a trackState flag which indicates whether the summarizer node should track the state of the
- * summary or not.
  *
  * `createChild`: Added the following params:
  *

@@ -742,7 +742,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public override getAttachSummary(
 		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined
 	): ISummaryTreeWithStats {
 		// If local changes exist, emulate the sequencing of those changes.
@@ -760,7 +759,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			}
 			this.editLog.sequenceLocalEdits();
 		}
-		return super.getAttachSummary(fullTree, trackState, telemetryContext);
+		return super.getAttachSummary(fullTree, telemetryContext);
 	}
 
 	/**

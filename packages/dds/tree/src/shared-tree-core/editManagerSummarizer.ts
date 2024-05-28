@@ -47,7 +47,6 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		return this.summarizeCore(stringify);
@@ -56,7 +55,6 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public async summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		return this.summarizeCore(stringify);

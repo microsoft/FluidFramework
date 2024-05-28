@@ -249,7 +249,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				s.getAttachSummary(
 					(contents) => serializer.stringify(contents, this.handle),
 					undefined,
-					undefined,
 					telemetryContext,
 					incrementalSummaryContext,
 				),
@@ -438,7 +437,6 @@ export interface Summarizable {
 	getAttachSummary(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats;
@@ -450,7 +448,6 @@ export interface Summarizable {
 	summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;
 

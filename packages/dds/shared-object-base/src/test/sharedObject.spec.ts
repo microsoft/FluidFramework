@@ -80,13 +80,10 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected applyStashedOp(content: any): unknown {
 		throw new Error("Method not implemented.");
 	}
-	public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
+	public getAttachSummary(fullTree?: boolean): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
 	}
-	public async summarize(
-		fullTree?: boolean,
-		trackState?: boolean,
-	): Promise<ISummaryTreeWithStats> {
+	public async summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats> {
 		throw new Error("Method not implemented.");
 	}
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {

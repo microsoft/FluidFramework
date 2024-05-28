@@ -36,7 +36,6 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const data = this.detachedFieldIndex.encode();
@@ -46,10 +45,9 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 	public async summarize(
 		stringify: SummaryElementStringifier,
 		fullTree?: boolean,
-		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
+		return this.getAttachSummary(stringify, fullTree, telemetryContext);
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {

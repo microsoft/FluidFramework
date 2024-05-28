@@ -213,7 +213,6 @@ export async function uploadSummary(container: IContainer) {
 	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
-		trackState: false,
 		fullGC: true,
 	});
 	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {

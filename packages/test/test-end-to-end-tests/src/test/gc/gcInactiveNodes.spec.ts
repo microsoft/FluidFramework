@@ -128,7 +128,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 		return containerRuntime.summarize({
 			runGC: true,
 			fullTree: true,
-			trackState: false,
 		});
 	}
 

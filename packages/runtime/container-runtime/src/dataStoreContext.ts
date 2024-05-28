@@ -372,9 +372,8 @@ export abstract class FluidDataStoreContext
 
 		const thisSummarizeInternal = async (
 			fullTree: boolean,
-			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-		) => this.summarizeInternal(fullTree, trackState, telemetryContext);
+		) => this.summarizeInternal(fullTree, telemetryContext);
 
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
@@ -607,20 +606,17 @@ export abstract class FluidDataStoreContext
 	/**
 	 * Returns a summary at the current sequence number.
 	 * @param fullTree - true to bypass optimizations and force a full summary tree
-	 * @param trackState - This tells whether we should track state from this summary.
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
 	 */
 	public async summarize(
 		fullTree: boolean = false,
-		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
+		return this.summarizerNode.summarize(fullTree, telemetryContext);
 	}
 
 	private async summarizeInternal(
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
 		await this.realize();
@@ -628,7 +624,7 @@ export abstract class FluidDataStoreContext
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const summarizeResult = await this.channel!.summarize(
 			fullTree,
-			trackState,
+			true /* trackState */,
 			telemetryContext,
 		);
 

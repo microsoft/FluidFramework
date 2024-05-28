@@ -92,7 +92,7 @@ export class GCSummaryStateTracker {
 	 * If none of the components changed, it returns a summary handle for the entire GC data.
 	 */
 	public summarize(
-		trackState: boolean,
+		fullTree: boolean,
 		gcState: IGarbageCollectionState,
 		deletedNodes: Set<string>,
 		tombstones: string[],
@@ -125,7 +125,7 @@ export class GCSummaryStateTracker {
 			serializedDeletedNodes,
 		};
 
-		if (trackState && this.latestSummaryData !== undefined) {
+		if (!fullTree && this.latestSummaryData !== undefined) {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
@@ -149,38 +149,38 @@ export class GCSummaryStateTracker {
 				serializedGCState,
 				serializedTombstones,
 				serializedDeletedNodes,
-				true /* trackState */,
+				false /* fullTree */,
 			);
 		}
-		// If not tracking GC state, build a GC summary tree without any summary handles.
+		// If not fullTree, build a GC summary tree without any summary handles.
 		return this.buildGCSummaryTree(
 			serializedGCState,
 			serializedTombstones,
 			serializedDeletedNodes,
-			false /* trackState */,
+			true /* fullTree */,
 		);
 	}
 
 	/**
 	 * Builds the GC summary tree which contains GC state, deleted nodes and tombstones.
-	 * If trackState is false, all of GC state, deleted nodes and tombstones are written as summary blobs.
-	 * If trackState is true, only states that changed are written. Rest are written as handles.
+	 * If fullTree is true, all of GC state, deleted nodes and tombstones are written as summary blobs.
+	 * If fullTree is false, only states that changed are written. Rest are written as handles.
 	 * @param serializedGCState - The GC state serialized as string.
 	 * @param serializedTombstones - The tombstone state serialized as string.
 	 * @param serializedDeletedNodes - Deleted nodes serialized as string.
-	 * @param trackState - Whether we are tracking GC state across summaries.
+	 * @param incrementalSummary - Whether a full tree summary should be generated.
 	 * @returns the GC summary tree.
 	 */
 	private buildGCSummaryTree(
 		serializedGCState: string,
 		serializedTombstones: string | undefined,
 		serializedDeletedNodes: string | undefined,
-		trackState: boolean,
+		fullTree: boolean,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 
 		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.
-		if (this.latestSummaryData?.serializedGCState === serializedGCState && trackState) {
+		if (this.latestSummaryData?.serializedGCState === serializedGCState && !fullTree) {
 			builder.addHandle(gcStateBlobKey, SummaryType.Blob, `/${gcTreeKey}/${gcStateBlobKey}`);
 		} else {
 			builder.addBlob(gcStateBlobKey, serializedGCState);
@@ -191,7 +191,7 @@ export class GCSummaryStateTracker {
 		if (serializedTombstones !== undefined) {
 			if (
 				this.latestSummaryData?.serializedTombstones === serializedTombstones &&
-				trackState
+				!fullTree
 			) {
 				builder.addHandle(
 					gcTombstoneBlobKey,
@@ -211,7 +211,7 @@ export class GCSummaryStateTracker {
 		// If the deleted nodes hasn't changed, write a summary handle, else write a summary blob for it.
 		if (
 			this.latestSummaryData?.serializedDeletedNodes === serializedDeletedNodes &&
-			trackState
+			!fullTree
 		) {
 			builder.addHandle(
 				gcDeletedBlobKey,

@@ -58,7 +58,6 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 				const { stats, summary } = await containerRuntime.summarize({
 					runGC: false,
 					fullTree: false,
-					trackState: false,
 				});
 
 				// Validate stats

@@ -124,16 +124,9 @@ export class RemoteChannelContext implements IChannelContext {
 
 		const thisSummarizeInternal = async (
 			fullTree: boolean,
-			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
 			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		) =>
-			this.summarizeInternal(
-				fullTree,
-				trackState,
-				telemetryContext,
-				incrementalSummaryContext,
-			);
+		) => this.summarizeInternal(fullTree, telemetryContext, incrementalSummaryContext);
 
 		this.summarizerNode = createSummarizerNode(
 			thisSummarizeInternal,
@@ -197,20 +190,17 @@ export class RemoteChannelContext implements IChannelContext {
 	/**
 	 * Returns a summary at the current sequence number.
 	 * @param fullTree - true to bypass optimizations and force a full summary tree
-	 * @param trackState - This tells whether we should track state from this summary.
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
 	 */
 	public async summarize(
 		fullTree: boolean = false,
-		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
+		return this.summarizerNode.summarize(fullTree, telemetryContext);
 	}
 
 	private async summarizeInternal(
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummarizeInternalResult> {
@@ -218,7 +208,6 @@ export class RemoteChannelContext implements IChannelContext {
 		const summarizeResult = await summarizeChannelAsync(
 			channel,
 			fullTree,
-			trackState,
 			telemetryContext,
 			incrementalSummaryContext,
 		);

@@ -593,7 +593,6 @@ describe("SharedTreeCore", () => {
 		public getAttachSummary(
 			stringify: SummaryElementStringifier,
 			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
 			telemetryContext?: ITelemetryContext | undefined,
 		): ISummaryTreeWithStats {
 			this.emit("summarizeAttached");
@@ -603,7 +602,6 @@ describe("SharedTreeCore", () => {
 		public async summarize(
 			stringify: SummaryElementStringifier,
 			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
 			telemetryContext?: ITelemetryContext | undefined,
 		): Promise<ISummaryTreeWithStats> {
 			this.emit("summarizeAsync");

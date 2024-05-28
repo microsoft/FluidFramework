@@ -159,7 +159,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	public async summarize(
 		fullTree: boolean,
-		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		assert(
@@ -211,7 +210,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
-			true,
 			telemetryContext,
 			incrementalSummaryContext,
 		);

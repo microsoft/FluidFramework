@@ -354,7 +354,6 @@ export interface IGarbageCollector {
 	/** Summarizes the GC data and returns it as a summary tree. */
 	summarize(
 		fullTree: boolean,
-		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined;
 	/** Returns the garbage collector specific metadata to be written into the summary. */
