@@ -2104,7 +2104,7 @@ describe("SharedString interval collections", () => {
 describe("the start and end positions of intervals are updated in response to edits", () => {
 	const stringFactory = new SharedStringFactory();
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	let clients: [Client, Client, Client];
+	let clients: Client[];
 	beforeEach(() => {
 		containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		clients = constructClients(

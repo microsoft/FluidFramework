@@ -16,7 +16,7 @@ import { constructClient, constructClients, loadClient } from "./multiClientTest
 
 describe("interval rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	let clients: [Client, Client, Client];
+	let clients: Client[];
 
 	useStrictPartialLengthChecks();
 

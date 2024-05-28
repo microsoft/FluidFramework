@@ -72,7 +72,7 @@ export function constructClients(
 	numClients = 3,
 	dataStoreRuntimeOptions?: Record<string | number, any>,
 	factory = SharedString.getFactory(),
-): [Client, Client, Client] {
+): Client[] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const { sharedString, containerRuntime, services } = constructClient(
 			containerRuntimeFactory,
@@ -82,5 +82,5 @@ export function constructClients(
 
 		sharedString.connect(services);
 		return { containerRuntime, sharedString };
-	}) as [Client, Client, Client];
+	});
 }
