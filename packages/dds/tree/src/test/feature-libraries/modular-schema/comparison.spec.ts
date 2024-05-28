@@ -453,7 +453,7 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 	for (let index = 0; index < inOrder.length - 1; index++) {
 		const order = getOrdering(inOrder[index], inOrder[index + 1], compare);
 		if (order !== Ordering.Superset) {
-			throw new Error(
+			assert.fail(
 				`expected ${JSON.stringify(
 					intoSimpleObject(inOrder[index + 1]),
 				)} to be a superset of ${JSON.stringify(
