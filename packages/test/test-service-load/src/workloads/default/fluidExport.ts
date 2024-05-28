@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { loadTestDataStoreInstantiationFactory } from "./loadTestDataStore";
+import { loadTestDataStoreInstantiationFactory } from "./loadTestDataStore.js";
 
 export const fluidExport = loadTestDataStoreInstantiationFactory;

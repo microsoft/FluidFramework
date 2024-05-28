@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { rootDataObjectFactory } from "./gcDataStores";
+import { rootDataObjectFactory } from "./gcDataStores.js";
 
 export const fluidExport = rootDataObjectFactory;

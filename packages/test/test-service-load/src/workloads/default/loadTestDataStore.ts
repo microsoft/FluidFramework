@@ -5,16 +5,9 @@
 
 import * as crypto from "crypto";
 
-import { IRandom } from "@fluid-private/stochastic-test-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
-import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
 	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -25,7 +18,6 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -34,16 +26,6 @@ import {
 	ITestRunner,
 	TestRunResult,
 } from "../../testConfigFile.js";
-
-export interface IRunConfig {
-	runId: number;
-	profileName: string;
-	testConfig: ILoadTestConfig;
-	verbose: boolean;
-	random: IRandom;
-	logger: ITelemetryLoggerExt;
-	loaderConfig?: ILoaderOptions;
-}
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
@@ -530,7 +512,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 
 	public async getDetachedRunner(
 		config: Omit<IRunConfig, "runId">,
-	): Promise<IDetachedTestRunner> {
+	): Promise<IDetachedTestRunner | undefined> {
 		return LoadTestDataStoreModel.createRunnerInstance(
 			{ ...config, runId: -1 },
 			false,
@@ -549,7 +531,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 			this.context.containerRuntime,
 		);
 		if (dataModel === undefined) {
-			return false;
+			return { abort: true, errorCode: -1 };
 		}
 
 		// At every moment, we want half the client to be concurrent writers, and start and stop

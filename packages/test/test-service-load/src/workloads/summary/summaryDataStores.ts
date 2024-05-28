@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedMap } from "@fluidframework/map/internal";
+import {
+	ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import { IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile.js";
 
 /**
  * The maximum number of leaf data objects that can be created.

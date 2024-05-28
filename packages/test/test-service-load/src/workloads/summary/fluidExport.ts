@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { rootDataObjectFactory } from "./summaryDataStores";
+import { rootDataObjectFactory } from "./summaryDataStores.js";
 
 export const fluidExport = rootDataObjectFactory;

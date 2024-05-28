@@ -14871,95 +14871,140 @@ importers:
         version: 5.3.3
 
   packages/test/test-service-load:
-    specifiers:
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-private/stochastic-test-utils': workspace:~
-      '@fluid-private/test-drivers': workspace:~
-      '@fluid-private/test-pairwise-generator': workspace:~
-      '@fluid-tools/build-cli': ^0.28.0
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.28.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/container-runtime': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/counter': workspace:~
-      '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@fluidframework/map': workspace:~
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-definitions': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/task-manager': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@fluidframework/tool-utils': workspace:~
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      '@types/xml': ^1.0.0
-      c8: ^7.7.1
-      commander: ^5.1.0
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      prettier: ~3.0.3
-      ps-node: ^0.1.6
-      rimraf: ^4.4.0
-      start-server-and-test: ^1.11.7
-      tinylicious: ^2.0.2
-      typescript: ~5.1.6
-      xml: ^1.0.0
     dependencies:
-      '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluid-private/stochastic-test-utils': link:../stochastic-test-utils
-      '@fluid-private/test-drivers': link:../test-drivers
-      '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
-      '@fluidframework/aqueduct': link:../../framework/aqueduct
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
-      '@fluidframework/container-runtime': link:../../runtime/container-runtime
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/counter': link:../../dds/counter
-      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/task-manager': link:../../dds/task-manager
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
-      '@fluidframework/test-utils': link:../test-utils
-      '@fluidframework/tool-utils': link:../../utils/tool-utils
-      commander: 5.1.0
-      ps-node: 0.1.6
-      start-server-and-test: 1.15.5
-      tinylicious: 2.0.2
-      xml: 1.0.1
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
+      '@fluid-internal/test-driver-definitions':
+        specifier: workspace:~
+        version: link:../test-driver-definitions
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../stochastic-test-utils
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../test-drivers
+      '@fluid-private/test-pairwise-generator':
+        specifier: workspace:~
+        version: link:../test-pairwise-generator
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/counter':
+        specifier: workspace:~
+        version: link:../../dds/counter
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../dds/map
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../dds/task-manager
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../test-utils
+      '@fluidframework/tool-utils':
+        specifier: workspace:~
+        version: link:../../utils/tool-utils
+      commander:
+        specifier: ^5.1.0
+        version: 5.1.0
+      ps-node:
+        specifier: ^0.1.6
+        version: 0.1.6
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.3
+      tinylicious:
+        specifier: ^4.0.1
+        version: 4.0.1
+      xml:
+        specifier: ^1.0.0
+        version: 1.0.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.28.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../mocha-test-setup
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      '@types/xml': 1.0.8
-      c8: 7.14.0
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      mocha: 10.2.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
+      '@biomejs/biome':
+        specifier: ^1.6.2
+        version: 1.6.2
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.19.1)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.19.1)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.1.0
+        version: 5.1.0(eslint@8.55.0)(typescript@5.3.3)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.1
+      '@types/xml':
+        specifier: ^1.0.0
+        version: 1.0.11
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.3.3
+        version: 5.3.3
 
   packages/test/test-utils:
     dependencies:
@@ -28485,38 +28530,37 @@ packages:
     dependencies:
       '@types/node': 18.19.1
 
-  /@types/xml/1.0.8:
-    resolution: {integrity: sha512-IptEZBtDwSPayCP8FmbordhAdjdxsif4zH29xTbBRacZeCHFHZp8OxyG1/CrS8AS0MziJUPTGWCTKbYtvHGYPg==}
+  /@types/ws@8.5.10:
+    resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
+    dependencies:
+      '@types/node': 18.19.1
+
+  /@types/xml@1.0.11:
+    resolution: {integrity: sha512-9gktTjxBWoz4+X8ZOS+QRFM2/liMQgBv8Z36wuNnomK5jtXFq4IJa7Az4Hzoy+rYux343NkH9Dq+nzIdejVrjw==}
     dependencies:
       '@types/node': 18.19.1
     dev: true
 
-  /@types/yargs-parser/21.0.0:
-    resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
+  /@types/yargs-parser@21.0.3:
+    resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
     dev: true
 
   /@types/yargs@13.0.12:
     resolution: {integrity: sha512-qCxJE1qgz2y0hA4pIxjBR+PelCH0U5CK1XJXFwCNqfmliatKp47UCXXE9Dyk1OXBDLvsCF57TqQEJaeLfDYEOQ==}
     dependencies:
-      '@types/yargs-parser': 21.0.0
+      '@types/yargs-parser': 21.0.3
     dev: true
 
   /@types/yargs@15.0.19:
     resolution: {integrity: sha512-2XUaGVmyQjgyAZldf0D0c14vvo/yv0MhQBSTJcejMMaitsn3nxCB6TmH4G0ZQf+uxROOa9mpanoSm8h6SG/1ZA==}
     dependencies:
-      '@types/yargs-parser': 21.0.0
+      '@types/yargs-parser': 21.0.3
     dev: true
 
-  /@types/yargs/16.0.9:
-    resolution: {integrity: sha512-tHhzvkFXZQeTECenFoRljLBYPZJ7jAVxqqtEI0qTLOmuultnFp4I9yKE17vTuhf7BkhCu7I4XuemPgikDVuYqA==}
-    dependencies:
-      '@types/yargs-parser': 21.0.0
-    dev: true
-
-  /@types/yargs/17.0.32:
+  /@types/yargs@17.0.32:
     resolution: {integrity: sha512-xQ67Yc/laOG5uMfX/093MRlGGCIBzZMarVa+gfNKJxWAIgykYpVGkBdbqEzGDDfCrVUj6Hiff4mTZ5BA6TmAog==}
     dependencies:
-      '@types/yargs-parser': 21.0.0
+      '@types/yargs-parser': 21.0.3
     dev: true
 
   /@types/yauzl@2.10.3:

@@ -6,6 +6,7 @@
 import crypto from "crypto";
 import fs from "fs";
 
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	DriverEndpoint,
 	ITelemetryBufferedLogger,
@@ -29,6 +30,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
@@ -39,7 +41,7 @@ import {
 	getOptionOverride,
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import { ILoadTestConfig, ITestConfig, ITestRunner } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -69,6 +71,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		driverType: string;
 		driverEndpointName: string | undefined;
 		profile: string;
+		workLoadPath: string;
 		runId: number | undefined;
 	}) {
 		return createChildLogger({
@@ -148,7 +151,7 @@ export async function createCodeLoader(
 	workLoadPath: string,
 ) {
 	// The work load path must contain a `fluidExport` which provides IFluidDataStoreFactory.
-	const module = await import(`./${workLoadPath}/fluidExport`);
+	const module = await import(`./${workLoadPath}/fluidExport.js`);
 	const dataStoreFactory = (module.fluidExport as IProvideFluidDataStoreFactory)
 		.IFluidDataStoreFactory;
 	assert(

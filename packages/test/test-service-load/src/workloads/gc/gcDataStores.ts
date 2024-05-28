@@ -2,20 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable jsdoc/check-indentation */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IFluidHandle, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
-import { Deferred, assert, delay } from "@fluidframework/core-utils";
-import { SharedCounter } from "@fluidframework/counter";
-import { IValueChanged, SharedMap } from "@fluidframework/map";
+import { Deferred, assert, delay } from "@fluidframework/core-utils/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import {
 	createChildLogger,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
+} from "@fluidframework/telemetry-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { GcFailureExitCode, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile.js";
 
 /**
  * The maximum number of leaf data objects that can be running at a given time per client. This is used to limit the
@@ -65,7 +67,7 @@ function logEvent(logger: ITelemetryLoggerExt, props: ITelemetryGenericEventExt 
 	console.log(`########## ${props.eventName}: ${props.fromId} ${toId}`);
 }
 
-function getBlobIdFromHandle(blobHandle: IFluidHandle<ArrayBufferLike>) {
+function getBlobIdFromHandle(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
 	const pathParts = blobHandle.absolutePath.split("/");
 	return pathParts[2];
 }
