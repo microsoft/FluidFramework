@@ -242,8 +242,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const { stats, summary } = await containerRuntime.summarize({
 			runGC: false,
-			fullTree: false,
-			trackState: false,
+			fullTree: true,
 			summaryLogger: createChildLogger(),
 		});
 
@@ -594,8 +593,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 			await containerRuntime
 				.summarize({
 					runGC: false,
-					fullTree: false,
-					trackState: false,
+					fullTree: true,
 					summaryLogger: createChildLogger({ logger: mockLogger }),
 				})
 				.catch(() => {});
