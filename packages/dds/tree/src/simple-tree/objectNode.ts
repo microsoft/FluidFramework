@@ -167,7 +167,7 @@ function createProxyHandler(
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, viewKey, proxy);
 		},
-		set(target, viewKey, value: InsertableContent, proxy) {
+		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
@@ -225,7 +225,7 @@ function createProxyHandler(
 export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
-	value: InsertableContent,
+	value: InsertableContent | undefined,
 	nodeKeyManager: NodeKeyManager,
 ): void {
 	switch (field.schema.kind) {

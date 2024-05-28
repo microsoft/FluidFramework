@@ -230,6 +230,11 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
 
 	/**
+	 * The number of nodes in this field
+	 */
+	readonly length: number;
+
+	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
 	 */

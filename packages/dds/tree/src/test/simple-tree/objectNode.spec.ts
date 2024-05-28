@@ -24,7 +24,6 @@ describe("ObjectNode", () => {
 				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				const n = hydrate(Schema, { toString: 1 });
 				assert.equal(n.toString, 1);
-				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				n.toString = undefined;
 				assert.equal(n.toString, undefined);
 			}

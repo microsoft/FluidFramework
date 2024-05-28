@@ -7,11 +7,17 @@ import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { Flags } from "@oclif/core";
-import { readJson } from "fs-extra";
+import { readJson } from "fs-extra/esm";
 
 import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 
-import { BaseCommand, Context, Handler, Repository, policyHandlers } from "../../library";
+import {
+	BaseCommand,
+	Context,
+	Handler,
+	Repository,
+	policyHandlers,
+} from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
 
