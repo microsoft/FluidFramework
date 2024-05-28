@@ -18,9 +18,9 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { MessageRelayContext } from "../../MessageRelayContext.js";
-import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../../components/index.js";
-import { MockMessageRelay } from "../utils/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
+import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../components/index.js";
+import { MockMessageRelay } from "./utils/index.js";
 
 const testContainerKey = "test-container-key";
 const testFluidObjectId = "test-fluid-object-id";
