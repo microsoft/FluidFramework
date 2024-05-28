@@ -94,7 +94,7 @@ export interface Listenable<TListeners extends object> {
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a {@link Off | function} which will deregister the listener when called.
 	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
-	 * @remarks Avoid registering the exact same `listener` object for the same event more than once.
+	 * @remarks Do not register the exact same `listener` object for the same event more than once.
 	 * Doing so will result in undefined behavior.
 	 */
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
