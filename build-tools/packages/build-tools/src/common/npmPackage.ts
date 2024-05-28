@@ -267,7 +267,7 @@ export class Package {
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
 			if (print) {
-				error(`${this.nameColored}: node_modules not installed`);
+				error(`${this.nameColored}: node_modules not installed in ${this.directory}`);
 			}
 			return false;
 		}
