@@ -3,6 +3,7 @@ import {
 	ChangeAtomIdMap,
 	FieldKey,
 	FieldKindIdentifier,
+	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
 import {
@@ -20,7 +21,13 @@ import {
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import { IdAllocator, brand, idAllocatorFromMaxId, setInNestedMap } from "../../../util/index.js";
+import {
+	IdAllocator,
+	Mutable,
+	brand,
+	idAllocatorFromMaxId,
+	setInNestedMap,
+} from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { fail } from "assert";
@@ -66,18 +73,20 @@ function newField(
 	return { fieldKey, kind, changeset, children };
 }
 
-function build(
-	family: ModularChangeFamily,
-	maxId: number | undefined,
-	...fields: FieldChangesetDescription[]
-): ModularChangeset {
+interface BuildArgs {
+	family: ModularChangeFamily;
+	maxId?: number;
+	revisions?: RevisionInfo[];
+}
+
+function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
 	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
 	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
 	const crossFieldKeys: CrossFieldKeyTable = new BTree();
 
 	const idAllocator = idAllocatorFromMaxId();
 	const fieldChanges = fieldChangeMapFromDescription(
-		family,
+		args.family,
 		fields,
 		undefined,
 		nodeChanges,
@@ -86,13 +95,19 @@ function build(
 		idAllocator,
 	);
 
-	return {
+	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
-		maxId: brand(maxId ?? idAllocator.getMaxId()),
+		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
+
+	if (args.revisions !== undefined) {
+		result.revisions = args.revisions;
+	}
+
+	return result;
 }
 
 function fieldChangeMapFromDescription(

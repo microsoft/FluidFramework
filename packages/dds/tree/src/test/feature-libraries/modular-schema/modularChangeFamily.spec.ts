@@ -60,6 +60,7 @@ import {
 import {
 	EncodingTestData,
 	assertDeltaEqual,
+	defaultRevInfosFromChanges,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -433,8 +434,7 @@ describe("ModularChangeFamily", () => {
 
 		it("compose specific ○ specific", () => {
 			const expectedCompose = Change.build(
-				family,
-				rootChange2.maxId,
+				{ family, maxId: rootChange2.maxId },
 				Change.field(
 					fieldA,
 					singleNodeField.identifier,
@@ -458,8 +458,7 @@ describe("ModularChangeFamily", () => {
 
 		it("compose specific ○ generic", () => {
 			const expectedCompose = Change.build(
-				family,
-				rootChange2Generic.maxId,
+				{ family, maxId: rootChange2Generic.maxId },
 				Change.field(
 					fieldA,
 					singleNodeField.identifier,
@@ -473,22 +472,24 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			assert.deepEqual(
-				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
-				expectedCompose,
-			);
+			const composed = family.compose([
+				makeAnonChange(rootChange1a),
+				makeAnonChange(rootChange2Generic),
+			]);
+
+			assert.deepEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ specific", () => {
 			const expectedCompose = Change.build(
-				family,
-				rootChange2.maxId,
+				{ family, maxId: rootChange2.maxId },
 				Change.field(
 					fieldA,
 					singleNodeField.identifier,
 					singleNodeField.changeHandler.createEmpty(),
-					Change.node(
+					Change.nodeWithId(
 						0,
+						{ localId: brand(1) },
 						Change.field(fieldA, valueField.identifier, composedValues),
 						Change.field(fieldB, valueField.identifier, valueChange1a),
 					),
@@ -496,22 +497,24 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			assert.deepEqual(
-				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
-				expectedCompose,
-			);
+			const composed = family.compose([
+				makeAnonChange(rootChange1aGeneric),
+				makeAnonChange(rootChange2),
+			]);
+
+			assert.deepEqual(composed, expectedCompose);
 		});
 
 		it("compose generic ○ generic", () => {
 			const expectedCompose = Change.build(
-				family,
-				rootChange2Generic.maxId,
+				{ family, maxId: rootChange2Generic.maxId },
 				Change.field(
 					fieldA,
 					genericFieldKind.identifier,
 					genericFieldKind.changeHandler.createEmpty(),
-					Change.node(
+					Change.nodeWithId(
 						0,
+						{ localId: brand(1) },
 						Change.field(fieldA, valueField.identifier, composedValues),
 						Change.field(fieldB, valueField.identifier, valueChange1a),
 					),
@@ -563,44 +566,25 @@ describe("ModularChangeFamily", () => {
 			deepFreeze(change2);
 			const composed = family.compose([change1, change2]);
 
-			const expectedNodeChange: NodeChangeset = {
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange2),
-						},
-					],
-				]),
-			};
-
 			const nodeId: NodeId = { revision: tag2, localId: brand(0) };
-			const expected: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId.revision, nodeId.localId, expectedNodeChange],
-				]),
-				fieldChanges: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: valueField.identifier,
-							change: brand(valueChange1a),
-						},
-					],
-					[
-						fieldB,
-						{
-							fieldKind: singleNodeField.identifier,
-							change: brand(nodeId),
-						},
-					],
-				]),
-				nodeToParent: new Map(), // XXX
-				crossFieldKeys: new BTree(),
-				revisions: [{ revision: tag1 }, { revision: tag2 }],
-				maxId: brand(0),
-			};
+			const expected = Change.build(
+				{
+					family,
+					maxId: change2.change.maxId,
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+				},
+				Change.field(fieldA, valueField.identifier, valueChange1a),
+				Change.field(
+					fieldB,
+					singleNodeField.identifier,
+					singleNodeField.changeHandler.createEmpty(),
+					Change.nodeWithId(
+						0,
+						nodeId,
+						Change.field(fieldA, valueField.identifier, valueChange2),
+					),
+				),
+			);
 
 			assert.deepEqual(composed, expected);
 		});

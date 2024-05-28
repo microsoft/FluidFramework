@@ -34,6 +34,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	readonly fieldChanges: FieldChangeMap;
 	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+
+	// TODO: Should this be merged with `nodeChanges`?
 	readonly nodeToParent: ChangeAtomIdMap<FieldId>;
 	readonly crossFieldKeys: CrossFieldKeyTable;
 	readonly constraintViolationCount?: number;

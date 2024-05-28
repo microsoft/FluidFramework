@@ -232,6 +232,11 @@ export class ModularChangeFamily
 			change2.change.nodeChanges,
 		);
 
+		const composedNodeToParent = mergeNestedMaps(
+			change1.change.nodeToParent,
+			change2.change.nodeToParent,
+		);
+
 		const composedFields = this.composeFieldMaps(
 			change1.change.fieldChanges,
 			change2.change.fieldChanges,
@@ -246,6 +251,7 @@ export class ModularChangeFamily
 			crossFieldTable,
 			composedFields,
 			composedNodeChanges,
+			composedNodeToParent,
 			genId,
 			revisionMetadata,
 		);
@@ -271,6 +277,7 @@ export class ModularChangeFamily
 					crossFieldTable,
 					composedFields,
 					composedNodeChanges,
+					composedNodeToParent,
 					genId,
 					revisionMetadata,
 				);
@@ -281,12 +288,6 @@ export class ModularChangeFamily
 			change1,
 			change2,
 		]);
-
-		// XXX
-		const composedNodeToParent = mergeNestedMaps(
-			change1.change.nodeToParent,
-			change2.change.nodeToParent,
-		);
 
 		// XXX
 		const composedCrossFieldKeys = mergeBTrees(
@@ -361,6 +362,7 @@ export class ModularChangeFamily
 		table: ComposeTable,
 		composedFields: FieldChangeMap,
 		composedNodes: ChangeAtomIdMap<NodeChangeset>,
+		composedNodeToParent: ChangeAtomIdMap<FieldId>,
 		genId: IdAllocator,
 		metadata: RevisionMetadataSource,
 	): void {
@@ -375,6 +377,7 @@ export class ModularChangeFamily
 					change1.nodeChanges,
 					change2.nodeChanges,
 					composedNodes,
+					composedNodeToParent,
 					id1,
 					id2,
 					genId,
@@ -565,6 +568,7 @@ export class ModularChangeFamily
 		nodeChanges1: ChangeAtomIdMap<NodeChangeset>,
 		nodeChanges2: ChangeAtomIdMap<NodeChangeset>,
 		composedNodes: ChangeAtomIdMap<NodeChangeset>,
+		composedNodeToParent: ChangeAtomIdMap<FieldId>,
 		id1: NodeId,
 		id2: NodeId,
 		idAllocator: IdAllocator,
@@ -584,6 +588,7 @@ export class ModularChangeFamily
 
 		setInNestedMap(composedNodes, id1.revision, id1.localId, composedNodeChangeset);
 		deleteFromNestedMap(composedNodes, id2.revision, id2.localId);
+		deleteFromNestedMap(composedNodeToParent, id2.revision, id2.localId);
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
 
@@ -1373,10 +1378,19 @@ export class ModularChangeFamily
 			]),
 		);
 
+		const updatedNodeToParent: ChangeAtomIdMap<FieldId> = nestedMapFromFlatList(
+			nestedMapToFlatList(change.nodeToParent).map(([revision, id, fieldId]) => [
+				replaceRevision(revision, oldRevisions, newRevision),
+				id,
+				replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
+			]),
+		);
+
 		const updated: Mutable<ModularChangeset> = {
 			...change,
 			fieldChanges: updatedFields,
 			nodeChanges: updatedNodes,
+			nodeToParent: updatedNodeToParent,
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
 				oldRevisions,
@@ -2462,6 +2476,8 @@ function buildModularChangesetFromNode(
 		nodeToParent,
 		crossFieldKeys,
 		idAllocator,
+		[],
+		nodeId,
 	);
 }
 
@@ -2612,4 +2628,19 @@ function cloneNodeChangeset(nodeChangeset: NodeChangeset): NodeChangeset {
 	}
 
 	return { ...nodeChangeset };
+}
+
+function replaceFieldIdRevision(
+	fieldId: FieldId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): FieldId {
+	if (fieldId.nodeId === undefined) {
+		return fieldId;
+	}
+
+	return {
+		...fieldId,
+		nodeId: replaceAtomRevisions(fieldId.nodeId, oldRevisions, newRevision),
+	};
 }
