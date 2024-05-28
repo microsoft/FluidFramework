@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import {
 	FluidRepo,
@@ -16,11 +17,13 @@ import {
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
-import * as JSON5 from "json5";
+import JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
 import { Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
+
+const require = createRequire(import.meta.url);
 
 /**
  * Get and cache the tsc check ignore setting
@@ -226,10 +229,7 @@ function eslintGetScriptDependencies(
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// TODO: Ideally loading the eslint config should use import() instead of require() but right now policy resolvers
-			// are synchronous. If they are made async in the future, then this code should be updated to use dynamic import.
-
-			// eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
+			// This code assumes that the jest config will be in CommonJS, because if it's ESM the require call will fail.
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
