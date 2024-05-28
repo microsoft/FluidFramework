@@ -19,8 +19,8 @@ import {
 import * as JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
-import { Handler, readFile } from "./common";
-import { FluidBuildDatabase } from "./fluidBuildDatabase";
+import { Handler, readFile } from "./common.js";
+import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
  * Get and cache the tsc check ignore setting
@@ -226,7 +226,10 @@ function eslintGetScriptDependencies(
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// eslint-disable-next-line  @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
+			// TODO: Ideally loading the eslint config should use import() instead of require() but right now policy resolvers
+			// are synchronous. If they are made async in the future, then this code should be updated to use dynamic import.
+
+			// eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
