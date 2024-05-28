@@ -9,7 +9,7 @@ import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ImplicitFieldSchema } from '@fluidframework/tree';
 import * as React_2 from 'react';
-import { SchemaCompatibilityStatus } from '@fluidframework/tree/internal';
+import { SchemaCompatibilityStatus } from '@fluidframework/tree';
 import type { SharedObjectKind } from '@fluidframework/shared-object-base';
 import { TreeConfiguration } from '@fluidframework/tree';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree';

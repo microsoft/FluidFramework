@@ -179,7 +179,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 	it("Open document using view schema that allows a subset of stored schema documents", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
-		const view = new SchematizingSimpleTreeView(checkout, config, createMockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
 		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.canUpgrade, false);

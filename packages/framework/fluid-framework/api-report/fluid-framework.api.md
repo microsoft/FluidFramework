@@ -577,6 +577,7 @@ export interface ITrace {
 
 // @public
 export interface ITree extends IFluidLoadable {
+    // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): Promise<TreeView<TRoot>>;
 }
@@ -998,6 +999,8 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 
 // @public
 export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    // (undocumented)
+    options?: ITreeConfigurationOptions;
     schema: TSchema;
 }
 

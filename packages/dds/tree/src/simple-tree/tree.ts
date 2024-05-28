@@ -89,6 +89,8 @@ export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Imp
 	 * The schema which the application wants to view the tree with.
 	 */
 	schema: TSchema;
+
+	options?: ITreeConfigurationOptions;
 }
 
 /**
