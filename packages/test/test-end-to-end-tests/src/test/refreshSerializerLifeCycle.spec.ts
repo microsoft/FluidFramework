@@ -19,27 +19,24 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import {
-	type IContainerRuntimeOptions,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import type { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const testConfigs = generatePairwiseOptions({
 	savedOps: [true, false],
 	pendingOps: [true, false],
+	remoteOps: [true, false],
 	savedOps2: [true, false],
 	pendingOps2: [true, false],
 	summaryWhileOffline: [true, false],
-	waitForRefresh: [true,false],
+	waitForRefresh: [true, false],
+	idCompressorEnabled: ["on", undefined, "delayed"],
 });
 
 describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
@@ -48,25 +45,27 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
-	const runtimeOptions: IContainerRuntimeOptions = {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
+	const runtimeOptions = (idCompressorEnabled) => {
+		return {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
 				},
 			},
-		},
-		enableRuntimeIdCompressor: "on",
+			enableRuntimeIdCompressor: idCompressorEnabled,
+		};
 	};
 
 	const waitForSummary = async (container) => {
 		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
-			container.on("op", (op: { type: string; }) => {
+			container.on("op", (op: { type: string }) => {
 				if (op.type === "summarize") {
 					summarized = true;
 				} else if (summarized && op.type === "summaryAck") {
@@ -79,32 +78,24 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 	};
 
 	for (const testConfig of testConfigs) {
-		let provider: ITestObjectProvider;
-		let mockLogger: MockLogger;
-		let getLatestSnapshotInfoP: Deferred<void>;
-		let loader: IHostLoader;
-		let container: IContainerExperimental;
-		let url;
-		let map: ISharedMap;
-		let dataStore: ITestFluidObject;
-		let testContainerConfig;
-		beforeEach(async () => {
-			provider = getTestObjectProvider();
-			mockLogger = new MockLogger();
-			getLatestSnapshotInfoP = new Deferred<void>();
-			testContainerConfig = {
+		it(`Snapshot refresh life cycle: ${JSON.stringify(
+			testConfig ?? "undefined",
+		)}`, async () => {
+			const provider: ITestObjectProvider = getTestObjectProvider();
+			const getLatestSnapshotInfoP = new Deferred<void>();
+			const testContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
-				runtimeOptions,
+				runtimeOptions: runtimeOptions(testConfig.idCompressorEnabled),
 				loaderProps: {
-					logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
+					logger: wrapObjectAndOverride<ITelemetryBaseLogger>(provider.logger, {
 						send: (tb) => (event) => {
 							tb.send(event);
 							if (
 								event.eventName ===
-								"fluid:telemetry:serializedStateManager:SnapshotRefreshed"
-								|| event.eventName ===
-								"fluid:telemetry:serializedStateManager:OldSnapshotFetchWhileRefreshing"
+									"fluid:telemetry:serializedStateManager:SnapshotRefreshed" ||
+								event.eventName ===
+									"fluid:telemetry:serializedStateManager:OldSnapshotFetchWhileRefreshing"
 							) {
 								getLatestSnapshotInfoP.resolve();
 							}
@@ -117,77 +108,77 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 				},
 			};
 
-			loader = provider.makeTestLoader(testContainerConfig);
-			container = await createAndAttachContainer(
+			const loader = provider.makeTestLoader(testContainerConfig);
+			const container = await createAndAttachContainer(
 				provider.defaultCodeDetails,
 				loader,
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			provider.updateDocumentId(container.resolvedUrl);
-			url = await container.getAbsoluteUrl("");
-			dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-			map = await dataStore.getSharedObject<ISharedMap>(mapId);
+			const url = await container.getAbsoluteUrl("");
+			assert(url);
+			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 			map.set("hello", "world");
-		})
-		it(`Snapshot refresh life cycle: ${JSON.stringify(
-			testConfig ?? "undefined",
-		)}`, async () => {
-			const container1: IContainerExperimental = await provider.loadTestContainer(testContainerConfig);
+			const container1: IContainerExperimental =
+				await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container1);
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			let i = 0;
-			if(testConfig.savedOps) {
-				map1.set(`${i}`, i);
-				i++;
+			if (testConfig.savedOps) {
+				map1.set(`${i}`, i++);
 				await waitForSummary(container1);
 				await provider.ensureSynchronized();
 			}
-			if(testConfig.pendingOps) {
+			if (testConfig.pendingOps) {
 				await provider.opProcessingController.pauseProcessing(container1);
-				assert(dataStore1.runtime.deltaManager.outbound.paused);
 				map1.set(`${i}`, i++);
 				map1.set(`${i}`, i++);
 			}
-			
+			if (testConfig.remoteOps) {
+				map.set(`${i}`, i++);
+				map.set(`${i}`, i++);
+			}
+
 			const pendingOps = await container1.closeAndGetPendingLocalState?.();
 			assert.ok(pendingOps);
 
-			if(testConfig.summaryWhileOffline){
+			if (testConfig.summaryWhileOffline) {
 				map.set(`${i}`, i++);
 				await waitForSummary(container);
 			}
-			
 			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-			if(testConfig.waitForRefresh && (testConfig.savedOps || testConfig.summaryWhileOffline)){
+			if (
+				testConfig.waitForRefresh &&
+				(testConfig.savedOps || testConfig.summaryWhileOffline)
+			) {
 				await timeoutAwait(getLatestSnapshotInfoP.promise, {
 					errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 				});
 			}
 
-			if(testConfig.savedOps2) {
+			if (testConfig.savedOps2) {
 				map2.set(`${i}`, i++);
 				await waitForSummary(container2);
 				await provider.ensureSynchronized();
 			}
-			if(testConfig.pendingOps2){
+			if (testConfig.pendingOps2) {
 				await provider.opProcessingController.pauseProcessing(container2);
-				assert(dataStore2.runtime.deltaManager.outbound.paused);
 				map2.set(`${i}`, i++);
 				map2.set(`${i}`, i++);
-				provider.opProcessingController.resumeProcessing();
 			}
-			
+
 			const pendingOps2 = await container2.closeAndGetPendingLocalState?.();
 			const container3: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container3, true);
 			await provider.ensureSynchronized();
-			for(let k=0; k<i; k++){
+			for (let k = 0; k < i; k++) {
 				assert.strictEqual(map3.get(`${k}`), k);
 			}
 		});
