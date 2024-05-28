@@ -6,7 +6,7 @@
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
-import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine";
+import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine.js";
 
 chai.use(assertArrays);
 

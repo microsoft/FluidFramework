@@ -206,6 +206,11 @@ module.exports = {
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				// This can be removed once the client release group is using build-tools 0.39.0+.
+				// See https://github.com/microsoft/FluidFramework/pull/21238
+				"^packages/test/test-end-to-end-tests/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",

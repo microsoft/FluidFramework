@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,

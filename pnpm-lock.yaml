@@ -10782,9 +10782,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../loader/driver-utils
-      '@fluidframework/gitresources':
-        specifier: ^4.0.0
-        version: 4.0.0
       '@fluidframework/protocol-base':
         specifier: ^4.0.0
         version: 4.0.0
@@ -12359,9 +12356,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/gitresources':
-        specifier: ^4.0.0
-        version: 4.0.0
       '@fluidframework/protocol-base':
         specifier: ^4.0.0
         version: 4.0.0
