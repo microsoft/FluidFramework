@@ -81,19 +81,6 @@ export interface ITree extends IFluidLoadable {
 }
 
 /**
- * Configuration for {@link ITree.viewWith}.
- * @public
- */
-export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-	/**
-	 * The schema which the application wants to view the tree with.
-	 */
-	schema: TSchema;
-
-	options?: ITreeConfigurationOptions;
-}
-
-/**
  * Options when schematizing a tree.
  * @public
  */
@@ -116,8 +103,31 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 };
 
 /**
+ * Configuration for {@link ITree.viewWith}.
+ * @public
+ */
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	/**
+	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 */
+	public readonly options: Required<ITreeConfigurationOptions>;
+
+	/**
+	 * @param schema - The schema which the application wants to view the tree with.
+	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 */
+	public constructor(
+		public readonly schema: TSchema,
+		options?: ITreeConfigurationOptions,
+	) {
+		this.options = { ...defaultTreeConfigurationOptions, ...options };
+	}
+}
+
+/**
  * Configuration for how to {@link ITree.schematize | schematize} a tree.
  * @public
+ * @deprecated Please migrate to use {@link TreeViewConfiguration} with {@link ITree.viewWith} instead.
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**

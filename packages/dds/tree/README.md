@@ -290,7 +290,7 @@ Over time, application authors may want to change the schema for their documents
 For example, they might want to add support for a new application feature or represent existing content in some new way.
 
 Before doing so, application authors must consider compatibility constraints within their ecosystem.
-Most ecosystems don't have a way to ensure all users within a collaborative session are using the same code version.
+Most ecosystems don't have a way to ensure all documents an application may open are using the new schema or even that all users within a collaborative session are using the same code version.
 This can be problematic when two clients using code versions with different document schema attempt to collaborate.
 
 As a result, applications must be forward-thinking about policies around when their code supports working with some particular document.

@@ -82,9 +82,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	) {
 		const policy = {
 			...defaultSchemaPolicy,
-			// TODO: Sort out option spec policy here while deciding API for TreeConfiguration / TreeViewConfiguration.
-			// This is duped with a default constant right now.
-			validateSchema: config.options?.enableSchemaValidation ?? false,
+			validateSchema: config.options.enableSchemaValidation ?? false,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
