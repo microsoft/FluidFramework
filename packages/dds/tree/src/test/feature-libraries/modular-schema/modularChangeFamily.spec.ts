@@ -88,6 +88,7 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { Change } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -431,32 +432,21 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ specific", () => {
-			const expectedCompose = buildChangeset([
-				{
-					type: "field",
-					field: pathA,
-					fieldKind: singleNodeField.identifier,
-					change: brand(undefined),
-				},
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(composedValues),
-				},
-				{
-					type: "field",
-					field: pathA0B,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange1a),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange2),
-				},
-			]);
+			const expectedCompose = Change.build(
+				family,
+				rootChange2.maxId,
+				Change.field(
+					fieldA,
+					singleNodeField.identifier,
+					singleNodeField.changeHandler.createEmpty(),
+					Change.node(
+						0,
+						Change.field(fieldA, valueField.identifier, composedValues),
+						Change.field(fieldB, valueField.identifier, valueChange1a),
+					),
+				),
+				Change.field(fieldB, valueField.identifier, valueChange2),
+			);
 
 			const composed = family.compose([
 				makeAnonChange(rootChange1a),
@@ -467,32 +457,21 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose specific ○ generic", () => {
-			const expectedCompose = buildChangeset([
-				{
-					type: "field",
-					field: pathA,
-					fieldKind: singleNodeField.identifier,
-					change: brand(undefined),
-				},
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(composedValues),
-				},
-				{
-					type: "field",
-					field: pathA0B,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange1a),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange2),
-				},
-			]);
+			const expectedCompose = Change.build(
+				family,
+				rootChange2Generic.maxId,
+				Change.field(
+					fieldA,
+					singleNodeField.identifier,
+					singleNodeField.changeHandler.createEmpty(),
+					Change.node(
+						0,
+						Change.field(fieldA, valueField.identifier, composedValues),
+						Change.field(fieldB, valueField.identifier, valueChange1a),
+					),
+				),
+				Change.field(fieldB, valueField.identifier, valueChange2),
+			);
 
 			assert.deepEqual(
 				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
@@ -501,32 +480,21 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ specific", () => {
-			const expectedCompose = buildChangeset([
-				{
-					type: "field",
-					field: pathA,
-					fieldKind: singleNodeField.identifier,
-					change: brand(undefined),
-				},
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(composedValues),
-				},
-				{
-					type: "field",
-					field: pathA0B,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange1a),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange2),
-				},
-			]);
+			const expectedCompose = Change.build(
+				family,
+				rootChange2.maxId,
+				Change.field(
+					fieldA,
+					singleNodeField.identifier,
+					singleNodeField.changeHandler.createEmpty(),
+					Change.node(
+						0,
+						Change.field(fieldA, valueField.identifier, composedValues),
+						Change.field(fieldB, valueField.identifier, valueChange1a),
+					),
+				),
+				Change.field(fieldB, valueField.identifier, valueChange2),
+			);
 
 			assert.deepEqual(
 				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
@@ -535,26 +503,21 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("compose generic ○ generic", () => {
-			const expectedCompose = buildChangeset([
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(composedValues),
-				},
-				{
-					type: "field",
-					field: pathA0B,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange1a),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueChange2),
-				},
-			]);
+			const expectedCompose = Change.build(
+				family,
+				rootChange2Generic.maxId,
+				Change.field(
+					fieldA,
+					genericFieldKind.identifier,
+					genericFieldKind.changeHandler.createEmpty(),
+					Change.node(
+						0,
+						Change.field(fieldA, valueField.identifier, composedValues),
+						Change.field(fieldB, valueField.identifier, valueChange1a),
+					),
+				),
+				Change.field(fieldB, valueField.identifier, valueChange2),
+			);
 
 			assert.deepEqual(
 				family.compose([

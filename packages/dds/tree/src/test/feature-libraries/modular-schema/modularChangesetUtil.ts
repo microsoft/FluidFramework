@@ -61,19 +61,21 @@ function newField(
 	fieldKey: FieldKey,
 	kind: FieldKindIdentifier,
 	changeset: unknown,
-	children: NodeChangesetDescription[] = [],
+	...children: NodeChangesetDescription[]
 ): FieldChangesetDescription {
 	return { fieldKey, kind, changeset, children };
 }
 
 function build(
 	family: ModularChangeFamily,
+	maxId: number | undefined,
 	...fields: FieldChangesetDescription[]
 ): ModularChangeset {
 	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
 	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
 	const crossFieldKeys: CrossFieldKeyTable = new BTree();
 
+	const idAllocator = idAllocatorFromMaxId();
 	const fieldChanges = fieldChangeMapFromDescription(
 		family,
 		fields,
@@ -81,7 +83,7 @@ function build(
 		nodeChanges,
 		nodeToParent,
 		crossFieldKeys,
-		idAllocatorFromMaxId(),
+		idAllocator,
 	);
 
 	return {
@@ -89,6 +91,7 @@ function build(
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
+		maxId: brand(maxId ?? idAllocator.getMaxId()),
 	};
 }
 
