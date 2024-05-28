@@ -93,6 +93,6 @@
 "@fluidframework/undo-redo": minor
 ---
 
-Update to TypeScript 5.3
+Update to TypeScript 5.4
 
-Update package implementations to use TypeScript 5.3.3.
+Update package implementations to use TypeScript 5.4.5.
