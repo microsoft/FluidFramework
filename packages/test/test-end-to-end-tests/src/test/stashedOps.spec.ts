@@ -2006,7 +2006,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
-		it(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		it.only(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
 			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(
 				testContainerConfig,

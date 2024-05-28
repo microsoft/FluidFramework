@@ -2580,6 +2580,13 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+
+		//* Shoot....... losing easy access to localOpMetadata... :(
+		let localOpMetadata: unknown;
+		if (local && modernRuntimeMessage) {
+			localOpMetadata = this.pendingStateManager.processPendingLocalMessage(messageCopy);
+		}
+
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			const msg: MessageWithContext = modernRuntimeMessage
@@ -2641,11 +2648,13 @@ export class ContainerRuntime
 			);
 
 			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-				);
-			}
+			//* Shoot....... losing easy access to localOpMetadata... :(
+			// if (local && messageWithContext.modernRuntimeMessage) {
+			// 	localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
+			// 		messageWithContext.message,
+			// 	);
+			// }
+			//*
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.

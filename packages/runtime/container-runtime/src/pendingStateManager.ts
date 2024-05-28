@@ -18,24 +18,26 @@ import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 
+//* Switch to Batch not Message semantics (but it'll be a single grouped/compressed/chunked batch-as-message)
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
  */
-export interface IPendingMessage {
+export interface IPendingBatch {
 	type: "message";
 	referenceSequenceNumber: number;
 	content: string;
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
+	batchId?: string; //* needed here?
 }
 
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
 	 */
-	pendingStates: IPendingMessage[];
+	pendingStates: IPendingBatch[];
 }
 
 export interface IPendingBatchMessage {
@@ -85,14 +87,14 @@ function buildPendingMessageContent(
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
-	private readonly pendingMessages = new Deque<IPendingMessage>();
+	private readonly pendingMessages = new Deque<IPendingBatch>();
 	// This queue represents already acked messages.
-	private readonly initialMessages = new Deque<IPendingMessage>();
+	private readonly initialMessages = new Deque<IPendingBatch>();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
-	private savedOps: IPendingMessage[] = [];
+	private savedOps: IPendingBatch[] = [];
 
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
@@ -186,14 +188,15 @@ export class PendingStateManager implements IDisposable {
 		content: string,
 		referenceSequenceNumber: number,
 		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
+		opMetadata: (Record<string, unknown> & { batchId: string }) | undefined,
 	) {
-		const pendingMessage: IPendingMessage = {
+		const pendingMessage: IPendingBatch = {
 			type: "message",
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
 			opMetadata,
+			batchId: opMetadata?.batchId ?? "NO_BATCH_ID", //*
 		};
 
 		this.pendingMessages.push(pendingMessage);
@@ -241,7 +244,10 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
+	public processPendingLocalMessage(
+		//* Grouped Batch, maybe compressed/chunked.  Key is, it has batchId on metadata
+		message: ISequencedDocumentMessage,
+	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 		// Get the next message from the pending queue. Verify a message exists.
@@ -395,6 +401,7 @@ export class PendingStateManager implements IDisposable {
 				0x41b /* We cannot process batches in chunks */,
 			);
 
+			//* N/A now that we deal with grouped batch
 			/**
 			 * We want to ensure grouped messages get processed in a batch.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will

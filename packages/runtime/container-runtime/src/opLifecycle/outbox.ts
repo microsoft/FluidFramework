@@ -261,9 +261,24 @@ export class Outbox {
 			const processedBatch = this.compressBatch(
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
+			if (!shouldGroup) {
+				//* BatchId not supported here yet
+				this.sendBatch(processedBatch);
+				return;
+			}
+
+			assert(
+				processedBatch.content.length === 1,
+				"Grouped Batch should have single message even after compression/chunking",
+			);
+			//* TODO: Remove !'s
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			processedBatch.content[0]!.metadata!.batchId = uuid();
 			this.sendBatch(processedBatch);
+			this.persistBatch2(processedBatch.content[0]!);
 		}
 
+		//* Probably should group/compress in either case now.
 		this.persistBatch(rawBatch.content);
 	}
 
@@ -398,6 +413,16 @@ export class Outbox {
 		}
 	}
 
+	private persistBatch2(message: BatchMessage) {
+		this.params.pendingStateManager.onSubmitMessage(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			message.contents!,
+			message.referenceSequenceNumber,
+			message.localOpMetadata,
+			message.metadata as any, //* plumb batchId through better
+		);
+	}
+
 	private persistBatch(batch: BatchMessage[]) {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
@@ -407,7 +432,7 @@ export class Outbox {
 				message.contents!,
 				message.referenceSequenceNumber,
 				message.localOpMetadata,
-				message.metadata,
+				message.metadata as any, //* Handle back-compat as needed (batchId)
 			);
 		}
 	}
@@ -422,4 +447,7 @@ export class Outbox {
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
+}
+function uuid(): unknown {
+	throw new Error("Function not implemented.");
 }
