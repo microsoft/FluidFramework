@@ -4,26 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainer,
-	waitForContainerConnection,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+	createAndAttachContainer,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describe("Document Dirty", () => {
 	const documentId = "documentDirtyTest";
@@ -39,7 +39,7 @@ describe("Document Dirty", () => {
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let containerRuntime: IContainerRuntime;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 	let wasMarkedDirtyRuntimeCount: number;
 	let wasMarkedCleanRuntimeCount: number;
 	let wasMarkedDirtyContainerCount: number;
@@ -118,12 +118,9 @@ describe("Document Dirty", () => {
 				"default",
 			);
 
-			const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-				runtime.IFluidHandleContext.resolveHandle(request);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				requestHandlers: [innerRequestHandler],
 			});
 
 			const urlResolver = new LocalResolver();
@@ -152,7 +149,7 @@ describe("Document Dirty", () => {
 			container = await createContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
-			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
@@ -440,12 +437,9 @@ describe("Document Dirty", () => {
 				"default",
 			);
 
-			const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-				runtime.IFluidHandleContext.resolveHandle(request);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				requestHandlers: [innerRequestHandler],
 			});
 
 			const urlResolver = new LocalResolver();
@@ -554,7 +548,7 @@ describe("Document Dirty", () => {
 			container = await createDetachedContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
-			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.

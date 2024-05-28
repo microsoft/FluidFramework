@@ -10,16 +10,16 @@ import express from "express";
 import fetch from "node-fetch";
 import request from "supertest";
 
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 
-import { externalDataServicePort } from "../src/mock-external-data-service-interface";
+import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import {
 	ExternalDataSource,
-	initializeExternalDataService,
 	MockWebhook,
-} from "../src/mock-external-data-service";
-import { assertValidTaskData, ITaskData } from "../src/model-interface";
-import { closeServer } from "./utilities";
+	initializeExternalDataService,
+} from "../src/mock-external-data-service/index.js";
+import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
+import { closeServer } from "./utilities.js";
 
 const externalTaskListId = "task-list-1";
 

@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Defines a helper class for wrapping the use of stateless data bindings
  */
-import { DataBinding } from "../data_binder/dataBinding";
-import { ModificationContext } from "../data_binder/modificationContext";
-import { RemovalContext } from "../data_binder/removalContext";
+import { DataBinding } from "../data_binder/dataBinding.js";
+import { ModificationContext } from "../data_binder/modificationContext.js";
+import { RemovalContext } from "../data_binder/removalContext.js";
 
 export interface StatelessParams {}
 

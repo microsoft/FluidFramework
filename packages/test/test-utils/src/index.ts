@@ -7,22 +7,27 @@ export {
 	wrapDocumentService,
 	wrapDocumentServiceFactory,
 	wrapDocumentStorageService,
-} from "./DriverWrappers";
-export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces";
-export { LoaderContainerTracker } from "./loaderContainerTracker";
-export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader";
-export { createAndAttachContainer, createLoader } from "./localLoader";
-export { retryWithEventualValue } from "./retry";
-export { mockConfigProvider } from "./TestConfigs";
+} from "./DriverWrappers.js";
+export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
+export { LoaderContainerTracker } from "./loaderContainerTracker.js";
+export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader.js";
+export { createAndAttachContainer, createLoader } from "./localLoader.js";
+export { retryWithEventualValue } from "./retry.js";
+export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
 export {
 	createTestContainerRuntimeFactory,
 	TestContainerRuntimeFactory,
-} from "./testContainerRuntimeFactory";
-export { ChannelFactoryRegistry, TestFluidObject, TestFluidObjectFactory } from "./testFluidObject";
+} from "./testContainerRuntimeFactory.js";
+export {
+	ChannelFactoryRegistry,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "./testFluidObject.js";
 export {
 	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	type IEventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
 	IOpProcessingController,
@@ -30,18 +35,24 @@ export {
 	ITestObjectProvider,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "./testObjectProvider";
-export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
+} from "./testObjectProvider.js";
+export {
+	createSummarizer,
+	createSummarizerCore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	SummaryInfo,
+} from "./TestSummaryUtils.js";
 export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,
 	timeoutPromise,
 	TimeoutWithError,
 	TimeoutWithValue,
-} from "./timeoutUtils";
+} from "./timeoutUtils.js";
 export {
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "./containerUtils";
-export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
+} from "./containerUtils.js";
+export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";

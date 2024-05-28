@@ -2,11 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+
+import { type IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	type IQuorumClients,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import { MessageType, type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
@@ -37,7 +42,6 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
- * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -45,7 +49,7 @@ export class Attributor implements IAttributor {
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
-	constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
+	public constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
 		this.keyToInfo = new Map(initialEntries ?? []);
 	}
 
@@ -78,27 +82,27 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
- * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
-	constructor(
+	public constructor(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
+		quorumClients: IQuorumClients,
 		initialEntries?: Iterable<[number, AttributionInfo]>,
 	) {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			const client = audience.getMember(message.clientId as string);
-			if (message.type === "op") {
-				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
+			if (message.type === MessageType.Operation) {
+				assert(
+					typeof message.clientId === "string",
+					0x966 /* Client id should be present and should be of type string */,
+				);
+				const client = quorumClients.getMember(message.clientId);
 				assert(
 					client !== undefined,
-					0x4af /* Received message from user not in the audience */,
+					0x967 /* Received message from user not in the quorumClients */,
 				);
 				this.keyToInfo.set(message.sequenceNumber, {
-					user: client.user,
+					user: client.client.user,
 					timestamp: message.timestamp,
 				});
 			}

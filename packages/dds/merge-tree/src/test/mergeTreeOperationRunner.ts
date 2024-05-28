@@ -7,14 +7,18 @@
 
 import { strict as assert } from "assert";
 import * as fs from "fs";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+
+import { _dirname } from "./dirname.cjs";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 export type TestOperation = (
 	client: TestClient,
@@ -26,8 +30,14 @@ export type TestOperation = (
 export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.removeRangeLocal(opStart, opEnd);
 
+export const obliterateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.obliterateRangeLocal(opStart, opEnd);
+
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
@@ -201,7 +211,7 @@ export interface ReplayGroup {
 	seq: number;
 }
 
-export const replayResultsPath = `${__dirname}/../../src/test/results`;
+export const replayResultsPath = `${_dirname}/../../src/test/results`;
 
 export function runMergeTreeOperationRunner(
 	random: IRandom,

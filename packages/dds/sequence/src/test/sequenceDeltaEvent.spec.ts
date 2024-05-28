@@ -5,17 +5,18 @@
 
 import { strict as assert } from "assert";
 import { isNullOrUndefined } from "util";
+
 import {
-	createAnnotateRangeOp,
-	createInsertSegmentOp,
-	createRemoveRangeOp,
 	IMergeTreeDeltaCallbackArgs,
 	PropertySet,
 	TextSegment,
-} from "@fluidframework/merge-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test/";
-import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
+	createAnnotateRangeOp,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
+} from "@fluidframework/merge-tree/internal";
+import { TestClient } from "@fluidframework/merge-tree/internal/test";
+
+import { SequenceDeltaEvent } from "../sequenceDeltaEvent.js";
 
 interface IExpectedSegmentInfo {
 	offset: number;
@@ -171,7 +172,7 @@ describe("non-collab", () => {
 		});
 
 		it("nullify all properties", () => {
-			annotateText(2, 10, { foo: undefined }, [
+			annotateText(2, 10, { foo: null }, [
 				{
 					offset: 2,
 					numChar: 1,
@@ -192,7 +193,7 @@ describe("non-collab", () => {
 				},
 			]);
 
-			annotateText(2, 3, { foo1: undefined }, [
+			annotateText(2, 3, { foo1: null }, [
 				{
 					offset: 2,
 					numChar: 1,
@@ -201,7 +202,7 @@ describe("non-collab", () => {
 				},
 			]);
 
-			annotateText(3, 7, { foo2: undefined }, [
+			annotateText(3, 7, { foo2: null }, [
 				{
 					offset: 3,
 					numChar: 4,
@@ -210,7 +211,7 @@ describe("non-collab", () => {
 				},
 			]);
 
-			annotateText(7, 10, { foo3: undefined }, [
+			annotateText(7, 10, { foo3: null }, [
 				{
 					offset: 7,
 					numChar: 3,
@@ -230,7 +231,7 @@ describe("non-collab", () => {
 			client.on("delta", (opArgs, delta) => {
 				deltaArgs = delta;
 			});
-			const op = client.annotateRangeLocal(start, end, newProps, undefined);
+			const op = client.annotateRangeLocal(start, end, newProps);
 
 			assert(deltaArgs);
 			assert.equal(deltaArgs.deltaSegments.length, expected.length);
@@ -246,8 +247,10 @@ describe("non-collab", () => {
 				assert.equal(event.ranges[i].position, expected[i].offset);
 				assert.equal(event.ranges[i].segment.cachedLength, expected[i].numChar);
 				assert.equal(
-					Object.keys(event.ranges[i].segment.properties ?? {}).length,
-					Object.keys(expected[i].props).length,
+					Object.entries(event.ranges[i].segment.properties ?? {}).filter(
+						([k, v]) => v !== undefined,
+					).length,
+					Object.entries(expected[i].props).filter(([k, v]) => v !== undefined).length,
 				);
 				for (const key of Object.keys(event.ranges[i].segment.properties ?? {})) {
 					assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
@@ -1378,7 +1381,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseqnum
 			);
@@ -1397,7 +1400,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bar" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bar" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1430,7 +1433,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseqnum
 			);
@@ -1447,7 +1450,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bar" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bar" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1481,7 +1484,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseqnum
 			);
@@ -1500,7 +1503,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bardash" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bardash" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1533,7 +1536,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo: "bar" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseqnum
 			);
@@ -1550,7 +1553,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bardash" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo: "bardash" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1584,7 +1587,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseqnum
 			);
@@ -1603,7 +1606,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo2: "bar2" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo2: "bar2" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1636,7 +1639,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }, undefined),
+				client.annotateRangeLocal(localPosStart, localPosEnd, { foo1: "bar1" }),
 				currentSeqNumber + 2,
 				currentSeqNumber, // refseqnum
 			);
@@ -1653,7 +1656,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo2: "bar2" }, undefined),
+				createAnnotateRangeOp(remotePosStart, remotePosEnd, { foo2: "bar2" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1727,12 +1730,7 @@ describe("collab", () => {
 			});
 
 			const localMessage1 = client.makeOpMessage(
-				client.annotateRangeLocal(
-					secondWordStart,
-					secondWordEnd,
-					{ foo1: "bar1" },
-					undefined,
-				),
+				client.annotateRangeLocal(secondWordStart, secondWordEnd, { foo1: "bar1" }),
 				currentSeqNumber + 1,
 				currentSeqNumber, // refseqnum
 			);
@@ -1751,12 +1749,7 @@ describe("collab", () => {
 			]);
 
 			const localMessage2 = client.makeOpMessage(
-				client.annotateRangeLocal(
-					fourthWordStart,
-					fourthWordEnd,
-					{ foo3: "bar3" },
-					undefined,
-				),
+				client.annotateRangeLocal(fourthWordStart, fourthWordEnd, { foo3: "bar3" }),
 				currentSeqNumber + 2,
 				currentSeqNumber + 1, // refseqnum
 			);
@@ -1774,7 +1767,7 @@ describe("collab", () => {
 			]);
 
 			const remoteMessage1 = client.makeOpMessage(
-				createAnnotateRangeOp(thirdWordStart, thirdWordEnd, { foo2: "bar2" }, undefined),
+				createAnnotateRangeOp(thirdWordStart, thirdWordEnd, { foo2: "bar2" }),
 				currentSeqNumber + 3,
 				currentSeqNumber, // refseq
 				remoteUserId,
@@ -1800,7 +1793,7 @@ describe("collab", () => {
 			});
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(firstWordStart, fourthWordEnd, { foo: "bar" }, undefined),
+				createAnnotateRangeOp(firstWordStart, fourthWordEnd, { foo: "bar" }),
 				seqnum,
 				refseqnum,
 				remoteUserId,
@@ -1862,12 +1855,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(
-					firstWordStart,
-					secondWordEnd,
-					{ foo: "bar1" },
-					undefined,
-				),
+				client.annotateRangeLocal(firstWordStart, secondWordEnd, { foo: "bar1" }),
 				seqnum,
 				refseqnum,
 			);
@@ -1900,7 +1888,7 @@ describe("collab", () => {
 			});
 
 			const remoteMessage = client.makeOpMessage(
-				createAnnotateRangeOp(thirdWordStart, fourthWordEnd, { foo: "bar2" }, undefined),
+				createAnnotateRangeOp(thirdWordStart, fourthWordEnd, { foo: "bar2" }),
 				seqnum,
 				refseqnum,
 				remoteUserId,
@@ -1941,12 +1929,7 @@ describe("collab", () => {
 			});
 
 			const localMessage = client.makeOpMessage(
-				client.annotateRangeLocal(
-					secondWordStart,
-					fourthWordEnd,
-					{ foo: "bar3" },
-					undefined,
-				),
+				client.annotateRangeLocal(secondWordStart, fourthWordEnd, { foo: "bar3" }),
 				seqnum,
 				refseqnum,
 			);
@@ -3212,7 +3195,6 @@ describe("SequenceDeltaEvent", () => {
 				{
 					foo: "bar",
 				},
-				undefined,
 			);
 
 			assert(deltaArgs);

@@ -8,9 +8,9 @@ import {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.

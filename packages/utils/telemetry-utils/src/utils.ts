@@ -2,42 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-} from "@fluidframework/core-interfaces";
-import { loggerToMonitoringContext } from "./config";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes";
 
-/**
- * Like assert, but logs only if the condition is false, rather than throwing
- * @param condition - The condition to attest too
- * @param logger - The logger to log with
- * @param event - The string or event to log
- * @returns The outcome of the condition
- *
- * @internal
- *
- * @deprecated
- * This API will be removed in a future release.
- * No replacement API is intended, but reproducing its behavior should be trivial for anyone who needs it.
- */
-export function logIfFalse(
-	condition: unknown,
-	logger: ITelemetryBaseLogger,
-	event: string | ITelemetryGenericEvent,
-): condition is true {
-	if (condition) {
-		return true;
-	}
-	const newEvent: ITelemetryBaseEvent =
-		typeof event === "string"
-			? { eventName: event, category: "error" }
-			: { category: "error", ...event };
-	logger.send(newEvent);
-	return false;
-}
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+
+import { loggerToMonitoringContext } from "./config.js";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.
@@ -87,6 +56,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 export function createSampledLogger(
 	logger: ITelemetryLoggerExt,
 	eventSampler?: IEventSampler,
+	skipLoggingWhenSamplingIsDisabled?: boolean,
 ): ISampledTelemetryLogger {
 	const monitoringContext = loggerToMonitoringContext(logger);
 	const isSamplingDisabled =
@@ -97,22 +67,35 @@ export function createSampledLogger(
 			// The sampler uses the following logic for sending events:
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
+			// 3. If skipLoggingWhenSamplingIsDisabled is true, then no event is sent.
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+					return;
+				}
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+					return;
+				}
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+					return;
+				}
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
+				if (isSamplingDisabled && skipLoggingWhenSamplingIsDisabled) {
+					return;
+				}
 				logger.sendPerformanceEvent(event);
 			}
 		},

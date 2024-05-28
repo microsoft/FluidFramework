@@ -1,4 +1,73 @@
-# @fluid-experimental/devtools-core
+# @fluidframework/devtools-core
+
+## 2.0.0-rc.4.0.0
+
+Dependency updates only.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+## 2.0.0-rc.1.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   datastore-definitions: Jsonable and Serializable now require a generic parameter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
+    if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
+    limitation of serialization.
+
+    Additional modifications:
+
+    -   `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
+        `void`.
+    -   Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
+    -   Recursive types with arrays (`[]`) are now supported.
+
+    `Serializable` is commonly used for DDS values and now requires more precision when using them. For example SharedMatrix
+    (unqualified) has an `any` default that meant values were `Serializable<any>` (i.e. `any`), but now `Serializable<any>`
+    is `JsonableTypeWith<IFluidHandle>` which may be problematic for reading or writing. Preferred correction is to specify
+    the value type but casting through `any` may provide a quick fix.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
 
 ## 2.0.0-internal.7.3.0
 

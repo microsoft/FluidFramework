@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { compress } from "lz4js";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { estimateSocketSize } from "./batchManager";
-import { IBatch, BatchMessage } from "./definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { compress } from "lz4js";
+
+import { CompressionAlgorithms } from "../containerRuntime.js";
+
+import { estimateSocketSize } from "./batchManager.js";
+import { BatchMessage, IBatch } from "./definitions.js";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains
@@ -47,7 +49,6 @@ export class OpCompressor {
 		// Add empty placeholder messages to reserve the sequence numbers
 		for (const message of batch.content.slice(1)) {
 			messages.push({
-				type: message.type,
 				localOpMetadata: message.localOpMetadata,
 				metadata: message.metadata,
 				referenceSequenceNumber: message.referenceSequenceNumber,

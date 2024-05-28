@@ -2,17 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import crypto from "crypto";
-import fs from "fs";
+import fs from "node:fs";
 
-import { IEvent, ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { pkgName, pkgVersion } from "./packageVersion";
-import { ScenarioRunnerTelemetryEventNames, getAzureClientConnectionConfigFromEnv } from "./utils";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import {
+	type ScenarioRunnerTelemetryEventNames,
+	getAzureClientConnectionConfigFromEnv,
+} from "./utils.js";
 
 export interface LoggerConfig {
 	scenarioName?: string;
@@ -130,8 +137,8 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);
@@ -144,7 +151,7 @@ export async function getLogger(
 	config: LoggerConfig,
 	events?: string[],
 	transformEvents?: Map<ScenarioRunnerTelemetryEventNames, string>,
-): Promise<ITelemetryLogger> {
+): Promise<ITelemetryLoggerExt> {
 	const baseLogger = await loggerP;
 	if (events) {
 		baseLogger.registerExpectedEvent(events);

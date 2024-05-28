@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 import {
 	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	FluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
-} from "./types";
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
+	FluidObjectProvider,
+	FluidObjectSymbolProvider,
+} from "./types.js";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
- * @internal
+ * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();

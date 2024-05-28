@@ -3,48 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import _ from "lodash";
+import lodash from "lodash";
+const { isEmpty, last } = lodash;
 
-import { expect } from "chai";
+import {
+	ArrayProperty,
+	BaseProperty,
+	NodeProperty,
+	PropertyFactory,
+	StringProperty,
+} from "@fluid-experimental/property-properties";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
+} from "@fluidframework/container-definitions/internal";
+import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
-	createAndAttachContainer,
-	createLoader,
-	LoaderContainerTracker,
+	ChannelFactoryRegistry,
 	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	TestContainerRuntimeFactory,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
+	createAndAttachContainer,
+	createLoader,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
-import {
-	PropertyFactory,
-	StringProperty,
-	BaseProperty,
-	NodeProperty,
-	ArrayProperty,
-} from "@fluid-experimental/property-properties";
-import { Loader as ContainerLoader } from "@fluidframework/container-loader";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
-import { SharedPropertyTree } from "../propertyTree";
-import { PropertyTreeFactory } from "../propertyTreeFactory";
+} from "@fluidframework/test-utils/internal";
+import { expect } from "chai";
+
+import { SharedPropertyTree } from "../propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
+import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 
 interface Result {
 	container: IContainer;
@@ -141,11 +143,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const {
-			client: u2,
-			dataObject: dataObject2,
-			container: container2,
-		} = await getClient(false, true);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -205,11 +203,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const {
-			client: u2,
-			dataObject: dataObject2,
-			container: container2,
-		} = await getClient(false, true);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -278,7 +272,7 @@ describe("PropertyDDS summarizer", () => {
 
 describe("PropertyTree", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const propertyDdsId = "PropertyTree";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",
@@ -312,7 +306,7 @@ describe("PropertyTree", () => {
 	describe("LZ4PropertyTree", () => {
 		executePerPropertyTreeType(
 			codeDetails,
-			factory1,
+			factory3,
 			documentId,
 			documentLoadUrl,
 			propertyDdsId,
@@ -378,8 +372,6 @@ function executePerPropertyTreeType(
 	}
 
 	describe("Local state", () => {
-		let propertyTree;
-
 		beforeEach(async () => {
 			opProcessingController = new LoaderContainerTracker();
 			deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -510,9 +502,8 @@ function executePerPropertyTreeType(
 				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(
-					_.isEmpty(
-						_.last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)
-							?.changeSet,
+					isEmpty(
+						last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet,
 					),
 				).to.equal(true);
 			});

@@ -5,14 +5,14 @@
 ```ts
 
 import { Doc } from 'ot-json1';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { JSONOp } from 'ot-json1';
 import { Path } from 'ot-json1';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
 import { SharedOT } from '@fluid-experimental/ot';
 
 // @internal (undocumented)
@@ -23,7 +23,6 @@ export class Json1Factory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;
@@ -45,13 +44,13 @@ export class SharedJson1 extends SharedOT<Doc, JSONOp> {
     // (undocumented)
     static getFactory(): Json1Factory;
     // (undocumented)
-    insert(path: Path, value: Serializable): void;
+    insert<T>(path: Path, value: Serializable<T>): void;
     // (undocumented)
     move(from: Path, to: Path): void;
     // (undocumented)
     remove(path: Path, value?: boolean): void;
     // (undocumented)
-    replace(path: Path, oldValue: Serializable, newValue: Serializable): void;
+    replace<T, U>(path: Path, oldValue: Serializable<T>, newValue: Serializable<U>): void;
     // (undocumented)
     protected transform(input: JSONOp, transform: JSONOp): JSONOp;
 }

@@ -12,6 +12,12 @@ aliases:
 In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
 localhost.
 
+{{< callout note >}}
+
+The demo app uses Fluid Framework 2.0, which is in preview.
+
+{{< /callout >}}
+
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.2021-09-24.js" >}}
 

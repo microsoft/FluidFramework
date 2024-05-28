@@ -5,12 +5,15 @@
 
 // This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import/no-nodejs-modules */
+/* eslint-disable unicorn/prefer-module */
 
-import * as path from "path";
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+import chalk from "chalk";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
-import chalk from "chalk";
+
 import { isChildProcess } from "./Configuration";
 import { pad, prettyNumber, getName } from "./ReporterUtilities";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
@@ -39,7 +42,7 @@ class MochaMemoryTestReporter {
 		// be sure to update the glob used to look for output files in the perf pipeline.
 		const reportDir = options?.reporterOptions?.reportDir ?? "";
 		this.outputDirectory =
-			reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
+			reportDir === "" ? path.join(__dirname, ".output") : path.resolve(reportDir);
 
 		fs.mkdirSync(this.outputDirectory, { recursive: true });
 
@@ -58,9 +61,7 @@ class MochaMemoryTestReporter {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.info(
-					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
-				);
+				console.info(chalk.red(`Test ${test.fullTitle()} failed with error: `, err));
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',
@@ -115,59 +116,62 @@ class MochaMemoryTestReporter {
 
 					const table = new Table();
 					const failedTests = new Array<[string, MemoryBenchmarkStats]>();
-					suiteData?.forEach(([testName, testData]) => {
-						if (testData.aborted) {
-							table.cell("status", `${pad(4)}${chalk.red("×")}`);
-							failedTests.push([testName, testData]);
-						} else {
-							table.cell("status", `${pad(4)}${chalk.green("✔")}`);
-						}
-						table.cell("name", chalk.italic(testName));
-						if (!testData.aborted) {
-							table.cell(
-								"Heap Used Avg",
-								prettyNumber(testData.stats.arithmeticMean, 2),
-								Table.padLeft,
-							);
-							table.cell(
-								"Heap Used StdDev",
-								prettyNumber(testData.stats.standardDeviation, 2),
-								Table.padLeft,
-							);
-							table.cell(
-								"Margin of Error",
-								`±${prettyNumber(testData.stats.marginOfError, 2)}`,
-								Table.padLeft,
-							);
-							table.cell(
-								"Relative Margin of Error",
-								`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
-								Table.padLeft,
-							);
+					if (suiteData !== undefined) {
+						for (const [testName, testData] of suiteData) {
+							if (testData.aborted) {
+								table.cell("status", `${pad(4)}${chalk.red("×")}`);
+								failedTests.push([testName, testData]);
+							} else {
+								table.cell("status", `${pad(4)}${chalk.green("✔")}`);
+							}
+							table.cell("name", chalk.italic(testName));
+							if (!testData.aborted) {
+								table.cell(
+									"Heap Used Avg",
+									prettyNumber(testData.stats.arithmeticMean, 2),
+									Table.padLeft,
+								);
+								table.cell(
+									"Heap Used StdDev",
+									prettyNumber(testData.stats.standardDeviation, 2),
+									Table.padLeft,
+								);
+								table.cell(
+									"Margin of Error",
+									`±${prettyNumber(testData.stats.marginOfError, 2)}`,
+									Table.padLeft,
+								);
+								table.cell(
+									"Relative Margin of Error",
+									`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
+									Table.padLeft,
+								);
 
-							table.cell("Iterations", testData.runs.toString(), Table.padLeft);
-							table.cell(
-								"Samples used",
-								testData.stats.samples.length.toString(),
-								Table.padLeft,
-							);
-							table.cell(
-								"Avg ms/iteration",
-								`${prettyNumber(testData.totalRunTimeMs / testData.runs, 2)}`,
-								Table.padLeft,
-							);
+								table.cell("Iterations", testData.runs.toString(), Table.padLeft);
+								table.cell(
+									"Samples used",
+									testData.stats.samples.length.toString(),
+									Table.padLeft,
+								);
+								table.cell(
+									"Avg ms/iteration",
+									`${prettyNumber(testData.totalRunTimeMs / testData.runs, 2)}`,
+									Table.padLeft,
+								);
+							}
+							table.newRow();
 						}
-						table.newRow();
-					});
+					}
+
 					console.log(`${table.toString()}`);
 					if (failedTests.length > 0) {
 						console.log(
 							"------------------------------------------------------",
 							`\n${chalk.red("ERRORS:")}`,
 						);
-						failedTests.forEach(([testName, testData]) => {
+						for (const [testName, testData] of failedTests) {
 							console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
-						});
+						}
 					}
 					this.writeCompletedBenchmarks(suiteName);
 					this.inProgressSuites.delete(suiteName);
@@ -179,15 +183,17 @@ class MochaMemoryTestReporter {
 	private writeCompletedBenchmarks(suiteName: string): string {
 		const outputFriendlyBenchmarks: unknown[] = [];
 		const suiteData = this.inProgressSuites.get(suiteName);
-		suiteData?.forEach(([testName, testData]) => {
-			if (testData.aborted) {
-				return;
+		if (suiteData !== undefined) {
+			for (const [testName, testData] of suiteData) {
+				if (testData.aborted) {
+					break;
+				}
+				outputFriendlyBenchmarks.push({
+					testName,
+					testData,
+				});
 			}
-			outputFriendlyBenchmarks.push({
-				testName,
-				testData,
-			});
-		});
+		}
 
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");

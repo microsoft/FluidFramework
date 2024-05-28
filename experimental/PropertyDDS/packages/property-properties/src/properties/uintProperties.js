@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the Uint32Property class
  */
 
-const { ValueProperty } = require("./valueProperty");
 const { _castFunctors } = require("./primitiveTypeCasts");
+const { ValueProperty } = require("./valueProperty");
 
 /**
  * A primitive property for an unsigned 8 bit integer value.

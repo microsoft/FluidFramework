@@ -4,40 +4,42 @@
 
 ```ts
 
-import { FetchSource } from '@fluidframework/driver-definitions';
-import { IAttachment } from '@fluidframework/protocol-definitions';
-import { IAuthorizationError } from '@fluidframework/driver-definitions';
-import { IBlob } from '@fluidframework/protocol-definitions';
-import { ICommittedProposal } from '@fluidframework/protocol-definitions';
-import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
-import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
+import { FetchSource } from '@fluidframework/driver-definitions/internal';
+import { IAttachment } from '@fluidframework/driver-definitions/internal';
+import { IAuthorizationError } from '@fluidframework/driver-definitions/internal';
+import { IBlob } from '@fluidframework/driver-definitions/internal';
+import { ICommittedProposal } from '@fluidframework/driver-definitions/internal';
+import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
+import { IDeltasFetchResult } from '@fluidframework/driver-definitions/internal';
+import { IDocumentAttributes } from '@fluidframework/driver-definitions/internal';
+import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { IStream } from '@fluidframework/driver-definitions';
-import { IStreamResult } from '@fluidframework/driver-definitions';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/driver-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
-import { ITreeEntry } from '@fluidframework/protocol-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
-import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
-import { LoggingError } from '@fluidframework/telemetry-utils';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
+import { IStream } from '@fluidframework/driver-definitions/internal';
+import { IStreamResult } from '@fluidframework/driver-definitions/internal';
+import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
+import { ISummaryHandle } from '@fluidframework/driver-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { IThrottlingWarning } from '@fluidframework/driver-definitions/internal';
+import { ITree } from '@fluidframework/driver-definitions/internal';
+import { ITreeEntry } from '@fluidframework/driver-definitions/internal';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { IVersion } from '@fluidframework/driver-definitions/internal';
+import { LoaderCachingPolicy } from '@fluidframework/driver-definitions/internal';
+import { LoggingError } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;
@@ -65,7 +67,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     // (undocumented)
     readonly claims: string | undefined;
     // (undocumented)
-    readonly errorType = DriverErrorType.authorizationError;
+    readonly errorType: "authorizationError";
     // (undocumented)
     readonly tenantId: string | undefined;
 }
@@ -125,9 +127,9 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    static readonly errorType: "deltaStreamConnectionForbidden";
     // (undocumented)
-    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    readonly errorType: "deltaStreamConnectionForbidden";
     // (undocumented)
     readonly storageOnlyReason: string | undefined;
 }
@@ -140,6 +142,8 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
+    getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // (undocumented)
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
@@ -151,13 +155,11 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    get repositoryUrl(): string;
-    // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @internal
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
     driverVersion: string | undefined;
 };
 
@@ -170,7 +172,7 @@ export class FluidInvalidSchemaError extends LoggingError implements IDriverErro
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly errorType: "fluidInvalidSchema";
 }
 
 // @internal
@@ -178,8 +180,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry: boolean;
-    // (undocumented)
-    readonly errorType = DriverErrorType.genericNetworkError;
+    readonly errorType: "genericNetworkError";
 }
 
 // @internal
@@ -194,7 +195,10 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @internal
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @alpha (undocumented)
+// @internal
+export function getSnapshotTree(tree: ISnapshotTree | ISnapshot): ISnapshotTree;
+
+// @public (undocumented)
 export interface ICompressionStorageConfig {
     // (undocumented)
     algorithm: SummaryCompressionAlgorithm;
@@ -204,7 +208,7 @@ export interface ICompressionStorageConfig {
 
 // @internal
 export class InsecureUrlResolver implements IUrlResolver {
-    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, deltaStreamUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
     createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)
@@ -223,6 +227,9 @@ export interface IProgress {
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
 
 // @internal
+export function isInstanceOfISnapshot(obj: ISnapshotTree | ISnapshot | undefined): obj is ISnapshot;
+
+// @internal
 export function isOnline(): OnlineStatus;
 
 // @internal
@@ -236,13 +243,13 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.locationRedirection;
+    readonly errorType: "locationRedirection";
     // (undocumented)
     readonly redirectUrl: IResolvedUrl;
 }
 
 // @internal (undocumented)
-export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEvent, error?: any): void;
+export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEventExt, error?: any): void;
 
 // @internal (undocumented)
 export enum MessageType2 {
@@ -278,7 +285,7 @@ export enum OnlineStatus {
 
 // @internal
 export class ParallelRequests<T> {
-    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
+    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryBaseProperties) => Promise<{
         partial: boolean;
         cancel: boolean;
         payload: T[];
@@ -337,7 +344,7 @@ export class RateLimiter {
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
 // @internal
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @internal (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
@@ -355,7 +362,7 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 // @internal (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum SummaryCompressionAlgorithm {
     // (undocumented)
     LZ4 = 1,
@@ -369,7 +376,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)
-    readonly errorType = DriverErrorType.throttlingError;
+    readonly errorType: "throttlingError";
     // (undocumented)
     readonly retryAfterSeconds: number;
 }
@@ -393,7 +400,7 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = DriverErrorType.usageError;
+    readonly errorType: "usageError";
 }
 
 // (No @packageDocumentation comment for this package)

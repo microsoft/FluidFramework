@@ -4,11 +4,10 @@
  */
 
 import { ConstellationView } from "@fluid-example/multiview-constellation-view";
-import { ICoordinate, IConstellation } from "@fluid-example/multiview-coordinate-interface";
+import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
-
 import * as React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import

@@ -1,0 +1,25 @@
+[
+  [
+    42,
+    {
+      "fieldChanges": [
+        {
+          "fieldKey": "",
+          "fieldKind": "",
+          "change": {
+            "localId": 0,
+            "testChange": {
+              "inputContext": [],
+              "intentions": [
+                1
+              ],
+              "outputContext": [
+                1
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+]

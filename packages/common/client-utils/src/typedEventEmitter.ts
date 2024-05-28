@@ -3,28 +3,23 @@
  * Licensed under the MIT License.
  */
 
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
 import {
 	IEvent,
-	TransformedEvent,
-	IEventTransformer,
 	IEventProvider,
+	IEventTransformer,
+	TransformedEvent,
 } from "@fluidframework/core-interfaces";
+
+import { EventEmitter } from "./eventEmitter.cjs";
 
 /**
  * The event emitter polyfill and the node event emitter have different event types:
  * string | symbol vs. string | number
  *
- * This type allow us to correctly handle either type
- *
+ * The polyfill is now always used, but string is the only event type preferred.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
-	? E
-	: never;
+export type EventEmitterEventType = string;
 
 /**
  * @alpha
@@ -47,8 +42,9 @@ export type TypedEventTransform<TThis, TEvent> =
 		TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**
- * Event Emitter helper class the supports emitting typed events
- *
+ * Event Emitter helper class the supports emitting typed events.
+ * @privateRemarks
+ * This should become internal once the classes extending it become internal.
  * @alpha
  */
 export class TypedEventEmitter<TEvent>

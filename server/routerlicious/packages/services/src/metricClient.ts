@@ -35,7 +35,6 @@ class TelegrafClient implements IMetricClient {
 		const row = {};
 		const Float = telegraf.Float;
 		for (const trace of traces) {
-			// tslint:disable prefer-template
 			const column = `${trace.service}${trace.action ? `-${trace.action}` : ""}`;
 			row[column] = new Float(trace.timestamp);
 		}

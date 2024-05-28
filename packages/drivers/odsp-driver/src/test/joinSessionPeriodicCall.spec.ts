@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
-import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
-import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
-import * as joinSession from "../vroom";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { LocalPersistentCache } from "../odspCache";
-import { OdspFluidDataStoreLocator } from "../contractsPublic";
-import { createOdspUrl } from "../createOdspUrl";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentService } from "../odspDocumentService";
-import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
+import { strict as assert } from "node:assert";
+
+import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
+
+import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
+import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
+import { OdspDocumentService } from "../odspDocumentService.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import * as joinSession from "../vroom.js";
 
 describe("joinSessions Tests", () => {
 	let clock: SinonFakeTimers;
@@ -24,6 +27,7 @@ describe("joinSessions Tests", () => {
 	const resolver = new OdspDriverUrlResolver();
 	const itemId = "itemId";
 	let service: OdspDocumentService;
+	let logger: MockLogger;
 	const client: IClient = {
 		mode: "read",
 		details: { capabilities: { interactive: true } },
@@ -31,6 +35,7 @@ describe("joinSessions Tests", () => {
 		user: { id: "id" },
 		scopes: [],
 	};
+	let deltaConnection;
 	const joinSessionResponse: ISocketStorageDiscovery = {
 		deltaStorageUrl: "https://fake/deltaStorageUrl",
 		deltaStreamSocketUrl: "https://localhost:3001",
@@ -39,12 +44,7 @@ describe("joinSessions Tests", () => {
 		snapshotStorageUrl: "https://fake/snapshotStorageUrl",
 		refreshSessionDurationSeconds: 100,
 	};
-	const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-		async (_options) => "token",
-		async (_options) => "token",
-		new LocalPersistentCache(2000),
-		{ snapshotOptions: { timeout: 2000 } },
-	);
+	let odspDocumentServiceFactory: OdspDocumentServiceFactory;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -56,14 +56,14 @@ describe("joinSessions Tests", () => {
 		});
 	}
 
-	async function tickClock(tickValue: number) {
+	async function tickClock(tickValue: number): Promise<void> {
 		clock.tick(tickValue);
 
 		// Yield the event loop because the outbound op will be processed asynchronously.
 		await yieldEventLoop();
 	}
 
-	function addJoinSessionStub(time: number) {
+	function addJoinSessionStub(time: number): SinonStub {
 		joinSessionResponse.refreshSessionDurationSeconds = time;
 		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
 			async () => joinSessionResponse,
@@ -76,16 +76,22 @@ describe("joinSessions Tests", () => {
 	});
 
 	beforeEach(async () => {
+		odspDocumentServiceFactory = new OdspDocumentServiceFactory(
+			async (_options) => "token",
+			async (_options) => "token",
+			new LocalPersistentCache(2000),
+			{ snapshotOptions: { timeout: 2000 } },
+		);
 		const locator: OdspFluidDataStoreLocator = { driveId, itemId, siteUrl, dataStorePath: "/" };
 		const request = createOdspUrl(locator);
 		const resolvedUrl = await resolver.resolve({ url: request });
+		logger = new MockLogger();
 		service = (await odspDocumentServiceFactory.createDocumentService(
 			resolvedUrl,
+			logger,
 		)) as OdspDocumentService;
-	});
 
-	it("Check periodic join session call", async () => {
-		const deltaConnection = {
+		deltaConnection = {
 			clientId: "clientId",
 			existing: true,
 			initialClients: [],
@@ -115,17 +121,20 @@ describe("joinSessions Tests", () => {
 					maxTime: 10,
 				},
 			},
-			dispose: (error) => {},
+			dispose: (): void => {},
 			disposed: false,
-			submit: (message) => {},
-			submitSignal: (message) => {},
-			on: (op: any, func?: any) => {},
-			once: (op: any, func?: any) => {},
+			submit: (): void => {},
+			submitSignal: (): void => {},
+			on: (): void => {},
+			once: (): void => {},
 		};
+	});
+
+	it("Check periodic join session call", async () => {
 		const createDeltaConnectionStub = stub(
 			odspDocumentDeltaConnection.OdspDocumentDeltaConnection,
 			"create",
-		).callsFake(async () => deltaConnection as any as OdspDocumentDeltaConnection);
+		).callsFake(async () => deltaConnection as OdspDocumentDeltaConnection);
 		let joinSessionStub = addJoinSessionStub(100);
 		await service.connectToDeltaStream(client);
 		createDeltaConnectionStub.restore();
@@ -156,6 +165,30 @@ describe("joinSessions Tests", () => {
 		// scheduled the refresh.
 		await tickClock(100000);
 		assert(joinSessionStub.notCalled, "Should not be called ever");
+		joinSessionStub.restore();
+	});
+
+	it("Check periodic join session call does not lead to duplicate refresh", async () => {
+		const createDeltaConnectionStub = stub(
+			odspDocumentDeltaConnection.OdspDocumentDeltaConnection,
+			"create",
+		).callsFake(async () => deltaConnection as OdspDocumentDeltaConnection);
+		let joinSessionStub = addJoinSessionStub(100);
+		await service.connectToDeltaStream(client);
+		createDeltaConnectionStub.restore();
+		joinSessionStub.restore();
+		assert(joinSessionStub.calledOnce, "Should called once on first try");
+
+		// Prepare second response.
+		joinSessionStub = addJoinSessionStub(90);
+		// Tick 70 seconds so as to get second response.
+		await tickClock(70000);
+		assert(joinSessionStub.calledOnce, "Should called once on second try");
+		joinSessionStub.restore();
+		logger.assertMatchNone(
+			[{ eventName: "OdspDriver:DuplicateJoinSessionRefresh" }],
+			"No duplicate join session should be there",
+		);
 	});
 
 	afterEach(() => {

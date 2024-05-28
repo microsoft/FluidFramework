@@ -8,39 +8,35 @@ import { strict as assert } from "assert";
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	type ITree,
-	TreeFactory,
-	type TreeView,
-	disposeSymbol,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
-import { describeCompat } from "@fluid-private/test-version-utils";
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils";
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -57,61 +53,7 @@ function getQuantity(tree: LegacySharedTree): number {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const legacyNode = tree.currentView.getViewNode(nodeId);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return legacyNode.payload.quantity as number;
-}
-
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public get _root() {
-		return this.root;
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const legacyTree = this.runtime.createChannel(
-			"tree",
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
-
-		const inventoryNode: BuildNode = {
-			definition: legacyNodeId,
-			traits: {
-				quantity: {
-					definition: "quantity",
-					payload: 0,
-				},
-			},
-		};
-		legacyTree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: legacyTree.currentView.root,
-					label: "inventory" as TraitLabel,
-				}),
-			),
-		);
-
-		this.root.set("tree", legacyTree.handle);
-		this.channel = legacyTree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
 }
 
 const builder = new SchemaFactory("test");
@@ -120,11 +62,14 @@ class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<QuantityType> {
+function getNewTreeView(tree: ITree): TreeView<typeof QuantityType> {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -132,7 +77,61 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: "on",
 	};
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const legacyTree = this.runtime.createChannel(
+				"tree",
+				LegacySharedTree.getFactory().type,
+			) as LegacySharedTree;
+
+			const inventoryNode: BuildNode = {
+				definition: legacyNodeId,
+				traits: {
+					quantity: {
+						definition: "quantity",
+						payload: 0,
+					},
+				},
+			};
+			legacyTree.applyEdit(
+				Change.insertTree(
+					inventoryNode,
+					StablePlace.atStartOf({
+						parent: legacyTree.currentView.root,
+						label: "inventory" as TraitLabel,
+					}),
+				),
+			);
+
+			this.root.set("tree", legacyTree.handle);
+			this.channel = legacyTree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			// TODO: handle tests
+			const tree = await this.runtime.getChannel("tree");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
+	}
 
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
@@ -148,12 +147,13 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -199,10 +199,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const originalValue = 3;
 	const newValue = 4;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
+		await waitForContainerConnection(container);
 		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
@@ -212,19 +213,23 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		container.close();
 	});
 
-	it.skip("MigrationShim can drop v1 ops and migrate ops", async () => {
+	it("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container1);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
-		await provider.opProcessingController.pauseProcessing();
+		container1.disconnect();
+		container2.disconnect();
 		shim1.submitMigrateOp();
 
 		// Modifies the legacyTree's quantity value
@@ -240,14 +245,17 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		// Wait for "migrated" event on both shims.
 		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
 		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
-		provider.opProcessingController.resumeProcessing();
+		container1.connect();
 		await promise1;
+
+		container2.connect();
 		await promise2;
 		await provider.ensureSynchronized();
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
+		await provider.ensureSynchronized();
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
 		const node2 = view2.root;
@@ -261,7 +269,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
 		updateQuantity(legacyTree1, 123);
 		await provider.ensureSynchronized();
@@ -277,6 +284,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+
+		await waitForContainerConnection(container1);
 
 		await provider.opProcessingController.pauseProcessing();
 		shim1.submitMigrateOp();
@@ -303,6 +312,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		assert(
@@ -313,6 +323,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
+		await provider.ensureSynchronized();
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
 		const node2 = view2.root;
@@ -326,7 +337,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
 
 		// Super hacky way to check to see if the v1 ops were dropped. We enable submission even though its disabled
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(shim1 as any).preMigrationDeltaConnection.canSubmit = true;
 		// Catch a remote shim2 op
 		const opSent = new Promise<ISequencedDocumentMessage>((resolve) =>
@@ -340,15 +350,12 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 
 		// Check if the shim2 received the op
 		const op2 = await opSent;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
 		const env = op2.contents as any;
 		assert.equal(
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			env.contents.address,
 			testObj2.id,
 			"Expected an op to be sent to the data object",
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const address = env.contents.contents.content.address as string;
 		assert.equal(address, shim2.id, "Expected an op to be sent to the shim2");
 

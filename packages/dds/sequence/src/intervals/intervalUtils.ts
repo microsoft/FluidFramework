@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SequencePlace, Side } from "../intervalCollection";
+} from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
+import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
@@ -69,29 +70,36 @@ export interface IInterval {
 }
 
 /**
- * Values are used in persisted formats (ops) and revertibles.
+ * Values are used in persisted formats (ops).
  * @internal
  */
-export const IntervalOpType = {
+export const IntervalDeltaOpType = {
 	ADD: "add",
 	DELETE: "delete",
 	CHANGE: "change",
+} as const;
+
+export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
+
+/**
+ * Values are used in revertibles.
+ * @alpha
+ */
+export const IntervalOpType = {
+	...IntervalDeltaOpType,
 	PROPERTY_CHANGED: "propertyChanged",
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
+
 /**
  * @alpha
  */
 export enum IntervalType {
 	Simple = 0x0,
-	/**
-	 * @deprecated this functionality is no longer supported and will be removed
-	 */
-	Nest = 0x1,
 
 	/**
 	 * SlideOnRemove indicates that the ends of the interval will slide if the segment
@@ -225,6 +233,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
+		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

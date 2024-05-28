@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
-} from "@fluidframework/test-runtime-utils";
-import { ISharedSummaryBlock } from "../interfaces";
-import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { ISharedSummaryBlock } from "../interfaces.js";
+import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 
 interface ITestInterface {
 	value1: string;
@@ -21,15 +24,13 @@ interface ITestInterface {
 
 describe("SharedSummaryBlock", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
-	let factory: SharedSummaryBlockFactory;
+	const factory = new SharedSummaryBlockFactory();
 	let sharedSummaryBlock: ISharedSummaryBlock;
 
 	beforeEach(async () => {
-		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		// We only want to test local state of the DDS.
-		dataStoreRuntime.local = true;
-		factory = new SharedSummaryBlockFactory();
-		sharedSummaryBlock = factory.create(dataStoreRuntime, "root") as ISharedSummaryBlock;
+		dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+		sharedSummaryBlock = factory.create(dataStoreRuntime, "root");
 	});
 
 	describe("Api", () => {
@@ -114,12 +115,12 @@ describe("SharedSummaryBlock", () => {
 			});
 
 			// Load another object from the snapshot and ensure that it has loaded the data from the original object.
-			const sharedSummaryBlock2 = (await factory.load(
+			const sharedSummaryBlock2 = await factory.load(
 				dataStoreRuntime,
 				"mapId",
 				services,
 				factory.attributes,
-			)) as ISharedSummaryBlock;
+			);
 			assert.equal(sharedSummaryBlock2.get(key1), value1);
 			assert.equal(sharedSummaryBlock2.get(key2), value2);
 			assert.deepEqual(sharedSummaryBlock2.get(key3), value3);

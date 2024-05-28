@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type { Parent as UnistParent } from "unist";
 
-import { ApiItem } from "..";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { SectionNode } from "./SectionNode";
+import { type ApiItem } from "../index.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { type SectionNode } from "./SectionNode.js";
 
 /**
  * {@link DocumentNode} construction properties.
@@ -32,11 +33,6 @@ export interface DocumentNodeProperties {
 	 * @remarks Does not include the file extension, as this domain has no concept of what kind of file will be produced.
 	 */
 	readonly documentPath: string;
-
-	/**
-	 * Optional document front-matter, to be appended above all other content.
-	 */
-	readonly frontMatter?: string;
 }
 
 /**
@@ -70,15 +66,9 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	 */
 	public readonly documentPath: string;
 
-	/**
-	 * {@inheritDoc DocumentNodeProps.frontMatter}
-	 */
-	public readonly frontMatter?: string;
-
 	public constructor(properties: DocumentNodeProperties) {
 		this.apiItem = properties.apiItem;
 		this.children = properties.children;
 		this.documentPath = properties.documentPath;
-		this.frontMatter = properties.frontMatter;
 	}
 }

@@ -93,7 +93,7 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- * @alpha
+ * @public
  */
 export interface ITrace {
 	/**
@@ -189,7 +189,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- * @alpha
+ * @public
  */
 export interface IBranchOrigin {
 	/**
@@ -210,7 +210,7 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- * @alpha
+ * @public
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -332,7 +332,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- * @alpha
+ * @public
  */
 export interface ISignalMessageBase {
 	/**
@@ -346,7 +346,7 @@ export interface ISignalMessageBase {
 	type?: string;
 
 	/**
-	 * Counts the number of signals sent by the client
+	 * Counts the number of signals sent by the sending client.
 	 */
 	clientConnectionNumber?: number;
 
@@ -354,11 +354,17 @@ export interface ISignalMessageBase {
 	 * Sequence number that indicates when the signal was created in relation to the delta stream
 	 */
 	referenceSequenceNumber?: number;
+
+	/**
+	 * Client ID of the singular client the signal is being (or has been) sent to.
+	 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
+	 */
+	targetClientId?: string;
 }
 
 /**
  * Interface for signals sent by the server to clients.
- * @alpha
+ * @public
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
@@ -370,15 +376,10 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ * Interface for signals sent by clients to the server.
  * @internal
  */
-export interface ISentSignalMessage extends ISignalMessageBase {
-	/**
-	 * When specified, the signal is only sent to the provided client id
-	 */
-	targetClientId?: string;
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 /**
  * @alpha

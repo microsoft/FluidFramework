@@ -4,8 +4,9 @@
  */
 
 import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { OdspFluidDataStoreLocator } from "./contractsPublic";
-import { OdcFileSiteOrigin, OdcApiSiteOrigin } from "./constants";
+
+import { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants.js";
+import { OdspFluidDataStoreLocator } from "./contractsPublic.js";
 
 const fluidSignature = "1";
 const fluidSignatureParamName = "fluid";
@@ -22,7 +23,7 @@ const additionalContextParamName = "x";
  * Transforms given Fluid data store locator into string that can be embedded into url
  * @param locator - describes Fluid data store locator info to be encoded
  * @returns string representing encoded Fluid data store locator info
- * @internal
+ * @alpha
  */
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string {
 	const siteUrl = new URL(locator.siteUrl);
@@ -112,7 +113,7 @@ function decodeOdspFluidDataStoreLocator(
 /**
  * This parameter is provided by host in the resolve request and it contains information about the file
  * like driveId, itemId, siteUrl, datastorePath, packageName etc.
- * @internal
+ * @alpha
  */
 export const locatorQueryParamName = "nav";
 
@@ -120,9 +121,9 @@ export const locatorQueryParamName = "nav";
  * Embeds Fluid data store locator data into given ODSP url
  * @param url - file url in ODSP format (can be either canonical or share link)
  * @param locator - object representing Fluid data store location in ODSP terms
- * @internal
+ * @alpha
  */
-export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator) {
+export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void {
 	const encodedLocatorValue = encodeOdspFluidDataStoreLocator(locator);
 	// IMPORTANT: Do not apply encodeURIComponent to encodedLocatorValue, param value is automatically encoded
 	// when set via URLSearchParams class
@@ -135,7 +136,7 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
  * @param url - ODSP url representing Fluid file link
  * @param requireFluidSignature - flag representing if the Fluid signature is expected in the url, default true
  * @returns object representing Fluid data store location in ODSP terms
- * @internal
+ * @alpha
  */
 export function getLocatorFromOdspUrl(
 	url: URL,

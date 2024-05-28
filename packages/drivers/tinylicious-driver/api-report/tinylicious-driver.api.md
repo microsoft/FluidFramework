@@ -5,11 +5,11 @@
 ```ts
 
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { ScopeType } from '@fluidframework/protocol-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { ScopeType } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export const createTinyliciousCreateNewRequest: (documentId?: string) => IRequest;

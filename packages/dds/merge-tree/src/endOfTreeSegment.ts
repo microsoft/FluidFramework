@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
+import { assert } from "@fluidframework/core-utils/internal";
 
-import { assert } from "@fluidframework/core-utils";
-import { LocalClientId } from "./constants";
-import { LocalReferenceCollection } from "./localReference";
-import { ISegmentLeaf, MergeTree } from "./mergeTree";
-import { IMergeBlock, IRemovalInfo, ISegment } from "./mergeTreeNodes";
-import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
+import { LocalClientId } from "./constants.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import { MergeTree } from "./mergeTree.js";
+import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -57,7 +56,7 @@ abstract class BaseEndpointSegment {
 	}
 
 	protected abstract endpointSegmentProps(): {
-		parent: IMergeBlock;
+		parent: MergeBlock;
 		index: number;
 		depth: number;
 	};

@@ -14,12 +14,12 @@ import {
 	TreeView,
 	TreeViewNode,
 } from "@fluid-experimental/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 const legacySharedTreeKey = "legacySharedTree";
 

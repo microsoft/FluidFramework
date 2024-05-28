@@ -3,55 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IThrottlingWarning,
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-	type ITelemetryBaseEvent,
-} from "@fluidframework/core-interfaces";
-import {
-	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-} from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/container-definitions/internal";
 import {
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	normalizeError,
-	safeRaiseEvent,
-	isFluidError,
-	ITelemetryLoggerExt,
-	DataCorruptionError,
-	UsageError,
-	type ITelemetryGenericEventExt,
-} from "@fluidframework/telemetry-utils";
+	IEventProvider,
+	type ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
-import {
 	IDocumentMessage,
+	MessageType,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ConnectionMode,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	MessageType,
-	ConnectionMode,
-} from "@fluidframework/protocol-definitions";
-import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions";
+import {
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	DataCorruptionError,
+	DataProcessingError,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	isFluidError,
+	normalizeError,
+	safeRaiseEvent,
+	EventEmitterWithErrorHandling,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { ThrottlingWarning } from "./error";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { ThrottlingWarning } from "./error.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -143,7 +147,7 @@ function logIfFalse(
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
-	extends TypedEventEmitter<IDeltaManagerInternalEvents>
+	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
 	implements
 		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		IEventProvider<IDeltaManagerInternalEvents>
@@ -325,7 +329,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
@@ -361,7 +365,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
 	}
 
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
@@ -376,7 +380,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * we stop processing ops that results in no processing join op and thus moving to connected state)
 	 * @param event - Event to log.
 	 */
-	public logConnectionIssue(event: ITelemetryErrorEvent) {
+	public logConnectionIssue(event: ITelemetryErrorEventExt) {
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -405,7 +409,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
-		super();
+		super((name, error) => {
+			this.logger.sendErrorEvent(
+				{
+					eventName: "DeltaManagerEventHandlerException",
+					name: typeof name === "string" ? name : undefined,
+				},
+				error,
+			);
+			this.close(normalizeError(error));
+		});
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
 				try {
@@ -536,18 +549,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
+	 * @param snapshotSequenceNumber - The sequence number of the snapshot at which the document loaded from.
+	 * @param lastProcessedSequenceNumber - The last processed sequence number, for offline, it should be greater than the sequence number.
+	 * Setting lastProcessedSequenceNumber allows the DeltaManager to skip downloading and processing ops that have already been processed.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
-		sequenceNumber: number,
+		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
+		prefetchType: "cached" | "all" | "none" = "none",
+		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
 	) {
-		this.initSequenceNumber = sequenceNumber;
-		this.lastProcessedSequenceNumber = sequenceNumber;
+		this.initSequenceNumber = snapshotSequenceNumber;
+		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
-		this.lastQueuedSequenceNumber = sequenceNumber;
-		this.lastObservedSeqNumber = sequenceNumber;
+		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
+		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(
@@ -797,7 +814,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason.text, reason.error);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/common-utils",
-	"version": "3.0.0",
+	"version": "3.2.0",
 	"description": "Collection of utility functions for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -47,7 +47,7 @@
 		"test:coverage": "c8 npm run test:report",
 		"test:jest": "jest",
 		"test:jest:report": "npm run test:jest -- --ci --coverage",
-		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.js\" --exit --project test/tsconfig.json",
+		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "npm run test:mocha:report && npm run test:jest:report",
@@ -59,13 +59,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -76,7 +76,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^1.0.0",
 		"@types/events": "^3.0.0",
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
@@ -85,12 +84,12 @@
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "22.2.3",
@@ -100,11 +99,11 @@
 		"@types/puppeteer": "1.3.0",
 		"@types/sinon": "^7.0.13",
 		"benchmark": "^2.1.4",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"jest": "^26.6.3",
 		"jest-junit": "^10.0.0",
@@ -122,7 +121,7 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
@@ -147,11 +146,30 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+		],
+		"overrides": {
+			"sharp": "^0.33.2"
+		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.43.1": "../../../patches/@microsoft__api-extractor@7.43.1.patch"
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_EventForwarder": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_TelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BaseTelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

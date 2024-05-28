@@ -90,13 +90,13 @@ jobs:
 
     - template: include-use-node-version.yml
 
-    - template: include-install.yml 
+    - template: include-install.yml
       parameters:
         packageManager: ${{ parameters.packageManager }}
         buildDirectory: ${{ parameters.buildDirectory }}
         packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
-    - template: include-build-lint.yml 
+    - template: include-build-lint.yml
       parameters:
         taskBuild: ${{ parameters.taskBuild }}
         taskLint: ${{ parameters.taskLint }}
@@ -115,7 +115,8 @@ jobs:
           parameters:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
-            
+            testCoverage: ${{ eq(variables['testCoverage'], true) }}
+
         # Verify if the tinylicious log exists
         - task: Bash@3
           displayName: Validate Tinylicious Log

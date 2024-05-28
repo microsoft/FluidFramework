@@ -5,64 +5,48 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { EventEmitter } from "events";
-import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
-import {
-	IMergeTreeInsertMsg,
-	ReferenceType,
-	reservedRangeLabelsKey,
-	MergeTreeDeltaType,
-	// eslint-disable-next-line import/no-deprecated
-	createMap,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/datastore/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import { EditorView } from "prosemirror-view";
-import { create404Response } from "@fluidframework/runtime-utils";
-
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey } from "./fluidBridge";
-import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
+import { nodeTypeKey } from "./fluidBridge.js";
+import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
 
-function createTreeMarkerOps(
+function insertMarkers(
+	text: SharedString,
 	treeRangeLabel: string,
 	beginMarkerPos: number,
 	endMarkerPos: number,
 	nodeType: string,
-): IMergeTreeInsertMsg[] {
-	// eslint-disable-next-line import/no-deprecated
-	const endMarkerProps = createMap<any>();
+) {
+	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
 
-	// eslint-disable-next-line import/no-deprecated
-	const beginMarkerProps = createMap<any>();
+	const beginMarkerProps = {};
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
 
-	return [
-		{
-			seg: { marker: { refType: ReferenceType.NestBegin }, props: beginMarkerProps },
-			pos1: beginMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-		{
-			seg: { marker: { refType: ReferenceType.NestEnd }, props: endMarkerProps },
-			pos1: endMarkerPos,
-			type: MergeTreeDeltaType.INSERT,
-		},
-	];
+	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
+	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
 }
 
 /**
@@ -113,8 +97,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
-			text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
+			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

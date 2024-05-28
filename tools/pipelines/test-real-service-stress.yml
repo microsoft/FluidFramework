@@ -57,6 +57,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:odsp
+        skipTestResultPublishing: true
         splitTestVariants:
           - name: Tombstone Mode
             flags: --workLoadPath gc --profile ci_tombstone
@@ -64,9 +65,8 @@ stages:
             flags: --workLoadPath gc --profile ci_sweep
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
-          login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
 
   # gc stress tests tinylicious
   - stage: gc_stress_tests_tinylicious
@@ -81,7 +81,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci:tombstone
-        splitTestVariants: 
+        splitTestVariants:
           - name: Tombstone Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -93,7 +93,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci:sweep
-        splitTestVariants: 
+        splitTestVariants:
           - name: Sweep Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -114,13 +114,13 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:odsp
+        skipTestResultPublishing: true
         splitTestVariants:
           - flags: --workLoadPath summary --profile ci
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
-          login__microsoft__secret: $(login-microsoft-secret)
-          login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
+          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
 
   # summarizer stress tests tinylicious
   - stage: summary_stress_tests_tinylicious
@@ -135,8 +135,9 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:summary:ci
+        skipTestResultPublishing: true
         env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny

@@ -4,21 +4,23 @@
  */
 
 import {
+	SharedTree as LegacySharedTree,
 	MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
-import { ForestType, ITree, TreeFactory, typeboxValidator } from "@fluid-experimental/tree2";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { EditLog } from "@fluid-experimental/tree/test/EditLog";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { ITree } from "@fluidframework/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedTree } from "@fluidframework/tree/internal";
 
-import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
-import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController";
-import { NewTreeInventoryListController } from "./newTreeInventoryListController";
+import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+
+import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
+import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
 
 const isMigratedKey = "isMigrated";
 const treeKey = "tree";
@@ -26,11 +28,7 @@ const treeKey = "tree";
 // Set to true to artificially slow down the migration.
 const DEBUG_migrateSlowly = false;
 
-const newTreeFactory = new TreeFactory({
-	jsonValidator: typeboxValidator,
-	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
-	forest: ForestType.Reference,
-});
+const newTreeFactory = SharedTree.getFactory();
 
 function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 	// Revert local edits - otherwise we will be eventually inconsistent

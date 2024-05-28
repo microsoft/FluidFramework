@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.1.0",
+	"version": "4.0.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,66 +11,95 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./legacy": {
+			"import": {
+				"types": "./lib/legacy.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
-		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
-		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
+		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"lint": "fluid-build . --task lint --task check:are-the-types-wrong",
+		"lint:fix": "fluid-build . --task lint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
-		"tsc:watch": "tsc --watch",
-		"typetests:gen": "fluid-type-test-generator",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v --level public",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"dependencies": {},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@2.0.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
+		"@microsoft/api-extractor": "^7.43.1",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^2.6.2",
-		"typescript": "~4.5.5",
-		"typescript-formatter": "7.1.0"
+		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"fluidBuild": {
-		"branchReleaseTypes": {
-			"main": "minor",
-			"release/**": "patch"
-		},
 		"tasks": {
 			"tsc": [
-				"...",
 				"typetests:gen"
 			]
 		}
 	},
 	"pnpm": {
-		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
-		},
+		"commentsOverrides": [
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+		],
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
 		],
@@ -78,6 +107,12 @@
 			"ignoreMissing": [
 				"@types/node"
 			]
+		},
+		"overrides": {
+			"sharp": "^0.33.2"
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.43.1": "../../../patches/@microsoft__api-extractor@7.43.1.patch"
 		}
 	},
 	"typeValidation": {

@@ -3,38 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelAttributes,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Consensus Register Collection channel factory interface
  *
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel.
- * @internal
+ * @alpha
+ * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
-export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	load(
-		document: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<IConsensusRegisterCollection>;
-
-	create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-}
+export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
 /**
  * Events emitted by {@link IConsensusRegisterCollection}.
- * @internal
+ * @alpha
  */
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
 	(
@@ -59,7 +43,7 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
  * the value. So we can safely return the first value.
  *
  * LWW: The last write to a key always wins.
- * @internal
+ * @alpha
  */
 export interface IConsensusRegisterCollection<T = any>
 	extends ISharedObject<IConsensusRegisterCollectionEvents> {
@@ -89,7 +73,7 @@ export interface IConsensusRegisterCollection<T = any>
 
 /**
  * Read policies used when reading the map value.
- * @internal
+ * @alpha
  */
 export enum ReadPolicy {
 	// On a concurrent update, returns the first agreed upon value amongst all clients.

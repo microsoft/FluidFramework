@@ -47,6 +47,8 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - biome.json
+    - biome.jsonc
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -58,6 +60,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -78,17 +81,27 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     buildDirectory: build-tools
     tagName: build-tools
     isReleaseGroup: true
@@ -99,11 +112,11 @@ extends:
     - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
-    poolBuild: Large
+    poolBuild: NewLarge-linux-1ES
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:
     - syncpack:deps
     - syncpack:versions
     - generate:packageList
-    - prettier
+    - check:format

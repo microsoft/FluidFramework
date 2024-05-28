@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # TestNamespace
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
@@ -62,9 +60,9 @@ const bar = foo
 
 ## Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
 
 ## Namespaces
 

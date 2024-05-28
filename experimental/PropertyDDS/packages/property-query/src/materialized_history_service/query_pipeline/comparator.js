@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const Long = require("long");
 const { convertPathToChunkBoundaryFormat } = require("../change_set_processing/chunk_change_set");
 

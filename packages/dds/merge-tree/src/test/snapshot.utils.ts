@@ -6,15 +6,20 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { IMergeTreeOp, ReferenceType } from "../ops";
-import { SnapshotV1 } from "../snapshotV1";
-import { IMergeTreeOptions } from "../mergeTree";
-import { createClientsAtInitialState } from "./testClientLogger";
-import { TestSerializer } from "./testSerializer";
-import { ISegment, PropertySet, TestClient } from ".";
+
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+
+import { IMergeTreeOptions } from "../mergeTree.js";
+import { ISegment } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, ReferenceType } from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { SnapshotV1 } from "../snapshotV1.js";
+
+import { TestClient } from "./testClient.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
+import { TestSerializer } from "./testSerializer.js";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -58,7 +63,7 @@ export class TestString {
 	}
 
 	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
-		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+		this.queue(this.client.annotateRangeLocal(start, end, props)!, increaseMsn);
 	}
 
 	public append(text: string, increaseMsn: boolean) {
@@ -80,6 +85,10 @@ export class TestString {
 
 	public removeRange(start: number, end: number, increaseMsn: boolean) {
 		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
+	}
+
+	public obliterateRange(start: number, end: number, increaseMsn: boolean) {
+		this.queue(this.client.obliterateRangeLocal(start, end)!, increaseMsn);
 	}
 
 	// Ensures the client's text matches the `expected` string and round-trips through a snapshot
@@ -126,7 +135,7 @@ export class TestString {
 		this.client = client2;
 	}
 
-	public getSummary() {
+	public getSummary(): ISummaryTree {
 		const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger, (id) =>
 			this.client.getLongClientId(id),
 		);

@@ -4,18 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { PactMap } from "../pactMap";
-import { PactMapFactory } from "../pactMapFactory";
-import { type IPactMap } from "../interfaces";
+} from "@fluidframework/test-runtime-utils/internal";
 
-function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
+import { type IPactMap } from "../interfaces.js";
+import { PactMapClass } from "../pactMap.js";
+import { PactMapFactory } from "../pactMapFactory.js";
+
+function createConnectedPactMap(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): PactMapClass {
 	// Create and connect a PactMap.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -24,17 +29,17 @@ function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntime
 		objectStorage: new MockStorage(),
 	};
 
-	const pactMap = new PactMap(id, dataStoreRuntime, PactMapFactory.Attributes);
+	const pactMap = new PactMapClass(id, dataStoreRuntime, PactMapFactory.Attributes);
 	pactMap.connect(services);
 	return pactMap;
 }
 
-const createLocalPactMap = (id: string): PactMap =>
-	new PactMap(id, new MockFluidDataStoreRuntime(), PactMapFactory.Attributes);
+const createLocalPactMap = (id: string): PactMapClass =>
+	new PactMapClass(id, new MockFluidDataStoreRuntime(), PactMapFactory.Attributes);
 
 describe("PactMap", () => {
 	describe("Local state", () => {
-		let pactMap: PactMap;
+		let pactMap: PactMapClass;
 
 		beforeEach(() => {
 			pactMap = createLocalPactMap("pactMap");
@@ -250,7 +255,11 @@ describe("PactMap", () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
-			const pactMap = new PactMap("pactMap", dataStoreRuntime, PactMapFactory.Attributes);
+			const pactMap = new PactMapClass(
+				"pactMap",
+				dataStoreRuntime,
+				PactMapFactory.Attributes,
+			);
 			assert.strict(!pactMap.isAttached(), "PactMap is attached earlier than expected");
 
 			const accept1P = new Promise<void>((resolve) => {
@@ -313,8 +322,8 @@ describe("PactMap", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let pactMap1: PactMap;
-		let pactMap2: PactMap;
+		let pactMap1: PactMapClass;
+		let pactMap2: PactMapClass;
 
 		beforeEach(async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -326,7 +335,7 @@ describe("PactMap", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			pactMap1 = new PactMap("pact-map-1", dataStoreRuntime1, PactMapFactory.Attributes);
+			pactMap1 = new PactMapClass("pact-map-1", dataStoreRuntime1, PactMapFactory.Attributes);
 			pactMap1.connect(services1);
 
 			// Create the second PactMap.
@@ -336,7 +345,7 @@ describe("PactMap", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			pactMap2 = new PactMap("pact-map-2", dataStoreRuntime2, PactMapFactory.Attributes);
+			pactMap2 = new PactMapClass("pact-map-2", dataStoreRuntime2, PactMapFactory.Attributes);
 			pactMap2.connect(services2);
 		});
 

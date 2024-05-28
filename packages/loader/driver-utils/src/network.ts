@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	IThrottlingWarning,
-	IDriverErrorBase,
 	IAuthorizationError,
-	// eslint-disable-next-line import/no-deprecated
-	DriverErrorType,
 	ILocationRedirectionError,
 	IResolvedUrl,
+	IThrottlingWarning,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+	IDriverErrorBase,
+} from "@fluidframework/driver-definitions/internal";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -46,7 +44,7 @@ export function isOnline(): OnlineStatus {
  * Telemetry props with driver-specific required properties
  * @internal
  */
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
 	driverVersion: string | undefined;
 };
 
@@ -55,8 +53,10 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
  * @internal
  */
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.genericNetworkError;
+	/**
+	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
+	 */
+	readonly errorType = DriverErrorTypes.genericNetworkError;
 
 	constructor(
 		message: string,
@@ -75,8 +75,7 @@ export class FluidInvalidSchemaError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.fluidInvalidSchema;
+	readonly errorType = DriverErrorTypes.fluidInvalidSchema;
 	readonly canRetry = false;
 
 	constructor(message: string, props: DriverErrorTelemetryProps) {
@@ -91,8 +90,7 @@ export class DeltaStreamConnectionForbiddenError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
-	// eslint-disable-next-line import/no-deprecated
-	static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+	static readonly errorType = DriverErrorTypes.deltaStreamConnectionForbidden;
 	readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
 	readonly canRetry = false;
 	readonly storageOnlyReason: string | undefined;
@@ -110,8 +108,7 @@ export class AuthorizationError
 	extends LoggingError
 	implements IAuthorizationError, IFluidErrorBase
 {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.authorizationError;
+	readonly errorType = DriverErrorTypes.authorizationError;
 	readonly canRetry = false;
 
 	constructor(
@@ -132,8 +129,7 @@ export class LocationRedirectionError
 	extends LoggingError
 	implements ILocationRedirectionError, IFluidErrorBase
 {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.locationRedirection;
+	readonly errorType = DriverErrorTypes.locationRedirection;
 	readonly canRetry = false;
 
 	constructor(
@@ -191,8 +187,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
  * @internal
  */
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.throttlingError;
+	readonly errorType = DriverErrorTypes.throttlingError;
 	readonly canRetry = true;
 
 	constructor(

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 interface ISequencedOpInfo<TOp> {
 	client: string;
@@ -105,7 +105,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
 	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
 		// Discard any sequenced ops that are now below the minimum sequence number.
-		const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
+		const minSeq = this.deltaManager.minimumSequenceNumber;
 		while (this.sequencedOps[0]?.seq < minSeq) {
 			this.sequencedOps.shift();
 		}
@@ -169,7 +169,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		return this.local;
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import os from "os";
-import path from "path";
-import util from "util";
-import child_process from "child_process";
-import interactiveLogin from "ms-rest-azure";
-import KeyVaultClient from "azure-keyvault";
-import { loadRC, saveRC } from "@fluidframework/tool-utils";
+import child_process from "node:child_process";
+import { appendFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
-const appendFile = util.promisify(fs.appendFile);
+import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
 // Wraps the given string in quotes, escaping any quotes already present in the string
 // with '\"', which is compatible with cmd, bash, and zsh.
@@ -30,8 +26,7 @@ async function exportToShellRc(shellRc, entries) {
 		.map(([key, value]) => `export ${key}=${quote(value)}`)
 		.join("\n")}\n`;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return appendFile(rcPath, stmts, "utf-8");
+	return appendFile(rcPath, stmts, "utf8");
 }
 
 // Persists the given 'env' map to the users environment.  The method used depends
@@ -47,15 +42,17 @@ async function saveEnv(env) {
 	const shellName = shell && path.basename(shell, path.extname(shell));
 	switch (shellName) {
 		// Gitbash on windows will appear as bash.exe
-		case "bash":
+		case "bash": {
 			return exportToShellRc(
 				// '.bash_profile' is used for the "login shell" ('bash -l').
 				process.env.TERM_PROGRAM === "Apple_Terminal" ? ".bash_profile" : ".bashrc",
 				entries,
 			);
-		case "zsh":
+		}
+		case "zsh": {
 			return exportToShellRc(".zshrc", entries);
-		case "fish":
+		}
+		case "fish": {
 			console.log("Writing '~/.config/fish/fish_variables'.");
 
 			// For 'fish' we use 'set -xU', which dedupes and performs its own escaping.
@@ -65,7 +62,8 @@ async function saveEnv(env) {
 					execAsync(`set -xU '${key}' '${value}'`, { shell }),
 				),
 			);
-		default:
+		}
+		default: {
 			if (!process.platform === "win32") {
 				throw new Error(`Unsupported shell: '${shellName}'.`);
 			} else {
@@ -76,6 +74,7 @@ async function saveEnv(env) {
 					entries.map(async ([key, value]) => execAsync(`setx ${key} ${quote(value)}`)),
 				);
 			}
+		}
 	}
 }
 
@@ -120,26 +119,34 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
 	static async get() {
-		await execAsync("az ad signed-in-user show");
+		// We use this to validate that the user is logged in (already ran `az login`).
+		try {
+			await execAsync("az ad signed-in-user show");
+		} catch (error) {
+			// Depending on how az login was performed, the above command may fail with a variety of errors.
+			// I've seen the one below in WSL2, but there are probably others.
+			// FATAL ERROR: Error: Command failed: az ad signed-in-user show
+			// ERROR: AADSTS530003: Your device is required to be managed to access this resource.
+			if (error.message.includes("AADSTS530003")) {
+				console.log(
+					`\nAn error occurred running \`az ad signed-in-user show\` that suggests you might need to \`az logout\` and ` +
+						`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. Error:\n\n` +
+						`${error.message}`,
+				);
+				// eslint-disable-next-line unicorn/no-process-exit
+				process.exit(1);
+			}
+		}
+		// Note: 'az keyvault' commands work regardless of which subscription is currently "in context",
+		// as long as the user is listed in the vault's access policy, so we don't need to do 'az account set'.
 		return new AzCliKeyVaultClient();
-
-		// Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-		// try {
-		//     await execAsync("az account set --subscription Fluid");
-		//     return new AzCliKeyVaultClient();
-		// } catch (e) {
-		//     return undefined;
-		// }
 	}
 
 	async getSecrets(vaultName) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return JSON.parse(await execAsync(`az keyvault secret list --vault-name ${vaultName}`));
 	}
 
 	async getSecret(vaultName, secretName) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return JSON.parse(
 			await execAsync(
 				`az keyvault secret show --vault-name ${vaultName} --name ${secretName}`,
@@ -148,39 +155,11 @@ class AzCliKeyVaultClient {
 	}
 }
 
-class MsRestAzureKeyVaultClinet {
-	static async get() {
-		const credentials = await interactiveLogin();
-		return new MsRestAzureKeyVaultClinet(credentials);
-	}
-
-	constructor(credentials) {
-		this.client = new KeyVaultClient(credentials);
-	}
-
-	async getSecrets(vaultName) {
-		return this.client.getSecrets(`https://${vaultName}.vault.azure.net/`);
-	}
-
-	async getSecret(vaultName, secretName) {
-		return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, "");
-	}
-}
-
 async function getClient() {
 	return AzCliKeyVaultClient.get();
-
-	// Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-	// const primary = await AzCliKeyVaultClient.get();
-	// if (primary !== undefined) {
-	//     console.log("Using Azure CLI");
-	//     return primary;
-	// }
-	// return MsRestAzureKeyVaultClinet.get();
 }
 
-(async () => {
+try {
 	const rc = await loadRC();
 
 	if (rc.secrets === undefined) {
@@ -201,7 +180,9 @@ async function getClient() {
 		console.log(
 			"\nNote: Default dev/test secrets overwritten with values from internal key vault.",
 		);
-	} catch (e) {}
+	} catch {
+		// Drop the error
+	}
 	// }
 
 	console.log(`\nWriting '${path.join(os.homedir(), ".fluidtoolrc")}'.`);
@@ -209,8 +190,8 @@ async function getClient() {
 	await saveEnv(rc.secrets);
 
 	console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`);
-})().catch((e) => {
-	if (e.message.includes("'az' is not recognized as an internal or external command")) {
+} catch (error) {
+	if (error.message.includes("'az' is not recognized as an internal or external command")) {
 		console.error(
 			`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`,
 		);
@@ -218,6 +199,7 @@ async function getClient() {
 		exit(0);
 	}
 
-	console.error(`FATAL ERROR: ${e.stack}`);
+	console.error(`FATAL ERROR: ${error.stack}`);
+	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(-1);
-});
+}

@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationLiteralNodeBase, SingleLineDocumentationNode } from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
+
+import {
+	DocumentationLiteralNodeBase,
+	type SingleLineDocumentationNode,
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
@@ -35,6 +39,13 @@ export class PlainTextNode
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
 	public readonly singleLine = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.value.length === 0;
+	}
 
 	/**
 	 * Whether or not the text content has already been escaped.

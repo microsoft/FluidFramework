@@ -1,5 +1,120 @@
 # @fluidframework/core-interfaces
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   core-interfaces: Code details and package API surface removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    The code details and package API surface was deprecated in @fluidframework/core-interfaces in 0.53 and has now been removed. Please import them from @fluidframework/container-definitions instead. These include:
+
+    -   IFluidCodeDetails
+    -   IFluidCodeDetailsComparer
+    -   IFluidCodeDetailsConfig
+    -   IFluidPackage
+    -   IFluidPackageEnvironment
+    -   IProvideFluidCodeDetailsComparer
+    -   isFluidCodeDetails
+    -   isFluidPackage
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   core-interfaces: Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType ([#19752](https://github.com/microsoft/FluidFramework/issues/19752)) [615a7712e6](https://github.com/microsoft/FluidFramework/commits/615a7712e67885c6cda69ddd907cb5cc708eef18)
+
+    The `ITelemetryProperties` interface was deprecated and has been removed.
+    Use the identical `ITelemetryBaseProperties` instead.
+
+    The `TelemetryEventCategory` type was deprecated and has been removed from `@fluidframework/core-interfaces`, since
+    it had moved to `@fluidframework/telemetry-utils` in the past.
+
+    The `TelemetryEventPropertyType` type alias was deprecated and has been removed.
+    Use the identical `TelemetryBaseEventPropertyType` instead.
+
+    The `ITaggedTelemetryPropertyType` interface was deprecated and has been removed.
+    Use `Tagged<TelemetryBaseEventPropertyType>` instead.
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+-   core-interfaces: Removed deprecated telemetry event types ([#19740](https://github.com/microsoft/FluidFramework/issues/19740)) [0ff130a50e](https://github.com/microsoft/FluidFramework/commits/0ff130a50e9bcccb119673ac985ea27fa38de463)
+
+    The deprecated `ITelemetryErrorEvent`, `ITelemetryGenericEvent`, and `ITelemetryPerformanceEvent` interfaces,
+    which represented different kinds of telemetry events, were not intended for consumers of Fluid Framework and have thus
+    been removed.
+    `ITelemetryBaseEvent` is the only telemetry event interface that should be used in/by consuming code.
+
+    `ITelemetryLogger` was not intended for consumers of Fluid Framework and has been removed.
+    Consumers should use the simpler `ITelemetryBaseLogger` instead.
+
+## 2.0.0-rc.1.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   core-interfaces: Removed IFluidRouter and IProvideFluidRouter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IFluidRouter` and `IProvideFluidRouter` interfaces have been removed. Please migrate all usage to the new `entryPoint` pattern.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   telemetry-utils: Deprecate ConfigTypes and IConfigProviderBase ([#18597](https://github.com/microsoft/FluidFramework/issues/18597)) [39b9ff57c0](https://github.com/microsoft/FluidFramework/commits/39b9ff57c0184b72f0e3f9425922dda944995265)
+
+    The types `ConfigTypes` and `IConfigProviderBase` have been deprecated in the @fluidframework/telemetry-utils package.
+    The types can now be found in the @fluidframework/core-interfaces package. Please replace any uses with the types from
+    @fluidframework/core-interfaces.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

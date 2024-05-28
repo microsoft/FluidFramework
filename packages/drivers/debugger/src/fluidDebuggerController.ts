@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-	IDocumentDeltaStorageService,
-} from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
 	IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,
 	ReadDocumentStorageServiceBase,
 	ReplayController,
 	SnapshotStorage,
-} from "@fluidframework/replay-driver";
-import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
-import { Sanitizer } from "./sanitizer";
+} from "@fluidframework/replay-driver/internal";
+
+import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
+import { Sanitizer } from "./sanitizer.js";
 
 /**
  * @internal

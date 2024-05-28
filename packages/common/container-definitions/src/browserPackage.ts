@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage, isFluidPackage, IFluidPackageEnvironment } from "./fluidPackage";
+import type { IFluidPackage, IFluidPackageEnvironment } from "./fluidPackage.js";
+import { isFluidPackage } from "./fluidPackage.js";
 
 /**
  * A specific Fluid package environment for browsers
- * @internal
+ * @alpha
  */
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
 	/**
@@ -31,7 +32,7 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
 
 /**
  * A Fluid package for specification for browser environments
- * @internal
+ * @alpha
  */
 export interface IFluidBrowserPackage extends IFluidPackage {
 	/**
@@ -52,7 +53,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
 /**
  * Determines if any object is an IFluidBrowserPackage
  * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
- * @internal
+ * @alpha
  */
 export const isFluidBrowserPackage = (
 	maybePkg: unknown,

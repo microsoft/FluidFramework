@@ -1,0 +1,8 @@
+# This file is a map of labels to repo glob paths. See https://github.com/marketplace/actions/labeler for more details
+# about the config format. The labels in this file will be added BUT NOT removed from PRs as the files edited in the PR
+# change. See https://github.com/microsoft/FluidFramework/blob/main/.github/workflows/pr-labeler.yml to see how this
+# config file is used.
+
+# Require changesets for server public API changes
+"changeset-required":
+  - "**/routerlicious/api-report/**"

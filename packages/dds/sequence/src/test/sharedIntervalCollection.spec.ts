@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+
+import { Client } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -10,15 +13,15 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { Client } from "@fluidframework/merge-tree";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection } from "../intervalCollection.js";
+import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { Interval, intervalHelpers } from "../intervals/index.js";
 import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
-} from "../sharedIntervalCollection";
-import { IIntervalCollection } from "../intervalCollection";
-import { Interval, IntervalType, intervalHelpers } from "../intervals";
-import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex";
+} from "../sharedIntervalCollection.js";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
@@ -120,8 +123,8 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can add intervals from multiple clients", () => {
-			collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			collection1.add({ start: 0, end: 20 });
+			collection2.add({ start: 10, end: 30 });
 			assertIntervals(collection1, [{ start: 0, end: 20 }], overlappingIntervalsIndex1);
 			assertIntervals(collection2, [{ start: 10, end: 30 }], overlappingIntervalsIndex2);
 
@@ -145,8 +148,8 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can remove intervals that were added", () => {
-			const interval = collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			const interval = collection1.add({ start: 0, end: 20 });
+			collection2.add({ start: 10, end: 30 });
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
@@ -167,12 +170,12 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can change intervals", () => {
-			const interval = collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			const interval = collection1.add({ start: 0, end: 20 });
+			collection2.add({ start: 10, end: 30 });
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection1.change(id, 10, 20);
+			collection1.change(id, { start: 10, end: 20 });
 			assertIntervals(
 				collection1,
 				[
@@ -251,7 +254,7 @@ describe("SharedIntervalCollection", () => {
 
 		it("can rebase add ops", () => {
 			runtime1.connected = false;
-			collection1.add(15, 17, IntervalType.Simple);
+			collection1.add({ start: 15, end: 17 });
 			runtimeFactory.processAllMessages();
 
 			assertIntervals(collection1, [{ start: 15, end: 17 }], overlappingIntervalsIndex1);

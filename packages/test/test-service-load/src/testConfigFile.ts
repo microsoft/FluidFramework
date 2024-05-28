@@ -3,64 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ConfigTypes, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-
-export const GcFailureExitCode = 254;
-
-/** The configuration used by the test runner. */
-export interface IRunConfig {
-	runId: number;
-	profileName: string;
-	testConfig: ILoadTestConfig;
-	verbose: boolean;
-	random: IRandom;
-	logger: ITelemetryLoggerExt;
-	loaderConfig?: ILoaderOptions;
-}
-
-/** The interface for test runners that supports running in detached container mode. */
-export interface IDetachedTestRunner {
-	/** Uploads blobs when container is detached. */
-	writeBlob(blobNumber: number): Promise<void>;
-}
-
-/**
- * The result of running the test on a specific runner.
- */
-export type TestRunResult =
-	| {
-			/** Abort and fail the runner */
-			abort: true;
-			/** The errorCode that the runner exits with. Should be non-zero. */
-			errorCode: number;
-	  }
-	| {
-			/** The runner should not be aborted */
-			abort: false;
-			/** Whether the runner is done. If this is false, the runner reruns the test */
-			done: boolean;
-	  };
-
-export const ITestRunner: keyof IProvideTestRunner = "ITestRunner";
-export interface IProvideTestRunner {
-	readonly ITestRunner: ITestRunner;
-}
-/**
- * The main test runner interface. The test runner data objects must implement this interface. This is
- * called by the runner process and is the entry point into the test work load.
- */
-export interface ITestRunner extends IProvideTestRunner {
-	run(config: IRunConfig, reset: boolean): Promise<TestRunResult>;
-	getRuntime(): Promise<IFluidDataStoreRuntime>;
-	getDetachedRunner?(
-		config: Omit<IRunConfig, "runId" | "profileName">,
-	): Promise<IDetachedTestRunner>;
-}
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
@@ -76,6 +25,7 @@ export interface ILoadTestConfig {
 	totalSignalsSendCount?: number;
 	readWriteCycleMs: number;
 	signalsPerMin?: number;
+	futureOpRatePerMin?: number;
 	faultInjectionMs?: {
 		min: number;
 		max: number;

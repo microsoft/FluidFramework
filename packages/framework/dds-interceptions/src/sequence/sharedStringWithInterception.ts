@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import * as MergeTree from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import * as MergeTree from "@fluidframework/merge-tree/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * - Create a new object from the passed SharedString.
@@ -200,49 +200,14 @@ export function createSharedStringWithInterception(
 	};
 
 	/**
-	 * Annotates the marker with the provided properties and calls the callback on concensus.
-	 *
-	 * @param marker - The marker to annotate
-	 * @param props - The properties to annotate the marker with
-	 * @param consensusCallback - The callback called when consensus is reached
-	 */
-	sharedStringWithInterception.annotateMarkerNotifyConsensus = (
-		marker: MergeTree.Marker,
-		props: MergeTree.PropertySet,
-		callback: (m: MergeTree.Marker) => void,
-	) => {
-		// Wrapper methods should not be called from the interception callback as this will lead to
-		// infinite recursion.
-		assert(
-			executingCallback === false,
-			0x0c6 /* "Interception wrapper methods called recursively from the interception callback" */,
-		);
-
-		context.containerRuntime.orderSequentially(() => {
-			executingCallback = true;
-			try {
-				sharedString.annotateMarkerNotifyConsensus(
-					marker,
-					propertyInterceptionCallback(props),
-					callback,
-				);
-			} finally {
-				executingCallback = false;
-			}
-		});
-	};
-
-	/**
 	 * Annotates the marker with the provided properties.
 	 *
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
 	sharedStringWithInterception.annotateMarker = (
 		marker: MergeTree.Marker,
 		props: MergeTree.PropertySet,
-		combiningOp?: MergeTree.ICombiningOp,
 	) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
@@ -254,11 +219,7 @@ export function createSharedStringWithInterception(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				sharedString.annotateMarker(
-					marker,
-					propertyInterceptionCallback(props),
-					combiningOp,
-				);
+				sharedString.annotateMarker(marker, propertyInterceptionCallback(props));
 			} finally {
 				executingCallback = false;
 			}
@@ -271,14 +232,12 @@ export function createSharedStringWithInterception(
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 *
 	 */
 	sharedStringWithInterception.annotateRange = (
 		start: number,
 		end: number,
 		props: MergeTree.PropertySet,
-		combiningOp?: MergeTree.ICombiningOp,
 	) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
@@ -290,12 +249,7 @@ export function createSharedStringWithInterception(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				sharedString.annotateRange(
-					start,
-					end,
-					propertyInterceptionCallback(props),
-					combiningOp,
-				);
+				sharedString.annotateRange(start, end, propertyInterceptionCallback(props));
 			} finally {
 				executingCallback = false;
 			}

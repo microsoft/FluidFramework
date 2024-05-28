@@ -4,14 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+	getDataStoreEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.
@@ -66,7 +67,9 @@ describeCompat(
 				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataObject = (await innerDataStore.entryPoint?.get()) as ITestDataObject;
+				const innerDataObject =
+					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
+
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
 
@@ -87,14 +90,12 @@ describeCompat(
 		);
 
 		let provider: ITestObjectProvider;
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
 		});
 
-		it("Requesting data store before outer data store completes initialization", async () => {
+		it("Requesting data store before outer data store completes initialization", async function () {
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -103,7 +104,6 @@ describeCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
@@ -120,7 +120,7 @@ describeCompat(
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
-		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
+		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -129,7 +129,6 @@ describeCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);

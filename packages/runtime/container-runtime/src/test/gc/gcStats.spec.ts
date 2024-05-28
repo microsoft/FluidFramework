@@ -4,40 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	ConfigTypes,
-	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import {
-	GarbageCollector,
 	GCNodeType,
+	GarbageCollector,
+	IGCMetadata,
+	IGCStats,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
-	IGCMetadata,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
-	IGCStats,
-} from "../../gc";
-import { ContainerRuntimeGCMessage } from "../../messageTypes";
-import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./gcUnitTestHelpers";
+} from "../../gc/index.js";
+import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {
-	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
 
-	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
@@ -83,7 +81,6 @@ describe("Garbage Collection Stats", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes,
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
@@ -120,7 +117,6 @@ describe("Garbage Collection Stats", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
-			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;
 				lastGCMessage = message;
@@ -135,7 +131,7 @@ describe("Garbage Collection Stats", () => {
 	beforeEach(() => {
 		lastGCMessage = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
+		mc = mixinMonitoringContext(mockLogger);
 
 		// Set up initial GC graph with 5 nodes and 2 are unreferenced.
 		defaultGCData.gcNodes["/"] = [nodes[0]];
@@ -167,7 +163,6 @@ describe("Garbage Collection Stats", () => {
 	afterEach(() => {
 		clock.reset();
 		mockLogger.clear();
-		injectedSettings = {};
 		defaultGCData = { gcNodes: {} };
 	});
 
@@ -307,7 +302,14 @@ describe("Garbage Collection Stats", () => {
 	 * Note that the life time and deleted stats are the same whether sweep is enabled or not.
 	 */
 	describe("Sweep phase stats", () => {
-		const sweepGracePeriodMs = 0; // Skip TombstoneReady for these tests and go straight to SweepReady
+		const defaultSnapshotCacheExpiryMs = 5 * oneDayMs;
+		const sweepTimeoutMs =
+			// Tombstone timeout
+			defaultSessionExpiryDurationMs +
+			defaultSnapshotCacheExpiryMs +
+			oneDayMs +
+			// + Grace Period
+			defaultSweepGracePeriodMs;
 
 		/**
 		 * When sweep is enabled, deleted stats are updated in the GC run next to the one where the objects become
@@ -316,7 +318,7 @@ describe("Garbage Collection Stats", () => {
 		it("can generate stats with deleted nodes - sweep enabled", async () => {
 			// Create garbage collector with sweep enabled.
 			garbageCollector = createGarbageCollector({
-				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true },
 			});
 
 			let previousGCMessagesCount = gcMessagesCount;
@@ -337,9 +339,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the 2 sweep-ready nodes won't actually be deleted yet (until the GC op is processed)
+			// but we account for them in the deleted stats now.
+			expectedStats.deletedNodeCount += 2;
+			expectedStats.deletedDataStoreCount += 2;
 
 			gcStats = await garbageCollector.collectGarbage({});
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 1");
@@ -352,10 +358,8 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready nodes are deleted.
 			processLastGCMessage();
 
-			// The 2 sweep ready nodes / data stores should now be deleted.
+			// The 2 sweep ready nodes / data stores should now be truly deleted.
 			// They should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount += 2;
-			expectedStats.deletedDataStoreCount += 2;
 			expectedStats.nodeCount -= 2;
 			expectedStats.dataStoreCount -= 2;
 			expectedStats.unrefNodeCount -= 2;
@@ -371,7 +375,7 @@ describe("Garbage Collection Stats", () => {
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep enabled", async () => {
 			garbageCollector = createGarbageCollector({
-				gcOptions: { enableGCSweep: true, sweepGracePeriodMs },
+				gcOptions: { enableGCSweep: true },
 			});
 
 			const expectedStats = initialStats;
@@ -388,9 +392,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the 2 sweep-ready nodes won't actually be deleted yet (until the GC op is processed)
+			// but we account for them in the deleted stats now.
+			expectedStats.deletedNodeCount += 2;
+			expectedStats.deletedDataStoreCount += 2;
 
 			gcStats = await garbageCollector.collectGarbage({});
 
@@ -402,13 +410,11 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready nodes are deleted.
 			processLastGCMessage();
 
-			// Unreference another data store node.
+			// Unreference one more data store node (nodes[1])
 			defaultGCData.gcNodes[nodes[0]] = [];
 
 			// The 2 sweep ready nodes / data stores should now be deleted.
 			// They should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount += 2;
-			expectedStats.deletedDataStoreCount += 2;
 			expectedStats.nodeCount -= 2;
 			expectedStats.dataStoreCount -= 2;
 			expectedStats.unrefNodeCount -= 2;
@@ -426,9 +432,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// No nodes are updated since the last run.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the new sweep-ready node won't actually be deleted yet (until the GC op is processed)
+			// but we account for it in the deleted stats now.
+			expectedStats.deletedNodeCount += 1;
+			expectedStats.deletedDataStoreCount += 1;
 
 			gcStats = await garbageCollector.collectGarbage({});
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 3");
@@ -441,10 +451,8 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready node is deleted.
 			processLastGCMessage();
 
-			// The sweep ready node / data store should now be deleted.
+			// The sweep ready node / data store should now be truly deleted.
 			// It should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount++;
-			expectedStats.deletedDataStoreCount++;
 			expectedStats.nodeCount--;
 			expectedStats.dataStoreCount--;
 			expectedStats.unrefNodeCount--;
@@ -459,7 +467,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
+			garbageCollector = createGarbageCollector({});
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});
@@ -488,7 +496,7 @@ describe("Garbage Collection Stats", () => {
 		 * sweep ready. This is because the stats are based on sweep ready state.
 		 */
 		it("can generate stats with deleted nodes after multiple sweep runs - sweep disabled", async () => {
-			garbageCollector = createGarbageCollector({ gcOptions: { sweepGracePeriodMs } });
+			garbageCollector = createGarbageCollector({});
 
 			const expectedStats = initialStats;
 			let gcStats = await garbageCollector.collectGarbage({});

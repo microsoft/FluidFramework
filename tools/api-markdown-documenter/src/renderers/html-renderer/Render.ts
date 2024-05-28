@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
-import { type DocumentWriter, createDocumentWriter } from "../DocumentWriter";
-import { RenderConfiguration, defaultRenderers } from "./configuration";
-import { RenderContext, getContextWithDefaults } from "./RenderContext";
+import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
+import { DocumentWriter } from "../DocumentWriter.js";
+import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
+import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
+
+// TODO: Leverage `documentationNodeToHtml` instead of maintaining custom renderers.
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
@@ -19,7 +21,7 @@ import { RenderContext, getContextWithDefaults } from "./RenderContext";
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const { customRenderers, language, startingHeadingLevel } = config;
 
-	const writer = createDocumentWriter();
+	const writer = DocumentWriter.create();
 	const renderContext = getContextWithDefaults({
 		headingLevel: startingHeadingLevel,
 		customRenderers,
@@ -48,11 +50,6 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
-
-	if (document.frontMatter !== undefined) {
-		// Join body contents with front-matter.
-		renderedDocument = [document.frontMatter, renderedDocument].join("\n");
-	}
 
 	// Ensure file ends with a single newline.
 	renderedDocument = [renderedDocument, ""].join("\n");

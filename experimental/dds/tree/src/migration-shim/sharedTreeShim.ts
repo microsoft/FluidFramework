@@ -2,23 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { AttachState } from '@fluidframework/container-definitions';
 import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
+	type IChannel,
 	type IChannelAttributes,
-	type IChannelServices,
+	type IChannelFactory,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
-	type ITelemetryContext,
 	type ISummaryTreeWithStats,
-} from '@fluidframework/runtime-definitions';
-import { type ITree, type TreeFactory } from '@fluid-experimental/tree2';
-import { AttachState } from '@fluidframework/container-definitions';
-import { assert } from '@fluidframework/core-utils';
-import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
+	type ITelemetryContext,
+} from '@fluidframework/runtime-definitions/internal';
+import { type ITree } from '@fluidframework/tree';
+
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
 import { type IShim } from './types.js';
@@ -38,7 +42,7 @@ export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
-		public readonly sharedTreeFactory: TreeFactory
+		public readonly sharedTreeFactory: IChannelFactory<ITree>
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 		this.handle = new ShimHandle<SharedTreeShim>(this);
@@ -46,8 +50,8 @@ export class SharedTreeShim implements IShim {
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
 	private services?: IChannelServices;
-	private _currentTree?: ITree;
-	public get currentTree(): ITree {
+	private _currentTree?: ITree & IChannel;
+	public get currentTree(): ITree & IChannel {
 		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
 		return this._currentTree;
 	}

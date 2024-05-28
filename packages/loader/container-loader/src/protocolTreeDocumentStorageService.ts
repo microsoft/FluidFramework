@@ -4,8 +4,11 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 
 /**
  * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include
@@ -19,14 +22,12 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 	public get policies() {
 		return this.internalStorageService.policies;
 	}
-	public get repositoryUrl() {
-		return this.internalStorageService.repositoryUrl;
-	}
 	public get disposed() {
 		return this.internalStorageService.disposed;
 	}
 
 	getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(this.internalStorageService);
+	getSnapshot = this.internalStorageService.getSnapshot?.bind(this.internalStorageService);
 	getVersions = this.internalStorageService.getVersions.bind(this.internalStorageService);
 	createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
 	readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);

@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import {
+
+import type {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness";
+} from "@fluidframework/datastore-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
+import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.
@@ -31,7 +33,7 @@ class SharedNothing extends SharedObject {
 	public noopCalls = 0;
 	public methodCalls: string[] = [];
 
-	constructor(
+	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly attributes: IChannelAttributes,
@@ -44,6 +46,7 @@ class SharedNothing extends SharedObject {
 	}
 	protected onDisconnect(): void {}
 	protected applyStashedOp(): void {
+		this.noop();
 		this.applyStashedOpCalls++;
 		this.methodCalls.push("applyStashedOp");
 	}
@@ -108,6 +111,8 @@ export interface Operation {
 }
 
 const noopGenerator = async () => ({ type: "noop" }) as const;
+
+export const isNoopOp = (op: BaseOperation): op is Operation => op.type === "noop";
 
 export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	workloadName: "test",

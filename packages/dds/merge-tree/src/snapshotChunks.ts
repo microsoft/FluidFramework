@@ -6,12 +6,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PropertySet } from "./properties";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { IJSONSegment } from "./ops";
-import { SerializedAttributionCollection } from "./attributionCollection";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { SerializedAttributionCollection } from "./attributionCollection.js";
+import { IJSONSegment } from "./ops.js";
+import { PropertySet } from "./properties.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export interface VersionedMergeTreeChunk {
 	version: undefined | "1";
@@ -67,6 +68,9 @@ export interface IJSONSegmentWithMergeInfo {
 	seq?: number;
 	removedClientIds?: string[];
 	removedSeq?: number;
+	movedClientIds?: string[];
+	movedSeq?: number;
+	movedSeqs?: number[];
 }
 
 /**

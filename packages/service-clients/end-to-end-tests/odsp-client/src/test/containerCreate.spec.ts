@@ -2,22 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { OdspClient } from "@fluid-experimental/odsp-client";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
 import { ConnectionState } from "@fluidframework/container-loader";
-import { OdspTestCredentials, createOdspClient } from "./OdspClientFactory";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-const clientCreds: OdspTestCredentials = {
-	clientId: "process.env.odsp__client__client__id",
-	clientSecret: "process.env.odsp__client__client__secret",
-	username: "process.env.odsp__client__login__username",
-	password: "process.env.odsp__client__login__password",
+import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+
+const clientCreds: IOdspLoginCredentials = {
+	username: process.env.odsp__client__login__username as string,
+	password: process.env.odsp__client__login__password as string,
 };
 
 describe("Container create scenarios", () => {

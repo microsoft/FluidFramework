@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -15,9 +14,9 @@ import {
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
-	PropertySet,
+	PropertySet, // eslint-disable-next-line import/no-deprecated
 	SortedSegmentSet,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.
@@ -31,12 +30,17 @@ export abstract class SequenceEvent<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
 > {
 	public readonly deltaOperation: TOperation;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
 	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
 	constructor(
+		/**
+		 * Arguments reflecting the type of change that caused this event.
+		 */
 		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
 	) {
 		assert(
@@ -45,7 +49,9 @@ export abstract class SequenceEvent<
 		);
 		this.deltaOperation = deltaArgs.operation;
 
+		// eslint-disable-next-line import/no-deprecated
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
+			// eslint-disable-next-line import/no-deprecated
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
 			this.deltaArgs.deltaSegments.forEach((delta) => {
 				const newRange: ISequenceDeltaRange<TOperation> = {
@@ -70,7 +76,10 @@ export abstract class SequenceEvent<
 
 	/**
 	 * The in-order ranges affected by this delta.
-	 * These may not be continuous.
+	 * These are not necessarily contiguous.
+	 *
+	 * @remarks - If processing code doesn't care about the order of the ranges, it may instead consider using the
+	 * {@link @fluidframework/merge-tree#IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments} field on {@link SequenceEvent.deltaArgs|deltaArgs}.
 	 */
 	public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
 		return this.sortedRanges.value.items;
@@ -119,6 +128,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);
@@ -136,8 +146,14 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	constructor(
+		/**
+		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.
+		 *
+		 * In that case, this argument provides information about the change which was acknowledged.
+		 */
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+		// eslint-disable-next-line import/no-deprecated
 		mergeTreeClient: Client,
 	) {
 		super(deltaArgs, mergeTreeClient);

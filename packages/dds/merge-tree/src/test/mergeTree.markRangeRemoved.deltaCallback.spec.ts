@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
-import { MergeTreeDeltaType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { MergeTree } from "../mergeTree";
-import { countOperations, insertSegments, markRangeRemoved } from "./testUtils";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
+import { MergeTreeDeltaType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+
+import { countOperations, insertSegments, markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -82,10 +85,9 @@ describe("MergeTree", () => {
 					pos2: end,
 					type: MergeTreeDeltaType.REMOVE,
 				},
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				sequencedMessage: {
 					sequenceNumber: ++currentSequenceNumber,
-				} as ISequencedDocumentMessage,
+				} as any as ISequencedDocumentMessage,
 			});
 
 			// Move currentSeq/minSeq past the seq# at which the removal was ACKed.

@@ -10,11 +10,12 @@ import { Editor } from "../editor/index.js";
 import { htmlFormatter } from "../html/formatters.js";
 import { ICommand, TagName } from "../util/index.js";
 import { IFormatterState, RootFormatter } from "../view/formatter.js";
+
+// eslint-disable-next-line import/no-unassigned-import
+import "./debug.css";
 import { debug } from "./debug.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./index.css";
-// eslint-disable-next-line import/no-unassigned-import
-import "./debug.css";
 import { SearchMenuView } from "./searchmenu/index.js";
 
 const always = () => true;
@@ -51,10 +52,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		const hasSelection = () => {
 			const { start, end } = editor.selection;
 			return start < end;
-		};
-		const insertTags = (tags: TagName[]) => {
-			const selection = editor.selection;
-			flowDocument.insertTags(tags, selection.start, selection.end);
 		};
 		const setFormat = (tag: TagName) => {
 			const { end } = editor.selection;
@@ -150,13 +147,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 					},
 				},
 				{
-					name: "ol",
-					enabled: always,
-					exec: () => {
-						insertTags([TagName.ol, TagName.li]);
-					},
-				},
-				{
 					name: "p",
 					enabled: always,
 					exec: () => {
@@ -168,13 +158,6 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 					enabled: always,
 					exec: () => {
 						switchFormatter(htmlFormatter);
-					},
-				},
-				{
-					name: "ul",
-					enabled: always,
-					exec: () => {
-						insertTags([TagName.ul, TagName.li]);
 					},
 				},
 				{

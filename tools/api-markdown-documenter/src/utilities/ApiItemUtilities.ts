@@ -3,31 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-	ApiCallSignature,
-	ApiConstructSignature,
-	ApiConstructor,
+	type ApiCallSignature,
+	type ApiConstructSignature,
+	type ApiConstructor,
 	ApiDocumentedItem,
-	ApiEntryPoint,
-	ApiFunction,
-	ApiIndexSignature,
-	ApiItem,
-	ApiItemKind,
-	ApiMethod,
-	ApiMethodSignature,
-	ApiNamespace,
+	type ApiEntryPoint,
+	type ApiFunction,
+	type ApiIndexSignature,
+	type ApiItem,
+	type ApiItemKind,
+	type ApiMethod,
+	type ApiMethodSignature,
+	type ApiNamespace,
 	ApiOptionalMixin,
-	ApiPackage,
+	type ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { DocSection, StandardTags } from "@microsoft/tsdoc";
+import { type DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import { Logger } from "../Logging";
+import { type Logger } from "../Logging.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
@@ -123,7 +122,7 @@ export enum ApiModifier {
  * @public
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
+	let qualifiedName: string = getSafeFilenameForName(apiItem.displayName);
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
@@ -178,16 +177,21 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 export function releaseTagToString(releaseTag: ReleaseTag): string {
 	// eslint-disable-next-line default-case
 	switch (releaseTag) {
-		case ReleaseTag.Alpha:
+		case ReleaseTag.Alpha: {
 			return "Alpha";
-		case ReleaseTag.Beta:
+		}
+		case ReleaseTag.Beta: {
 			return "Beta";
-		case ReleaseTag.Internal:
+		}
+		case ReleaseTag.Internal: {
 			return "Internal";
-		case ReleaseTag.Public:
+		}
+		case ReleaseTag.Public: {
 			return "Public";
-		case ReleaseTag.None:
+		}
+		case ReleaseTag.None: {
 			return "";
+		}
 	}
 }
 
@@ -437,4 +441,27 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 	}
 
 	return modifiers;
+}
+
+/**
+ * Generates a concise signature for a function.  Example: "getArea(width, height)"
+ */
+export function getConciseSignature(apiItem: ApiItem): string {
+	if (ApiParameterListMixin.isBaseClassOf(apiItem)) {
+		return `${apiItem.displayName}(${apiItem.parameters.map((x) => x.name).join(", ")})`;
+	}
+	return apiItem.displayName;
+}
+
+/**
+ * Converts bad filename characters to underscores.
+ */
+export function getSafeFilenameForName(apiItemName: string): string {
+	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+
+	// Note: This can introduce naming collisions.
+	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
+	// https://github.com/microsoft/rushstack/issues/1308
+	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }

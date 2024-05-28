@@ -2,38 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import {
-	CompressionAlgorithms,
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import {
-	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+
 import {
 	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
 	isDocumentMatrixPlainInfo,
 } from "@fluid-private/test-version-utils";
 import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
+import {
 	ConfigTypes,
 	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
+
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -71,7 +79,6 @@ const runtimeOptions: IContainerRuntimeOptions = {
 			state: "disabled",
 		},
 	},
-	gcOptions: { gcEnabled: false, disableGC: true, runGC: false },
 	compressionOptions: {
 		minimumBatchSizeInBytes: 1024 * 1024,
 		compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -94,7 +101,7 @@ const featureGates = {
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 const featureGatesWithGcOff = {
-	"Fluid.GarbageCollection.RunGC": false,
+	"Fluid.GarbageCollection.Test.RunGC": false,
 	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
 };
 
@@ -219,7 +226,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	public async initializeDocument(): Promise<void> {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		this._mainContainer = await loader.createDetachedContainer(
 			this.props.provider.defaultCodeDetails,
@@ -279,7 +286,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
+			{ logger: this.props.logger, configProvider: configProvider(featureGatesWithGcOff) },
 		);
 		const container2 = await loader.resolve(request);
 

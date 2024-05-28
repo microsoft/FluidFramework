@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+
 import { Phase } from "./runBenchmark";
 import { Timer } from "./timer";
 
@@ -422,6 +423,7 @@ export function benchmarkArgumentsIsCustom(
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
 	const isCustom = intersection.benchmarkFnCustom !== undefined;
 	assert(
+		// eslint-disable-next-line unicorn/prefer-native-coercion-functions
 		[isSync, isAsync, isCustom].filter((x) => x).length === 1,
 		"Exactly one of `benchmarkFn`, `benchmarkFnAsync` or `benchmarkFnCustom` should be defined.",
 	);

@@ -5,32 +5,39 @@
 
 import { strict as assert } from "assert";
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
-import { ILoaderProps } from "@fluidframework/container-loader";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummarizerStopReason,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+	neverCancelledSummaryToken,
+} from "@fluidframework/container-runtime/internal";
+import {
+	DriverHeader,
+	IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	wrapDocumentServiceFactory,
-	waitForContainerConnection,
 	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -38,7 +45,6 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -50,10 +56,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -115,15 +117,16 @@ async function submitFailingSummary(
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 ) {
 	await provider.ensureSynchronized();
 	// Submit a summary with a fail token on generate
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
+		latestSummaryRefSeqNum,
 	});
 
 	const stageMap = new Map<FailingSubmitSummaryStage, string>();
@@ -146,6 +149,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -155,9 +159,9 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -188,18 +192,11 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		// TODO:#4670: Make this compat-version-specific.
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				requestHandlers: [innerRequestHandler],
-				runtimeOptions,
 			},
 		);
 		const logger = createChildLogger();
@@ -228,12 +225,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**
@@ -269,10 +261,13 @@ describeCompat(
 			},
 			isHandle: boolean,
 		): Promise<string> {
+			const latestSummaryRefSeqNum =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -297,14 +292,25 @@ describeCompat(
 		}
 
 		describe("Stores handle in summary when GC state does not change", () => {
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-					provider.documentServiceFactory,
-					uploadSummaryCb,
-				);
+				(provider as any)._documentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
+								},
+							},
+						},
+					);
 
 				mainContainer = await createContainer();
 				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
@@ -402,6 +408,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob handle expected
@@ -419,6 +426,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Upload,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed
@@ -438,6 +446,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed

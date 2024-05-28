@@ -4,9 +4,10 @@
 
 ```ts
 
-import { DriverError } from '@fluidframework/driver-definitions';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { DriverError } from '@fluidframework/driver-definitions/internal';
+import { FiveDaysMs } from '@fluidframework/driver-definitions/internal';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -49,7 +50,7 @@ export interface ICollabSessionOptions {
     unauthenticatedUserDisplayName?: string;
 }
 
-// @internal
+// @alpha
 export type IdentityType = "Consumer" | "Enterprise";
 
 // @alpha
@@ -65,15 +66,18 @@ export interface IFileEntry {
 }
 
 // @internal (undocumented)
-export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
-
-// @internal
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
-    // (undocumented)
-    readonly errorType: OdspErrorType;
-}
+export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string>;
 
 // @internal (undocumented)
+export type InstrumentedTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
+
+// @alpha
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
+    // (undocumented)
+    readonly errorType: OdspErrorTypes;
+}
+
+// @alpha (undocumented)
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
@@ -174,7 +178,6 @@ export interface ISnapshotOptions {
     channels?: number;
     // (undocumented)
     deltas?: number;
-    // (undocumented)
     mds?: number;
     // (undocumented)
     timeout?: number;
@@ -190,6 +193,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
+    sensitivityLabelsInfo?: string;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;
@@ -200,24 +204,13 @@ export interface ISocketStorageDiscovery {
 // @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
-// @internal (undocumented)
+// @internal
+export const maximumCacheDurationMs: FiveDaysMs;
+
+// @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @internal @deprecated
-export enum OdspErrorType {
-    blockedIPAddress = "blockedIPAddress",
-    cannotCatchUp = "cannotCatchUp",
-    fetchTimeout = "fetchTimeout",
-    // (undocumented)
-    fetchTokenError = "fetchTokenError",
-    fluidNotEnabled = "fluidNotEnabled",
-    invalidFileNameError = "invalidFileNameError",
-    outOfStorageError = "outOfStorageError",
-    serviceReadOnly = "serviceReadOnly",
-    snapshotTooBig = "snapshotTooBig"
-}
-
-// @internal
+// @alpha
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -246,7 +239,7 @@ export const OdspErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 // @alpha
@@ -259,18 +252,11 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ISharingLinkKind;
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
-}
-
-// @alpha @deprecated (undocumented)
-export enum ShareLinkTypes {
-    // (undocumented)
-    csl = "csl"
 }
 
 // @alpha
@@ -309,7 +295,7 @@ export interface TokenFetchOptions {
 // @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
-// @alpha
+// @beta
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;

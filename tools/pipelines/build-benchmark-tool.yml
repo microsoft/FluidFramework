@@ -47,6 +47,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -67,15 +68,25 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
     buildDirectory: tools/benchmark
     tagName: benchmark

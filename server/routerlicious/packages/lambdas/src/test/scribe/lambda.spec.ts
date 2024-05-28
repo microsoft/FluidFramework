@@ -53,10 +53,12 @@ describe("Routerlicious", () => {
 			let testGitManager: GitManager;
 			let tree: ITree;
 
-			function sendOps(num: number): void {
+			async function sendOps(num: number): Promise<void> {
 				for (let i = 0; i < num; i++) {
 					const message = messageFactory.createSequencedOperation();
-					lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(message, testDocumentId),
+					);
 				}
 			}
 
@@ -65,12 +67,16 @@ describe("Routerlicious", () => {
 					referenceSequenceNumber,
 					tree.sha,
 				);
-				lambda.handler(kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId));
+				await lambda.handler(
+					kafkaMessageFactory.sequenceMessage(summaryMessage, testDocumentId),
+				);
 
 				await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 				const ackMessage = messageFactory.createSummaryAck(tree.sha);
-				lambda.handler(kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId));
+				await lambda.handler(
+					kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId),
+				);
 			}
 
 			beforeEach(async () => {
@@ -110,6 +116,16 @@ describe("Routerlicious", () => {
 
 				testCheckpointService = new TestNotImplementedCheckpointService();
 				Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
+				Sinon.replace(
+					testCheckpointService,
+					"getLocalCheckpointEnabled",
+					Sinon.fake.returns(false),
+				);
+				Sinon.replace(
+					testCheckpointService,
+					"restoreFromCheckpoint",
+					Sinon.fake.returns(undefined),
+				);
 
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
@@ -144,6 +160,7 @@ describe("Routerlicious", () => {
 					true,
 					true,
 					2000,
+					2000,
 				);
 
 				testContext = new TestContext();
@@ -157,23 +174,23 @@ describe("Routerlicious", () => {
 			describe(".handler()", () => {
 				it("Ops should be stored in mongodb", async () => {
 					const numMessages = 10;
-					sendOps(numMessages);
+					await sendOps(numMessages);
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
-					assert.equal(numMessages, testMessageCollection.collection.length);
+					assert.equal(testMessageCollection.collection.length, numMessages);
 				});
 
 				it("Summarize Ops should clean up the previous ops store in mongodb", async () => {
 					const numMessages = 10;
-					sendOps(numMessages);
+					await sendOps(numMessages);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
-					sendSummarize(numMessages);
+					await sendSummarize(numMessages);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
@@ -184,26 +201,28 @@ describe("Routerlicious", () => {
 
 				it("NoClient Ops will trigger service to generate summary and won't clean up the previous ops", async () => {
 					const numMessages = 5;
-					sendOps(numMessages);
+					await sendOps(numMessages);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
-					sendSummarize(numMessages);
+					await sendSummarize(numMessages);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
-					sendOps(numMessages);
+					await sendOps(numMessages);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
 					const message = messageFactory.createNoClient();
-					lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(message, testDocumentId),
+					);
 
 					await testContext.waitForOffset(
 						kafkaMessageFactory.getHeadOffset(testDocumentId),

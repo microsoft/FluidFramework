@@ -4,13 +4,19 @@
 
 ```ts
 
-// @alpha
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @alpha
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
+// @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @internal
+// @alpha
 export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
@@ -19,32 +25,35 @@ export const FluidErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
-// @alpha
+// @public
+export const fluidHandleSymbol: unique symbol;
+
+// @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
 
-// @alpha
+// @public
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
-// @alpha
+// @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha
+// @public
 export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
-// @alpha
+// @public
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
 }
 
-// @alpha
+// @public
 export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
     getTelemetryProperties?(): ITelemetryBaseProperties;
@@ -53,31 +62,31 @@ export interface IErrorBase extends Partial<Error> {
     readonly stack?: string;
 }
 
-// @alpha
+// @public
 export interface IErrorEvent extends IEvent {
     // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @alpha
+// @public
 export interface IEvent {
     // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @alpha
+// @public
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @alpha
+// @public
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @alpha
+// @public
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -230,38 +239,12 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @internal @deprecated
-export interface IFluidCodeDetails {
-    readonly config?: IFluidCodeDetailsConfig;
-    readonly package: string | Readonly<IFluidPackage>;
-}
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
 
-// @internal @deprecated (undocumented)
-export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
-
-// @internal @deprecated
-export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
-    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-}
-
-// @internal @deprecated
-export interface IFluidCodeDetailsConfig {
-    // (undocumented)
-    readonly [key: string]: string;
-}
-
-// @alpha (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
-
-// @alpha
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly absolutePath: string;
-    // @deprecated (undocumented)
-    attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(handle: IFluidHandle): void;
+// @public
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
@@ -279,39 +262,24 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
-// @alpha (undocumented)
-export const IFluidLoadable: keyof IProvideFluidLoadable;
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
 
 // @alpha
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    bind(handle: IFluidHandleInternal): void;
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
-    handle: IFluidHandle;
-}
-
-// @internal @deprecated
-export interface IFluidPackage {
-    [key: string]: unknown;
-    fluid: {
-        [environment: string]: undefined | IFluidPackageEnvironment;
-    };
-    name: string;
-}
-
-// @internal @deprecated
-export interface IFluidPackageEnvironment {
-    [target: string]: undefined | {
-        files: string[];
-        [key: string]: unknown;
-    };
-}
-
-// @alpha @deprecated (undocumented)
-export const IFluidRouter: keyof IProvideFluidRouter;
-
-// @alpha @deprecated (undocumented)
-export interface IFluidRouter extends IProvideFluidRouter {
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
+    readonly handle: IFluidHandle;
 }
 
 // @internal (undocumented)
@@ -332,21 +300,15 @@ export interface IGenericError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
-// @internal
+// @alpha
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @internal @deprecated (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
-    // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    // @deprecated (undocumented)
+    readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
 // @alpha (undocumented)
@@ -355,16 +317,10 @@ export interface IProvideFluidHandleContext {
     readonly IFluidHandleContext: IFluidHandleContext;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
     readonly IFluidLoadable: IFluidLoadable;
-}
-
-// @alpha @deprecated
-export interface IProvideFluidRouter {
-    // (undocumented)
-    readonly IFluidRouter: IFluidRouter;
 }
 
 // @internal (undocumented)
@@ -373,7 +329,7 @@ export interface IProvideFluidRunnable {
     readonly IFluidRunnable: IFluidRunnable;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IRequest {
     // (undocumented)
     headers?: IRequestHeader;
@@ -381,13 +337,13 @@ export interface IRequest {
     url: string;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IRequestHeader {
     // (undocumented)
     [index: string]: any;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IResponse {
     // (undocumented)
     headers?: {
@@ -403,21 +359,17 @@ export interface IResponse {
     value: any;
 }
 
-// @internal @deprecated (undocumented)
-export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
-
-// @internal @deprecated
-export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
-
-// @internal @deprecated (undocumented)
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyType;
+// @internal (undocumented)
+export interface ISignalEnvelope {
+    address?: string;
+    clientSignalSequenceNumber: number;
+    contents: {
+        type: string;
+        content: any;
+    };
 }
 
-// @alpha
+// @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
@@ -425,7 +377,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @alpha
+// @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
     minLogLevel?: LogLevel;
@@ -433,44 +385,12 @@ export interface ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
+// @public
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
+}
+
 // @alpha
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-// @alpha @deprecated
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    // (undocumented)
-    eventName: string;
-}
-
-// @alpha @deprecated
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
-
-// @alpha @deprecated
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-}
-
-// @alpha @deprecated
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    // (undocumented)
-    duration?: number;
-}
-
-// @alpha @deprecated
-export interface ITelemetryProperties {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
-}
-
-// @internal
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
@@ -482,22 +402,22 @@ export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
-// @alpha
+// @public
 export const LogLevel: {
     readonly verbose: 10;
     readonly default: 20;
     readonly error: 30;
 };
 
-// @alpha
+// @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
-// @alpha
+// @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
 
-// @alpha
+// @public
 export interface Tagged<V, T extends string = string> {
     // (undocumented)
     tag: T;
@@ -505,16 +425,10 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @internal
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
-// @alpha @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @alpha @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
-
-// @alpha
+// @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // (No @packageDocumentation comment for this package)

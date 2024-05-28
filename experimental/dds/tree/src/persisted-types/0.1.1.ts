@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
-import { assertNotUndefined, ReplaceRecursive } from '../Common';
-// These are re-exported from a persisted-types file.
-import type {
-	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-} from '../id-compressor';
+import { assert } from '@fluidframework/core-utils/internal';
+
+import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
 import type {
 	Definition,
 	DetachedSequenceId,
@@ -22,7 +17,14 @@ import type {
 	SessionId,
 	TraitLabel,
 	UuidString,
-} from '../Identifiers';
+} from '../Identifiers.js';
+// These are re-exported from a persisted-types file.
+import type {
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from '../id-compressor/index.js';
+
 import {
 	BuildInternal_0_0_2,
 	ChangeTypeInternal,
@@ -46,11 +48,11 @@ import {
 	TreeNodeSequence,
 	VersionedOp,
 	WriteFormat,
-} from './0.0.2';
+} from './0.0.2.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @internal
+ * @alpha
  */
 export interface TraitLocationInternal extends Omit<TraitLocationInternal_0_0_2, 'parent'> {
 	readonly parent: NodeId;
@@ -206,7 +208,7 @@ export type CompressedBuildNode<TId extends OpSpaceNodeId> = CompressedPlacehold
  * This type should be used as an opaque handle in the public API for `ChangeInternal` objects.
  * This is useful for supporting public APIs which involve working with a tree's edit history,
  * which will involve changes that have already been internalized.
- * @internal
+ * @alpha
  */
 export interface InternalizedChange {
 	InternalChangeBrand: '2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3';
@@ -214,19 +216,19 @@ export interface InternalizedChange {
 
 /**
  * {@inheritdoc (Change:type)}
- * @internal
+ * @alpha
  */
 export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
 
 /**
  * {@inheritdoc BuildNode}
- * @internal
+ * @alpha
  */
 export type BuildNodeInternal = TreeNode<BuildNodeInternal, NodeId> | DetachedSequenceId;
 
 /**
  * {@inheritdoc Build}
- * @internal
+ * @alpha
  */
 export interface BuildInternal extends Omit<BuildInternal_0_0_2, 'source'> {
 	readonly source: TreeNodeSequence<BuildNodeInternal>;
@@ -234,7 +236,7 @@ export interface BuildInternal extends Omit<BuildInternal_0_0_2, 'source'> {
 
 /**
  * {@inheritdoc (Insert:interface)}
- * @internal
+ * @alpha
  */
 export interface InsertInternal extends Omit<InsertInternal_0_0_2, 'destination'> {
 	/** {@inheritdoc (Insert:interface).destination } */
@@ -243,7 +245,7 @@ export interface InsertInternal extends Omit<InsertInternal_0_0_2, 'destination'
 
 /**
  * {@inheritdoc Detach}
- * @internal
+ * @alpha
  */
 export interface DetachInternal extends Omit<DetachInternal_0_0_2, 'source'> {
 	/** {@inheritdoc Detach.source } */
@@ -252,7 +254,7 @@ export interface DetachInternal extends Omit<DetachInternal_0_0_2, 'source'> {
 
 /**
  * {@inheritdoc SetValue}
- * @internal
+ * @alpha
  */
 export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, 'nodeToModify'> {
 	/** {@inheritdoc SetValue.nodeToModify } */
@@ -261,7 +263,7 @@ export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, 'nodeToMo
 
 /**
  * {@inheritdoc Constraint}
- * @internal
+ * @alpha
  */
 export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, 'toConstrain' | 'parentNode'> {
 	/** {@inheritdoc Constraint.toConstrain } */
@@ -272,7 +274,7 @@ export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, 'toCo
 
 // Note: Documentation of this constant is merged with documentation of the `ChangeInternal` interface.
 /**
- * @internal
+ * @alpha
  */
 export const ChangeInternal = {
 	build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId): BuildInternal => ({
@@ -343,7 +345,7 @@ export const ChangeInternal = {
 
 /**
  * {@inheritdoc (StablePlace:interface) }
- * @internal
+ * @alpha
  */
 export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, 'referenceSibling' | 'referenceTrait'> {
 	/**
@@ -359,7 +361,7 @@ export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, 're
 
 /**
  * {@inheritdoc (StableRange:interface) }
- * @internal
+ * @alpha
  */
 export interface StableRangeInternal {
 	/** {@inheritdoc (StableRange:interface).start } */
@@ -374,7 +376,7 @@ export interface StableRangeInternal {
  */
 
 /**
- * @internal
+ * @alpha
  */
 export const StablePlaceInternal = {
 	/**
@@ -408,7 +410,7 @@ export const StablePlaceInternal = {
 };
 
 /**
- * @internal
+ * @alpha
  */
 export const StableRangeInternal = {
 	/**

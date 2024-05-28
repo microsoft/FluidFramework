@@ -15,6 +15,6 @@ export {
 	ProxifiedSetProperty,
 	ProxyType,
 	ReferenceType,
-} from "./interfaces";
-export { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
-export { PropertyProxy, proxySymbol } from "./propertyProxy";
+} from "./interfaces.js";
+export { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
+export { PropertyProxy, proxySymbol } from "./propertyProxy.js";

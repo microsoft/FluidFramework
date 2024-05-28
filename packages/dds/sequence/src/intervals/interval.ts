@@ -2,22 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ICombiningOp,
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { SequencePlace } from "../intervalCollection";
-import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
+} from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-const reservedIntervalIdKey = "intervalId";
+import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
+
+import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -27,21 +27,21 @@ export class Interval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/***/
 	public auxProps: PropertySet[] | undefined;
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
-	public propertyManager: PropertiesManager;
+	public readonly propertyManager: PropertiesManager = new PropertiesManager();
+
 	constructor(
 		public start: number,
 		public end: number,
 		props?: PropertySet,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -89,7 +89,7 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 		return serializedInterval;
 	}
@@ -170,14 +170,11 @@ export class Interval implements ISerializableInterval {
 		newProps: PropertySet,
 		collaborating: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
 		if (newProps) {
-			this.initializeProperties();
 			return this.propertyManager.addProperties(
 				this.properties,
 				newProps,
-				op,
 				seq,
 				collaborating,
 			);
@@ -208,7 +205,6 @@ export class Interval implements ISerializableInterval {
 		}
 		const newInterval = new Interval(startPos, endPos);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -216,15 +212,6 @@ export class Interval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 

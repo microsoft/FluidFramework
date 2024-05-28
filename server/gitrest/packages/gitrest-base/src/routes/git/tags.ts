@@ -40,9 +40,10 @@ export function create(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,
 				);
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
+				const fsManager = fileSystemManagerFactory.create({
+					...repoManagerParams.fileSystemManagerParams,
+					rootDir: repoManager.path,
+				});
 				await checkSoftDeleted(
 					fsManager,
 					repoManager.path,
@@ -65,9 +66,10 @@ export function create(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,
 				);
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
+				const fsManager = fileSystemManagerFactory.create({
+					...repoManagerParams.fileSystemManagerParams,
+					rootDir: repoManager.path,
+				});
 				await checkSoftDeleted(
 					fsManager,
 					repoManager.path,

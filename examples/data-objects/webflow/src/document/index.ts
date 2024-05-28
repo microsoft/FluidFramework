@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
-import { assert } from "@fluidframework/core-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	LazyLoadedDataObject,
-	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
-import {
-	createDetachedLocalReferencePosition,
-	createInsertSegmentOp,
-	createRemoveRangeOp,
 	IMergeTreeRemoveMsg,
+	createDetachedLocalReferencePosition,
+	createRemoveRangeOp,
+	refGetTileLabels,
+} from "@fluidframework/merge-tree/internal";
+import {
 	ISegment,
 	LocalReferencePosition,
 	Marker,
@@ -23,28 +20,18 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	refGetRangeLabels,
-	refGetTileLabels,
-	refHasRangeLabels,
-	reservedMarkerIdKey,
-	reservedRangeLabelsKey,
-	reservedTileLabelsKey,
-	TextSegment,
-} from "@fluidframework/merge-tree";
-import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import {
+	SequenceDeltaEvent,
+	SequenceMaintenanceEvent,
 	SharedString,
 	SharedStringSegment,
-	SequenceMaintenanceEvent,
-	SequenceDeltaEvent,
-} from "@fluidframework/sequence";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { clamp, emptyArray, randomId, TagName, TokenList } from "../util/index.js";
-import { IHTMLAttributes } from "../util/attr.js";
+	TextSegment,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
+
 import { documentType } from "../package.js";
+import { IHTMLAttributes } from "../util/attr.js";
+import { TagName, TokenList, clamp } from "../util/index.js";
+
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 
@@ -86,27 +73,11 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		const markerType = segment.refType;
 		switch (markerType) {
 			case ReferenceType.Tile:
-			case ReferenceType.Tile | ReferenceType.NestBegin:
-				const hasRangeLabels = refHasRangeLabels(segment);
-				const kind = (
-					hasRangeLabels ? refGetRangeLabels(segment)[0] : refGetTileLabels(segment)[0]
-				) as DocSegmentKind;
-
+				const kind = refGetTileLabels(segment)[0] as DocSegmentKind;
 				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
 				return kind;
 			default:
-				assert(
-					markerType === (ReferenceType.Tile | ReferenceType.NestEnd),
-					"unexpected marker type",
-				);
-
-				// Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
-				// will not close the range.)
-				assert(
-					refGetRangeLabels(segment)[0] === DocSegmentKind.beginTags,
-					`Unknown refType '${markerType}'.`,
-				);
 				return DocSegmentKind.endTags;
 		}
 	}
@@ -149,7 +120,7 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
-const endOfTextReference = createDetachedLocalReferencePosition();
+const endOfTextReference = createDetachedLocalReferencePosition(undefined);
 const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {
@@ -165,20 +136,16 @@ const textId = "text";
 /**
  * @internal
  */
-export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
-	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
+export class FlowDocument extends DataObject {
+	private static readonly factory = new DataObjectFactory<FlowDocument>(
 		documentType,
 		FlowDocument,
-		/* root: */ SharedDirectory.getFactory(),
 		[SharedString.getFactory()],
+		{},
 	);
 
-	public static getFactory(): IFluidDataStoreFactory {
+	public static getFactory() {
 		return FlowDocument.factory;
-	}
-
-	public static async create(parentContext: IFluidDataStoreContext, props?: any) {
-		return FlowDocument.factory.create(parentContext, props);
 	}
 
 	public get length() {
@@ -192,23 +159,24 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 	private static readonly lineBreakProperties = Object.freeze({
 		[reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint],
 	});
-	private static readonly tagsProperties = Object.freeze({
-		[reservedTileLabelsKey]: [DocTile.checkpoint],
-		[reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
-	});
 
 	private sharedString: SharedString;
 
-	public create() {
+	protected async initializingFirstTime(props?: any): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
 		this.sharedString = SharedString.create(this.runtime);
 		this.root.set(textId, this.sharedString.handle);
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
-	public async load() {
+	protected async initializingFromExisting(): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
@@ -217,7 +185,12 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 			throw new Error("String not initialized properly");
 		}
 		this.sharedString = await handle.get();
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
 	public async getComponentFromMarker(marker: Marker) {
@@ -391,41 +364,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.insertParagraph(start, tag);
 	}
 
-	public insertTags(tags: TagName[], start: number, end = start) {
-		const ops = [];
-		const id = randomId();
-
-		const endMarker = new Marker(ReferenceType.Tile | ReferenceType.NestEnd);
-		endMarker.properties = Object.freeze({
-			...FlowDocument.tagsProperties,
-			[reservedMarkerIdKey]: `end-${id}`,
-		});
-		ops.push(createInsertSegmentOp(end, endMarker));
-
-		const beginMarker = new Marker(ReferenceType.Tile | ReferenceType.NestBegin);
-		beginMarker.properties = Object.freeze({
-			...FlowDocument.tagsProperties,
-			tags,
-			[reservedMarkerIdKey]: `begin-${id}`,
-		});
-		ops.push(createInsertSegmentOp(start, beginMarker));
-
-		// Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
-		//       change in positions.
-		this.sharedString.groupOperation({
-			ops,
-			type: MergeTreeDeltaType.GROUP,
-		});
-	}
-
-	public getTags(position: number): Readonly<Marker[]> {
-		const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[
-			DocSegmentKind.beginTags
-		];
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return tags?.items || emptyArray;
-	}
-
 	public getStart(marker: Marker) {
 		return this.getOppositeMarker(marker, /* "end".length = */ 3, "begin");
 	}
@@ -479,20 +417,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public findTile(
-		position: number,
-		tileType: DocTile,
-		preceding: boolean,
-	): { tile: ReferencePosition; pos: number } {
-		return this.sharedString.findTile(position, tileType as unknown as string, preceding);
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
-		const start = maybeStart ? maybeStart.pos : 0;
+		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
+		const start = maybeStart
+			? this.sharedString.localReferencePositionToPosition(maybeStart)
+			: 0;
 
-		const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
-		const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
+		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
+		const end = maybeEnd
+			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
+			: this.length;
 
 		return { start, end };
 	}

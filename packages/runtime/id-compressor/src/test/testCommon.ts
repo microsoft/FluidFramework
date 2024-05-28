@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { SessionSpaceCompressedId, StableId, OpSpaceCompressedId } from "../";
-import { numericUuidFromStableId, offsetNumericUuid, stableIdFromNumericUuid } from "../utilities";
-import { IdCompressor } from "../idCompressor";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { IdCompressor } from "../idCompressor.js";
+import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
+import {
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+} from "../utilities.js";
 
 /**
  * An identifier (v4 UUID) that has been shortened by a distributed compression algorithm.
@@ -90,16 +95,13 @@ export function incrementStableId(stableId: StableId, offset: number): StableId 
 }
 
 /** An immutable view of an `IdCompressor` */
-export interface ReadonlyIdCompressor
-	extends Omit<
-		IdCompressor,
-		| "generateCompressedId"
-		| "generateCompressedIdRange"
-		| "takeNextCreationRange"
-		| "finalizeCreationRange"
-	> {
-	readonly clusterCapacity: number;
-}
+export type ReadonlyIdCompressor = Omit<
+	IdCompressor,
+	| "generateCompressedId"
+	| "generateCompressedIdRange"
+	| "takeNextCreationRange"
+	| "finalizeCreationRange"
+>;
 
 /**
  * Asserts a value is not undefined, and returns the value.

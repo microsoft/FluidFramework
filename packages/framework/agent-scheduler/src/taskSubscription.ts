@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAgentScheduler } from "./agent";
+import { IEvent } from "@fluidframework/core-interfaces";
+
+import { IAgentScheduler } from "./agent.js";
 
 /**
  * Events emitted by {@link TaskSubscription}.
- * @internal
+ * @alpha
  */
 export interface ITaskSubscriptionEvents extends IEvent {
 	(event: "gotTask" | "lostTask", listener: () => void);
@@ -17,7 +18,7 @@ export interface ITaskSubscriptionEvents extends IEvent {
 
 /**
  * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
- * @internal
+ * @alpha
  */
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
 	private subscribed: boolean = false;

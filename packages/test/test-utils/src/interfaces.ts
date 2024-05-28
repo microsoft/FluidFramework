@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap } from "@fluidframework/map";
-import {
-	IFluidDataStoreContext,
-	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap } from "@fluidframework/map/internal";
+import {
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProvideTestFluidObject {
 	readonly ITestFluidObject: ITestFluidObject;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
 	root: ISharedMap;

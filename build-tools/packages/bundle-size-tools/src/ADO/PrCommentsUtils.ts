@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { WebApi, getBearerHandler } from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi";
 import { CommentThreadStatus } from "azure-devops-node-api/interfaces/GitInterfaces";
@@ -12,7 +13,12 @@ export class prCommentsUtils {
 	private repoId: string;
 	private pullRequestId: number;
 
-	constructor(collectionUrl: string, pullRequestId: number, repoId: string, accessToken: string) {
+	constructor(
+		collectionUrl: string,
+		pullRequestId: number,
+		repoId: string,
+		accessToken: string,
+	) {
 		this.connection = new WebApi(collectionUrl, getBearerHandler(accessToken));
 
 		this.repoId = repoId;
@@ -110,7 +116,10 @@ export class prCommentsUtils {
 	 * @param threadType - the identifier of your thread
 	 * @param commentThreadStatus - the new value of the thread status
 	 */
-	public async updateThreadStatus(threadType: string, commentThreadStatus: CommentThreadStatus) {
+	public async updateThreadStatus(
+		threadType: string,
+		commentThreadStatus: CommentThreadStatus,
+	) {
 		const gitApi = await this.gitApi;
 		const existingThread = await this.getThreadByType(threadType);
 

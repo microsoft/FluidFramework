@@ -3,25 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
-	Serializable,
+	IFluidDataStoreRuntime,
 	Jsonable,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { SharedSegmentSequence } from "@fluidframework/sequence";
-import { pkgVersion } from "./packageVersion";
-import { SubSequence } from "./sharedSequence";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	BaseSegment,
+	IJSONSegment,
+	ISegment,
+	PropertySet,
+} from "@fluidframework/merge-tree/internal";
+import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { pkgVersion } from "./packageVersion.js";
+import { SubSequence } from "./sharedSequence.js";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
- * {@link SparseMatrix} uses `PaddingSegment` to "pad" a run of unoccupied cells.
+ * {@link (SparseMatrix:variable)} uses `PaddingSegment` to "pad" a run of unoccupied cells.
  *
  * @deprecated `PaddingSegment` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
@@ -92,7 +97,7 @@ export class PaddingSegment extends BaseSegment {
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  * @internal
  */
-export type SparseMatrixItem = Serializable;
+export type SparseMatrixItem = any;
 
 /**
  * @deprecated `RunSegment` is part of an abandoned prototype.
@@ -237,31 +242,10 @@ export function positionToRowCol(position: number) {
 }
 
 /**
- * @deprecated `SparseMatrix` is an abandoned prototype.
- * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * {@inheritDoc (SparseMatrix:variable)}
  * @internal
  */
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
-	/**
-	 * Create a new sparse matrix
-	 *
-	 * @param runtime - data store runtime the new sparse matrix belongs to
-	 * @param id - optional name of the sparse matrix
-	 * @returns newly create sparse matrix (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SparseMatrixFactory.Type) as SparseMatrix;
-	}
-
-	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 *
-	 * @returns a factory that creates and load SharedMap
-	 */
-	public static getFactory(): IChannelFactory {
-		return new SparseMatrixFactory();
-	}
-
+export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 	constructor(
 		document: IFluidDataStoreRuntime,
 		public id: string,
@@ -377,7 +361,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
  * Use {@link @fluidframework/matrix#SharedMatrixFactory} instead.
  * @internal
  */
-export class SparseMatrixFactory implements IChannelFactory {
+export class SparseMatrixFactory implements IChannelFactory<SparseMatrix> {
 	public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
 	public static Attributes: IChannelAttributes = {
@@ -416,15 +400,27 @@ export class SparseMatrixFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<ISharedObject> {
-		const sharedObject = new SparseMatrix(runtime, id, attributes);
+	): Promise<SparseMatrix> {
+		const sharedObject = new SparseMatrixClass(runtime, id, attributes);
 		await sharedObject.load(services);
 		return sharedObject;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
-		const sharedObject = new SparseMatrix(document, id, this.attributes);
+	public create(document: IFluidDataStoreRuntime, id: string): SparseMatrix {
+		const sharedObject = new SparseMatrixClass(document, id, this.attributes);
 		sharedObject.initializeLocal();
 		return sharedObject;
 	}
 }
+
+/**
+ * @deprecated `SparseMatrix` is an abandoned prototype.
+ * Use {@link @fluidframework/matrix#SharedMatrix} instead.
+ * @internal
+ */
+export const SparseMatrix = createSharedObjectKind(SparseMatrixFactory);
+/**
+ * {@inheritDoc (SparseMatrix:variable)}
+ * @internal
+ */
+export type SparseMatrix = SparseMatrixClass;

@@ -14,36 +14,41 @@
  * transformations, or by writing your own!
  */
 
-export { BlockQuoteNode } from "./BlockQuoteNode";
-export { CodeSpanNode } from "./CodeSpanNode";
-export { DocumentNode, DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode";
+export { BlockQuoteNode } from "./BlockQuoteNode.js";
+export { CodeSpanNode } from "./CodeSpanNode.js";
+export { DocumentNode, type DocumentNodeProperties as DocumentNodeProps } from "./DocumentNode.js";
 export {
-	DocumentationNode,
-	DocumentationLiteralNode,
+	type DocumentationNode,
+	type DocumentationLiteralNode,
 	DocumentationLiteralNodeBase,
-	DocumentationParentNode,
+	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	MultiLineDocumentationNode,
-	SingleLineDocumentationNode,
-} from "./DocumentationNode";
-export { DocumentationNodeType } from "./DocumentationNodeType";
-export { FencedCodeBlockNode } from "./FencedCodeBlockNode";
-export { HeadingNode } from "./HeadingNode";
-export { HorizontalRuleNode } from "./HorizontalRuleNode";
-export { LineBreakNode } from "./LineBreakNode";
-export { LinkNode } from "./LinkNode";
-export { OrderedListNode } from "./OrderedListNode";
-export { ParagraphNode } from "./ParagraphNode";
-export { PlainTextNode } from "./PlainTextNode";
-export { SectionNode } from "./SectionNode";
-export { SpanNode, SingleLineSpanNode } from "./SpanNode";
+	type MultiLineDocumentationNode,
+	type SingleLineDocumentationNode,
+} from "./DocumentationNode.js";
+export { DocumentationNodeType } from "./DocumentationNodeType.js";
+export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
+export { HeadingNode } from "./HeadingNode.js";
+export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
+export { LineBreakNode } from "./LineBreakNode.js";
+export { LinkNode } from "./LinkNode.js";
+export { OrderedListNode } from "./OrderedListNode.js";
+export { ParagraphNode } from "./ParagraphNode.js";
+export { PlainTextNode } from "./PlainTextNode.js";
+export { SectionNode } from "./SectionNode.js";
+export { SpanNode, SingleLineSpanNode } from "./SpanNode.js";
 export {
 	TableCellNode,
 	TableBodyCellNode,
 	TableHeaderCellNode,
 	TableCellKind,
-} from "./TableCellNode";
-export { TableRowNode, TableBodyRowNode, TableHeaderRowNode, TableRowKind } from "./TableRowNode";
-export { TableNode } from "./TableNode";
-export { TextFormatting } from "./TextFormatting";
-export { UnorderedListNode } from "./UnorderedListNode";
+} from "./TableCellNode.js";
+export {
+	TableRowNode,
+	TableBodyRowNode,
+	TableHeaderRowNode,
+	TableRowKind,
+} from "./TableRowNode.js";
+export { TableNode } from "./TableNode.js";
+export type { TextFormatting } from "./TextFormatting.js";
+export { UnorderedListNode } from "./UnorderedListNode.js";

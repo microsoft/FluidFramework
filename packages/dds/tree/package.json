@@ -1,0 +1,191 @@
+{
+	"name": "@fluidframework/tree",
+	"version": "2.0.0-rc.5.0.0",
+	"description": "Distributed tree",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/dds/tree"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
+	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
+		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"depcruise": "depcruise src/ --ignore-known",
+		"depcruise:regen-known-issues": "depcruise-baseline src",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "fluid-build --task format .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
+		"test": "npm run test:mocha",
+		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
+		"test:mocha:esm": "mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@sinclair/typebox": "^0.32.29",
+		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@ungap/structured-clone": "^1.2.0",
+		"uuid": "^9.0.0"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@biomejs/biome": "^1.6.2",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
+		"@fluid-tools/benchmark": "^0.48.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@microsoft/api-extractor": "^7.43.1",
+		"@types/diff": "^3.5.1",
+		"@types/easy-table": "^0.0.32",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
+		"@types/ungap__structured-clone": "^1.2.0",
+		"@types/uuid": "^9.0.2",
+		"ajv": "^8.12.0",
+		"ajv-formats": "^3.0.1",
+		"c8": "^8.0.1",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
+		"dependency-cruiser": "^14.1.0",
+		"diff": "^3.5.0",
+		"easy-table": "^1.1.1",
+		"eslint": "~8.55.0",
+		"eslint-config-prettier": "~9.0.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"typescript": "~5.3.3"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test:cjs": [
+				"...",
+				"@fluidframework/id-compressor#build:test:cjs"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluidframework/id-compressor#build:test:esm"
+			],
+			"check:release-tags": [
+				"build:esnext"
+			],
+			"ci:build:docs": [
+				"build:esnext"
+			]
+		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
+	}
+}

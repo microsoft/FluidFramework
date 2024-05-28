@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const { HtmlRenderer, MarkdownRenderer } = require("@fluid-tools/api-markdown-documenter");
+import { HtmlRenderer, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
 
 /**
  * Renders an {@link @fluid-tools/api-markdown-documenter#AlertNode} using Hugo syntax.
@@ -12,7 +12,7 @@ const { HtmlRenderer, MarkdownRenderer } = require("@fluid-tools/api-markdown-do
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderAlertNode(alertNode, writer, context) {
+export function renderAlertNode(alertNode, writer, context) {
 	writer.ensureNewLine();
 
 	writer.writeLine(
@@ -35,7 +35,7 @@ function renderAlertNode(alertNode, writer, context) {
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderBlockQuoteNode(blockQuoteNode, writer, context) {
+export function renderBlockQuoteNode(blockQuoteNode, writer, context) {
 	writer.ensureNewLine();
 
 	writer.writeLine("{{% callout note %}}");
@@ -54,7 +54,7 @@ function renderBlockQuoteNode(blockQuoteNode, writer, context) {
  * @param {DocumentWriter} writer - Writer context object into which the document contents will be written.
  * @param {MarkdownRenderContext} context - See {@link @fluid-tools/api-markdown-documenter#MarkdownRenderContext}.
  */
-function renderTableNode(tableNode, writer, context) {
+export function renderTableNode(tableNode, writer, context) {
 	const childContext = {
 		...context,
 		insideTable: true,
@@ -86,9 +86,3 @@ function renderTableNode(tableNode, writer, context) {
 	writer.decreaseIndent();
 	writer.writeLine("</table>");
 }
-
-module.exports = {
-	renderAlertNode,
-	renderBlockQuoteNode,
-	renderTableNode,
-};

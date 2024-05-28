@@ -7,5 +7,5 @@ export {
 	InventoryListContainerRuntimeFactory,
 	inventoryListId,
 	migrationToolId,
-} from "./containerCode";
-export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList";
+} from "./containerCode.js";
+export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList.js";

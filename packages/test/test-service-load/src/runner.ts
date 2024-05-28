@@ -3,22 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import commander from "commander";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
+	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
-	DriverEndpoint,
-} from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+} from "@fluid-internal/test-driver-definitions";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import commander from "commander";
+
+import {
+	FaultInjectionDocumentServiceFactory,
+	FaultInjectionError,
+} from "./faultInjectionDriver.js";
+import {
+	generateConfigurations,
+	generateLoaderOptions,
+	generateRuntimeOptions,
+	getOptionOverride,
+} from "./optionsMatrix.js";
+import { IRunConfig, ITestRunner } from "./testConfigFile.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -27,15 +40,7 @@ import {
 	getProfile,
 	globalConfigurations,
 	safeExit,
-} from "./utils";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import {
-	generateConfigurations,
-	generateLoaderOptions,
-	generateRuntimeOptions,
-	getOptionOverride,
-} from "./optionsMatrix";
-import { IRunConfig, ITestRunner } from "./testConfigFile";
+} from "./utils.js";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
@@ -105,17 +110,13 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger(
-		{
-			runId,
-			driverType: driver,
-			driverEndpointName: endpoint,
-			profile: profileName,
-			workLoadPath,
-		},
-		// Turn on verbose events for ALL stress test runs.
-		random.pick([LogLevel.verbose]),
-	);
+	const logger = await createLogger({
+		runId,
+		driverType: driver,
+		driverEndpointName: endpoint,
+		profile: profileName,
+		workLoadPath,
+	});
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -269,16 +270,31 @@ async function runnerProcess(
 			assert(test.ITestRunner !== undefined, "Test runner doesn't implement ITestRunner");
 
 			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
+			container.once("closed", (err) => {
+				// everywhere else we gracefully handle container close/dispose,
+				// and don't create more errors which add noise to the stress
+				// results. This should be the only place we on error close/dispose ,
+				// as this place catches closes with no error specified, which
+				// should never happen. if it does happen, the container is
+				// closing without error which could be a test or product bug,
+				// but we don't want silent failures.
+				container?.dispose(
+					err === undefined
+						? new GenericError("Container closed unexpectedly without error")
+						: undefined,
+				);
+			});
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
+				if (testRuntime !== undefined) {
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						runConfig.logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 			}
 
 			// Control fault injection period through config.
@@ -341,8 +357,11 @@ async function runnerProcess(
 				await delay(delayMs);
 			}
 		} finally {
-			if (container?.closed === false) {
-				container?.close();
+			if (container?.disposed === false) {
+				// this should be the only place we dispose the container
+				// to avoid the closed handler above. This is also
+				// the only expected, non-fault, closure.
+				container?.dispose();
 			}
 			metricsCleanup();
 		}
@@ -448,7 +467,9 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
+								container.close(
+									new FaultInjectionError("scheduleContainerClose", false),
+								);
 							}
 						}, leaveTime);
 					}

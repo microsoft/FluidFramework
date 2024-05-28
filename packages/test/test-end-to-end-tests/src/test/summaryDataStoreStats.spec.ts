@@ -4,39 +4,37 @@
  */
 
 import assert from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import {
-	IContainerRuntimeOptions,
-	SummaryCollection,
-	ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _runtime() {
+			return this.runtime;
+		}
+
+		public get _context() {
+			return this.context;
+		}
 	}
 
-	public get _runtime() {
-		return this.runtime;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-}
-
-describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 
@@ -54,16 +52,10 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => 
 		summaryOptions: {
 			summaryConfigOverrides,
 		},
-		gcOptions: {
-			gcAllowed: true,
-		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 
@@ -107,7 +99,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (logger): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory, { logger });
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		mockLogger = new MockLogger();
 		// Create a Container for the first client.

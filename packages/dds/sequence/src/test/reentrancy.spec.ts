@@ -4,15 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
+	LocalReferenceCollection,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "@fluidframework/merge-tree/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import {
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { SharedString } from "../sharedString";
-import { resetReentrancyLogCounter } from "../sequence";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { resetReentrancyLogCounter } from "../sequence.js";
+import { SharedString } from "../sequenceFactory.js";
 
 describe("SharedString op-reentrancy", () => {
 	/**
@@ -38,8 +45,9 @@ describe("SharedString op-reentrancy", () => {
 		describe(`with preventSharedStringReentrancy: ${sharedStringPreventReentrancy}`, () => {
 			it("throws on local re-entrancy", () => {
 				const factory = SharedString.getFactory();
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				dataStoreRuntime1.local = true;
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+				});
 				dataStoreRuntime1.options = { sharedStringPreventReentrancy };
 
 				const sharedString = factory.create(dataStoreRuntime1, "A");
@@ -70,12 +78,11 @@ describe("SharedString op-reentrancy", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				logger: logger.toTelemetryLogger(),
 			});
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false };
 			sharedString = factory.create(dataStoreRuntime1, "A");
 
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -84,9 +91,8 @@ describe("SharedString op-reentrancy", () => {
 
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false };
-			dataStoreRuntime2.local = false;
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			dataStoreRuntime2.setAttachState(AttachState.Attached);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -112,6 +118,76 @@ describe("SharedString op-reentrancy", () => {
 			for (const str of [sharedString, sharedString2]) {
 				assert.equal(str.getText(), "abce");
 			}
+		});
+
+		it("is empty after deleting reference pos in reentrant callback", () => {
+			sharedString.insertText(0, "abcX");
+			const { segment } = sharedString.getContainingSegment(0);
+			assert(segment);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.SlideOnRemove, undefined);
+
+			assert.notEqual(localRef.getSegment(), undefined);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					const { segment: segment2 } = target.getContainingSegment(0);
+					assert(segment2);
+					assert.equal(segment, segment2);
+					assert(segment2.localRefs);
+					segment2.localRefs.removeLocalRef(localRef);
+				}
+			});
+
+			sharedString.insertText(4, "e");
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.walkSegments((seg) => {
+				if (!seg.localRefs) {
+					return false;
+				}
+				assert.equal(seg.localRefs.empty, true);
+				assert.equal(seg.localRefs.has(localRef), false);
+				return false;
+			});
+
+			assert.equal(localRef.getSegment(), undefined);
+			assert.equal(localRef.getOffset(), 0);
+		});
+
+		it("is empty after deleting segment containing simple reference pos in reentrant callback", () => {
+			sharedString.insertText(0, "abcX");
+			const { segment } = sharedString.getContainingSegment(0);
+			assert(segment);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
+
+			assert.notEqual(localRef.getSegment(), undefined);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
+				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
+					target.removeRange(0, 4);
+				}
+			});
+
+			sharedString.insertText(4, "e");
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.walkSegments((seg) => {
+				if (!seg.localRefs) {
+					return false;
+				}
+				assert.equal(seg.localRefs.empty, true);
+				assert.equal(seg.localRefs.has(localRef), false);
+				return false;
+			});
+
+			assert.equal(localRef.getSegment(), undefined);
+			assert.equal(localRef.getOffset(), 0);
 		});
 
 		it("logs reentrant events a fixed number of times", () => {

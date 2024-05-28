@@ -2,23 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import {
-	createLoader,
 	ITestFluidObject,
-	timeoutPromise,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;
@@ -31,9 +31,9 @@ const sharedPoints = [3, 4, 5];
 const ddsKey = "string";
 
 const testConfigs = generatePairwiseOptions({
-	containerAttachPoint: [ContainerCreated, DatastoreCreated, ...sharedPoints],
+	containerAttachPoint: [ContainerCreated, DatastoreCreated, DdsCreated, ...sharedPoints],
 	containerSaveAfterAttach: [true, false],
-	datastoreAttachPoint: [DatastoreCreated, ...sharedPoints],
+	datastoreAttachPoint: [DatastoreCreated, DdsCreated, ...sharedPoints],
 	datastoreSaveAfterAttach: [true, false],
 	ddsAttachPoint: [DdsCreated, ...sharedPoints],
 	ddsSaveAfterAttach: [true, false],
@@ -67,16 +67,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// act code block
 			{
-				const initLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const initLoader = provider.makeTestLoader(containerConfig);
 
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -141,9 +132,14 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						);
 					}
 				};
-				if (testConfig.ddsAttachPoint === 2) {
-					// point 2 - at dds create
+				if (testConfig.ddsAttachPoint === DdsCreated) {
 					await attachDds();
+				}
+				if (testConfig.datastoreAttachPoint === DdsCreated) {
+					await attachDatastore();
+				}
+				if (testConfig.containerAttachPoint === DdsCreated) {
+					await attachContainer();
 				}
 
 				// all objects, container, datastore, and dds are created, at least in memory at this point
@@ -184,16 +180,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// validation code block
 			{
-				const validationLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const validationLoader = provider.makeTestLoader(containerConfig);
 				const validationContainer = await validationLoader.resolve({
 					url: await provider.driver.createContainerUrl(
 						provider.documentId,

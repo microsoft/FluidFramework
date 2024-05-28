@@ -3,33 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DataCorruptionError,
-	ITelemetryLoggerExt,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	IGarbageCollectionData,
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
 	IExperimentalIncrementalSummaryContext,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IGarbageCollectionData,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
-import { addBlobToSummary } from "@fluidframework/runtime-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ChannelStorageService } from "./channelStorageService";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+	ISummarizeResult,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	DataCorruptionError,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { ChannelStorageService } from "./channelStorageService.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
@@ -78,6 +82,7 @@ export function createChannelServiceEndpoints(
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
+	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
@@ -88,6 +93,7 @@ export function createChannelServiceEndpoints(
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
 		addedGCOutboundReferenceFn,
+		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
 
@@ -97,6 +103,7 @@ export function createChannelServiceEndpoints(
 	};
 }
 
+/** Used to get the channel's summary for the DDS or DataStore attach op */
 export function summarizeChannel(
 	channel: IChannel,
 	fullTree: boolean = false,

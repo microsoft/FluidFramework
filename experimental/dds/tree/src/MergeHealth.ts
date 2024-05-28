@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { assertNotUndefined, fail } from './Common';
-import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities';
-import { SharedTreeEvent } from './EventTypes';
-import { EditStatus } from './persisted-types';
-import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree';
-import { TransactionInternal } from './TransactionInternal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+
+import { assertNotUndefined, fail } from './Common.js';
+import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { EditStatus } from './persisted-types/index.js';
 
 /**
  * Logs generic telemetry for failed sequenced edits.

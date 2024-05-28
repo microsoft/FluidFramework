@@ -2,23 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
+
 import {
-	ApiDeclaredItem,
-	ApiItem,
+	type ApiDeclaredItem,
+	type ApiItem,
 	ApiItemKind,
-	ApiPackage,
-	Excerpt,
+	type ApiPackage,
+	type Excerpt,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import {
-	ApiMemberKind,
+	type ApiMemberKind,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getUnscopedPackageName,
 	releaseTagToString,
-} from "../../utilities";
+	getSafeFilenameForName,
+	getConciseSignature,
+} from "../../utilities/index.js";
 
 /**
  * List of item kinds for which separate documents should be generated.
@@ -200,17 +202,6 @@ export interface DocumentationSuiteOptions {
 	skipPackage?: (apiPackage: ApiPackage) => boolean;
 
 	/**
-	 * Optionally generates front-matter contents for an `ApiItem` serving as the root of a document
-	 * (see {@link DocumentBoundaries}).
-	 * Any generated contents will be included at the top of a generated document.
-	 *
-	 * @remarks Note: this is arbitrary text, and will not be escaped.
-	 *
-	 * @defaultValue No front matter is generated.
-	 */
-	frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
-
-	/**
 	 * Minimal release scope to include in generated documentation suite.
 	 * API members with matching or higher scope will be included, while lower scoped items will be omitted.
 	 *
@@ -278,14 +269,15 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "index";
-			case ApiItemKind.Package:
-				return Utilities.getSafeFilenameForName(
-					getUnscopedPackageName(apiItem as ApiPackage),
-				);
-			default:
+			}
+			case ApiItemKind.Package: {
+				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
+			}
+			default: {
 				return getQualifiedApiItemName(apiItem);
+			}
 		}
 	}
 
@@ -312,8 +304,9 @@ export namespace DefaultDocumentationSuiteOptions {
 				: "";
 
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "API Overview";
+			}
 			case ApiItemKind.CallSignature:
 			case ApiItemKind.ConstructSignature:
 			case ApiItemKind.IndexSignature: {
@@ -323,8 +316,9 @@ export namespace DefaultDocumentationSuiteOptions {
 				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 				return `${excerpt}${headingTextPostfix}`;
 			}
-			default:
+			default: {
 				return `${apiItem.displayName}${headingTextPostfix}`;
+			}
 		}
 	}
 
@@ -335,17 +329,20 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
-			case ApiItemKind.Model:
+			case ApiItemKind.Model: {
 				return "Packages";
+			}
 			case ApiItemKind.CallSignature:
 			case ApiItemKind.ConstructSignature:
-			case ApiItemKind.IndexSignature:
+			case ApiItemKind.IndexSignature: {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
 				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-			default:
-				return Utilities.getConciseSignature(apiItem);
+			}
+			default: {
+				return getConciseSignature(apiItem);
+			}
 		}
 	}
 
@@ -356,15 +353,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultSkipPackage(): boolean {
 		return false;
-	}
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.frontMatter}.
-	 *
-	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
-	 */
-	export function defaultFrontMatter(): undefined {
-		return undefined;
 	}
 }
 
@@ -381,7 +369,6 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
-	frontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatter,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
 

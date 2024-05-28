@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { BaseSegment, ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { PropertySet } from "./properties";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -20,7 +21,7 @@ import { PropertySet } from "./properties";
 export const TextSegmentGranularity = 256;
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONTextSegment extends IJSONSegment {
 	text: string;
@@ -31,6 +32,7 @@ export interface IJSONTextSegment extends IJSONSegment {
  */
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";
+	public readonly type = TextSegment.type;
 
 	public static is(segment: ISegment): segment is TextSegment {
 		return segment.type === TextSegment.type;
@@ -54,17 +56,15 @@ export class TextSegment extends BaseSegment {
 		return undefined;
 	}
 
-	public readonly type = TextSegment.type;
-
 	constructor(public text: string) {
 		super();
 		this.cachedLength = text.length;
 	}
 
-	public toJSONObject() {
+	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
-		return this.properties ? { text: this.text, props: this.properties } : this.text;
+		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
 	public clone(start = 0, end?: number) {
@@ -91,22 +91,6 @@ export class TextSegment extends BaseSegment {
 		assert(TextSegment.is(segment), 0x447 /* can only append text segment */);
 		super.append(segment);
 		this.text += segment.text;
-	}
-
-	// TODO: retain removed text for undo
-	// returns true if entire string removed
-	public removeRange(start: number, end: number) {
-		let remnantString = "";
-		const len = this.text.length;
-		if (start > 0) {
-			remnantString += this.text.substring(0, start);
-		}
-		if (end < len) {
-			remnantString += this.text.substring(end);
-		}
-		this.text = remnantString;
-		this.cachedLength = remnantString.length;
-		return remnantString.length === 0;
 	}
 
 	protected createSplitSegmentAt(pos: number) {

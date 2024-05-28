@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/driver-definitions";
 
-import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces";
-import { ContainerStateChangeKind } from "./Container";
-import { type ContainerStateMetadata } from "./ContainerMetadata";
+import { type AudienceClientMetadata } from "./AudienceMetadata.js";
+import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
+import { ContainerStateChangeKind } from "./Container.js";
+import { type ContainerStateMetadata } from "./ContainerMetadata.js";
+import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
+import { type IContainerDevtools } from "./IContainerDevtools.js";
+import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
-	defaultVisualizers,
-	defaultEditors,
 	type FluidObjectNode,
 	type RootHandleNode,
 	type SharedObjectEdit,
-} from "./data-visualization";
-import { type IContainerDevtools } from "./IContainerDevtools";
-import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs";
+	defaultEditors,
+	defaultVisualizers,
+} from "./data-visualization/index.js";
 import {
 	AudienceSummary,
 	CloseContainer,
@@ -35,20 +38,18 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
-	postMessagesToWindow,
 	RootDataVisualizations,
-} from "./messaging";
-import { type AudienceClientMetadata } from "./AudienceMetadata";
-import { type ContainerDevtoolsFeatureFlags } from "./Features";
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
+} from "./messaging/index.js";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
- * @internal
+ * @alpha
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
@@ -534,13 +535,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
-			"containerDataVisualization": this.containerData !== undefined,
-
-			// Required for backwards compatibility with the extension through v0.0.3
-			"container-data": this.containerData !== undefined,
+			containerDataVisualization: this.containerData !== undefined,
 
 			// TODO: When ready to enable feature set it to this.containerData !== undefined
-			"containerDataEditing": false,
+			containerDataEditing: false,
 		};
 	}
 

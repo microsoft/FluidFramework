@@ -4,35 +4,29 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { strict as assert } from "assert";
+
+import { strict as assert } from "node:assert";
+
+import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import { type IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+
+import { Attributor } from "../attributor.js";
+import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
+import { makeLZ4Encoder } from "../lz4Encoder.js";
 import {
-	AttachState,
-	IContainerContext,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
-import {
-	MockLogger,
-	sessionStorageConfigProvider,
-	ConfigTypes,
-} from "@fluidframework/telemetry-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import {
+	type IProvideRuntimeAttributor,
 	createRuntimeAttributor,
 	enableOnNewFileKey,
-	IProvideRuntimeAttributor,
 	mixinAttributor,
-} from "../mixinAttributor";
-import { Attributor } from "../attributor";
-import { makeLZ4Encoder } from "../lz4Encoder";
-import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
-import { makeMockAudience } from "./utils";
+} from "../mixinAttributor.js";
+
+import { makeMockAudience, makeMockQuorum } from "./utils.js";
 
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
@@ -45,7 +39,7 @@ describe("mixinAttributor", () => {
 			audience: makeMockAudience([clientId]),
 			attachState: AttachState.Attached,
 			deltaManager: new MockDeltaManager(),
-			quorum: new MockQuorumClients(),
+			quorum: makeMockQuorum([clientId]),
 			taggedLogger: new MockLogger(),
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (error?: ICriticalContainerError): void => {
@@ -55,7 +49,7 @@ describe("mixinAttributor", () => {
 				}
 			},
 			options: {},
-			updateDirtyContainerState: (_dirty: boolean) => {},
+			updateDirtyContainerState: (_dirty: boolean): void => {},
 			getLoadedFromVersion: () => undefined,
 		};
 	};
@@ -68,7 +62,8 @@ describe("mixinAttributor", () => {
 	let injectedSettings: Record<string, ConfigTypes> = {};
 
 	before(() => {
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
+		sessionStorageConfigProvider.value.getRawConfig = (name): ConfigTypes =>
+			injectedSettings[name];
 	});
 
 	afterEach(() => {
@@ -79,7 +74,7 @@ describe("mixinAttributor", () => {
 		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
-	const setEnableOnNew = (val: boolean) => {
+	const setEnableOnNew = (val: boolean): void => {
 		injectedSettings[enableOnNewFileKey] = val;
 	};
 
@@ -177,7 +172,7 @@ describe("mixinAttributor", () => {
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience!.getMember(op.clientId!)!.user },
+				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
 			],
 		]);
 
@@ -222,7 +217,7 @@ describe("mixinAttributor", () => {
 		const testCases: { getContext: () => IContainerContext; testName: string }[] = [
 			{
 				testName: "for existing documents that had no attributor",
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					setEnableOnNew(true);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {
@@ -235,13 +230,13 @@ describe("mixinAttributor", () => {
 			},
 			{
 				testName: `for new documents with ${enableOnNewFileKey} unset`,
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					return getMockContext() as IContainerContext;
 				},
 			},
 			{
 				testName: `for new documents with ${enableOnNewFileKey} set to false`,
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					setEnableOnNew(false);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {

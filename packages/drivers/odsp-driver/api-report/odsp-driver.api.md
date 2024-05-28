@@ -4,39 +4,37 @@
 
 ```ts
 
-import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
-import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
-import { IdentityType } from '@fluidframework/odsp-driver-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IEntry } from '@fluidframework/odsp-driver-definitions';
-import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
-import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
-import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { IPrefetchSnapshotContents as IPrefetchSnapshotContents_2 } from './odspCache';
-import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
+import { DriverPreCheckInfo } from '@fluidframework/driver-definitions/internal';
+import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
+import { IdentityType } from '@fluidframework/odsp-driver-definitions/internal';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IFileEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions/internal';
+import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions/internal';
+import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
+import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
-import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions/internal';
+import { ISnapshot } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions/internal';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
+import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions/internal';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
-import { PromiseCache } from '@fluidframework/core-utils';
-import { RateLimiter } from '@fluidframework/driver-utils';
-import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
-import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions/internal';
+import { PromiseCache } from '@fluidframework/core-utils/internal';
+import { RateLimiter } from '@fluidframework/driver-utils/internal';
+import { TokenFetcher } from '@fluidframework/odsp-driver-definitions/internal';
 
-// @internal
+// @alpha
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
 // @internal (undocumented)
@@ -45,16 +43,16 @@ export enum ClpCompliantAppHeader {
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
 
-// @internal (undocumented)
+// @alpha
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
-// @internal
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ShareLinkTypes | ISharingLinkKind): IRequest;
+// @alpha
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind): IRequest;
 
-// @internal
+// @alpha
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
-// @internal
+// @alpha
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
 // @alpha
@@ -67,7 +65,7 @@ export class EpochTracker implements IPersistedFileCache {
     fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
     fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
     fetchArray(url: string, fetchOptions: {
-        [index: string]: any;
+        [index: string]: RequestInit;
     }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
     // (undocumented)
     protected readonly fileEntry: IFileEntry;
@@ -97,13 +95,10 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 // @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";
 
-// @internal
-export function getApiRoot(origin: string): string;
-
-// @internal (undocumented)
+// @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
-// @internal
+// @alpha
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
 // @internal
@@ -147,7 +142,7 @@ export interface IOdspResponse<T> {
     // (undocumented)
     headers: Map<string, string>;
     // (undocumented)
-    propsToLog: ITelemetryProperties;
+    propsToLog: ITelemetryBaseProperties;
 }
 
 // @alpha
@@ -161,7 +156,7 @@ export interface IPersistedFileCache {
 }
 
 // @alpha (undocumented)
-export interface IPrefetchSnapshotContents extends ISnapshotContents {
+export interface IPrefetchSnapshotContents extends ISnapshot {
     // (undocumented)
     fluidEpoch: string;
     // (undocumented)
@@ -174,7 +169,7 @@ export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISnapshotContents {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -187,30 +182,27 @@ export interface ISnapshotContents {
 }
 
 // @internal
-export interface ISnapshotContentsWithProps extends ISnapshotContents {
+export interface ISnapshotContentsWithProps extends ISnapshot {
     // (undocumented)
     telemetryProps: Record<string, number>;
 }
 
 // @internal
-export function isOdcOrigin(origin: string): boolean;
+export function isOdcUrl(url: URL): boolean;
 
 // @internal
-export function isOdcUrl(url: string | URL): boolean;
-
-// @internal (undocumented)
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
-export function isSpoUrl(url: string): boolean;
+export function isSpoUrl(url: URL): boolean;
 
-// @internal
+// @alpha
 export const locatorQueryParamName = "nav";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @alpha
@@ -226,14 +218,14 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents_2>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 // @internal @deprecated (undocumented)
@@ -245,22 +237,20 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
-    // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 
-// @internal
+// @alpha
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined, getContext?: ((resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>) | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
+    appendLocatorParams(baseUrl: string, resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
-    // @deprecated
-    static createNavParam(locator: OdspFluidDataStoreLocator): string;
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
     appName?: string;
@@ -277,10 +267,10 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 // @internal
 export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLoggerExt): ISnapshotContentsWithProps;
 
-// @internal
+// @alpha
 export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
-// @internal
+// @alpha
 export interface ShareLinkFetcherProps {
     identityType: IdentityType;
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
@@ -292,7 +282,7 @@ export enum SharingLinkHeader {
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
 }
 
-// @internal
+// @alpha
 export enum SnapshotFormatSupportType {
     // (undocumented)
     Binary = 1,
@@ -302,7 +292,7 @@ export enum SnapshotFormatSupportType {
     JsonAndBinary = 2
 }
 
-// @internal
+// @alpha
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;
 
 // (No @packageDocumentation comment for this package)

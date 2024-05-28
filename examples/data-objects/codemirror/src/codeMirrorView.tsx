@@ -4,25 +4,25 @@
  */
 
 import {
-	MergeTreeDeltaType,
-	TextSegment,
-	ReferenceType,
-	reservedTileLabelsKey,
 	Marker,
-} from "@fluidframework/merge-tree";
-import { getTextAndMarkers, SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
+	MergeTreeDeltaType,
+	ReferenceType,
+	SequenceDeltaEvent,
+	SharedString,
+	TextSegment,
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
-/* eslint-disable @typescript-eslint/no-require-imports,
-import/no-internal-modules, import/no-unassigned-import */
-require("codemirror/lib/codemirror.css");
-require("./style.css");
-require("codemirror/mode/javascript/javascript.js");
-/* eslint-enable @typescript-eslint/no-require-imports,
-import/no-internal-modules, import/no-unassigned-import */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/javascript/javascript.js";
+import "./style.css";
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
-import { CodeMirrorPresenceManager, PresenceManager } from "./presence";
+import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
 
 class CodeMirrorView {
 	private textArea: HTMLTextAreaElement | undefined;
@@ -46,7 +46,7 @@ class CodeMirrorView {
 		// https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
 
 		if (this.sequenceDeltaCb) {
-			this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
+			this.text.off("sequenceDelta", this.sequenceDeltaCb);
 			this.sequenceDeltaCb = undefined;
 		}
 

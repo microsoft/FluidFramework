@@ -3,13 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { IErrorEvent } from "@fluidframework/core-interfaces";
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
+import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops
@@ -18,7 +26,7 @@ import { IErrorEvent } from "@fluidframework/core-interfaces";
 /**
  * @internal
  */
-export type SignalListener = (clientId: string, local: boolean, payload: Jsonable) => void;
+export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
@@ -26,7 +34,7 @@ export type SignalListener = (clientId: string, local: boolean, payload: Jsonabl
  * provides explicit methods around signal requests to other connected clients.
  * @internal
  */
-export interface ISignaler {
+export interface ISignaler extends IEventProvider<IErrorEvent> {
 	/**
 	 * Adds a listener for the specified signal.  It behaves in the same way as EventEmitter's `on`
 	 * method regarding multiple registrations, callback order, etc.
@@ -34,7 +42,7 @@ export interface ISignaler {
 	 * @param listener - The callback signal handler to add
 	 * @returns This ISignaler
 	 */
-	onSignal(signalName: string, listener: SignalListener): ISignaler;
+	onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
 	/**
 	 * Remove a listener for the specified signal.  It behaves in the same way as EventEmitter's
 	 * `off` method regarding multiple registrations, removal order, etc.
@@ -42,13 +50,13 @@ export interface ISignaler {
 	 * @param listener - The callback signal handler to remove
 	 * @returns This ISignaler
 	 */
-	offSignal(signalName: string, listener: SignalListener): ISignaler;
+	offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
 	/**
 	 * Send a signal with payload to its connected listeners.
 	 * @param signalName - The name of the signal
 	 * @param payload - The data to send with the signal
 	 */
-	submitSignal(signalName: string, payload?: Jsonable);
+	submitSignal<T>(signalName: string, payload?: Jsonable<T>);
 }
 
 /**
@@ -59,7 +67,7 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: Jsonable<unknown>): void;
 }
 
 /**
@@ -110,19 +118,19 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 
 	// ISignaler methods
 
-	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.on(signalerSignalName, listener);
 		return this;
 	}
 
-	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		this.emitter.off(signalerSignalName, listener);
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
@@ -131,14 +139,10 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 }
 
 /**
- * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
- * users to get an ISignaler without a custom DO.
- * @internal
+ * DataObject implementation of ISignaler for fluid-static plug-and-play.
+ * Allows fluid-static users to get an ISignaler without a custom DataObject.
  */
-export class Signaler
-	extends DataObject<{ Events: IErrorEvent }>
-	implements EventEmitter, ISignaler
-{
+class SignalerClass extends DataObject<{ Events: IErrorEvent }> implements EventEmitter, ISignaler {
 	private _signaler: InternalSignaler | undefined;
 	private get signaler(): InternalSignaler {
 		assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
@@ -147,7 +151,12 @@ export class Signaler
 
 	public static readonly Name = "@fluid-example/signaler";
 
-	public static readonly factory = new DataObjectFactory(Signaler.Name, Signaler, [], {});
+	public static readonly factory = new DataObjectFactory(
+		SignalerClass.Name,
+		SignalerClass,
+		[],
+		{},
+	);
 
 	protected async hasInitialized() {
 		this._signaler = new InternalSignaler(this.runtime);
@@ -158,17 +167,30 @@ export class Signaler
 
 	// ISignaler methods  Note these are all passthroughs
 
-	public onSignal(signalName: string, listener: SignalListener): ISignaler {
+	public onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.onSignal(signalName, listener);
 		return this;
 	}
 
-	public offSignal(signalName: string, listener: SignalListener): ISignaler {
+	public offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler {
 		this.signaler.offSignal(signalName, listener);
 		return this;
 	}
 
-	public submitSignal(signalName: string, payload?: Jsonable) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
 		this.signaler.submitSignal(signalName, payload);
 	}
 }
+
+/**
+ * Implementation of ISignaler for declarative API.
+ * @privateRemarks
+ * `factory` part of the type is included here to satisfy the usage in `@fluid-example/presence-tracker`, which is accessing encapsulated API surfaces from this.
+ * If this eventually gets promoted to `@public` and/or part of `fluid-framework`, that part of the type should be left as `@internal` or `@alpha`.
+ * @internal
+ */
+export const Signaler: {
+	readonly factory: IFluidDataStoreFactory & {
+		readonly registryEntry: NamedFluidDataStoreRegistryEntry;
+	};
+} & SharedObjectKind<ISignaler> = createDataObjectKind(SignalerClass);

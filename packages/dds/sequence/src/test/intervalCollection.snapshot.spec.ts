@@ -2,42 +2,51 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringClass, type ISharedString } from "../sharedString.js";
+
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
 	id: string,
 	summary: ISummaryTree,
-): Promise<SharedString> {
+): Promise<ISharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	dataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+		containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
-	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime,
+		id,
+		SharedStringFactory.Attributes,
+	);
 	await sharedString.load(services);
-	await sharedString.loaded;
 	return sharedString;
 }
 
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number }> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = false;
+	dataStoreRuntime.setAttachState(AttachState.Attached);
 	dataStoreRuntime.options = {
 		intervalStickinessEnabled: true,
 	};
@@ -46,7 +55,11 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const sharedString = new SharedString(dataStoreRuntime, "", SharedStringFactory.Attributes);
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime,
+		"",
+		SharedStringFactory.Attributes,
+	);
 	sharedString.initializeLocal();
 	sharedString.connect(services);
 	sharedString.insertText(0, "ABCDEF");
@@ -135,8 +148,8 @@ describe("IntervalCollection snapshotting", () => {
 	});
 
 	describe("enables operations on reload", () => {
-		let sharedString: SharedString;
-		let sharedString2: SharedString;
+		let sharedString: ISharedString;
+		let sharedString2: ISharedString;
 		let collection: IIntervalCollection<SequenceInterval>;
 		let collection2: IIntervalCollection<SequenceInterval>;
 		let id: string;
@@ -154,7 +167,7 @@ describe("IntervalCollection snapshotting", () => {
 		});
 
 		it("reloaded interval can be changed", async () => {
-			collection.change(id, 1, 3);
+			collection.change(id, { start: 1, end: 3 });
 			assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 			containerRuntimeFactory.processAllMessages();

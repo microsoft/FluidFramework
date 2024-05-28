@@ -105,6 +105,7 @@ export interface ICreateBlobParams {
 	content: string;
 
 	// The encoding of the content.
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 

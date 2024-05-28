@@ -4,31 +4,33 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/internal/test/gc";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
+import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedMap } from "@fluidframework/map";
-import { gcTreeKey, gcBlobPrefix } from "@fluidframework/runtime-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import { IGarbageCollectionState } from "@fluidframework/container-runtime/dist/gc/index.js";
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
  * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
-describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let mainDataStore: ITestDataObject;
@@ -38,7 +40,7 @@ describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider) =
 		return summarizeNow(summarizer);
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;

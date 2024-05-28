@@ -4,36 +4,41 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	ITree,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+
 import { Trace } from "@fluid-internal/client-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { Client } from "../client";
-import { List } from "../collections";
-import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
-import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
-import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
-import { PropertySet } from "../properties";
-import { SnapshotLegacy } from "../snapshotlegacy";
-import { TextSegment } from "../textSegment";
-import { getSlideToSegoff, MergeTree } from "../mergeTree";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
-import { MergeTreeRevertibleDriver } from "../revertibles";
-import { ReferencePosition } from "..";
-import { TestSerializer } from "./testSerializer";
-import { nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ITree, MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+import { Client } from "../client.js";
+import { DoublyLinkedList } from "../collections/index.js";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { MergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import {
+	IJSONSegment,
+	IMarkerDef,
+	IMergeTreeOp,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
+import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
+import { TextSegment } from "../textSegment.js";
+
+import { TestSerializer } from "./testSerializer.js";
+import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
 export function specToSegment(spec: IJSONSegment): ISegment {
 	const maybeText = TextSegment.fromJSONObject(spec);
@@ -121,11 +126,10 @@ export class TestClient extends Client {
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
 		const { catchupOpsP } = await client2.load(
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			{
 				logger: client2.logger,
 				clientId: newLongClientId,
-			} as IFluidDataStoreRuntime,
+			} as any as IFluidDataStoreRuntime,
 			storage,
 			TestClient.serializer,
 		);
@@ -135,12 +139,22 @@ export class TestClient extends Client {
 
 	public readonly mergeTree: MergeTree;
 
-	public readonly checkQ: List<string> = new List<string>();
-	protected readonly q: List<ISequencedDocumentMessage> = new List<ISequencedDocumentMessage>();
+	public readonly checkQ: DoublyLinkedList<string> = new DoublyLinkedList<string>();
+	protected readonly q: DoublyLinkedList<ISequencedDocumentMessage> =
+		new DoublyLinkedList<ISequencedDocumentMessage>();
 
 	private readonly textHelper: MergeTreeTextHelper;
-	constructor(options?: PropertySet, specToSeg = specToSegment) {
-		super(specToSeg, createChildLogger({ namespace: "fluid:testClient" }), options);
+	constructor(
+		options?: IMergeTreeOptions & PropertySet,
+		specToSeg = specToSegment,
+		getMinInFlightRefSeq: () => number | undefined = () => undefined,
+	) {
+		super(
+			specToSeg,
+			createChildLogger({ namespace: "fluid:testClient" }),
+			options,
+			getMinInFlightRefSeq,
+		);
 		this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
 		this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
@@ -149,16 +163,13 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			d.deltaSegments.forEach((s) => {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: IMergeLeaf = s.segment;
+					const seg: ISegmentLeaf = s.segment;
 					assert.notEqual(seg.parent, undefined);
 				}
 			});
 		});
 	}
 
-	/**
-	 * @internal
-	 */
 	public obliterateRange({
 		start,
 		end,
@@ -176,11 +187,7 @@ export class TestClient extends Client {
 		overwrite?: boolean;
 		opArgs: IMergeTreeDeltaOpArgs;
 	}): void {
-		this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
-	}
-
-	public obliterateRangeLocal(start: number, end: number) {
-		return this.removeRangeLocal(start, end);
+		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
 	}
 
 	public getText(start?: number, end?: number): string {
@@ -260,12 +267,7 @@ export class TestClient extends Client {
 		longClientId: string,
 	) {
 		this.applyMsg(
-			this.makeOpMessage(
-				createAnnotateRangeOp(start, end, props, undefined),
-				seq,
-				refSeq,
-				longClientId,
-			),
+			this.makeOpMessage(createAnnotateRangeOp(start, end, props), seq, refSeq, longClientId),
 		);
 	}
 
@@ -428,7 +430,10 @@ export class TestClient extends Client {
 			removedSeq !== undefined &&
 			(removedSeq !== UnassignedSequenceNumber ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-
+		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegment) =>
+			movedSeq !== undefined &&
+			(movedSeq !== UnassignedSequenceNumber ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -445,15 +450,16 @@ export class TestClient extends Client {
 			//
 			// Note that all ACKed / remote ops are applied and we only need concern ourself with
 			// determining if locally pending ops fall before/after the given 'localSeq'.
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
+			if (isInsertedInView(seg) && !isRemovedFromView(seg) && !isMovedFromView(seg)) {
 				segmentPosition += seg.cachedLength;
 			}
 
 			return true;
 		});
 
-		assert(
-			fasterComputedPosition === segmentPosition,
+		assert.equal(
+			fasterComputedPosition,
+			segmentPosition,
 			"Expected fast-path computation to match result from walk all segments",
 		);
 		return segmentPosition;
@@ -524,7 +530,8 @@ export class TestClient extends Client {
 		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment(startPos);
-		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const segWithParent: ISegmentLeaf = segment!;
 
 		if (Marker.is(segWithParent)) {
 			if (refHasTileLabel(segWithParent, markerLabel)) {
@@ -571,7 +578,7 @@ export const createRevertDriver = (client: TestClient): TestClientRevertibleDriv
 			this.submitOpCallback?.(op);
 		},
 		annotateRange(start: number, end: number, props: PropertySet) {
-			const op = client.annotateRangeLocal(start, end, props, undefined);
+			const op = client.annotateRangeLocal(start, end, props);
 			this.submitOpCallback?.(op);
 		},
 		insertFromSpec(pos: number, spec: IJSONSegment) {
@@ -595,7 +602,7 @@ export interface MergeTreeStats {
 }
 
 export function getStats(tree: MergeTree) {
-	const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
+	const nodeGetStats = (block: MergeBlock): MergeTreeStats => {
 		const stats: MergeTreeStats = {
 			maxHeight: 0,
 			nodeCount: 0,

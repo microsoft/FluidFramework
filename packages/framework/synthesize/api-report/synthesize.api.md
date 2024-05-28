@@ -17,7 +17,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<s
     [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 };
 
-// @internal
+// @alpha
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
     has(type: string, excludeParents?: boolean): boolean;
@@ -28,7 +28,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     unregister(type: keyof TMap): void;
 }
 
-// @internal
+// @alpha
 export type FluidObjectProvider<T> = NonNullable<T> | Promise<NonNullable<T>> | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>) | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
 
 // @alpha

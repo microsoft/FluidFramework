@@ -4,10 +4,10 @@
 
 ```ts
 
-// @internal
+// @alpha
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @internal
+// @alpha
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
 // @alpha
@@ -29,8 +29,8 @@ export class Heap<T> {
     // (undocumented)
     comp: IComparer<T>;
     count(): number;
-    get(): T;
-    peek(): IHeapNode<T>;
+    get(): T | undefined;
+    peek(): IHeapNode<T> | undefined;
     remove(node: IHeapNode<T>): void;
     update(node: IHeapNode<T>): void;
 }
@@ -60,6 +60,12 @@ export interface IPromiseTimerResult {
     timerResult: "timeout" | "cancel";
 }
 
+// @internal
+export const isObject: (value: unknown) => value is object;
+
+// @internal
+export const isPromiseLike: (value: unknown) => value is PromiseLike<unknown>;
+
 // @internal (undocumented)
 export interface ITimer {
     clear(): void;
@@ -74,7 +80,7 @@ export class Lazy<T> {
     get value(): T;
 }
 
-// @internal
+// @alpha
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -132,7 +138,7 @@ export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTime
 
 // @internal
 export class Timer implements ITimer {
-    constructor(defaultTimeout: number, defaultHandler: () => void, getCurrentTick?: () => number);
+    constructor(defaultTimeout: number, defaultHandler: () => void, exceptionHandler?: ((error: unknown) => void) | undefined);
     clear(): void;
     get hasTimer(): boolean;
     restart(ms?: number, handler?: () => void): void;

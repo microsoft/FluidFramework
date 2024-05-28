@@ -14,7 +14,10 @@ import {
 	ILumberFormatter,
 } from "./resources";
 import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
-import { SanitizationLumberFormatter } from "./sanitizationLumberFormatter";
+import {
+	BaseSanitizationLumberFormatter,
+	SanitizationLumberFormatter,
+} from "./sanitizationLumberFormatter";
 
 /**
  * @internal
@@ -60,11 +63,11 @@ export class Lumberjack {
 			}
 			return getGlobalLumberjackInstance() as Lumberjack;
 		}
-		if (!Lumberjack._instance) {
-			Lumberjack._instance = new Lumberjack();
+		if (!this._instance) {
+			this._instance = new Lumberjack();
 		}
 
-		return Lumberjack._instance;
+		return this._instance;
 	}
 
 	protected static set options(options: Partial<ILumberjackOptions> | undefined) {
@@ -170,6 +173,8 @@ export class Lumberjack {
 		const lumberFormatters: ILumberFormatter[] = [];
 		if (this._options.enableSanitization) {
 			lumberFormatters.push(new SanitizationLumberFormatter());
+		} else {
+			lumberFormatters.push(new BaseSanitizationLumberFormatter());
 		}
 		this._formatters = lumberFormatters;
 
@@ -187,6 +192,7 @@ export class Lumberjack {
 			this._engineList,
 			this._schemaValidators,
 			properties,
+			this._formatters,
 		);
 	}
 

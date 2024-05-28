@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "../common/npmPackage";
 import { readFileAsync } from "../common/utils";
 
@@ -146,10 +147,7 @@ export class NpmDepChecker {
 				const typePkgName = dep.substring("@types/".length);
 				const altName = this.altTyping.get(typePkgName);
 				if (
-					!(
-						this.isInDependencies(typePkgName) ||
-						(altName && this.isInDependencies(altName))
-					)
+					!(this.isInDependencies(typePkgName) || (altName && this.isInDependencies(altName)))
 				) {
 					console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
 					if (apply) {

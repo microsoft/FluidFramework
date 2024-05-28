@@ -10,15 +10,23 @@
  * @packageDocumentation
  */
 
-export {
+export type {
 	IChannel,
 	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
-} from "./channel";
-export { IFluidDataStoreRuntime, IFluidDataStoreRuntimeEvents } from "./dataStoreRuntime";
-export { Jsonable } from "./jsonable";
-export { Serializable } from "./serializable";
-export { IChannelAttributes } from "./storage";
+} from "./channel.js";
+export type {
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
+	IDeltaManagerErased,
+} from "./dataStoreRuntime.js";
+export type {
+	Jsonable,
+	JsonableTypeWith,
+	Internal_InterfaceOfJsonableTypesWith,
+} from "./jsonable.js";
+export type { Serializable } from "./serializable.js";
+export type { IChannelAttributes } from "./storage.js";

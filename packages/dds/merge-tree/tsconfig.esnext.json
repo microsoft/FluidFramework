@@ -1,6 +1,0 @@
-{
-	"extends": ["./tsconfig.json", "../../../common/build/build-common/tsconfig.esm.json"],
-	"compilerOptions": {
-		"outDir": "./lib",
-	},
-}

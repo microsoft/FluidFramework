@@ -18,23 +18,17 @@
  * @packageDocumentation
  */
 
+export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
 export {
-	DataObjectFactory,
-	IRootDataObjectFactory,
-	PureDataObjectFactory,
-} from "./data-object-factories";
-export { DataObject, DataObjectTypes, IDataObjectProps, PureDataObject } from "./data-objects";
+	DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+	PureDataObject,
+	createDataObjectKind,
+} from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
-} from "./container-runtime-factories";
-export {
-	defaultFluidObjectRequestHandler,
-	defaultRouteRequestHandler,
-	mountableViewRequestHandler,
-} from "./request-handlers";
-export {
-	getDefaultObjectFromContainer,
-	getObjectFromContainer,
-	getObjectWithIdFromContainer,
-} from "./utils";
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+} from "./container-runtime-factories/index.js";

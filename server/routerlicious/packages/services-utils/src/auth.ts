@@ -157,22 +157,13 @@ function getTokenFromRequest(request: Request): string {
 	}
 	const tokenRegex = /Basic (.+)/;
 	const tokenMatch = tokenRegex.exec(authorizationHeader);
-	if (!tokenMatch || !tokenMatch[1]) {
+	if (!tokenMatch?.[1]) {
 		throw new NetworkError(403, "Missing access token.");
 	}
 	return tokenMatch[1];
 }
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
-
-// Used to sanitize Redis error object and remove sensitive information
-function sanitizeError(error: any) {
-	if (error?.command?.args) {
-		error.command.args = ["REDACTED"];
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return error;
-}
 
 /**
  * @internal
@@ -219,11 +210,7 @@ export async function verifyToken(
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const cachedToken = await options.tokenCache.get(token).catch((error) => {
-				Lumberjack.error(
-					"Unable to retrieve cached JWT",
-					logProperties,
-					sanitizeError(error),
-				);
+				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
 				return false;
 			});
 
@@ -249,7 +236,7 @@ export async function verifyToken(
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
 				)
 				.catch((error) => {
-					Lumberjack.error("Unable to cache JWT", logProperties, sanitizeError(error));
+					Lumberjack.error("Unable to cache JWT", logProperties, error);
 				});
 		}
 	} catch (error) {
@@ -291,6 +278,7 @@ export function verifyStorageToken(
 		);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, res, next) => {
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
@@ -320,6 +308,7 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),
@@ -343,6 +332,7 @@ export function verifyStorageToken(
  * @internal
  */
 export function validateTokenScopeClaims(expectedScopes: string): RequestHandler {
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		let token: string = "";
 		try {
@@ -357,7 +347,13 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		const claims = decode(token) as ITokenClaims;
+		let claims: ITokenClaims;
+		try {
+			claims = decode(token) as ITokenClaims;
+		} catch {
+			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
+		}
+
 		if (!claims) {
 			return respondWithNetworkError(
 				response,

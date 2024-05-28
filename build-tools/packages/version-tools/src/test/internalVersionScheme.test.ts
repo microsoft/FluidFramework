@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "chai";
 import * as semver from "semver";
 
@@ -23,7 +24,13 @@ describe("internalScheme", () => {
 			assert.isTrue(result);
 		});
 
-		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal)", () => {
+		it("2.0.0-rc.1.0.0 is internal scheme", () => {
+			const input = `2.0.0-rc.1.0.0`;
+			const result = isInternalVersionScheme(input);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal/rc)", () => {
 			const input = `2.0.0-alpha.1.0.0`;
 			const result = isInternalVersionScheme(input);
 			assert.isFalse(result);
@@ -31,6 +38,12 @@ describe("internalScheme", () => {
 
 		it("2.0.0-alpha.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
 			const input = `2.0.0-alpha.1.0.0`;
+			const result = isInternalVersionScheme(input, false, true);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-rc.1.0.0 is valid when allowAnyPrereleaseId is true", () => {
+			const input = `2.0.0-rc.1.0.0`;
 			const result = isInternalVersionScheme(input, false, true);
 			assert.isTrue(result);
 		});
@@ -53,9 +66,15 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
+		it("2.0.0-rc.1.1.0.0 is not internal scheme (prerelease must only have four items)", () => {
+			const input = `2.0.0-rc.1.1.0.0`;
+			const result = isInternalVersionScheme(input);
+			assert.isFalse(result);
+		});
+
 		it("validateVersionScheme: 2.0.0-dev.1.1.0.123 is valid when allowAnyPrereleaseId is true", () => {
 			const input = `2.0.0-dev.1.1.0.123`;
-			const result = validateVersionScheme(input, true, "dev");
+			const result = validateVersionScheme(input, true, ["dev"]);
 			assert.isTrue(result);
 		});
 
@@ -67,6 +86,12 @@ describe("internalScheme", () => {
 
 		it("2.0.0-internal.1.1.0 is a valid internal version when prerelease is true", () => {
 			const input = `2.0.0-internal.1.1.0`;
+			const result = isInternalVersionScheme(input, true);
+			assert.isTrue(result);
+		});
+
+		it("2.0.0-rc.1.1.0 is a valid internal version when prerelease is true", () => {
+			const input = `2.0.0-rc.1.1.0`;
 			const result = isInternalVersionScheme(input, true);
 			assert.isTrue(result);
 		});
@@ -101,50 +126,37 @@ describe("internalScheme", () => {
 			assert.isFalse(result);
 		});
 
-		it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
-			const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
-			assert.isTrue(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
-			const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is not internal", () => {
-			const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
-			const input = `>=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input, true));
-		});
-
-		it(">=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0 is internal when allowAnyPrereleaseId is true", () => {
-			const input = `>=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0`;
-			assert.isTrue(isInternalVersionRange(input, true));
-		});
-
-		it(">=1.0.0 <2.0.0 is not internal", () => {
-			const input = `>=1.0.0 <2.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it(">=2.0.0-2.2.1 <2.0.0-3.0.0 is not internal", () => {
-			const input = `>=2.0.0-2.2.1 <2.0.0-3.0.0`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it("^2.0.0-internal.2.2.1 is not internal", () => {
-			const input = `^2.0.0-internal.2.2.1`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
-
-		it("~2.0.0-internal.2.2.1 is not internal", () => {
-			const input = `~2.0.0-internal.2.2.1`;
-			assert.isFalse(isInternalVersionRange(input));
-		});
+		const cases: [
+			isInternal: boolean,
+			input: string,
+			allowAnyPrereleaseId: boolean | undefined,
+		][] = [
+			[true, ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0", undefined],
+			[true, ">=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0", undefined],
+			[false, ">=2.0.0-internal.1.0.0 <2.0.0-rc.1.1.0", undefined],
+			[
+				true,
+				">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=2.0.0-rc.1.0.0 <2.0.0-rc.1.1.0",
+				undefined,
+			],
+			[false, ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 || >=1.0.0 <2.0.0", undefined],
+			[true, ">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0", undefined],
+			[false, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", undefined],
+			[true, ">=2.0.0-alpha.2.2.1 <2.0.0-alpha.3.0.0", true],
+			[true, ">=2.0.0-dev.2.2.1.12345 <2.0.0-dev.3.0.0", true],
+			[false, ">=1.0.0 <2.0.0", undefined],
+			[false, ">=2.0.0-2.2.1 <2.0.0-3.0.0", undefined],
+			[false, "^2.0.0-internal.2.2.1", undefined],
+			[false, "~2.0.0-internal.2.2.1", undefined],
+		];
+		for (const [isInternal, input, allowAnyPrereleaseId] of cases) {
+			it(`${input} is ${isInternal ? "" : "not "}internal${
+				allowAnyPrereleaseId ? " when allowAnyPrereleaseId is true" : ""
+			}`, () =>
+				(isInternal ? assert.isTrue : assert.isFalse)(
+					isInternalVersionRange(input, allowAnyPrereleaseId),
+				));
+		}
 	});
 
 	describe("converting FROM internal scheme", () => {
@@ -305,9 +317,30 @@ describe("internalScheme", () => {
 	});
 
 	describe("detect constraint types", () => {
+		it("exact constraint", () => {
+			const input = `2.0.0-internal.1.0.23`;
+			const expected = `exact`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
 		it("patch constraint", () => {
 			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.1.0`;
 			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it("narrow patch constraint", () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.0.25`;
+			const expected = `patch`;
+			const result = detectInternalVersionConstraintType(input);
+			assert.strictEqual(result, expected);
+		});
+
+		it('exact "patch" constraint', () => {
+			const input = `>=2.0.0-internal.1.0.23 <2.0.0-internal.1.0.24`;
+			const expected = `exact`;
 			const result = detectInternalVersionConstraintType(input);
 			assert.strictEqual(result, expected);
 		});

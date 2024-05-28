@@ -1,9 +1,7 @@
-/api-report
-/dist
-/lib
-_api-extractor-temp/
-nyc/
-oclif.manifest.json
-README.md
-# Generated type-tests
-**/*.generated.ts
+# Ignore all files...
+**/*.*
+*/*
+
+# ...except JSON files not handled by biome
+!tsconfig.json
+!package.json

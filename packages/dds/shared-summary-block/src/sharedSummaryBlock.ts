@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	Jsonable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	Jsonable,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+} from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
-import { ISharedSummaryBlock } from "./interfaces";
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+
+import { ISharedSummaryBlock } from "./interfaces.js";
 
 const snapshotFileName = "header";
 
@@ -28,39 +27,19 @@ const snapshotFileName = "header";
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 interface ISharedSummaryBlockDataSerializable {
-	[key: string]: Jsonable;
+	[key: string]: Jsonable<unknown>;
 }
 
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
- * @internal
+ * @alpha
  */
-export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
-	/**
-	 * Create a new shared summary block
-	 *
-	 * @param runtime - data store runtime the new shared summary block belongs to.
-	 * @param id - optional name of the shared summary block.
-	 * @returns newly created shared summary block (but not attached yet).
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SharedSummaryBlockFactory.Type) as SharedSummaryBlock;
-	}
-
-	/**
-	 * Get a factory for SharedSummaryBlock to register with the data store.
-	 *
-	 * @returns a factory that creates and loads SharedSummaryBlock.
-	 */
-	public static getFactory(): IChannelFactory {
-		return new SharedSummaryBlockFactory();
-	}
-
+export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {
 	/**
 	 * The data held by this object.
 	 */
-	private readonly data = new Map<string, Jsonable>();
+	private readonly data = new Map<string, Jsonable<unknown>>();
 
 	/**
 	 * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will

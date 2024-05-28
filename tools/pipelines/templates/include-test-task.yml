@@ -5,20 +5,24 @@
 
 parameters:
 - name: taskTestStep
-  type: string 
+  type: string
 
 - name: buildDirectory
-  type: string 
+  type: string
 
-steps: 
+- name: testCoverage
+  type: boolean
+  default: false
+
+steps:
 # Test - With coverage
-- ${{ if and(eq(variables['testCoverage'], true), startsWith(parameters.taskTestStep, 'ci:test')) }}:
+- ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test')) }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskTestStep }}:coverage
     inputs:
       command: 'custom'
       workingDir: ${{ parameters.buildDirectory }}
-      customCommand: 'run ${{ taskTestStep }}:coverage'
+      customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
       # Tests can use this environment variable to behave differently when running from a test branch

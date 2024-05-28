@@ -4,13 +4,13 @@
 
 ```ts
 
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export class DefaultTokenProvider implements ITokenProvider {
@@ -39,19 +39,24 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
 }
 
 // @alpha
+export interface IRouterliciousResolvedUrl extends IResolvedUrl {
+    createAsEphemeral?: boolean;
+    routerliciousResolvedUrl: true;
+}
+
+// @public
 export interface ITokenProvider {
     documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface ITokenResponse {
     fromCache?: boolean;
     jwt: string;
@@ -65,16 +70,8 @@ export interface ITokenService {
 // @internal
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
-}
-
-// @internal @deprecated
-export enum RouterliciousErrorType {
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    sslCertError = "sslCertError"
 }
 
 // @internal

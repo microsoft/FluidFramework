@@ -4,15 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "../sparsematrix";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	SparseMatrix,
+	SparseMatrixClass,
+	SparseMatrixFactory,
+	SparseMatrixItem,
+} from "../sparsematrix.js";
 
 describe("SparseMatrix", () => {
 	const extract = (matrix: SparseMatrix, numCols: number) => {
@@ -32,8 +39,10 @@ describe("SparseMatrix", () => {
 		let matrix: SparseMatrix;
 
 		before(async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			matrix = new SparseMatrix(dataStoreRuntime, "matrix", SparseMatrixFactory.Attributes);
+			dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SparseMatrix.getFactory()],
+			});
+			matrix = SparseMatrix.create(dataStoreRuntime);
 		});
 
 		const expect = async (expected: readonly (readonly any[])[]) => {
@@ -133,7 +142,7 @@ describe("SparseMatrix", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix1 = new SparseMatrix(
+				matrix1 = new SparseMatrixClass(
 					dataStoreRuntime1,
 					"matrix1",
 					SparseMatrixFactory.Attributes,
@@ -148,7 +157,7 @@ describe("SparseMatrix", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix2 = new SparseMatrix(
+				matrix2 = new SparseMatrixClass(
 					dataStoreRuntime2,
 					"matrix2",
 					SparseMatrixFactory.Attributes,
@@ -282,7 +291,7 @@ describe("SparseMatrix", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix1 = new SparseMatrix(
+				matrix1 = new SparseMatrixClass(
 					dataStoreRuntime1,
 					"matrix",
 					SparseMatrixFactory.Attributes,
@@ -299,7 +308,7 @@ describe("SparseMatrix", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix2 = new SparseMatrix(
+				matrix2 = new SparseMatrixClass(
 					dataStoreRuntime2,
 					"matrix2",
 					SparseMatrixFactory.Attributes,

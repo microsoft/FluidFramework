@@ -7,13 +7,17 @@ import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
-} from "@fluidframework/datastore-definitions";
-import { ConsensusQueue } from "./consensusQueue";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { ConsensusQueueClass } from "./consensusQueue.js";
+import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue
+ *
+ * @internal
  */
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
 	public static Type = "https://graph.microsoft.com/types/consensus-queue";
@@ -41,14 +45,26 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection> {
-		const collection = new ConsensusQueue(id, runtime, attributes);
+		const collection = new ConsensusQueueClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
-		const collection = new ConsensusQueue(id, document, this.attributes);
+		const collection = new ConsensusQueueClass(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
 	}
 }
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

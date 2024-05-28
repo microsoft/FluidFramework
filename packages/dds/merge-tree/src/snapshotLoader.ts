@@ -3,37 +3,39 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import {
-	createChildLogger,
-	ITelemetryLoggerExt,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { Client } from "./client";
-import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks";
-import { SnapshotV1 } from "./snapshotV1";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	UsageError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+// eslint-disable-next-line import/no-deprecated
+import { Client } from "./client.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import { IJSONSegmentWithMergeInfo, MergeTreeChunkV1, hasMergeInfo } from "./snapshotChunks.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
 		logger: ITelemetryLoggerExt,
@@ -82,7 +84,7 @@ export class SnapshotLoader {
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
-			return this.loadCatchupOps(services.readBlob(blobs[0]));
+			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
 		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
@@ -107,6 +109,12 @@ export class SnapshotLoader {
 			if (spec.removedSeq !== undefined) {
 				seg.removedSeq = spec.removedSeq;
 			}
+			if (spec.movedSeq !== undefined) {
+				seg.movedSeq = spec.movedSeq;
+			}
+			if (spec.movedSeqs !== undefined) {
+				seg.movedSeqs = spec.movedSeqs;
+			}
 			// this format had a bug where it didn't store all the overlap clients
 			// this is for back compat, so we change the singular id to an array
 			// this will only cause problems if there is an overlapping delete
@@ -119,6 +127,11 @@ export class SnapshotLoader {
 			}
 			if (spec.removedClientIds !== undefined) {
 				seg.removedClientIds = spec.removedClientIds?.map((sid) =>
+					this.client.getOrAddShortClientId(sid),
+				);
+			}
+			if (spec.movedClientIds !== undefined) {
+				seg.movedClientIds = spec.movedClientIds?.map((sid) =>
 					this.client.getOrAddShortClientId(sid),
 				);
 			}
@@ -289,12 +302,15 @@ export class SnapshotLoader {
 	/**
 	 * If loading from a snapshot, get the catchup messages.
 	 * @param rawMessages - The messages in original encoding
-	 * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
+	 * @returns The decoded messages with parsed+hydrated handles.  Matches the format that will be passed in
 	 * SharedObject.processCore.
 	 */
 	private async loadCatchupOps(
 		rawMessages: Promise<ArrayBufferLike>,
+		serializer: IFluidSerializer,
 	): Promise<ISequencedDocumentMessage[]> {
-		return JSON.parse(bufferToString(await rawMessages, "utf8")) as ISequencedDocumentMessage[];
+		return serializer.parse(
+			bufferToString(await rawMessages, "utf8"),
+		) as ISequencedDocumentMessage[];
 	}
 }

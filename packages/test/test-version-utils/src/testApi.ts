@@ -4,34 +4,52 @@
  */
 
 // Driver API
+import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
-import { Loader } from "@fluidframework/container-loader";
-
-// ContainerRuntime API
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-
-// Data Runtime API
-import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
-import { Ink } from "@fluidframework/ink";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString } from "@fluidframework/sequence";
-import { TestFluidObjectFactory } from "@fluidframework/test-utils";
-
-// ContainerRuntime and Data Runtime API
+import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
 import {
+	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+} from "@fluidframework/aqueduct/internal";
+import * as cell from "@fluidframework/cell/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 
+// ContainerRuntime API
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+
+// Data Runtime API
+import * as counter from "@fluidframework/counter/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import * as datastore from "@fluidframework/datastore/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import * as map from "@fluidframework/map/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import * as matrix from "@fluidframework/matrix/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import * as orderedCollection from "@fluidframework/ordered-collection/internal";
+import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import * as registerCollection from "@fluidframework/register-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import * as sequence from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+
+// ContainerRuntime and Data Runtime API
 import * as semver from "semver";
+
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+// Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
+// For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
+export type _fakeUsage = ISharedObjectKind<unknown>;
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
@@ -44,12 +62,12 @@ import {
 // List of package that needs to be install for legacy versions
 const packageList = [
 	"@fluidframework/aqueduct",
+	"@fluidframework/datastore",
 	"@fluidframework/test-utils",
 	"@fluidframework/container-loader",
 	"@fluidframework/container-runtime",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
-	"@fluidframework/ink",
 	"@fluidframework/map",
 	"@fluidframework/matrix",
 	"@fluidframework/ordered-collection",
@@ -58,6 +76,7 @@ const packageList = [
 	"@fluidframework/local-driver",
 	"@fluidframework/odsp-driver",
 	"@fluidframework/routerlicious-driver",
+	"@fluidframework/agent-scheduler",
 ];
 
 /**
@@ -112,7 +131,12 @@ export const LoaderApi = {
  */
 export const ContainerRuntimeApi = {
 	version: pkgVersion,
+	BaseContainerRuntimeFactory,
 	ContainerRuntime,
+	/**
+	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
+	 * to construct safely across versions.
+	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
@@ -123,11 +147,12 @@ export const DataRuntimeApi = {
 	version: pkgVersion,
 	DataObject,
 	DataObjectFactory,
+	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
+	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
 		SharedCell,
 		SharedCounter,
-		Ink,
 		SharedDirectory,
 		SharedMap,
 		SharedMatrix,
@@ -135,6 +160,27 @@ export const DataRuntimeApi = {
 		ConsensusRegisterCollection,
 		SharedString,
 		SparseMatrix,
+	},
+	/**
+	 * Contains all APIs from imported DDS packages.
+	 * Keep in mind that regardless of the DataRuntime version,
+	 * the APIs will be typechecked as if they were from the latest version.
+	 *
+	 * @remarks - Using these APIs in an e2e test puts additional burden on the test author and anyone making
+	 * changes to those APIs in the future, since this will necessitate back-compat logic in the tests.
+	 * Using non-stable APIs in e2e tests for that reason is discouraged.
+	 */
+	packages: {
+		cell,
+		counter,
+		datastore,
+		map,
+		matrix,
+		orderedCollection,
+		registerCollection,
+		sequence,
+		sequenceDeprecated,
+		agentScheduler,
 	},
 };
 
@@ -167,13 +213,22 @@ async function loadContainerRuntime(
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
+		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
+			loadPackage(modulePath, "@fluidframework/container-runtime"),
+			loadPackage(modulePath, "@fluidframework/aqueduct"),
+		]);
+
+		/* eslint-disable @typescript-eslint/no-shadow */
+		const { ContainerRuntime } = containerRuntimePkg;
+		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
+			aqueductPkg;
+		/* eslint-enable @typescript-eslint/no-shadow */
+
 		const containerRuntime = {
 			version,
-			ContainerRuntime: (await loadPackage(modulePath, "@fluidframework/container-runtime"))
-				.ContainerRuntime,
-			ContainerRuntimeFactoryWithDefaultDataStore: (
-				await loadPackage(modulePath, "@fluidframework/aqueduct")
-			).ContainerRuntimeFactoryWithDefaultDataStore,
+			BaseContainerRuntimeFactory,
+			ContainerRuntime,
+			ContainerRuntimeFactoryWithDefaultDataStore,
 		};
 		containerRuntimeCache.set(version, containerRuntime);
 	}
@@ -189,25 +244,26 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const [
 			{ DataObject, DataObjectFactory },
+			datastore,
 			{ TestFluidObjectFactory },
-			{ SharedMap, SharedDirectory },
-			{ SharedString },
-			{ SharedCell },
-			{ SharedCounter },
-			{ SharedMatrix },
-			{ Ink },
-			{ ConsensusQueue },
-			{ ConsensusRegisterCollection },
-			{ SparseMatrix },
+			map,
+			sequence,
+			cell,
+			counter,
+			matrix,
+			orderedCollection,
+			registerCollection,
+			sequenceDeprecated,
+			agentScheduler,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
+			loadPackage(modulePath, "@fluidframework/datastore"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
 			loadPackage(modulePath, "@fluidframework/map"),
 			loadPackage(modulePath, "@fluidframework/sequence"),
 			loadPackage(modulePath, "@fluidframework/cell"),
 			loadPackage(modulePath, "@fluidframework/counter"),
 			loadPackage(modulePath, "@fluidframework/matrix"),
-			loadPackage(modulePath, "@fluidframework/ink"),
 			loadPackage(modulePath, "@fluidframework/ordered-collection"),
 			loadPackage(modulePath, "@fluidframework/register-collection"),
 			loadPackage(
@@ -216,18 +272,28 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 					? "@fluid-experimental/sequence-deprecated"
 					: "@fluidframework/sequence",
 			),
+			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);
+		const { FluidDataStoreRuntime } = datastore;
+		const { SharedCell } = cell;
+		const { SharedCounter } = counter;
+		const { SharedDirectory, SharedMap } = map;
+		const { SharedMatrix } = matrix;
+		const { ConsensusQueue } = orderedCollection;
+		const { ConsensusRegisterCollection } = registerCollection;
+		const { SharedString } = sequence;
+		const { SparseMatrix } = sequenceDeprecated;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const dataRuntime = {
 			version,
 			DataObject,
 			DataObjectFactory,
+			FluidDataStoreRuntime,
 			TestFluidObjectFactory,
 			dds: {
 				SharedCell,
 				SharedCounter,
-				Ink,
 				SharedDirectory,
 				SharedMap,
 				SharedMatrix,
@@ -235,6 +301,18 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				ConsensusRegisterCollection,
 				SharedString,
 				SparseMatrix,
+			},
+			packages: {
+				datastore,
+				map,
+				sequence,
+				cell,
+				counter,
+				matrix,
+				orderedCollection,
+				registerCollection,
+				sequenceDeprecated,
+				agentScheduler,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);
@@ -311,13 +389,7 @@ function throwNotFound(layer: string, version: string): never {
  *
  * @internal
  */
-export function getLoaderApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof LoaderApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getLoaderApi(requestedStr: string): typeof LoaderApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return LoaderApi;
@@ -339,12 +411,7 @@ export function getLoaderApi(
  *
  * @internal
  */
-export function getContainerRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -363,12 +430,7 @@ export function getContainerRuntimeApi(
  *
  * @internal
  */
-export function getDataRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DataRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -387,13 +449,7 @@ export function getDataRuntimeApi(
  *
  * @internal
  */
-export function getDriverApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DriverApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getDriverApi(requestedStr: string): typeof DriverApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DriverApi;

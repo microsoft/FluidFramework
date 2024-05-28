@@ -4,15 +4,15 @@
 
 ```ts
 
-import { Deferred } from '@fluidframework/core-utils';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
-import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
-import { ReplayController } from '@fluidframework/replay-driver';
+import { Deferred } from '@fluidframework/core-utils/internal';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
+import { IVersion } from '@fluidframework/driver-definitions/internal';
+import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver/internal';
+import { ReplayController } from '@fluidframework/replay-driver/internal';
 
 // @internal (undocumented)
 export class DebuggerUI {
@@ -123,8 +123,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected static readonly WindowClosedSeq = -1;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export namespace FluidDebugger {
+    // @internal
     export function createFromService(documentService: IDocumentService): Promise<IDocumentService>;
     // (undocumented)
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;

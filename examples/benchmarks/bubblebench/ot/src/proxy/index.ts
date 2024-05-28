@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { observe } from "./tree";
+export { observe } from "./tree.js";

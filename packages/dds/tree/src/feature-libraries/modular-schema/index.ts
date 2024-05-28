@@ -1,0 +1,73 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	allowsRepoSuperset,
+	allowsTreeSchemaIdentifierSuperset,
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+} from "./comparison.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
+export {
+	addCrossFieldQuery,
+	CrossFieldManager,
+	CrossFieldMap,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+	setInCrossFieldMap,
+} from "./crossFieldQueries.js";
+export {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+	EncodedModularChangeset,
+	EncodedNodeChangeset,
+} from "./modularChangeFormat.js";
+export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+export {
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	FieldEditor,
+	getIntention,
+	NodeChangeComposer,
+	NodeChangeInverter,
+	NodeChangeRebaser,
+	NodeChangePruner,
+	referenceFreeFieldChangeRebaser,
+	RebaseRevisionMetadata,
+	RelevantRemovedRootsFromChild,
+	ToDelta,
+	NodeExistenceState,
+	FieldChangeEncodingContext,
+} from "./fieldChangeHandler.js";
+export {
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NodeExistsConstraint,
+	NodeId,
+} from "./modularChangeTypes.js";
+export {
+	convertGenericChange,
+	genericChangeHandler,
+	genericFieldKind,
+} from "./genericFieldKind.js";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+export {
+	ModularChangeFamily,
+	ModularEditBuilder,
+	EditDescription,
+	GlobalEditDescription,
+	FieldEditDescription,
+	rebaseRevisionMetadataFromInfo,
+	intoDelta,
+	relevantRemovedRoots,
+	updateRefreshers,
+} from "./modularChangeFamily.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";

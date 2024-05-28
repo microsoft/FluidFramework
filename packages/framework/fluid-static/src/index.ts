@@ -10,31 +10,24 @@
  */
 
 export {
-	FluidContainer,
 	createFluidContainer,
-	IFluidContainer,
-	IFluidContainerEvents,
-	InitialObjects,
-} from "./fluidContainer";
-export {
-	DOProviderContainerRuntimeFactory,
-	createDOProviderContainerRuntimeFactory,
-} from "./rootDataObject";
-export { ServiceAudience, createServiceAudience } from "./serviceAudience";
-export {
+	type IFluidContainer,
+	type IFluidContainerEvents,
+	type InitialObjects,
+} from "./fluidContainer.js";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
+export { createServiceAudience } from "./serviceAudience.js";
+export type {
+	CompatibilityMode,
 	ContainerSchema,
-	DataObjectClass,
+	ContainerAttachProps,
 	IConnection,
 	IMember,
+	IProvideRootDataObject,
 	IRootDataObject,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
-	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
 	Myself,
-	SharedObjectClass,
-	IProvideRootDataObject,
-} from "./types";
+} from "./types.js";

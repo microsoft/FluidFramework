@@ -6,16 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+
 import {
+	TestOperation,
 	annotateRange,
 	applyMessages,
 	doOverRanges,
 	generateOperationMessagesForClients,
 	insertAtRefPos,
 	removeRange,
-	TestOperation,
-} from "./mergeTreeOperationRunner";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+} from "./mergeTreeOperationRunner.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
@@ -68,9 +69,9 @@ describe("MergeTree.Client", () => {
 				);
 				while (rollbackMsgs.length > 0) {
 					const msg = rollbackMsgs.pop();
-					// TODO: The type here is probably MergeTreeDeltaType but omitting GROUP, given the typing of the rollback method.
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					clients[msg![0].clientId as string].rollback?.(
+					// TODO: The type here is probably MergeTreeDeltaType but
+					// omitting GROUP, given the typing of the rollback method.
+					clients[msg![0].clientId!].rollback?.(
 						{ type: (msg![0].contents as { type?: unknown }).type },
 						msg![1],
 					);

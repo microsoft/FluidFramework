@@ -4,33 +4,42 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	ContainerMessageType,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { SharedString } from "@fluidframework/sequence";
 import {
-	createAndAttachContainer,
-	waitForContainerConnection,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+	createAndAttachContainer,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describe("Ops on Reconnect", () => {
 	const documentId = "opsOnReconnectTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const map1Id = "map1Key";
 	const map2Id = "map2Key";
 	const directoryId = "directoryKey";
@@ -46,8 +55,8 @@ describe("Ops on Reconnect", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container1: IContainer;
 	let container1Object1: ITestFluidObject & IFluidLoadable;
-	let container1Object1Map1: SharedMap;
-	let container1Object1Map2: SharedMap;
+	let container1Object1Map1: ISharedMap;
+	let container1Object1Map2: ISharedMap;
 	let container1Object1Directory: SharedDirectory;
 	let container1Object1String: SharedString;
 	let receivedValues: any[] = [];
@@ -62,15 +71,12 @@ describe("Ops on Reconnect", () => {
 
 		const defaultFactory = createDataStoreFactory("default", factory);
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
 			],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		});
 
@@ -101,8 +107,8 @@ describe("Ops on Reconnect", () => {
 		container1 = await createContainer(runtimeOptions);
 		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
-		container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
-		container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
+		container1Object1Map1 = await container1Object1.getSharedObject<ISharedMap>(map1Id);
+		container1Object1Map2 = await container1Object1.getSharedObject<ISharedMap>(map2Id);
 		container1Object1Directory =
 			await container1Object1.getSharedObject<SharedDirectory>(directoryId);
 		container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
@@ -302,9 +308,9 @@ describe("Ops on Reconnect", () => {
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
-				await container1Object2.getSharedObject<SharedMap>(map1Id);
+				await container1Object2.getSharedObject<ISharedMap>(map1Id);
 			const container1Object2Map2 =
-				await container1Object2.getSharedObject<SharedMap>(map2Id);
+				await container1Object2.getSharedObject<ISharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -319,7 +325,7 @@ describe("Ops on Reconnect", () => {
 
 			// Get dataObject2 in the second container.
 			const container2Object1Map1 =
-				await container2Object1.getSharedObject<SharedMap>(map1Id);
+				await container2Object1.getSharedObject<ISharedMap>(map1Id);
 			assert(container2Object1Map1);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
@@ -432,9 +438,9 @@ describe("Ops on Reconnect", () => {
 
 			// Get the maps in dataStore2.
 			const container1Object2Map1 =
-				await container1Object2.getSharedObject<SharedMap>(map1Id);
+				await container1Object2.getSharedObject<ISharedMap>(map1Id);
 			const container1Object2Map2 =
-				await container1Object2.getSharedObject<SharedMap>(map2Id);
+				await container1Object2.getSharedObject<ISharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -449,7 +455,7 @@ describe("Ops on Reconnect", () => {
 
 			// Get dataObject2 in the second container.
 			const container2Object1Map1 =
-				await container2Object1.getSharedObject<SharedMap>(map1Id);
+				await container2Object1.getSharedObject<ISharedMap>(map1Id);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
 					"dataStore2Key",

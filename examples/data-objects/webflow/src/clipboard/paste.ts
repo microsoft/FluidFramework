@@ -5,6 +5,7 @@
 
 import { FlowDocument } from "../document/index.js";
 import { TagName } from "../util/index.js";
+
 import { debug } from "./debug.js";
 
 const enum ClipboardFormat {
@@ -50,7 +51,6 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
 				const tag = el.tagName as TagName;
 				const emitTag = !ignoredTags.includes(tag);
 				if (emitTag) {
-					doc.insertTags([tag], _position);
 					doc.setAttr(
 						_position,
 						_position + 1,

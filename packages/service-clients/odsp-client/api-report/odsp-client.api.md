@@ -10,58 +10,59 @@ import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions/internal';
 
-// @alpha
+// @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha
+// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
 
-// @alpha (undocumented)
+// @beta (undocumented)
 export interface OdspClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: OdspConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @alpha
+// @beta
 export interface OdspConnectionConfig {
     driveId: string;
+    filePath: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }
 
-// @alpha
+// @beta
 export interface OdspContainerServices {
     audience: IOdspAudience;
 }
 
-// @alpha
+// @beta
 export interface OdspMember extends IMember {
     email: string;
+    id: string;
     name: string;
-    userId: string;
 }
 
-// (No @packageDocumentation comment for this package)
+export { TokenResponse }
 
 ```

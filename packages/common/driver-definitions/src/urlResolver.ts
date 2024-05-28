@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
+
+import type { IRequest } from "@fluidframework/core-interfaces";
 
 /**
  * @alpha
@@ -55,7 +56,7 @@ export interface IUrlResolver {
 /**
  * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
- * @internal
+ * @alpha
  */
 export interface DriverPreCheckInfo {
 	/**
@@ -72,7 +73,7 @@ export interface DriverPreCheckInfo {
 
 /**
  * Additional key in the loader request header
- * @internal
+ * @alpha
  */
 export enum DriverHeader {
 	// Key to indicate whether the request for summarizer
@@ -92,6 +93,11 @@ export interface IDriverHeader {
 }
 
 declare module "@fluidframework/core-interfaces" {
+	/**
+	 * Interface to represent headers to include in the container or data store load request.
+	 * For example, caller can use this to pass on various loader options in the container
+	 * load request.
+	 */
 	// eslint-disable-next-line @typescript-eslint/no-empty-interface
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }

@@ -13,6 +13,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -20,6 +21,7 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
+import shajs from "sha.js";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
@@ -50,9 +52,12 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: IClusterDrainingChecker,
+	enableClientIPLogging?: boolean,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
+	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -82,17 +87,70 @@ export function create(
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
-			jsonMorganLoggerMiddleware("alfred", (tokens, req, res) => {
-				const additionalProperties: Record<string, any> = {
-					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
-				};
-				if (req.body?.isEphemeralContainer !== undefined) {
-					additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
-				}
-				return additionalProperties;
-			}),
+			jsonMorganLoggerMiddleware(
+				"alfred",
+				(tokens, req, res) => {
+					const additionalProperties: Record<string, any> = {
+						[HttpProperties.driverVersion]: tokens.req(
+							req,
+							res,
+							DriverVersionHeaderName,
+						),
+						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+					};
+					if (enableClientIPLogging === true) {
+						const hashedClientIP = req.ip
+							? shajs("sha256").update(`${req.ip}`).digest("hex")
+							: "";
+						additionalProperties.hashedClientIPAddress = hashedClientIP;
+
+						const clientIPAddress = req.ip ? req.ip : "";
+						const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+						const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
+						if (
+							ipv4Regex.test(clientIPAddress) &&
+							clientIPAddress.split(".").every((part) => Number(part) <= 255)
+						) {
+							additionalProperties.clientIPType = "IPv4";
+						} else if (
+							ipv6Regex.test(clientIPAddress) &&
+							clientIPAddress.split(":").every((part) => part.length <= 4)
+						) {
+							additionalProperties.clientIPType = "IPv6";
+						} else {
+							additionalProperties.clientIPType = "";
+						}
+
+						const XAzureClientIP = "x-azure-clientip";
+						const hashedAzureClientIP = req.headers[XAzureClientIP]
+							? shajs("sha256").update(`${req.headers[XAzureClientIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureClientIPAddress = hashedAzureClientIP;
+
+						const XAzureSocketIP = "x-azure-socketip";
+						const hashedAzureSocketIP = req.headers[XAzureSocketIP]
+							? shajs("sha256").update(`${req.headers[XAzureSocketIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureSocketIPAddress = hashedAzureSocketIP;
+					}
+					if (req.body?.isEphemeralContainer !== undefined) {
+						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+					}
+					const customHeadersToLog = (config.get("customHeadersToLog") as string[]) ?? [];
+					if (customHeadersToLog) {
+						customHeadersToLog.forEach((header) => {
+							const lowerCaseHeader = header.toLowerCase();
+							if (req.headers[lowerCaseHeader]) {
+								additionalProperties[lowerCaseHeader] =
+									req.headers[lowerCaseHeader];
+							}
+						});
+					}
+					return additionalProperties;
+				},
+				enableLatencyMetric,
+			),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
@@ -120,6 +178,7 @@ export function create(
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		clusterDrainingChecker,
 	);
 
 	app.use(routes.api);

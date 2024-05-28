@@ -4,17 +4,54 @@
  */
 
 import * as crypto from "crypto";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+
+import { IRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	UnknownContainerRuntimeMessage,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay, assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDetachedTestRunner, IRunConfig, ITestRunner, TestRunResult } from "../../testConfigFile";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+
+import {
+	IDetachedTestRunner,
+	IRunConfig,
+	ITestRunner,
+	TestRunResult,
+} from "../../testConfigFile.js";
+
+export interface IRunConfig {
+	runId: number;
+	profileName: string;
+	testConfig: ILoadTestConfig;
+	verbose: boolean;
+	random: IRandom;
+	logger: ITelemetryLoggerExt;
+	loaderConfig?: ILoaderOptions;
+}
+
+export interface ILoadTest {
+	run(config: IRunConfig, reset: boolean): Promise<boolean>;
+	detached(
+		config: Omit<IRunConfig, "runId" | "profileName">,
+	): Promise<LoadTestDataStoreModel | undefined>;
+	getRuntime(): Promise<IFluidDataStoreRuntime | undefined>;
+}
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
@@ -31,52 +68,39 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 export class LoadTestDataStoreModel implements IDetachedTestRunner {
-	private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
-		if (!runtime.connected) {
-			await new Promise<void>((resolve, reject) => {
-				const connectListener = () => {
-					runtime.off("dispose", disposeListener);
+	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
+		await new Promise<void>((resolve) => {
+			const resolveIfConnectedOrDisposed = () => {
+				if (runtime.connected || runtime.disposed) {
+					runtime.off("dispose", resolveIfConnectedOrDisposed);
+					runtime.off("connected", resolveIfConnectedOrDisposed);
 					resolve();
-				};
-				const disposeListener = () => {
-					runtime.off("connected", connectListener);
-					reject(new Error("disposed"));
-				};
+				}
+			};
+			runtime.once("connected", resolveIfConnectedOrDisposed);
+			runtime.once("dispose", resolveIfConnectedOrDisposed);
+			resolveIfConnectedOrDisposed();
+		});
 
-				runtime.once("connected", connectListener);
-				runtime.once("dispose", disposeListener);
-			});
-		}
-		const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
+		const lastKnownSeq = deltaManager.lastKnownSeqNumber;
 		assert(
-			runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
+			deltaManager.lastSequenceNumber <= lastKnownSeq,
 			"lastKnownSeqNumber should never be below last processed sequence number",
 		);
-		if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
-			return;
-		}
 
-		return new Promise<void>((resolve, reject) => {
-			if (runtime.disposed) {
-				reject(new Error("disposed"));
-			}
-
-			const opListener = (op: ISequencedDocumentMessage) => {
-				if (lastKnownSeq <= op.sequenceNumber) {
-					runtime.deltaManager.off("op", opListener);
-					runtime.off("dispose", disposeListener);
+		await new Promise<void>((resolve) => {
+			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
+				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
+					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			const disposeListener = () => {
-				runtime.deltaManager.off("op", opListener);
-				runtime.off("dispose", disposeListener);
-				reject(new Error("disposed"));
-			};
-
-			runtime.deltaManager.on("op", opListener);
-			runtime.on("dispose", disposeListener);
+			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
+			resolveIfDisposedOrCaughtUp();
 		});
 	}
 
@@ -124,7 +148,10 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
 	) {
-		await LoadTestDataStoreModel.waitForCatchup(runtime);
+		await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
+		if (runtime.disposed) {
+			return;
+		}
 
 		if (!root.hasSubDirectory(config.runId.toString())) {
 			root.createSubDirectory(config.runId.toString());
@@ -171,7 +198,7 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 		);
 
 		if (reset) {
-			await LoadTestDataStoreModel.waitForCatchup(runtime);
+			await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
 			runDir.set(startTimeKey, Date.now());
 			runDir.delete(taskTimeKey);
 			counter.increment(-1 * counter.value);
@@ -179,6 +206,9 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 			if (partnerCounter !== undefined && partnerCounter.value > 0) {
 				partnerCounter.increment(-1 * partnerCounter.value);
 			}
+		}
+		if (runtime.disposed) {
+			return;
 		}
 		return dataModel;
 	}
@@ -214,11 +244,14 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 						this.taskStartTime = 0;
 					}
 				},
-				(error) =>
-					this.config.logger.sendErrorEvent(
-						{ eventName: "TaskManager_OnValueChanged" },
-						error,
-					),
+				(error) => {
+					if (!runtime.disposed) {
+						this.config.logger.sendErrorEvent(
+							{ eventName: "TaskManager_OnValueChanged" },
+							error,
+						);
+					}
+				},
 			);
 		};
 		this.taskManager.on("lost", changed);
@@ -265,8 +298,11 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 							);
 						}
 					},
-					(error) =>
-						this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
+					(error) => {
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error);
+						}
+					},
 				),
 			);
 		}
@@ -285,13 +321,15 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 					.get<IFluidHandle>(key)!
 					.get()
 					.catch((error) => {
-						this.config.logger.sendErrorEvent(
-							{
-								eventName: "ReadBlobFailed_OnValueChanged",
-								key,
-							},
-							error,
-						);
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent(
+								{
+									eventName: "ReadBlobFailed_OnValueChanged",
+									key,
+								},
+								error,
+							);
+						}
 					});
 			}
 		};
@@ -439,8 +477,10 @@ export class LoadTestDataStoreModel implements IDetachedTestRunner {
 			const now = Date.now();
 			const totalMin = (now - this.startTime) / 60000;
 			const taskMin = this.totalTaskTime / 60000;
-			const opCount = this.runtime.deltaManager.lastKnownSeqNumber;
-			const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
+
+			const deltaManager = toDeltaManagerInternal(this.runtime.deltaManager);
+			const opCount = deltaManager.lastKnownSeqNumber;
+			const opRate = Math.floor(deltaManager.lastKnownSeqNumber / totalMin);
 			const sendRate = Math.floor(this.counter.value / taskMin);
 			const disposed = this.runtime.disposed;
 			const blobsEnabled = (this.config.testConfig.totalBlobCount ?? 0) > 0;
@@ -508,6 +548,9 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 			this.runtime,
 			this.context.containerRuntime,
 		);
+		if (dataModel === undefined) {
+			return false;
+		}
 
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.
@@ -538,7 +581,9 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 	}
 
 	async getRuntime() {
-		return this.runtime;
+		if (!this.runtime.disposed) {
+			return this.runtime;
+		}
 	}
 
 	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
@@ -547,6 +592,11 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
+		const futureOpPeriod =
+			config.testConfig.futureOpRatePerMin === undefined ||
+			config.testConfig.futureOpRatePerMin <= 0
+				? undefined
+				: Math.floor(config.testConfig.opRatePerMin / config.testConfig.futureOpRatePerMin);
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
@@ -577,6 +627,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
 		let largeOpsSent = 0;
+		let futureOpsSent = 0;
 
 		const reportOpCount = (reason: string, error?: Error) => {
 			config.logger.sendTelemetryEvent(
@@ -587,6 +638,7 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
 					localLargeOpCount: largeOpsSent,
+					localFutureOpCount: futureOpsSent,
 				},
 				error,
 			);
@@ -621,6 +673,19 @@ export class LoadTestDataStore extends DataObject implements ITestRunner {
 				});
 
 				largeOpsSent++;
+			}
+
+			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
+				(
+					this.context.containerRuntime as unknown as {
+						submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					}
+				).submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed, even upon resubmit if that happens
+				});
+				futureOpsSent++;
 			}
 
 			dataModel.counter.increment(1);

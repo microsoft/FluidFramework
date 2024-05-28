@@ -1,0 +1,16 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"noImplicitAny": true,
+		"preserveConstEnums": true,
+		// Allow unused locals.
+		// This is needed for type assertions using the TypeCheck library.
+		// Linter is used to enforce "_" prefix for unused locals to prevent accidentally having unused locals.
+		"noUnusedLocals": false,
+		"noImplicitOverride": true,
+	},
+}

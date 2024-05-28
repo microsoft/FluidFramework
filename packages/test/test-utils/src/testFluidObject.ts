@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FluidObjectHandle,
 	FluidDataStoreRuntime,
+	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { SharedMap, ISharedMap } from "@fluidframework/map";
+} from "@fluidframework/datastore/internal";
 import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { ITestFluidObject } from "./interfaces";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+
+import { ITestFluidObject } from "./interfaces.js";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
@@ -33,13 +36,6 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	public get IFluidLoadable() {
-		return this;
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
 		return this;
 	}
 
@@ -79,19 +75,17 @@ export class TestFluidObject implements ITestFluidObject {
 		for (const key of this.factoryEntriesMap.keys()) {
 			if (key === id) {
 				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as unknown as T;
+				return handle?.get() as Promise<T>;
 			}
 		}
 
 		throw new Error(`Shared object with id ${id} not found.`);
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
-		// eslint-disable-next-line import/no-deprecated
-		return defaultFluidObjectRequestHandler(this, request);
+		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(request);
 	}
 
 	public async initialize(existing: boolean) {

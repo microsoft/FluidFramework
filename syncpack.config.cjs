@@ -124,9 +124,6 @@ module.exports = {
 				"vue",
 				"webpack-dev-server",
 
-				// Required due to use of "unstable" tree component APIs
-				"@fluentui/react-components",
-
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
 			],
@@ -157,6 +154,15 @@ module.exports = {
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+		// Workaround for this private internal package. Can be removed once our types wrapper around
+		// the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
+		{
+			label: "Ignore private workaround package @types/jest-environment-puppeteer",
+			dependencies: ["@types/jest-environment-puppeteer"],
+			dependencyTypes: ["dev", "prod"],
 			packages: ["**"],
 			isIgnored: true,
 		},

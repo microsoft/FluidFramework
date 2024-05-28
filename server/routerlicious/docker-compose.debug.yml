@@ -24,3 +24,7 @@ services:
     ports:
       - "5865:5858"
     command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/riddler/www.js
+  nexus:
+    ports:
+      - "5866:5858"
+    command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/nexus/www.js

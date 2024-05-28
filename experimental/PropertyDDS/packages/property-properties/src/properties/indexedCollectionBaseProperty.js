@@ -11,10 +11,12 @@ const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { deserialize } = require("../containerSerializer");
 const { validationsEnabled } = require("../enableValidations");
-const { BaseProperty } = require("./baseProperty");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const { BaseProperty } = require("./baseProperty");
 
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType

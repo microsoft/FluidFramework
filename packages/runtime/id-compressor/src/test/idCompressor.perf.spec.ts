@@ -5,21 +5,21 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/core-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { IdCompressor } from "../idCompressor.js";
 import {
 	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
 	OpSpaceCompressedId,
-	SessionSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
 	SessionId,
+	SessionSpaceCompressedId,
 	StableId,
-	initialClusterCapacity,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
-import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "../index.js";
+import { createSessionId } from "../utilities.js";
+
 import {
 	Client,
 	DestinationClient,
@@ -28,7 +28,10 @@ import {
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
-} from "./idCompressorTestUtilities";
+} from "./idCompressorTestUtilities.js";
+import { FinalCompressedId, LocalCompressedId, fail, isFinalId, isLocalId } from "./testCommon.js";
+
+const initialClusterCapacity = 512;
 
 describe("IdCompressor Perf", () => {
 	const type = BenchmarkType.Measurement;
@@ -42,7 +45,7 @@ describe("IdCompressor Perf", () => {
 		synchronizeAtEnd: boolean,
 	): IdCompressorTestNetwork {
 		const perfNetwork = new IdCompressorTestNetwork(clusterSize);
-		const maxClusterSize = 25;
+		const maxClusterSize = clusterSize * 2;
 		const generator = take(
 			1000,
 			makeOpGenerator({
@@ -51,9 +54,6 @@ describe("IdCompressor Perf", () => {
 				outsideAllocationFraction: 0.9,
 			}),
 		);
-		if (perfNetwork.initialClusterSize > maxClusterSize) {
-			perfNetwork.enqueueCapacityChange(maxClusterSize);
-		}
 		performFuzzActions(
 			generator,
 			perfNetwork,
@@ -152,6 +152,8 @@ describe("IdCompressor Perf", () => {
 					ids: {
 						firstGenCount,
 						count: numIds,
+						requestedClusterSize: initialClusterCapacity,
+						localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 					},
 				};
 
@@ -225,8 +227,16 @@ describe("IdCompressor Perf", () => {
 				const network = setupCompressors(initialClusterCapacity, false, true);
 				// Ensure the local session has several different clusters
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
-					network.allocateAndSendIds(localClient, perfCompressor.clusterCapacity);
-					network.allocateAndSendIds(remoteClient, perfCompressor.clusterCapacity * 2);
+					network.allocateAndSendIds(
+						localClient,
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						perfCompressor["nextRequestedClusterSize"],
+					);
+					network.allocateAndSendIds(
+						remoteClient,
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						perfCompressor["nextRequestedClusterSize"] * 2,
+					);
 					network.deliverOperations(DestinationClient.All);
 				}
 				const client = isLocalOriginator ? localClient : remoteClient;
@@ -248,7 +258,8 @@ describe("IdCompressor Perf", () => {
 			// Ensure no eager finals
 			network.allocateAndSendIds(
 				localClient,
-				network.getCompressor(localClient).clusterCapacity * 2 + 1,
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				network.getCompressor(localClient)["nextRequestedClusterSize"] * 2 + 1,
 			);
 			unackedLocalId = getIdMadeBy(localClient, false, network);
 			assert(

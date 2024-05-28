@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces";
+import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
 	model: IInventoryListAppModel;

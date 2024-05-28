@@ -1,4 +1,63 @@
-# @fluidframework/mocha-test-setup
+# @fluid-internal/mocha-test-setup
+
+## 2.0.0-rc.4.0.0
+
+Dependency updates only.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   @fluidframework/mocha-test-setup moved to @fluid-internal/mocha-test-setup ([#19759](https://github.com/microsoft/FluidFramework/issues/19759)) [d530594684](https://github.com/microsoft/FluidFramework/commits/d530594684e074caa3c1899fdf332d3a3208969f)
+
+    The mocha-test-setup package is intended to aid in testing internal to the FluidFramework repo, and should not be used outside of the repo.
+
+## 2.0.0-rc.1.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.8.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   azure-client: Deprecated FluidStatic Classes ([#18402](https://github.com/microsoft/FluidFramework/issues/18402)) [589ec39de5](https://github.com/microsoft/FluidFramework/commits/589ec39de52116c7f782319e6f6aa61bc5aa9964)
+
+    Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
+    keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
+    public surface area of downstream packages. The deprecated classes are as follows:
+
+    -   `AzureAudience` (use `IAzureAudience` instead)
+    -   `TinyliciousAudience` (use `ITinyliciousAudience` instead)
+    -   `DOProviderContainerRuntimeFactory`
+    -   `FluidContainer`
+    -   `ServiceAudience`
 
 ## 2.0.0-internal.7.3.0
 

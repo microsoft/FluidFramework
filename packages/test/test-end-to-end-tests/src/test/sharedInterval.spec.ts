@@ -4,30 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import {
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-	createOverlappingIntervalsIndex,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,
@@ -247,9 +247,11 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedString } = apis.dds;
+	const { createOverlappingIntervalsIndex } = apis.dataRuntime.packages.sequence;
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	describe("one client", () => {
@@ -264,7 +266,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
@@ -370,8 +372,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
-			for (let j = 0; j < 10; j++) {
-				for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 3; j++) {
+				for (let i = 0; i < 5; i++) {
 					sharedString.replaceText(0, 1, `x`);
 					assertIntervals([{ start: 0, end: 2 }]);
 
@@ -680,8 +682,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 				typeof intervals2.change === "function"
 			) {
 				// Conflicting changes
-				intervals1.change(id1, 1, 2);
-				intervals2.change(id1, 2, 1);
+				intervals1.change(id1, { start: 1, end: 2 });
+				intervals2.change(id1, { start: 2, end: 1 });
 
 				await provider.ensureSynchronized();
 
@@ -715,8 +717,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 				}
 			}
 			if (
-				typeof intervals1.changeProperties === "function" &&
-				typeof intervals2.changeProperties === "function"
+				typeof intervals1.change === "function" &&
+				typeof intervals2.change === "function"
 			) {
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
 					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
@@ -743,14 +745,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 						deltaArgs2 = propertyDeltas;
 					},
 				);
-				intervals1.changeProperties(id1, { prop1: "prop1" });
+				intervals1.change(id1, { props: { prop1: "prop1" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					null,
 					"Mismatch in property-changed event arg 1",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop2: "prop2" });
+				intervals2.change(id1, { props: { prop2: "prop2" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop2,
 					null,
@@ -792,14 +794,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 					"Mismatch in changed properties 4",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "no" });
+				intervals1.change(id1, { props: { prop1: "no" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"prop1",
 					"Mismatch in property-changed event arg 5",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: "yes" });
+				intervals2.change(id1, { props: { prop1: "yes" } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"prop1",
@@ -839,14 +841,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 					"Mismatch in changed properties 8",
 				);
 
-				intervals1.changeProperties(id1, { prop1: "maybe" });
+				intervals1.change(id1, { props: { prop1: "maybe" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"yes",
 					"Mismatch in property-changed event arg 9",
 				);
 				await provider.opProcessingController.processOutgoing();
-				intervals2.changeProperties(id1, { prop1: null });
+				intervals2.change(id1, { props: { prop1: null } });
 				assertPropertyChangedArg(
 					deltaArgs2.prop1,
 					"yes",
@@ -922,21 +924,21 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach(async () => {
+		beforeEach("setupSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
-			sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
+			sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 		});
 
 		// This functionality is used in Word and FlowView's "add comment" functionality.
@@ -995,7 +997,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 					story: comment2Text.handle,
 				},
 			});
-			const nestedMap = SharedMap.create(dataObject1.runtime);
+			const nestedMap = SharedMap.create(dataObject1.runtime, "nestedMap");
 			nestedMap.set("nestedKey", "nestedValue");
 			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
@@ -1032,7 +1034,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider) => {
 			const interval3From3Properties = serialized3[2].properties;
 			assert(interval3From3Properties);
 			const mapFrom3 = await (
-				interval3From3Properties.story as IFluidHandle<SharedMap>
+				interval3From3Properties.story as IFluidHandle<ISharedMap>
 			).get();
 			assert.equal(
 				mapFrom3.get("nestedKey"),

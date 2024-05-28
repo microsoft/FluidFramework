@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { test } from "@oclif/test";
 import chai, { expect } from "chai";
@@ -33,7 +34,8 @@ describe("flub release fromTag", () => {
 		title: "build-tools v0.26.1 (patch)",
 	};
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["release:fromTag", "build-tools_v0.26.1", "--json"])
 		.it(`--json`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);

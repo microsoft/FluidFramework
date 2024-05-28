@@ -4,101 +4,118 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString } from "@fluid-internal/client-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { convertProtocolAndAppSummaryToSnapshotTree } from "../utils";
+
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+
+import {
+	combineAppAndProtocolSummary,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+} from "../utils.js";
 
 describe("Dehydrate Container", () => {
-	it("Summary to snapshot conversion", async () => {
-		const protocolSummary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {
-				attributes: {
-					type: SummaryType.Blob,
-					content: JSON.stringify("attributes"),
-				},
-				quorumValues: {
-					type: SummaryType.Blob,
-					content: JSON.stringify("quorumValues"),
-				},
+	const protocolSummary: ISummaryTree = {
+		type: SummaryType.Tree,
+		tree: {
+			attributes: {
+				type: SummaryType.Blob,
+				content: JSON.stringify("attributes"),
 			},
-		};
-		const appSummary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {
-				default: {
-					type: SummaryType.Tree,
-					tree: {
-						".component": {
-							type: SummaryType.Blob,
-							content: JSON.stringify("defaultDataStore"),
-						},
-						"root": {
-							type: SummaryType.Tree,
-							tree: {
-								attributes: {
-									type: SummaryType.Blob,
-									content: JSON.stringify("rootattributes"),
-								},
+			quorumValues: {
+				type: SummaryType.Blob,
+				content: JSON.stringify("quorumValues"),
+			},
+		},
+	};
+	const appSummary: ISummaryTree = {
+		type: SummaryType.Tree,
+		tree: {
+			default: {
+				type: SummaryType.Tree,
+				tree: {
+					".component": {
+						type: SummaryType.Blob,
+						content: JSON.stringify("defaultDataStore"),
+					},
+					"root": {
+						type: SummaryType.Tree,
+						tree: {
+							attributes: {
+								type: SummaryType.Blob,
+								content: JSON.stringify("rootattributes"),
 							},
 						},
-						"unref": {
-							type: SummaryType.Tree,
-							tree: {},
-							unreferenced: true,
-						},
+					},
+					"unref": {
+						type: SummaryType.Tree,
+						tree: {},
+						unreferenced: true,
+					},
+					"groupId": {
+						type: SummaryType.Tree,
+						tree: {},
+						groupId: "group",
 					},
 				},
 			},
-		};
-		const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(
-			protocolSummary,
-			appSummary,
-		);
+		},
+	};
 
-		assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
+	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
+		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+		const { baseSnapshot, snapshotBlobs } =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+
+		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
-			Object.keys(snapshotTree.trees[".protocol"].blobs).length,
+			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
 			2,
 			"2 protocol blobs should be there.",
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
+		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
+		const defaultDataStoreBlob = snapshotBlobs[defaultDataStoreBlobId];
+		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
-			JSON.parse(
-				bufferToString(
-					snapshotTree.trees.default.blobsContents[defaultDataStoreBlobId],
-					"utf8",
-				),
-			),
+			JSON.parse(defaultDataStoreBlob),
 			"defaultDataStore",
 			"The .component blob's content is incorrect",
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId = snapshotTree.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlob = snapshotBlobs[rootAttributesBlobId];
+		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
-			JSON.parse(
-				bufferToString(
-					snapshotTree.trees.default.trees.root.blobsContents[rootAttributesBlobId],
-					"utf8",
-				),
-			),
+			JSON.parse(rootAttributesBlob),
 			"rootattributes",
 			"The root sub-tree's content is incorrect",
 		);
 		assert.strictEqual(
-			snapshotTree.trees.default.trees.root.unreferenced,
+			baseSnapshot.trees.default.trees.root.unreferenced,
 			undefined,
 			"The root sub-tree should not be marked as unreferenced",
 		);
 
 		// Validate "unref" sub-tree.
 		assert.strictEqual(
-			snapshotTree.trees.default.trees.unref.unreferenced,
+			baseSnapshot.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			baseSnapshot.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			baseSnapshot.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
 		);
 	});
 });

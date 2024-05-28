@@ -5,27 +5,35 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
-import stringify from "json-stable-stringify";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	ITelemetryLogger,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
-	excludeChannelContentDdsFactories,
+	ISnapshotNormalizerConfig,
+	getNormalizedSnapshot,
+} from "@fluidframework/tool-utils/internal";
+import stringify from "json-stable-stringify";
+
+import {
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
-} from "./replayFluidFactories";
-import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
-import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+	excludeChannelContentDdsFactories,
+} from "./replayFluidFactories.js";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";
 
 export interface ReplayToolContainerEntryPoint {
 	readonly containerRuntime: ContainerRuntime;
@@ -116,7 +124,7 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryBaseLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IResolvedUrl = {
@@ -181,7 +189,6 @@ export async function loadContainer(
 	};
 	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
 	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
-
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,

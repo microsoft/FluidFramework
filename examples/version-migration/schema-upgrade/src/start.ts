@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
+import { Migrator, ModelLoader } from "@fluid-example/example-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import {
+	InsecureTinyliciousTokenProvider,
+	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/internal";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
-import { Migrator, ModelLoader } from "@fluid-example/example-utils";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import {
-	createTinyliciousCreateNewRequest,
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-} from "@fluidframework/tinylicious-driver";
-
-import { inventoryListDataTransformationCallback } from "./dataTransform";
-import { DemoCodeLoader } from "./demoCodeLoader";
-import type { IInventoryListAppModel } from "./modelInterfaces";
-import { DebugView, InventoryListAppView } from "./view";
+import { inventoryListDataTransformationCallback } from "./dataTransform.js";
+import { DemoCodeLoader } from "./demoCodeLoader.js";
+import type { IInventoryListAppModel } from "./modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

@@ -5,23 +5,21 @@
 
 import assert from "assert";
 
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
 	IContainerRuntimeOptions,
-	SummaryCollection,
 	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
@@ -55,18 +53,12 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		summaryOptions: {
 			summaryConfigOverrides,
 		},
-		gcOptions: {
-			gcAllowed: true,
-		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);
@@ -124,7 +116,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 		if (provider.driver.type === "odsp") {
 			this.skip();

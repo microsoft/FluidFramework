@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type IDevtoolsMessage,
-	type ISourcedDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
-	isDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
-} from "@fluid-experimental/devtools-core";
+	isDevtoolsMessage,
+} from "@fluidframework/devtools-core/internal";
 
 /**
  * Message relay used by a devtools view rendered in the same page as the application to communicate with the
@@ -37,7 +37,7 @@ export class WindowMessageRelay
 		 * All messages sent through the returned instance's {@link WindowMessageRelay.postMessage}
 		 * method will get this value written to their 'source' property.
 		 *
-		 * @see {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage}
+		 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
 	) {
@@ -62,7 +62,7 @@ export class WindowMessageRelay
 
 	/**
 	 * Handler for incoming messages from the window object.
-	 * Messages are forwarded on to subscribers for valid {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage}s
+	 * Messages are forwarded on to subscribers for valid {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}s
 	 * from the expected source.
 	 */
 	private readonly onWindowMessage = (

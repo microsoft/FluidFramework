@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { runWithRetry } from "../runWithRetry";
+
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any = (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) =>
@@ -77,7 +79,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
-				(error as any).errorType = DriverErrorType.throttlingError;
+				(error as any).errorType = DriverErrorTypes.throttlingError;
 				(error as any).retryAfterSeconds = 400;
 				(error as any).canRetry = true;
 				throw error;

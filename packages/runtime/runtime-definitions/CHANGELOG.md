@@ -1,5 +1,222 @@
 # @fluidframework/runtime-definitions
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+    Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+
+    External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+    Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+    Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   runtime-definitions: IFluidDataStoreContext no longer raises events, IFluidDataStoreChannel needs to implement new method [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    This change could be ignored, unless you have custom implementations of IFluidDataStoreChannel or listened to IFluidDataStoreContext's "attached" or "attaching" events
+
+    IFluidDataStoreContext no longer raises events. Instead, it will call IFluidDataStoreChannel.setAttachState().
+    If you are implementing data store runtme, please implement setAttachState() API and rely on this flow.
+    If you are not data store developer, and were reaching out to context, then please stop doing it - the only purpose of IFluidDataStoreContext is
+    communication with IFluidDataStoreChannel. Context object should not be exposed by impplementers of IFluidDataStoreChannel.
+    If you are using stock implementations of IFluidDataStoreChannel, you can listen for same events on IFluidDataStoreRuntime instead.
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   runtime-definitions: ITelemetryContext: Functions `get` and `serialize` are now deprecated ([#19409](https://github.com/microsoft/FluidFramework/issues/19409)) [42696564dd](https://github.com/microsoft/FluidFramework/commits/42696564ddbacfe200d653bdf7a1db18fc253bfb)
+
+    ITelemetryContext is to be used only for instrumentation, not for attempting to read the values already set by other code.
+    This is important because this _public_ interface may soon use FF's _should-be internal_ logging instrumentation types,
+    which we reserve the right to expand (to support richer instrumentation).
+    In that case, we would not be able to do so in a minor release if they're used as an "out" type
+    like the return type for `get`.
+
+    There is no replacement given in terms of immediate programmatic access to this data.
+    The expected use pattern is something like this:
+
+    -   Some code creates a concrete implementation of `ITelemetryContext` and passes it around
+    -   Callers use the "write" functions on the interface to build up the context
+    -   The originator uses a function like `serialize` (on the concrete impl, not exposed on the interface any longer)
+        and passes the result to a logger
+    -   The data is inspected along with other logs in whatever telemetry pipeline is used by the application (or Debug Tools, etc)
+
+-   container-runtime: New feature: ID compression for DataStores & DDSs ([#19859](https://github.com/microsoft/FluidFramework/issues/19859)) [51f0d3db73](https://github.com/microsoft/FluidFramework/commits/51f0d3db737800e1c30ea5e3952d38ff30ffc7da)
+
+    ### Key changes
+
+    1. A new API IContainerRuntimeBase.generateDocumentUniqueId() is exposed. This API will opportunistically generate IDs in short format (non-negative numbers). If it can't achieve that, it will return UUID strings. UUIDs generated will have low entropy in groups and will compress well. It can be leveraged anywhere in container where container unique IDs are required. I.e. any place that uses uuid() and stores data in container is likely candidate to start leveraging this API.
+    2. Data store internal IDs (IDs that are auto generated by FF system) will opportunistically be generated in shorter form. Data stores created in detached container will always have short IDs, data stores created in attached container will opportunistically be short (by using newly added IContainerRuntimeBase.generateDocumentUniqueId() capability)
+    3. Similar DDS names will be opportunistically short (same considerations for detached DDS vs. attached DDS)
+
+    ### Implementation details
+
+    1. Container level ID Compressor can now be enabled with delay. With such setting, only new IContainerRuntimeBase.generateDocumentUniqueId() is exposed (ID Compressor is not exposed in such case, as leveraging any of its other capabilities requires future container sessions to load ID Compressor on container load, for correctness reasons). Once Container establishes connection and any changes are made in container, newly added API will start generating more compact IDs (in most cases).
+
+    ### Breaking changes
+
+    1. DDS names can no longer start with "\_" symbol - this is reserved for FF needs. I've validated that's not an issue for AzureClient (it only creates root object by name, everything else is referred by handle). Our main internal partners almost never use named DDSs (I can find only 4 instances in Loop).
+
+    ### Backward compatibility considerations
+
+    1. Data store internal IDs could collide with earlier used names data stores. Earlier versions of FF framework (before DataStore aliasing feature was added) allowed customers to supply IDs for data stores. And thus, files created with earlier versions of framework could have data store IDs that will be similar to names FF will use for newly created data stores ("A", ... "Z", "a"..."z", "AA", etc.). While such collision is possible, it's very unlikely (almost impossible) if user-provided names were at least 4-5 characters long.
+    2. If application runs to these problems, or wants to reduce risks, consider disabling ID compressor via IContainerRuntimeOptions.enableRuntimeIdCompressor = "off".
+
+    ### Minor changes
+
+    1. IContainerRuntime.createDetachedRootDataStore() is removed. Please use IContainerRuntime.createDetachedDataStore and IDataStore.trySetAlias() instead
+    2. IContainerRuntimeOptions.enableRuntimeIdCompressor has been changes from boolean to tri-state.
+
+-   driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+
+    The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+
+-   runtime-definitions: FlushMode.Immediate is deprecated ([#19963](https://github.com/microsoft/FluidFramework/issues/19963)) [861500c1e2](https://github.com/microsoft/FluidFramework/commits/861500c1e2bdd3394308bd87007231d70b698be0)
+
+    `FlushMode.Immediate` is deprecated and will be removed in the next major version. It should not be used. Use
+    `FlushMode.TurnBased` instead, which is the default. See
+    <https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/opLifecycle#how-batching-works>
+    for more information
+
+-   container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
+
+    ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
+
+-   runtime-definitions: Deprecated ID compressor related types have been removed. ([#19031](https://github.com/microsoft/FluidFramework/issues/19031)) [de92ef0ac5](https://github.com/microsoft/FluidFramework/commits/de92ef0ac551ad89b00564c78c0091f8ecc33639)
+
+    This change should be a no-op for consumers, as these types were almost certainly unused and are also available in the
+    standalone package id-compressor (see <https://github.com/microsoft/FluidFramework/pull/18749>).
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
+-   garbage collection: Deprecate addedGCOutboundReference ([#18456](https://github.com/microsoft/FluidFramework/issues/18456)) [0619cf8a41](https://github.com/microsoft/FluidFramework/commits/0619cf8a4197bee6d5ac56cac05db92008939817)
+
+    The `addedGCOutboundReference` property on IDeltaConnection, IFluidDataStoreContext, and MockFluidDataStoreRuntime is
+    now deprecated.
+
+    The responsibility of adding outbound references (for Garbage Collection tracking) is moving up to the ContainerRuntime.
+    Previously, DDSes themselves were responsible to detect and report added outbound references (via a handle being stored),
+    so these interfaces (and corresponding mock) needed to plumb that information up to the ContainerRuntime layer where GC sits.
+    This is no longer necessary so they're being removed in an upcoming release.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime-definitions: Removed resolveHandle and IFluidHandleContext from ContainerRuntime interfaces [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IContainerRuntime.resolveHandle(...)` method and the `IContainerRuntimeBase.IFluidHandleContext` property have been
+    removed. Please remove all usage of these APIs.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request(...)` method and `IFluidRouter` property have been removed from the following places:
+
+    -   `ContainerRuntime`
+    -   `IRuntime`
+    -   `IContainerRuntimeBase`
+
+    Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   runtime-definitions: Removed IFluidRouter from IFluidDataStoreChannel and FluidDataStoreRuntime [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IFluidRouter` property has been removed from `IFluidDataStoreChannel` and `FluidDataStoreRuntime`. Please migrate
+    all usage to the `IFluidDataStoreChannel.entryPoint` API.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+-   runtime-definitions: Removed request and IFluidRouter from IDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `request` method and `IFluidRouter` property have been removed from `IDataStore`. Please migrate all usage to the `IDataStore.entryPoint` API.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   container-runtime/runtime-definitions: `IdCompressor` and related types deprecated ([#18749](https://github.com/microsoft/FluidFramework/issues/18749)) [6f070179de](https://github.com/microsoft/FluidFramework/commits/6f070179ded7c2f4398252f75485e85b39725419)
+
+    `IdCompressor` and related types from the @fluidframework/container-runtime and @fluidframework/runtime-definitions
+    packages have been deprecated. They can now be found in a new package, @fluidframework/id-compressor.
+
+    The `IdCompressor` class is deprecated even in the new package. Consumers should use the interfaces, `IIdCompressor` and
+    `IIdCompressorCore`, in conjunction with the factory function `createIdCompressor` instead.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

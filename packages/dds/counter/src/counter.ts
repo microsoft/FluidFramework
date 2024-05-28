@@ -3,23 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
 	type IChannelStorageService,
-	type IChannelFactory,
-	type IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { CounterFactory } from "./counterFactory";
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
+} from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -43,36 +40,15 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCounter}
- * @internal
+ * @alpha
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
-	/**
-	 * Create a new {@link SharedCounter}.
-	 *
-	 * @param runtime - The data store runtime to which the new `SharedCounter` will belong.
-	 * @param id - Optional name of the `SharedCounter`. If not provided, one will be generated.
-	 *
-	 * @returns newly create shared counter (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
-		return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
-	}
-
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_counter_");
-	}
-
-	/**
-	 * Get a factory for {@link SharedCounter} to register with the data store.
-	 *
-	 * @returns a factory that creates and load SharedCounter
-	 */
-	public static getFactory(): IChannelFactory {
-		return new CounterFactory();
 	}
 
 	private _value: number = 0;
@@ -178,6 +154,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
-		this.incrementCore(counterOp.incrementAmount);
+		this.increment(counterOp.incrementAmount);
 	}
 }

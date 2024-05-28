@@ -3,55 +3,54 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	AttributionInfo,
 	AttributionKey,
 	DetachedAttributionKey,
 	LocalAttributionKey,
 	OpAttributionKey,
-} from "./attribution";
-export {
+} from "./attribution.js";
+export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
-	FlushMode,
-	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
 	IFluidDataStoreContextDetached,
-	IFluidDataStoreContextEvents,
-	VisibilityState,
-} from "./dataStoreContext";
-export { IFluidDataStoreFactory, IProvideFluidDataStoreFactory } from "./dataStoreFactory";
-export {
+} from "./dataStoreContext.js";
+export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
+export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+export type {
 	FluidDataStoreRegistryEntry,
-	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
-} from "./dataStoreRegistry";
+} from "./dataStoreRegistry.js";
+export { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+export type {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions.js";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-} from "./garbageCollection";
-export {
+} from "./garbageCollectionDefinitions.js";
+export type {
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
 	ISignalEnvelope,
-} from "./protocol";
-export {
-	blobCountPropertyName,
-	channelsTreeName,
+} from "./protocol.js";
+export type {
 	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
@@ -62,59 +61,12 @@ export {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ITelemetryContextExt,
 	SummarizeInternalFn,
-	totalBlobSizePropertyName,
-} from "./summary";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
+} from "./summary.js";
 export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IIdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IIdCompressorCore,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IdCreationRange,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	OpSpaceCompressedId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressorWithNoSession,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressorWithOngoingSession,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SessionId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SessionSpaceCompressedId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	StableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	initialClusterCapacity,
-} from "@fluidframework/id-compressor";
+	blobCountPropertyName,
+	channelsTreeName,
+	CreateSummarizerNodeSource,
+	totalBlobSizePropertyName,
+} from "./summary.js";

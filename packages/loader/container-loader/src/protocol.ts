@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
 	ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
+import { ISequencedDocumentMessage, ISignalMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
@@ -60,6 +59,10 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 			quorumSnapshot.values,
 			sendProposal,
 		);
+
+		for (const [clientId, member] of this.quorum.getMembers()) {
+			audience.addMember(clientId, member.client);
+		}
 
 		// Join / leave signals are ignored for "write" clients in favor of join / leave ops
 		this.quorum.on("addMember", (clientId, details) =>

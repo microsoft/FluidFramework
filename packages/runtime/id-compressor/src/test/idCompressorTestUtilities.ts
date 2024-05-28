@@ -4,20 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
+	BaseFuzzTestState,
 	Generator,
+	SaveInfo,
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
-	SaveInfo,
 	take,
-	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
+import { IdCompressor } from "../idCompressor.js";
 import {
-	createIdCompressor,
+	type IIdCompressor,
+	type IIdCompressorCore,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -25,18 +29,20 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { assertIsSessionId, createSessionId } from "../utilities";
+	createIdCompressor,
+} from "../index.js";
+import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
+
+import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import {
 	FinalCompressedId,
+	ReadonlyIdCompressor,
+	fail,
 	getOrCreate,
 	incrementStableId,
 	isFinalId,
 	isLocalId,
-	ReadonlyIdCompressor,
-	fail,
-} from "./testCommon";
+} from "./testCommon.js";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key
@@ -99,7 +105,8 @@ export class CompressorFactory {
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
-		compressor.clusterCapacity = clusterCapacity;
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		compressor["nextRequestedClusterSize"] = clusterCapacity;
 		return compressor;
 	}
 }
@@ -131,6 +138,8 @@ export function buildHugeCompressor(
 			ids: {
 				firstGenCount: Math.floor(i / numSessions) * capacity + 1,
 				count: capacity,
+				requestedClusterSize: capacity,
+				localIdRanges: [], // remote session, can safely ignore in tests
 			},
 		});
 	}
@@ -175,15 +184,12 @@ export class IdCompressorTestNetwork {
 	/** The compressors used in this network */
 	private readonly compressors: ClientMap<IdCompressor>;
 	/** The log of operations seen by the server so far. Append-only. */
-	private readonly serverOperations: (
-		| [
-				creationRange: IdCreationRange,
-				opSpaceIds: OpSpaceCompressedId[],
-				clientFrom: OriginatingClient,
-				sessionIdFrom: SessionId,
-		  ]
-		| number
-	)[] = [];
+	private readonly serverOperations: [
+		creationRange: IdCreationRange,
+		opSpaceIds: OpSpaceCompressedId[],
+		clientFrom: OriginatingClient,
+		sessionIdFrom: SessionId,
+	][] = [];
 	/** An index into `serverOperations` for each client which represents how many operations have been delivered to that client */
 	private readonly clientProgress: ClientMap<number>;
 	/** All ids (local and sequenced) that a client has created or received, in order. */
@@ -278,10 +284,10 @@ export class IdCompressorTestNetwork {
 	}
 
 	/**
-	 * Submit a capacity change operation to the network. It will not take effect immediately but will be processed in sequence order.
+	 * Changes the capacity request amount for a client. It will take effect immediately.
 	 */
-	public enqueueCapacityChange(newClusterCapacity: number): void {
-		this.serverOperations.push(newClusterCapacity);
+	public changeCapacity(client: Client, newClusterCapacity: number): void {
+		changeCapacity(this.compressors.get(client), newClusterCapacity);
 	}
 
 	private addNewId(
@@ -332,6 +338,11 @@ export class IdCompressorTestNetwork {
 				ids: {
 					firstGenCount: 1,
 					count: numIds,
+					requestedClusterSize: this.getCompressor(Client.Client1)[
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						"nextRequestedClusterSize"
+					],
+					localIdRanges: [], // remote session, can safely ignore in tests
 				},
 			};
 			const opSpaceIds: OpSpaceCompressedId[] = [];
@@ -355,17 +366,17 @@ export class IdCompressorTestNetwork {
 	}
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: Client, opsToDeliver?: number): void;
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient): void;
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient, opsToDeliver?: number): void {
 		let opIndexBound: number;
@@ -380,28 +391,17 @@ export class IdCompressorTestNetwork {
 		}
 		for (const [clientTo, compressorTo] of this.getTargetCompressors(clientTakingDelivery)) {
 			for (let i = this.clientProgress.get(clientTo); i < opIndexBound; i++) {
-				const operation = this.serverOperations[i];
-				if (typeof operation === "number") {
-					compressorTo.clusterCapacity = operation;
-				} else {
-					const [range, opSpaceIds, clientFrom, sessionIdFrom] = operation;
-					compressorTo.finalizeCreationRange(range);
+				const [range, opSpaceIds, clientFrom, sessionIdFrom] = this.serverOperations[i];
+				compressorTo.finalizeCreationRange(range);
 
-					const ids = range.ids;
-					if (ids !== undefined) {
-						for (const id of opSpaceIds) {
-							const sessionSpaceId = compressorTo.normalizeToSessionSpace(
-								id,
-								range.sessionId,
-							);
-							this.addNewId(
-								clientTo,
-								sessionSpaceId,
-								clientFrom,
-								sessionIdFrom,
-								true,
-							);
-						}
+				const ids = range.ids;
+				if (ids !== undefined) {
+					for (const id of opSpaceIds) {
+						const sessionSpaceId = compressorTo.normalizeToSessionSpace(
+							id,
+							range.sessionId,
+						);
+						this.addNewId(clientTo, sessionSpaceId, clientFrom, sessionIdFrom, true);
 					}
 				}
 			}
@@ -426,6 +426,92 @@ export class IdCompressorTestNetwork {
 		const sequencedLogs = Object.values(Client).map(
 			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const,
 		);
+
+		const getLocalIdsInRange = (
+			range: IdCreationRange,
+			opSpaceIds?: OpSpaceCompressedId[],
+		): Set<SessionSpaceCompressedId> => {
+			const localIdsInCreationRange = new Set<SessionSpaceCompressedId>();
+			const ids = range.ids;
+			if (ids !== undefined) {
+				const { firstGenCount, localIdRanges } = ids;
+				for (const [genCount, count] of localIdRanges) {
+					for (let g = genCount; g < genCount + count; g++) {
+						const local = localIdFromGenCount(g);
+						if (opSpaceIds) {
+							assert.strictEqual(opSpaceIds[g - firstGenCount], local);
+						}
+						localIdsInCreationRange.add(local);
+					}
+				}
+			}
+			return localIdsInCreationRange;
+		};
+
+		// Ensure creation ranges for clients we track contain the correct local ID ranges
+		this.serverOperations.forEach(([range, opSpaceIds, clientFrom]) => {
+			if (clientFrom !== OriginatingClient.Remote) {
+				const localIdsInCreationRange = getLocalIdsInRange(range, opSpaceIds);
+				let localCount = 0;
+				opSpaceIds.forEach((id) => {
+					if (isLocalId(id)) {
+						localCount++;
+						assert(localIdsInCreationRange.has(id), "Local ID not in creation range");
+					}
+				});
+				assert.strictEqual(
+					localCount,
+					localIdsInCreationRange.size,
+					"Local ID count mismatch",
+				);
+			}
+		});
+
+		const undeliveredRanges = new Map<Client, IdCreationRange[]>();
+		this.clientProgress.forEach((progress, client) => {
+			const ranges = this.serverOperations
+				.slice(progress)
+				.filter((op) => op[2] === client)
+				.map(([range]) => range);
+			undeliveredRanges.set(client, ranges);
+		});
+		undeliveredRanges.forEach((ranges, client) => {
+			const compressor = this.compressors.get(client);
+			let firstGenCount: number | undefined;
+			let totalCount = 0;
+			const unionedLocalRanges = new SessionSpaceNormalizer();
+			ranges.forEach((range) => {
+				assert(range.sessionId === compressor.localSessionId);
+				if (range.ids !== undefined) {
+					// initialize firstGenCount if not set
+					if (firstGenCount === undefined) {
+						firstGenCount = range.ids.firstGenCount;
+					}
+					totalCount += range.ids.count;
+					range.ids.localIdRanges.forEach(([genCount, count]) => {
+						unionedLocalRanges.addLocalRange(genCount, count);
+					});
+				}
+			});
+
+			const retakenRange = compressor.takeUnfinalizedCreationRange();
+			if (retakenRange.ids !== undefined) {
+				const retakenLocalIds = new SessionSpaceNormalizer();
+				retakenRange.ids.localIdRanges.forEach(([genCount, count]) => {
+					retakenLocalIds.addLocalRange(genCount, count);
+				});
+				assert.strictEqual(
+					retakenLocalIds.equals(unionedLocalRanges),
+					true,
+					"Local ID ranges mismatch",
+				);
+				assert.strictEqual(retakenRange.ids.count, totalCount, "Count mismatch");
+				assert.strictEqual(retakenRange.ids.firstGenCount, firstGenCount, "Count mismatch");
+			} else {
+				assert.strictEqual(totalCount, 0);
+				assert.strictEqual(unionedLocalRanges.idRanges.size, 0);
+			}
+		});
 
 		// First, ensure all clients each generated a unique ID for each of their own calls to generate.
 		for (const [compressor, ids] of sequencedLogs) {
@@ -565,6 +651,11 @@ export class IdCompressorTestNetwork {
 	}
 }
 
+function changeCapacity(compressor: IdCompressor, newClusterCapacity: number): void {
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	compressor["nextRequestedClusterSize"] = newClusterCapacity;
+}
+
 /**
  * Roundtrips the supplied compressor through serialization and deserialization.
  */
@@ -585,13 +676,21 @@ export function roundtrip(
 	compressor: ReadonlyIdCompressor,
 	withSession: boolean,
 ): [SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession, IdCompressor] {
+	// preserve the capacity request as this property is normally private and resets
+	// to a default on construction (deserialization)
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const capacity = compressor["nextRequestedClusterSize"];
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		return [serialized, IdCompressor.deserialize(serialized)];
+		const roundtripped = IdCompressor.deserialize(serialized);
+		changeCapacity(roundtripped, capacity);
+		return [serialized, roundtripped];
+	} else {
+		const nonLocalSerialized = compressor.serialize(withSession);
+		const roundtripped = IdCompressor.deserialize(nonLocalSerialized, createSessionId());
+		changeCapacity(roundtripped, capacity);
+		return [nonLocalSerialized, roundtripped];
 	}
-
-	const nonLocalSerialized = compressor.serialize(withSession);
-	return [nonLocalSerialized, IdCompressor.deserialize(nonLocalSerialized, createSessionId())];
 }
 
 /**
@@ -664,6 +763,7 @@ interface DeliverSomeOperations {
 
 interface ChangeCapacity {
 	type: "changeCapacity";
+	client: Client;
 	newSize: number;
 }
 
@@ -745,9 +845,10 @@ export function makeOpGenerator(
 		};
 	}
 
-	function changeCapacityGenerator({ random }: FuzzTestState): ChangeCapacity {
+	function changeCapacityGenerator({ random, activeClients }: FuzzTestState): ChangeCapacity {
 		return {
 			type: "changeCapacity",
+			client: random.pick(activeClients),
 			newSize: Math.min(
 				Math.floor(random.real(0, 1) ** 2 * maxClusterSize) + 1,
 				maxClusterSize,
@@ -786,13 +887,13 @@ export function makeOpGenerator(
 		return { type: "reconnect", client: random.pick(activeClients) };
 	}
 
-	const allocationWeight = 16;
+	const allocationWeight = 20;
 	return interleave(
 		createWeightedGenerator<Operation, FuzzTestState>([
 			[changeCapacityGenerator, 1],
 			[allocateIdsGenerator, Math.round(allocationWeight * (1 - outsideAllocationFraction))],
 			[allocateOutsideIdsGenerator, Math.round(allocationWeight * outsideAllocationFraction)],
-			[deliverAllOperationsGenerator, 2],
+			[deliverAllOperationsGenerator, 1],
 			[deliverSomeOperationsGenerator, 6],
 			[reconnectGenerator, 1],
 		]),
@@ -848,7 +949,7 @@ export function performFuzzActions(
 				return state;
 			},
 			changeCapacity: (state, op) => {
-				network.enqueueCapacityChange(op.newSize);
+				network.changeCapacity(op.client, op.newSize);
 				return { ...state, clusterSize: op.newSize };
 			},
 			deliverSomeOperations: (state, op) => {
@@ -864,7 +965,6 @@ export function performFuzzActions(
 				return state;
 			},
 			validate: (state) => {
-				network.deliverOperations(DestinationClient.All);
 				validator?.(network);
 				return state;
 			},
@@ -891,4 +991,34 @@ export function generateCompressedIds(
 		ids.push(compressor.generateCompressedId());
 	}
 	return ids;
+}
+
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	sessionId: SessionId,
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+export function createAlwaysFinalizedIdCompressor(
+	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+	loggerOrUndefined?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore {
+	const compressor =
+		sessionIdOrLogger === undefined
+			? createIdCompressor()
+			: typeof sessionIdOrLogger === "string"
+			? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
+			: createIdCompressor(sessionIdOrLogger);
+	// Permanently put the compressor in a ghost session
+	(compressor as IdCompressor).startGhostSession(createSessionId());
+	return compressor;
 }

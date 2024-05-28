@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	Dropdown,
 	Link,
@@ -14,9 +13,10 @@ import {
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
+import React from "react";
 
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { useTelemetryOptIn } from "../TelemetryUtils";
+import { useTelemetryOptIn } from "../TelemetryUtils.js";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
 const useStyles = makeStyles({
 	root: {

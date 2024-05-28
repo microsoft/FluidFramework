@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the reference array property class
  */
@@ -9,6 +10,7 @@ const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-chang
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { ReferenceProperty } = require("./referenceProperty");

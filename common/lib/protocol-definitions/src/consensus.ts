@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "./clients";
+import { ISequencedClient } from "./clients.js";
 
 /**
  * Proposal to set the given key/value pair.
@@ -86,7 +86,7 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
- * @alpha
+ * @public
  */
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;

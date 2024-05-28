@@ -4,21 +4,23 @@
  */
 
 import assert from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { AttachState, IAudience } from "@fluidframework/container-definitions/";
 import {
-	AttachState,
-	IAudience,
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { waitContainerToCatchUp } from "../container";
-import { ConnectionState } from "../connectionState";
+} from "@fluidframework/container-definitions/internal";
+import { IResolvedUrl, IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, IClient } from "@fluidframework/driver-definitions";
+
+import { ConnectionState } from "../connectionState.js";
+import { waitContainerToCatchUp } from "../container.js";
+import { ProtocolHandler } from "../protocol.js";
+import { Audience } from "../audience.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -47,7 +49,6 @@ class MockContainer
 	audience?: IAudience | undefined;
 	clientId?: string | undefined;
 	readOnlyInfo?: ReadOnlyInfo | undefined;
-	IFluidRouter?: IFluidRouter | undefined;
 
 	get mockDeltaManager() {
 		return this.deltaManager as any as MockDeltaManager;
@@ -102,6 +103,44 @@ describe("Container", () => {
 
 			// Should resolve immediately, otherwise test will time out
 			await waitP;
+		});
+
+		it("Audience", () => {
+			const protocolHandler = new ProtocolHandler(
+				{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
+				{ members: [], proposals: [], values: [] }, // quorumSnapshot
+				(key, value) => 0, // sendProposal
+				new Audience(),
+				(clientId: string) => false, // shouldClientHaveLeft
+			);
+
+			const client: Partial<IClient> = { mode: "write" };
+			protocolHandler.quorum.addMember("fakeClient", {
+				client: client as IClient,
+				sequenceNumber: 10,
+			});
+			const quorumSnapshot = protocolHandler.snapshot();
+
+			const protocolHandler2 = new ProtocolHandler(
+				{ minimumSequenceNumber: 0, sequenceNumber: 0 }, // attributes
+				quorumSnapshot,
+				(key, value) => 0, // sendProposal
+				new Audience(),
+				(clientId: string) => false, // shouldClientHaveLeft
+			);
+
+			// Audience is superset of quorum!
+			assert(protocolHandler2.audience.getMembers().size === 1);
+
+			// audience and quorum should not change across serialization.
+			assert.deepEqual(
+				protocolHandler.quorum.getMembers(),
+				protocolHandler2.quorum.getMembers(),
+			);
+			assert.deepEqual(
+				protocolHandler.audience.getMembers(),
+				protocolHandler2.audience.getMembers(),
+			);
 		});
 	});
 });

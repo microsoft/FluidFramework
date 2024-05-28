@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { strict as assert } from "assert";
+import path from "path";
+
 /* eslint-disable import/no-internal-modules */
-import { OutputFormat } from "../logger/fileLogger";
+import { OutputFormat } from "../logger/fileLogger.js";
 import {
 	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
-} from "../logger/loggerUtils";
+} from "../logger/loggerUtils.js";
 /* eslint-enable import/no-internal-modules */
 
+import { _dirname } from "./dirname.cjs";
+
 describe("logger utils", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const telemetryFile = path.join(folderRoot, "outputFolder", "telemetryFile.txt");
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 

@@ -10,28 +10,28 @@ export {
 	ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "./orderedClientElection";
-export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer";
+} from "./orderedClientElection.js";
+export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer.js";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
-} from "./runWhileConnectedCoordinator";
-export { Summarizer } from "./summarizer";
+} from "./runWhileConnectedCoordinator.js";
+export { Summarizer } from "./summarizer.js";
 export {
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
 	SummarizerClientElection,
 	summarizerClientType,
-} from "./summarizerClientElection";
-export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
+} from "./summarizerClientElection.js";
+export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
 	IRefreshSummaryResult,
 	IRootSummarizerNode,
 	IRootSummarizerNodeWithGC,
-} from "./summarizerNode";
+} from "./summarizerNode/index.js";
 export {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -63,9 +63,9 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
-} from "./summarizerTypes";
+} from "./summarizerTypes.js";
 export {
 	IAckedSummary,
 	ISummaryCollectionOpEvents,
@@ -77,7 +77,7 @@ export {
 	ISummaryNackMessage,
 	OpActionEventListener,
 	OpActionEventName,
-} from "./summaryCollection";
+} from "./summaryCollection.js";
 export {
 	aliasBlobName,
 	blobsTreeName,
@@ -98,12 +98,26 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
-} from "./summaryFormat";
-export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator";
+	IFluidDataStoreAttributes0,
+	IFluidDataStoreAttributes1,
+	IFluidDataStoreAttributes2,
+	OmitAttributesVersions,
+} from "./summaryFormat.js";
+export {
+	IdCompressorMode,
+	IDocumentSchemaCurrent,
+	IDocumentSchema,
+	currentDocumentVersionSchema,
+	DocumentSchemaValueType,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
+} from "./documentSchema.js";
+export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {
 	IConnectedEvents,
 	IConnectedState,
 	ISummaryManagerConfig,
 	SummaryManager,
 	SummaryManagerState,
-} from "./summaryManager";
+} from "./summaryManager.js";

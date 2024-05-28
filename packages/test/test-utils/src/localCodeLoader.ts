@@ -4,23 +4,22 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
-	IProvideRuntimeFactory,
-	IFluidModule,
-	IProvideFluidCodeDetailsComparer,
-	IFluidCodeDetails,
 	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModule,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+	IProvideFluidCodeDetailsComparer,
+	IProvideRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
-	IContainerRuntimeBase,
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+} from "@fluidframework/runtime-definitions/internal";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal
@@ -71,10 +70,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 						"default",
 						maybeExport.IFluidDataStoreFactory,
 					);
-					const innerRequestHandler = async (
-						request: IRequest,
-						runtime: IContainerRuntimeBase,
-					) => runtime.IFluidHandleContext.resolveHandle(request);
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
@@ -83,7 +78,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 								registryEntries: [
 									[defaultFactory.type, Promise.resolve(defaultFactory)],
 								],
-								requestHandlers: [innerRequestHandler],
 								runtimeOptions,
 							}),
 						},

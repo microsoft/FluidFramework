@@ -3,17 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "./containerRuntime";
-import { DataStores } from "./dataStores";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ChannelCollection } from "./channelCollection.js";
+import { ContainerMessageType } from "./messageTypes.js";
 
 /**
  * Interface for an op to be used for assigning an
@@ -44,10 +50,9 @@ export const isDataStoreAliasMessage = (
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
-	runtime: ContainerRuntime,
-	datastores: DataStores,
+	channelCollection: ChannelCollection,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -113,11 +118,13 @@ class DataStore implements IDataStore {
 			internalId: this.internalId,
 			alias,
 		};
-
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
-		if (this.runtime.attachState === AttachState.Detached) {
-			const localResult = this.datastores.processAliasMessageCore(message);
+		if (this.parentContext.attachState === AttachState.Detached) {
+			const localResult = this.channelCollection.processAliasMessageCore(
+				this.internalId,
+				alias,
+			);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;
@@ -125,7 +132,7 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.runtime.submitDataStoreAliasOp(message, resolve);
+			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -161,34 +168,20 @@ class DataStore implements IDataStore {
 	}
 
 	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		return this.fluidDataStoreChannel.request(request);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> {
+	get entryPoint(): IFluidHandleInternal<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
-		private readonly runtime: ContainerRuntime,
-		private readonly datastores: DataStores,
+		private readonly channelCollection: ChannelCollection,
 		private readonly logger: ITelemetryLoggerExt,
+		private readonly parentContext = channelCollection.parentContext,
 	) {
-		this.pendingAliases = datastores.pendingAliases;
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this.fluidDataStoreChannel;
+		this.pendingAliases = channelCollection.pendingAliases;
 	}
 
 	private async ackBasedPromise<T>(
@@ -204,15 +197,15 @@ class DataStore implements IDataStore {
 					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
 				);
 
-			if (this.runtime.disposed) {
+			if (this.parentContext.containerRuntime.disposed) {
 				rejectBecauseDispose();
 				return;
 			}
 
-			this.runtime.on("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.on("dispose", rejectBecauseDispose);
 			executor(resolve, reject);
 		}).finally(() => {
-			this.runtime.off("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.off("dispose", rejectBecauseDispose);
 		});
 	}
 }

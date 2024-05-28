@@ -3,62 +3,69 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { type SharedObjectKind } from "@fluidframework/shared-object-base";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+/**
+ * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
+ * @public
+ */
+export type CompatibilityMode = "1" | "2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
- * @alpha
+ * @internal
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 /**
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
- * or `SharedObject` in a {@link LoadableObjectRecord}.
- * @alpha
+ * or `SharedObject`.
  */
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
 
 /**
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
- * @alpha
+ *
+ * @privateRemarks
+ * There are some edge cases in TypeScript where the order of the members in a union matter.
+ * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
+ * In this case, its better to have the desired match and/or the simpler type first.
+ * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
-	| DataObjectClass<T>
-	| SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+	| ISharedObjectKind<T>
+	| DataObjectClass<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
- * @alpha
+ * @privateRemarks
+ * Having both `factory` and constructor is redundant.
+ * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
+export interface DataObjectClass<T extends IFluidLoadable> {
 	readonly factory: IFluidDataStoreFactory;
-} & LoadableObjectCtor<T>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	new (...args: any[]): T;
+}
 
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `SharedObject`.
- * @alpha
+ * Represents properties that can be attached to a container.
+ * @public
  */
-export type SharedObjectClass<T extends IFluidLoadable> = {
-	readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
-
-/**
- * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
- *
- * @typeParam T - The class of the loadable object.
- * @alpha
- */
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+export type ContainerAttachProps<T = unknown> = T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
@@ -67,7 +74,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
  *
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
- * @alpha
+ * @public
  */
 export interface ContainerSchema {
 	/**
@@ -88,7 +95,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: Record<string, SharedObjectKind>;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -100,14 +107,14 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	dynamicObjectTypes?: LoadableObjectClass<any>[];
+	readonly dynamicObjectTypes?: readonly SharedObjectKind[];
 }
 
 /**
  * @internal
  */
 export interface IProvideRootDataObject {
-	readonly IRootDataObject?: IRootDataObject;
+	readonly IRootDataObject: IRootDataObject;
 }
 
 /**
@@ -128,7 +135,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
 }
 
 /**
@@ -138,7 +145,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
  * @param member - The service-specific member object for the client.
  *
  * @see See {@link IServiceAudienceEvents} for usage details.
- * @alpha
+ * @public
  */
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
@@ -151,7 +158,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
- * @alpha
+ * @public
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 	/**
@@ -185,7 +192,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * details about the connecting client, such as device information, environment, or a username.
  *
  * @typeParam M - A service-specific {@link IMember} type.
- * @alpha
+ * @public
  */
 export interface IServiceAudience<M extends IMember>
 	extends IEventProvider<IServiceAudienceEvents<M>> {
@@ -194,7 +201,7 @@ export interface IServiceAudience<M extends IMember>
 	 * member object.  The implementation may choose to exclude certain connections from the returned map.
 	 * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
 	 */
-	getMembers(): Map<string, M>;
+	getMembers(): ReadonlyMap<string, M>;
 
 	/**
 	 * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
@@ -206,40 +213,40 @@ export interface IServiceAudience<M extends IMember>
  * Base interface for information for each connection made to the Fluid session.
  *
  * @remarks This interface can be extended to provide additional information specific to each service.
- * @alpha
+ * @public
  */
 export interface IConnection {
 	/**
 	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
 	 */
-	id: string;
+	readonly id: string;
 
 	/**
 	 * Whether the connection is in read or read/write mode.
 	 */
-	mode: "write" | "read";
+	readonly mode: "write" | "read";
 }
 
 /**
  * Base interface to be implemented to fetch each service's member.
  *
  * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
- * @alpha
+ * @public
  */
 export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	readonly id: string;
 
 	/**
 	 * The set of connections the user has made, e.g. from multiple tabs or devices.
 	 */
-	connections: IConnection[];
+	readonly connections: IConnection[];
 }
 
 /**
  * An extended member object that includes currentConnection
- * @alpha
+ * @public
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };

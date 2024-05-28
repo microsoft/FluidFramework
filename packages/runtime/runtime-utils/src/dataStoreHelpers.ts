@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-// eslint-disable-next-line import/no-deprecated
-import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -73,27 +72,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 /**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @internal
- */
-export async function requestFluidObject<T = FluidObject>(
-	// eslint-disable-next-line import/no-deprecated
-	router: IFluidRouter,
-	url: string | IRequest,
-): Promise<T> {
-	const request = typeof url === "string" ? { url } : url;
-	const response = await router.request(request);
-
-	if (response.status !== 200 || response.mimeType !== "fluid/object") {
-		throw responseToException(response, request);
-	}
-
-	assert(response.value, 0x19a /* "Invalid response value for Fluid object request" */);
-	return response.value as T;
-}
-
-/**
- * @internal
+ * @alpha
  */
 export const create404Response = (request: IRequest) =>
 	createResponseError(404, "not found", request);

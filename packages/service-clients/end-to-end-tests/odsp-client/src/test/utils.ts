@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspMember, IOdspAudience } from "@fluid-experimental/odsp-client";
-import { IMember } from "@fluidframework/fluid-static";
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
+import { IOdspAudience, OdspMember } from "@fluid-experimental/odsp-client";
+import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
 export const waitForMember = async (
 	audience: IOdspAudience,
@@ -17,9 +16,9 @@ export const waitForMember = async (
 		return member;
 	}
 	return new Promise((resolve) => {
-		const handler = (clientId: string, newMember: IMember): void => {
-			if (newMember.userId === username) {
-				resolve(newMember as OdspMember);
+		const handler = (clientId: string, newMember: OdspMember): void => {
+			if (newMember.email === username) {
+				resolve(newMember);
 			}
 		};
 		audience.on("memberAdded", handler);

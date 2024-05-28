@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ICreateTreeEntry } from "@fluidframework/gitresources";
+import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import {
-	ISnapshotTreeEx,
-	ISummaryTree,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
-import { IGitManager, ISummaryUploadManager } from "./storageContracts";
+
+import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
@@ -47,7 +44,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 			Object.keys(summaryTree.tree).map(async (key) => {
 				const entry = summaryTree.tree[key];
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
-				const treeEntry: ICreateTreeEntry = {
+				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
 					path: encodeURIComponent(key),
 					sha: pathHandle,

@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
-import {
-	SummaryTree,
-	ISummaryTree,
-	ISequencedDocumentMessage,
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	ISnapshotTree,
 	ITree,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
+	SummaryTree,
+} from "@fluidframework/driver-definitions/internal";
+
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions.js";
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
@@ -125,16 +129,6 @@ export interface ISummarizerNodeConfig {
 	 * Defaults to true.
 	 */
 	readonly canReuseHandle?: boolean;
-	/**
-	 * True to always stop execution on error during summarize, or false to
-	 * attempt creating a summary that is a pointer ot the last acked summary
-	 * plus outstanding ops in case of internal summarize failure.
-	 * Defaults to false.
-	 *
-	 * BUG BUG: Default to true while we investigate problem
-	 * with differential summaries
-	 */
-	readonly throwOnFailure?: true;
 }
 
 /**
@@ -187,9 +181,6 @@ export interface ISummarizerNode {
 	invalidate(sequenceNumber: number): void;
 	/**
 	 * Calls the internal summarize function and handles internal state tracking.
-	 * If unchanged and fullTree is false, it will reuse previous summary subtree.
-	 * If an error is encountered and throwOnFailure is false, it will try to make
-	 * a summary with a pointer to the previous summary + a blob of outstanding ops.
 	 * @param fullTree - true to skip optimizations and always generate the full tree
 	 * @param trackState - indicates whether the summarizer node should track the state of the summary or not
 	 * @param telemetryContext - summary data passed through the layers for telemetry purposes
@@ -238,7 +229,9 @@ export interface ISummarizerNode {
 
 	getChild(id: string): ISummarizerNode | undefined;
 
-	/** True if a summary is currently in progress */
+	/**
+	 * True if a summary is currently in progress
+	 */
 	isSummaryInProgress?(): boolean;
 }
 
@@ -329,17 +322,17 @@ export const channelsTreeName = ".channels";
 
 /**
  * Contains telemetry data relevant to summarization workflows.
- * This object is expected to be modified directly by various summarize methods.
- * @alpha
+ * This object, in contrast to ITelemetryContext, is expected to be modified directly by various summarize methods.
+ * @internal
  */
-export interface ITelemetryContext {
+export interface ITelemetryContextExt {
 	/**
 	 * Sets value for telemetry data being tracked.
 	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
@@ -350,22 +343,35 @@ export interface ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void;
+}
 
+/**
+ * Contains telemetry data relevant to summarization workflows.
+ * This object is expected to be modified directly by various summarize methods.
+ * @alpha
+ */
+export interface ITelemetryContext {
 	/**
-	 * Get the telemetry data being tracked
-	 * @param prefix - unique prefix for this data (ex: "fluid:map:")
+	 * Sets value for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
-	 * @returns undefined if item not found
+	 * @param value - value to attribute to this summary telemetry data
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType;
+	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
 
 	/**
-	 * Returns a serialized version of all the telemetry data.
-	 * Should be used when logging in telemetry events.
+	 * Sets multiple values for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:summarize:")
+	 * @param property - property name of the telemetry data being tracked (ex: "Options")
+	 * @param values - A set of values to attribute to this summary telemetry data.
 	 */
-	serialize(): string;
+	setMultiple(
+		prefix: string,
+		property: string,
+		values: Record<string, TelemetryBaseEventPropertyType>,
+	): void;
 }
 
 /**

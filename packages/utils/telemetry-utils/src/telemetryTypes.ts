@@ -23,7 +23,6 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * @remarks
  * Includes extra types beyond {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType}, which must be
  * converted before sending to a base logger.
- *
  * @alpha
  */
 export type TelemetryEventPropertyTypeExt =
@@ -52,7 +51,6 @@ export interface ITaggedTelemetryPropertyTypeExt {
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
- *
  * @alpha
  */
 export interface ITelemetryPropertiesExt {

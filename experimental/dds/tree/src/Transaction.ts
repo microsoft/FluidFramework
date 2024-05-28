@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types';
-import { newEditId } from './EditUtilities';
-import { TreeView } from './TreeView';
-import { Change } from './ChangeTypes';
-import { SharedTree } from './SharedTree';
-import { GenericTransaction, TransactionInternal } from './TransactionInternal';
-import { CachingLogViewer } from './LogViewer';
-import { RestOrArray, unwrapRestOrArray } from './Common';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+
+import { Change } from './ChangeTypes.js';
+import { RestOrArray, unwrapRestOrArray } from './Common.js';
+import { newEditId } from './EditUtilities.js';
+import { CachingLogViewer } from './LogViewer.js';
+import { SharedTree } from './SharedTree.js';
+import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
- * @internal
+ * @alpha
  */
 export enum TransactionEvent {
 	/**
@@ -27,7 +28,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
- * @internal
+ * @alpha
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
@@ -36,7 +37,7 @@ export interface TransactionEvents extends IErrorEvent {
 /**
  * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
  * single edit
- * @internal
+ * @alpha
  */
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */

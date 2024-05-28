@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FocusTracker } from "./FocusTracker";
-import { MouseTracker } from "./MouseTracker";
+import { FocusTracker } from "./FocusTracker.js";
+import { MouseTracker } from "./MouseTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
@@ -31,7 +31,7 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.userName;
+		const currentUser = focusTracker.audience.getMyself()?.name;
 		const focusPresences = focusTracker.getFocusPresences();
 
 		focusDiv.innerHTML = `

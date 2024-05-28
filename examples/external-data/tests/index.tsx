@@ -8,9 +8,9 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { BaseDocumentContainerRuntimeFactory } from "../src/model";
-import type { IAppModel, ITaskList } from "../src/model-interface";
-import { TaskListView } from "../src/view";
+import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
+import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
+import { TaskListView } from "../src/view/index.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

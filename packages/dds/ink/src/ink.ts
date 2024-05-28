@@ -4,32 +4,34 @@
  */
 
 import {
+	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+} from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
-import { InkFactory } from "./inkFactory";
+
+import { InkFactory } from "./inkFactory.js";
 import {
 	IClearOperation,
 	ICreateStrokeOperation,
 	IInk,
+	IInkEvents,
 	IInkOperation,
 	IInkPoint,
 	IInkStroke,
 	IPen,
 	IStylusOperation,
-	IInkEvents,
-} from "./interfaces";
-import { InkData, ISerializableInk } from "./snapshot";
+} from "./interfaces.js";
+import { ISerializableInk, InkData } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.
@@ -280,7 +282,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		return stroke;
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

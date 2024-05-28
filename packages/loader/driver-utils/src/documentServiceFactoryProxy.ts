@@ -8,8 +8,8 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 
 /**
  * This abstract class implements IDocumentServiceFactory interface. It uses delegation pattern.

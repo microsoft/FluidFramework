@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
+	type IChannelFactory,
 	type IFluidDataStoreRuntime,
 	type IChannelServices,
-	type IChannelFactory,
-} from '@fluidframework/datastore-definitions';
-import { type TreeFactory, type ITree } from '@fluid-experimental/tree2';
-import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+} from '@fluidframework/datastore-definitions/internal';
+import { type ITree } from '@fluidframework/tree';
+
+import {
+	type SharedTree as LegacySharedTree,
+	type SharedTreeFactory as LegacySharedTreeFactory,
+} from '../SharedTree.js';
+
 import { MigrationShim } from './migrationShim.js';
 import { attributesMatch } from './utils.js';
 
@@ -30,7 +35,7 @@ import { attributesMatch } from './utils.js';
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
 		private readonly oldFactory: LegacySharedTreeFactory,
-		private readonly newFactory: TreeFactory,
+		private readonly newFactory: IChannelFactory<ITree>,
 		private readonly populateNewChannelFn: (oldChannel: LegacySharedTree, newChannel: ITree) => void
 	) {}
 

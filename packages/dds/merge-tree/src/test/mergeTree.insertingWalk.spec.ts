@@ -6,18 +6,20 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { IMergeBlock, MaxNodesInBlock } from "../mergeTreeNodes";
-import { TextSegment } from "../textSegment";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import { MergeTree } from "../mergeTree.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { TextSegment } from "../textSegment.js";
+
 import {
 	insertSegments,
 	insertText,
 	markRangeRemoved,
 	nodeOrdinalsHaveIntegrity,
-} from "./testUtils";
+} from "./testUtils.js";
 
 interface ITestTreeFactory {
 	readonly create: () => ITestData;
@@ -93,12 +95,12 @@ const treeFactories: ITestTreeFactory[] = [
 			const textHelper = new MergeTreeTextHelper(mergeTree);
 			assert.equal(textHelper.getText(UniversalSequenceNumber, localClientId), initialText);
 
-			const nodes: IMergeBlock[] = [mergeTree.root];
+			const nodes: MergeBlock[] = [mergeTree.root];
 			while (nodes.length > 0) {
 				const node = nodes.pop()!;
 				assert.equal(node.childCount, MaxNodesInBlock - 1);
 				const childrenBlocks = node.children
-					.map((v) => v as IMergeBlock)
+					.map((v) => v as MergeBlock)
 					.filter((v) => v === undefined);
 				nodes.push(...childrenBlocks);
 			}

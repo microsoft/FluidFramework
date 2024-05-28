@@ -4,25 +4,27 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal
 export function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined>;
 
-// @internal
+// @alpha
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @internal
+// @alpha
 export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
@@ -35,7 +37,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected completeCore(acquireId: string): void;
     // (undocumented)
     protected isActive(): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -50,14 +51,33 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @internal
-export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
+// @alpha
+export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
+
+// @alpha
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
+
+// @alpha
+export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusQueue<T>;
-    static getFactory(): IChannelFactory;
 }
 
-// @internal (undocumented)
+// @internal
+export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
+    // (undocumented)
+    static Type: string;
+    // (undocumented)
+    get type(): string;
+}
+
+// @alpha (undocumented)
 export enum ConsensusResult {
     // (undocumented)
     Complete = 1,
@@ -65,14 +85,14 @@ export enum ConsensusResult {
     Release = 0
 }
 
-// @internal
+// @alpha
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
-// @internal
+// @alpha
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
     (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
     (event: "acquire", listener: (value: T, clientId?: string) => void): this;
@@ -88,14 +108,14 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 }
 
-// @internal
+// @alpha
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     add(value: T): any;
     remove(): T;
     size(): number;
 }
 
-// @internal
+// @alpha
 export interface ISnapshotable<T> {
     // (undocumented)
     asArray(): T[];

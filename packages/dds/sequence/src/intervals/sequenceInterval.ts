@@ -6,9 +6,9 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	Client,
-	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
 	PropertiesManager,
@@ -23,17 +23,19 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	SequencePlace,
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	reservedIntervalIdKey,
 	sidesFromStickiness,
-} from "../intervalCollection";
+} from "../intervalCollection.js";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -42,9 +44,7 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-} from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
+} from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
 	if (sideA === sideB) {
@@ -106,11 +106,12 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
-	public propertyManager: PropertiesManager;
+	public propertyManager: PropertiesManager = new PropertiesManager();
 
 	/***/
 	public get stickiness(): IntervalStickiness {
@@ -141,9 +142,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -200,7 +198,7 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 
 		return serializedInterval;
@@ -332,10 +330,8 @@ export class SequenceInterval implements ISerializableInterval {
 		newProps: PropertySet,
 		collab: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
-		this.initializeProperties();
-		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
 	}
 
 	/**
@@ -420,7 +416,6 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -428,15 +423,6 @@ export class SequenceInterval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 
@@ -487,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(
@@ -568,10 +554,6 @@ export function createSequenceInterval(
 		beginRefType = ReferenceType.Transient;
 		endRefType = ReferenceType.Transient;
 	} else {
-		if (intervalType === IntervalType.Nest) {
-			beginRefType = ReferenceType.NestBegin;
-			endRefType = ReferenceType.NestEnd;
-		}
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { FileDeltaStorageService } from "./fileDeltaStorageService";
-export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory";
-export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
+export { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory.js";
+export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection.js";
 export {
 	FileSnapshotWriterClassFactory,
 	FileStorageDocumentName,
@@ -13,4 +13,4 @@ export {
 	FluidFetchReaderFileSnapshotWriter,
 	ISnapshotWriterStorage,
 	ReaderConstructor,
-} from "./fileDocumentStorageService";
+} from "./fileDocumentStorageService.js";

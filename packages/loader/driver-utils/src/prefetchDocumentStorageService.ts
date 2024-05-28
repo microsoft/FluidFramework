@@ -2,10 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-import { canRetryOnError } from "./network";
+
+import {
+	LoaderCachingPolicy,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
+import { canRetryOnError } from "./network.js";
 
 /**
  * @internal

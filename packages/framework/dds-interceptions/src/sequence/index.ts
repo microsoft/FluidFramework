@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { createSharedStringWithInterception } from "./sharedStringWithInterception";
+export { createSharedStringWithInterception } from "./sharedStringWithInterception.js";

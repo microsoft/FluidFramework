@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiModel } from "@microsoft/api-extractor-model";
 
-import { ConfigurationBase } from "../../ConfigurationBase";
-import { defaultConsoleLogger } from "../../Logging";
+import { type ApiModel } from "@microsoft/api-extractor-model";
+
+import { type ConfigurationBase } from "../../ConfigurationBase.js";
+import { defaultConsoleLogger } from "../../Logging.js";
 import {
-	DocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
-} from "./DocumentationSuiteOptions";
+} from "./DocumentationSuiteOptions.js";
 import {
-	ApiItemTransformationOptions,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationOptionsWithDefaults,
-} from "./TransformationOptions";
+} from "./TransformationOptions.js";
 
 /**
  * API Item transformation configuration.

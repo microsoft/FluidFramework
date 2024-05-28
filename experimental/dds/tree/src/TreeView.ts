@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail } from './Common';
-import { NodeId, TraitLabel } from './Identifiers';
-import { Delta, Forest, isParentedForestNode } from './Forest';
-import { NodeData, Side } from './persisted-types';
+import { assert } from '@fluidframework/core-utils/internal';
+
+import { copyPropertyIfDefined, fail } from './Common.js';
+import { Delta, Forest, isParentedForestNode } from './Forest.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeData, Side } from './persisted-types/index.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @internal
+ * @alpha
  */
 export interface TraitLocation {
 	readonly parent: NodeId;
@@ -20,7 +21,7 @@ export interface TraitLocation {
 
 /**
  * An immutable view of a distributed tree node.
- * @internal
+ * @alpha
  */
 export interface TreeViewNode extends NodeData<NodeId> {
 	/** The IDs of the children under this node */
@@ -34,7 +35,7 @@ export interface TreeViewNode extends NodeData<NodeId> {
  * 0 = before all nodes,
  * 1 = after first node,
  * etc.
- * @internal
+ * @alpha
  */
 export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
 
@@ -43,14 +44,14 @@ export type PlaceIndex = number & { readonly PlaceIndex: unique symbol };
  * 0 = first node,
  * 1 = second node,
  * etc.
- * @internal
+ * @alpha
  */
 export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol };
 
 /**
  * A place within a particular `TreeView` that is anchored relative to a specific node in the tree, or relative to the outside of the trait.
  * Valid iff 'trait' is valid and, if provided, sibling is in the Location specified by 'trait'.
- * @internal
+ * @alpha
  */
 export interface TreeViewPlace {
 	readonly sibling?: NodeId;
@@ -61,7 +62,7 @@ export interface TreeViewPlace {
 /**
  * Specifies the range of nodes from `start` to `end` within a trait within a particular `TreeView`.
  * Valid iff start and end are valid and are within the same trait.
- * @internal
+ * @alpha
  */
 export interface TreeViewRange {
 	readonly start: TreeViewPlace;
@@ -79,7 +80,7 @@ export interface NodeInTrait {
 
 /**
  * A view of a distributed tree.
- * @internal
+ * @alpha
  */
 export abstract class TreeView {
 	public readonly root: NodeId;
@@ -318,6 +319,5 @@ export abstract class TreeView {
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
 }

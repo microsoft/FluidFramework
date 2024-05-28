@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "../constants";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeDeltaType } from "../ops";
-import { PartialSequenceLengths, verify } from "../partialLengths";
-import { TextSegment } from "../textSegment";
-import { insertSegments, insertText, markRangeRemoved, validatePartialLengths } from "./testUtils";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeDeltaType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+
+import {
+	insertSegments,
+	insertText,
+	markRangeRemoved,
+	useStrictPartialLengthChecks,
+	validatePartialLengths,
+} from "./testUtils.js";
 
 describe("partial lengths", () => {
 	let mergeTree: MergeTree;
@@ -16,8 +22,9 @@ describe("partial lengths", () => {
 	const remoteClientId = 18;
 	const refSeq = 0;
 
+	useStrictPartialLengthChecks();
+
 	beforeEach(() => {
-		PartialSequenceLengths.options.verifier = verify;
 		mergeTree = new MergeTree();
 		insertSegments({
 			mergeTree,
@@ -30,10 +37,6 @@ describe("partial lengths", () => {
 		});
 
 		mergeTree.startCollaboration(localClientId, /* minSeq: */ 0, /* currentSeq: */ 0);
-	});
-
-	afterEach(() => {
-		PartialSequenceLengths.options.verifier = undefined;
 	});
 
 	it("passes with no additional ops", () => {

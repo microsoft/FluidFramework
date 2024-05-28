@@ -5,9 +5,9 @@
 ```ts
 
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { IUser } from '@fluidframework/protocol-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { IUser } from '@fluidframework/driver-definitions';
 import { Provider } from 'nconf';
 
 // @internal (undocumented)

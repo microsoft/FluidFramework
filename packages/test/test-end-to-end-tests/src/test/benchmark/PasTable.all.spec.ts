@@ -4,26 +4,27 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
+	return SharedMatrix.create(dataStoreRuntime, id);
 }
 
 function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	return SharedString.create(dataStoreRuntime, id);
 }
 
 describeCompat("PAS Test", "NoCompat", () => {
-	let matrix: SharedMatrix;
-	let containerRuntimeFactory: MockContainerRuntimeFactory;
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedMatrix.getFactory(), SharedString.getFactory()],
+	});
 	const rowSize = 6;
 	const columnSize = 5;
 
@@ -47,10 +48,10 @@ describeCompat("PAS Test", "NoCompat", () => {
 				this.matrix.insertCols(0, columnSize);
 				for (let i = 0; i < rowSize; i++) {
 					for (let j = 0; j < columnSize; j++) {
-						const id = j.toString() + i.toString();
+						const id = `${j},${i}`;
 						const sharedString: SharedString = createString(id, dataStoreRuntime);
 						sharedString.insertText(0, "testValue");
-						this.matrix.setCell(i, j, sharedString);
+						this.matrix.setCell(i, j, sharedString.handle);
 					}
 				}
 			}

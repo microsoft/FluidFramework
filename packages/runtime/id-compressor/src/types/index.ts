@@ -8,9 +8,13 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-	initialClusterCapacity,
-} from "./persisted-types";
+} from "./persisted-types/index.js";
 
-export { IIdCompressorCore, IIdCompressor } from "./idCompressor";
+export { IIdCompressorCore, IIdCompressor } from "./idCompressor.js";
 
-export { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, StableId } from "./identifiers";
+export {
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	StableId,
+} from "./identifiers.js";

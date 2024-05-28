@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
-import { LocalReferencePosition } from "./localReference";
-import { ISegment } from "./mergeTreeNodes";
-import { SortedSet } from "./sortedSet";
+import { LocalReferencePosition } from "./localReference.js";
+import { ISegment } from "./mergeTreeNodes.js";
+// eslint-disable-next-line import/no-deprecated
+import { SortedSet } from "./sortedSet.js";
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
@@ -31,6 +30,7 @@ export type SortedSegmentSetItem =
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
 	T,
 	string
@@ -39,9 +39,11 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 		const maybeRef = item as Partial<LocalReferencePosition>;
 		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
 			const lref = maybeRef as LocalReferencePosition;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const segment = lref.getSegment()!;
-			return segment.ordinal;
+			// If the reference position has no associated segment, assign it a sentinel value.
+			// The particular value for comparison doesn't matter because `findItemPosition` tolerates
+			// elements with duplicate keys (as it must, since local references use the same key as their segment).
+			// All that matters is that it's consistent.
+			return lref.getSegment()?.ordinal ?? "";
 		}
 		const maybeObject = item as { readonly segment: ISegment };
 		if (maybeObject?.segment) {

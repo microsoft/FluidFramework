@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
-import { UnreferencedState, UnreferencedStateTracker } from "../../gc";
+
+import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
+
+import { UnreferencedState, UnreferencedStateTracker } from "../../gc/index.js";
 
 /** Schema for steps taken to test unreferenced state progression / tracking */
 type Steps = [
@@ -64,7 +66,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* unreferencedTimestampMs */,
 				10 /* inactiveTimeoutMs */,
 				start.time /* currentReferenceTimestampMs */,
-				20 /* sweepTimeoutMs */,
+				20 /* tombstoneTimeoutMs */,
 				start.sweepGracePeriodMs ?? 10 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, start.state, `Wrong starting state`);
@@ -89,7 +91,7 @@ describe("Garbage Collection Tests", () => {
 		 * In all cases:
 		 * - unreferencedTimestampMs = 0
 		 * - inactiveTimeoutMs = 10
-		 * - sweepTimeoutMs = 20
+		 * - tombstoneTimeoutMs = 20
 		 * - sweepGracePeriodMs defaults to 10 (so sweep at 30)
 		 */
 		const testCases: {
@@ -197,7 +199,7 @@ describe("Garbage Collection Tests", () => {
 				10 /* unreferencedTimestampMs */,
 				3 /* inactiveTimeoutMs */,
 				11 /* currentReferenceTimestampMs */,
-				7 /* sweepTimeoutMs */,
+				7 /* tombstoneTimeoutMs */,
 				15 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
@@ -225,7 +227,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* unreferencedTimestampMs */,
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
-				12 /* sweepTimeoutMs */,
+				12 /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
@@ -249,7 +251,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* unreferencedTimestampMs */,
 				20 /* inactiveTimeoutMs */,
 				5 /* currentReferenceTimestampMs */,
-				undefined /* sweepTimeoutMs */,
+				undefined /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
@@ -269,7 +271,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* unreferencedTimestampMs */,
 				10 /* inactiveTimeoutMs */,
 				0 /* currentReferenceTimestampMs */,
-				undefined /* sweepTimeoutMs */,
+				undefined /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");

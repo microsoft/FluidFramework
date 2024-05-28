@@ -4,18 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
-	MockStorage,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
-} from "@fluidframework/test-runtime-utils";
-import { SharedCell } from "../cell";
-import { CellFactory } from "../cellFactory";
-import { type ISharedCell, type ICellOptions } from "../interfaces";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedCell } from "../cell.js";
+import { CellFactory } from "../cellFactory.js";
+import { type ICellOptions, type ISharedCell } from "../interfaces.js";
 
 function createConnectedCell(
 	id: string,
@@ -37,7 +40,7 @@ function createConnectedCell(
 	return cell;
 }
 
-function createDetachedCell(id: string, options?: ICellOptions): ISharedCell {
+function createDetachedCell(id: string, options?: ICellOptions): SharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
@@ -67,7 +70,7 @@ describe("Cell", () => {
 		 */
 		let cell: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createDetachedCell", () => {
 			cell = createDetachedCell("cell");
 		});
 
@@ -143,7 +146,7 @@ describe("Cell", () => {
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
@@ -212,7 +215,7 @@ describe("Cell", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		describe("APIs", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell.
 				cell1 = createConnectedCell("cell1", containerRuntimeFactory);
@@ -296,7 +299,7 @@ describe("Cell", () => {
 		});
 
 		describe("Attributor", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				const options: ICellOptions = { attribution: { track: true } };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell with attribution enabled.
@@ -418,7 +421,7 @@ describe("Cell", () => {
 		let cell1: ISharedCell;
 		let cell2: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createCellsForReconnection", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCell.

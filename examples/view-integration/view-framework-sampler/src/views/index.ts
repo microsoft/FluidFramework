@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { jsRenderDiceRoller } from "./jsView";
-export { DiceRollerView, reactRenderDiceRoller } from "./reactView";
-export { vueRenderDiceRoller } from "./vueView";
+export { jsRenderDiceRoller } from "./jsView.js";
+export { DiceRollerView, reactRenderDiceRoller } from "./reactView.js";
+export { vueRenderDiceRoller } from "./vueView.js";

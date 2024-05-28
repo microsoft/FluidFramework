@@ -2,19 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import chai, { assert, expect } from "chai";
 
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import assertArrays from "chai-arrays";
 
+import path from "path";
 import {
 	AllPackagesSelectionCriteria,
-	filterPackages,
 	PackageFilterOptions,
 	PackageSelectionCriteria,
+	filterPackages,
 	selectAndFilterPackages,
 } from "../src/filter";
-import path from "path";
+import { Context } from "../src/library";
 
 chai.use(assertArrays);
 
@@ -139,7 +141,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.containingAllOf([
@@ -165,13 +167,12 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
 			"@fluidframework/eslint-config-fluid",
-			"@fluidframework/common-definitions",
-			"@fluidframework/common-utils",
+			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
@@ -195,7 +196,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.equalTo([

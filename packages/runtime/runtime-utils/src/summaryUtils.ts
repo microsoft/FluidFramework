@@ -3,32 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
-	bufferToString,
-	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	ITree,
-	SummaryType,
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ISummaryBlob,
 	ISummaryTree,
 	SummaryObject,
-	ISummaryBlob,
-	TreeEntry,
-	ITreeEntry,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryStats,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
+	ISummarizeResult,
+	ITelemetryContextExt,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -133,18 +136,6 @@ export function addBlobToSummary(
 /**
  * @internal
  */
-export function addTreeToSummary(
-	summary: ISummaryTreeWithStats,
-	key: string,
-	summarizeResult: ISummarizeResult,
-): void {
-	summary.summary.tree[key] = summarizeResult.summary;
-	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
-}
-
-/**
- * @internal
- */
 export function addSummarizeResultToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -155,7 +146,7 @@ export function addSummarizeResultToSummary(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
@@ -225,7 +216,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
- * @internal
+ * @alpha
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,
@@ -265,6 +256,7 @@ export function convertToSummaryTreeWithStats(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -298,12 +290,14 @@ export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false)
  * @param snapshot - snapshot in ISnapshotTree format
  * @internal
  */
-export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats {
+export function convertSnapshotTreeToSummaryTree(
+	snapshot: ISnapshotTreeWithBlobContents,
+): ISummaryTreeWithStats {
 	const builder = new SummaryTreeBuilder();
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
-		if ((snapshot as any).blobsContents !== undefined) {
-			const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
+		if (snapshot.blobsContents !== undefined) {
+			const content: ArrayBufferLike = snapshot.blobsContents[id];
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
@@ -324,6 +318,7 @@ export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISumm
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -370,19 +365,59 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
+}
+
+/**
+ * Looks in the given attach message snapshot for the .gcdata blob, which would
+ * contain the initial GC Data for the node being attached.
+ * If it finds it, it notifies GC of all the new outbound routes being added by the attach.
+ *
+ * @param snapshot - The snapshot from the attach message
+ * @param addedGCOutboundRoute - Callback to notify GC of a new outbound route.
+ * IMPORTANT: addedGCOutboundRoute's param nodeId is "/" for the attaching node itself, or "/<id>" for its children.
+ *
+ * @returns true if it found/processed GC Data, false otherwise
+ *
+ * @internal
+ */
+export function processAttachMessageGCData(
+	snapshot: ITree | null,
+	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
+): boolean {
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+
+	// Old attach messages won't have GC Data
+	// (And REALLY old DataStore Attach messages won't even have a snapshot!)
+	if (gcDataEntry === undefined) {
+		return false;
+	}
+
+	assert(
+		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+		0x8ff /* GC data should be a utf-8-encoded blob */,
+	);
+
+	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+		outboundRoutes.forEach((toPath) => {
+			addedGCOutboundRoute(nodeId, toPath);
+		});
+	}
+	return true;
 }
 
 /**
  * @internal
  */
-export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -392,7 +427,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -403,7 +438,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType {
+	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

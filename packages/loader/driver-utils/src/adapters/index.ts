@@ -8,6 +8,6 @@ export {
 	ICompressionStorageConfig,
 	DefaultCompressionStorageConfig,
 	blobHeadersBlobName,
-} from "./compression";
+} from "./compression/index.js";
 
-export { applyStorageCompression } from "./predefinedAdapters";
+export { applyStorageCompression } from "./predefinedAdapters.js";

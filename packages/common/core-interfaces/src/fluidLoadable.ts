@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "./handles";
+import type { IFluidHandle } from "./handles.js";
 
 /**
- * @alpha
+ * @public
  */
 export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 
 /**
- * @alpha
+ * @public
  */
 export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
  * A shared FluidObject has a URL from which it can be referenced
- * @alpha
+ * @public
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
-	handle: IFluidHandle;
+	readonly handle: IFluidHandle;
 }
 
 /**
