@@ -4,9 +4,7 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-
-import { fail, getOrCreate } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -95,7 +93,9 @@ export interface Listenable<TListeners extends object> {
 	 * @param eventName - the name of the event
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a {@link Off | function} which will deregister the listener when called.
-	 * This function has undefined behavior if called more than once.
+	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
+	 * @remarks Avoid registering the exact same `listener` object for the same event more than once.
+	 * Doing so will result in undefined behavior.
 	 */
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
@@ -269,22 +269,32 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	 */
 	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
 		const off: Off = () => {
-			const listeners =
-				this.listeners.get(eventName) ??
-				// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
-				fail(
-					"Event has no listeners. Event deregistration functions may only be invoked once.",
-				);
-			assert(
-				listeners.delete(off),
-				0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
-			);
-			if (listeners.size === 0) {
-				this.listeners.delete(eventName);
-				this.noListeners?.(eventName);
+			const currentListeners = this.listeners.get(eventName);
+			if (currentListeners?.delete(off) === true) {
+				if (currentListeners.size === 0) {
+					this.listeners.delete(eventName);
+					this.noListeners?.(eventName);
+				}
 			}
 		};
-		getOrCreate(this.listeners, eventName, () => new Map()).set(off, listener);
+
+		const listeners = this.listeners.get(eventName);
+		if (listeners === undefined) {
+			const map = new Map([[off, listener]]);
+			this.listeners.set(eventName, map);
+		} else {
+			// If the same listener function is already registered, error.
+			// This policy may change in the future, but in the meantime this is a conservative choice that can accommodate multiple future eventing API/implementation options.
+			// For example, adding an `Listenable.off()` method in the future could be problematic if we allowed registering the same function twice (should `off(f)` deregister _both_ `f`s or just one?).
+			for (const l of listeners.values()) {
+				if (Object.is(l, listener)) {
+					throw new UsageError(
+						"The same listener may not be registered more than once for the same event",
+					);
+				}
+			}
+			listeners.set(off, listener);
+		}
 		return off;
 	}
 
