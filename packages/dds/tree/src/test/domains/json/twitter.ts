@@ -15,6 +15,7 @@ import {
 	getRandomNumberString,
 	getSizeInBytes,
 } from "./jsonGeneratorUtils.js";
+import { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
@@ -197,7 +198,7 @@ export function generateTwitterJsonByByteSize(
 	sizeInBytes: number,
 	allowOversize = false,
 	seed = 1,
-) {
+): Twitter & JsonCompatibleReadOnlyObject {
 	const random = makeRandom(seed);
 	const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(
 		random,
@@ -208,7 +209,7 @@ export function generateTwitterJsonByByteSize(
 		getTwitterJsonUserDescFieldWordMarkovChain(),
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-	const twitterJson: Twitter = {
+	const twitterJson: Twitter & JsonCompatibleReadOnlyObject = {
 		statuses: [],
 		search_metadata: {
 			completed_in: 0.087,
