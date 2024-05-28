@@ -27,21 +27,23 @@ export const compareArrays = <T>(
 	//       '===' and 'Object.is()' tied.
 	//       Trivial acceptance adds no measurable overhead.
 	//       30% penalty vs. baseline for exported function [node 14 x64].
-	if (left === right) { // Trivial acceptance: 'left' and 'right' are the same instance
+	if (left === right) {
+		// Trivial acceptance: 'left' and 'right' are the same instance
 		return true;
 	}
 
-	if(left.length !== right.length) { // Trivial rejection: 'left' and 'right' are different lengths
+	if (left.length !== right.length) {
+		// Trivial rejection: 'left' and 'right' are different lengths
 		return false;
 	}
 
 	for (const [index, leftItem] of left.entries()) {
-        const rightItem = right[index];
+		const rightItem = right[index];
 		assert(rightItem !== undefined, "rightItem is undefined in compareArrays");
-        if (!comparator(leftItem, rightItem, index)) {
-            return false;
-        }
-    }
+		if (!comparator(leftItem, rightItem, index)) {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 };
