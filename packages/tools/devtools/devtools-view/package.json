@@ -97,7 +97,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@previewjs/api": "^13.0.0",
 		"@previewjs/chromeless": "^7.0.3",
 		"@previewjs/core": "^23.0.0",
