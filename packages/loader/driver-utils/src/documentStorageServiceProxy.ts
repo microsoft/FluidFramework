@@ -10,14 +10,11 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**

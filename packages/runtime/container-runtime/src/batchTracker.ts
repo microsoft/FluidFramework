@@ -7,7 +7,7 @@ import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 export class BatchTracker {

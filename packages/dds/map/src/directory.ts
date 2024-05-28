@@ -7,15 +7,19 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import type { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
@@ -203,6 +207,9 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 
 /**
  * Create info for the subdirectory.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface ICreateInfo {
@@ -224,6 +231,9 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
+ *
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
  * @alpha
  */
 export interface IDirectoryDataObject {
@@ -251,7 +261,9 @@ export interface IDirectoryDataObject {
 /**
  * {@link IDirectory} storage format.
  *
- * @internal
+ * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ *
+ * @alpha
  */
 export interface IDirectoryNewStorageFormat {
 	/**

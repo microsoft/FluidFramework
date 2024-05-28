@@ -28,21 +28,19 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
 				"tinylicious": {
 					"configurations": {
-						"Fluid.Summarizer.UseDynamicRetries": [true, false],
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
+						"Fluid.Container.ForceWriteConnection": [true, false]
 					}
 				}
 			},
@@ -73,7 +71,6 @@
 			"optionOverrides": {
 				"routerlicious": {
 					"configurations": {
-						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
@@ -105,7 +102,6 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}

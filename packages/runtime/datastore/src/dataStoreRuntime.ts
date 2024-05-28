@@ -4,14 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import {
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces/internal";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -24,26 +20,23 @@ import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
+	type IDeltaManagerErased,
+} from "@fluidframework/datastore-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	type ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -52,6 +45,7 @@ import {
 	IFluidDataStoreContext,
 	VisibilityState,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -68,6 +62,7 @@ import {
 	processAttachMessageGCData,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
+	toDeltaManagerErased,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -189,7 +184,10 @@ export class FluidDataStoreRuntime
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly options: Record<string | number, any>;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly deltaManagerInternal: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
@@ -229,7 +227,7 @@ export class FluidDataStoreRuntime
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.logger,
+			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
@@ -238,7 +236,7 @@ export class FluidDataStoreRuntime
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
-		this.deltaManager = dataStoreContext.deltaManager;
+		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 
@@ -330,6 +328,10 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+	}
+
+	get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
 	}
 
 	public dispose(): void {
@@ -942,13 +944,27 @@ export class FluidDataStoreRuntime
 		//  "The data store should be locally visible when generating attach summary",
 		// );
 
-		for (const [contextId, context] of this.contexts) {
-			if (!(context instanceof LocalChannelContextBase)) {
-				throw new LoggingError("Should only be called with local channel handles");
-			}
+		const visitedContexts = new Set<string>();
+		let visitedLength = -1;
+		while (visitedLength !== visitedContexts.size) {
+			// detect changes in the visitedContexts set, as on visiting a context
+			// it could could make contexts available by removing other contexts
+			// from the notBoundedChannelContextSet, so we need to ensure those get processed as well.
+			// only once the loop can run with no new contexts added to the visitedContexts set do we
+			// know for sure all possible contexts have been visited.
+			visitedLength = visitedContexts.size;
+			for (const [contextId, context] of this.contexts) {
+				if (!(context instanceof LocalChannelContextBase)) {
+					throw new LoggingError("Should only be called with local channel handles");
+				}
 
-			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				visitor(contextId, context);
+				if (
+					!visitedContexts.has(contextId) &&
+					!this.notBoundedChannelContextSet.has(contextId)
+				) {
+					visitor(contextId, context);
+					visitedContexts.add(contextId);
+				}
 			}
 		}
 	}

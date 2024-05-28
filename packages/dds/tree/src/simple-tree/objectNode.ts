@@ -16,7 +16,7 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
-	LocalNodeKey,
+	getSchemaAndPolicy,
 	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import {
@@ -44,7 +44,7 @@ import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
+import { RawTreeNode } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -146,7 +146,7 @@ function createProxyHandler(
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, viewKey, proxy);
 		},
-		set(target, viewKey, value: InsertableContent, proxy) {
+		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
@@ -204,7 +204,7 @@ function createProxyHandler(
 export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
-	value: InsertableContent,
+	value: InsertableContent | undefined,
 	nodeKeyManager: NodeKeyManager,
 ): void {
 	switch (field.schema.kind) {
@@ -219,6 +219,7 @@ export function setField(
 				content,
 				simpleFieldSchema.allowedTypes,
 				nodeKeyManager,
+				getSchemaAndPolicy(field),
 			);
 			typedField.content = cursor;
 			break;
@@ -306,7 +307,7 @@ export function objectSchema<
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			handler = createProxyHandler(flexKeyMap, customizable);
@@ -361,12 +362,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
 	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
+	implements FlexTreeObjectNode {}
 
 /**
  * Ensures that the set of view keys in the schema is unique.

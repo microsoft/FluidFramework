@@ -7,7 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha

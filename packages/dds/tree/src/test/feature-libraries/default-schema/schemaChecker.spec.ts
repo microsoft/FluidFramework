@@ -32,6 +32,9 @@ import {
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
+/**
+ * Creates a schema and policy. Indicates stored schema validation should be performed.
+ */
 function createSchemaAndPolicy(
 	nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
 	fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
@@ -42,6 +45,9 @@ function createSchemaAndPolicy(
 		},
 		policy: {
 			fieldKinds,
+			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
+			// layer where we already decided that we are doing validation and are validating that it works correctly.
+			validateSchema: true,
 		},
 	};
 }
@@ -158,9 +164,14 @@ describe("schema validation", () => {
 				const { node, schema } = createLeafNode("myNumberNode", 1, ValueSchema.Number);
 				const stringNode = createLeafNode("myStringNode", "string", ValueSchema.String);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
-				node.fields.set(brand("prop1"), [stringNode.node]);
+				const outOfSchemaNode: MapTree = {
+					type: node.type,
+					value: node.value,
+					fields: new Map([[brand("prop1"), [stringNode.node]]]),
+				};
+
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.LeafNode_FieldsNotAllowed,
 				);
 			});
@@ -177,7 +188,10 @@ describe("schema validation", () => {
 				]);
 				const mapNode = createNonLeafNode(
 					"myUnionMapNode",
-					new Map(),
+					new Map([
+						[brand("prop1"), [numberNode.node]],
+						[brand("prop2"), [stringNode.node]],
+					]),
 					new MapNodeStoredSchema(fieldSchema),
 				);
 				const schemaAndPolicy = createSchemaAndPolicy(
@@ -189,8 +203,6 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
-				mapNode.node.fields.set(brand("prop2"), [stringNode.node]);
 				assert.equal(
 					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
@@ -225,7 +237,6 @@ describe("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new MapNodeStoredSchema(fieldSchema),
 				);
-				mapNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy = createSchemaAndPolicy(
 					new Map([
@@ -235,8 +246,14 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
+				const outOfSchemaNode: MapTree = {
+					type: mapNode.node.type,
+					value: "something that's not undefined",
+					fields: mapNode.node.fields,
+				};
+
 				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -344,7 +361,6 @@ describe("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new ObjectNodeStoredSchema(new Map([[brand("requiredProp"), fieldSchema]])),
 				);
-				objectNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy = createSchemaAndPolicy(
 					new Map([
@@ -354,8 +370,14 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
+				const outOfSchemaNode: MapTree = {
+					type: objectNode.node.type,
+					value: "something that's not undefined",
+					fields: objectNode.node.fields,
+				};
+
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});

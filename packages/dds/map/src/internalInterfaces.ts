@@ -136,7 +136,7 @@ export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadat
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
  * channel ID.
  *
- * @deprecated This type is legacy and deprecated.
+ * @deprecated This type is legacy and deprecated(AB#8004).
  * @alpha
  */
 export interface ISerializableValue {

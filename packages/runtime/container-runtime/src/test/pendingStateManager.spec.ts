@@ -7,7 +7,8 @@ import assert from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -46,7 +47,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ hardLimit: 950 * 1024 });
+			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {

@@ -14,6 +14,7 @@ import {
 	Brand,
 	NestedMap,
 	RangeMap,
+	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
@@ -109,6 +110,10 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
+export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+	return { ...id, localId: brand(id.localId + offset) };
+}
+
 export function replaceAtomRevisions(
 	id: ChangeAtomId,
 	oldRevisions: Set<RevisionTag | undefined>,
@@ -188,4 +193,13 @@ export function mintCommit<TChange>(
 		change,
 		parent,
 	};
+}
+
+export function replaceChange<TChange>(
+	commit: GraphCommit<TChange>,
+	change: TChange,
+): GraphCommit<TChange> {
+	const output = { ...commit, change };
+	delete output.inverse;
+	return output;
 }

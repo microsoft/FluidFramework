@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/azure-client-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -35,7 +53,6 @@ declare function get_old_ClassDeclaration_AzureClient():
 declare function use_current_ClassDeclaration_AzureClient(
     use: TypeOnly<current.AzureClient>): void;
 use_current_ClassDeclaration_AzureClient(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AzureClient());
 
 /*
@@ -50,7 +67,6 @@ declare function get_current_ClassDeclaration_AzureClient():
 declare function use_old_ClassDeclaration_AzureClient(
     use: TypeOnly<old.AzureClient>): void;
 use_old_ClassDeclaration_AzureClient(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AzureClient());
 
 /*
@@ -289,7 +305,6 @@ declare function get_old_InterfaceDeclaration_AzureMember():
 declare function use_current_InterfaceDeclaration_AzureMember(
     use: TypeOnly<current.AzureMember>): void;
 use_current_InterfaceDeclaration_AzureMember(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_AzureMember());
 
 /*
@@ -304,7 +319,6 @@ declare function get_current_InterfaceDeclaration_AzureMember():
 declare function use_old_InterfaceDeclaration_AzureMember(
     use: TypeOnly<old.AzureMember>): void;
 use_old_InterfaceDeclaration_AzureMember(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_AzureMember());
 
 /*
@@ -452,34 +466,6 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITokenClaims": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_ITokenClaims():
-    TypeOnly<old.ITokenClaims>;
-declare function use_current_InterfaceDeclaration_ITokenClaims(
-    use: TypeOnly<current.ITokenClaims>): void;
-use_current_InterfaceDeclaration_ITokenClaims(
-    get_old_InterfaceDeclaration_ITokenClaims());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_ITokenClaims": {"backCompat": false}
- */
-declare function get_current_InterfaceDeclaration_ITokenClaims():
-    TypeOnly<current.ITokenClaims>;
-declare function use_old_InterfaceDeclaration_ITokenClaims(
-    use: TypeOnly<old.ITokenClaims>): void;
-use_old_InterfaceDeclaration_ITokenClaims(
-    get_current_InterfaceDeclaration_ITokenClaims());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_ITokenProvider():
@@ -530,59 +516,3 @@ declare function use_old_InterfaceDeclaration_ITokenResponse(
     use: TypeOnly<old.ITokenResponse>): void;
 use_old_InterfaceDeclaration_ITokenResponse(
     get_current_InterfaceDeclaration_ITokenResponse());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IUser():
-    TypeOnly<old.IUser>;
-declare function use_current_InterfaceDeclaration_IUser(
-    use: TypeOnly<current.IUser>): void;
-use_current_InterfaceDeclaration_IUser(
-    get_old_InterfaceDeclaration_IUser());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IUser": {"backCompat": false}
- */
-declare function get_current_InterfaceDeclaration_IUser():
-    TypeOnly<current.IUser>;
-declare function use_old_InterfaceDeclaration_IUser(
-    use: TypeOnly<old.IUser>): void;
-use_old_InterfaceDeclaration_IUser(
-    get_current_InterfaceDeclaration_IUser());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"forwardCompat": false}
- */
-declare function get_old_EnumDeclaration_ScopeType():
-    TypeOnly<old.ScopeType>;
-declare function use_current_EnumDeclaration_ScopeType(
-    use: TypeOnly<current.ScopeType>): void;
-use_current_EnumDeclaration_ScopeType(
-    get_old_EnumDeclaration_ScopeType());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "EnumDeclaration_ScopeType": {"backCompat": false}
- */
-declare function get_current_EnumDeclaration_ScopeType():
-    TypeOnly<current.ScopeType>;
-declare function use_old_EnumDeclaration_ScopeType(
-    use: TypeOnly<old.ScopeType>): void;
-use_old_EnumDeclaration_ScopeType(
-    get_current_EnumDeclaration_ScopeType());

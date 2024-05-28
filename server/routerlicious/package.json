@@ -82,9 +82,9 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:../../tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.43.1",
 		"c8": "^8.0.1",
@@ -97,7 +97,7 @@
 		"run-script-os": "^1.1.5",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"engines": {
 		"node": ">=14.17.0"
 	},

@@ -12,7 +12,7 @@ import {
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import { ISubscribable } from "../../events/index.js";
+import { Listenable } from "../../events/index.js";
 import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
 import { NodeKeyManager } from "../node-key/index.js";
@@ -28,7 +28,7 @@ import type { ITreeCheckout } from "../../shared-tree/index.js";
  * It handles group operations like transforming cursors into anchors for edits.
  * @internal
  */
-export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeContext extends Listenable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */
@@ -77,14 +77,11 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * @param schema - Schema to use when working with the  tree.
 	 * @param checkout - The checkout.
 	 * @param nodeKeyManager - An object which handles node key generation and conversion
-	 * @param nodeKeyFieldKey - An optional field key under which node keys are stored in this tree.
-	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly schema: FlexTreeSchema,
 		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
 		this.eventUnregister = [
 			this.checkout.forest.on("beforeChange", () => {
@@ -164,8 +161,6 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
  * @param nodeKeyManager - an object which handles node key generation and conversion.
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
@@ -173,7 +168,6 @@ export function getTreeContext(
 	schema: FlexTreeSchema,
 	checkout: ITreeCheckout,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): Context {
-	return new Context(schema, checkout, nodeKeyManager, nodeKeyFieldKey);
+	return new Context(schema, checkout, nodeKeyManager);
 }

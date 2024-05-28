@@ -65,15 +65,10 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
-		"build:test": [
-			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
-			// requires them. I don't want to change the policy right now.
-			...tscDependsOn,
-			"typetests:gen",
-			"tsc",
-			"api-extractor:commonjs",
-			"api-extractor:esnext",
-		],
+		// Generic build:test script should be replaced by :esm or :cjs specific versions.
+		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
+		// on CommonJS.
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
@@ -212,8 +207,9 @@ module.exports = {
 				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
-				// TODO: AB#7460 fix tsconfig reference path match on Windows
-				"^packages/tools/devtools/devtools-view/package.json",
+				// This can be removed once the client release group is using build-tools 0.39.0+.
+				// See https://github.com/microsoft/FluidFramework/pull/21238
+				"^packages/test/test-end-to-end-tests/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts

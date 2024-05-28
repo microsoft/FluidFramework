@@ -12,16 +12,34 @@ import type * as old from "@fluidframework/runtime-utils-previous/internal";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
+type ValueOf<T> = T[keyof T];
+type OnlySymbols<T> = T extends symbol ? T : never;
+type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
+/**
+ * Omit (replace with never) a key if it is a custom symbol,
+ * not just symbol or a well known symbol from the global Symbol.
+ */
+type SkipUniqueSymbols<Key> = symbol extends Key
+	? Key // Key is symbol or a generalization of symbol, so leave it as is.
+	: Key extends symbol
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+/**
+ * Remove details of T which are incompatible with type testing while keeping as much as is practical.
+ *
+ * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
+ */
 type TypeOnly<T> = T extends number
 	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+	: T extends boolean | bigint | string
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -50,6 +68,34 @@ declare function use_old_TypeAliasDeclaration_Factory(
     use: TypeOnly<old.Factory>): void;
 use_old_TypeAliasDeclaration_Factory(
     get_current_TypeAliasDeclaration_Factory());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_FluidHandleBase": {"forwardCompat": false}
+ */
+declare function get_old_ClassDeclaration_FluidHandleBase():
+    TypeOnly<old.FluidHandleBase<any>>;
+declare function use_current_ClassDeclaration_FluidHandleBase(
+    use: TypeOnly<current.FluidHandleBase<any>>): void;
+use_current_ClassDeclaration_FluidHandleBase(
+    get_old_ClassDeclaration_FluidHandleBase());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_FluidHandleBase": {"backCompat": false}
+ */
+declare function get_current_ClassDeclaration_FluidHandleBase():
+    TypeOnly<current.FluidHandleBase<any>>;
+declare function use_old_ClassDeclaration_FluidHandleBase(
+    use: TypeOnly<old.FluidHandleBase<any>>): void;
+use_old_ClassDeclaration_FluidHandleBase(
+    get_current_ClassDeclaration_FluidHandleBase());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -700,6 +746,34 @@ use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "FunctionDeclaration_isFluidHandle": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_isFluidHandle():
+    TypeOnly<typeof old.isFluidHandle>;
+declare function use_current_FunctionDeclaration_isFluidHandle(
+    use: TypeOnly<typeof current.isFluidHandle>): void;
+use_current_FunctionDeclaration_isFluidHandle(
+    get_old_FunctionDeclaration_isFluidHandle());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_isFluidHandle": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_isFluidHandle():
+    TypeOnly<typeof current.isFluidHandle>;
+declare function use_old_FunctionDeclaration_isFluidHandle(
+    use: TypeOnly<typeof old.isFluidHandle>): void;
+use_old_FunctionDeclaration_isFluidHandle(
+    get_current_FunctionDeclaration_isFluidHandle());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "VariableDeclaration_isSerializedHandle": {"forwardCompat": false}
  */
 declare function get_old_VariableDeclaration_isSerializedHandle():
@@ -722,6 +796,34 @@ declare function use_old_VariableDeclaration_isSerializedHandle(
     use: TypeOnly<typeof old.isSerializedHandle>): void;
 use_old_VariableDeclaration_isSerializedHandle(
     get_current_VariableDeclaration_isSerializedHandle());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId():
+    TypeOnly<typeof old.isSnapshotFetchRequiredForLoadingGroupId>;
+declare function use_current_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId(
+    use: TypeOnly<typeof current.isSnapshotFetchRequiredForLoadingGroupId>): void;
+use_current_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId(
+    get_old_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId():
+    TypeOnly<typeof current.isSnapshotFetchRequiredForLoadingGroupId>;
+declare function use_old_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId(
+    use: TypeOnly<typeof old.isSnapshotFetchRequiredForLoadingGroupId>): void;
+use_old_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId(
+    get_current_FunctionDeclaration_isSnapshotFetchRequiredForLoadingGroupId());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -862,6 +964,118 @@ declare function use_old_FunctionDeclaration_seqFromTree(
     use: TypeOnly<typeof old.seqFromTree>): void;
 use_old_FunctionDeclaration_seqFromTree(
     get_current_FunctionDeclaration_seqFromTree());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toDeltaManagerErased": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_toDeltaManagerErased():
+    TypeOnly<typeof old.toDeltaManagerErased>;
+declare function use_current_FunctionDeclaration_toDeltaManagerErased(
+    use: TypeOnly<typeof current.toDeltaManagerErased>): void;
+use_current_FunctionDeclaration_toDeltaManagerErased(
+    get_old_FunctionDeclaration_toDeltaManagerErased());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toDeltaManagerErased": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_toDeltaManagerErased():
+    TypeOnly<typeof current.toDeltaManagerErased>;
+declare function use_old_FunctionDeclaration_toDeltaManagerErased(
+    use: TypeOnly<typeof old.toDeltaManagerErased>): void;
+use_old_FunctionDeclaration_toDeltaManagerErased(
+    get_current_FunctionDeclaration_toDeltaManagerErased());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toDeltaManagerInternal": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_toDeltaManagerInternal():
+    TypeOnly<typeof old.toDeltaManagerInternal>;
+declare function use_current_FunctionDeclaration_toDeltaManagerInternal(
+    use: TypeOnly<typeof current.toDeltaManagerInternal>): void;
+use_current_FunctionDeclaration_toDeltaManagerInternal(
+    get_old_FunctionDeclaration_toDeltaManagerInternal());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toDeltaManagerInternal": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_toDeltaManagerInternal():
+    TypeOnly<typeof current.toDeltaManagerInternal>;
+declare function use_old_FunctionDeclaration_toDeltaManagerInternal(
+    use: TypeOnly<typeof old.toDeltaManagerInternal>): void;
+use_old_FunctionDeclaration_toDeltaManagerInternal(
+    get_current_FunctionDeclaration_toDeltaManagerInternal());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toFluidHandleErased": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_toFluidHandleErased():
+    TypeOnly<typeof old.toFluidHandleErased>;
+declare function use_current_FunctionDeclaration_toFluidHandleErased(
+    use: TypeOnly<typeof current.toFluidHandleErased>): void;
+use_current_FunctionDeclaration_toFluidHandleErased(
+    get_old_FunctionDeclaration_toFluidHandleErased());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toFluidHandleErased": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_toFluidHandleErased():
+    TypeOnly<typeof current.toFluidHandleErased>;
+declare function use_old_FunctionDeclaration_toFluidHandleErased(
+    use: TypeOnly<typeof old.toFluidHandleErased>): void;
+use_old_FunctionDeclaration_toFluidHandleErased(
+    get_current_FunctionDeclaration_toFluidHandleErased());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toFluidHandleInternal": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_toFluidHandleInternal():
+    TypeOnly<typeof old.toFluidHandleInternal>;
+declare function use_current_FunctionDeclaration_toFluidHandleInternal(
+    use: TypeOnly<typeof current.toFluidHandleInternal>): void;
+use_current_FunctionDeclaration_toFluidHandleInternal(
+    get_old_FunctionDeclaration_toFluidHandleInternal());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_toFluidHandleInternal": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_toFluidHandleInternal():
+    TypeOnly<typeof current.toFluidHandleInternal>;
+declare function use_old_FunctionDeclaration_toFluidHandleInternal(
+    use: TypeOnly<typeof old.toFluidHandleInternal>): void;
+use_old_FunctionDeclaration_toFluidHandleInternal(
+    get_current_FunctionDeclaration_toFluidHandleInternal());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

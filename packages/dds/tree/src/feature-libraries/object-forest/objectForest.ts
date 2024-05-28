@@ -31,7 +31,6 @@ import {
 	UpPath,
 	Value,
 	aboveRootPlaceholder,
-	getMapTreeField,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import {
@@ -40,14 +39,37 @@ import {
 	assertValidRange,
 	brand,
 	fail,
+	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
-function makeRoot(): MapTree {
+/** A `MapTree` with mutable fields */
+interface MutableMapTree extends MapTree {
+	readonly fields: Map<FieldKey, MutableMapTree[]>;
+}
+
+/** Get a field from a `MutableMapTree`, optionally modifying the tree to create it if missing. */
+function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTree[] {
+	const field = mapTree.fields.get(key);
+	if (field !== undefined) {
+		return field;
+	}
+
+	const newField: MutableMapTree[] = [];
+	mapTree.fields.set(key, newField);
+	return newField;
+}
+
+function deepCopyMapTree(mapTree: MapTree): MutableMapTree {
 	return {
-		type: aboveRootPlaceholder,
-		fields: new Map(),
+		...mapTree,
+		fields: new Map(
+			mapIterable(mapTree.fields.entries(), ([key, field]) => [
+				key,
+				field.map(deepCopyMapTree),
+			]),
+		),
 	};
 }
 
@@ -60,14 +82,28 @@ function makeRoot(): MapTree {
 export class ObjectForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
-	public readonly roots: MapTree = makeRoot();
-
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {}
+	readonly #roots: MutableMapTree;
+	public get roots(): MapTree {
+		return this.#roots;
+	}
+
+	public constructor(
+		public readonly anchors: AnchorSet = new AnchorSet(),
+		roots?: MapTree,
+	) {
+		this.#roots =
+			roots !== undefined
+				? deepCopyMapTree(roots)
+				: {
+						type: aboveRootPlaceholder,
+						fields: new Map(),
+				  };
+	}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
@@ -78,17 +114,7 @@ export class ObjectForest implements IEditableForest {
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		const forest = new ObjectForest(anchors);
-		// Deep copy the trees.
-		for (const [key, value] of this.roots.fields) {
-			// TODO: this references the existing TreeValues instead of copying them:
-			// they are assumed to be copy on write. See TODO on NodeData.
-			forest.roots.fields.set(
-				key,
-				value.map((v) => mapTreeFromCursor(cursorForMapTreeNode(v))),
-			);
-		}
-		return forest;
+		return new ObjectForest(anchors, this.roots);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -100,12 +126,6 @@ export class ObjectForest implements IEditableForest {
 			this.activeVisitor === undefined,
 			0x76c /* Must release existing visitor before acquiring another */,
 		);
-		this.events.emit("beforeChange");
-
-		assert(
-			this.currentCursors.size === 0,
-			0x374 /* No cursors can be current when modifying forest */,
-		);
 
 		// Note: This code uses cursors, however it also modifies the tree.
 		// In general this is not safe, but this code happens to only modify the tree below the current cursor location,
@@ -115,6 +135,20 @@ export class ObjectForest implements IEditableForest {
 
 		const cursor: Cursor = this.allocateCursor();
 		cursor.setToAboveDetachedSequences();
+
+		/**
+		 * Called before each edit to allow cursor cleanup to happen and ensure that there are no unexpected cursors.
+		 * This is required for each change since there may be app facing change event handlers which create cursors.
+		 */
+		const preEdit = (): void => {
+			this.events.emit("beforeChange");
+			assert(
+				this.currentCursors.size === 1,
+				0x374 /* No cursors can be current when modifying forest */,
+			);
+			assert(this.currentCursors.has(cursor), "unexpected cursor while editing");
+		};
+
 		const visitor = {
 			forest: this,
 			cursor,
@@ -125,12 +159,13 @@ export class ObjectForest implements IEditableForest {
 					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-				this.forest.events.emit("afterChange");
 			},
 			destroy(detachedField: FieldKey, count: number): void {
+				preEdit();
 				this.forest.delete(detachedField);
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
+				preEdit();
 				this.forest.add(content, destination);
 				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
@@ -149,6 +184,7 @@ export class ObjectForest implements IEditableForest {
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+				preEdit();
 				assertNonNegativeSafeInteger(count);
 				if (count === 0) {
 					return;
@@ -158,9 +194,9 @@ export class ObjectForest implements IEditableForest {
 					parent !== this.forest.roots || key !== source,
 					0x7b6 /* Attach source field must be different from current field */,
 				);
-				const currentField = getMapTreeField(parent, key, true);
+				const currentField = getOrCreateField(parent, key);
 				assertValidIndex(destination, currentField, true);
-				const sourceField = getMapTreeField(this.forest.roots, source, false);
+				const sourceField = this.forest.#roots.fields.get(source) ?? [];
 				assert(sourceField !== undefined, 0x7b7 /* Attach source field must exist */);
 				assert(
 					sourceField.length === count,
@@ -178,6 +214,7 @@ export class ObjectForest implements IEditableForest {
 			 * If not specified, the detached range is destroyed.
 			 */
 			detachEdit(source: Range, destination: FieldKey | undefined): void {
+				preEdit();
 				const [parent, key] = cursor.getParent();
 				assert(
 					destination === undefined ||
@@ -185,7 +222,7 @@ export class ObjectForest implements IEditableForest {
 						key !== destination,
 					0x7b9 /* Detach destination field must be different from current field */,
 				);
-				const currentField = getMapTreeField(parent, key, true);
+				const currentField = getOrCreateField(parent, key);
 				assertValidRange(source, currentField);
 				const content = currentField.splice(source.start, source.end - source.start);
 				if (destination !== undefined) {
@@ -234,19 +271,19 @@ export class ObjectForest implements IEditableForest {
 	}
 
 	private add(nodes: Iterable<ITreeCursor>, key: FieldKey): void {
-		const field: ObjectField = Array.from(nodes, mapTreeFromCursor);
+		const field = Array.from(nodes, mapTreeFromCursor) as MutableMapTree[];
 		this.addFieldAsDetached(field, key);
 	}
 
-	private addFieldAsDetached(field: ObjectField, key: FieldKey): void {
+	private addFieldAsDetached(field: MutableMapTree[], key: FieldKey): void {
 		assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
 		if (field.length > 0) {
-			this.roots.fields.set(key, field);
+			this.#roots.fields.set(key, field);
 		}
 	}
 
 	private delete(field: FieldKey): void {
-		this.roots.fields.delete(field);
+		this.#roots.fields.delete(field);
 	}
 
 	public allocateCursor(): Cursor {
@@ -319,8 +356,6 @@ export class ObjectForest implements IEditableForest {
 	}
 }
 
-type ObjectField = MapTree[];
-
 /**
  * Cursor implementation for ObjectForest.
  */
@@ -333,7 +368,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	 */
 	public constructor(
 		public readonly forest: ObjectForest,
-		private innerCursor?: CursorWithNode<MapTree>,
+		private innerCursor?: CursorWithNode<MutableMapTree>,
 	) {
 		super();
 		if (innerCursor === undefined) {
@@ -454,16 +489,19 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		);
 		this.clear();
 		this.state = ITreeSubscriptionCursorState.Current;
-		this.innerCursor = cursorForMapTreeNode(this.forest.roots);
+		// Cast to a cursor of _mutable_ trees to allow direct manipulation of the tree data which is more efficient than doing immutable copies.
+		this.innerCursor = cursorForMapTreeNode(
+			this.forest.roots,
+		) as CursorWithNode<MutableMapTree>;
 		this.forest.currentCursors.add(this);
 	}
 
-	public getNode(): MapTree {
+	public getNode(): MutableMapTree {
 		assert(this.innerCursor !== undefined, 0x33e /* Cursor must be current to be used */);
 		return this.innerCursor.getNode();
 	}
 
-	public getParent(): [MapTree, FieldKey] {
+	public getParent(): [MutableMapTree, FieldKey] {
 		assert(this.innerCursor !== undefined, 0x441 /* Cursor must be current to be used */);
 		// This could be optimized to skip moving it accessing internals of cursor.
 		const key = this.innerCursor.getFieldKey();

@@ -9,6 +9,7 @@ import {
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ISegment } from "./mergeTreeNodes.js";
 
@@ -84,6 +85,24 @@ export interface IAttributionCollection<T> {
 	 * @param channel - When specified, gets an attribution key associated with a particular channel.
 	 */
 	getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
+
+	/**
+	 * Retrieves all the [Offset, Attribution key] pairs for the provided offset range. Note:
+	 * The returned array is sorted by offset.
+	 * The first offset in response could be lower than the startOffset as the Attribution Key for the startOffset
+	 * could start at a lower offset than the startOffset in case where Attribution key offset boundaries don't
+	 * align exactly with startOffset.
+	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
+	 * then result would be [(offset: 0, key: key1), (offset:10, key: key2), (offset:20, key: key3)].
+	 * @param channel - When specified, gets attribution keys associated with a particular channel.
+	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
+	 * the corresponding offset start boundary.
+	 */
+	getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined;
 
 	/**
 	 * Total length of all attribution keys in this collection.
@@ -185,6 +204,52 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}
 		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
 		return this.get(this.findIndex(offset));
+	}
+
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+	): { offset: number; key: AttributionKey }[];
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined;
+	public getKeysInOffsetRange(
+		startOffset: number,
+		endOffset?: number,
+		channel?: string,
+	): { offset: number; key: AttributionKey }[] | undefined {
+		if (startOffset < 0 || startOffset >= this._length) {
+			throw new UsageError("startOffset should be valid and in range");
+		}
+		if (
+			endOffset !== undefined &&
+			(endOffset < 0 || endOffset >= this._length || startOffset > endOffset)
+		) {
+			throw new UsageError("endOffset should be valid and in range");
+		}
+
+		if (channel !== undefined) {
+			const subCollection = this.channels?.[channel];
+			return subCollection?.getKeysInOffsetRange(startOffset, endOffset);
+		}
+		const result: { offset: number; key: AttributionKey }[] = [];
+		let index = this.findIndex(startOffset);
+		let attributionKey = this.get(index);
+		if (attributionKey !== undefined) {
+			result.push({ offset: this.offsets[index], key: attributionKey });
+		}
+		index++;
+		const endOffsetVal = endOffset ?? Number.MAX_SAFE_INTEGER;
+		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]) {
+			attributionKey = this.get(index);
+			if (attributionKey !== undefined) {
+				result.push({ offset: this.offsets[index], key: attributionKey });
+			}
+			index++;
+		}
+		return result;
 	}
 
 	private findIndex(offset: number): number {

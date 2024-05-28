@@ -6,7 +6,7 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -141,7 +141,7 @@ export class PendingStateManager implements IDisposable {
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,
-				"saved op should already have a sequence number",
+				0x97c /* saved op should already have a sequence number */,
 			);
 			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
 		});

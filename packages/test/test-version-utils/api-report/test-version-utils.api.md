@@ -17,10 +17,11 @@ import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISharedDirectory } from '@fluidframework/map/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITestContainerConfig } from '@fluidframework/test-utils/internal';
 import { ITestObjectProvider } from '@fluidframework/test-utils/internal';
@@ -31,6 +32,7 @@ import * as orderedCollection from '@fluidframework/ordered-collection/internal'
 import * as registerCollection from '@fluidframework/register-collection/internal';
 import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils/internal';
@@ -84,15 +86,15 @@ export const DataRuntimeApi: {
     FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
-        SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
-        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
-        SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
-        SharedMap: ISharedObjectKind<map.ISharedMap>;
-        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
-        ConsensusQueue: ISharedObjectKind<orderedCollection.IConsensusOrderedCollection<any>>;
-        ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
-        SharedString: ISharedObjectKind<sequence.ISharedString>;
-        SparseMatrix: ISharedObjectKind<sequenceDeprecated.SparseMatrixClass>;
+        SharedCell: ISharedObjectKind<cell.ISharedCell<any>> & SharedObjectKind<cell.ISharedCell<any>>;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter> & SharedObjectKind<counter.ISharedCounter>;
+        SharedDirectory: ISharedObjectKind<map.ISharedDirectory> & SharedObjectKind<map.ISharedDirectory>;
+        SharedMap: ISharedObjectKind<map.ISharedMap> & SharedObjectKind<map.ISharedMap>;
+        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>> & SharedObjectKind<matrix.ISharedMatrix<any>>;
+        ConsensusQueue: ISharedObjectKind<orderedCollection.IConsensusOrderedCollection<any>> & SharedObjectKind<orderedCollection.IConsensusOrderedCollection<any>>;
+        ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>> & SharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
+        SharedString: ISharedObjectKind<sequence.ISharedString> & SharedObjectKind<sequence.ISharedString>;
+        SparseMatrix: ISharedObjectKind<sequenceDeprecated.SparseMatrixClass> & SharedObjectKind<sequenceDeprecated.SparseMatrixClass>;
     };
     packages: {
         cell: typeof cell;
@@ -301,6 +303,7 @@ export interface ITestDataObject extends IFluidLoadable {
 
 // @internal (undocumented)
 export interface ITestObjectProviderOptions {
+    persistedCache?: IPersistedCache;
     resetAfterEach?: boolean;
     syncSummarizer?: boolean;
 }

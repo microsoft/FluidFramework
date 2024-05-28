@@ -20,14 +20,12 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -42,6 +40,7 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -149,7 +148,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		},
 		deltaManager: context.deltaManager,
 		storage: context.storage,
-		logger: context.logger,
+		baseLogger: context.baseLogger,
 		get clientDetails() {
 			return context.clientDetails;
 		},
@@ -660,7 +659,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		createProps?: any,
 		loadingGroupId?: string,
 	) {
-		assert(loadingGroupId !== "", "loadingGroupId should not be the empty string");
+		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
 			id,
 			pkg,
@@ -679,7 +678,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					channel,
 					id,
 					this,
-					createChildLogger({ logger: this.parentContext.logger }),
+					createChildLogger({ logger: this.parentContext.baseLogger }),
 				),
 		});
 
@@ -1561,7 +1560,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		const runtime = this.ctor(
 			context.baseSnapshot,
 			context, // parentContext
-			context.logger,
+			context.baseLogger,
 			() => {}, // gcNodeUpdated
 			(_nodePath: string) => false, // isDataStoreDeleted
 			new Map(), // aliasMap

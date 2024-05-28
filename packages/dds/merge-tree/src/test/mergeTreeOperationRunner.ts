@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";

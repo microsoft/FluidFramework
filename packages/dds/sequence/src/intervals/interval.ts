@@ -12,7 +12,7 @@ import {
 	createMap,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";

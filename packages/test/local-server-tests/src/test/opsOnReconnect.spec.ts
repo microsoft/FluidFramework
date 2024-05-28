@@ -20,7 +20,7 @@ import {
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";

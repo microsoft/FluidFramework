@@ -25,12 +25,9 @@ import {
 	DriverHeader,
 	type IDocumentServiceFactory,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -113,7 +110,6 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
@@ -333,7 +329,6 @@ describeCompat(
 				// Submit a summary
 				const result = await summarizerClient.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum: 0,
@@ -377,7 +372,6 @@ describeCompat(
 					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				const result = await summarizerClient2.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum,
@@ -432,7 +426,6 @@ describeCompat(
 				// Submit a summary and wait for the summary op.
 				const result = await summarizer2.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum: summary1.summaryRefSeq,

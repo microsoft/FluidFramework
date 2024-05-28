@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { NodeKeyManager, createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -29,7 +26,7 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	nodeKeyManager?: NodeKeyManager,
 ): TreeFieldFromImplicitField<TSchema> {
 	const config = new TreeConfiguration(schema, () => initialTree);
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
 	const tree = flexTreeWithContent(flexConfig);
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
 }
@@ -45,20 +42,4 @@ export function pretty(arg: unknown): number | string {
 		return arg;
 	}
 	return JSON.stringify(arg);
-}
-
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }
