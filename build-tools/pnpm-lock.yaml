@@ -231,8 +231,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.57.0)(typescript@5.1.6)
       '@oclif/test':
         specifier: ^3.2.12
         version: 3.2.12
@@ -421,8 +421,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.57.0)(typescript@5.1.6)
       '@types/async':
         specifier: ^3.2.20
         version: 3.2.20
@@ -488,8 +488,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.57.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.43.1
         version: 7.43.1(@types/node@18.18.6)
@@ -534,8 +534,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.57.0)(typescript@5.1.6)
       '@oclif/test':
         specifier: ^3.2.12
         version: 3.2.12
@@ -619,8 +619,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.57.0)(typescript@5.1.6)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.57.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.43.1
         version: 7.43.1(@types/node@18.18.6)
@@ -2198,8 +2198,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/eslint-config-fluid@5.2.0(eslint@8.57.0)(typescript@5.1.6):
-    resolution: {integrity: sha512-FGAt7QIm//36j+ZiiIAj1+LZ6NYP2UJLwE5NT70ztgjl90jaCEWZUgoGUgPUWB9CpTmVZYo1+dGWOSsMLHidJA==}
+  /@fluidframework/eslint-config-fluid@5.3.0(eslint@8.57.0)(typescript@5.1.6):
+    resolution: {integrity: sha512-sc8M6ZKnzBxshYZZodMbNgLSn36YdSJfafqAMtDVm2KnHoUP46JM9oLWYbo7xRBXrxEfaojO9q+VIZB0DAn2eg==}
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.1(eslint@8.57.0)(typescript@5.1.6)
       '@microsoft/tsdoc': 0.14.2
@@ -4096,7 +4096,7 @@ packages:
       graphemer: 1.4.0
       ignore: 5.2.4
       natural-compare: 1.4.0
-      semver: 7.6.0
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -4294,7 +4294,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.0
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -4353,7 +4353,7 @@ packages:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       eslint: 8.57.0
-      semver: 7.6.0
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -6576,7 +6576,7 @@ packages:
       eslint: 8.57.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.6.0
+      semver: 7.6.2
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -6708,7 +6708,7 @@ packages:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.6.0
+      semver: 7.6.2
       strip-indent: 3.0.0
     dev: true
 

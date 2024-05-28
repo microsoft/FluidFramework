@@ -22,17 +22,22 @@ module.exports = {
 		// oclif uses default exports for commands
 		"import/no-default-export": "off",
 
-		// This package uses interfaces and types that are not exposed directly by npm-check-updates.
-		// We also call commands' run method directly in some cases, so these are all excluded.
 		"import/no-internal-modules": [
 			"error",
 			{
 				allow: [
+					// fs-extra's ./esm export is needed for ESM support.
 					"fs-extra/esm",
+
+					// This package uses interfaces and types that are not exposed directly by npm-check-updates.
 					"npm-check-updates/build/src/types/**",
+
+					// We call oclif commands' run method directly in some cases, so these are all excluded.
 					"**/commands/**",
+
+					// These are all excluded because they're "submodules" used for organization.
+					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
 					"**/library/index.js",
-					"**/library/github.js",
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",
