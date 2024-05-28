@@ -53,6 +53,7 @@ module.exports = {
 				"eslint",
 				"good-fences",
 				"depcruise",
+				"check:exports",
 				"check:release-tags",
 			],
 			script: false,
@@ -101,6 +102,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:exports": ["api"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
