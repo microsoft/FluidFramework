@@ -127,7 +127,7 @@
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-rc.4.0.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
