@@ -192,6 +192,7 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	replaceAtomRevisions,
+	replaceChange,
 } from "./rebase/index.js";
 
 export {

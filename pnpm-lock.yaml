@@ -10782,9 +10782,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../loader/driver-utils
-      '@fluidframework/gitresources':
-        specifier: ^4.0.0
-        version: 4.0.0
       '@fluidframework/protocol-base':
         specifier: ^4.0.0
         version: 4.0.0
@@ -12359,9 +12356,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/gitresources':
-        specifier: ^4.0.0
-        version: 4.0.0
       '@fluidframework/protocol-base':
         specifier: ^4.0.0
         version: 4.0.0
@@ -41425,7 +41419,6 @@ packages:
 
   /path-dirname@1.0.2:
     resolution: {integrity: sha512-ALzNPpyNq9AqXMBjeymIjFDAkAFH06mHJH/cSBHAgU0s4vfpBn6b2nf8tiRLvagKD8RbTpq2FKTBg7cl9l3c7Q==}
-    requiresBuild: false
     dev: true
 
   /path-exists@2.1.0:

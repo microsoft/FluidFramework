@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ISubscribable } from "../../events/index.js";
+import { Listenable } from "../../events/index.js";
 import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	Anchor,
@@ -60,7 +60,7 @@ export interface ForestEvents {
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @internal
  */
-export interface IForestSubscription extends ISubscribable<ForestEvents> {
+export interface IForestSubscription extends Listenable<ForestEvents> {
 	/**
 	 * Set of anchors this forest is tracking.
 	 *

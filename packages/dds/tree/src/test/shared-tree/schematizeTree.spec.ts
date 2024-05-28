@@ -45,7 +45,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
-import type { ISubscribable } from "../../events/index.js";
+import type { Listenable } from "../../events/index.js";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
@@ -182,8 +182,8 @@ describe("schematizeTree", () => {
 			updateSchema(newSchema: TreeStoredSchema): void {
 				throw new Error("Function not implemented.");
 			},
-			events: undefined as unknown as ISubscribable<CheckoutEvents>,
-			rootEvents: undefined as unknown as ISubscribable<AnchorSetRootEvents>,
+			events: undefined as unknown as Listenable<CheckoutEvents>,
+			rootEvents: undefined as unknown as Listenable<AnchorSetRootEvents>,
 			getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 				throw new Error("Function not implemented.");
 			},

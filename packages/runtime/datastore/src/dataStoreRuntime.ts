@@ -33,7 +33,6 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -46,6 +45,7 @@ import {
 	IFluidDataStoreContext,
 	VisibilityState,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

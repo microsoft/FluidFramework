@@ -7,6 +7,8 @@ import { strict as assert } from "assert";
 import {
 	DetachedFieldIndex,
 	ForestRootId,
+	IEditableForest,
+	TreeStoredSchemaRepository,
 	initializeForest,
 	mapCursorField,
 	rootFieldKey,
@@ -23,8 +25,11 @@ import {
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChangeEnricher } from "../../shared-tree/sharedTreeChangeEnricher.js";
+import {
+	SharedTreeMutableChangeEnricher,
+	SharedTreeReadonlyChangeEnricher,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
@@ -61,7 +66,13 @@ const removeRoot: SharedTreeChange = {
 
 const revision1 = testIdCompressor.generateCompressedId();
 
-function setupEnricher() {
+interface TestChangeEnricher {
+	forest: IEditableForest;
+	removedRoots: DetachedFieldIndex;
+	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
+}
+
+export function setupEnricher() {
 	const removedRoots = new DetachedFieldIndex(
 		"test",
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
@@ -70,25 +81,35 @@ function setupEnricher() {
 	);
 	const forest = buildForest();
 	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
-	const enricher = new SharedTreeChangeEnricher(forest, removedRoots);
-	return { enricher, forest, removedRoots };
+	const schema = new TreeStoredSchemaRepository();
+	const enricher = new SharedTreeReadonlyChangeEnricher(
+		forest,
+		schema,
+		removedRoots,
+	) as SharedTreeReadonlyChangeEnricher & TestChangeEnricher;
+	const fork = enricher.fork() as SharedTreeMutableChangeEnricher & TestChangeEnricher;
+	return { enricher, fork };
 }
 
 describe("SharedTreeChangeEnricher", () => {
-	it("applies tip changes", () => {
-		const { enricher, forest, removedRoots } = setupEnricher();
-		assert.deepEqual(jsonTreeFromForest(forest), [content]);
-		assert.deepEqual(Array.from(removedRoots.entries()), []);
+	it("applies tip changes to fork", () => {
+		const { enricher, fork } = setupEnricher();
+		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
+		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
 
-		enricher.applyTipChange(removeRoot, revision1);
+		fork.applyTipChange(removeRoot, revision1);
 
-		assert.deepEqual(jsonTreeFromForest(forest), []);
-		assert.deepEqual(Array.from(removedRoots.entries()), [{ id: { minor: 0 }, root: 0 }]);
+		assert.deepEqual(jsonTreeFromForest(fork.forest), []);
+		assert.deepEqual(Array.from(fork.removedRoots.entries()), [{ id: { minor: 0 }, root: 0 }]);
+
+		// The original enricher should not have been modified
+		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
+		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
 	});
 
 	it("updates enrichments", () => {
-		const { enricher } = setupEnricher();
-		enricher.applyTipChange(removeRoot, revision1);
+		const { fork } = setupEnricher();
+		fork.applyTipChange(removeRoot, revision1);
 
 		const restore = Change.atOnce(
 			Change.reserve("self", brand(0)),
@@ -110,7 +131,7 @@ describe("SharedTreeChangeEnricher", () => {
 			],
 		};
 
-		const enriched = enricher.updateChangeEnrichments(restoreRoot);
+		const enriched = fork.updateChangeEnrichments(restoreRoot);
 
 		// Check that the original change was not modified
 		assert.equal(restoreRoot.changes[0].type, "data");
@@ -127,13 +148,13 @@ describe("SharedTreeChangeEnricher", () => {
 	});
 
 	it("can be disposed right after creation", () => {
-		const { enricher } = setupEnricher();
-		enricher[disposeSymbol]();
+		const { fork } = setupEnricher();
+		fork[disposeSymbol]();
 	});
 
 	it("can be disposed after mutation", () => {
-		const { enricher } = setupEnricher();
-		enricher.applyTipChange(removeRoot, revision1);
-		enricher[disposeSymbol]();
+		const { fork } = setupEnricher();
+		fork.applyTipChange(removeRoot, revision1);
+		fork[disposeSymbol]();
 	});
 });

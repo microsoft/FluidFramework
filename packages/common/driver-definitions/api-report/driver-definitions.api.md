@@ -373,6 +373,128 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
+// @internal
+export interface IGitAuthor {
+    // (undocumented)
+    date: string;
+    // (undocumented)
+    email: string;
+    // (undocumented)
+    name: string;
+}
+
+// @internal
+export interface IGitBlob {
+    // (undocumented)
+    content: string;
+    // (undocumented)
+    encoding: string;
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export interface IGitCommitDetails {
+    // (undocumented)
+    commit: {
+        url: string;
+        author: IGitAuthor;
+        committer: IGitCommitter;
+        message: string;
+        tree: IGitCommitHash;
+    };
+    // (undocumented)
+    parents: IGitCommitHash[];
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export interface IGitCommitHash {
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export interface IGitCommitter {
+    // (undocumented)
+    date: string;
+    // (undocumented)
+    email: string;
+    // (undocumented)
+    name: string;
+}
+
+// @internal
+export interface IGitCreateBlobParams {
+    // (undocumented)
+    content: string;
+    // (undocumented)
+    encoding: "utf-8" | "base64";
+}
+
+// @internal
+export interface IGitCreateBlobResponse {
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export interface IGitCreateTreeEntry {
+    // (undocumented)
+    mode: string;
+    // (undocumented)
+    path: string;
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    type: string;
+}
+
+// @internal
+export interface IGitCreateTreeParams {
+    // (undocumented)
+    base_tree?: string;
+    // (undocumented)
+    tree: IGitCreateTreeEntry[];
+}
+
+// @internal
+export interface IGitTree {
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    tree: IGitTreeEntry[];
+    // (undocumented)
+    url: string;
+}
+
+// @internal
+export interface IGitTreeEntry {
+    // (undocumented)
+    mode: string;
+    // (undocumented)
+    path: string;
+    // (undocumented)
+    sha: string;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    type: string;
+    // (undocumented)
+    url: string;
+}
+
 // @alpha (undocumented)
 export interface ILocationRedirectionError extends IDriverErrorBase {
     // (undocumented)

@@ -58,7 +58,6 @@ export {
 	Mutable,
 	Populated,
 	RecursiveReadonly,
-	zipIterables,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
