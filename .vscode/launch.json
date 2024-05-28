@@ -415,6 +415,7 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
 			"outFiles": [
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
@@ -441,6 +442,7 @@
 				"../../../../dist/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
 			"outFiles": [
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
