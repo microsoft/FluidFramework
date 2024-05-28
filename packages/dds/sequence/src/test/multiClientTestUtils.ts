@@ -78,6 +78,7 @@ export function constructClients(
 			containerRuntimeFactory,
 			String.fromCharCode(index + 65),
 			dataStoreRuntimeOptions,
+			factory,
 		);
 
 		sharedString.connect(services);
