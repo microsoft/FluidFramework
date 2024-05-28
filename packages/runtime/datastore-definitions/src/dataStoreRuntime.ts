@@ -16,7 +16,7 @@ import type {
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 

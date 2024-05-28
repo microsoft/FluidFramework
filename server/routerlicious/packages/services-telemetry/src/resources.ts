@@ -80,9 +80,12 @@ export enum CommonProperties {
 	clientType = "clientType",
 	clientCount = "clientCount",
 	clientDriverVersion = "clientDriverVersion",
+
+	// Connection properties
 	connectionClients = "connectionClients",
 	roomClients = "roomClients",
 	connectionCount = "connectionCount",
+	disconnectReason = "disconnectReason",
 
 	// Session properties
 	sessionState = "sessionState",

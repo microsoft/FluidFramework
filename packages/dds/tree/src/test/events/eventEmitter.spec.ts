@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EventEmitter, ISubscribable, createEmitter } from "../../events/index.js";
+import { EventEmitter, Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -192,7 +192,7 @@ class MyInheritanceClass extends EventEmitter<MyEvents> {
 	}
 }
 
-class MyCompositionClass implements ISubscribable<MyEvents> {
+class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
 	private load() {

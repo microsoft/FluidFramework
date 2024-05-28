@@ -22,7 +22,6 @@ import {
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -41,6 +40,7 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
