@@ -1450,7 +1450,7 @@ export class ModularChangeFamily
 	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
-		return new ModularEditBuilder(this, changeReceiver);
+		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2228,6 +2228,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
+		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		changeReceiver: (change: ModularChangeset) => void,
 	) {
 		super(family, changeReceiver);
@@ -2330,10 +2331,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							new Map(),
 							new BTree(),
 							this.idAllocator,
-							getChangeHandler(
-								(this.changeFamily as ModularChangeFamily).fieldKinds,
-								change.fieldKind,
-							).getCrossFieldKeys(change.change),
+							getChangeHandler(this.fieldKinds, change.fieldKind).getCrossFieldKeys(
+								change.change,
+							),
 					  ),
 			),
 		);
