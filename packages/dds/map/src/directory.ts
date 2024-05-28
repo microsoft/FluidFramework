@@ -20,7 +20,12 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, ValueType, bindHandles, parseHandles } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	ValueType,
+	bindHandles,
+	parseHandles,
+} from "@fluidframework/shared-object-base/internal";
 import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
@@ -1307,11 +1312,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// Create a local value and serialize it.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
-		bindHandles(
-			localValue,
-			this.serializer,
-			this.directory.handle,
-		);
+		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
