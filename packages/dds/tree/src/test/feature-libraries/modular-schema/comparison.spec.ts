@@ -210,7 +210,9 @@ describe("Schema Comparison", () => {
 		);
 	});
 
-	describe("allowsRepoSuperset - 2", () => {
+	// This helps provide some coverage for our schema evolution story, since repo compatibility
+	// influences the types of schema changes we allow
+	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (a: TreeStoredSchema, b: TreeStoredSchema): boolean => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
@@ -370,121 +372,6 @@ describe("Schema Comparison", () => {
 			assert.equal(getOrdering(repo1, repo2, compareTwoRepo), Ordering.Incomparable);
 		});
 	});
-	/**
-	 * This test suite aims to test the ordering relationship between the different repositories
-	 * (i.e different combinations of field schemas), it will not primarily focus on the comparison
-	 * between field schemas themselves, the tests for `allowsFieldSuperset` and `allowsTreeSuperset`
-	 * have done most of the heavy-lifting.
-	 *
-	 * The primary objective behind designing this test suite is to ensure backward compatibility
-	 * during document schema upgrades. When we talk about 'schema evolution', a prerequisite is to
-	 * ensure that the upgraded schema can be the superset of the original one.
-	 */
-	describe("allowsRepoSuperset", () => {
-		const compareTwoRepo = (
-			a: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[],
-			b: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[],
-		): boolean => {
-			const repo1 = new TreeStoredSchemaRepository();
-			const repo2 = new TreeStoredSchemaRepository();
-			for (const { name, schema } of a) {
-				updateTreeSchema(repo1, name, schema);
-			}
-			for (const { name, schema } of b) {
-				updateTreeSchema(repo2, name, schema);
-			}
-			return allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2);
-		};
-
-		const emptyTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: new ObjectNodeStoredSchema(new Map()),
-		};
-		const valueTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: valueAnyTree,
-		};
-		const valueEmptyTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: valueEmptyTree,
-		};
-		const optionalTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: optionalTreeWithoutValue,
-		};
-		const optionalEmptyTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: optionalEmptyTree,
-		};
-		const anyTestTree = {
-			name: brand<TreeNodeSchemaIdentifier>("testTree"),
-			schema: anyTreeWithoutValue,
-		};
-
-		it("Incorporating additional node schema should result in a superset", () => {
-			// When repo B has more fields than repo A (with the remaining fields the same), regardless
-			// of whether the additional fields are required or optional, repo B should always be considered
-			// the superset of repo A.
-			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, optionalLocalFieldTree]]);
-			testOrder(compareTwoRepo, [
-				[valueLocalFieldTree],
-				[valueLocalFieldTree, optionalLocalFieldTree],
-			]);
-			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, valueLocalFieldTree]]);
-
-			validateOrdering(
-				compareTwoRepo,
-				[[emptyTree, valueLocalFieldTree], [emptyTree]],
-				Ordering.Subset,
-			);
-
-			// If repo B's field is a sequence, potentially accommodating more fields than repo A, it should be
-			// considered a superset
-			testOrder(compareTwoRepo, [[valueTestTree], [optionalTestTree], [anyTestTree]]);
-			testOrder(compareTwoRepo, [[valueTestTree, emptyTestTree], [anyTestTree]]);
-		});
-
-		it("Repositories with mismatched fields are incomparable.", () => {
-			validateOrdering(
-				compareTwoRepo,
-				[[valueTestTree, emptyTree], [anyTestTree]],
-				Ordering.Incomparable,
-			);
-		});
-
-		it("Relaxing a field should result in a superset", () => {
-			testOrder(compareTwoRepo, [
-				[valueTestTree],
-				[emptyTestTree],
-				[optionalTestTree],
-				[anyTestTree],
-			]);
-
-			testOrder(compareTwoRepo, [[optionalEmptyTestTree], [optionalTestTree]]);
-			testOrder(compareTwoRepo, [[valueEmptyTestTree], [optionalTestTree]]);
-			testOrder(compareTwoRepo, [[valueTestTree], [optionalEmptyTestTree]]);
-		});
-
-		it("Some scenarios in which two repositories are considered equal", () => {
-			// When the field schema is `required`, no matter with or without child types, they should be Equal
-			validateOrdering(
-				compareTwoRepo,
-				[[valueTestTree], [valueEmptyTestTree]],
-				Ordering.Equal,
-			);
-
-			// When the field identifiers are different but the schema is the same, they still should be Equal
-			// TODO: should allowsRepoSuperset validates the consistency of identifiers?
-			validateOrdering(
-				compareTwoRepo,
-				[
-					[{ name: brand<TreeNodeSchemaIdentifier>("testTree"), schema: neverTree }],
-					[{ name: brand<TreeNodeSchemaIdentifier>("testTree2"), schema: neverTree }],
-				],
-				Ordering.Equal,
-			);
-		});
-	});
 
 	it("allowsTreeSuperset-no leaf values", () => {
 		const repo = new TreeStoredSchemaRepository();
@@ -575,41 +462,6 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 			);
 		}
 	}
-}
-
-/**
- * This function is used to capture the error message and determine the actual ordering of the input components.
- */
-function validateOrdering<T>(compare: (a: T, b: T) => boolean, inOrder: T[], expected: Ordering) {
-	assert.throws(
-		() => {
-			testOrder(compare, inOrder);
-		},
-		(error: Error) => {
-			return error !== undefined && extractOrderingFromError(error.message) === expected;
-		},
-	);
-}
-
-function extractOrderingFromError(errorMessage: string): Ordering | undefined {
-	const orderingRegex = /but was (Equal|Superset|Subset|Incomparable)/;
-	// Check if the error message contains the ordering regex pattern
-	const match = errorMessage.match(orderingRegex);
-	if (match !== null) {
-		switch (match[1]) {
-			case "Equal":
-				return Ordering.Equal;
-			case "Superset":
-				return Ordering.Superset;
-			case "Subset":
-				return Ordering.Subset;
-			case "Incomparable":
-				return Ordering.Incomparable;
-			default:
-				break;
-		}
-	}
-	return undefined;
 }
 
 /**
