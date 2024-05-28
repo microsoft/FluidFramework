@@ -230,6 +230,7 @@ export class FluidBuildDatabase {
 	 * @param packageGroup - map (cache) of packageName's related packages
 	 * @param packageName - package name
 	 * @param script - packages script name
+	 * @param ignorePackage - optional filter function to ignore select packages
 	 * @returns Array of groups of possible predecessor tasks
 	 */
 	public getPossiblePredecessorTasks(
