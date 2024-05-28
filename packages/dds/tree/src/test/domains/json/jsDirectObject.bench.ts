@@ -61,7 +61,7 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 
 function extractCoordinatesFromCanadaDirect(
 	directObj: Canada,
-	calculate: (x: number) => void,
+	calculate: (value: number) => void,
 ): void {
 	for (const feature of directObj.features) {
 		for (const coordinates of feature.geometry.coordinates) {
