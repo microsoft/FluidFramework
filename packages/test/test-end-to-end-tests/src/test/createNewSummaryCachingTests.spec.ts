@@ -4,19 +4,21 @@
  */
 
 import assert from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	IContainerRuntimeOptions,
-	ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+} from "@fluidframework/test-utils/internal";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
@@ -49,9 +51,6 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
 			summaryConfigOverrides,
-		},
-		gcOptions: {
-			gcAllowed: true,
 		},
 	};
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(

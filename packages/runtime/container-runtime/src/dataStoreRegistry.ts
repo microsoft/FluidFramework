@@ -7,8 +7,8 @@ import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal

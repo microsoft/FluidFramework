@@ -8,7 +8,6 @@ import classNames from "classnames";
 import React, { useState } from "react";
 import Select, {
 	DropdownIndicatorProps,
-	StylesConfig,
 	GroupBase,
 	Options as OptionsType,
 	OptionProps,
@@ -17,6 +16,7 @@ import Select, {
 	Props as SelectProps,
 	components,
 } from "react-select";
+
 import { SvgIcon } from "./SVGIcon.js";
 import {
 	backGroundDarkGrayColor,
@@ -55,7 +55,7 @@ const useStyles = makeStyles(
 );
 
 // Style api of react-select library
-const reactSelectStyles: StylesConfig<IDecoratedSelectOptionType, false> = {
+const reactSelectStyles = {
 	container: (provided) => ({
 		...provided,
 		backgroundColor: "transparent",

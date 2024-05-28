@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { readJsonSync } from "fs-extra";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { readJsonSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
-import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
-import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
-import { typeOnly } from "./compatibility";
+import { typeOnly } from "../typeValidator/compatibility";
+import { TestCaseTypeData, buildTestCase } from "../typeValidator/testGeneration";
+import { TypeData, getFullTypeName, getNodeTypeData } from "../typeValidator/typeData";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -138,12 +138,12 @@ for (const oldTypeData of previousData) {
 					...oldTypeData,
 					kind: `Removed${oldTypeData.kind}`,
 					removed: true,
-			  }
+				}
 			: {
 					prefix: "current",
 					...currentTypeData,
 					removed: false,
-			  };
+				};
 
 	// look for settings not under version, then fall back to version for back compat
 	const brokenData = broken?.[getFullTypeName(currentType)];

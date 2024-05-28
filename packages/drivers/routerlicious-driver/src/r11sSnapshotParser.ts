@@ -4,7 +4,8 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+
 import {
 	INormalizedWholeSnapshot,
 	IWholeFlatSnapshot,

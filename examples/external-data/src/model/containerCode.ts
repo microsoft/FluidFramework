@@ -4,10 +4,11 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { IAppModel, IBaseDocument } from "../model-interface/index.js";
+
 import { AppModel } from "./appModel.js";
 import { BaseDocumentInstantiationFactory } from "./taskList.js";
 

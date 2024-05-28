@@ -5,16 +5,18 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
+
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 
 /**
@@ -87,7 +89,7 @@ export class Interval implements ISerializableInterval {
 			start: this.start,
 		};
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 		return serializedInterval;
 	}

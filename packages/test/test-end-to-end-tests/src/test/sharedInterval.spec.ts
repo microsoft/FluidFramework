@@ -4,29 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map";
-import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,

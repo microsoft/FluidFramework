@@ -6,14 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+
 import { IMergeTreeOptions } from "../mergeTree.js";
 import { ISegment } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, ReferenceType } from "../ops.js";
 import { PropertySet } from "../properties.js";
 import { SnapshotV1 } from "../snapshotV1.js";
+
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { TestSerializer } from "./testSerializer.js";

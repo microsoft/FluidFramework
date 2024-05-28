@@ -4,12 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
+
 import { countOperations, insertSegments, markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree", () => {

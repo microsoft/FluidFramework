@@ -8,6 +8,7 @@
  */
 
 import { expect } from "chai";
+
 import type { PropertySchema } from "../../templateValidator.js";
 import { SchemaValidator } from "../schemaValidator.js";
 // Good or bad none of the templateSchema in these imports actually conform to

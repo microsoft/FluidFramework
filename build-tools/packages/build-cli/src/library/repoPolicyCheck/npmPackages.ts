@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable prefer-object-has-own */
+
 import * as child_process from "node:child_process";
 import fs from "node:fs";
 import { EOL as newline } from "node:os";
@@ -13,12 +15,12 @@ import sortPackageJson from "sort-package-json";
 
 import {
 	PackageJson,
-	updatePackageJsonFile,
-	loadFluidBuildConfig,
 	PackageNamePolicyConfig,
 	ScriptRequirement,
+	loadFluidBuildConfig,
+	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
-import { Handler, readFile, writeFile } from "./common";
+import { Handler, readFile, writeFile } from "./common.js";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -960,7 +962,7 @@ export const handlers: Handler[] = [
 			return missingDeps.length > 0
 				? `${file} is missing the following dependencies or devDependencies: \n\t${missingDeps.join(
 						"\n\t",
-				  )}`
+					)}`
 				: undefined;
 		},
 	},
@@ -992,7 +994,7 @@ export const handlers: Handler[] = [
 			return scriptsUsingInconsistentArgs.length > 0
 				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
 						"\n\t",
-				  )}`
+					)}`
 				: undefined;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
@@ -1176,8 +1178,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
-			// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, unicorn/prefer-module
-			const config = require(path.resolve(jestConfigFile)) as { reporters?: unknown };
+			const config = (await import(path.resolve(jestConfigFile))) as { reporters?: unknown };
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
 			}
@@ -1379,7 +1380,7 @@ export const handlers: Handler[] = [
 				exportsRoot?.default?.default === undefined
 					? undefined
 					: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-					  normalizePathField(exportsRoot?.default?.default);
+						normalizePathField(exportsRoot?.default?.default);
 
 			// CJS-only packages should use default, not import or require.
 			if (isCJSOnly) {
@@ -1404,7 +1405,7 @@ export const handlers: Handler[] = [
 					exportsRoot?.import?.default === undefined
 						? undefined
 						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-						  normalizePathField(exportsRoot?.import?.default);
+							normalizePathField(exportsRoot?.import?.default);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
@@ -1417,7 +1418,7 @@ export const handlers: Handler[] = [
 					exportsRoot?.require?.default === undefined
 						? undefined
 						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-						  normalizePathField(exportsRoot?.require?.default);
+							normalizePathField(exportsRoot?.require?.default);
 				const mainField = normalizePathField(json.main);
 				if (requireField !== mainField) {
 					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;

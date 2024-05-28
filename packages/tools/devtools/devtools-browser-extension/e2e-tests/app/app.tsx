@@ -13,11 +13,14 @@ import {
 	type ContainerKey,
 	createDevtoolsLogger,
 	initializeDevtools,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
+import {
+	CollaborativeTextContainerRuntimeFactory,
+	ICollaborativeTextAppModel,
+} from "./container.js";
 
 // Initialize the Devtools logger
 const logger = createDevtoolsLogger();

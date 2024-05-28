@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { CompatKind } from "../../compatOptions.cjs";
-import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+
 import { baseVersionForMinCompat } from "../baseVersion.js";
+import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+import { CompatKind } from "../compatOptions.js";
 
 describe("Minimum Compat Version", () => {
 	const numCompatVersions = 9;
@@ -25,11 +26,7 @@ describe("Minimum Compat Version", () => {
 					compatVersion: "2.0.0-internal.8.0.0",
 				}),
 			(error: Error) => {
-				return (
-					error.message?.startsWith(
-						`Error while running: npm v @fluidframework/container-loader`,
-					) === true
-				);
+				return error.message?.startsWith("Error trying to getRequestedVersion:") === true;
 			},
 			"Should fail when not sending a correct version",
 		);

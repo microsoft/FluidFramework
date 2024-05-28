@@ -13,7 +13,7 @@
  * @packageDocumentation
  */
 
-export { type TokenResponse } from "@fluidframework/odsp-driver-definitions";
+export { type TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
 export type {
 	OdspConnectionConfig,
 	OdspClientProps,

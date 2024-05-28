@@ -4,16 +4,20 @@
  */
 
 import crypto from "crypto";
-import fs from "fs";
+import fs from "node:fs";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import {
-	ScenarioRunnerTelemetryEventNames,
+	type ScenarioRunnerTelemetryEventNames,
 	getAzureClientConnectionConfigFromEnv,
 } from "./utils.js";
 
@@ -133,8 +137,8 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);

@@ -13,6 +13,7 @@ import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { type WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
+
 import type { IInspectorRow } from "./InspectorTableTypes.js";
 import { ItemMenu } from "./ItemMenu.js";
 import { OverflowableCell } from "./OverflowableCell.js";

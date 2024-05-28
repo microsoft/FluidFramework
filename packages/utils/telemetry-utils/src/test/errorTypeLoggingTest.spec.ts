@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+
 import { DataCorruptionError, GenericError } from "../error.js";
 import { createChildLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";

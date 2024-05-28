@@ -4,49 +4,40 @@
  */
 
 import { strict as assert } from "assert";
-import type { PureDataObject } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
-import { ILoaderProps } from "@fluidframework/container-loader";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter";
-import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+	neverCancelledSummaryToken,
+} from "@fluidframework/container-runtime/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
 	DriverHeader,
-	ISummaryContext,
 	type IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
+	ISummaryContext,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
 	createSummarizerFromFactory,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { wrapObjectAndOverride } from "../mocking.js";
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
-interface ProvideSearchContent {
-	SearchContent: SearchContent;
-}
-interface SearchContent extends ProvideSearchContent {
-	getSearchContent(): Promise<string | undefined>;
-}
+import { wrapObjectAndOverride } from "../mocking.js";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -54,7 +45,6 @@ interface SearchContent extends ProvideSearchContent {
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -66,10 +56,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -124,7 +110,6 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
@@ -154,9 +139,18 @@ describeCompat(
 	"Prepare for Summary with Search Blobs",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMatrix, SharedCounter } = apis.dds;
-		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
+		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		function createDataStoreRuntime(
+			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		) {
+			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
+				await DataObject.getDataObject(runtime);
+				return undefined;
+			}, factory);
+		}
 
 		class TestDataObject2 extends DataObject {
 			public get _root() {
@@ -166,13 +160,8 @@ describeCompat(
 				return this.context;
 			}
 		}
-		class TestDataObject1 extends DataObject implements SearchContent {
-			public async getSearchContent(): Promise<string | undefined> {
-				return Promise.resolve("TestDataObject1 Search Blob");
-			}
-			public get SearchContent() {
-				return this;
-			}
+
+		class TestDataObject1 extends DataObject {
 			public get _root() {
 				return this.root;
 			}
@@ -181,72 +170,21 @@ describeCompat(
 				return this.context;
 			}
 
-			private readonly matrixKey = "SharedMatrix";
-			private readonly counterKey = "Counter";
-			public matrix!: SharedMatrix;
-			public undoRedoStackManager!: UndoRedoStackManager;
-			public counter!: SharedCounter;
-
 			protected async initializingFirstTime() {
-				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-				this.root.set(this.matrixKey, sharedMatrix.handle);
-
-				const dataStore =
+				const dataStore2 =
 					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
-				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
-				this.root.set("dsFactory2", dsFactory2.handle);
-
-				const counter = SharedCounter.create(this.runtime, this.counterKey);
-				this.root.set(this.counterKey, counter.handle);
+				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
 			protected async hasInitialized() {
-				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-				assert(matrixHandle !== undefined, "SharedMatrix not found");
-				this.matrix = await matrixHandle.get();
-
-				this.undoRedoStackManager = new UndoRedoStackManager();
-				this.matrix.insertRows(0, 3);
-				this.matrix.insertCols(0, 3);
-				this.matrix.openUndo(this.undoRedoStackManager);
-
-				const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(this.counterKey);
-				assert(counterHandle);
-				this.counter = await counterHandle.get();
+				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
+				await dataStore2Handle?.get();
 			}
 		}
-
-		function createDataStoreRuntime(
-			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-		) {
-			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-				const obj: PureDataObject & FluidObject<SearchContent> =
-					await DataObject.getDataObject(runtime);
-				const searchObj = obj.SearchContent;
-				if (searchObj === undefined) {
-					return undefined;
-				}
-
-				// ODSP parser requires every search blob end with a line-feed character.
-				const searchContent = await searchObj.getSearchContent();
-				if (searchContent === undefined) {
-					return undefined;
-				}
-				const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
-				return {
-					// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
-					// that want to provide search content.
-					path: ["_search", "01"],
-					content,
-				};
-			}, factory);
-		}
-
-		let provider: ITestObjectProvider;
 		const dataStoreFactory1 = new DataObjectFactory(
 			TestDataObjectType1,
 			TestDataObject1,
-			[SharedMatrix.getFactory(), SharedCounter.getFactory()],
+			[],
 			[],
 			[],
 			createDataStoreRuntime(),
@@ -257,11 +195,8 @@ describeCompat(
 			[],
 			[],
 			[],
-			createDataStoreRuntime(),
 		);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
+
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
@@ -269,9 +204,11 @@ describeCompat(
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataStoreFactory1,
 			registryEntries: registryStoreEntries,
-			runtimeOptions,
 		});
+
 		const logger = createChildLogger();
+
+		let provider: ITestObjectProvider;
 
 		// Stores the latest summary uploaded to the server.
 		let latestUploadedSummary: ISummaryTree | undefined;
@@ -289,12 +226,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**
@@ -397,7 +329,6 @@ describeCompat(
 				// Submit a summary
 				const result = await summarizerClient.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum: 0,
@@ -422,13 +353,13 @@ describeCompat(
 			it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
 				const summarizerClient1 = await getNewSummarizer();
 
-				const DataStoreA = await dataStoreFactory1.createInstance(
+				const dataStoreA = await dataStoreFactory1.createInstance(
 					mainDataStore._context.containerRuntime,
 				);
-				mainDataStore.matrix.setCell(0, 0, DataStoreA.handle);
+				mainDataStore._root.set("dataStoreA", dataStoreA.handle);
 
 				const summaryVersion = await waitForSummary(summarizerClient1);
-				mainDataStore.matrix.setCell(0, 0, "value");
+				mainDataStore._root.set("key", "value");
 
 				const summarizerClient2 = await getNewSummarizer(summaryVersion);
 				// Wait for all pending ops to be processed by all clients.
@@ -441,7 +372,6 @@ describeCompat(
 					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				const result = await summarizerClient2.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum,
@@ -496,7 +426,6 @@ describeCompat(
 				// Submit a summary and wait for the summary op.
 				const result = await summarizer2.containerRuntime.submitSummary({
 					fullTree: false,
-					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
 					latestSummaryRefSeqNum: summary1.summaryRefSeq,

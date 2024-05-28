@@ -6,10 +6,6 @@
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
-/* eslint-disable-next-line import/no-internal-modules */
-import { Format } from "../../../feature-libraries/schema-index/format.js";
 
 import { makeCodecFamily } from "../../../codec/index.js";
 import { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
@@ -20,6 +16,10 @@ import {
 	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
+/* eslint-disable-next-line import/no-internal-modules */
+import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
+/* eslint-disable-next-line import/no-internal-modules */
+import { Format } from "../../../feature-libraries/schema-index/format.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { library } from "../../testTrees.js";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
@@ -87,7 +87,7 @@ describe("SchemaIndex", () => {
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases, (a, b) => {
+		makeEncodingTestSuite(makeCodecFamily([[1, codec]]), testCases, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});

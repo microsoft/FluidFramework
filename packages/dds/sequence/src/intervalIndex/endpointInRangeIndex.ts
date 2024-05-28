@@ -5,7 +5,8 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
+import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -13,7 +14,8 @@ import {
 	SequenceInterval,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { ISharedString } from "../sharedString.js";
+
 import { IntervalIndex } from "./intervalIndex.js";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils.js";
 
@@ -110,7 +112,7 @@ export class EndpointInRangeIndex<TInterval extends ISerializableInterval>
  * @internal
  */
 export function createEndpointInRangeIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IEndpointInRangeIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);

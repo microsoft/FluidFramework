@@ -209,12 +209,16 @@ export function repeat<T, TState = void>(t: T): Generator_2<T, TState>;
 export function repeatAsync<T, TState = void>(t: T): AsyncGenerator_2<T, TState>;
 
 // @internal (undocumented)
+export interface SaveDestination {
+    readonly path: string;
+}
+
+// @internal (undocumented)
 export interface SaveInfo {
-    filepath: string;
     // (undocumented)
-    saveOnFailure: boolean;
+    saveOnFailure: false | SaveDestination;
     // (undocumented)
-    saveOnSuccess?: boolean;
+    saveOnSuccess: false | SaveDestination;
 }
 
 // @internal

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
@@ -12,6 +13,7 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { Anchor, UpPath, Value } from "../../../core/index.js";
 import {
 	cursorsFromContextualData,
@@ -20,6 +22,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -33,7 +36,7 @@ import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	fuzzNode,
-	fuzzSchema,
+	initialFuzzSchema,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
@@ -44,7 +47,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const config = {
-	schema: fuzzSchema,
+	schema: initialFuzzSchema,
 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
 	initialTree: {
@@ -76,15 +79,19 @@ describe("Fuzz - anchor stability", () => {
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 1,
 			remove: 2,
-			move: 2,
+			intraFieldMove: 2,
+			crossFieldMove: 2,
 			fieldSelection: {
 				optional: 1,
 				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -139,9 +146,12 @@ describe("Fuzz - anchor stability", () => {
 	});
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 2,
 			remove: 2,
-			move: 2,
+			intraFieldMove: 2,
+			crossFieldMove: 2,
 			undo: 1,
 			redo: 1,
 			synchronizeTrees: 1,
@@ -151,6 +161,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -210,9 +221,6 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO: AB#6664 tracks investigating and resolving.
-			// These seeds encounter issues in delta application (specifically 0x7ce and 0x7cf)
-			skip: [0, 19, 38],
 		});
 	});
 });

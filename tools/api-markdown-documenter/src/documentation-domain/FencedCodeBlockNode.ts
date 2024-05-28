@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type DocumentationNode,
 	DocumentationParentNodeBase,
@@ -16,7 +17,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * @example Markdown
  *
  * ```md
- * \`\`\`typescrpt
+ * \`\`\`typescript
  * const foo = "bar";
  * \`\`\`
  * ```

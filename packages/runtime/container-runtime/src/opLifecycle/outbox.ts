@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	GenericError,
 	MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { ContainerMessageType } from "../messageTypes.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -87,11 +89,9 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 
 export class Outbox {
 	private readonly mc: MonitoringContext;
-	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private readonly idAllocationBatch: BatchManager;
-	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -111,21 +111,14 @@ export class Outbox {
 			Number.POSITIVE_INFINITY;
 		// We need to allow infinite size batches if we enable compression
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
-		const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
-		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
-		this.mainBatch = new BatchManager({ hardLimit });
-		this.blobAttachBatch = new BatchManager({ hardLimit });
-		this.idAllocationBatch = new BatchManager({ hardLimit });
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
 	}
 
 	public get messageCount(): number {
-		return (
-			this.attachFlowBatch.length +
-			this.mainBatch.length +
-			this.blobAttachBatch.length +
-			this.idAllocationBatch.length
-		);
+		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
 	}
 
 	public get isEmpty(): boolean {
@@ -140,13 +133,11 @@ export class Outbox {
 	 */
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
-		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
-				(sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+				(sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
 					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
@@ -155,7 +146,6 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers) &&
 			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
 			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
 		) {
@@ -170,8 +160,6 @@ export class Outbox {
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
-					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
-					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
 					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
 					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
 					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
@@ -187,55 +175,12 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		assert(
-			message.type !== ContainerMessageType.IdAllocation,
-			0x8f8 /* Allocation message submitted to mainBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.Attach,
-			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
-		);
-		this.maybeFlushPartialBatch();
-
-		if (
-			!this.attachFlowBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
-			// when queue is not empty.
-			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.attachFlowBatch);
-
-			this.addMessageToBatchManager(this.attachFlowBatch, message);
-		}
-
-		// If compression is enabled, we will always successfully receive
-		// attach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.attachFlowBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.attachFlowBatch);
-		}
-	}
-
 	public submitBlobAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.BlobAttach,
-			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -254,38 +199,9 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.IdAllocation,
-			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
-		if (
-			!this.idAllocationBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
-			// when queue is not empty.
-			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.idAllocationBatch);
-
-			this.addMessageToBatchManager(this.idAllocationBatch, message);
-		}
-
-		// If compression is enabled, we will always successfully receive
-		// attach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.idAllocationBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.idAllocationBatch);
-		}
+		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
 	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
@@ -317,7 +233,6 @@ export class Outbox {
 
 	private flushAll() {
 		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(this.attachFlowBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
 		this.flushInternal(this.mainBatch);
 	}
@@ -330,7 +245,7 @@ export class Outbox {
 		const rawBatch = batchManager.popBatch();
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
-		if (rawBatch.hasReentrantOps === true && shouldGroup) {
+		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -360,6 +275,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
@@ -493,7 +409,7 @@ export class Outbox {
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
 			mainBatch,
-			attachFlowBatch: this.attachFlowBatch.checkpoint(),
+			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}

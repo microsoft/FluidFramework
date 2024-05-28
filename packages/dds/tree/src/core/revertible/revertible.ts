@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { disposeSymbol } from "../../util/index.js";
+
 /**
  * Allows reversion of a change made to SharedTree.
  *
@@ -16,14 +18,24 @@ export interface Revertible {
 	 * The current status of the revertible.
 	 */
 	readonly status: RevertibleStatus;
+
 	/**
-	 * Reverts the associated change.
+	 * Reverts the associated change and disposes it.
 	 */
 	revert(): void;
 	/**
-	 * Releases this revertible so that it can no longer be used.
+	 * Reverts the associated change and optionally disposes it.
+	 *
+	 * @param dispose - If true, the revertible will be disposed after being reverted.
+	 * If false, the revertible will remain valid. This can be useful for scenarios where the revert may be dropped
+	 * due to merge conflicts, and one wants to attempt reverting again.
 	 */
-	release(): void;
+	revert(dispose: boolean): void;
+
+	/**
+	 * Disposes this revertible, allowing associated resources to be released.
+	 */
+	[disposeSymbol](): void;
 }
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { VisualNode, VisualNodeBase } from "@fluidframework/devtools-core";
+import type { VisualNode, VisualNodeBase } from "@fluidframework/devtools-core/internal";
 
 /**
  * Base interface used in passing key of the child node from Record {@link VisualTree}.

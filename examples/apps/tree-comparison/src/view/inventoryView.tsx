@@ -4,6 +4,7 @@
  */
 
 import React, { FC, useEffect, useRef, useState } from "react";
+
 import { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
 export interface IInventoryItemViewProps {

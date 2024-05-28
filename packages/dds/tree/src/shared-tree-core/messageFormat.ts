@@ -5,6 +5,7 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { TSchema, Type } from "@sinclair/typebox";
+
 import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
 
@@ -24,11 +25,22 @@ export interface Message {
 	 * The changeset to be applied.
 	 */
 	readonly changeset: JsonCompatibleReadOnly;
+
+	/**
+	 * The version of the message. This controls how the message is encoded.
+	 *
+	 * This was not set historically and was added before making any breaking changes to the format.
+	 * For that reason, absence of a 'version' field is synonymous with version 1.
+	 */
+	readonly version?: number;
 }
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
+		version: Type.Optional(Type.Number()),
 	});

@@ -4,40 +4,47 @@
  */
 
 import { strict as assert } from "assert";
+
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IGCRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/container-runtime/internal";
 import {
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-	ITestContainerConfig,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+	ISweepMessage,
+	disableDatastoreSweepKey,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	blobsTreeName,
-	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
+	blobsTreeName,
+	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/test/summary";
-// eslint-disable-next-line import/no-internal-modules
-import { disableDatastoreSweepKey, ISweepMessage } from "@fluidframework/container-runtime/test/gc";
+} from "@fluidframework/container-runtime/internal/test/summary";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -182,6 +189,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		// Skip these tests for drivers / services that do not support attachment blobs.
+		if (!driverSupportsBlobs(provider.driver)) {
+			this.skip();
+		}
 
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
@@ -194,12 +205,6 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	});
 
 	describe("Attachment blobs in attached container", () => {
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"fails retrieval of deleted attachment blobs",
 			[
@@ -221,8 +226,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob so that it's unreferenced in the next summary.
@@ -295,13 +300,13 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle1 = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle1 = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Upload another blob with the same content so that it is de-duped.
-				const blobHandle2 = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle2 = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob via one of the handles so that it's unreferenced in next summary.
@@ -447,12 +452,6 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			return { mainContainer, mainDataStore };
 		}
-
-		beforeEach("conditionalSkip", async function () {
-			if (!driverSupportsBlobs(provider.driver)) {
-				this.skip();
-			}
-		});
 
 		itExpects(
 			"deletes blobs uploaded in detached container",
@@ -794,12 +793,6 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			return { summarizer, summarizerContainer };
 		}
 
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"deletes blobs uploaded in disconnected container",
 			[
@@ -1087,12 +1080,6 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	});
 
 	describe("Deleted blob in summary", () => {
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		[true, undefined].forEach((disableDatastoreSweep) =>
 			it(`updates deleted blob state in the summary [disableDatastoreSweep=${disableDatastoreSweep}]`, async () => {
 				configProvider.set(disableDatastoreSweepKey, disableDatastoreSweep);
@@ -1102,8 +1089,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blob1Contents = "Blob contents 1";
-				const blob1Handle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blob1Contents, "utf-8"),
+				const blob1Handle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blob1Contents, "utf-8")),
 				);
 				const blob1NodePath = blob1Handle.absolutePath;
 
@@ -1252,8 +1239,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 					// Upload an attachment blob.
 					const blob1Contents = "Blob contents 1";
-					const blob1Handle = await mainDataStore._runtime.uploadBlob(
-						stringToBuffer(blob1Contents, "utf-8"),
+					const blob1Handle = toFluidHandleInternal(
+						await mainDataStore._runtime.uploadBlob(
+							stringToBuffer(blob1Contents, "utf-8"),
+						),
 					);
 					const blob1NodePath = blob1Handle.absolutePath;
 

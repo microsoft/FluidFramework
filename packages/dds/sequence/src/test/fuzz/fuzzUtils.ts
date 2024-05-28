@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as path from "path";
+
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -15,25 +16,27 @@ import {
 import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { PropertySet } from "@fluidframework/merge-tree";
-import type { SequenceInterval } from "../../index.js";
+	type Serializable,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { PropertySet } from "@fluidframework/merge-tree/internal";
+
+import type { SequenceInterval, SharedStringClass } from "../../index.js";
 import { type IIntervalCollection, Side } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
-import { SharedString } from "../../sharedString.js";
+import { ISharedString } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-export type RevertibleSharedString = SharedString & {
+export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
 	// This field prevents change events that are emitted while in the process of a revert from
 	// being added into the revertibles stack.
 	isCurrentRevert: boolean;
 };
-export function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
+export function isRevertibleSharedString(s: ISharedString): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
 }
 
@@ -54,6 +57,11 @@ export interface AddText {
 
 export interface RemoveRange extends RangeSpec {
 	type: "removeRange";
+}
+
+export interface AnnotateRange extends RangeSpec {
+	type: "annotateRange";
+	props: { key: string; value?: Serializable<any> }[];
 }
 
 export interface ObliterateRange extends RangeSpec {
@@ -103,7 +111,7 @@ export interface RevertibleWeights {
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange | ObliterateRange;
+export type TextOperation = AddText | RemoveRange | AnnotateRange | ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -122,8 +130,10 @@ export interface SharedStringOperationGenerationConfig {
 	weights?: {
 		addText: number;
 		removeRange: number;
+		annotateRange: number;
 		obliterateRange: number;
 	};
+	propertyNamePool?: string[];
 }
 
 export interface IntervalOperationGenerationConfig extends SharedStringOperationGenerationConfig {
@@ -145,15 +155,16 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
+			annotateRange: 1,
 			obliterateRange: 1,
 		},
+		propertyNamePool: ["prop1", "prop2", "prop3"],
 	};
 export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
 	{
 		...defaultSharedStringOperationGenerationConfig,
 		maxIntervals: 100,
 		intervalCollectionNamePool: ["comments"],
-		propertyNamePool: ["prop1", "prop2", "prop3"],
 		validateInterval: 100,
 		weights: {
 			...defaultSharedStringOperationGenerationConfig.weights,
@@ -220,6 +231,13 @@ export function makeReducer(
 		},
 		removeRange: async ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
+		},
+		annotateRange: async ({ client }, { start, end, props }) => {
+			const propertySet: PropertySet = {};
+			for (const { key, value } of props) {
+				propertySet[key] = value;
+			}
+			client.channel.annotateRange(start, end, propertySet);
 		},
 		obliterateRange: async ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
@@ -301,6 +319,17 @@ export function createSharedStringGeneratorOperations(
 		};
 	}
 
+	async function annotateRange(state: ClientOpState): Promise<AnnotateRange> {
+		const { random } = state;
+		const key = random.pick(options.propertyNamePool);
+		const value = random.pick([random.string(5), random.handle(), undefined, null]);
+		return {
+			type: "annotateRange",
+			...exclusiveRange(state),
+			props: [{ key, value }],
+		};
+	}
+
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
@@ -322,6 +351,7 @@ export function createSharedStringGeneratorOperations(
 		exclusiveRangeLeaveChar,
 		addText,
 		obliterateRange,
+		annotateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -336,13 +366,13 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<SharedString> {
+	): Promise<SharedStringClass> {
 		runtime.options.intervalStickinessEnabled = true;
 		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
 		document.options.intervalStickinessEnabled = true;
 		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
@@ -357,7 +387,7 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
+	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
@@ -374,6 +404,7 @@ export const baseModel: Omit<
 					}
 					break;
 				case "removeRange":
+				case "annotateRange":
 				case "addInterval":
 				case "changeInterval":
 					if (op.start !== undefined && op.start > 0) {
@@ -390,6 +421,7 @@ export const baseModel: Omit<
 		(op) => {
 			if (
 				op.type !== "removeRange" &&
+				op.type !== "annotateRange" &&
 				op.type !== "addInterval" &&
 				op.type !== "changeInterval"
 			) {
@@ -412,18 +444,6 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
 };
 
 export function makeIntervalOperationGenerator(
@@ -435,6 +455,7 @@ export function makeIntervalOperationGenerator(
 		addText,
 		obliterateRange,
 		removeRange,
+		annotateRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
 		hasNonzeroLength,
@@ -573,6 +594,7 @@ export function makeIntervalOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],

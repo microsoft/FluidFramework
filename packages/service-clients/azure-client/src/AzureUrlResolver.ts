@@ -8,7 +8,7 @@ import {
 	DriverHeader,
 	type IResolvedUrl,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the

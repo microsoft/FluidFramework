@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MergeTreeDeltaType } from "../ops.js";
+
 import { TestClient } from "./testClient.js";
 import { insertText, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
 

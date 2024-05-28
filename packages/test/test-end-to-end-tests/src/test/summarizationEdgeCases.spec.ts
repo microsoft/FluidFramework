@@ -4,21 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	ISubmitSummaryOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
-import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime";
-import type { ISharedMap } from "@fluidframework/map";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/test-utils/internal";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
 describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
@@ -27,9 +32,6 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
-			},
-			gcOptions: {
-				gcAllowed: true,
 			},
 		},
 	};
@@ -59,7 +61,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		const containerRuntime1 = defaultDataStore1._context.containerRuntime;
 		const nonDefaultDataStore1 = await containerRuntime1.createDataStore(TestDataObjectType);
 		const dataObject1 = await (
-			nonDefaultDataStore1.entryPoint as IFluidHandle<ITestDataObject>
+			nonDefaultDataStore1.entryPoint as IFluidHandleInternal<ITestDataObject>
 		).get();
 		// create a dds
 		const dds1 = SharedMap.create(dataObject1._runtime);

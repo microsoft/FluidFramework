@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { ICache, InMemoryCache } from "../cache.js";
 
 describe("InMemoryCache", () => {

@@ -4,26 +4,26 @@
  */
 
 import { resolve } from 'path';
+
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
-import { AttachState, type IContainer, type IHostLoader } from '@fluidframework/container-definitions';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
-import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidCodeDetails,
-	IFluidHandle,
-	IRequestHeader,
-} from '@fluidframework/core-interfaces';
+import { AttachState } from '@fluidframework/container-definitions';
+import {
+	type IContainer,
+	type IFluidCodeDetails,
+	type IHostLoader,
+} from '@fluidframework/container-definitions/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
+import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { createChildLogger } from '@fluidframework/telemetry-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from '@fluidframework/test-runtime-utils';
+} from '@fluidframework/test-runtime-utils/internal';
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -32,9 +32,10 @@ import {
 	TestFluidObjectFactory,
 	TestObjectProvider,
 	createAndAttachContainer,
-} from '@fluidframework/test-utils';
+} from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
+
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
 import { ReplaceRecursive, fail, identity } from '../../Common.js';
 import { OrderedEditSet } from '../../EditLog.js';
@@ -73,6 +74,7 @@ import {
 	WriteFormat,
 	reservedIdCount,
 } from '../../persisted-types/index.js';
+
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */

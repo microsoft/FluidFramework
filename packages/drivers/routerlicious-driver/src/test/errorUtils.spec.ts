@@ -4,8 +4,10 @@
  */
 
 import assert from "assert";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/driver-definitions";
+
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { IThrottlingWarning } from "@fluidframework/driver-definitions/internal";
+
 import {
 	RouterliciousErrorTypes,
 	createR11sNetworkError,

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Reads a blob from storage and parses it from JSON.

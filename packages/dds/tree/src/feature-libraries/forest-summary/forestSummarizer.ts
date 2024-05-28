@@ -4,14 +4,15 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
 	DeltaDetachedNodeBuild,
@@ -36,6 +37,7 @@ import { idAllocatorFromMaxId } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import { Format } from "./format.js";
 /**

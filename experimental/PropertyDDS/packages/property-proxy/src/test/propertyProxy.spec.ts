@@ -14,7 +14,7 @@ import {
 	SetProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "..";
+import { PropertyProxy } from "../index.js";
 
 import {
 	bookDataTemplate,
@@ -23,7 +23,7 @@ import {
 	genericTemplate,
 	vector2DTemplate,
 	vector3DTemplate,
-} from "./testSchemas";
+} from "./testSchemas.js";
 
 // --------------------- unit testing ----------------------------------
 

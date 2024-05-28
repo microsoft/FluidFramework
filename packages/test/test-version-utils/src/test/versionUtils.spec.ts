@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { satisfies } from "semver";
+
 import { getRequestedVersion, versionHasMovedSparsedMatrix } from "../versionUtils.js";
 
 /**

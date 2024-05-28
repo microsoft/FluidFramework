@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/driver-definitions";
 
 import { type AudienceClientMetadata } from "./AudienceMetadata.js";
 import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
@@ -48,7 +49,7 @@ import {
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
- * @internal
+ * @alpha
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
@@ -534,13 +535,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
-			"containerDataVisualization": this.containerData !== undefined,
-
-			// Required for backwards compatibility with the extension through v0.0.3
-			"container-data": this.containerData !== undefined,
+			containerDataVisualization: this.containerData !== undefined,
 
 			// TODO: When ready to enable feature set it to this.containerData !== undefined
-			"containerDataEditing": false,
+			containerDataEditing: false,
 		};
 	}
 

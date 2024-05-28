@@ -5,15 +5,19 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { assert } from "@fluidframework/core-utils/internal";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { ReferenceType, SharedString, reservedTileLabelsKey } from "@fluidframework/sequence";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";

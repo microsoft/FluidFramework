@@ -124,9 +124,6 @@ module.exports = {
 				"vue",
 				"webpack-dev-server",
 
-				// Required due to use of "unstable" tree component APIs
-				"@fluentui/react-components",
-
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
 			],

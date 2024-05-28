@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { type IClient } from "@fluidframework/driver-definitions";
+
 import { type TinyliciousMember, type TinyliciousUser } from "./interfaces.js";
 
 /**
@@ -16,22 +17,16 @@ import { type TinyliciousMember, type TinyliciousUser } from "./interfaces.js";
  */
 export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
 	const tinyliciousUser = audienceMember.user as Partial<TinyliciousUser>;
-	// AB#7448 to reenable this stronger check.  Relaxing to mitigate a bug that the name may be missing.
-	// assert(
-	// 	tinyliciousUser !== undefined &&
-	// 		typeof tinyliciousUser.id === "string" &&
-	// 		typeof tinyliciousUser.name === "string",
-	// 	0x313 /* Specified user was not of type "TinyliciousUser". */,
-	// );
 	assert(
-		tinyliciousUser !== undefined && typeof tinyliciousUser.id === "string",
+		tinyliciousUser !== undefined &&
+			typeof tinyliciousUser.id === "string" &&
+			typeof tinyliciousUser.name === "string",
 		0x313 /* Specified user was not of type "TinyliciousUser". */,
 	);
 
 	return {
-		userId: tinyliciousUser.id,
-		// AB#7448 to remove this cast after the check above is strengthened again.
-		userName: tinyliciousUser.name as string,
+		id: tinyliciousUser.id,
+		name: tinyliciousUser.name,
 		connections: [],
 	};
 }

@@ -4,30 +4,28 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { type ISharedMap, SharedMap } from "fluid-framework";
 
-import {
-	IContainer,
-	IFluidModuleWithDetails,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import {
-	IFluidContainer,
-	createDOProviderContainerRuntimeFactory,
-} from "@fluidframework/fluid-static";
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
 import { DiceRollerController } from "../src/controller.js";
 import { makeAppView } from "../src/view.js";
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -131,7 +129,10 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
+		createDOProviderContainerRuntimeFactory({
+			schema: containerConfig,
+			compatibilityMode: "2",
+		}),
 		createNewFlag,
 	);
 

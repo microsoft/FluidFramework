@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { assertNotUndefined } from './Common.js';
 import { NodeId, TraitLabel, UuidString } from './Identifiers.js';
 import { getNodeId } from './NodeIdUtilities.js';

@@ -4,6 +4,7 @@
  */
 
 import { expect } from 'chai';
+
 import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompression.js';
 import { StablePlace, StableRange } from '../ChangeTypes.js';
 import { newEdit, newEditId } from '../EditUtilities.js';
@@ -26,6 +27,7 @@ import {
 	PlaceholderTree,
 	SetValueInternal,
 } from '../persisted-types/index.js';
+
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 // CompressedChange type for this test suite. It aligns with CompressedChangeInternal but doesn't actually compress trees.

@@ -4,7 +4,9 @@
  */
 
 import assert from "assert";
+
 import { computeHierarchicalOrdinal } from "../ordinal.js";
+
 import { doOverRange } from "./mergeTreeOperationRunner.js";
 
 function computeNumericOrdinal(index: number) {

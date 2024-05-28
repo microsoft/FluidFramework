@@ -4,10 +4,11 @@
  */
 
 import { ChildProcess } from "child_process";
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
@@ -32,7 +33,7 @@ export class DocCreatorRunner extends ScenarioRunner<
 	DocCreatorRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/docCreatorRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docCreatorRunnerClient.js";
 
 	constructor(scenarioConfig: DocCreatorRunnerConfig) {
 		super({
@@ -58,8 +59,8 @@ export class DocCreatorRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -75,7 +76,7 @@ export class DocCreatorRunner extends ScenarioRunner<
 				logger,
 				{ eventName: "create" },
 				async () => {
-					return ac.createContainer(schema);
+					return ac.createContainer(schema, "2");
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));

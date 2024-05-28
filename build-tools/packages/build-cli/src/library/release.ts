@@ -11,7 +11,7 @@ import {
 	getVersionRange,
 } from "@fluid-tools/version-tools";
 
-import { ReleaseGroup } from "../releaseGroups";
+import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to their versions. This is the format of the "simple" release report.
@@ -88,13 +88,13 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-		  }
+			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-		  };
+			};
 };
 
 interface PackageCaretRange {

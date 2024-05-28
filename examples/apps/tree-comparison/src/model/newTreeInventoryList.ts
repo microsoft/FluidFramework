@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
 	NodeFromSchema,
 	SchemaFactory,
-	SharedTree,
 	Tree,
 	TreeConfiguration,
 } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -56,8 +56,6 @@ export const treeConfiguration = new TreeConfiguration(
 		}),
 );
 
-const newTreeFactory = SharedTree.getFactory();
-
 const sharedTreeKey = "sharedTree";
 
 /**
@@ -88,7 +86,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterChange", () => {
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "nodeChanged", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -132,7 +130,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as ITree;
+		this._sharedTree = SharedTree.create(this.runtime);
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();
@@ -159,13 +157,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// reach in and grab the inventoryItems list.
 		this._inventoryItemList =
 			this.sharedTree.schematize(treeConfiguration).root.inventoryItemList;
-		// afterChange will fire for any change of any type anywhere in the subtree.  In this application we expect
+		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
-		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
-		Tree.on(this.inventoryItemList, "afterChange", () => {
+		Tree.on(this.inventoryItemList, "treeChanged", () => {
 			for (const inventoryItemNode of this.inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
@@ -219,6 +217,6 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
 	"new-tree-inventory-list",
 	NewTreeInventoryList,
-	[newTreeFactory],
+	[SharedTree.getFactory()],
 	{},
 );

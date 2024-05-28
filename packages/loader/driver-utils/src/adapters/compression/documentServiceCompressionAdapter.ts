@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import {
+	IDocumentService,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
+
 import { DocumentServiceProxy } from "../../documentServiceProxy.js";
+
 import { ICompressionStorageConfig } from "./compressionTypes.js";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 

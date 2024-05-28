@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+
 import type { IMigrationTool } from "./migrationTool.js";
 
 /**

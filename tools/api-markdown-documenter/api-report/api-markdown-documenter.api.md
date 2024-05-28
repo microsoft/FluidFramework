@@ -30,8 +30,10 @@ import { DocSection } from '@microsoft/tsdoc';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
+import type { Nodes } from 'hast';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
+import type { Root } from 'hast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
@@ -177,7 +179,6 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
-    export function defaultFrontMatter(): undefined;
     export function defaultGetFileNameForItem(apiItem: ApiItem): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -212,6 +213,12 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly singleLine: boolean;
     readonly type: string;
 }
+
+// @alpha
+export function documentationNodesToHtml(nodes: DocumentationNode[], context: ToHtmlContext): Nodes[];
+
+// @alpha
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
 export enum DocumentationNodeType {
@@ -258,7 +265,6 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
-    frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
     getLinkTextForItem?: (apiItem: ApiItem) => string;
@@ -279,7 +285,6 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
-    readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
 }
 
@@ -288,8 +293,10 @@ export interface DocumentNodeProps {
     readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
-    readonly frontMatter?: string;
 }
+
+// @alpha
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -550,7 +557,6 @@ export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocum
 // @public
 export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
-    static combine(...nodes: ParagraphNode[]): ParagraphNode;
     static createFromPlainText(text: string): ParagraphNode;
     static readonly Empty: ParagraphNode;
     get singleLine(): false;
@@ -700,6 +706,27 @@ export interface TextFormatting {
     readonly bold?: boolean;
     readonly italic?: boolean;
     readonly strikethrough?: boolean;
+}
+
+// @alpha
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly startingHeadingLevel?: number;
+}
+
+// @alpha
+export interface ToHtmlContext extends ConfigurationBase {
+    readonly headingLevel: number;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @alpha
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @alpha
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

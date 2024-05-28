@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -16,9 +16,9 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
@@ -112,9 +112,9 @@ describe("Data Store Creation Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: globalRegistry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				baselogger: createChildLogger(),
 				clientDetails: {},
-			} as ContainerRuntime;
+			} as unknown as ContainerRuntime;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,

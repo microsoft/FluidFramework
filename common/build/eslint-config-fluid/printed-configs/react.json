@@ -118,11 +118,11 @@
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
-                "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
-                "allowDirectConstAssertionInArrowFunctions": true,
-                "allowExpressions": false,
+                "allowExpressions": true,
+                "allowTypedFunctionExpressions": true,
                 "allowHigherOrderFunctions": true,
-                "allowTypedFunctionExpressions": true
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": false
             }
         ],
         "@typescript-eslint/explicit-member-accessibility": [
@@ -153,11 +153,11 @@
                     "delimiter": "semi",
                     "requireLast": true
                 },
-                "multilineDetection": "brackets",
                 "singleline": {
                     "delimiter": "semi",
                     "requireLast": true
-                }
+                },
+                "multilineDetection": "brackets"
             }
         ],
         "@typescript-eslint/member-ordering": [
@@ -166,14 +166,14 @@
         "@typescript-eslint/naming-convention": [
             "error",
             {
-                "format": [
-                    "camelCase"
-                ],
-                "leadingUnderscore": "allow",
+                "selector": "accessor",
                 "modifiers": [
                     "private"
                 ],
-                "selector": "accessor"
+                "format": [
+                    "camelCase"
+                ],
+                "leadingUnderscore": "allow"
             }
         ],
         "@typescript-eslint/no-array-constructor": [
@@ -201,7 +201,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "error"
+            "error",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -605,6 +608,7 @@
             {
                 "allow": [
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }
@@ -632,7 +636,17 @@
             "error"
         ],
         "import/order": [
-            "off"
+            "error",
+            {
+                "newlines-between": "always",
+                "alphabetize": {
+                    "order": "asc",
+                    "caseInsensitive": false,
+                    "orderImportKind": "ignore"
+                },
+                "distinctGroup": true,
+                "warnOnUnassignedImports": false
+            }
         ],
         "indent": [
             "off"
@@ -709,11 +723,11 @@
             "error",
             {
                 "code": 120,
-                "ignoreRegExpLiterals": true,
+                "ignoreTrailingComments": true,
+                "ignoreUrls": true,
                 "ignoreStrings": true,
                 "ignoreTemplateLiterals": true,
-                "ignoreTrailingComments": true,
-                "ignoreUrls": true
+                "ignoreRegExpLiterals": true
             }
         ],
         "max-lines": [
@@ -931,8 +945,8 @@
         "no-restricted-syntax": [
             "error",
             {
-                "message": "Exporting * is not permitted. You should export only named items you intend to export.",
-                "selector": "ExportAllDeclaration"
+                "selector": "ExportAllDeclaration",
+                "message": "Exporting * is not permitted. You should export only named items you intend to export."
             },
             "ForInStatement"
         ],
@@ -1065,8 +1079,8 @@
             "off",
             {
                 "blankLine": "always",
-                "next": "return",
-                "prev": "*"
+                "prev": "*",
+                "next": "return"
             }
         ],
         "prefer-arrow-callback": [
@@ -1286,10 +1300,10 @@
             "always",
             {
                 "block": {
-                    "balanced": true,
                     "markers": [
                         "!"
-                    ]
+                    ],
+                    "balanced": true
                 }
             }
         ],
@@ -1474,7 +1488,7 @@
             "error"
         ],
         "unicorn/number-literal-case": [
-            "error"
+            "off"
         ],
         "unicorn/numeric-separators-style": [
             "error",
@@ -1811,21 +1825,34 @@
             ]
         },
         "import/resolver": {
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx",
-                    ".jsx"
-                ]
-            },
             "typescript": {
                 "extensions": [
                     ".ts",
                     ".tsx",
                     ".d.ts",
+                    ".js",
+                    ".jsx"
+                ],
+                "conditionNames": [
+                    "allow-ff-test-exports",
+                    "types",
+                    "import",
+                    "esm2020",
+                    "es2020",
+                    "es2015",
+                    "require",
+                    "node",
+                    "node-addons",
+                    "browser",
+                    "default"
+                ]
+            },
+            "node": {
+                "extensions": [
+                    ".ts",
+                    ".cts",
+                    ".mts",
+                    ".tsx",
                     ".js",
                     ".jsx"
                 ]

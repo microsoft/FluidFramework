@@ -4,6 +4,7 @@
  */
 
 import { expect } from "chai";
+
 import { ChangeSet } from "../changeset.js";
 import { isEmptyChangeSet } from "../changeset_operations/isEmptyChangeset.js";
 

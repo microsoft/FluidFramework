@@ -1,7 +1,7 @@
 {
 	"metadata": {
 		"toolPackage": "@microsoft/api-extractor",
-		"toolVersion": "7.39.4",
+		"toolVersion": "7.42.3",
 		"schemaVersion": 1011,
 		"oldestForwardsCompatibleVersion": 1001,
 		"tsdocConfig": {
@@ -620,7 +620,7 @@
 						{
 							"kind": "Property",
 							"canonicalReference": "simple-suite-test!TestClass#testClassGetterProperty:member",
-							"docComment": "/**\n * Test class getter-only property\n *\n * @remarks\n *\n * Here are some remarks about the getter-only property\n *\n * @virtual\n */\n",
+							"docComment": "/**\n * Test class property with both a getter and a setter.\n *\n * @remarks\n *\n * Here are some remarks about the getter-only property\n *\n * @virtual\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",
@@ -632,10 +632,10 @@
 								},
 								{
 									"kind": "Content",
-									"text": ";"
+									"text": ";\n\nset testClassGetterProperty(newValue: number);"
 								}
 							],
-							"isReadonly": true,
+							"isReadonly": false,
 							"isOptional": false,
 							"releaseTag": "Public",
 							"name": "testClassGetterProperty",
@@ -875,24 +875,20 @@
 					"excerptTokens": [
 						{
 							"kind": "Content",
-							"text": "testConstWithEmptyDeprecatedBlock = "
+							"text": "testConstWithEmptyDeprecatedBlock: "
 						},
 						{
 							"kind": "Content",
-							"text": "\"I have a `@deprecated` tag with an empty comment block.\""
+							"text": "string"
 						}
 					],
 					"fileUrlPath": "dist/TestConst.d.ts",
-					"initializerTokenRange": {
-						"startIndex": 1,
-						"endIndex": 2
-					},
 					"isReadonly": true,
 					"releaseTag": "Public",
 					"name": "testConstWithEmptyDeprecatedBlock",
 					"variableTypeTokenRange": {
-						"startIndex": 0,
-						"endIndex": 0
+						"startIndex": 1,
+						"endIndex": 2
 					}
 				},
 				{
@@ -1355,6 +1351,66 @@
 							"releaseTag": "Public",
 							"overloadIndex": 1,
 							"parameters": []
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "simple-suite-test!TestInterface#getterProperty:member",
+							"docComment": "/**\n * A test getter-only interface property.\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get getterProperty(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "getterProperty",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "simple-suite-test!TestInterface#setterProperty:member",
+							"docComment": "/**\n * A test property with a getter and a setter.\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get setterProperty(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n\nset setterProperty(newValue: boolean);"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "setterProperty",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
 						},
 						{
 							"kind": "PropertySignature",

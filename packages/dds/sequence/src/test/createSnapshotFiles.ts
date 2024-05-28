@@ -4,7 +4,9 @@
  */
 
 import fs from "fs";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
 for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {

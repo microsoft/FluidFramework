@@ -27,6 +27,7 @@ export {
 	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	type IEventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
 	IOpProcessingController,

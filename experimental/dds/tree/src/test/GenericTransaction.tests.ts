@@ -4,8 +4,10 @@
  */
 
 import { expect } from 'chai';
+
 import { ReconciliationEdit } from '../ReconciliationPath.js';
 import { ChangeInternal, EditStatus } from '../persisted-types/index.js';
+
 import { MockTransaction } from './utilities/MockTransaction.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

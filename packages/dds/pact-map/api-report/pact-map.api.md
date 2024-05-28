@@ -4,16 +4,10 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @internal
 export interface IAcceptedPact<T> {
@@ -37,25 +31,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 }
 
 // @internal
-export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): PactMap;
-    delete(key: string): void;
-    get(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    getPending(key: string): T | undefined;
-    getWithDetails(key: string): IAcceptedPact<T> | undefined;
-    protected initializeLocalCore(): void;
-    isPending(key: string): boolean;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: T | undefined): void;
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-}
+export const PactMap: ISharedObjectKind<IPactMap<unknown>> & SharedObjectKind<IPactMap<unknown>>;
 
 // (No @packageDocumentation comment for this package)
 

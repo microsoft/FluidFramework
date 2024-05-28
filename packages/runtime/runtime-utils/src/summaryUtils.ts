@@ -9,26 +9,29 @@ import {
 	bufferToString,
 	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryBlob,
 	ISummaryTree,
-	ITree,
-	ITreeEntry,
 	SummaryObject,
 	SummaryType,
-	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	ISummarizeResult,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+	IGarbageCollectionData,
+	ISummarizeResult,
+	ITelemetryContextExt,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -408,13 +411,13 @@ export function processAttachMessageGCData(
 /**
  * @internal
  */
-export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryBaseEventPropertyType>();
+export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -424,7 +427,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryBaseEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -435,7 +438,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryBaseEventPropertyType {
+	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

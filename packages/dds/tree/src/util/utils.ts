@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
@@ -161,31 +161,9 @@ export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
  * @param map - the transformation function to run on each element of the iterable
  * @returns a new iterable of elements which have been transformed by the `map` function
  */
-export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Iterable<U> {
+export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): IterableIterator<U> {
 	for (const t of iterable) {
 		yield map(t);
-	}
-}
-
-/**
- * Returns an iterable of tuples containing pairs of elements from the given iterables
- * @param iterableA - an iterable to zip together with `iterableB`
- * @param iterableB - an iterable to zip together with `iterableA`
- * @returns in iterable of tuples of elements zipped together from `iterableA` and `iterableB`.
- * If the input iterables are of different lengths, then the extra elements in the longer will be ignored.
- */
-export function* zipIterables<T, U>(
-	iterableA: Iterable<T>,
-	iterableB: Iterable<U>,
-): Iterable<[T, U]> {
-	const iteratorA = iterableA[Symbol.iterator]();
-	const iteratorB = iterableB[Symbol.iterator]();
-	for (
-		let nextA = iteratorA.next(), nextB = iteratorB.next();
-		nextA.done !== true && nextB.done !== true;
-		nextA = iteratorA.next(), nextB = iteratorB.next()
-	) {
-		yield [nextA.value, nextB.value];
 	}
 }
 
@@ -260,7 +238,7 @@ export function assertValidRangeIndices(
 	startIndex: number,
 	endIndex: number,
 	array: { readonly length: number },
-) {
+): void {
 	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
@@ -270,7 +248,7 @@ export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
-) {
+): void {
 	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
 		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
@@ -282,14 +260,14 @@ export function assertValidIndex(
 export function assertValidRange(
 	{ start, end }: { start: number; end: number },
 	array: { readonly length: number },
-) {
+): void {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
 	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
 	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
-export function assertNonNegativeSafeInteger(index: number) {
+export function assertNonNegativeSafeInteger(index: number): void {
 	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
 	assert(index >= 0, 0x377 /* index must be non-negative */);
 }
@@ -395,8 +373,8 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 
 /**
  * Placeholder for `Symbol.dispose`.
- *
- * Replace this with `Symbol.dispose` when it is available.
+ * @privateRemarks
+ * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
  * @public
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");

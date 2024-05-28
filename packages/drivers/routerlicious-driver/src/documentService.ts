@@ -4,12 +4,29 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import * as api from "@fluidframework/driver-definitions";
-import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework/driver-utils";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentServiceEvents,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
+
 import { ICache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
@@ -42,10 +59,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
-// eslint-disable-next-line import/namespace
 export class DocumentService
-	extends TypedEventEmitter<api.IDocumentServiceEvents>
-	implements api.IDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
+	implements IDocumentService
 {
 	private lastDiscoveredAt: number = Date.now();
 	private discoverP: Promise<void> | undefined;
@@ -58,7 +75,7 @@ export class DocumentService
 	}
 
 	constructor(
-		private _resolvedUrl: api.IResolvedUrl,
+		private _resolvedUrl: IResolvedUrl,
 		protected ordererUrl: string,
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
@@ -68,12 +85,12 @@ export class DocumentService
 		protected tenantId: string,
 		protected documentId: string,
 		protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
-		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
+		private readonly documentStorageServicePolicies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
-		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
+		private readonly discoverFluidResolvedUrl: () => Promise<IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
@@ -90,7 +107,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document storage service for routerlicious driver.
 	 */
-	public async connectToStorage(): Promise<api.IDocumentStorageService> {
+	public async connectToStorage(): Promise<IDocumentStorageService> {
 		if (this.documentStorageService !== undefined) {
 			return this.documentStorageService;
 		}
@@ -113,7 +130,7 @@ export class DocumentService
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
-					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.storageRestWrapper = RouterliciousStorageRestWrapper.load(
 						this.tenantId,
 						this.storageTokenFetcher,
 						this.logger,
@@ -153,7 +170,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document delta storage service for routerlicious driver.
 	 */
-	public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		await this.connectToStorage();
 		assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
@@ -165,7 +182,7 @@ export class DocumentService
 				const rateLimiter = new RateLimiter(
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,
@@ -196,7 +213,7 @@ export class DocumentService
 	 *
 	 * @returns returns the document delta stream service for routerlicious driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
 			if (this.shouldUpdateDiscoveredSessionInfo()) {

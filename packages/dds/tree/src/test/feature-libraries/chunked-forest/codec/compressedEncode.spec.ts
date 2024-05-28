@@ -5,8 +5,9 @@
 
 import { strict as assert, fail } from "assert";
 
-import { compareArrays } from "@fluidframework/core-utils";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { compareArrays } from "@fluidframework/core-utils/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
 import { typeboxValidator } from "../../../../external-utilities/index.js";
@@ -57,6 +58,7 @@ import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);

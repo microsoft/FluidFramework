@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type ApiCallSignature,
 	type ApiConstructSignature,
@@ -10,14 +11,14 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethodSignature,
-	type ApiPropertySignature,
+	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain/index.js";
-import { filterByKind } from "../../utilities/index.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for `Interface` items.
@@ -62,31 +63,52 @@ export function transformApiInterface(
 	const filteredChildren = filterChildMembers(apiInterface, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
-		const constructSignatures = filterByKind(apiInterface.members, [
-			ApiItemKind.ConstructSignature,
-		]).map((apiItem) => apiItem as ApiConstructSignature);
-
-		const allProperties = filterByKind(apiInterface.members, [
-			ApiItemKind.PropertySignature,
-		]).map((apiItem) => apiItem as ApiPropertySignature);
+		const constructSignatures: ApiConstructSignature[] = [];
+		const allProperties: ApiPropertyItem[] = [];
+		const callSignatures: ApiCallSignature[] = [];
+		const indexSignatures: ApiIndexSignature[] = [];
+		const methods: ApiMethodSignature[] = [];
+		for (const child of filteredChildren) {
+			switch (child.kind) {
+				case ApiItemKind.ConstructSignature: {
+					constructSignatures.push(child as ApiConstructSignature);
+					break;
+				}
+				case ApiItemKind.Property:
+				case ApiItemKind.PropertySignature: {
+					allProperties.push(child as ApiPropertyItem);
+					break;
+				}
+				case ApiItemKind.CallSignature: {
+					callSignatures.push(child as ApiCallSignature);
+					break;
+				}
+				case ApiItemKind.IndexSignature: {
+					indexSignatures.push(child as ApiIndexSignature);
+					break;
+				}
+				case ApiItemKind.MethodSignature: {
+					methods.push(child as ApiMethodSignature);
+					break;
+				}
+				default: {
+					config.logger?.error(
+						`Child item "${
+							child.displayName
+						}" of Interface "${getScopedMemberNameForDiagnostics(
+							apiInterface,
+						)}" is of unsupported API item kind: "${child.kind}"`,
+					);
+					break;
+				}
+			}
+		}
 
 		// Split properties into event properties and non-event properties
 		const standardProperties = allProperties.filter(
 			(apiProperty) => !apiProperty.isEventProperty,
 		);
 		const eventProperties = allProperties.filter((apiProperty) => apiProperty.isEventProperty);
-
-		const callSignatures = filterByKind(apiInterface.members, [ApiItemKind.CallSignature]).map(
-			(apiItem) => apiItem as ApiCallSignature,
-		);
-
-		const indexSignatures = filterByKind(apiInterface.members, [
-			ApiItemKind.IndexSignature,
-		]).map((apiItem) => apiItem as ApiIndexSignature);
-
-		const methods = filterByKind(apiInterface.members, [ApiItemKind.MethodSignature]).map(
-			(apiItem) => apiItem as ApiMethodSignature,
-		);
 
 		// Render summary tables
 		const renderedMemberTables = createMemberTables(

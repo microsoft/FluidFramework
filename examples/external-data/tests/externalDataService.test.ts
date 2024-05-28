@@ -10,7 +10,7 @@ import express from "express";
 import fetch from "node-fetch";
 import request from "supertest";
 
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import {

@@ -4,9 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
 import {
+	EmptyKey,
 	FieldKey,
+	ITreeCursor,
 	JsonableTree,
 	TreeStoredSchemaRepository,
 	initializeForest,
@@ -32,15 +36,11 @@ import {
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
+	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import {
-	EmptyKey,
-	ITreeCursor,
-	JsonCompatible,
-	brand,
-	jsonableTreeFromCursor,
-} from "../../../index.js";
+import { brand, JsonCompatible } from "../../../util/index.js";
+
 import { testRevisionTagCodec } from "../../utils.js";
 import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
@@ -61,8 +61,8 @@ export const TwitterKey = {
 function bench(
 	data: {
 		name: string;
-		getJson: () => any;
-		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
+		getJson: () => JsonCompatible;
+		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: unknown[]) => void) => unknown;
 	}[],
 ) {
 	const schemaCollection = new SchemaBuilder({
@@ -154,10 +154,13 @@ function bench(
 				string,
 				(
 					cursor: ITreeCursor,
+					// TODO: use something other than `any`
+					/* eslint-disable @typescript-eslint/no-explicit-any */
 					dataConsumer: (
 						cursor: ITreeCursor,
 						calculate: (...operands: any[]) => void,
 					) => any,
+					/* eslint-enable @typescript-eslint/no-explicit-any */
 				) => void,
 			][] = [
 				["cursorToJsonObject", cursorToJsonObject],
@@ -314,7 +317,25 @@ const citm = isInPerformanceTestingMode
 	? generateCitmJson(2, 2500000)
 	: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
-	bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
-	bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
-	bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
+	bench([
+		{
+			name: "canada",
+			getJson: () => canada as unknown as JsonCompatible,
+			dataConsumer: extractCoordinatesFromCanada,
+		},
+	]);
+	bench([
+		{
+			name: "twitter",
+			getJson: () => twitter as unknown as JsonCompatible,
+			dataConsumer: extractAvgValsFromTwitter,
+		},
+	]);
+	bench([
+		{
+			name: "citm",
+			getJson: () => citm as unknown as JsonCompatible,
+			dataConsumer: extractAvgValsFromCitm,
+		},
+	]);
 });

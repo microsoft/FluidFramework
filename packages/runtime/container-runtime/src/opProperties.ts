@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentSystemMessage } from "@fluidframework/driver-definitions/internal";
 
 export const opSize = (op: ISequencedDocumentMessage): number => {
 	// Some messages may already have string contents,

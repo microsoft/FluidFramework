@@ -6,10 +6,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { IRandom, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
 import { SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp } from "../ops.js";
+
 import {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,

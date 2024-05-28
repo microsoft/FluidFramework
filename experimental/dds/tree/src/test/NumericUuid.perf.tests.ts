@@ -4,6 +4,7 @@
  */
 
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+
 import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
 import { defaultClusterCapacity } from '../id-compressor/IdCompressor.js';
 import {

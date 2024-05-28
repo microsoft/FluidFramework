@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
-import * as api from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
+import { IVersion } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 import { IOdspSnapshot } from "../contracts.js";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase.js";
@@ -38,7 +43,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		blobid: string | null,
 		count: number,
 		_scenarioName?: string,
-	): Promise<api.IVersion[]> {
+	): Promise<IVersion[]> {
 		assert(blobid === null, 0x342 /* Invalid usage. "blobid" should always be null */);
 		assert(count === 1, 0x343 /* Invalid usage. "count" should always be 1 */);
 
@@ -65,7 +70,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		this.throwUsageError("getSnapshot");
 	}
 
-	private getSnapshotVersion(): api.IVersion[] {
+	private getSnapshotVersion(): IVersion[] {
 		return this.snapshotTreeId ? [{ id: this.snapshotTreeId, treeId: undefined! }] : [];
 	}
 
@@ -77,7 +82,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		this.throwUsageError("fetchBlobFromStorage");
 	}
 
-	public uploadSummaryWithContext(_summary: api.ISummaryTree, _context: ISummaryContext): never {
+	public uploadSummaryWithContext(_summary: ISummaryTree, _context: ISummaryContext): never {
 		this.throwUsageError("uploadSummaryWithContext");
 	}
 

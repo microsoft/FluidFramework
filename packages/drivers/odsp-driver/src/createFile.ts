@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { NonRetryableError } from "@fluidframework/driver-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
 import { ICreateFileResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
@@ -31,7 +32,6 @@ import {
 	INewFileInfo,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
-	getOrigin,
 	getWithRetryForTokenRefresh,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -169,7 +169,7 @@ export async function createNewEmptyFluidFile(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
-	const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${
+	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
@@ -212,7 +212,6 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;
@@ -233,7 +232,7 @@ export async function createNewFluidFileFromSummary(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
-		`${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
 		`${filePath}/${encodedFilename}`;
 
 	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);

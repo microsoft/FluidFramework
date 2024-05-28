@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type IUser } from "@fluidframework/protocol-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions";
+
+import { type IUser } from "@fluidframework/driver-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+
 import { Attributor } from "../attributor.js";
 
 describe("Attributor", () => {

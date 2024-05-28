@@ -5,26 +5,28 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import {
-	getRedisClusterRetryStrategy,
-	getRedisClient,
-} from "@fluidframework/server-services-utils";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { clone } from "lodash";
-import * as Redis from "ioredis";
-import { Namespace, Server, Socket } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
+import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
+import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
-import * as winston from "winston";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
+import type { Cluster, Redis } from "ioredis";
 
 class SocketIoSocket implements core.IWebSocket {
+	private readonly eventListeners: { event: string; listener: () => void }[] = [];
+
+	private isDisposed = false;
+
 	public get id(): string {
 		return this.socket.id;
 	}
@@ -32,23 +34,44 @@ class SocketIoSocket implements core.IWebSocket {
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
-		this.socket.on(event, listener);
+		if (!this.isDisposed) {
+			this.eventListeners.push({ event, listener });
+			this.socket.on(event, listener);
+		}
 	}
 
 	public async join(id: string): Promise<void> {
-		return this.socket.join(id);
+		if (!this.isDisposed) {
+			return this.socket.join(id);
+		}
 	}
 
-	public async emit(event: string, ...args: any[]) {
-		this.socket.emit(event, ...args);
+	public emit(event: string, ...args: any[]) {
+		if (!this.isDisposed) {
+			this.socket.emit(event, ...args);
+		}
 	}
 
-	public async emitToRoom(roomId: string, event: string, ...args: any[]) {
-		this.socket.nsp.to(roomId).emit(event, ...args);
+	public emitToRoom(roomId: string, event: string, ...args: any[]) {
+		if (!this.isDisposed) {
+			this.socket.nsp.to(roomId).emit(event, ...args);
+		}
 	}
 
 	public disconnect(close?: boolean) {
-		this.socket.disconnect(close);
+		if (!this.isDisposed) {
+			this.socket.disconnect(close);
+		}
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+		if (!this.socket.disconnected) {
+			this.disconnect(true);
+		}
+		for (const { event, listener } of this.eventListeners) {
+			this.socket.off(event, listener);
+		}
 	}
 }
 
@@ -75,15 +98,45 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis | Redis.Cluster,
-		private readonly sub: Redis.Redis | Redis.Cluster,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
+			const socketConnectionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.SocketConnection,
+				{},
+			);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 
+			//
+			webSocket.on("disconnect", (reason: DisconnectReason) => {
+				// The following should be considered as normal disconnects and not logged as errors.
+				// For more information about each reason, see https://socket.io/docs/v4/server-socket-instance/#disconnect
+				const isOk = [
+					// server used socket.disconnect()
+					"server namespace disconnect",
+					// client used socket.disconnect()
+					"client namespace disconnect",
+					// server shutting down
+					"server shutting down",
+					// connection closed for normal reasons
+					"transport close",
+				].includes(reason);
+				socketConnectionMetric.setProperties({
+					reason,
+					transport: socket.conn.transport.name,
+				});
+				if (isOk) {
+					socketConnectionMetric.success("Socket connection ended");
+				} else {
+					socketConnectionMetric.error("Socket connection closed", reason);
+				}
+			});
+
 			// Server side listening for ping events
-			socket.on("ping", (cb) => {
+			webSocket.on("ping", (cb) => {
 				if (typeof cb === "function") {
 					cb();
 				}
@@ -127,73 +180,120 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
-		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
-		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
+		const sleep = async (timeMs: number) =>
+			new Promise((resolve) => setTimeout(resolve, timeMs));
+
+		if (this.socketIoConfig?.gracefulShutdownEnabled) {
+			// Gradual disconnection of websocket connections
+			const drainTime = this.socketIoConfig?.gracefulShutdownDrainTimeMs ?? 30000;
+			const drainInterval = this.socketIoConfig?.gracefulShutdownDrainIntervalMs ?? 1000;
+			if (drainTime > 0 && drainInterval > 0) {
+				// Stop receiving new connections
+				this.io.engine.use((_, res, __) => {
+					res.status(503).send("Graceful Shutdown");
+				});
+
+				const connections = await this.io.fetchSockets();
+				const connectionCount = connections.length;
+				const telemetryProperties = {
+					drainTime,
+					drainInterval,
+					connectionCount,
+				};
+				Lumberjack.info("Graceful disconnection started", telemetryProperties);
+				const metricForTimeTaken = Lumberjack.newLumberMetric(
+					LumberEventName.GracefulShutdown,
+					telemetryProperties,
+				);
+				// total number of drains to run
+				const totalDrains = Math.ceil(drainTime / drainInterval);
+				// number of connections to disconnect per drain
+				const connectionsToDisconnectPerDrain = Math.ceil(connectionCount / totalDrains);
+				let done = false;
+				const drainConnections = Array.from(connections.values());
+				let n = 0;
+				if (connectionsToDisconnectPerDrain > 0) {
+					// start draining                let done = false;
+					for (let i = 0; i < totalDrains; i++) {
+						for (let j = 0; j < connectionsToDisconnectPerDrain; j++) {
+							const connection: RemoteSocket<any, any> = drainConnections[n];
+							if (!connection) {
+								done = true;
+								break;
+							}
+							try {
+								connection.disconnect(true);
+							} catch (e) {
+								Lumberjack.error("Graceful disconnect exception", undefined, e);
+							}
+							n++;
+						}
+						if (done) {
+							break;
+						}
+						Lumberjack.info("Graceful disconnect batch processed", {
+							disconnectedSoFar: n + 1,
+							connectionCount,
+						});
+						await sleep(drainInterval);
+					}
+				}
+				if (n + 1 < connectionCount) {
+					metricForTimeTaken.error(
+						`Graceful shutdown finished incompletely. Missed ${
+							connectionCount - n - 1
+						} connections.`,
+					);
+				} else {
+					metricForTimeTaken.success("Graceful shutdown finished");
+					const reconnections = await this.io.fetchSockets();
+					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
+						connectionsCount: reconnections.length,
+					});
+				}
+			}
+		}
+
+		this.io.close();
+		await sleep(3000); // Give time for any  disconnect handlers to execute before closing Redis resources
+		await Promise.all([
+			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
+			this.redisClientConnectionManagerForSub.getRedisClient().quit(),
+		]);
 	}
 }
 
-export function create(
-	redisConfig: any,
-	server: http.Server,
+type SocketIoAdapter = typeof Adapter | ((nsp: Namespace) => Adapter);
+
+/**
+ * @internal
+ */
+export type SocketIoAdapterCreator = (
+	pub: Redis | Cluster,
+	sub: Redis | Cluster,
+) => SocketIoAdapter;
+
+function getRedisAdapter(
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 	socketIoAdapterConfig?: any,
-	socketIoConfig?: any,
-	ioSetup?: (io: Server) => void,
-): core.IWebSocketServer {
-	const options: Redis.RedisOptions = {
-		host: redisConfig.host,
-		port: redisConfig.port,
-		password: redisConfig.pass,
-		connectTimeout: redisConfig.connectTimeout,
-		enableReadyCheck: true,
-		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-		enableOfflineQueue: redisConfig.enableOfflineQueue,
-		retryStrategy: getRedisClusterRetryStrategy({ delayPerAttemptMs: 50, maxDelayMs: 2000 }),
-	};
-	if (redisConfig.enableAutoPipelining) {
-		/**
-		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-		 * More info: https://github.com/luin/ioredis#autopipelining
-		 */
-		options.enableAutoPipelining = true;
-		options.autoPipeliningIgnoredCommands = ["ping"];
-	}
-	if (redisConfig.tls) {
-		options.tls = {
-			servername: redisConfig.host,
-		};
+	customCreateAdapter?: SocketIoAdapterCreator,
+): SocketIoAdapter {
+	if (customCreateAdapter !== undefined) {
+		// Use the externally provided Socket.io Adapter
+		return customCreateAdapter(
+			redisClientConnectionManagerForPub.getRedisClient(),
+			redisClientConnectionManagerForSub.getRedisClient(),
+		);
 	}
 
-	const pub: Redis.default | Redis.Cluster = getRedisClient(
-		clone(options),
-		redisConfig.slotsRefreshTimeout,
-		redisConfig.enableClustering,
-	);
-
-	const sub: Redis.default | Redis.Cluster = getRedisClient(
-		clone(options),
-		redisConfig.slotsRefreshTimeout,
-		redisConfig.enableClustering,
-	);
-
-	pub.on("error", (err) => {
-		winston.error("Error with Redis pub connection: ", err);
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
-	});
-	sub.on("error", (err) => {
-		winston.error("Error with Redis sub connection: ", err);
-		Lumberjack.error("Error with Redis sub connection", undefined, err);
-	});
-
-	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
+		// Use the custom Socket.io Redis Adapter from the services-shared package
 		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
-			pubConnection: new SocketIORedisConnection(pub),
-			subConnection: new SocketIoRedisSubscriptionConnection(sub),
+			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
+			subConnection: new SocketIoRedisSubscriptionConnection(
+				redisClientConnectionManagerForSub,
+			),
 		};
 
 		redisSocketIoAdapter.RedisSocketIoAdapter.setup(
@@ -201,10 +301,40 @@ export function create(
 			socketIoAdapterConfig?.shouldDisableDefaultNamespace,
 		);
 
-		adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
-	} else {
-		adapter = createAdapter(pub, sub);
+		return redisSocketIoAdapter.RedisSocketIoAdapter;
 	}
+
+	// Use the default, official Socket.io Redis Adapter from the @socket.io/redis-adapter package
+	return createRedisAdapter(
+		redisClientConnectionManagerForPub.getRedisClient(),
+		redisClientConnectionManagerForSub.getRedisClient(),
+	);
+}
+
+export function create(
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+	server: http.Server,
+	socketIoAdapterConfig?: any,
+	socketIoConfig?: any,
+	ioSetup?: (io: Server) => void,
+	customCreateAdapter?: SocketIoAdapterCreator,
+): core.IWebSocketServer {
+	redisClientConnectionManagerForPub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis pub connection", // error message
+	);
+
+	redisClientConnectionManagerForSub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis sub connection", // error message
+	);
+	const adapter = getRedisAdapter(
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+		socketIoAdapterConfig,
+		customCreateAdapter,
+	);
 
 	// Create and register a socket.io connection on the server
 	const io = new Server(server, {
@@ -227,5 +357,10 @@ export function create(
 		ioSetup(io);
 	}
 
-	return new SocketIoServer(io, pub, sub);
+	return new SocketIoServer(
+		io,
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+		socketIoConfig,
+	);
 }

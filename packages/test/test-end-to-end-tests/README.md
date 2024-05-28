@@ -6,7 +6,7 @@ in much the same way a real application using Fluid would.
 
 These tests are additionally meaningfully parameterized over two dimensions
 
--   the underlying services the clients are using (see `@fluid-private/test-driver-definitions`, `@fluid-private/test-drivers`, and [its README](../test-drivers/README.md) for more information)
+-   the underlying services the clients are using (see `@fluid-internal/test-driver-definitions`, `@fluid-private/test-drivers`, and [its README](../test-drivers/README.md) for more information)
 -   a compatibility configuration determining which versions of packages should be used to create/load containers
 
 Testing against a variety of drivers helps catch server-specific bugs.
@@ -114,6 +114,14 @@ Take a look at the [SharedStringEndToEndTest](src/test/sharedStringEndToEndTests
 of how to write an end-to-end test.
 
 That same [directory](src/test) contains more complex examples too.
+
+## Debugging
+
+In order to debug legacy code running as part of an end-to-end test, you'll need to modify the debug launch configuration to include `node_modules` in its set of loaded files.
+
+For example, if using "Debug Current Mocha Test" or one of its variants, remove the `node_modules` entry under `"skipFiles"`.
+
+Break points in the set of legacy modules (found in test-version-utils' install tree) will then properly be hit.
 
 ## "Real Service" Tests
 

@@ -4,8 +4,6 @@
  */
 
 import { Spinner } from "@fluentui/react-components";
-import React from "react";
-
 import {
 	DataVisualization,
 	type FluidObjectNode,
@@ -15,9 +13,11 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
+import React from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
+
 import { type HasLabel } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
 import { TreeHeader } from "./TreeHeader.js";
@@ -87,12 +87,6 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
 		return <TreeItem header={header} />;
 	} else {
-		const header = <TreeHeader label={label} nodeTypeMetadata={"FluidHandle"} />;
-
-		return (
-			<TreeItem header={header}>
-				<TreeDataView containerKey={containerKey} label={"data"} node={visualTree} />
-			</TreeItem>
-		);
+		return <TreeDataView containerKey={containerKey} label={label} node={visualTree} />;
 	}
 }

@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { SharedTreeCore } from "../../shared-tree-core/index.js";
 import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";
 

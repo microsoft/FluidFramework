@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
@@ -12,9 +13,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies.js";
-
-// eslint-disable-next-line import/no-internal-modules
-import { getFlexNode } from "../../simple-tree/flexNode.js";
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
@@ -143,45 +141,36 @@ describe("SharedTreeObject factories", () => {
 
 	describe("factory content extraction", () => {
 		it("extracts a primitive", () => {
-			assert.equal(extractFactoryContent(42).content, 42);
+			assert.equal(extractFactoryContent(42), 42);
 		});
 		it("extracts an object", () => {
-			assert.deepEqual(extractFactoryContent(new ChildA({ content: 42 })).content, {
+			assert.deepEqual(extractFactoryContent(new ChildA({ content: 42 })), {
 				content: 42,
 			});
 		});
 		it("extracts an array of primitives", () => {
-			assert.deepEqual(extractFactoryContent([42, 42]).content, [42, 42]);
+			assert.deepEqual(extractFactoryContent([42, 42]), [42, 42]);
 		});
 		it("extracts an array of objects", () => {
 			assert.deepEqual(
-				extractFactoryContent([new ChildA({ content: 42 }), new ChildA({ content: 42 })])
-					.content,
+				extractFactoryContent([new ChildA({ content: 42 }), new ChildA({ content: 42 })]),
 				[{ content: 42 }, { content: 42 }],
 			);
 		});
 		it("extracts an array of maps", () => {
-			assert.deepEqual(extractFactoryContent([new Map([["a", 42]])]).content, [
-				new Map([["a", 42]]),
-			]);
+			assert.deepEqual(extractFactoryContent([new Map([["a", 42]])]), [new Map([["a", 42]])]);
 		});
 		it("extracts a map of primitives", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", 42]])).content,
-				new Map([["a", 42]]),
-			);
+			assert.deepEqual(extractFactoryContent(new Map([["a", 42]])), new Map([["a", 42]]));
 		});
 		it("extracts a map of objects", () => {
 			assert.deepEqual(
-				extractFactoryContent(new Map([["a", new ChildA({ content: 42 })]])).content,
+				extractFactoryContent(new Map([["a", new ChildA({ content: 42 })]])),
 				new Map([["a", { content: 42 }]]),
 			);
 		});
 		it("extracts a map of arrays", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", [42]]])).content,
-				new Map([["a", [42]]]),
-			);
+			assert.deepEqual(extractFactoryContent(new Map([["a", [42]]])), new Map([["a", [42]]]));
 		});
 		it("extracts an object tree", () => {
 			assert.deepEqual(
@@ -192,7 +181,7 @@ describe("SharedTreeObject factories", () => {
 							map: new Map([["a", new ChildA({ content: 42 })]]),
 						}),
 					}),
-				).content,
+				),
 				{
 					child: { list: [{ content: 42 }], map: new Map([["a", { content: 42 }]]) },
 				},
@@ -215,10 +204,10 @@ describe("SharedTreeObject factories", () => {
 			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
 		}
-		getFlexNode(root).on("beforeChange", () => {
+		Tree.on(root, "treeChanged", () => {
 			readData();
 		});
-		Tree.on(root, "afterChange", () => {
+		Tree.on(root, "nodeChanged", () => {
 			readData();
 		});
 

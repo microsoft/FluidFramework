@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { BlobTreeEntry } from "@fluidframework/driver-utils";
-import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { BlobTreeEntry } from "@fluidframework/driver-utils/internal";
+import { ITree } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -15,7 +17,9 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+import type { ConsensusRegisterCollection } from "../consensusRegisterCollection.js";
+
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";
 
@@ -28,14 +32,14 @@ function createConnectedCollection(id: string, runtimeFactory: MockContainerRunt
 	};
 
 	const crcFactory = new ConsensusRegisterCollectionFactory();
-	const collection = crcFactory.create(dataStoreRuntime, id);
+	const collection = crcFactory.create(dataStoreRuntime, id) as ConsensusRegisterCollection<any>;
 	collection.connect(services);
 	return collection;
 }
 
 function createLocalCollection(id: string) {
 	const factory = new ConsensusRegisterCollectionFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusRegisterCollection<any>;
 }
 
 function createCollectionForReconnection(
@@ -58,7 +62,7 @@ function createCollectionForReconnection(
 describe("ConsensusRegisterCollection", () => {
 	describe("Single connected client", () => {
 		const collectionId = "consensus-register-collection";
-		let crc: IConsensusRegisterCollection;
+		let crc: ConsensusRegisterCollection<any>;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(() => {
@@ -376,7 +380,9 @@ describe("ConsensusRegisterCollection", () => {
 
 			public async deleteOutboundRoutes() {
 				const subCollectionId = `subCollection-${this.subCollectionCount}`;
-				const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandle;
+				const deletedHandle = this.collection1.read(
+					subCollectionId,
+				) as IFluidHandleInternal;
 				assert(deletedHandle, "Route must be added before deleting");
 
 				// Delete the last handle that was added.

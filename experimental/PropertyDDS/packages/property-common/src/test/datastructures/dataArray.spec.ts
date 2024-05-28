@@ -7,6 +7,7 @@
  * @fileoverview In this file, we will test the functions exported by deep_copy.js
  */
 import { expect } from "chai";
+
 import { BoolDataArray, Int8DataArray, Int32DataArray, UniversalDataArray } from "../../index";
 let error;
 

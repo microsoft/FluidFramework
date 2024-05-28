@@ -4,17 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { createNewFluidFile } from "../createFile.js";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
@@ -22,36 +25,37 @@ import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { IExistingFileInfo, INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+
 import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
-	const documentAttributes: api.IDocumentAttributes = {
+	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = (): api.ISummaryTree => {
-		const summary: api.ISummaryTree = {
-			type: api.SummaryType.Tree,
+	const createSummary = (): ISummaryTree => {
+		const summary: ISummaryTree = {
+			type: SummaryType.Tree,
 			tree: {},
 		};
 
 		summary.tree[".app"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: blobContent,
 				},
 			},
 		};
 		summary.tree[".protocol"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: JSON.stringify(documentAttributes),
 				},
 			},

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+
 import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from './Common.js';
 import { NodeId, TraitLabel } from './Identifiers.js';
 import { comparePayloads } from './PayloadUtilities.js';

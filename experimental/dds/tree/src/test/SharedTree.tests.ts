@@ -4,6 +4,7 @@
  */
 
 import { WriteFormat } from '../persisted-types/index.js';
+
 import { runSummaryTests } from './Summary.tests.js';
 import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests.js';
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests.js';

@@ -4,10 +4,13 @@
  */
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { type ITree, NodeFromSchema, SharedTree } from "@fluidframework/tree";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { type ITree, NodeFromSchema, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
+
 import { Table, generateTable } from "../index.js";
+
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
 const numRows = isInPerformanceTestingMode ? 10000 : 100;
@@ -69,12 +72,9 @@ describe("Table", () => {
 			title: `SharedTree`,
 			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as ITree;
+				const tree = channel as unknown as ITree;
 
-				const view = tree.schematize({
-					schema: Table,
-					initialTree: () => data,
-				});
+				const view = tree.schematize(new TreeConfiguration(Table, () => data));
 
 				table = view.root;
 
@@ -185,12 +185,9 @@ describe("Table", () => {
 
 			it("SharedTree", () => {
 				const { channel, processAllMessages } = create(SharedTree.getFactory());
-				tree = channel as ITree;
+				tree = channel;
 
-				tree.schematize({
-					schema: Table,
-					initialTree: () => data,
-				});
+				tree.schematize(new TreeConfiguration(Table, () => data));
 
 				processAllMessages();
 				summaryBytes = measureAttachmentSummary(channel);

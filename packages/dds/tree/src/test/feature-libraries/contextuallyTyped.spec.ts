@@ -4,15 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { MapTree } from "../../core/index.js";
 
+import { MapTree } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
 	ContextuallyTypedNodeDataObject,
 	applyTypesFromContext,
 	cursorFromContextualData,
-	isTreeValue,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped.js";
@@ -23,20 +21,6 @@ import {
 } from "../../feature-libraries/index.js";
 
 describe("ContextuallyTyped", () => {
-	it("isTreeValue", () => {
-		assert(isTreeValue(0));
-		assert(isTreeValue(0.001));
-		assert(isTreeValue(NaN));
-		assert(isTreeValue(true));
-		assert(isTreeValue(false));
-		assert(isTreeValue(""));
-		assert(!isTreeValue({}));
-		assert(!isTreeValue(undefined));
-		assert(isTreeValue(null));
-		assert(!isTreeValue([]));
-		assert(isTreeValue(new MockHandle(5)));
-	});
-
 	it("applyTypesFromContext omits empty fields", () => {
 		const builder = new SchemaBuilder({
 			scope: "applyTypesFromContext",

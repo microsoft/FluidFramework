@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -13,8 +13,10 @@ import {
 	UsageError,
 	createChildLogger,
 	wrapErrorAndLog,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ISummaryConfiguration } from "../containerRuntime.js";
+
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
@@ -96,7 +98,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
-		this.logger = createChildLogger({ logger: this.runtime.logger, namespace: "Summarizer" });
+		this.logger = createChildLogger({
+			logger: this.runtime.baseLogger,
+			namespace: "Summarizer",
+		});
 	}
 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
@@ -240,7 +245,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
-			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
+			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,

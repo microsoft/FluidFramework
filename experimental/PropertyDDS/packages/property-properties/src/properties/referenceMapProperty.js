@@ -9,6 +9,7 @@
 const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { BaseProperty } = require("./baseProperty");
 const { ContainerProperty } = require("./containerProperty");
 const { ReferenceProperty } = require("./referenceProperty");

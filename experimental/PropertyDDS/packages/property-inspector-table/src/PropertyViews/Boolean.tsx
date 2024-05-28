@@ -6,6 +6,7 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import Switch, { SwitchProps } from "@material-ui/core/Switch";
 import * as React from "react";
+
 import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes.js";
 import { getPropertyValue } from "../propertyInspectorUtils.js";
 

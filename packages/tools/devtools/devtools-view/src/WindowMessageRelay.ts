@@ -11,7 +11,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 /**
  * Message relay used by a devtools view rendered in the same page as the application to communicate with the

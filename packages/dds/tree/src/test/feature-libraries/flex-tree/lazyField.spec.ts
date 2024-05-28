@@ -7,10 +7,11 @@
 
 import { strict as assert } from "assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldAnchor, FieldKey, UpPath, rootFieldKey } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
+import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
 	LazyField,
 	LazyOptionalField,
@@ -24,9 +25,11 @@ import {
 	FlexFieldSchema,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
+	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
+
 import {
 	getReadonlyContext,
 	initializeCursor,
@@ -215,7 +218,7 @@ describe("LazyField", () => {
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
-		const parentAnchor = context.forest.anchors.track(parentPath);
+		const parentAnchor = context.checkout.forest.anchors.track(parentPath);
 
 		// Move cursor down to leaf field
 		cursor.enterNode(0);
@@ -231,6 +234,76 @@ describe("LazyField", () => {
 			},
 		);
 		assert.equal(leafField.parent, rootField.boxedAt(0));
+	});
+
+	it("Disposes when context is disposed", () => {
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "LazyField",
+			libraries: [leafDomain.library],
+		});
+		builder.object("empty", {});
+		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
+		const forest = forestWithContent({ schema, initialTree: {} });
+		const context = getReadonlyContext(forest, schema);
+		const cursor = initializeCursor(context, detachedFieldAnchor);
+
+		const field = new LazyOptionalField(
+			context,
+			FlexFieldSchema.create(FieldKinds.optional, [Any]),
+			cursor,
+			detachedFieldAnchor,
+		);
+
+		assert(!field[isFreedSymbol]());
+		context[disposeSymbol]();
+		assert(field[isFreedSymbol]());
+	});
+
+	it("Disposes when parent is disposed", () => {
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "LazyField",
+			libraries: [leafDomain.library],
+		});
+		const Holder = builder.object("holder", { f: leafDomain.number });
+		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
+		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const context = getReadonlyContext(forest, schema);
+
+		const holder = [...context.root.boxedIterator()][0];
+		assert(holder.is(Holder));
+		const field = holder.boxedF;
+		assert(field instanceof LazyField);
+
+		assert(!field[isFreedSymbol]());
+		const v = forest.anchors.acquireVisitor();
+		v.destroy(rootFieldKey, 1);
+		assert(field[isFreedSymbol]());
+
+		// Should not double free.
+		context[disposeSymbol]();
+	});
+
+	it("Disposes when context then parent is disposed", () => {
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "LazyField",
+			libraries: [leafDomain.library],
+		});
+		const Holder = builder.object("holder", { f: leafDomain.number });
+		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
+		const forest = forestWithContent({ schema, initialTree: { f: 5 } });
+		const context = getReadonlyContext(forest, schema);
+
+		const holder = [...context.root.boxedIterator()][0];
+		assert(holder.is(Holder));
+		const field = holder.boxedF;
+		assert(field instanceof LazyField);
+
+		assert(!field[isFreedSymbol]());
+		context[disposeSymbol]();
+		assert(field[isFreedSymbol]());
+		// Should not double free.
+		const v = forest.anchors.acquireVisitor();
+		v.destroy(rootFieldKey, 1);
 	});
 });
 

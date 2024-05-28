@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+
 import { InsecureUrlResolver } from "../insecureUrlResolver.js";
 
 describe("Insecure Url Resolver Test", () => {

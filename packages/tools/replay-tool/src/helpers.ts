@@ -5,27 +5,35 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { ISnapshotNormalizerConfig, getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import {
+	ISnapshotNormalizerConfig,
+	getNormalizedSnapshot,
+} from "@fluidframework/tool-utils/internal";
 import stringify from "json-stable-stringify";
+
 import {
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
 	excludeChannelContentDdsFactories,
-} from "./replayFluidFactories";
-import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
-import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+} from "./replayFluidFactories.js";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";
 
 export interface ReplayToolContainerEntryPoint {
 	readonly containerRuntime: ContainerRuntime;
@@ -205,7 +213,6 @@ export async function uploadSummary(container: IContainer) {
 	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
-		trackState: false,
 		fullGC: true,
 	});
 	return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from 'assert';
+
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
@@ -12,6 +13,7 @@ import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
 import { RevisionView } from '../RevisionView.js';
 import { TreeViewNode } from '../TreeView.js';
 import { ChangeNode, Side } from '../persisted-types/index.js';
+
 import { TestTree } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

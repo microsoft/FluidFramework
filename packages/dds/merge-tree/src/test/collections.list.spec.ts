@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { DoublyLinkedList, walkList } from "../collections/index.js";
 
 describe("Collections.DoublyLinkedList", () => {

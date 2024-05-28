@@ -4,7 +4,8 @@
  */
 
 import * as fs from "fs";
-import { IFluidFileConverter } from "./codeLoaderBundle";
+
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
 
 /**
  * Is the given snapshot in JSON format

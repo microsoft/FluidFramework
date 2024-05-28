@@ -5,14 +5,14 @@
 
 import { assert } from "chai";
 
-import { MonoRepoKind } from "../../src/library";
+import { MonoRepoKind } from "../../src/library/index.js";
 
 import {
 	generateBumpDepsBranchName,
 	generateBumpVersionBranchName,
 	generateReleaseBranchName,
 	getDefaultBumpTypeForBranch,
-} from "../../src/library/branches";
+} from "../../src/library/branches.js";
 
 describe("generateBumpVersionBranchName", () => {
 	it("semver versions", () => {
@@ -126,6 +126,12 @@ describe("generateReleaseBranchName", () => {
 	it("Fluid internal version scheme", () => {
 		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-internal.1.0.0");
 		const expected = "release/v2int/1.0";
+		assert.equal(actual, expected);
+	});
+
+	it("Fluid RC version scheme", () => {
+		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-rc.1.0.0");
+		const expected = "release/client/2.0.0-rc.1.0";
 		assert.equal(actual, expected);
 	});
 

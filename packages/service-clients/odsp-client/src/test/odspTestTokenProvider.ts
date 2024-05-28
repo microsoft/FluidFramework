@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { IOdspTokenProvider } from "../token.js";
+
 import { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**
@@ -50,9 +52,8 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		refreshToken?: string;
 	}> {
 		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
+		const clientConfig: IPublicClientConfig = {
 			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
@@ -62,7 +63,6 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const body = {
 			scope,
 			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
 			...credentials,
 		};
 		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));

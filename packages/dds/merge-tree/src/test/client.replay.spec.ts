@@ -7,9 +7,12 @@
 
 import assert from "assert";
 import * as fs from "fs";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
 import { createGroupOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+
 import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";

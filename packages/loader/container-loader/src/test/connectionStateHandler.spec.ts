@@ -4,18 +4,19 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import { IClientConfiguration, ITokenClaims } from "@fluidframework/driver-definitions/internal";
 import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	ISequencedClient,
-	ITokenClaims,
-} from "@fluidframework/protocol-definitions";
-import { TelemetryEventCategory, createChildLogger } from "@fluidframework/telemetry-utils";
+	TelemetryEventCategory,
+	createChildLogger,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {
@@ -58,6 +59,7 @@ describe("ConnectionStateHandler Tests", () => {
 		details: IConnectionDetailsInternal,
 	) => void;
 	let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
+	let connectionStateHandler_receivedLeaveSignalEvent: (id: string) => void;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -141,6 +143,7 @@ describe("ConnectionStateHandler Tests", () => {
 			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
+		const logger = createChildLogger();
 		handlerInputs = {
 			maxClientLeaveWaitTime: expectedTimeout,
 			shouldClientJoinWrite: () => shouldClientJoinWrite,
@@ -152,8 +155,13 @@ describe("ConnectionStateHandler Tests", () => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
 			connectionStateChanged: () => {},
-			logger: createChildLogger(),
+			logger,
+			mc: loggerToMonitoringContext(logger),
 			clientShouldHaveLeft: (clientId: string) => {},
+			onCriticalError: (error) => {
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
+				throw error;
+			},
 		};
 
 		deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
@@ -173,6 +181,9 @@ describe("ConnectionStateHandler Tests", () => {
 			protocolHandler.audience.addMember(details.clientId, {
 				mode: details.mode,
 			} as any as IClient);
+		};
+		connectionStateHandler_receivedLeaveSignalEvent = (id: string) => {
+			protocolHandler.audience.removeMember(id);
 		};
 	});
 
@@ -1129,6 +1140,52 @@ describe("ConnectionStateHandler Tests", () => {
 			await tickClock(expectedTimeout);
 		},
 	);
+
+	it("test 'read' reconnect & races ", async () => {
+		connectionStateHandler = createHandler(
+			false, // connectedRaisedWhenCaughtUp,
+			true, // readClientsWaitForJoinSignal
+		);
+
+		// Typical flow to reach connected state ("read" connection)
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 1 should be in connected state",
+		);
+
+		connectionStateHandler.receivedDisconnectEvent({ text: "disconnect" });
+
+		// Another read client is joining, but we don't yet receive its join signal (so not yet in connected state)
+		connectionDetails2.mode = "read";
+		connectionStateHandler.establishingConnection({ text: "initial connect" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails2);
+
+		// Simulate how ConnectionStateHandler observes reconnection flow.
+		// It will see Audience being fully cleared, and then repopulated with new state
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// We connected to different front-end, it may not processed yet leave signal for first connection,
+		// and thus it appears in the Audience again.
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails2);
+
+		// It should not wait for leave of connectionDetails.clientId
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 2 should be in connected state",
+		);
+
+		// This should  not cause any trouble.
+		connectionStateHandler_receivedLeaveSignalEvent(connectionDetails.clientId);
+
+		// Timeout should not raise any error as timer should be cleared
+		await tickClock(expectedTimeout);
+	});
 
 	afterEach(() => {
 		clock.reset();

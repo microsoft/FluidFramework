@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidBrowserPackageEnvironment } from "@fluidframework/container-definitions";
+import { IFluidBrowserPackageEnvironment } from "@fluidframework/container-definitions/internal";
 
 const precacheTargetList: readonly string[] = [
 	"audio",

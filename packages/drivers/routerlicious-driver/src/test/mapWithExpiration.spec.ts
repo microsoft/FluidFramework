@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { MapWithExpiration } from "../mapWithExpiration.js";
 
 describe("MapWithExpiration", () => {
@@ -281,24 +283,30 @@ describe("MapWithExpiration", () => {
 			},
 		);
 
-		// In ESM the the 'this' value is 'undefined', but in CJS it is '{__esModule: true}'.
-		// Therefore, we exempt the test value 'undefined' from the below assertion.
-		if (this !== undefined) {
-			testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
-				for (const thisArg of thisArgs) {
-					for (const map of maps) {
-						map.set(1, "one");
-						map.forEach(() => {
-							assert.notEqual(
-								this,
-								thisArg,
-								"Expected 'this' to be unchanged for arrow fn",
-							);
-						}, thisArg);
-					}
+		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
+			const testCaseRunner = new (class {
+				runTestCase(map: Map<any, any>, thisArg: any) {
+					map.set(1, "one");
+
+					// eslint-disable-next-line @typescript-eslint/no-this-alias
+					const thisOutside = this;
+
+					map.forEach(() => {
+						assert.equal(
+							this,
+							thisOutside,
+							"Expected 'this' to be unchanged for arrow fn",
+						);
+					}, thisArg);
 				}
-			});
-		}
+			})();
+
+			for (const thisArg of thisArgs) {
+				for (const map of maps) {
+					testCaseRunner.runTestCase(map, thisArg);
+				}
+			}
+		});
 	});
 
 	it("toString", () => {

@@ -4,13 +4,16 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SessionId } from "@fluidframework/id-compressor";
+
 import { ChangeFamilyEditor, ChangeRebaser, emptyDelta } from "../../../core/index.js";
 import { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
 import { brand, clone } from "../../../util/index.js";
 import { TestChange, TestChangeFamily, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+
 import {
 	addSequencedChange,
 	checkChangeList,

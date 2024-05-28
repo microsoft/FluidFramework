@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers.js";
 import { SessionId, StableId } from "./types/index.js";
 import {

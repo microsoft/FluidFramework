@@ -5,8 +5,12 @@
 
 import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	GenericNetworkError,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
@@ -17,9 +21,10 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	numberFromString,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
+
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -275,7 +280,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
@@ -283,7 +288,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousStorageRestWrapper> {
+	): RouterliciousStorageRestWrapper {
 		const defaultQueryString = {
 			token: `${fromUtf8ToBase64(tenantId)}`,
 		};
@@ -336,14 +341,14 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousOrdererRestWrapper> {
+	): RouterliciousOrdererRestWrapper {
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,
 		): string => {

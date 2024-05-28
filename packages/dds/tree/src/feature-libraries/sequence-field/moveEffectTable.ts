@@ -3,25 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
+
 import { MoveMarkEffect } from "./helperTypes.js";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 
-export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
+export type MoveEffectTable = CrossFieldManager<MoveEffect>;
 
 /**
  * Changes to be applied to a move mark.
  */
-export interface MoveEffect<T> {
+export interface MoveEffect {
 	/**
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: NodeId;
 
 	/**
 	 * Only used during rebasing.
@@ -32,15 +34,28 @@ export interface MoveEffect<T> {
 	/**
 	 * Rebased changes for a node which has been moved to the position of this mark.
 	 */
-	rebasedChanges?: T;
+	rebasedChanges?: NodeId;
 
 	/**
-	 * The ID of the new endpoint associated with this mark.
+	 * The ID of the other outer endpoint.
+	 * Used when this is the outer endpoint in a move chain which is being composed with another move chain.
 	 */
 	endpoint?: ChangeAtomId;
+
+	/**
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the outer endpoint of a chain being composed with a redundant move chain.
+	 */
+	truncatedEndpoint?: ChangeAtomId;
+
+	/**
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the inner endpoint of a redundant move chain.
+	 */
+	truncatedEndpointForInner?: ChangeAtomId;
 }
 
-interface MoveEffectWithBasis<T> extends MoveEffect<T> {
+interface MoveEffectWithBasis extends MoveEffect {
 	/**
 	 * The ID for the start of the range this MoveEffect was created for.
 	 * This is used, for example, to correctly interpret `MoveEffect.endpoint` field.
@@ -53,43 +68,43 @@ export enum MoveEnd {
 	Dest,
 }
 
-export interface MovePartition<TNodeChange> {
+export interface MovePartition {
 	id: MoveId;
 
 	// Undefined means the partition is the same size as the input.
 	count?: number;
-	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TaggedChange<TNodeChange>;
+	replaceWith?: Mark[];
+	modifyAfter?: TaggedChange<NodeId>;
 }
 
-export function setMoveEffect<T>(
-	moveEffects: MoveEffectTable<T>,
+export function setMoveEffect(
+	moveEffects: MoveEffectTable,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
-	effect: MoveEffect<T>,
+	effect: MoveEffect,
 	invalidate: boolean = true,
-) {
-	(effect as MoveEffectWithBasis<T>).basis = id;
+): void {
+	(effect as MoveEffectWithBasis).basis = id;
 	moveEffects.set(target, revision, id, count, effect, invalidate);
 }
 
-export function getMoveEffect<T>(
-	moveEffects: MoveEffectTable<T>,
+export function getMoveEffect(
+	moveEffects: MoveEffectTable,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): RangeQueryResult<MoveEffect<T>> {
+): RangeQueryResult<MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value !== undefined
-		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis<T>, id) }
+		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
 		: result;
 }
 
-export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
+export type MoveMark = CellMark<MoveMarkEffect>;
 
 export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
 	return isMoveOut(effect) || isMoveIn(effect);
@@ -114,7 +129,7 @@ export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
 	}
 }
 
-function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
+function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): MoveEffect {
 	if (effect.basis === newBasis) {
 		return effect;
 	}
@@ -124,10 +139,18 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 	assert(basisShift > 0, 0x812 /* Expected basis shift to be positive */);
 
 	if (effect.endpoint !== undefined) {
-		adjusted.endpoint = {
-			...effect.endpoint,
-			localId: brand(effect.endpoint.localId + basisShift),
-		};
+		adjusted.endpoint = adjustChangeAtomId(effect.endpoint, basisShift);
+	}
+
+	if (effect.truncatedEndpoint !== undefined) {
+		adjusted.truncatedEndpoint = adjustChangeAtomId(effect.truncatedEndpoint, basisShift);
+	}
+
+	if (effect.truncatedEndpointForInner !== undefined) {
+		adjusted.truncatedEndpointForInner = adjustChangeAtomId(
+			effect.truncatedEndpointForInner,
+			basisShift,
+		);
 	}
 
 	if (effect.movedEffect !== undefined) {
@@ -138,33 +161,28 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects<T>(
-	mark: Mark<T>,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<T>,
-): Mark<T>[] {
-	const length = getFirstMoveEffectLength(mark, mark.count, revision, effects);
+export function splitMarkForMoveEffects(mark: Mark, effects: MoveEffectTable): Mark[] {
+	const length = getFirstMoveEffectLength(mark, mark.count, effects);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
 
 function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
+	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
 		return getMoveEffect(
 			effects,
 			getCrossFieldTargetFromMove(markEffect),
-			markEffect.revision ?? revision,
+			markEffect.revision,
 			markEffect.id,
 			count,
 		).length;
 	} else if (isAttachAndDetachEffect(markEffect)) {
 		return Math.min(
-			getFirstMoveEffectLength(markEffect.attach, count, revision, effects),
-			getFirstMoveEffectLength(markEffect.detach, count, revision, effects),
+			getFirstMoveEffectLength(markEffect.attach, count, effects),
+			getFirstMoveEffectLength(markEffect.detach, count, effects),
 		);
 	}
 
@@ -181,4 +199,11 @@ export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTar
 		default:
 			unreachableCase(type);
 	}
+}
+
+function adjustChangeAtomId(id: ChangeAtomId, shift: number): ChangeAtomId {
+	return {
+		...id,
+		localId: brand(id.localId + shift),
+	};
 }

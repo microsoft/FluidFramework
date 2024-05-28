@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
+
 import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree", () => {
@@ -208,7 +210,6 @@ describe("MergeTree", () => {
 			);
 
 			assert.deepStrictEqual(count, {
-				[MergeTreeDeltaType.ANNOTATE]: 1,
 				[MergeTreeMaintenanceType.SPLIT]: 2,
 			});
 		});

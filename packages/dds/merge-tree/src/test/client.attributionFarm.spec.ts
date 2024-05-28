@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
+
 import {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,

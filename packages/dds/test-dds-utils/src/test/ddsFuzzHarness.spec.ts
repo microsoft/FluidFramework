@@ -11,13 +11,14 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
+
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
 	BaseOperation,
@@ -41,6 +42,7 @@ import {
 	mixinSynchronization,
 	runTestForSeed,
 } from "../ddsFuzzHarness.js";
+
 import { _dirname } from "./dirname.cjs";
 import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
 import { baseModel, isNoopOp } from "./sharedNothing.js";
@@ -246,7 +248,7 @@ describe("DDS Fuzz Harness", () => {
 						...baseModel,
 						generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
 						validateConsistency: (a, b) => {
-							perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+							perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 						},
 					},
 					options,
@@ -290,7 +292,7 @@ describe("DDS Fuzz Harness", () => {
 									takeAsync(1, baseModel.generatorFactory()),
 								),
 							validateConsistency: (a, b) => {
-								perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+								perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 							},
 						},
 						options,

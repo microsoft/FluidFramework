@@ -6,9 +6,11 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "node:assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { stub } from "sinon";
+
 import { SharingLinkHeader } from "../contractsPublic.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";

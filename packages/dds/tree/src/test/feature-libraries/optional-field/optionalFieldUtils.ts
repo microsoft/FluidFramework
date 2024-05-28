@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -11,13 +12,16 @@ import {
 	TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
-	makeChangeAtomId,
+	tagChange,
+	tagRollbackInverse,
+	taggedAtomId,
 } from "../../../core/index.js";
 import {
 	Move,
 	OptionalChangeset,
 	RegisterId,
 	RegisterMap,
+	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import {
@@ -26,6 +30,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { Mutable, brand } from "../../../util/index.js";
+import { NodeId } from "../../../feature-libraries/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -45,7 +50,7 @@ export const Change = {
 	/**
 	 * @returns An empty changeset
 	 */
-	empty: (): OptionalChangeset<never> => ({ moves: [], childChanges: [] }),
+	empty: (): OptionalChangeset => ({ moves: [], childChanges: [] }),
 	/**
 	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move that node to.
@@ -53,9 +58,9 @@ export const Change = {
 	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
-		src: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
-	): OptionalChangeset<never> | ProtoChange => {
+		src: RegisterId | ChangesetLocalId | ChangeAtomId,
+		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
+	): OptionalChangeset | ProtoChange => {
 		if (dst === "self") {
 			return {
 				type: "write",
@@ -79,7 +84,7 @@ export const Change = {
 	clear: (
 		target: RegisterId | ChangesetLocalId,
 		dst: ChangeAtomId | ChangesetLocalId,
-	): OptionalChangeset<never> =>
+	): OptionalChangeset =>
 		target === "self"
 			? {
 					moves: [],
@@ -99,7 +104,7 @@ export const Change = {
 	reserve: (
 		target: RegisterId | ChangesetLocalId,
 		dst: ChangeAtomId | ChangesetLocalId,
-	): OptionalChangeset<never> => {
+	): OptionalChangeset => {
 		assert(target === "self", "Reserve cell only supports self as source");
 		return {
 			moves: [],
@@ -108,15 +113,24 @@ export const Change = {
 		};
 	},
 	/**
+	 * @param dst - The register that the contents of the field should be moved to should it become populated
+	 * with a different node that the current one (which will take its place).
+	 * @returns A changeset that pins the current node to the field.
+	 */
+	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
+		return {
+			moves: [],
+			childChanges: [],
+			valueReplace: { isEmpty: false, dst: asChangeAtomId(dst), src: "self" },
+		};
+	},
+	/**
 	 * @param location - The register that contains the child node to be changed.
 	 * That register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node.
 	 * @returns A changeset that applies the given change to the child node in the given register.
 	 */
-	childAt: <TChild>(
-		location: RegisterId | ChangesetLocalId,
-		change: TChild,
-	): OptionalChangeset<TChild> => ({
+	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => ({
 		moves: [],
 		childChanges: [[asRegister(location), change]],
 	}),
@@ -125,22 +139,20 @@ export const Change = {
 	 * @returns A changeset that applies the given change to the child node in the "self" register.
 	 * The "self" register must be full in the input context of the changeset.
 	 */
-	child: <TChild>(change: TChild): OptionalChangeset<TChild> => Change.childAt("self", change),
+	child: (change: NodeId): OptionalChangeset => Change.childAt("self", change),
 	/**
 	 * Combines multiple changesets for the same input context into a single changeset.
 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
 	 * @returns A single changeset that applies all of the given changes.
 	 */
-	atOnce: <TChild>(
-		...changes: (ProtoChange | OptionalChangeset<TChild>)[]
-	): OptionalChangeset<TChild> => {
+	atOnce: (...changes: (ProtoChange | OptionalChangeset)[]): OptionalChangeset => {
 		const moves: Move[] = [];
-		const childChanges: ChildChange<TChild>[] = [];
+		const childChanges: ChildChange[] = [];
 		let replace: Mutable<Replace> | undefined;
-		const changeset: Mutable<OptionalChangeset<TChild>> = { moves, childChanges };
+		const changeset: Mutable<OptionalChangeset> = { moves, childChanges };
 		for (const changeLike of changes) {
 			if ("type" in changeLike === false) {
-				const change = changeLike as OptionalChangeset<TChild>;
+				const change = changeLike;
 				// Note: this will stack overflow if there are too many moves.
 				moves.push(...change.moves);
 				// Note: this will stack overflow if there are too many child changes.
@@ -224,10 +236,6 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 	return taggedAtomId(id, revision);
 }
 
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	return makeChangeAtomId(id.localId, id.revision ?? revision);
-}
-
 function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangeset>): {
 	src: RegisterMap<true>;
 	dst: RegisterMap<true>;
@@ -301,4 +309,22 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function tagChangeInline(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<OptionalChangeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

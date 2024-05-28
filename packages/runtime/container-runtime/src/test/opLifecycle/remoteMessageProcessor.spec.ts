@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import type { IBatchMessage } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { ContainerMessageType } from "../../index.js";
 import {
 	type BatchMessage,
 	type IBatch,
-	IMessageProcessingResult,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -21,62 +23,30 @@ import {
 } from "../../opLifecycle/index.js";
 
 describe("RemoteMessageProcessor", () => {
-	const stamp = (
-		message: ISequencedDocumentMessage,
-		value: string,
-	): ISequencedDocumentMessage => {
-		const newMessage = { ...message };
-		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
-		(newMessage.metadata as { history?: string[] }).history ??= [];
-		(newMessage.metadata as { history: string[] }).history.push(value);
-		return newMessage;
-	};
-
-	const getMockSplitter = (): Partial<OpSplitter> => ({
-		processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-			return {
-				message: stamp(message, "reconstruct"),
-				state: "Skipped",
-			};
-		},
-	});
-
-	const getMockDecompressor = (): Partial<OpDecompressor> => ({
-		processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-			return {
-				message: stamp(message, "decompress"),
-				state: "Skipped",
-			};
-		},
-	});
-
-	const getMessageProcessor = (
-		mockSpliter: Partial<OpSplitter> = getMockSplitter(),
-		mockDecompressor: Partial<OpDecompressor> = getMockDecompressor(),
-	): RemoteMessageProcessor =>
-		new RemoteMessageProcessor(
-			mockSpliter as OpSplitter,
-			mockDecompressor as OpDecompressor,
+	function getMessageProcessor(): RemoteMessageProcessor {
+		const logger = new MockLogger();
+		return new RemoteMessageProcessor(
+			new OpSplitter([], undefined, 1, 1, logger),
+			new OpDecompressor(logger),
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
 					reentrantBatchGroupingEnabled: false,
 				},
-				new MockLogger(),
+				logger,
 			),
 		);
+	}
 
 	function getOutboundMessage(value: string, batchMetadata?: boolean): BatchMessage {
 		return {
-			type: ContainerMessageType.FluidDataStoreOp,
 			metadata:
 				batchMetadata === undefined
 					? undefined
 					: {
 							batch: batchMetadata,
 					  },
-			localOpMetadata: undefined,
 			referenceSequenceNumber: Infinity,
 			contents: JSON.stringify({
 				contents: {
@@ -182,10 +152,7 @@ describe("RemoteMessageProcessor", () => {
 			let startSeqNum = outboundMessages.length + 1;
 			outboundMessages.push(...batch.content);
 
-			const messageProcessor = getMessageProcessor(
-				new OpSplitter([], undefined, 1, 1, mockLogger),
-				new OpDecompressor(mockLogger),
-			);
+			const messageProcessor = getMessageProcessor();
 			const actual: ISequencedDocumentMessage[] = [];
 			let seqNum = 1;
 			for (const message of outboundMessages) {
@@ -221,82 +188,6 @@ describe("RemoteMessageProcessor", () => {
 
 			assert.deepStrictEqual(actual, expected, "unexpected output");
 		});
-	});
-
-	it("Invokes internal processors in order", () => {
-		const messageProcessor = getMessageProcessor();
-		const message = {
-			contents: {
-				contents: {
-					key: "value",
-				},
-				type: ContainerMessageType.FluidDataStoreOp,
-			},
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
-		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
-
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
-
-		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
-			"decompress",
-			"reconstruct",
-		]);
-		assert.deepStrictEqual(result.contents, message.contents.contents);
-	});
-
-	it("Invokes internal processors in order if the message is compressed and chunked", () => {
-		let decompressCalls = 0;
-		const messageProcessor = getMessageProcessor(
-			{
-				processRemoteMessage(
-					original: ISequencedDocumentMessage,
-				): IMessageProcessingResult {
-					return {
-						message: stamp(original, "reconstruct"),
-						state: "Processed",
-					};
-				},
-			},
-			{
-				processMessage(original: ISequencedDocumentMessage): IMessageProcessingResult {
-					return {
-						message: stamp(original, "decompress"),
-						state: decompressCalls++ % 2 === 0 ? "Skipped" : "Processed",
-					};
-				},
-			},
-		);
-
-		const message = {
-			contents: {
-				contents: {
-					contents: {
-						key: "value",
-					},
-				},
-				type: ContainerMessageType.FluidDataStoreOp,
-			},
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
-		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
-
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
-
-		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
-			"decompress",
-			"reconstruct",
-			"decompress",
-		]);
-		assert.deepStrictEqual(result.contents, message.contents.contents.contents);
 	});
 
 	it("Processes legacy string-content message", () => {
@@ -375,9 +266,7 @@ describe("RemoteMessageProcessor", () => {
 				sequenceNumber: 10,
 				clientSequenceNumber: 1,
 				compression: undefined,
-				metadata: {
-					history: ["decompress", "reconstruct"],
-				},
+				metadata: undefined,
 				contents: {
 					contents: "a",
 				},
@@ -387,9 +276,7 @@ describe("RemoteMessageProcessor", () => {
 				sequenceNumber: 10,
 				clientSequenceNumber: 2,
 				compression: undefined,
-				metadata: {
-					history: ["decompress", "reconstruct"],
-				},
+				metadata: undefined,
 				contents: {
 					contents: "b",
 				},

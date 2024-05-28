@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ISegment } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 

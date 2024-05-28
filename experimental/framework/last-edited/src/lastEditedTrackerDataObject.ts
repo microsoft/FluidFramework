@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
+
 import { IProvideFluidLastEditedTracker } from "./interfaces.js";
 import { LastEditedTracker } from "./lastEditedTracker.js";
 

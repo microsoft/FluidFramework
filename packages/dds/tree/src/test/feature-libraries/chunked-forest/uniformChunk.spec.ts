@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
@@ -23,6 +25,7 @@ import {
 import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
+
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.

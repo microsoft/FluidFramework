@@ -9,16 +9,17 @@ import {
 	positionToRowCol,
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	PropertySet,
 	ReferencePosition,
 	SequenceDeltaEvent,
 	SharedString,
 	createEndpointIndex,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
+
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";
 import { ConfigKey } from "./configKey.js";

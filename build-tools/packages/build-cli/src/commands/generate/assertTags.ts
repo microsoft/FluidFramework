@@ -6,10 +6,11 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { PackageCommand } from "../../BasePackageCommand";
 import { Package, loadFluidBuildConfig } from "@fluidframework/build-tools";
-import { PackageKind } from "../../filter";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import { PackageKind } from "../../filter.js";
 
+import { Flags } from "@oclif/core";
 import {
 	NoSubstitutionTemplateLiteral,
 	Node,
@@ -19,7 +20,6 @@ import {
 	StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
-import { Flags } from "@oclif/core";
 
 const shortCodes = new Map<number, Node>();
 const newAssetFiles = new Set<SourceFile>();
@@ -44,6 +44,8 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}),
 		...PackageCommand.flags,
 	};
+
+	protected defaultSelection = undefined;
 
 	private assertionFunctions: ReadonlyMap<string, number> | undefined;
 	private readonly errors: string[] = [];

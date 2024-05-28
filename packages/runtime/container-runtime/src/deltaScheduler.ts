@@ -4,9 +4,10 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there

@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
-import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils";
+import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+
 import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);

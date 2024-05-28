@@ -11,10 +11,12 @@ import {
 	type IDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
-import { type IClient } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/devtools-core/internal";
+import { type IClient } from "@fluidframework/driver-definitions";
 import React from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
+
 import { AudienceHistoryTable } from "./AudienceHistoryTable.js";
 import { AudienceStateTable } from "./AudienceStateTable.js";
 import { Waiting } from "./Waiting.js";

@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
 } from "../../core/index.js";
 import { IDisposable, disposeSymbol } from "../../util/index.js";
+
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
 
@@ -18,6 +20,9 @@ export const isFreedSymbol = Symbol("isFreed");
 export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
 export const forgetAnchorSymbol = Symbol("forgetAnchor");
 export const cursorSymbol = Symbol("cursor");
+/**
+ * Symbol used to access the (generic) anchor of a {@link LazyEntity}.
+ */
 export const anchorSymbol = Symbol("anchor");
 
 /**
@@ -60,7 +65,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
-		this[forgetAnchorSymbol](this[anchorSymbol]);
+		this[forgetAnchorSymbol]();
 		this.context.withAnchors.delete(this);
 	}
 
@@ -81,12 +86,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 			);
 			assert(
 				this[anchorSymbol] !== undefined,
-				0x779 /* EditableTree should have an anchor if it does not have a cursor */,
+				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
-			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
+			const result = this[tryMoveCursorToAnchorSymbol](this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				0x77a /* It is invalid to access an EditableTree node which no longer exists */,
+				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}
@@ -94,14 +99,13 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	}
 
 	protected abstract [tryMoveCursorToAnchorSymbol](
-		anchor: TAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
 	/**
 	 * Called when disposing of this target, iff it has an anchor.
 	 */
-	protected abstract [forgetAnchorSymbol](anchor: TAnchor): void;
+	protected abstract [forgetAnchorSymbol](): void;
 }
 
 /**

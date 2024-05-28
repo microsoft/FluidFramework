@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { CommitMetadata, Revertible } from "../core/index.js";
-import { ISubscribable } from "../events/index.js";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+
+import { CommitMetadata } from "../core/index.js";
+import { Listenable } from "../events/index.js";
+import { RevertibleFactory } from "../shared-tree/index.js";
 import { IDisposable } from "../util/index.js";
+
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -19,7 +22,7 @@ import {
  * Allows storing and collaboratively editing schema-aware hierarchial data.
  * @public
  */
-export interface ITree extends IChannel {
+export interface ITree extends IFluidLoadable {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
 	 * If the tree's stored schema is compatible, this will provide a schema-aware API for accessing the tree's content.
@@ -58,25 +61,56 @@ export interface ITree extends IChannel {
 	 */
 	schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+	): TreeView<TRoot>;
 }
 
 /**
- * Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * Options when schematizing a tree.
+ * @public
+ */
+export interface ITreeConfigurationOptions {
+	/**
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
+	 */
+	enableSchemaValidation?: boolean;
+}
+
+const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
+	enableSchemaValidation: false,
+};
+
+/**
+ * Configuration for how to {@link ITree.schematize | schematize} a tree.
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	/**
+	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 */
+	public readonly options: Required<ITreeConfigurationOptions>;
+
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
 	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
+	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-	) {}
+		options?: ITreeConfigurationOptions,
+	) {
+		this.options = { ...defaultTreeConfigurationOptions, ...options };
+	}
 }
 
 /**
@@ -96,7 +130,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
  * @public
  */
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -106,7 +140,9 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 * To get notified about changes to this field (including to it being in an `error` state),
 	 * use {@link TreeViewEvents.rootChanged} via `view.events.on("rootChanged", callback)`.
 	 */
-	readonly root: TRoot;
+	get root(): TreeFieldFromImplicitField<TSchema>;
+
+	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
 	 * Description of the error state, if any.
@@ -133,7 +169,7 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	/**
 	 * Events for the tree.
 	 */
-	readonly events: ISubscribable<TreeViewEvents>;
+	readonly events: Listenable<TreeViewEvents>;
 }
 
 /**
@@ -174,13 +210,6 @@ export interface TreeViewEvents {
 	rootChanged(): void;
 
 	/**
-	 * Fired when a revertible made on this view is disposed.
-	 *
-	 * @param revertible - The revertible that was disposed.
-	 */
-	revertibleDisposed(revertible: Revertible): void;
-
-	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -193,5 +222,5 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }

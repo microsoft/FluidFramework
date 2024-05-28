@@ -5,10 +5,15 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	ValueType,
+	bindHandles,
+} from "@fluidframework/shared-object-base/internal";
+
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
 import {

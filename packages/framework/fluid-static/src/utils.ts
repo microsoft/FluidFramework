@@ -4,57 +4,56 @@
  */
 
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions";
-import {
-	type ContainerSchema,
-	type DataObjectClass,
-	type LoadableObjectClass,
-	type SharedObjectClass,
-} from "./types.js";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { type NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-/**
- * An internal type used by the internal type guard isDataObjectClass to cast a
- * DataObjectClass to a type that is strongly coupled to IFluidDataStoreFactory.
- * Unlike the external and exported type DataObjectClass which is
- * weakly coupled to the IFluidDataStoreFactory to prevent leaking internals.
- */
-export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<T> &
-	Record<"factory", IFluidDataStoreFactory>;
+import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
 export function isDataObjectClass<T extends IFluidLoadable>(
 	obj: LoadableObjectClass<T>,
-): obj is InternalDataObjectClass<T>;
+): obj is DataObjectClass<T>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
-export function isDataObjectClass(obj: unknown): obj is InternalDataObjectClass<IFluidLoadable>;
+export function isDataObjectClass(obj: LoadableObjectClass): obj is DataObjectClass<IFluidLoadable>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
-export function isDataObjectClass(obj: unknown): obj is InternalDataObjectClass<IFluidLoadable> {
-	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
-	return (
+export function isDataObjectClass(
+	obj: LoadableObjectClass,
+): obj is DataObjectClass<IFluidLoadable> {
+	const maybe = obj as Partial<DataObjectClass<IFluidLoadable>> | undefined;
+	const isDataObject =
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
-		maybe?.factory?.IFluidDataStoreFactory === maybe?.factory
-	);
+		maybe.factory.IFluidDataStoreFactory === maybe.factory;
+
+	if (
+		isDataObject ===
+		((obj as Partial<ISharedObjectKind<IFluidLoadable>>).getFactory !== undefined)
+	) {
+		// TODO: Currently nothing in the types or docs requires an actual DataObjectClass to not have a member called "getFactory" so there is a risk of this being a false positive.
+		// Refactoring the use of LoadableObjectClass such that explicit down casting is not required (for example by having a single factory API shared by both cases) could avoid problems like this.
+		throw new UsageError("Invalid LoadableObjectClass");
+	}
+
+	return isDataObject;
 }
 
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFluidLoadable> => {
-	const maybe = obj as Partial<SharedObjectClass<IFluidLoadable>> | undefined;
-	return maybe?.getFactory !== undefined;
-};
+export function isSharedObjectKind(
+	obj: LoadableObjectClass,
+): obj is ISharedObjectKind<IFluidLoadable> {
+	return !isDataObjectClass(obj);
+}
 
 /**
  * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
@@ -67,8 +66,8 @@ export const parseDataObjectsFromSharedObjects = (
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
 
-	const tryAddObject = (obj: unknown): void => {
-		if (isSharedObjectClass(obj)) {
+	const tryAddObject = (obj: LoadableObjectClass): void => {
+		if (isSharedObjectKind(obj)) {
 			sharedObjects.add(obj.getFactory());
 		} else if (isDataObjectClass(obj)) {
 			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
@@ -83,7 +82,7 @@ export const parseDataObjectsFromSharedObjects = (
 		...(schema.dynamicObjectTypes ?? []),
 	]);
 	for (const obj of dedupedObjects) {
-		tryAddObject(obj);
+		tryAddObject(obj as unknown as LoadableObjectClass);
 	}
 
 	if (registryEntries.size === 0 && sharedObjects.size === 0) {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { streamFromMessages } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import { streamFromMessages } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 
 /**

@@ -6,6 +6,7 @@
 import { TreeValue } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FluidSerializableReadOnly } from "../../valueUtilities.js";
+
 import {
 	Counter,
 	CounterFilter,
@@ -58,7 +59,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 	// These collections enable that.
 	const shapesSeen = new Set<Shape<TEncodedShape>>();
 	const shapeToCount: Shape<TEncodedShape>[] = [];
-	const shapeDiscovered = (shape: Shape<TEncodedShape>) => {
+	const shapeDiscovered = (shape: Shape<TEncodedShape>): void => {
 		shapes.add(shape);
 		if (!shapesSeen.has(shape)) {
 			shapesSeen.add(shape);
@@ -80,7 +81,7 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 			} else if (
 				item !== null &&
 				typeof item === "object" &&
-				(item as any).shape instanceof Shape
+				(item as Record<string, unknown>).shape instanceof Shape
 			) {
 				// because "serializable" is allowed in buffer and it has type `any`, its very easy to mess up including of shapes in the buffer.
 				// This catches the easiest way to get it wrong.

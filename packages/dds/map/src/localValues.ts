@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISerializedHandle } from "@fluidframework/runtime-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	IFluidSerializer,
 	ValueType,
 	parseHandles,
 	serializeHandles,
-} from "@fluidframework/shared-object-base";
+} from "@fluidframework/shared-object-base/internal";
+
 // eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue } from "./interfaces.js";
+import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
 
 /**
  * A local value to be stored in a container type Distributed Data Store (DDS).

@@ -4,14 +4,20 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
@@ -164,7 +170,7 @@ class DataStore implements IDataStore {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> {
+	get entryPoint(): IFluidHandleInternal<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 

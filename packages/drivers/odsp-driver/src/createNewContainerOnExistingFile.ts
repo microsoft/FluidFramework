@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
@@ -23,7 +24,7 @@ import { createOdspUrl } from "./createOdspUrl.js";
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { IExistingFileInfo, createCacheSnapshotKey, getOrigin } from "./odspUtils.js";
+import { IExistingFileInfo, createCacheSnapshotKey } from "./odspUtils.js";
 
 /**
  * Creates a new Fluid container on an existing file.
@@ -51,7 +52,7 @@ export async function createNewContainerOnExistingFile(
 		throw new UsageError("createNewSummary must exist to create a new container");
 	}
 
-	const baseUrl = `${getApiRoot(getOrigin(fileInfo.siteUrl))}/drives/${fileInfo.driveId}/items/${
+	const baseUrl = `${getApiRoot(new URL(fileInfo.siteUrl))}/drives/${fileInfo.driveId}/items/${
 		fileInfo.itemId
 	}`;
 

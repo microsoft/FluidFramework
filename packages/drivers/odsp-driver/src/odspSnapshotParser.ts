@@ -4,9 +4,10 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
 
 /**
@@ -16,10 +17,10 @@ import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
  * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
  * @returns the hierarchical tree
  */
-function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
-	const lookup: { [path: string]: api.ISnapshotTree } = {};
+function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
+	const lookup: { [path: string]: ISnapshotTree } = {};
 	// id is required for root tree as it will be used to determine the version we loaded from.
-	const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
+	const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
 	lookup[""] = root;
 
 	for (const entry of flatTree.entries) {
@@ -32,7 +33,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
-			const newTree: api.ISnapshotTree = {
+			const newTree: ISnapshotTree = {
 				blobs: {},
 				trees: {},
 				unreferenced: entry.unreferenced,

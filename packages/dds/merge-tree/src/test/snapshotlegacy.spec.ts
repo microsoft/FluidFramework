@@ -6,14 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 } from "../attributionPolicy.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
+
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { TestSerializer } from "./testSerializer.js";

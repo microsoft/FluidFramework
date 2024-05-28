@@ -25,7 +25,8 @@ import type {
 	ISummaryTree,
 	ITokenClaims,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "./protocol/index.js";
+
 import type { IAnyDriverError } from "./driverError.js";
 import type { IResolvedUrl } from "./urlResolver.js";
 
@@ -313,10 +314,11 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @privateRemarks
+	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
-	// TODO: Use something other than `any`.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 }
 
 /**
@@ -465,6 +467,8 @@ export enum FetchSource {
 }
 
 /**
+ * A "Full" container Snapshot, including ISnapshotTree, blobs and outstanding ops (and other metadata)
+ *
  * @alpha
  */
 export interface ISnapshot {

@@ -6,27 +6,32 @@
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
-import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
-import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
+	type IChannel,
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
+import type { SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
+import { MessageType } from '@fluidframework/driver-definitions/internal';
+import { type ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from '@fluidframework/runtime-definitions';
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+} from '@fluidframework/runtime-definitions/internal';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
+
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
+
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
@@ -87,7 +92,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
-		private readonly newTreeFactory: IChannelFactory,
+		private readonly newTreeFactory: IChannelFactory<ITree>,
 		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
 		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
@@ -104,7 +109,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		if (message.type !== MessageType.Operation || (message.contents as Partial<IMigrationOp>).type !== 'barrier') {
 			return false;
 		}
-		const newTree = this.newTreeFactory.create(this.runtime, this.id) as ITree;
+		const newTree = this.newTreeFactory.create(this.runtime, this.id);
 		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
 		const { idCompressor } = this.runtime;
@@ -132,7 +137,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		return this._legacyTree;
 	}
 
-	private newTree: ITree | undefined;
+	private newTree: (IChannel & ITree) | undefined;
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeError}
@@ -191,7 +196,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		this.submitLocalMessage(migrateOp);
 	}
 
-	public get currentTree(): LegacySharedTree | ITree {
+	public get currentTree(): IChannel & (LegacySharedTree | ITree) {
 		return this.newTree ?? this.legacyTree;
 	}
 

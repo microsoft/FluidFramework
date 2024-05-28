@@ -9,6 +9,7 @@
 
 import { expect } from "chai";
 import * as _ from "lodash";
+
 import { Collection } from "../../index";
 
 describe("collection", function () {

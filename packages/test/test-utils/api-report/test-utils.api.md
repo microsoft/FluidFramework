@@ -5,55 +5,56 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/core-interfaces';
-import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
-import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
+import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct/internal';
+import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IContainer } from '@fluidframework/container-definitions';
-import { IContainerContext } from '@fluidframework/container-definitions';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
-import { IDataStore } from '@fluidframework/runtime-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/container-definitions';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IContainer } from '@fluidframework/container-definitions/internal';
+import { IContainerContext } from '@fluidframework/container-definitions/internal';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/internal';
+import { IDataStore } from '@fluidframework/runtime-definitions/internal';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
-import { IHostLoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
-import { ILoaderProps } from '@fluidframework/container-loader';
-import { IOnDemandSummarizeOptions } from '@fluidframework/container-runtime';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
-import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IProvideRuntimeFactory } from '@fluidframework/container-definitions';
+import { IFluidModule } from '@fluidframework/container-definitions/internal';
+import { IFluidModuleWithDetails } from '@fluidframework/container-definitions/internal';
+import { IHostLoader } from '@fluidframework/container-definitions/internal';
+import { ILoaderOptions } from '@fluidframework/container-definitions/internal';
+import { ILoaderProps } from '@fluidframework/container-loader/internal';
+import { IOnDemandSummarizeOptions } from '@fluidframework/container-runtime/internal';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions/internal';
+import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
+import { IProvideRuntimeFactory } from '@fluidframework/container-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { IRuntime } from '@fluidframework/container-definitions';
-import { ISharedMap } from '@fluidframework/map';
-import { ISummarizer } from '@fluidframework/container-runtime';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { IRuntime } from '@fluidframework/container-definitions/internal';
+import { ISharedMap } from '@fluidframework/map/internal';
+import { ISummarizer } from '@fluidframework/container-runtime/internal';
+import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
-import { ITestDriver } from '@fluidframework/test-driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { Loader } from '@fluidframework/container-loader';
-import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
-import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils/internal';
+import { ITestDriver } from '@fluid-internal/test-driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { Loader } from '@fluidframework/container-loader/internal';
+import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
 
 // @internal (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
@@ -117,7 +118,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 // @internal (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
-    Primed = 0,
+    Primed = 0,// default
     // (undocumented)
     Test = 1
 }
@@ -126,16 +127,16 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @internal
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
-    constructor(baseLogger: ITelemetryBaseLogger);
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger {
+    constructor(baseLogger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
-        expectedNotFound: ({
+        expectedNotFound: {
             index: number;
-            event: ITelemetryGenericEventExt | undefined;
-        } | undefined)[];
+            event: ITelemetryGenericEventExt;
+        }[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
@@ -152,13 +153,27 @@ export function getContainerEntryPointBackCompat<T>(container: IContainer): Prom
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
 // @internal (undocumented)
-export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
+export function getUnexpectedLogErrorException(logger: IEventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @internal
 export interface IDocumentIdStrategy {
     get(): string;
     reset(): void;
     update(resolvedUrl?: IResolvedUrl): void;
+}
+
+// @internal (undocumented)
+export interface IEventAndErrorTrackingLogger {
+    // (undocumented)
+    registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
+    // (undocumented)
+    reportAndClearTrackedEvents: () => {
+        expectedNotFound: {
+            index: number;
+            event: ITelemetryGenericEventExt;
+        }[];
+        unexpectedErrors: ITelemetryBaseEvent[];
+    };
 }
 
 // @alpha (undocumented)
@@ -215,20 +230,21 @@ export interface ITestObjectProvider {
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, forceUseCreateVersion?: boolean): IHostLoader;
     defaultCodeDetails: IFluidCodeDetails;
     documentId: string;
     documentServiceFactory: IDocumentServiceFactory;
     driver: ITestDriver;
-    ensureSynchronized(timeoutDuration?: number): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    logger: EventAndErrorTrackingLogger | undefined;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    logger: ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
     opProcessingController: IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
+    tracker: IEventAndErrorTrackingLogger;
     type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
     updateDocumentId(url: IResolvedUrl | undefined): void;
     urlResolver: IUrlResolver;
@@ -333,15 +349,17 @@ export class TestObjectProvider implements ITestObjectProvider {
     get documentId(): string;
     get documentServiceFactory(): IDocumentServiceFactory;
     readonly driver: ITestDriver;
-    ensureSynchronized(): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingState?: string): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
+    get tracker(): EventAndErrorTrackingLogger;
     readonly type = "TestObjectProvider";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;
@@ -349,25 +367,27 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 // @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
-    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, telemetryProps?: ITelemetryLoggerPropertyBags | undefined);
     attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, forceUseCreateVersion?: true): Loader;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, forceUseCreateVersion?: boolean): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
     get documentId(): string;
     get documentServiceFactory(): IDocumentServiceFactory;
     get driver(): ITestDriver;
-    ensureSynchronized(): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingState?: string): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
+    get tracker(): EventAndErrorTrackingLogger;
     readonly type = "TestObjectProviderWithVersionedLoad";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;

@@ -5,7 +5,7 @@
 ```ts
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function assertIsStableId(stableId: string): StableId;
@@ -35,6 +35,7 @@ export interface IdCreationRange {
         readonly firstGenCount: number;
         readonly count: number;
         readonly requestedClusterSize: number;
+        readonly localIdRanges: [genCount: number, count: number][];
     };
     // (undocumented)
     readonly sessionId: SessionId;
@@ -54,11 +55,12 @@ export interface IIdCompressor {
 
 // @alpha
 export interface IIdCompressorCore {
-    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     takeNextCreationRange(): IdCreationRange;
+    takeUnfinalizedCreationRange(): IdCreationRange;
 }
 
 // @internal

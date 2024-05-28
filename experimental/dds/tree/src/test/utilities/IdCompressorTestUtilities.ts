@@ -18,6 +18,7 @@ import {
 } from '@fluid-private/stochastic-test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert, expect } from 'chai';
+
 import { ClosedMap, assertNotUndefined, fail, getOrCreate } from '../../Common.js';
 import {
 	AttributionId,
@@ -42,6 +43,7 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from '../../id-compressor/index.js';
+
 import { expectDefined } from './TestCommon.js';
 
 /** Identifies a compressor in a network */

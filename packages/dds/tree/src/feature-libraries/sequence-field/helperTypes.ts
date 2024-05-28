@@ -14,13 +14,13 @@ import {
 	MoveOut,
 } from "./types.js";
 
-export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
+export type EmptyInputCellMark = Mark & DetachedCellMark;
 
 export interface DetachedCellMark extends HasMarkFields {
 	cellId: CellId;
 }
 
-export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | AttachAndDetach, TNodeChange>;
+export type EmptyOutputCellMark = CellMark<Detach | AttachAndDetach>;
 
 export type MoveMarkEffect = MoveOut | MoveIn;
 export type DetachOfRemovedNodes = Detach & { cellId: CellId };

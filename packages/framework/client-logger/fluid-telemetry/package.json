@@ -1,0 +1,127 @@
+{
+	"name": "@fluidframework/fluid-telemetry",
+	"version": "2.0.0-rc.5.0.0",
+	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/framework/client-logger/fluid-telemetry"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./legacy": {
+			"import": {
+				"types": "./lib/legacy.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist lib \"*.d.ts\" nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "fluid-build --task format .",
+		"format-and-build": "npm run format && npm run build",
+		"format-and-compile": "npm run format && npm run build:compile",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"test": "npm run test:mocha",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+	},
+	"dependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@microsoft/applicationinsights-web": "^2.8.11",
+		"uuid": "^9.0.0"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@microsoft/api-extractor": "^7.43.1",
+		"@types/chai": "^4.0.0",
+		"@types/mocha": "^9.1.1",
+		"@types/sinon": "^17.0.3",
+		"@types/uuid": "^9.0.2",
+		"chai": "^4.2.0",
+		"copyfiles": "^2.4.1",
+		"eslint": "~8.55.0",
+		"mocha": "^10.2.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"sinon": "^17.0.1",
+		"tslib": "^1.10.0",
+		"typescript": "~5.3.3"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"typetests:gen"
+			]
+		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
+	}
+}

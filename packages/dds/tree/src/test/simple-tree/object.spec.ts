@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ImplicitFieldSchema,
 	NodeKind,
@@ -11,11 +12,13 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "../../simple-tree/index.js";
+
 import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	name?: string;
 	schema: TSchema;
 	initialTree: TreeFieldFromImplicitField<TSchema>;
 }
@@ -43,12 +46,10 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEqual'", () => {
-			for (const { schema, initialTree } of testCases) {
-				const proxy = hydrate(schema, initialTree);
-				const real = initialTree;
-
-				it(`deepEqual(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEqual'.");
+			for (const { schema, initialTree, name } of testCases) {
+				it(name ?? pretty(initialTree).toString(), () => {
+					const proxy = hydrate(schema, initialTree);
+					assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEqual'.");
 				});
 			}
 		});
@@ -121,14 +122,18 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 		});
 
+		/**
+		 * Creates a test out of applying the given function to both a structural clone of the initial tree object and a hydrated tree created from it for each test case.
+		 * The results are asserted to be equal with nodes's assert.deepEqual.
+		 */
 		function test1(fn: (subject: object) => unknown) {
-			for (const { schema, initialTree } of testCases) {
-				const real = structuredClone(initialTree) as object;
-				const expected = fn(real);
+			for (const { schema, initialTree, name } of testCases) {
+				const pojo = structuredClone(initialTree) as object;
 
-				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const proxy = hydrate(schema, initialTree);
-					const actual = fn(proxy as object);
+				it(name ?? `${pretty(pojo)} -> ${pretty(fn(pojo))}`, () => {
+					const expected = fn(pojo);
+					const node = hydrate(schema, initialTree);
+					const actual = fn(node as object);
 					assert.deepEqual(actual, expected);
 				});
 			}
@@ -154,7 +159,15 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		describe("Object.prototype.toLocaleString", () => {
-			test1((subject) => Object.prototype.toLocaleString.call(subject));
+			test1((subject) => {
+				try {
+					return Object.prototype.toLocaleString.call(subject);
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toLocaleString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// 'deepEqual' requires that objects have the same prototype to be considered equal.
@@ -162,10 +175,13 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
 		});
 
-		// 'deepEqual' enumerates and compares the own properties of objects.
-		describe("Object.getOwnPropertyDescriptors", () => {
+		// 'deepEqual' enumerates and compares the enumerable own properties of objects
+		describe("enumerable Object.getOwnPropertyDescriptors", () => {
 			test1((subject) => {
-				return Object.getOwnPropertyDescriptors(subject);
+				const all = Object.getOwnPropertyDescriptors(subject);
+				return Object.fromEntries(
+					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
+				);
 			});
 		});
 
@@ -184,13 +200,29 @@ function testObjectLike(testCases: TestCase[]) {
 
 		// Validate that root.toString() === initialTree.toString()
 		describe(".toString()", () => {
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
-			test1((subject) => subject.toString());
+			test1((subject) => {
+				try {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
+					return subject.toString();
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// Validate that root.toLocaleString() === initialTree.toLocaleString()
 		describe(".toLocaleString()", () => {
-			test1((subject) => subject.toLocaleString());
+			test1((subject) => {
+				try {
+					return subject.toLocaleString();
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toLocaleString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// Validate that JSON.stringify(root) === JSON.stringify(initialTree)
@@ -203,14 +235,14 @@ function testObjectLike(testCases: TestCase[]) {
 const tcs: TestCase[] = [
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testA");
 			return _.object("empty", {});
 		})(),
 		initialTree: {},
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testB");
 			return _.object("primitives", {
 				boolean: _.boolean,
 				number: _.number,
@@ -224,8 +256,9 @@ const tcs: TestCase[] = [
 		},
 	},
 	{
+		name: "Empty tree, optional fields",
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testC");
 			return _.object("optional", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -236,7 +269,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testD");
 			return _.object("optional (defined)", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -251,7 +284,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testE");
 
 			const inner = _.object("inner", {});
 
@@ -261,30 +294,50 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: { nested: {} },
 	},
+	// Case with explicit stored keys
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const schemaFactoryInner = new SchemaFactory("testE");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+				bar: schemaFactoryInner.optional(schemaFactoryInner.string, { key: "stable-bar" }),
+				baz: schemaFactoryInner.required(
+					[schemaFactoryInner.boolean, schemaFactoryInner.null],
+					{ key: "stable-baz" },
+				),
+			});
+		})(),
+		initialTree: {
+			foo: 42,
+			bar: "hello world",
+			baz: null,
+		},
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("testF");
 			return _.array(_.string);
 		})(),
 		initialTree: [],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testG");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A"],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testH");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
 	},
 	{
+		name: "Special Keys",
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testI");
 			return _.object("special keys", {
 				value: _.number,
 				[""]: _.number,
@@ -303,18 +356,31 @@ const tcs: TestCase[] = [
 			setting: 6,
 		},
 	},
+	{
+		name: "toString key",
+		schema: (() => {
+			const _ = new SchemaFactory("testI");
+			return _.object("special keys", {
+				toString: _.number,
+			});
+		})(),
+		initialTree: {
+			toString: 1,
+		},
+	},
 ];
 
 testObjectLike(tcs);
 
 const factory = new SchemaFactory("test");
 
-describe("Object-like", () => {
+describe("Object-like-2", () => {
 	describe("setting an local field", () => {
 		it("throws TypeError in POJO emulation mode", () => {
 			const root = hydrate(schemaFactory.object("no fields", {}), {});
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
 		});

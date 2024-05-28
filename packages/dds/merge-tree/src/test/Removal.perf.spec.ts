@@ -4,8 +4,10 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import { MergeTreeDeltaType } from "../ops.js";
 import { MergeTreeDeltaRevertible, appendToMergeTreeDeltaRevertibles } from "../revertibles.js";
+
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 import { markRangeRemoved } from "./testUtils.js";
 

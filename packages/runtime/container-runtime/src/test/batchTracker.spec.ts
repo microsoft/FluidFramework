@@ -4,8 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { BatchTracker } from "../batchTracker.js";
 
 describe("Runtime", () => {

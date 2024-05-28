@@ -4,21 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
@@ -123,7 +129,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);

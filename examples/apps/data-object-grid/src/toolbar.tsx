@@ -6,6 +6,7 @@
 import { Button } from "@fluentui/react-components";
 import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/react-icons";
 import React from "react";
+
 import { Collapsible } from "./collapsible.cjs";
 import { IDataObjectGridItemEntry } from "./dataObjectRegistry.js";
 import { iconMap } from "./icons.js";

@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import {
@@ -13,6 +15,7 @@ import {
 	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
+
 import { createRevertDriver } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 

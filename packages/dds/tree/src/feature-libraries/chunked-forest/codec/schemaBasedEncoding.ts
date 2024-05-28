@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -12,10 +13,11 @@ import {
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
+	Multiplicity,
 } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
-import { Multiplicity } from "../../multiplicity.js";
+
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -63,7 +65,7 @@ export function fieldShaper(
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
+	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary

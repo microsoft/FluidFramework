@@ -7,6 +7,12 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
@@ -21,6 +27,9 @@ export const FluidErrorTypes: {
 
 // @alpha (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
+
+// @public
+export const fluidHandleSymbol: unique symbol;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -230,46 +239,20 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @alpha @deprecated
-export interface IFluidCodeDetails {
-    readonly config?: IFluidCodeDetailsConfig;
-    readonly package: string | Readonly<IFluidPackage>;
-}
-
-// @internal @deprecated (undocumented)
-export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
-
-// @internal @deprecated
-export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
-    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-}
-
-// @alpha @deprecated
-export interface IFluidCodeDetailsConfig {
-    // (undocumented)
-    readonly [key: string]: string;
-}
-
 // @public (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
+export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly absolutePath: string;
-    // @deprecated (undocumented)
-    attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(handle: IFluidHandle): void;
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const IFluidHandleContext: keyof IProvideFluidHandleContext;
 
-// @public
+// @alpha
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly absolutePath: string;
     attachGraph(): void;
@@ -279,30 +262,24 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
+
+// @alpha
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    bind(handle: IFluidHandleInternal): void;
+}
+
 // @public (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
 // @public
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
-    handle: IFluidHandle;
-}
-
-// @alpha @deprecated
-export interface IFluidPackage {
-    [key: string]: unknown;
-    fluid: {
-        [environment: string]: undefined | IFluidPackageEnvironment;
-    };
-    name: string;
-}
-
-// @alpha @deprecated
-export interface IFluidPackageEnvironment {
-    [target: string]: undefined | {
-        files: string[];
-        [key: string]: unknown;
-    };
+    readonly handle: IFluidHandle;
 }
 
 // @internal (undocumented)
@@ -323,24 +300,18 @@ export interface IGenericError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
-// @internal
+// @alpha
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @internal @deprecated (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
-    // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    // @deprecated (undocumented)
+    readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidHandleContext {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
@@ -387,12 +358,6 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
-
-// @internal @deprecated (undocumented)
-export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
-
-// @internal @deprecated
-export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @internal (undocumented)
 export interface ISignalEnvelope {

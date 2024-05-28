@@ -9,7 +9,8 @@ import {
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	FuzzTestState,
 	Operation,
@@ -28,6 +29,7 @@ export function makeSharedStringOperationGenerator(
 	const {
 		addText,
 		removeRange,
+		annotateRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
 		hasNonzeroLength,
@@ -46,6 +48,7 @@ export function makeSharedStringOperationGenerator(
 				  })
 				: hasNonzeroLength,
 		],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 	]);
 }
 

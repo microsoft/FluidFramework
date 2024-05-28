@@ -4,19 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces";
-import { IAuthorizationError, IGenericNetworkError } from "@fluidframework/driver-definitions";
-import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils";
+
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import {
+	IAuthorizationError,
+	IGenericNetworkError,
+} from "@fluidframework/driver-definitions/internal";
+import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+
 import { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion } from "../packageVersion.js";
+
 import { mockFetchError } from "./mockFetch.js";
 
 describe("Odsp Error", () => {

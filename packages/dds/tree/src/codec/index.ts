@@ -4,6 +4,7 @@
  */
 
 export {
+	FormatVersion,
 	IBinaryCodec,
 	ICodecFamily,
 	ICodecOptions,
@@ -20,4 +21,9 @@ export {
 } from "./codec.js";
 export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions.js";
 export { noopValidator } from "./noopValidator.js";
-export { Versioned, makeVersionedCodec, makeVersionedValidatedCodec } from "./versioned/index.js";
+export {
+	Versioned,
+	makeVersionedCodec,
+	makeVersionedValidatedCodec,
+	makeVersionDispatchingCodec,
+} from "./versioned/index.js";

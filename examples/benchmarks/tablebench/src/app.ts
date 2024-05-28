@@ -4,6 +4,7 @@
  */
 
 import { TreeConfiguration } from "@fluidframework/tree";
+
 import { initFluid } from "./azure.js";
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";

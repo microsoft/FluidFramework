@@ -5,10 +5,10 @@
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {

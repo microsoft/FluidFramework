@@ -4,14 +4,14 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData } from "@fluidframework/driver-base";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
 	isRuntimeMessage,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
@@ -22,15 +22,16 @@ import {
 	ISnapshotOptions,
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
+	loggerToMonitoringContext,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	ISnapshotContentsWithProps,
 	currentReadVersion,
@@ -82,7 +83,7 @@ export enum SnapshotFormatSupportType {
 export async function fetchSnapshot(
 	snapshotUrl: string,
 	// eslint-disable-next-line @rushstack/no-new-null
-	token: string | null,
+	token: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
@@ -109,7 +110,6 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -220,34 +220,71 @@ async function redeemSharingLink(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-): Promise<IOdspResponse<unknown>> {
-	return PerformanceEvent.timedExecAsync(
+): Promise<void> {
+	await PerformanceEvent.timedExecAsync(
 		logger,
 		{
 			eventName: "RedeemShareLink",
 		},
-		async () =>
-			getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-				assert(
-					!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-					0x1ed /* "Share link should be present" */,
-				);
-				const storageToken = await storageTokenFetcher(
-					tokenFetchOptions,
-					"RedeemShareLink",
-				);
-				const encodedShareUrl = getEncodedShareUrl(
-					odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-				);
-				const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					redeemUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
-				headers.prefer = "redeemSharingLink";
-				return fetchAndParseAsJSONHelper(url, { headers });
-			}),
+		async () => {
+			assert(
+				!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+				0x1ed /* "Share link should be present" */,
+			);
+
+			const encodedShareUrl = getEncodedShareUrl(
+				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+			);
+
+			let redeemUrl: string | undefined;
+			async function callSharesAPI(baseUrl: string): Promise<void> {
+				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+					const storageToken = await storageTokenFetcher(
+						tokenFetchOptions,
+						"RedeemShareLink",
+					);
+					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+					const { url, headers } = getUrlAndHeadersWithAuth(
+						redeemUrl,
+						storageToken,
+						forceAccessTokenViaAuthorizationHeader,
+					);
+					headers.prefer = "redeemSharingLink";
+					await fetchAndParseAsJSONHelper(url, { headers });
+				});
+			}
+
+			const disableUsingTenantDomain = loggerToMonitoringContext(logger).config.getBoolean(
+				"Fluid.Driver.Odsp.DisableUsingTenantDomainForSharesApi",
+			);
+			// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters(300-400)
+			// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So, first
+			// construct the url for /shares using tenant domain but to be on safer side, fallback to using the siteUrl. We get tenant domain
+			// by getting origin of the siteUrl.
+			if (!disableUsingTenantDomain) {
+				try {
+					await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
+					return;
+				} catch (error) {
+					logger.sendTelemetryEvent(
+						{
+							eventName: "ShareLinkRedeemFailedWithTenantDomain",
+							details: JSON.stringify({
+								length: redeemUrl?.length,
+								shareLinkUrlLength:
+									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
+								queryParamsLength: new URL(
+									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+								).search.length,
+								useHeaders: forceAccessTokenViaAuthorizationHeader,
+							}),
+						},
+						error,
+					);
+				}
+			}
+			await callSharesAPI(odspResolvedUrl.siteUrl);
+		},
 	);
 }
 
@@ -271,7 +308,6 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
-		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
 			eventName,
@@ -338,17 +374,31 @@ async function fetchLatestSnapshotCore(
 					case "application/json": {
 						let text: string;
 						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.text().catch((error) =>
-								// Parsing can fail and message could contain full request URI, including
-								// tokens, etc. So do not log error object itself.
-								throwOdspNetworkError(
-									"Error while parsing fetch response",
-									fetchIncorrectResponse,
-									odspResponse.content, // response
-									undefined, // response text
-									propsToLog,
+							odspResponse.content
+								.text()
+								.then((res) => {
+									if (res.length === 0) {
+										throwOdspNetworkError(
+											"Response from browser is empty",
+											fetchIncorrectResponse,
+											odspResponse.content, // response
+											undefined, // response text
+											propsToLog,
+										);
+									}
+									return res;
+								})
+								.catch((error) =>
+									// Parsing can fail and message could contain full request URI, including
+									// tokens, etc. So do not log error object itself.
+									throwOdspNetworkError(
+										"Error while parsing fetch response",
+										fetchIncorrectResponse,
+										odspResponse.content, // response
+										undefined, // response text
+										propsToLog,
+									),
 								),
-							),
 						);
 						propsToLog.bodySize = text.length;
 						let content: IOdspSnapshot;
@@ -368,17 +418,31 @@ async function fetchLatestSnapshotCore(
 					case "application/ms-fluid": {
 						let content: ArrayBuffer;
 						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.arrayBuffer().catch((error) =>
-								// Parsing can fail and message could contain full request URI, including
-								// tokens, etc. So do not log error object itself.
-								throwOdspNetworkError(
-									"Error while parsing fetch response",
-									fetchIncorrectResponse,
-									odspResponse.content, // response
-									undefined, // response text
-									propsToLog,
+							odspResponse.content
+								.arrayBuffer()
+								.then((res) => {
+									if (res.byteLength === 0) {
+										throwOdspNetworkError(
+											"Response from browser is empty",
+											fetchIncorrectResponse,
+											odspResponse.content, // response
+											undefined, // response text
+											propsToLog,
+										);
+									}
+									return res;
+								})
+								.catch((error) =>
+									// Parsing can fail and message could contain full request URI, including
+									// tokens, etc. So do not log error object itself.
+									throwOdspNetworkError(
+										"Error while parsing fetch response",
+										fetchIncorrectResponse,
+										odspResponse.content, // response
+										undefined, // response text
+										propsToLog,
+									),
 								),
-							),
 						);
 						propsToLog.bodySize = content.byteLength;
 						let snapshotContents: ISnapshotContentsWithProps;
@@ -436,7 +500,6 @@ async function fetchLatestSnapshotCore(
 
 			assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
 			const snapshot = parsedSnapshotContents.content;
-			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
 			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
@@ -479,17 +542,16 @@ async function fetchLatestSnapshotCore(
 			}
 
 			event.end({
-				trees,
+				// trees, leafTrees, blobNodes, encodedBlobsSize,
+				// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
+				...getTreeStats(snapshot),
 				blobs: snapshot.blobContents?.size ?? 0,
-				leafNodes: numBlobs,
-				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
 				fetchSnapshotForLoadingGroup,
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -574,18 +636,24 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshot): {
+interface ITreeStats {
 	trees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-} {
-	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobContents.size;
+	leafTrees: number;
+	blobNodes: number;
+}
+
+export function getTreeStats(snapshot: ISnapshot): ITreeStats & { encodedBlobsSize: number } {
+	const stats: ITreeStats = {
+		trees: 0,
+		leafTrees: 0,
+		blobNodes: 0,
+	};
+	getTreeStatsCore(snapshot.snapshotTree, stats);
 	let encodedBlobsSize = 0;
 	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
-	return { trees, numBlobs, encodedBlobsSize };
+	return { ...stats, encodedBlobsSize };
 }
 
 export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
@@ -599,13 +667,19 @@ export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 	);
 }
 
-function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
-	let numTrees = 0;
-	for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-		numTrees += 1;
-		numTrees += countTreesInSnapshotTree(tree);
+function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void {
+	stats.blobNodes += Object.entries(snapshotTree.blobs).length;
+	stats.trees++;
+
+	const entries = Object.entries(snapshotTree.trees);
+	if (entries.length === 0) {
+		stats.leafTrees++;
+	} else {
+		for (const [_, tree] of entries) {
+			stats.trees++;
+			getTreeStatsCore(tree, stats);
+		}
 	}
-	return numTrees;
 }
 
 /**

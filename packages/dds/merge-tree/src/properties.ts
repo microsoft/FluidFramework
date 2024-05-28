@@ -99,10 +99,13 @@ export function clone<T>(extension: MapLike<T> | undefined) {
  * be removed in a future release.
  * @internal
  */
-export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet) {
+export function addProperties(
+	oldProps: PropertySet | undefined,
+	newProps: PropertySet,
+): PropertySet {
 	const _oldProps = oldProps ?? createMap<any>();
 	extend(_oldProps, newProps);
-	return _oldProps;
+	return { ..._oldProps };
 }
 
 /**

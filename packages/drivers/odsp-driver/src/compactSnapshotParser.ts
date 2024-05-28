@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
 import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
 import {
@@ -60,17 +61,16 @@ function readBlobSection(node: NodeTypes): {
 			// "id": <node name>
 			// "data": <blob>
 			blobContents.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
-			continue;
+		} else {
+			/**
+			 * More generalized workflow
+			 */
+			slowBlobStructureCount += 1;
+			const records = getNodeProps(blob);
+			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
+			const id = getStringInstance(records.id, "blob id should be string");
+			blobContents.set(id, records.data.arrayBuffer);
 		}
-
-		/**
-		 * More generalized workflow
-		 */
-		slowBlobStructureCount += 1;
-		const records = getNodeProps(blob);
-		assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-		const id = getStringInstance(records.id, "blob id should be string");
-		blobContents.set(id, records.data.arrayBuffer);
 	}
 	return { blobContents, slowBlobStructureCount };
 }
@@ -108,7 +108,7 @@ function readTreeSection(node: NodeCore): {
 	slowTreeStructureCount: number;
 } {
 	let slowTreeStructureCount = 0;
-	const trees = {};
+	const trees: Record<string, ISnapshotTree> = {};
 	const snapshotTree: ISnapshotTree = {
 		blobs: {},
 		trees,
@@ -124,6 +124,12 @@ function readTreeSection(node: NodeCore): {
 		const length = treeNode.length;
 		if (length > 0 && treeNode.getMaybeString(0) === "name") {
 			switch (length) {
+				case 2: {
+					// empty tree case
+					// "name": <node name>
+					trees[treeNode.getString(1)] = { blobs: {}, trees: {} };
+					continue;
+				}
 				case 4: {
 					const content = treeNode.getMaybeString(2);
 					// "name": <node name>
@@ -191,20 +197,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.groupId !== undefined) {
-			const groupId = getStringInstance(records.groupId, "groupId should be a string");
-			snapshotTree.groupId = groupId;
-		}
-
-		if (records.omitted !== undefined) {
-			assertBoolInstance(records.omitted, "omitted should be a boolean");
-			assert(
-				!records.omitted || snapshotTree.groupId !== undefined,
-				0x8df /* GroupId absent but omitted is true */,
-			);
-			snapshotTree.omitted = records.omitted;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -216,6 +208,10 @@ function readTreeSection(node: NodeCore): {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
+			if (records.groupId !== undefined) {
+				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				trees[path].groupId = groupId;
+			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
@@ -288,7 +284,7 @@ export function parseCompactSnapshotResponse(
 
 	return {
 		...snapshot,
-		...blobContents,
+		blobContents: blobContents.blobContents,
 		ops: records.deltas === undefined ? [] : readOpsSection(records.deltas),
 		latestSequenceNumber: records.lsn,
 		snapshotFormatV: 1,

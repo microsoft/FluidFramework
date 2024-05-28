@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
-import Proxyquire from "proxyquire";
-import { createSandbox } from "sinon";
-
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
 	TelemetryEvent,
 	devtoolsMessageSource,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
+import { expect } from "chai";
+import Proxyquire from "proxyquire";
+import { createSandbox } from "sinon";
 
-import { type Globals } from "../Globals";
-import { extensionViewMessageSource } from "../messaging";
-import { awaitListener, stubGlobals, stubPort } from "./Utilities";
+import { type Globals } from "../Globals.js";
+import { extensionViewMessageSource } from "../messaging/index.js";
+
+import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";
 
 type Port = chrome.runtime.Port;
 

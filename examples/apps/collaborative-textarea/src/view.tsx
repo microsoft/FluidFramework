@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
 
 interface CollaborativeTextProps {
@@ -12,9 +12,10 @@ interface CollaborativeTextProps {
 }
 
 /**
+ * Collaborative text-area component.
  * @internal
  */
-export const CollaborativeTextView = (props: CollaborativeTextProps) => {
+export const CollaborativeTextView = (props: CollaborativeTextProps): React.ReactElement => {
 	return (
 		<div className="text-area">
 			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(props.text)} />

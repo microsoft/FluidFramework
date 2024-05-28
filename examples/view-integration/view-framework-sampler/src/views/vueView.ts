@@ -4,6 +4,7 @@
  */
 
 import { createApp } from "vue";
+
 import { IDiceRoller } from "../dataObject.js";
 
 /**

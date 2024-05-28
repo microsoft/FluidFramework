@@ -11,20 +11,19 @@ import {
 	ReferenceType,
 	compareReferencePositions,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
+
 import {
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { ISharedString } from "../sharedString.js";
+
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 
-/**
- * @public
- */
 class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
@@ -74,7 +73,7 @@ class OverlappingSequenceIntervalsIndex
  * @internal
  */
 export function createOverlappingSequenceIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): SequenceIntervalIndexes.Overlapping {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingSequenceIntervalsIndex(client);

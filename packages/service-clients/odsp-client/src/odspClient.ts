@@ -3,42 +3,45 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	IContainer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IRequest,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,
 	type ContainerSchema,
 	IFluidContainer,
+} from "@fluidframework/fluid-static";
+import {
 	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver/internal";
 import type {
 	OdspResourceTokenFetchOptions,
 	TokenResponse,
-} from "@fluidframework/odsp-driver-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	OdspClientProps,
 	OdspConnectionConfig,
@@ -169,7 +172,10 @@ export class OdspClient {
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatibilityMode: "2",
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },

@@ -4,22 +4,23 @@
  */
 
 import assert from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { responseToException } from "@fluidframework/runtime-utils";
+} from "@fluidframework/test-utils/internal";
 
 async function resolveHandleWithoutWait(
 	containerRuntime: ContainerRuntime,
@@ -110,7 +111,7 @@ async function getAliasedDataStoreBackCompat(
 	if (response.status !== 200) {
 		throw responseToException(response, request);
 	}
-	return response.value.handle as IFluidHandle;
+	return response.value.handle as IFluidHandle<FluidObject>;
 }
 
 /**

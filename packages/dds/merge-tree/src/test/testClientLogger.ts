@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions } from "../index.js";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
@@ -14,6 +16,7 @@ import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp } from "../ops.js";
 import { PropertySet, matchProperties } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
+
 import { TestClient } from "./testClient.js";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {

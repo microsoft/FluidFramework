@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { Mutable, compareFiniteNumbers, compareFiniteNumbersReversed, fail } from '../Common.js';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
+
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap.js';
 import { SerializedSessionIdNormalizer } from './persisted-types/index.js';
 

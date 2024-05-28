@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
 import { averageTwoValues, sumDirect } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
@@ -16,8 +18,11 @@ import { Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
 export function jsObjectBench(
 	data: {
 		name: string;
+		// TODO: Use something other than `any`
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		getJson: () => any;
 		dataConsumer: (directObj: any, calculate: (...operands: any[]) => void) => any;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}[],
 ) {
 	for (const { name, getJson, dataConsumer } of data) {

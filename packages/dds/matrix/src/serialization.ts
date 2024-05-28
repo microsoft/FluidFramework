@@ -5,9 +5,12 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelStorageService, Serializable } from "@fluidframework/datastore-definitions";
-import { BlobTreeEntry } from "@fluidframework/driver-utils";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import {
+	IChannelStorageService,
+	Serializable,
+} from "@fluidframework/datastore-definitions/internal";
+import { BlobTreeEntry } from "@fluidframework/driver-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 export const serializeBlob = <T>(
 	handle: IFluidHandle,

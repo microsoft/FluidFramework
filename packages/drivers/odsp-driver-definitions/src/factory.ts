@@ -162,9 +162,4 @@ export interface HostStoragePolicy {
 	 * as false. This is if the host wants to do some A/B testing.
 	 */
 	avoidPrefetchSnapshotCache?: boolean;
-
-	/**
-	 * True if host does not want the storage service to perform retries when throttling errors occur in the service.
-	 */
-	disableRetriesOnStorageThrottlingError?: boolean;
 }

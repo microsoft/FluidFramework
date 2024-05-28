@@ -6,9 +6,9 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
@@ -47,7 +47,7 @@ export class NestedMapRunner extends ScenarioRunner<
 	NestedMapRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/nestedMapRunnerClient.js";
 
 	constructor(scenarioConfig: NestedMapRunnerConfig) {
 		super({
@@ -72,8 +72,8 @@ export class NestedMapRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -178,7 +178,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "load" },
 					async () => {
-						return client.getContainer(docId, schema);
+						return client.getContainer(docId, schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));
@@ -208,7 +208,7 @@ export class NestedMapRunner extends ScenarioRunner<
 					logger,
 					{ eventName: "create" },
 					async () => {
-						return client.createContainer(schema);
+						return client.createContainer(schema, "2");
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));

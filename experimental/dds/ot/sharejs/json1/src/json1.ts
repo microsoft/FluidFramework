@@ -8,7 +8,7 @@ import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	Doc,
 	JSONOp,
@@ -19,6 +19,7 @@ import {
 	removeOp,
 	replaceOp,
 } from "ot-json1";
+
 import { Json1Factory } from "./factory.js";
 
 /**

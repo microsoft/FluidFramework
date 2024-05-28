@@ -4,8 +4,9 @@
  */
 
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+
 import { ChangeEncodingContext } from "../core/index.js";
 import { JsonCompatibleReadOnly, fail } from "../util/index.js";
 
@@ -166,14 +167,21 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 	 * This ensures that applications can diagnose compatibility issues.
 	 */
 	resolve(
-		formatVersion: number,
+		formatVersion: FormatVersion,
 	): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
 	 */
-	getSupportedFormats(): Iterable<number>;
+	getSupportedFormats(): Iterable<FormatVersion>;
 }
+
+/**
+ * A version stamp for encoded data.
+ *
+ * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ */
+export type FormatVersion = number | undefined;
 
 /**
  * Creates a codec family from a registry of codecs.
@@ -182,7 +190,7 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 export function makeCodecFamily<TDecoded, TContext>(
 	registry: Iterable<
 		[
-			formatVersion: number,
+			formatVersion: FormatVersion,
 			codec:
 				| IMultiFormatCodec<
 						TDecoded,
@@ -195,7 +203,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 	>,
 ): ICodecFamily<TDecoded, TContext> {
 	const codecs: Map<
-		number,
+		FormatVersion,
 		IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
@@ -206,12 +214,14 @@ export function makeCodecFamily<TDecoded, TContext>(
 	}
 
 	return {
-		resolve(formatVersion: number) {
+		resolve(
+			formatVersion: number,
+		): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 			const codec = codecs.get(formatVersion);
 			assert(codec !== undefined, 0x5e6 /* Requested coded for unsupported format. */);
 			return codec;
 		},
-		getSupportedFormats() {
+		getSupportedFormats(): Iterable<FormatVersion> {
 			return codecs.keys();
 		},
 	};
@@ -271,17 +281,21 @@ export function ensureBinaryEncoding<TDecoded, TContext>(
 /**
  * Codec for objects which carry no information.
  */
-export const unitCodec: IMultiFormatCodec<0, JsonCompatibleReadOnly, JsonCompatibleReadOnly, any> =
-	{
-		json: {
-			encode: () => 0,
-			decode: () => 0,
-		},
-		binary: {
-			encode: () => IsoBuffer.from(""),
-			decode: () => 0,
-		},
-	};
+export const unitCodec: IMultiFormatCodec<
+	0,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	unknown
+> = {
+	json: {
+		encode: () => 0,
+		decode: () => 0,
+	},
+	binary: {
+		encode: () => IsoBuffer.from(""),
+		decode: () => 0,
+	},
+};
 
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
@@ -303,14 +317,14 @@ export function withSchemaValidation<
 	}
 	const compiledFormat = validator.compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat, context: TContext) => {
+		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TContext) => {
+		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}

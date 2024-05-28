@@ -4,27 +4,28 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { MessageType } from "@fluidframework/protocol-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-	LoaderContainerTracker,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.

@@ -112,4 +112,13 @@ export type InstrumentedStorageTokenFetcher = (
 	options: TokenFetchOptions,
 	name: string,
 	alwaysRecordTokenFetchTelemetry?: boolean,
+) => Promise<string>;
+
+/**
+ * @internal
+ */
+export type InstrumentedTokenFetcher = (
+	options: TokenFetchOptions,
+	name: string,
+	alwaysRecordTokenFetchTelemetry?: boolean,
 ) => Promise<string | null>;

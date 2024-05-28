@@ -3,28 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
+	IFluidHandle,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	IFluidHandle,
-	IFluidHandleContext,
 	ITelemetryBaseLogger,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+
 import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @public
+ * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
@@ -34,8 +32,16 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 }
 
 /**
+ * Manages the transmission of ops between the runtime and storage.
+ * @alpha
+ */
+export type IDeltaManagerErased =
+	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
+
+/**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
- * @public
+ * @sealed
+ * @alpha
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
@@ -51,7 +57,7 @@ export interface IFluidDataStoreRuntime
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManagerErased;
 
 	readonly clientId: string | undefined;
 
@@ -70,16 +76,6 @@ export interface IFluidDataStoreRuntime
 	 * Returns the channel with the given id
 	 */
 	getChannel(id: string): Promise<IChannel>;
-
-	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
 
 	/**
 	 * Creates a new channel of the given type.
@@ -119,10 +115,10 @@ export interface IFluidDataStoreRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Returns the current quorum.

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	CursorLocationType,
 	FieldKey,
@@ -17,6 +18,7 @@ import {
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
+
 import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
@@ -57,7 +59,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		return new BasicChunkCursor([this], [], [], [], [], [dummyRoot], 0, 0, 0, undefined);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const v of this.fields.values()) {
 			for (const child of v) {
 				child.referenceRemoved();

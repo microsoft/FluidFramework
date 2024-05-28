@@ -4,15 +4,16 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IClient,
-	ISequencedDocumentMessage,
+	IDocumentService,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
-import { printMessageStats } from "./fluidAnalyzeMessages";
+} from "@fluidframework/driver-definitions/internal";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
+import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {
 	connectToWebSocket,
 	dumpMessageStats,
@@ -20,7 +21,7 @@ import {
 	messageTypeFilter,
 	overWrite,
 	paramActualFormatting,
-} from "./fluidFetchArgs";
+} from "./fluidFetchArgs.js";
 
 function filenameFromIndex(index: number): string {
 	return index === 0 ? "" : index.toString(); // support old tools...

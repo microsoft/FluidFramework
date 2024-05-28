@@ -7,6 +7,7 @@ import { UnassignedSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
+
 import {
 	insertSegments,
 	insertText,

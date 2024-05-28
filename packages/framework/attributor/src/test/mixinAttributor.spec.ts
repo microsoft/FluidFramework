@@ -4,21 +4,18 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "node:assert";
-import {
-	AttachState,
-	type IContainerContext,
-	type ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+
+import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { type IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
-	type ISequencedDocumentMessage,
-	type ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { type IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+
 import { Attributor } from "../attributor.js";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
 import { makeLZ4Encoder } from "../lz4Encoder.js";
@@ -28,7 +25,8 @@ import {
 	enableOnNewFileKey,
 	mixinAttributor,
 } from "../mixinAttributor.js";
-import { makeMockAudience } from "./utils.js";
+
+import { makeMockAudience, makeMockQuorum } from "./utils.js";
 
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
@@ -41,7 +39,7 @@ describe("mixinAttributor", () => {
 			audience: makeMockAudience([clientId]),
 			attachState: AttachState.Attached,
 			deltaManager: new MockDeltaManager(),
-			quorum: new MockQuorumClients(),
+			quorum: makeMockQuorum([clientId]),
 			taggedLogger: new MockLogger(),
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (error?: ICriticalContainerError): void => {
@@ -134,7 +132,6 @@ describe("mixinAttributor", () => {
 		(context.deltaManager as MockDeltaManager).emit("op", op);
 		const { summary } = await containerRuntime.summarize({
 			fullTree: true,
-			trackState: false,
 			runGC: false,
 		});
 
@@ -174,7 +171,7 @@ describe("mixinAttributor", () => {
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience!.getMember(op.clientId!)!.user },
+				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
 			],
 		]);
 
@@ -268,7 +265,6 @@ describe("mixinAttributor", () => {
 
 				const { summary } = await containerRuntime.summarize({
 					fullTree: true,
-					trackState: false,
 					runGC: false,
 				});
 				assert(summary.tree[".attributor"] === undefined);

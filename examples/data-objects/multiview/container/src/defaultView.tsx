@@ -8,7 +8,6 @@ import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
-
 import * as React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import

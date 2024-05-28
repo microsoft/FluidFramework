@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import { AttributionCollection } from "./attributionCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
@@ -223,7 +224,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
  * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
  * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
  * ```
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAttributionPolicyFactory(
 	...propNames: string[]
@@ -241,7 +242,7 @@ export function createPropertyTrackingAttributionPolicyFactory(
  * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
  * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
  * {@link createInsertOnlyAttributionPolicy}: see there for more details.
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
 	...propNames: string[]

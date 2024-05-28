@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	Client,
 	ISegment,
@@ -23,9 +23,10 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	SequencePlace,
 	Side,
@@ -34,6 +35,7 @@ import {
 	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection.js";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -196,7 +198,7 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 
 		return serializedInterval;
@@ -471,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(

@@ -4,18 +4,19 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { validateMessages } from "@fluidframework/driver-base";
+import { assert } from "@fluidframework/core-utils/internal";
+import { validateMessages } from "@fluidframework/driver-base/internal";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
-} from "@fluidframework/driver-definitions";
-import { requestOps, streamObserver } from "@fluidframework/driver-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
@@ -106,7 +107,6 @@ export class OdspDeltaStorageService {
 							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
 
 					event.end({
-						headers: Object.keys(headers).length > 0 ? true : undefined,
 						length: messages.length,
 						...response.propsToLog,
 					});

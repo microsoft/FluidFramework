@@ -4,16 +4,23 @@
  */
 
 import { strict as assert } from "assert";
+
 import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { noopValidator } from "../../../codec/index.js";
-import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
+
+import {
+	ChangeFamily,
+	RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
-import { failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+import { failCodecFamily, mintRevisionTag } from "../../utils.js";
+
 import {
 	editManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
@@ -42,20 +49,20 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<any, TChange>;
-		readonly mintChange: () => TChange;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-		jsonValidator: noopValidator,
-	});
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily);
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
 			.insert(0, singleJsonCursor(1));
 	};
 
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const families: Family<any>[] = [
 		{
 			name: "TestChange",
@@ -66,7 +73,12 @@ describe("EditManager - Bench", () => {
 		{
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
-			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
+			mintChange: (revision) => {
+				const change = makeEditMinter(defaultFamily, sequencePrepend)();
+				return revision !== undefined
+					? defaultFamily.rebaser.changeRevision(change, revision)
+					: change;
+			},
 			maxEditCount: 350,
 		},
 	];

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type ApiClass,
 	type ApiEnum,
@@ -14,11 +15,12 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain/index.js";
-import { type ApiModuleLike, filterByKind } from "../../utilities/index.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import type { ApiModuleLike } from "../../utilities/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterItems } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).
@@ -67,33 +69,55 @@ export function transformApiModuleLike(
 	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
-		const interfaces = filterByKind(filteredChildren, [ApiItemKind.Interface]).map(
-			(_apiItem) => _apiItem as ApiInterface,
-		);
-
-		const classes = filterByKind(filteredChildren, [ApiItemKind.Class]).map(
-			(_apiItem) => _apiItem as ApiClass,
-		);
-
-		const namespaces = filterByKind(filteredChildren, [ApiItemKind.Namespace]).map(
-			(_apiItem) => _apiItem as ApiNamespace,
-		);
-
-		const types = filterByKind(filteredChildren, [ApiItemKind.TypeAlias]).map(
-			(_apiItem) => _apiItem as ApiTypeAlias,
-		);
-
-		const functions = filterByKind(filteredChildren, [ApiItemKind.Function]).map(
-			(_apiItem) => _apiItem as ApiFunction,
-		);
-
-		const enums = filterByKind(filteredChildren, [ApiItemKind.Enum]).map(
-			(_apiItem) => _apiItem as ApiEnum,
-		);
-
-		const variables = filterByKind(filteredChildren, [ApiItemKind.Variable]).map(
-			(_apiItem) => _apiItem as ApiVariable,
-		);
+		const interfaces: ApiInterface[] = [];
+		const classes: ApiClass[] = [];
+		const namespaces: ApiNamespace[] = [];
+		const types: ApiTypeAlias[] = [];
+		const functions: ApiFunction[] = [];
+		const enums: ApiEnum[] = [];
+		const variables: ApiVariable[] = [];
+		for (const child of filteredChildren) {
+			switch (child.kind) {
+				case ApiItemKind.Interface: {
+					interfaces.push(child as ApiInterface);
+					break;
+				}
+				case ApiItemKind.Class: {
+					classes.push(child as ApiClass);
+					break;
+				}
+				case ApiItemKind.Namespace: {
+					namespaces.push(child as ApiNamespace);
+					break;
+				}
+				case ApiItemKind.TypeAlias: {
+					types.push(child as ApiTypeAlias);
+					break;
+				}
+				case ApiItemKind.Function: {
+					functions.push(child as ApiFunction);
+					break;
+				}
+				case ApiItemKind.Enum: {
+					enums.push(child as ApiEnum);
+					break;
+				}
+				case ApiItemKind.Variable: {
+					variables.push(child as ApiVariable);
+					break;
+				}
+				default: {
+					config.logger?.error(
+						`Child item "${child.displayName}" of ${
+							apiItem.kind
+						} "${getScopedMemberNameForDiagnostics(
+							apiItem,
+						)}" is of unsupported API item kind: "${child.kind}"`,
+					);
+					break;
+				}
+			}
+		}
 
 		// Render summary tables
 		const memberTableSections = createMemberTables(

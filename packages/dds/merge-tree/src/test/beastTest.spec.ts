@@ -11,11 +11,13 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import { Trace } from "@fluid-internal/client-utils";
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
+
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
 	KeyComparer,
@@ -41,6 +43,7 @@ import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePosit
 import { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { IJSONTextSegment, TextSegment } from "../textSegment.js";
+
 import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 /**

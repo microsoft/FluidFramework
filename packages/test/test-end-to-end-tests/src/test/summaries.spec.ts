@@ -4,50 +4,47 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	ISummarizer,
-	ISummarizeResults,
-	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
+	ISummarizeResults,
+	ISummarizer,
+	ISummaryRuntimeOptions,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	channelsTreeName,
 	FlushMode,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	waitForContainerConnection,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
+	createSummarizerFromFactory,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import type { SharedString } from "@fluidframework/sequence";
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { SinonSandbox, createSandbox } from "sinon";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -108,22 +105,34 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-class TestDataObject1 extends DataObject {
-	protected async initializingFromExisting(): Promise<void> {
-		// This test data object will verify full initialization does not happen for summarizer client.
-		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw Error(
-				"Non interactive/summarizer client's data object should not be initialized",
-			);
-		}
-	}
-}
-
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject1 extends DataObject {
+		protected async initializingFromExisting(): Promise<void> {
+			// This test data object will verify full initialization does not happen for summarizer client.
+			if (this.context.clientDetails.capabilities.interactive === false) {
+				throw Error(
+					"Non interactive/summarizer client's data object should not be initialized",
+				);
+			}
+		}
+	}
+
+	let sandbox: SinonSandbox;
+	before(() => {
+		sandbox = createSandbox();
+	});
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
+	});
+
+	afterEach(() => {
+		sandbox.restore();
 	});
 
 	it("On demand summaries", async () => {
@@ -233,8 +242,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const { stats, summary } = await containerRuntime.summarize({
 			runGC: false,
-			fullTree: false,
-			trackState: false,
+			fullTree: true,
 			summaryLogger: createChildLogger(),
 		});
 
@@ -506,6 +514,54 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
 	});
+
+	itExpects(
+		"attempt last summary if parent container disconnects",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_Op",
+				summarizeReason: "lastSummary",
+			},
+		],
+		async function () {
+			const container = await createContainer(provider, {});
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "enabled",
+							minOpsForLastSummaryAttempt: 1, // This is the key setting
+							maxTime: 60 * 1000,
+							maxOps: 1000,
+							minIdleTime: 60 * 1000,
+							maxIdleTime: 60 * 1000,
+							runtimeOpWeight: 1,
+							nonRuntimeOpWeight: 0.1,
+							initialSummarizerDelayMs: 0,
+							maxAckWaitTime: 60 * 1000,
+							maxOpsSinceLastSummary: 1000,
+						},
+					},
+				},
+			});
+			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
+
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+
+			const directory1 = defaultDataStore._root;
+			directory1.set("key", "value");
+			await provider.ensureSynchronized();
+
+			const summarizerRunProm = summarizer.run("test");
+			summarizer.stop("parentNotConnected");
+			await flushPromises();
+			await summarizerRunProm;
+
+			assert.strictEqual(submitSumarySpy.calledOnce, true, "expect a final summary to run");
+		},
+	);
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
@@ -537,15 +593,13 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 			await containerRuntime
 				.summarize({
 					runGC: false,
-					fullTree: false,
-					trackState: false,
-					summaryLogger: createChildLogger(),
+					fullTree: true,
+					summaryLogger: createChildLogger({ logger: mockLogger }),
 				})
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) =>
-					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
+				(event) => event.eventName === "SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
@@ -581,7 +635,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	it("Non single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
@@ -697,7 +751,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		},
 	);
 
-	it("Single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	it("Single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
@@ -781,14 +835,14 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			configForSingleCommitSummary,
 		);
 
-		let summary2AckHandle: string | undefined;
+		let summary2Handle: string | undefined;
 		// Second summary should be discarded
 		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 		let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 		const func = async (summary: ISummaryTree, context: ISummaryContext) => {
 			uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 			const response = await uploadSummaryUploaderFunc(summary, context);
-			summary2AckHandle = response;
+			summary2Handle = response;
 			// Close summarizer so that it does not submit SummaryOp
 			summarizer2.close();
 			return response;
@@ -809,7 +863,6 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		// Summarize third time
 		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({
 			reason: "test3",
-			refreshLatestAck: true,
 		});
 		const submitResult3 = await result3.summarySubmitted;
 		assert(submitResult3.success, "on-demand summary3 should submit");
@@ -822,8 +875,8 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		assert(broadcastResult3.success, "summary op3 should be broadcast");
 		const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
 		assert(
-			summary3ParentHandle === summary2AckHandle,
-			"Summary Parent should match ack handle of summary2",
+			summary3ParentHandle === summary2Handle,
+			"Summary Parent should match handle of summary2",
 		);
 	});
 });

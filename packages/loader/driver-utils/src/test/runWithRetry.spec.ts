@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;

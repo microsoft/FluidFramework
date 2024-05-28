@@ -34,6 +34,8 @@ export namespace DevtoolsFeatures {
 		 * Package version of devtools-core.
 		 */
 		devtoolsVersion?: string;
+
+		unsampledTelemetry?: boolean;
 	}
 
 	/**

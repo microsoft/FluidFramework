@@ -16,12 +16,12 @@ import {
 	getPreReleaseDependencies,
 	npmCheckUpdates,
 	setVersion,
-} from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+} from "../library/index.js";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Bumps any pre-release dependencies that have been released.
@@ -124,7 +124,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 			isReleaseGroup(releaseGroup)
 				? context.packagesInReleaseGroup(releaseGroup)
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  [context.fullPackageMap.get(releaseGroup)!],
+					[context.fullPackageMap.get(releaseGroup)!],
 		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
@@ -159,9 +159,9 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  context.repo.releaseGroups.get(releaseGroup)!
+			context.repo.releaseGroups.get(releaseGroup)!
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  context.fullPackageMap.get(releaseGroup)!;
+			context.fullPackageMap.get(releaseGroup)!;
 
 	const scheme = detectVersionScheme(releaseVersion);
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);

@@ -4,12 +4,14 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
+import type { SnapshotWithBlobs } from "./serializedStateManager.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
 /**
@@ -109,6 +111,7 @@ export interface AttachProcessProps {
 	/**
 	 * The detached blob storage if it exists.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
 
 	/**
@@ -131,19 +134,18 @@ export interface AttachProcessProps {
  * This method is retriable on failure. Based on the provided initialAttachmentData
  * this method will resume the attachment process and attempt to complete it.
  *
- * @param props - The data and services necessary to run the attachment process
+ * @param AttachProcessProps - The data and services necessary to run the attachment process
+ * @returns - The attach summary (only if offline load is enabled), or undefined
  */
-export const runRetriableAttachProcess = async (
-	props: AttachProcessProps,
-): Promise<{ tree: ISnapshotTree; blobs: ISerializableBlobContents } | undefined> => {
-	const {
-		detachedBlobStorage,
-		createOrGetStorageService,
-		setAttachmentData,
-		createAttachmentSummary,
-		offlineLoadEnabled,
-	} = props;
-	let currentData: AttachmentData = props.initialAttachmentData;
+export const runRetriableAttachProcess = async ({
+	detachedBlobStorage,
+	createOrGetStorageService,
+	setAttachmentData,
+	createAttachmentSummary,
+	offlineLoadEnabled,
+	initialAttachmentData,
+}: AttachProcessProps): Promise<SnapshotWithBlobs | undefined> => {
+	let currentData: AttachmentData = initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
@@ -160,7 +162,7 @@ export const runRetriableAttachProcess = async (
 			  }
 			: {
 					state: AttachState.Attaching,
-					summary: props.createAttachmentSummary(),
+					summary: createAttachmentSummary(),
 					blobs: "none",
 			  };
 		setAttachmentData(currentData);
@@ -210,7 +212,7 @@ export const runRetriableAttachProcess = async (
 		});
 	}
 
-	const snapshot = offlineLoadEnabled
+	const snapshot: SnapshotWithBlobs | undefined = offlineLoadEnabled
 		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
 		: undefined;
 

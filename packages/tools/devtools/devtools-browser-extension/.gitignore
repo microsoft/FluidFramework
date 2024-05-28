@@ -3,6 +3,7 @@ package-lock.json
 
 # Build output
 dist
+lib
 *.tsbuildinfo
 
 # npm dependencies

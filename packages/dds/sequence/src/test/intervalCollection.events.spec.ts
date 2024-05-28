@@ -4,18 +4,20 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringClass, ISharedString } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -24,16 +26,16 @@ interface IntervalEventInfo {
 }
 
 describe("SharedString interval collection event spec", () => {
-	let sharedString: SharedString;
+	let sharedString: ISharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
-	let sharedString2: SharedString;
+	let sharedString2: ISharedString;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	let collection: IIntervalCollection<SequenceInterval>;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -42,7 +44,7 @@ describe("SharedString interval collection event spec", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -52,13 +54,13 @@ describe("SharedString interval collection event spec", () => {
 
 		// Create and connect a second SharedString.
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
-		sharedString2 = new SharedString(
+		sharedString2 = new SharedStringClass(
 			dataStoreRuntime2,
 			"shared-string-2",
 			SharedStringFactory.Attributes,

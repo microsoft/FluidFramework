@@ -4,6 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+
 import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
 	JsonCompatibleReadOnly,
@@ -22,24 +23,7 @@ export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
 	ChangesetLocalIdSchema,
 ]);
-
-const EncodedValueChange = Type.Object(
-	{
-		revision: Type.Optional(RevisionTagSchema),
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-	},
-	noAdditionalProps,
-);
-type EncodedValueChange = Static<typeof EncodedValueChange>;
-
-const EncodedValueConstraint = Type.Object(
-	{
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-		violated: Type.Boolean(),
-	},
-	noAdditionalProps,
-);
-type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
+export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 const EncodedFieldChange = Type.Object(
 	{
@@ -81,9 +65,7 @@ type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
 	{
-		valueChange: Type.Optional(EncodedValueChange),
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
-		valueConstraint: Type.Optional(EncodedValueConstraint),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,

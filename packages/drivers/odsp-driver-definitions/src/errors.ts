@@ -4,10 +4,10 @@
  */
 
 import {
-	DriverError,
 	DriverErrorTypes,
 	IDriverErrorBase,
-} from "@fluidframework/driver-definitions";
+	DriverError,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP Error types.

@@ -22,5 +22,5 @@ export { WindowMessageRelay } from "./WindowMessageRelay.js";
 export { isTelemetryOptInEnabled } from "./TelemetryUtils.js";
 
 // Convenience re-exports
-export type { IMessageRelay } from "@fluidframework/devtools-core";
+export type { IMessageRelay } from "@fluidframework/devtools-core/internal";
 export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

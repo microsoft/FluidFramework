@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { Deferred } from "@fluidframework/core-utils";
-import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IConnectedEvents,
 	IConnectedState,
@@ -22,6 +25,7 @@ import {
 	SummaryManager,
 	summarizerClientType,
 } from "../../summary/index.js";
+
 import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Summarizer Client Election", () => {

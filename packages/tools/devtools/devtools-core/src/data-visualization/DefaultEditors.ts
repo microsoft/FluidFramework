@@ -8,11 +8,11 @@
  * implementations for our DDSs.
  */
 
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { SharedCell } from "@fluidframework/cell";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { type Edit, type EditSharedObject } from "./DataEditing.js";
 
 /**
@@ -22,7 +22,7 @@ export const editSharedCell: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	const sharedCell = sharedObject as SharedCell;
+	const sharedCell = sharedObject as ISharedCell;
 	sharedCell.set(edit.data);
 };
 

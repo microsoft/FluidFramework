@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Routerlicious extends the resolved url with additional properties to control Routerlicious-specific behaviors.

@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
+
 import { SharedDelta } from "./delta.js";
 
 describe("SharedOT", () => {
@@ -84,7 +86,9 @@ describe("SharedOT", () => {
 
 				// Create docs for this stress run.
 				for (let i = 0; i < numClients; i++) {
-					const dataStoreRuntimeN = new MockFluidDataStoreRuntime();
+					const dataStoreRuntimeN = new MockFluidDataStoreRuntime({
+						registry: [SharedDelta.getFactory()],
+					});
 					const containerRuntimeN =
 						containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
 					const servicesN: IChannelServices = {
@@ -92,7 +96,7 @@ describe("SharedOT", () => {
 						objectStorage: new MockStorage(),
 					};
 
-					const docN = SharedDelta.getFactory().create(dataStoreRuntimeN, `doc-${i}`);
+					const docN = SharedDelta.create(dataStoreRuntimeN, `doc-${i}`);
 					docN.connect(servicesN);
 
 					docs.push(docN);

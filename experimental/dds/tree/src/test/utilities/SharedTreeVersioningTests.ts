@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from 'assert';
-import { LoaderHeader } from '@fluidframework/container-definitions';
+
+import { LoaderHeader } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
+
 import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { Mutable } from '../../Common.js';
 import { EditLog } from '../../EditLog.js';
@@ -19,6 +21,7 @@ import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { nilUuid } from '../../UuidUtilities.js';
 import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { applyTestEdits } from '../Summary.tests.js';
+
 import { buildLeaf } from './TestNode.js';
 import {
 	SharedTreeTestingComponents,
@@ -55,7 +58,10 @@ export function runSharedTreeVersioningTests(
 		};
 
 		it('defaults to latest version if no version is specified when creating factory', () => {
-			const sharedTree = SharedTree.getFactory().create(new MockFluidDataStoreRuntime(), 'SharedTree');
+			const sharedTree = SharedTree.create(
+				new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
+				'SharedTree'
+			);
 			const writeFormats = Object.values(WriteFormat);
 			expect(sharedTree.getWriteFormat()).to.equal(writeFormats[writeFormats.length - 1]);
 		});

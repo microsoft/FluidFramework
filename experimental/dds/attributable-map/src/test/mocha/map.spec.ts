@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
 	IMapClearLocalOpMetadata,
@@ -22,7 +24,7 @@ import {
 	IMapSetOperation,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { AttributableMap, MapFactory } from "../../map.js";
+import { AttributableMapClass, MapFactory } from "../../map.js";
 import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {
@@ -45,7 +47,7 @@ function createDetachedMap(id: string): TestMap {
 	return map;
 }
 
-class TestMap extends AttributableMap {
+class TestMap extends AttributableMapClass {
 	private lastMetadata?: MapLocalOpMetadata;
 	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;
@@ -277,9 +279,9 @@ describe("Map", () => {
 			it("new serialization format for big maps", async () => {
 				map.set("key", "value");
 
-				// 40K char string
+				// 160K char string
 				let longString = "01234567890";
-				for (let i = 0; i < 12; i++) {
+				for (let i = 0; i < 14; i++) {
 					longString = longString + longString;
 				}
 				map.set("longValue", longString);
@@ -586,7 +588,7 @@ describe("Map", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					// Verify the local SharedMap
-					const localSubMap = map1.get<IFluidHandle>("test");
+					const localSubMap = map1.get<IFluidHandleInternal>("test");
 					assert(localSubMap);
 					assert.equal(
 						localSubMap.absolutePath,
@@ -595,7 +597,7 @@ describe("Map", () => {
 					);
 
 					// Verify the remote SharedMap
-					const remoteSubMap = map2.get<IFluidHandle>("test");
+					const remoteSubMap = map2.get<IFluidHandleInternal>("test");
 					assert(remoteSubMap);
 					assert.equal(
 						remoteSubMap.absolutePath,

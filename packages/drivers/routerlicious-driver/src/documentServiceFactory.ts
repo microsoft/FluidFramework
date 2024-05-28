@@ -4,8 +4,8 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData } from "@fluidframework/driver-base";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -13,19 +13,20 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
@@ -130,7 +131,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -280,7 +281,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const storageTokenP = storageTokenFetcher();
 
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -329,7 +330,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 
-		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+		const storageRestWrapper = RouterliciousStorageRestWrapper.load(
 			tenantId,
 			storageTokenFetcher,
 			logger2,

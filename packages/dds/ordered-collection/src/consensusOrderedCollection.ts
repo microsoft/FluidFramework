@@ -4,17 +4,19 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	ConsensusCallback,
 	ConsensusResult,
@@ -200,7 +202,7 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	protected isActive() {
-		return this.runtime.connected && this.runtime.deltaManager.active;
+		return this.runtime.connected && this.deltaManager.active;
 	}
 
 	protected async complete(acquireId: string) {

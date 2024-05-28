@@ -8,9 +8,10 @@ export {
 	Required,
 	Optional,
 	Sequence,
-	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	fieldKinds,
+	fieldKindConfigurations,
 } from "./defaultFieldKinds.js";
 
 export {
@@ -24,5 +25,7 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
+
+export { SchemaValidationErrors, isNodeInSchema } from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";

@@ -4,6 +4,7 @@
  */
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
+
 import type { EditLog } from './EditLog.js';
 import type { SharedTree } from './SharedTree.js';
 import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types/index.js';

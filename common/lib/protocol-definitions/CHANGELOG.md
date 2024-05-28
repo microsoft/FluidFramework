@@ -1,5 +1,21 @@
 # @fluidframework/protocol-definitions Changelog
 
+## [4.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v4.0.0)
+
+### BREAKING CHANGE: Some APIs no longer exported
+
+The public API surface of this package has been trimmed. This means that some APIs may no longer be available.
+
+### Explicit package entrypoints using "exports" field
+
+This release adds the ["exports" field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to package.json
+to enforce package entrypoints. Any imports of APIs that are not explicitly exported will no longer work.
+
+In addition, TypeScript users should compile Fluid Framework using the following tsconfig settings:
+
+-   `moduleResolution: Node16` or `moduleResolution: Bundler`. See the
+    [TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information.
+
 ## [3.2.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.2.0)
 
 This release includes new optional properties on several interfaces. Note that these new properties are not yet used by

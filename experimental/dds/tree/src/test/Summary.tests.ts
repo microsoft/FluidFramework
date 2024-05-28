@@ -5,9 +5,11 @@
 
 import * as fs from 'fs';
 import { join } from 'path';
-import { ISummaryBlob, SummaryType } from '@fluidframework/protocol-definitions';
+
+import { ISummaryBlob, SummaryType } from '@fluidframework/driver-definitions';
 import { assert, expect } from 'chai';
 import { v5 } from 'uuid';
+
 import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
 import { RecursiveMutable, fail } from '../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities.js';
@@ -21,6 +23,7 @@ import { MutableStringInterner } from '../StringInterner.js';
 import { SummaryStatistics, deserialize, getSummaryStatistics } from '../SummaryBackCompatibility.js';
 import { IdCompressor } from '../id-compressor/index.js';
 import { SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat, reservedIdCount } from '../persisted-types/index.js';
+
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestFluidSerializer } from './utilities/TestSerializer.js';
 import {

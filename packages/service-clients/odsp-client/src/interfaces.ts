@@ -6,6 +6,7 @@
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+
 import { IOdspTokenProvider } from "./token.js";
 
 /**
@@ -95,7 +96,7 @@ export interface OdspMember extends IMember {
 	/**
 	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	id: string;
 	/**
 	 * The user's name
 	 */

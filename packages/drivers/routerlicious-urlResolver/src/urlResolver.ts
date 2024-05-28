@@ -4,9 +4,10 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IUser } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { IUser } from "@fluidframework/driver-definitions";
+
 import { Provider } from "./nconf.cjs";
 
 const r11sServers = [

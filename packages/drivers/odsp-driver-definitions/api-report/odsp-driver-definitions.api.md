@@ -4,10 +4,10 @@
 
 ```ts
 
-import { DriverError } from '@fluidframework/driver-definitions';
-import { FiveDaysMs } from '@fluidframework/driver-definitions';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { DriverError } from '@fluidframework/driver-definitions/internal';
+import { FiveDaysMs } from '@fluidframework/driver-definitions/internal';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -22,7 +22,6 @@ export interface HostStoragePolicy {
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    disableRetriesOnStorageThrottlingError?: boolean;
     // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
     // @deprecated (undocumented)
@@ -67,7 +66,10 @@ export interface IFileEntry {
 }
 
 // @internal (undocumented)
-export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
+export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string>;
+
+// @internal (undocumented)
+export type InstrumentedTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {

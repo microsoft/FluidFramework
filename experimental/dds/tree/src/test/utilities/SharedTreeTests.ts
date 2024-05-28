@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from 'assert';
+
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/driver-definitions';
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
-} from '@fluidframework/test-runtime-utils';
+} from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
+
 import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common.js';
 import { EditLog, OrderedEditSet } from '../../EditLog.js';
@@ -45,6 +47,7 @@ import {
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
 } from '../../persisted-types/index.js';
+
 import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
-import type { Covariant, isAny } from "./typeCheck.js";
-import type { Assume } from "./typeUtils.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { Covariant } from "./typeCheck.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -20,84 +20,12 @@ import type { Assume } from "./typeUtils.js";
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  * @internal
  */
-export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType &
-	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
-
-/**
- * "opaque" handle which can be used to expose a branded type without referencing its value type.
- * @remarks
- * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
- * uses the type name instead of expanding it.
- *
- * @example
- * ```typescript
- * // Public
- * export interface ErasedMyType extends Erased<"myPackage.MyType"> {}
- * // Internal
- * export interface MyType {
- * 	example: number;
- * }
- * export interface BrandedMyType extends Brand<MyType, ErasedMyType> {}
- * // Usage
- * export function extract(input: ErasedMyType): BrandedMyType {
- * 	return fromErased<BrandedMyType>(input);
- * }
- * export function erase(input: MyType): ErasedMyType {
- * 	return brandErased<BrandedMyType>(input);
- * }
- * ```
- * @internal
- */
-export type Erased<Name extends string> = ErasedType<Name>;
-
-/**
- * Helper for {@link Erased}.
- * This is split out into its own as that's the only way to:
- * - have doc comments for the member.
- * - make the member protected (so you don't accidentally try and read it).
- * - get nominal typing (so types produced without using this class can never be assignable to it).
- *
- * See {@link MakeNominal} for more details.
- *
- * Do not use this class with `instanceof`: this will always be false at runtime,
- * but the compiler may think it's true in some cases.
- *
- * @sealed
- * @internal
- */
-export abstract class ErasedType<out Name extends string> {
-	/**
-	 * Compile time only marker to make type checking more strict.
-	 * This method will not exist at runtime and accessing it is invalid.
-	 * See {@link Brand} for details.
-	 *
-	 * @privateRemarks
-	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
-	 * The method takes in never to help emphasize that its not callable.
-	 */
-	protected abstract brand(dummy: never): Name;
-
-	/**
-	 * This class should never exist at runtime, so make it un-constructable.
-	 */
-	private constructor() {}
-
-	/**
-	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
-	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
-	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
-	 */
-	public static [Symbol.hasInstance](value: never): value is never {
-		throw new UsageError(
-			"ErasedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
-		);
-	}
-}
+export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 /**
  * Helper for {@link Brand}.
  *
- * See `InternalTypes.MakeNominal` for some more details.
+ * See `MakeNominal` for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
@@ -116,7 +44,7 @@ export abstract class ErasedType<out Name extends string> {
  * @sealed
  * @internal
  */
-export abstract class BrandedType<out ValueType, Name extends string> {
+export abstract class BrandedType<out ValueType, Name> {
 	protected _typeCheck?: Covariant<ValueType>;
 	/**
 	 * Compile time only marker to make type checking more strict.
@@ -151,9 +79,9 @@ export abstract class BrandedType<out ValueType, Name extends string> {
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	infer ValueType,
-	string
+	unknown
 >
 	? ValueType
 	: never;
@@ -163,26 +91,12 @@ export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	unknown,
 	infer Name
 >
 	? Name
 	: never;
-
-/**
- * Converts a {@link Erased} handle to the underlying branded type.
- *
- * It is assumed that only code that produces these "opaque" handles does this conversion,
- * allowing these handles to be considered opaque.
- * @internal
- */
-export function fromErased<
-	TBranded extends BrandedType<unknown, string>,
-	TName extends string = NameFromBranded<TBranded>,
->(value: ErasedType<TName>): TBranded {
-	return value as unknown as TBranded;
-}
 
 /**
  * Adds a type {@link Brand} to a value.
@@ -198,19 +112,7 @@ export function fromErased<
  * @internal
  */
 export function brand<T>(
-	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
+	value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never,
 ): T {
 	return value as T;
-}
-
-/**
- * Adds a type {@link Brand} to a value, returning it as a {@link Erased} handle.
- *
- * Only do this when specifically allowed by the requirements of the type being converted to.
- * @internal
- */
-export function brandErased<T extends BrandedType<unknown, string>>(
-	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
-): ErasedType<NameFromBranded<T>> {
-	return value as ErasedType<NameFromBranded<T>>;
 }

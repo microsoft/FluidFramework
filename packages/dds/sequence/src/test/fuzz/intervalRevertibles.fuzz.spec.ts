@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator as Generator,
@@ -16,7 +17,8 @@ import {
 	DDSFuzzSuiteOptions,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -24,6 +26,7 @@ import {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 } from "../../revertibles.js";
+
 import {
 	FuzzTestState,
 	IntervalOperationGenerationConfig,
@@ -141,6 +144,7 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						annotateRange: 1,
 						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
@@ -167,6 +171,7 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						annotateRange: 1,
 						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,

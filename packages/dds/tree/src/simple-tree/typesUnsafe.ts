@@ -5,19 +5,22 @@
 
 import { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+
 import {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
+	type FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
 	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
+	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
+import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -29,10 +32,11 @@ import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
  * 2. Deduplicate the safe and unsafe types (possibly by having the safe one call the unsafe ones, or some other trick).
  * 3. Add type tests that check that the two copies of these types produce identical results.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
- * @beta
+ * @public
  */
 export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -41,19 +45,28 @@ export type ObjectFromSchemaRecordUnsafe<
 };
 
 /**
+ * {@link Unenforced} version of {@link TreeObjectNode}.
+ * @public
+ */
+export type TreeObjectNodeUnsafe<
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	TypeName extends string = string,
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
+
+/**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
- * @beta
+ * @public
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 		: unknown;
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
@@ -67,7 +80,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
@@ -77,7 +90,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
- * @beta
+ * @public
  */
 export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
 	| Unhydrated<NodeFromSchemaUnsafe<T>>
@@ -85,7 +98,7 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
 
 /**
  * {@link Unenforced} version of {@link NodeFromSchema}.
- * @beta
+ * @public
  */
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
 	string,
@@ -97,7 +110,7 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T exten
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
 	string,
@@ -110,7 +123,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
 
 /**
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
- * @beta
+ * @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
 	extends TreeArrayNodeBase<
@@ -121,7 +134,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 /**
  * {@link Unenforced} version of {@link TreeMapNode}.
- * @beta
+ * @public
  */
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
@@ -139,7 +152,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 
 /**
  * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
- * @beta
+ * @public
  */
 export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -149,22 +162,34 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeFieldFromImplicitField}.
- * @beta
+ * @public
  */
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
- * @beta
+ * @public
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
+> extends FieldSchema<Kind, any> {
+	/**
+	 * {@inheritDoc FieldSchema.kind}
+	 */
 	readonly kind: Kind;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypes}
+	 */
 	readonly allowedTypes: Types;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypeSet}
+	 */
+	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any */

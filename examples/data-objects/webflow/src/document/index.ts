@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IMergeTreeRemoveMsg,
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
 	refGetTileLabels,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import {
 	ISegment,
 	LocalReferencePosition,
@@ -26,10 +26,12 @@ import {
 	SharedStringSegment,
 	TextSegment,
 	reservedTileLabelsKey,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
+
 import { documentType } from "../package.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { TagName, TokenList, clamp } from "../util/index.js";
+
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 
@@ -118,7 +120,7 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
-const endOfTextReference = createDetachedLocalReferencePosition();
+const endOfTextReference = createDetachedLocalReferencePosition(undefined);
 const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {

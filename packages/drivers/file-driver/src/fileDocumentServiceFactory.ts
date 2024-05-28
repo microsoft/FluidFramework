@@ -10,8 +10,9 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 import { FileDocumentService } from "./fileDocumentService.js";
 

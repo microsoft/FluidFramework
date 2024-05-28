@@ -8,7 +8,7 @@ import {
 	type IDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 /**
  * Returns a direct response to the provided message.

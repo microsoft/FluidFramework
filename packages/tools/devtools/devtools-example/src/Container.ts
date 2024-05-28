@@ -4,10 +4,11 @@
  */
 
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppData } from "./FluidObject";
+
+import { AppData } from "./FluidObject.js";
 
 /**
  * This model contains the data we want to share with other clients.

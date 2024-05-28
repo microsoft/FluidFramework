@@ -14,10 +14,10 @@
  * @fileoverview In this file, we will test template validation.
  */
 
-import { expect } from "chai";
-
 import { constants } from "@fluid-experimental/property-common";
+import { expect } from "chai";
 import semver from "semver";
+
 import { TemplateValidator } from "../../templateValidator.js";
 import type { SchemaValidationResult } from "../../validationResultBuilder.js";
 import { SchemaValidator } from "../schemaValidator.js";

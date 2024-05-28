@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+
 import {
 	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,

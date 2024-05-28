@@ -4,8 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
+import { MockHandle } from "../mockHandle.js";
 
 describe("MockContainerRuntime", () => {
 	it("inherits its id from the datastore when set", () => {
@@ -59,5 +63,9 @@ describe("MockContainerRuntime", () => {
 			513,
 			"Should have finalized the ID in both containers.",
 		);
+	});
+
+	it("MockHandle is handle", () => {
+		assert(isFluidHandle(new MockHandle(5)));
 	});
 });

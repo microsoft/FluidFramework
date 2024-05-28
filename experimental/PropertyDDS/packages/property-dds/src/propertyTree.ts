@@ -8,37 +8,34 @@ import lodash from "lodash";
 // eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
-import { copy as cloneDeep } from "fastest-json-copy";
-import { Packr } from "msgpackr";
-
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-
-import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
 	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
-
 import {
 	BaseProperty,
 	NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
+import { copy as cloneDeep } from "fastest-json-copy";
+import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";
+
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**
@@ -150,16 +147,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
 };
 
 /**
- * Silly DDS example that models a six sided die.
- *
- * Unlike the typical 'Dice Roller' example where clients clobber each other's last roll in a
- * SharedMap, this 'SharedDie' DDS works by advancing an internal PRNG each time it sees a 'roll'
- * operation.
- *
- * Because all clients are using the same PRNG starting in the same state, they arrive at
- * consensus by simply applying the same number of rolls.  (A fun addition would be logging
- * who received which roll, which would need to change as clients learn how races are resolved
- * in the total order)
+ * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
 export class SharedPropertyTree extends SharedObject {
@@ -229,7 +217,7 @@ export class SharedPropertyTree extends SharedObject {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
-			let dm = (this.runtime.deltaManager as any).deltaManager;
+			let dm = (this.deltaManager as any).deltaManager;
 			if (dm.deltaManager !== undefined) {
 				dm = dm.deltaManager;
 			}
@@ -506,7 +494,7 @@ export class SharedPropertyTree extends SharedObject {
 		};
 	}
 	public pruneHistory() {
-		const msn = this.runtime.deltaManager.minimumSequenceNumber;
+		const msn = this.deltaManager.minimumSequenceNumber;
 
 		let lastKnownRemoteGuid = this.headCommitGuid;
 		// We use the reference GUID of the first change in the list
@@ -580,7 +568,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
-			summaryMinimumSequenceNumber: this.runtime.deltaManager.minimumSequenceNumber,
+			summaryMinimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 			useMH: this.useMH,
 			numChunks: 0,
 		};
@@ -725,7 +713,7 @@ export class SharedPropertyTree extends SharedObject {
 				);
 				const lastDelta = commitMetadata.sequenceNumber;
 
-				const dm = (this.runtime.deltaManager as any).deltaManager;
+				const dm = (this.deltaManager as any).deltaManager;
 				// TODO: This is accessing a private member of the delta manager, and should not be.
 				await dm.getDeltas(
 					"DocumentOpen",

@@ -4,9 +4,11 @@
  */
 
 import * as fs from "fs";
+
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { parse } from "json2csv";
-import { BaseFileLogger } from "./baseFileLogger";
+
+import { BaseFileLogger } from "./baseFileLogger.js";
 
 /**
  * FileLogger that writes events into a defined CSV file

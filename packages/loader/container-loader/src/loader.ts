@@ -12,7 +12,7 @@ import {
 	ILoaderOptions as ILoaderOptions1,
 	IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IConfigProviderBase,
@@ -24,23 +24,27 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { IClientDetails } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	UsageError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { Container, IPendingContainerState } from "./container.js";
+
+import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
-import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import type { IPendingContainerState } from "./serializedStateManager.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -223,6 +227,7 @@ export interface ILoaderServices {
 
 	/**
 	 * Blobs storage for detached containers.
+	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
@@ -237,6 +242,8 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  * @alpha
+ *
+ * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
 	size: number;
@@ -244,6 +251,11 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 	 * Return an array of all blob IDs present in storage
 	 */
 	getBlobIds(): string[];
+
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 };
 
 /**
@@ -334,7 +346,7 @@ export class Loader implements IHostLoader {
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
 			return this.resolveCore(
 				request,
-				pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
+				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
 			);
 		});
 	}
@@ -367,24 +379,6 @@ export class Loader implements IHostLoader {
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
-		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
-			| number
-			| undefined;
-		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
-			| string
-			| undefined;
-
-		if (
-			opsBeforeReturn === "sequenceNumber" &&
-			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
-		) {
-			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
-			throw new UsageError("sequenceNumber must be set to a non-negative integer");
-		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
-			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
-			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
-			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
-		}
 
 		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 	}
@@ -400,7 +394,6 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
-				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
 			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],

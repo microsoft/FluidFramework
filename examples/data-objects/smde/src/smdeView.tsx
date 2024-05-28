@@ -10,8 +10,7 @@ import {
 	TextSegment,
 	getTextAndMarkers,
 	reservedTileLabelsKey,
-} from "@fluidframework/sequence";
-
+} from "@fluidframework/sequence/internal";
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 

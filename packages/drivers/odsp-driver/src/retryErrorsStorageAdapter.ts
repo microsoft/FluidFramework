@@ -11,15 +11,17 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { runWithRetry } from "./retryUtils.js";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {

@@ -186,7 +186,10 @@ data:
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
             "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }},
-            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }}
+            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }},
+            "scrubUserDataInGlobalCheckpoints": {{ .Values.scribe.scrubUserDataInGlobalCheckpoints }},
+            "scrubUserDataInLocalCheckpoints": {{ .Values.scribe.scrubUserDataInLocalCheckpoints }},
+            "scrubUserDataInSummaries": {{ .Values.scribe.scrubUserDataInSummaries }}
         },
         "system": {
             "httpServer": {
@@ -198,7 +201,8 @@ data:
         },
         "usage": {
             "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
-            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
+            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }},
+            "httpUsageCountingEnabled": {{ .Values.usage.httpUsageCountingEnabled }}
         },
         "shared": {
             "transientTenants": {{ toJson .Values.shared.transientTenants }},

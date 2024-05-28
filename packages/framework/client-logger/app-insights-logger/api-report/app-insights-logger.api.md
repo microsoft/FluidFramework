@@ -6,7 +6,6 @@
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
 // @beta
 export interface CategoryFilter {
@@ -30,7 +29,8 @@ export interface NamespaceFilter {
     namespacePatternExceptions?: Set<string>;
 }
 
-export { TelemetryEventCategory }
+// @beta
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @beta
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);

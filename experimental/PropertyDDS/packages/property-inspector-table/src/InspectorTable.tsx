@@ -7,12 +7,12 @@
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
 import { type Theme, createStyles, withStyles } from "@material-ui/core/styles";
-import Skeleton from "react-loading-skeleton";
-
 import classNames from "classnames";
 import debounce from "lodash.debounce";
 import React, { createRef } from "react";
 import BaseTable, { type SortOrder } from "react-base-table";
+import Skeleton from "react-loading-skeleton";
+
 // eslint-disable-next-line import/no-unassigned-import
 import "react-base-table/styles.css";
 import { Empty, computeIconSize } from "./Empty.js";

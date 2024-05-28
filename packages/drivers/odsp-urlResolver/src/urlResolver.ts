@@ -5,20 +5,20 @@
 
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	OdspDriverUrlResolver,
 	createOdspUrl,
 	getOdspUrlParts,
 	isOdcUrl,
 	isSpoUrl,
-} from "@fluidframework/odsp-driver";
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver/internal";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fluidOfficeAndOneNoteServers = new Set([
 	"dev.fluidpreview.office.net",
@@ -31,8 +31,8 @@ const fluidOfficeAndOneNoteServers = new Set([
  */
 export class OdspUrlResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-		if (isOdspUrl(request.url)) {
-			const reqUrl = new URL(request.url);
+		const reqUrl = new URL(request.url);
+		if (isOdspUrl(reqUrl)) {
 			const contents = await getOdspUrlParts(reqUrl);
 			if (!contents) {
 				return undefined;
@@ -57,7 +57,7 @@ export class OdspUrlResolver implements IUrlResolver {
  *
  * @internal
  */
-export const isOdspUrl = (url: string): boolean => {
+const isOdspUrl = (url: URL): boolean => {
 	return isSpoUrl(url) || isOdcUrl(url);
 };
 

@@ -28,6 +28,7 @@ import {
 	FlexFieldSchema,
 } from "../../../feature-libraries/index.js";
 import { type TreeContent } from "../../../shared-tree/index.js";
+
 import { contextWithContentReadonly } from "./utils.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
@@ -36,9 +37,12 @@ const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
+	const cursor = context.checkout.forest.allocateCursor();
 
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 

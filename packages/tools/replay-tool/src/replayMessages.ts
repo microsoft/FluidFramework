@@ -6,9 +6,11 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -18,32 +20,32 @@ import {
 	ISnapshotWriterStorage,
 	ReplayFileDeltaConnection,
 	Replayer,
-} from "@fluidframework/file-driver";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+} from "@fluidframework/file-driver/internal";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
 	ITree,
 	ITreeEntry,
 	MessageType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-import { ReplayArgs } from "./replayArgs";
+} from "./helpers.js";
+import { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -907,15 +909,16 @@ async function assertDdsEqual(
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
 		const objectStorage = MockStorage.createFromSummary(summary);
-		const matrix = new SharedMatrix(
-			dataStoreRuntime as any,
+		const matrixFactory = SharedMatrix.getFactory();
+		const matrix = await matrixFactory.load(
+			dataStoreRuntime,
 			"1",
-			SharedMatrixFactory.Attributes,
+			{
+				deltaConnection,
+				objectStorage,
+			},
+			matrixFactory.attributes,
 		);
-		await matrix.load({
-			deltaConnection,
-			objectStorage,
-		});
 		return matrix;
 	}
 

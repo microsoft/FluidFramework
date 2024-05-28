@@ -249,6 +249,34 @@ describe("Undo and redo", () => {
 			expectJsonTree(view, editedState);
 			unsubscribe();
 		});
+
+		it(`${name} multiple times`, () => {
+			const tree = makeTreeFromJson(initialState);
+			const fork = tree.fork();
+
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			edit(tree, fork);
+
+			tree.merge(fork, false);
+			expectJsonTree(tree, editedState);
+			while (undoStack.length > 0) {
+				undoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, undoState ?? initialState);
+			while (redoStack.length > 0) {
+				redoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, editedState);
+			while (undoStack.length > 0) {
+				undoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, undoState ?? initialState);
+			while (redoStack.length > 0) {
+				redoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, editedState);
+			unsubscribe();
+		});
 	}
 
 	it("can undo before and after rebasing a branch", () => {
@@ -330,42 +358,6 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["A", "B"]);
 		redoStack.pop()?.revert();
 		expectJsonTree(tree, ["B", "C"]);
-		unsubscribe();
-	});
-
-	it("can undo and redo an insert multiple times", () => {
-		const tree = makeTreeFromJson(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		unsubscribe();
-	});
-
-	it("can undo and redo a move multiple times", () => {
-		const tree = makeTreeFromJson(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		tree.editor.sequenceField(rootField).move(1, 1, 0);
-
-		expectJsonTree(tree, ["B", "A"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "A"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "A"]);
 		unsubscribe();
 	});
 });

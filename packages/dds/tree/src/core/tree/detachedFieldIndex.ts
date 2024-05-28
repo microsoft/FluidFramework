@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
@@ -19,6 +20,7 @@ import {
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+
 import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
@@ -83,11 +85,11 @@ export class DetachedFieldIndex {
 	/**
 	 * Removes all entries from the index.
 	 */
-	public purge() {
+	public purge(): void {
 		this.detachedNodeToField.clear();
 	}
 
-	public updateMajor(current: Major, updated: Major) {
+	public updateMajor(current: Major, updated: Major): void {
 		const innerCurrent = this.detachedNodeToField.get(current);
 		if (innerCurrent !== undefined) {
 			this.detachedNodeToField.delete(current);

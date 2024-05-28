@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export type { IAudience, IAudienceOwner } from "./audience.js";
+export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
 export type { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
@@ -75,4 +75,4 @@ export type {
 	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IUsageError,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";

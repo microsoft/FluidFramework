@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "..//index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { IdCompressor } from "../idCompressor.js";
+import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
 import {
 	numericUuidFromStableId,
 	offsetNumericUuid,

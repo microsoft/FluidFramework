@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISubscribable } from "../../events/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { Listenable } from "../../events/index.js";
 import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	Anchor,
@@ -16,6 +17,7 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
+
 import type { IEditableForest } from "./editableForest.js";
 
 /**
@@ -35,16 +37,19 @@ import type { IEditableForest } from "./editableForest.js";
  */
 export interface ForestEvents {
 	/**
-	 * The forest is about to be changed.
-	 * Emitted before the first change in a batch of changes.
+	 * A new root field was just created in this forest.
 	 */
-	beforeChange(): void;
+	afterRootFieldCreated(key: FieldKey): void;
 
 	/**
-	 * The forest was just changed.
-	 * Emitted after the last change in a batch of changes.
+	 * The forest is about to be changed.
+	 * Emitted before each change in a batch of changes.
+	 * @remarks
+	 * This is the last chance for users of the forest to remove cursors from the forest before the edit.
+	 * Removing these cursors is important since they are not allowed to live across edits and
+	 * not clearing them can lead to corruption of in memory structures.
 	 */
-	afterChange(): void;
+	beforeChange(): void;
 }
 
 /**
@@ -55,7 +60,7 @@ export interface ForestEvents {
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @internal
  */
-export interface IForestSubscription extends ISubscribable<ForestEvents> {
+export interface IForestSubscription extends Listenable<ForestEvents> {
 	/**
 	 * Set of anchors this forest is tracking.
 	 *

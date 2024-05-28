@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, expect } from "chai";
 import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
+import { assert, expect } from "chai";
 
 import {
 	VersionOptions,
-	updateTypeTestDependency,
 	previousVersion,
 	resetBrokenTests,
-} from "../../src/commands/typetests";
+	updateTypeTestDependency,
+} from "../../src/commands/typetests.js";
 
 /**
  * A minimal test package.json. It defines only the required fields according to the type definition.
