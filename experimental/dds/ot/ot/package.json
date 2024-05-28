@@ -109,7 +109,7 @@
 		"prettier": "~3.0.3",
 		"quill-delta": "^4.2.2",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

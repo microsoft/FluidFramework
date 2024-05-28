@@ -175,7 +175,7 @@
 		"random-js": "^2.1.0",
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
