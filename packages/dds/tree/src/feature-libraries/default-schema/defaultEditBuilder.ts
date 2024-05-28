@@ -196,7 +196,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: valueFieldKind.identifier,
 					change,
-					crossFieldKeys: [],
 				};
 				this.modularBuilder.submitChanges([build, edit]);
 			},
@@ -229,7 +228,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: optional.identifier,
 					change,
-					crossFieldKeys: [],
 				};
 				edits.push(edit);
 
@@ -305,14 +303,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field: sourceField,
 					fieldKind: sequence.identifier,
 					change: brand(moveOut),
-					crossFieldKeys: [[CrossFieldTarget.Source, undefined, moveId]],
 				},
 				{
 					type: "field",
 					field: adjustedAttachField,
 					fieldKind: sequence.identifier,
 					change: brand(moveIn),
-					crossFieldKeys: [[CrossFieldTarget.Destination, undefined, moveId]],
 				},
 			]);
 		}
@@ -337,7 +333,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: sequence.identifier,
 					change,
-					crossFieldKeys: [],
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.

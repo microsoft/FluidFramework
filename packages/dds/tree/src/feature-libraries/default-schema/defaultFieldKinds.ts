@@ -47,6 +47,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 	createEmpty: () => 0,
+	getCrossFieldKeys: () => [],
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {

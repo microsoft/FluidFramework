@@ -44,6 +44,7 @@ export {
 	FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export {
+	CrossFieldKey,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,

@@ -137,6 +137,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
 	createEmpty: () => undefined,
+	getCrossFieldKeys: (_change) => [],
 };
 
 const singleNodeField = new FieldKindWithEditor(

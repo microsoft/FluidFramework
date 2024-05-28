@@ -96,6 +96,7 @@ export const valueHandler = {
 	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
 	createEmpty: () => 0,
+	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FieldKindWithEditor(

@@ -102,6 +102,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	createEmpty: (): GenericChangeset => [],
+	getCrossFieldKeys: (_change) => [],
 };
 
 function rebaseGenericChange(

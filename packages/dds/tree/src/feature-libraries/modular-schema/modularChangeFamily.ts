@@ -2330,7 +2330,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							new Map(),
 							new BTree(),
 							this.idAllocator,
-							change.crossFieldKeys ?? [],
+							getChangeHandler(
+								(this.changeFamily as ModularChangeFamily).fieldKinds,
+								change.fieldKind,
+							).getCrossFieldKeys(change.change),
 					  ),
 			),
 		);
@@ -2470,7 +2473,6 @@ export interface FieldEditDescription {
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
-	crossFieldKeys?: CrossFieldKey[];
 }
 
 /**

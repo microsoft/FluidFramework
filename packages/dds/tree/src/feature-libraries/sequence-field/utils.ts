@@ -15,6 +15,7 @@ import {
 } from "../../core/index.js";
 import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
+	CrossFieldKey,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -966,4 +967,23 @@ export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 				revision: effect.finalEndpoint.revision ?? effect.revision,
 		  }
 		: { revision: effect.revision, localId: effect.id };
+}
+
+// XXX Should be key ranges
+export function getCrossFieldKeys(change: Changeset): CrossFieldKey[] {
+	const keys: CrossFieldKey[] = [];
+	for (const mark of change) {
+		switch (mark.type) {
+			case "MoveOut":
+				keys.push([CrossFieldTarget.Source, mark.revision, mark.id]);
+				break;
+			case "MoveIn":
+				keys.push([CrossFieldTarget.Destination, mark.revision, mark.id]);
+				break;
+			default:
+				break;
+		}
+	}
+
+	return keys;
 }

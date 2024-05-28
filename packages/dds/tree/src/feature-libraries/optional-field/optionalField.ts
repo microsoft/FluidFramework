@@ -700,6 +700,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change.valueReplace === undefined,
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
+	getCrossFieldKeys: (_change) => [],
 };
 
 function* relevantRemovedRoots(
