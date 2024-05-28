@@ -18,7 +18,7 @@ Application authors are encouraged to develop a compatibility policy which they 
 
 To make the details of schema compatibilities that SharedTree supports more clear,
 `TreeView.error` has been functionally replaced with the `compatibility` property.
-Users desiring the previous strict behavior can use `view.compatibility.isExactMatch` at appropriate places of application logic.
+Users desiring the previous strict behavior can use `view.compatibility.isExactMatch` at appropriate places in application logic.
 
 In addition to this functional change to the types of collaboration that `SharedTree` permits, several APIs have been tweaked.
 

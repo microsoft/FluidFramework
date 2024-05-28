@@ -51,7 +51,7 @@ The following types of changes are backward-compatible under this definition:
 2. Adding to the set of allowed types for a field
 3. Relaxing a field kind to a more general field kind
 
-Adding new schemas (rather than modifying existing ones) is allowed and a typical reason to make a change to the allowed types for a field.
+Adding new schemas (rather than modifying existing ones) is allowed and is a typical reason to make a change to the allowed types for a field.
 Examples for each type of change can be found below.
 Each change should be interpreted independently from the others (rather than in aggregate):
 
@@ -195,9 +195,9 @@ Once the application version that understands both schemas saturates sufficientl
 
 > **_WARNING:_** The policy outlined in this section is not currently implementable. There are plans to extend the `compatibility` API with information that allows implementing policies such as this, but the exact API is not finalized.
 
-Adding an optional field ot an object node is one of the more safe types of schema changes from the perspective of clients running older code collaborating with clients running newer code.
+Adding an optional field to an object node is one of the safer types of schema changes from the perspective of clients running older code collaborating with clients running newer code.
 This is because newer code must already have fallback behavior for absence of the optional field for backward-compatibility reasons, and older application code can generally just "ignore the extra field"
-That isn't strictly true--e.g. old code code using a spread operation or reflection APIs like `Object.keys` might fail upon encountering objects with a populated optional field it wasn't expecting--but this caveat might be acceptable for application authors enough for them to allow collaboration between such clients.
+That isn't strictly true--e.g. old client code code using a spread operation or reflection APIs like `Object.keys` might fail upon encountering objects with a populated optional field it wasn't expecting--but this caveat might be acceptable for application authors enough for them to allow collaboration between such clients.
 
 This policy can be implemented as follows:
 

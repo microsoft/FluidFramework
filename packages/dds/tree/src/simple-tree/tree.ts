@@ -72,7 +72,7 @@ export interface ITree extends IFluidLoadable {
 	 *
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `schematize` again.
-	 * @deprecated - Replaced by {@link ITree.viewWith}. Use that method instead. Note that `viewWith` does not implicitly initialize the tree:
+	 * @deprecated Replaced by {@link ITree.viewWith}. Use that method instead. Note that `viewWith` does not implicitly initialize the tree:
 	 * to initialize it, call {@link TreeView.initialize} on the returned view.
 	 */
 	schematize<TRoot extends ImplicitFieldSchema>(
@@ -146,7 +146,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * An editable view of a branch of a shared tree based on some schema.
  *
  * This schema--known as the view schema--may or may not align the stored schema of the document.
- * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility|compatibility}.
+ * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
  *
  * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
  * choose a schema compatibility policy that aligns with their application's needs.
@@ -164,7 +164,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	 * The current root of the tree.
 	 *
 	 * If in the out of schema state, accessing this will throw.
-	 * To handle this case, check {@link TreeView.compatibility|compatibility}'s {@link SchemaCompatibilityStatus.canView|canView} before using.
+	 * To handle this case, check {@link TreeView.compatibility | compatibility}'s {@link SchemaCompatibilityStatus.canView | canView} before using.
 	 *
 	 * To get notified about changes to this field,
 	 * use {@link TreeViewEvents.rootChanged} via `view.events.on("rootChanged", callback)`.
