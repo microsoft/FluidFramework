@@ -11,6 +11,7 @@ import {
 	ITestDataObject,
 	describeCompat,
 	itExpects,
+	type CompatApis,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
@@ -52,11 +53,26 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 
 function makeTestContainerConfig(
 	provider: ITestObjectProvider,
+	apis: CompatApis,
 	registry: ChannelFactoryRegistry,
 ): ITestContainerConfig {
-	// When running in cross client compat mode, disable returning local Ids for attachment blobs
-	// because that is not supported by 1.x.
-	const noLocalIdsForAttachmentBlobs = provider.type === "TestObjectProviderWithVersionedLoad";
+	// When running in cross client compat mode, disable local ids for attachment blobs in case one of the
+	// versions is 1.x because it doesn't support local ids.
+	let noLocalIdsForAttachmentBlobs = true;
+	if (provider.type === "TestObjectProviderWithVersionedLoad") {
+		assert(apis.containerRuntime !== undefined, "apis.containerRuntime not defined");
+		assert(
+			apis.containerRuntimeForLoading !== undefined,
+			"apis.containerRuntimeForLoading not defined",
+		);
+		// If the container runtimes used for creation or loading are running version 1.x, disable local ids
+		// for blobs in these cases.
+		const version = apis.containerRuntime.version;
+		const version2 = apis.containerRuntimeForLoading.version;
+		if (version.startsWith("1.") || version2.startsWith("1.")) {
+			noLocalIdsForAttachmentBlobs = true;
+		}
+	}
 	return {
 		runtimeOptions: {
 			summaryOptions: {
@@ -100,7 +116,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
-		testContainerConfig = makeTestContainerConfig(provider, [
+		testContainerConfig = makeTestContainerConfig(provider, apis, [
 			["sharedString", SharedString.getFactory()],
 		]);
 	});
@@ -291,7 +307,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
-		testContainerConfig = makeTestContainerConfig(provider, [
+		testContainerConfig = makeTestContainerConfig(provider, apis, [
 			["sharedString", SharedString.getFactory()],
 		]);
 	});
@@ -438,14 +454,14 @@ function serializationTests({
 			getDetachedBlobStorage === undefined ? "without" : "with"
 		} detachedBlobStorage`,
 		"NoCompat",
-		(getTestObjectProvider) => {
+		(getTestObjectProvider, apis) => {
 			let provider: ITestObjectProvider;
 			let testContainerConfig: ITestContainerConfig;
 			let detachedBlobStorage: IDetachedBlobStorage | undefined;
 			beforeEach(async function () {
 				provider = getTestObjectProvider();
 				detachedBlobStorage = getDetachedBlobStorage?.();
-				testContainerConfig = makeTestContainerConfig(provider, []);
+				testContainerConfig = makeTestContainerConfig(provider, apis, []);
 			});
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(
