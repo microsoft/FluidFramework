@@ -67,9 +67,9 @@ export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof Co
     defaultFactory: IFluidDataStoreFactory;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     dependencyContainer?: any;
-    requestHandlers?: RuntimeRequestHandler[] | undefined;
-    runtimeOptions?: IContainerRuntimeOptions | undefined;
-    provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
+    provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }) => ContainerRuntimeFactoryWithDefaultDataStore;
 
 // @internal (undocumented)
