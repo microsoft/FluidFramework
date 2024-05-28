@@ -48,6 +48,7 @@ import {
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
+// eslint-disable-next-line import/no-deprecated
 import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
@@ -76,6 +77,7 @@ export function cursorFromUnhydratedRoot(
 	);
 }
 
+/* eslint-disable import/no-deprecated */
 function isTreeConfiguration(
 	config: TreeViewConfiguration | TreeConfiguration,
 ): config is TreeConfiguration {
@@ -84,6 +86,7 @@ function isTreeConfiguration(
 		typeof (config as TreeConfiguration).initialTree === "function"
 	);
 }
+/* eslint-enable import/no-deprecated */
 
 /**
  * Generates a configuration object (schema + initial tree) for a FlexTree.
@@ -98,6 +101,7 @@ function isTreeConfiguration(
  * I wrote these docs without a ton of context, they can probably be improved.
  */
 export function toFlexConfig(
+	// eslint-disable-next-line import/no-deprecated
 	config: TreeViewConfiguration | TreeConfiguration,
 	nodeKeyManager: NodeKeyManager,
 	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,

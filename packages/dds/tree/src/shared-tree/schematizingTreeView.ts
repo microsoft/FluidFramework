@@ -20,6 +20,7 @@ import {
 	ImplicitFieldSchema,
 	SchemaCompatibilityStatus,
 	InsertableTreeFieldFromImplicitField,
+	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
@@ -77,6 +78,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
+		// eslint-disable-next-line import/no-deprecated
 		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
@@ -191,7 +193,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
-		const canView = result.write === Compatibility.Compatible;
+		// TODO: AB#8121: Weaken this check to support viewing under additional circumstances.
+		// In the near term, this should support viewing documents with additional optional fields in their schema on object types.
+		// Longer-term (as demand arises), we could also add APIs to constructing view schema to allow for more flexibility
+		// (e.g. out-of-schema content handlers could allow support for viewing docs which have extra allowed types in a particular field)
+		const canView =
+			result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
 		const canUpgrade = result.read === Compatibility.Compatible;
 		const isExactMatch = canView && canUpgrade;
 		const compatibility: SchemaCompatibilityStatus = {
@@ -221,9 +228,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 					lastRoot = this.root;
 					this.events.emit("rootChanged");
 				}
+
+				this.events.emit("afterBatch");
 			});
 
-			const onViewDispose = () => {
+			const onViewDispose = (): void => {
 				cleanupCheckOutEvents();
 				this.view = undefined;
 				if (!this.disposed) {
@@ -315,7 +324,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 /**
  * Creates a view that self-disposes whenenever the stored schema changes.
- * This may only be called when the schema is already known to be read-compatible (typically via ensureSchema).
+ * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema<TRoot extends FlexFieldSchema>(
 	checkout: TreeCheckout,
@@ -329,7 +338,8 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 		assert(
-			compatibility.write === Compatibility.Compatible,
+			compatibility.write === Compatibility.Compatible &&
+				compatibility.read === Compatibility.Compatible,
 			0x8c3 /* requireSchema invoked with incompatible schema */,
 		);
 	}

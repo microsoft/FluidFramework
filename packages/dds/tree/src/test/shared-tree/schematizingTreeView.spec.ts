@@ -18,7 +18,11 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeConfiguration,
+	type ImplicitFieldSchema,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { disposeSymbol } from "../../util/index.js";
@@ -67,7 +71,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 	});
 
-	const getChangeData = (view: SchematizingSimpleTreeView<any>) => {
+	const getChangeData = <T extends ImplicitFieldSchema>(view: SchematizingSimpleTreeView<T>) => {
 		return view.compatibility.canView
 			? view.root
 			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;
@@ -119,6 +123,8 @@ describe("SchematizingSimpleTreeView", () => {
 		]);
 	});
 
+	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using
+	// an intermediate state where canView is true but canUpgrade is false.
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
@@ -129,11 +135,13 @@ describe("SchematizingSimpleTreeView", () => {
 		// Modify schema to invalidate view
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number, schema.string])));
 
-		assert.deepEqual(log, [["schemaChanged", 5]]);
+		assert.deepEqual(log, [
+			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
+		]);
 		log.length = 0;
 		assert.equal(view.compatibility.isExactMatch, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.canView, true);
+		assert.equal(view.compatibility.canView, false);
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -177,14 +185,17 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 	});
 
-	it("Open document using view schema that allows a subset of stored schema documents", () => {
+	it("Attempt to open document using view schema that allows a subset of stored schema documents", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		assert.equal(view.compatibility.canView, true);
+		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isExactMatch, false);
-		assert.equal(view.root, 6);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
 
 		assert.throws(
 			() => view.upgradeSchema(),

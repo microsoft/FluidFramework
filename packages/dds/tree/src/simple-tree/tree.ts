@@ -173,7 +173,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	/**
 	 * The current root of the tree.
 	 *
-	 * If in the out of schema state, accessing this will throw.
+	 * If the view schema not sufficiently compatible with the stored schema, accessing this will throw.
 	 * To handle this case, check {@link TreeView.compatibility | compatibility}'s {@link SchemaCompatibilityStatus.canView | canView} before using.
 	 *
 	 * To get notified about changes to this field,
@@ -227,28 +227,49 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 
 /**
  * Information about a view schema's compatibility with the document's stored schema.
+ *
+ * See SharedTree's README for more information about choosing a compatibility policy.
  * @public
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view schema is an exact match to the stored schema.
+	 * Whether the view schema allows exactly the same set of documents as the stored schema.
+	 *
+	 * @remarks
+	 * Equivalence here is defined in terms of allowed documents because there are some degenerate cases where schemas are not
+	 * equal in a strict sense but still allow the same documents, and the document notion is more useful to applications.
+	 *
+	 * Examples which are expressible where this may occur include:
+	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
+	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (ex: an object node type containing a required field with no allowed types)
+	 *
+	 * These cases are typically not interesting to applications.
 	 */
 	readonly isExactMatch: boolean;
 
 	/**
 	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
-	 * This is true when the documents allowed by the view schema are a subset of those allowed by the stored schema.
 	 * If false, {@link TreeView.root} will throw upon access.
 	 *
-	 * Be aware that even when this is true, application logic may not correctly tolerate the documents allowable by the stored schema!
-	 * For example, if the stored schema allows types that the view schema does not, and the application doesn't have fallback logic
-	 * for unrecognized types as part of a field, it may throw when trying to read the document!
+	 * A necessary condition for this to be true is that the documents allowed by the view schema are a subset of those allowed by the stored schema.
+	 * This is not sufficient: the simple-tree layer does not tolerate read APIs which return out-of-schema data.
+	 * For example, if the view schema for a node has a required `Point` field but the stored schema has an optional `Point` field,
+	 * read APIs on the view schema do not work correctly when the document has a node with a missing `Point` field.
+	 * Similar issues happen when the view schema has a field with less allowed types than the stored schema and the document actually leverages those types.
+	 *
+	 * Currently, this field is true iff `isExactMatch` is true.
+	 * Do not rely on this:
+	 * there are near-term plans to extend support for viewing documents when the stored schema contains additional optional fields not present in the view schema.
+	 * The other two types of backward-compatible changes (field relaxations and addition of allowed field types) will eventually be supported as well,
+	 * likely through out-of-schema content adapters that the application can provide alongside their view schema.
+	 *
+	 * Be aware that even with these SharedTree limitations fixed, application logic may not correctly tolerate the documents allowable by the stored schema!
 	 * Application authors are encouraged to read docs/user-facing/schema-evolution.md and choose a schema compatibility policy that
 	 * aligns with their application's needs.
 	 *
 	 * @remarks
-	 * When the view schema is a strict superset of the stored schema, this is false because writes to the document using the view
-	 * schema could make the document violate its stored schema.
+	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
+	 * this is false because writes to the document using the view schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read write access to the tree.
 	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *

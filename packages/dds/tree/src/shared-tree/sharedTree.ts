@@ -48,6 +48,7 @@ import {
 import {
 	ITree,
 	ImplicitFieldSchema,
+	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
 	TreeView,
 	type TreeViewConfiguration,
@@ -298,6 +299,7 @@ export class SharedTree
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
+		// eslint-disable-next-line import/no-deprecated
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
