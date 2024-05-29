@@ -68,7 +68,7 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => array.removeAt(5),
 					validateUsageError(
-						/Index value passed to TreeArrayNode.removeAt is too large./,
+						/Index value passed to TreeArrayNode.removeAt is out of bounds./,
 					),
 				);
 				assert.throws(
@@ -91,7 +91,7 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => array.insertAt(4, 0),
 					validateUsageError(
-						/Index value passed to TreeArrayNode.insertAt is too large./,
+						/Index value passed to TreeArrayNode.insertAt is out of bounds./,
 					),
 				);
 				assert.throws(
@@ -100,7 +100,7 @@ describe("ArrayNode", () => {
 				);
 			});
 		});
-
+		
 		describe("removeRange", () => {
 			it("no arguments", () => {
 				const jsArray = [0, 1, 2];

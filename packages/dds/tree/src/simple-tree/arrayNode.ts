@@ -639,12 +639,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
-		validateIndex(
-			index,
-			field,
-			false,
-			"Index value passed to TreeArrayNode.insertAt is too large.",
-		);
+		validateIndex(index, field, "insertAt", true);
 		field.insertAt(index, this.#cursorFromFieldData(value));
 	}
 	public insertAtStart(...value: Insertable<T>): void {
@@ -655,12 +650,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
-		validateIndex(
-			index,
-			field,
-			false,
-			"Index value passed to TreeArrayNode.removeAt is too large.",
-		);
+		validateIndex(index, field, "removeAt");
 		field.removeAt(index);
 	}
 	public removeRange(start?: number, end?: number): void {
@@ -678,27 +668,27 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
+		const field = getSequenceField(this);
+		validateIndex(sourceIndex, field, "moveToStart");
 		if (source !== undefined) {
-			getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
+			field.moveToStart(sourceIndex, getSequenceField(source));
 		} else {
-			getSequenceField(this).moveToStart(sourceIndex);
+			field.moveToStart(sourceIndex);
 		}
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
+		const field = getSequenceField(this);
+		validateIndex(sourceIndex, field, "moveToEnd");
 		if (source !== undefined) {
-			getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
+			field.moveToEnd(sourceIndex, getSequenceField(source));
 		} else {
-			getSequenceField(this).moveToEnd(sourceIndex);
+			field.moveToEnd(sourceIndex);
 		}
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this)
-		validateIndex(
-			index,
-			field,
-			false,
-			"Index value passed to TreeArrayNode.removeAt is too large.",
-		);
+		const field = getSequenceField(this);
+		validateIndex(index, field, "moveToIndex", true);
+		validateIndex(sourceIndex, field, "moveToIndex");
 		if (source !== undefined) {
 			field.moveToIndex(index, sourceIndex, getSequenceField(source));
 		} else {
@@ -706,17 +696,17 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		const field = getSequenceField(this);
+		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToStart");
 		if (source !== undefined) {
-			getSequenceField(this).moveRangeToStart(
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
+			field.moveRangeToStart(sourceStart, sourceEnd, getSequenceField(source));
 		} else {
-			getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
+			field.moveRangeToStart(sourceStart, sourceEnd);
 		}
 	}
 	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		const field = getSequenceField(this);
+		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToEnd");
 		if (source !== undefined) {
 			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
 		} else {
@@ -729,6 +719,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
+		const field = getSequenceField(this);
+		validateIndex(index, field, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToIndex");
 		if (source !== undefined) {
 			getSequenceField(this).moveRangeToIndex(
 				index,
@@ -864,17 +857,34 @@ function validatePositiveIndex(index: number): void {
 function validateIndex(
 	index: number,
 	array: { readonly length: number },
+	methodName: string,
 	allowOnePastEnd: boolean = false,
-	error: string,
 ): void {
 	validatePositiveIndex(index);
 	if (allowOnePastEnd) {
 		if (index > array.length) {
-			throw new UsageError(error);
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
 		}
 	} else {
 		if (index >= array.length) {
-			throw new UsageError(error);
+			throw new UsageError(
+				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+			);
 		}
+	}
+}
+
+function validateIndexRange(
+	startIndex: number,
+	endIndex: number,
+	array: { readonly length: number },
+	methodName: string,
+): void {
+	validateIndex(startIndex, array, methodName);
+	validateIndex(endIndex, array, methodName);
+	if (startIndex < endIndex) {
+		throw new UsageError(`Too large of "start" value passed to TreeArrayNode.${methodName}.`);
 	}
 }
