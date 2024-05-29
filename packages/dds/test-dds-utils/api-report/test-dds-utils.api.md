@@ -67,8 +67,8 @@ export function createDDSFuzzSuite<TChannelFactory extends IChannelFactory, TOpe
 
 // @internal
 export namespace createDDSFuzzSuite {
-    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
-    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
 // @internal

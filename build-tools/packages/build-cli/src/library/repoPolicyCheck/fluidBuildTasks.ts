@@ -16,6 +16,7 @@ import {
 	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";
@@ -206,11 +207,11 @@ interface EslintConfig {
  * @param json - content of the package.json
  * @returns list of build script names that the eslint depends on
  */
-function eslintGetScriptDependencies(
+async function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
 	json: Readonly<PackageJson>,
-): (string | string[])[] {
+): Promise<(string | string[])[]> {
 	if (json.scripts?.eslint === undefined) {
 		return [];
 	}
@@ -224,7 +225,7 @@ function eslintGetScriptDependencies(
 	let config: EslintConfig;
 	try {
 		const { ext } = path.parse(eslintConfig);
-		if (ext !== ".js" && ext !== ".cjs") {
+		if (ext !== ".js" && ext !== ".cjs" && ext !== ".mjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
@@ -678,20 +679,23 @@ export const handlers: Handler[] = [
 				return;
 			}
 			try {
-				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (error: unknown) {
 				return (error as Error).message;
 			}
 		},
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
+		resolver: async (
+			file: string,
+			root: string,
+		): Promise<{ resolved: boolean; message?: string }> => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			await updatePackageJsonFileAsync(path.dirname(file), async (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
 				try {
-					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (error: unknown) {
 					result = { resolved: false, message: (error as Error).message };
