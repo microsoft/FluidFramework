@@ -881,20 +881,20 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("generic", () => {
-			const expectedInverse = buildChangeset([
-				{
-					type: "field",
-					field: pathA0A,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse1),
-				},
-				{
-					type: "field",
-					field: pathB,
-					fieldKind: valueField.identifier,
-					change: brand(valueInverse2),
-				},
-			]);
+			const expectedInverse = Change.build(
+				{ family, maxId: rootChange1aGeneric.maxId },
+				Change.field(
+					fieldA,
+					genericFieldKind.identifier,
+					genericFieldKind.changeHandler.createEmpty(),
+					Change.nodeWithId(
+						0,
+						{ localId: brand(1) },
+						Change.field(fieldA, valueField.identifier, valueInverse1),
+					),
+				),
+				Change.field(fieldB, valueField.identifier, valueInverse2),
+			);
 
 			assert.deepEqual(
 				family.invert(makeAnonChange(rootChange1aGeneric), false),
