@@ -19,6 +19,9 @@ import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ITreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -28,13 +31,9 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -57,6 +56,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -292,7 +292,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
 

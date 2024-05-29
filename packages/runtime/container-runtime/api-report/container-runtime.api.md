@@ -13,7 +13,7 @@ import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IClientDetails } from '@fluidframework/driver-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
@@ -22,7 +22,7 @@ import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions/internal';
 import { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IEnvelope } from '@fluidframework/runtime-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -41,28 +41,28 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
 import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions/internal';
-import { ISummaryAck } from '@fluidframework/protocol-definitions';
-import { ISummaryContent } from '@fluidframework/protocol-definitions';
-import { ISummaryNack } from '@fluidframework/protocol-definitions';
+import { ISummaryAck } from '@fluidframework/driver-definitions/internal';
+import { ISummaryContent } from '@fluidframework/driver-definitions/internal';
+import { ISummaryNack } from '@fluidframework/driver-definitions/internal';
 import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import { MessageType } from '@fluidframework/protocol-definitions';
+import { MessageType } from '@fluidframework/driver-definitions/internal';
 import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions/internal';
@@ -900,7 +900,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 // @alpha
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
-    readonly forcedFullTree: boolean;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";

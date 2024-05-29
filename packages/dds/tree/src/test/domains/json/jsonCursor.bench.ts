@@ -42,7 +42,7 @@ import {
 import { brand, JsonCompatible } from "../../../util/index.js";
 
 import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
-import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
+import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
@@ -62,7 +62,8 @@ function bench(
 	data: {
 		name: string;
 		getJson: () => JsonCompatible;
-		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: unknown[]) => void) => unknown;
+		// Some synthetic workload that invokes this callback with numbers from the data.
+		dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => void;
 	}[],
 ) {
 	const schemaCollection = new SchemaBuilder({
@@ -156,13 +157,7 @@ function bench(
 				string,
 				(
 					cursor: ITreeCursor,
-					// TODO: use something other than `any`
-					/* eslint-disable @typescript-eslint/no-explicit-any */
-					dataConsumer: (
-						cursor: ITreeCursor,
-						calculate: (...operands: any[]) => void,
-					) => any,
-					/* eslint-enable @typescript-eslint/no-explicit-any */
+					dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => unknown,
 				) => void,
 			][] = [
 				["cursorToJsonObject", cursorToJsonObject],
@@ -170,7 +165,7 @@ function bench(
 				["mapTreeFromCursor", mapTreeFromCursor],
 				["sum", sum],
 				["sum-map", sumMap],
-				["averageTwoValues", averageTwoValues],
+				["averageValues", averageValues],
 			];
 
 			for (const [factoryName, factory] of cursorFactories) {
@@ -203,10 +198,7 @@ const canada = generateCanada(
 	isInPerformanceTestingMode ? undefined : [2, 10],
 );
 
-function extractCoordinatesFromCanada(
-	cursor: ITreeCursor,
-	calculate: (x: number, y: number) => void,
-): void {
+function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number) => void): void {
 	cursor.enterField(Canada.SharedTreeFieldKey.features);
 	cursor.enterNode(0);
 	cursor.enterField(EmptyKey);
@@ -232,7 +224,8 @@ function extractCoordinatesFromCanada(
 			cursor.exitNode();
 			cursor.exitField();
 
-			calculate(x, y);
+			calculate(x);
+			calculate(y);
 		}
 
 		cursor.exitField();
@@ -323,7 +316,7 @@ describe("ITreeCursor", () => {
 		{
 			name: "canada",
 			getJson: () => canada as unknown as JsonCompatible,
-			dataConsumer: extractCoordinatesFromCanada,
+			dataConsumer: (cursor) => averageValues(cursor, extractCoordinatesFromCanada),
 		},
 	]);
 	bench([

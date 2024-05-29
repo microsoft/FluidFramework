@@ -121,7 +121,7 @@
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",
 		"c8": "^8.0.1",
@@ -137,7 +137,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -147,6 +147,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_DevtoolsProps": {
+				"backCompat": false
+			}
+		}
 	}
 }

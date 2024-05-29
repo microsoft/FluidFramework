@@ -19,7 +19,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import * as Validator from "jsonschema";
 
 import {

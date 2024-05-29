@@ -65,9 +65,9 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema));
+				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
@@ -129,7 +129,7 @@ for (const testOpts of testMatrix) {
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 
 				if (container.connectionState !== ConnectionState.Connected) {
@@ -149,6 +149,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[0],
+				"2",
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -175,10 +176,10 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema));
+				({ container } = await client.getContainer(containerId, schema, "2"));
 				map1 = container.initialObjects.map1 as SharedMap;
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 
 				map1 = container.initialObjects.map1 as SharedMap;
 				map1.set(testKey, expectedValue);
@@ -203,6 +204,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[versions.length - 1],
+				"2",
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -215,9 +217,14 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: client should throw an error.
 		 */
 		it("can handle non-existing container", async () => {
-			const resources = client.viewContainerVersion("badidonviewversion", schema, {
-				id: "whatever",
-			});
+			const resources = client.viewContainerVersion(
+				"badidonviewversion",
+				schema,
+				{
+					id: "whatever",
+				},
+				"2",
+			);
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				assert.strictEqual(

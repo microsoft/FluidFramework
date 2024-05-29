@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatible, JsonCompatibleObject } from "../../../util/index.js";
+import {
+	JsonCompatible,
+	JsonCompatibleObject,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+	isReadonlyArray,
+} from "../../../util/index.js";
 
-function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatible {
-	if (Array.isArray(obj)) {
+function cloneObject(
+	obj: JsonCompatibleReadOnlyObject | readonly JsonCompatibleReadOnly[],
+): JsonCompatible {
+	if (isReadonlyArray(obj)) {
 		// PERF: 'Array.map()' was ~44% faster than looping over the array. (node 14 x64)
 		return obj.map(clone);
 	} else {
@@ -19,7 +27,7 @@ function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatib
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: clone(obj[key] as JsonCompatible),
+				value: clone(obj[key] as JsonCompatibleReadOnly),
 			});
 		}
 		return result;
@@ -31,7 +39,7 @@ function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatib
  * Used as a real-world-ish baseline to measure the overhead of using ITreeCursor
  * in a scenario where we're reifying a domain model for the application.
  */
-export function clone(value: JsonCompatible): JsonCompatible {
+export function clone(value: JsonCompatibleReadOnly): JsonCompatible {
 	// PERF: Separate clone vs. cloneObject yields showed improvements with 'canada.json' in the past,
 	// but for the current code the difference is within noise ( < 3%) (node 14 x64).
 	return typeof value !== "object" || value === null ? value : cloneObject(value);

@@ -62,7 +62,6 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
@@ -88,7 +87,7 @@
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

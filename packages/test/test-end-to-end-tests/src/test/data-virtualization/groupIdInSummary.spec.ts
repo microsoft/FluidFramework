@@ -16,8 +16,8 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,
@@ -25,6 +25,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -88,11 +90,20 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	const assertOmittedTree = (
 		snapshotTree: ISnapshotTree,
 		groupId: string | undefined,
+		blobContents: Map<string, ArrayBuffer>,
 		message: string,
 	) => {
+		// Only local driver supports consistently omitting data from snapshots
+		if (provider.driver.type !== "local") {
+			return;
+		}
 		assert(snapshotTree.groupId === groupId, message);
-		assert(Object.entries(snapshotTree.trees).length === 0, message);
-		assert(Object.entries(snapshotTree.blobs).length === 0, message);
+		for (const tree of Object.values(snapshotTree.trees)) {
+			assertOmittedTree(tree, groupId, blobContents, message);
+		}
+		for (const id of Object.values(snapshotTree.blobs)) {
+			assert(!blobContents.has(id), `${message}: ${id}`);
+		}
 	};
 
 	const assertOmittedBlobContents = (
@@ -101,6 +112,10 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		blobContents: Map<string, ArrayBuffer>,
 		message: string,
 	) => {
+		// Only local driver supports consistently omitting data from snapshots
+		if (provider.driver.type !== "local") {
+			return;
+		}
 		const snapshotTree = getSnapshotTree(snapshot);
 		assert(snapshotTree.groupId === groupId, message);
 		assert(assertOmittedBlobContentsCore(snapshotTree, groupId, blobContents), message);
@@ -157,12 +172,17 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	let dataObjectB = {} as unknown as TestDataObject;
 	let dataObjectC = {} as unknown as TestDataObject;
 	let dataObjectD = {} as unknown as TestDataObject;
+	const persistedCache = new TestSnapshotCache();
 	beforeEach("setup", async () => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ persistedCache });
 		dataObjectA = {} as unknown as TestDataObject;
 		dataObjectB = {} as unknown as TestDataObject;
 		dataObjectC = {} as unknown as TestDataObject;
 		dataObjectD = {} as unknown as TestDataObject;
+	});
+
+	afterEach("teardown", async () => {
+		persistedCache.reset();
 	});
 
 	const noId = undefined;
@@ -228,11 +248,19 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 		const channelsTree = summaryTree.tree[".channels"];
 		assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
-		const dataObjectTree = channelsTree.tree[dataObjectA.id];
-		assert(dataObjectTree !== undefined, "dataObjectTree should exist");
-		assert(dataObjectTree.type === SummaryType.Tree, "dataObjectTree should be a tree");
-		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
+		const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
+		const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
+		assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
+		assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
+		assert(dataObjectTreeA.groupId === loadingGroupId, "GroupId missing from A summary tree");
+		assert(dataObjectTreeB !== undefined, "dataObjectTree should exist");
+		assert(dataObjectTreeB.type === SummaryType.Tree, "dataObjectTree should be a tree");
+		assert(dataObjectTreeB.groupId === loadingGroupId, "GroupId missing from B summary tree");
 
+		// TODO enable for prod odsp
+		if (provider.driver.endpointName === "odsp-df") {
+			persistedCache.clearCache();
+		}
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{
@@ -241,6 +269,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				}),
 			},
 			{
+				// For ODSP this technically doesn't work, but the cache is cleared so we get the "latest"
 				[LoaderHeader.version]: summaryVersion,
 			},
 		);
@@ -263,11 +292,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// TODO: Enable this portion in tinylicious
 		// This allows us to test against services without groupId enabled.
 		// Round tripping of groupId only works for local driver, regardless the rest should just work as intended
-		if (provider.driver.type === "local") {
+		if (supportsDataVirtualization(provider)) {
 			assert.equal(dataObjectA2.loadingGroupId, loadingGroupId, "A groupId not set");
 			assert.equal(dataObjectB2.loadingGroupId, loadingGroupId, "B groupId not set");
-			assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "B groupId not set");
-			assert.equal(dataObjectD2.loadingGroupId, loadingGroupId2, "B groupId not set");
+			assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "C groupId not set");
+			assert.equal(dataObjectD2.loadingGroupId, loadingGroupId2, "D groupId not set");
 		}
 	});
 
@@ -279,8 +308,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		await createDataObjectsWithGroupIds(mainObject, containerRuntime);
 
 		await provider.attachDetachedContainer(container);
-		// TODO: Enable this portion in tinylicious
-		if (provider.driver.type === "local") {
+		if (supportsDataVirtualization(provider)) {
 			const container2 = await provider.loadContainer(runtimeFactory, {
 				configProvider: configProvider({
 					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
@@ -309,7 +337,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	it("Excludes dataStores with loadingGroupId from summary", async () => {
-		if (provider.driver.type !== "local") {
+		if (!supportsDataVirtualization(provider)) {
 			return;
 		}
 		// Load basic container stuff
@@ -358,6 +386,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			},
 		);
 
+		// TODO enable for prod odsp
+		if (provider.driver.endpointName === "odsp-df") {
+			persistedCache.clearCache();
+		}
+
 		// Load from the summary
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
@@ -380,8 +413,8 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const runtime2 = mainObject2.containerRuntime;
 		assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot should be defined");
-		assert(callCount === 1, "Should have only called getSnapshot once");
-		assert(loadingSnapshot.sequenceNumber === summaryRefSeq, "Loaded from wrong snapshot");
+		assert.equal(callCount, 1, "Should have only called getSnapshot once");
+		assert.equal(loadingSnapshot.sequenceNumber, summaryRefSeq, "Loaded from wrong snapshot");
 
 		// Snapshot validation (a snapshot call with NO loadingGroupIds)
 		const channelsTree = loadingSnapshot.snapshotTree.trees[".channels"];
@@ -492,7 +525,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const dataObjectCTree2 = channelsTree2.trees[dataObjectC.id];
 		const dataObjectDTree2 = channelsTree2.trees[dataObjectD.id];
 
-		assertOmittedTree(mainObjectTree2, noId, "mainObject tree incorrect");
+		assertOmittedTree(mainObjectTree2, noId, blobContents, "mainObject tree incorrect");
 		assertPopulatedTree(
 			dataObjectATree2,
 			loadingGroupId,
@@ -505,8 +538,8 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			blobContents,
 			"Incorrect tree for B2",
 		);
-		assertOmittedTree(dataObjectCTree2, loadingGroupId2, "Incorrect tree for C2");
-		assertOmittedTree(dataObjectDTree2, loadingGroupId2, "Incorrect tree for D2");
+		assertOmittedTree(dataObjectCTree2, loadingGroupId2, blobContents, "Incorrect tree for C2");
+		assertOmittedTree(dataObjectDTree2, loadingGroupId2, blobContents, "Incorrect tree for D2");
 
 		const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
 		// This call realizes the data object
@@ -529,9 +562,19 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const dataObjectC2Tree2 = channels2Tree2.trees[dataObjectC.id];
 		const dataObjectD2Tree2 = channels2Tree2.trees[dataObjectD.id];
 
-		assertOmittedTree(mainObject2Tree2, noId, "Not omitted tree for mainObject");
-		assertOmittedTree(dataObjectA2Tree2, loadingGroupId, "Not omitted tree for A2");
-		assertOmittedTree(dataObjectB2Tree2, loadingGroupId, "Not omitted tree for B2");
+		assertOmittedTree(mainObject2Tree2, noId, blobContents, "Not omitted tree for mainObject");
+		assertOmittedTree(
+			dataObjectA2Tree2,
+			loadingGroupId,
+			blobContents,
+			"Not omitted tree for A2",
+		);
+		assertOmittedTree(
+			dataObjectB2Tree2,
+			loadingGroupId,
+			blobContents,
+			"Not omitted tree for B2",
+		);
 		assertPopulatedTree(
 			dataObjectC2Tree2,
 			loadingGroupId2,

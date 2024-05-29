@@ -45,7 +45,7 @@ import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISharedMap } from '@fluidframework/map/internal';
 import { ISummarizer } from '@fluidframework/container-runtime/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
@@ -67,9 +67,9 @@ export const createContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof Co
     defaultFactory: IFluidDataStoreFactory;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     dependencyContainer?: any;
-    requestHandlers?: RuntimeRequestHandler[] | undefined;
-    runtimeOptions?: IContainerRuntimeOptions | undefined;
-    provideEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined;
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
+    provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }) => ContainerRuntimeFactoryWithDefaultDataStore;
 
 // @internal (undocumented)
@@ -118,7 +118,7 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 // @internal (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
-    Primed = 0,
+    Primed = 0,// default
     // (undocumented)
     Test = 1
 }

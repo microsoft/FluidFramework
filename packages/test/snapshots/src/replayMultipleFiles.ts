@@ -9,7 +9,7 @@ import nodePath from "path";
 
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { _dirname } from "./dirname.cjs";
 import { getMetadata, writeMetadataFile } from "./metadata.js";

@@ -65,7 +65,6 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
@@ -76,7 +75,7 @@
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-rc.4.0.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
@@ -84,7 +83,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {

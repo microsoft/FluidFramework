@@ -10,6 +10,10 @@
  * @packageDocumentation
  */
 
+// ===============================================================
+// #region Public exports
+// #region Basic re-exports
+
 export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
 	ICriticalContainerError,
@@ -31,6 +35,12 @@ export type {
 } from "@fluidframework/fluid-static";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
+export type {
+	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
+	IBranchOrigin, // Required for ISequencedDocumentMessage
+	ITrace, // Required for ISequencedDocumentMessage
+} from "@fluidframework/driver-definitions";
+
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
 // desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
@@ -38,9 +48,15 @@ export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 // eslint-disable-next-line no-restricted-syntax, import/export
 export * from "@fluidframework/tree";
 
+// End of basic public exports - nothing above this line should
+// depend on an /internal path.
+// #endregion Basic re-exports
+// ---------------------------------------------------------------
+// #region Custom re-exports
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ITree } from "@fluidframework/tree";
 import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
-import { type ITree } from "@fluidframework/tree";
 
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -52,28 +68,15 @@ import { type ITree } from "@fluidframework/tree";
  * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
  * @public
  */
+// Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
 // eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+// #endregion Custom re-exports
+// #endregion Public exports
+
 // ===============================================================
-// Legacy exports
-
-export {
-	ContainerErrorTypes,
-	type IDeltaManager,
-	type IDeltaManagerEvents,
-	type IDeltaSender,
-	type IDeltaQueue,
-	type ReadOnlyInfo,
-	type IConnectionDetails,
-	type IDeltaQueueEvents,
-} from "@fluidframework/container-definitions/internal";
-
-export type {
-	IAnyDriverError,
-	IDriverErrorBase,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions/internal";
+// #region Legacy exports
 
 export type {
 	IDirectory,
@@ -86,12 +89,7 @@ export type {
 	IValueChanged,
 } from "@fluidframework/map/internal";
 
-export {
-	DirectoryFactory,
-	MapFactory,
-	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map/internal";
+export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 
 export type {
 	DeserializeCallback,
@@ -110,6 +108,7 @@ export type {
 	SequencePlace,
 	SharedStringSegment,
 	Side,
+	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export {
@@ -119,13 +118,11 @@ export {
 	SequenceInterval,
 	SequenceMaintenanceEvent,
 	SharedString,
-	type ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 export type {
-	SharedObject,
-	IFluidSerializer,
-	SharedObjectCore,
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
+
+// #endregion Legacy exports

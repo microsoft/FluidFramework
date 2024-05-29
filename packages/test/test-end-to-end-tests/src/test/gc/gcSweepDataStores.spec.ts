@@ -30,7 +30,7 @@ import {
 } from "@fluidframework/container-runtime/internal/test/summary";
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,

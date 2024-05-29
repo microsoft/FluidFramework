@@ -8,9 +8,9 @@ import { IDocumentService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export class DefaultTokenProvider implements ITokenProvider {

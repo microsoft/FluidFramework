@@ -73,7 +73,7 @@ export interface AnchorLocator {
 }
 
 // @internal
-export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
     readonly anchorSet: AnchorSet;
     child(key: FieldKey, index: number): UpPath<AnchorNode>;
     getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
@@ -81,7 +81,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 }
 
 // @internal @sealed
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
     constructor();
     acquireVisitor(): AnnouncedVisitor & DeltaVisitor;
     // (undocumented)
@@ -272,7 +272,7 @@ export interface Covariant<out T> {
 }
 
 // @internal
-export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
+export function createEmitter<TListeners extends object>(noListeners?: NoListenersCallback<TListeners>): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners>;
 
 // @internal
 export interface CursorAdapter<TNode> {
@@ -433,11 +433,6 @@ export function enumFromStrings<TScope extends string, const Members extends str
 // @internal
 export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {
 }
-
-// @public
-export type Events<E> = {
-    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
-};
 
 // @internal
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
@@ -636,7 +631,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 }
 
 // @internal
-export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeContext extends Listenable<ForestEvents> {
     readonly checkout: ITreeCheckout;
     // (undocumented)
     readonly nodeKeyManager: NodeKeyManager;
@@ -671,6 +666,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
     is<TSchema extends FlexFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
     isSameAs(other: FlexTreeField): boolean;
     readonly key: FieldKey;
+    readonly length: number;
     readonly parent?: FlexTreeNode;
 }
 
@@ -879,7 +875,6 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @internal
 export interface ForestEvents {
-    afterChange(): void;
     afterRootFieldCreated(key: FieldKey): void;
     beforeChange(): void;
 }
@@ -909,8 +904,8 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 }
 
 // @internal (undocumented)
-export interface HasListeners<E extends Events<E>> {
-    hasListeners(eventName?: keyof Events<E>): boolean;
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
+    hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
 }
 
 // @internal
@@ -956,13 +951,13 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @internal
-export interface IEmitter<E extends Events<E>> {
-    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
-    emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
+    emit<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): void;
+    emitAndCollect<K extends keyof Listeners<TListeners>>(eventName: K, ...args: Parameters<TListeners[K]>): ReturnType<TListeners[K]>[];
 }
 
 // @internal
-export interface IForestSubscription extends ISubscribable<ForestEvents> {
+export interface IForestSubscription extends Listenable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
     clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
@@ -1051,9 +1046,6 @@ export interface ISchemaEditor {
 // @internal
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
-// @public
-export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
-
 // @internal
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
@@ -1065,13 +1057,11 @@ export interface ISharedTreeEditor extends IDefaultEditBuilder {
     schema: ISchemaEditor;
 }
 
+// @public
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+
 // @internal (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: TreeStoredSchema, field: TreeFieldStoredSchema): boolean;
-
-// @public
-export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
-}
 
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
@@ -1094,14 +1084,14 @@ export interface ITree extends IFluidLoadable {
 // @internal
 export interface ITreeCheckout extends AnchorLocator {
     readonly editor: ISharedTreeEditor;
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: Listenable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ITreeCheckoutFork;
     getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
     merge(view: ITreeCheckoutFork): void;
     merge(view: ITreeCheckoutFork, disposeView: boolean): void;
     rebase(view: ITreeCheckoutFork): void;
-    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    readonly rootEvents: Listenable<AnchorSetRootEvents>;
     readonly storedSchema: TreeStoredSchemaSubscription;
     readonly transaction: ITransaction;
     updateSchema(newSchema: TreeStoredSchema): void;
@@ -1191,11 +1181,6 @@ export type JsonCompatibleObject = {
 };
 
 // @internal
-export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]?: JsonCompatibleReadOnly;
-};
-
-// @internal
 export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
@@ -1239,6 +1224,16 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
     readonly leafValue: ValueSchema;
 }
 
+// @public
+export interface Listenable<TListeners extends object> {
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
 // @internal
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
 }
@@ -1259,7 +1254,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 // @internal
 export interface MapTree extends NodeData {
     // (undocumented)
-    fields: Map<FieldKey, MapTree[]>;
+    readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }
 
 // @internal
@@ -1302,7 +1297,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
 // @internal
 export interface NodeData {
     readonly type: TreeNodeSchemaIdentifier;
-    value?: TreeValue;
+    readonly value?: TreeValue;
 }
 
 // @internal (undocumented)
@@ -1345,7 +1340,7 @@ export enum NodeKind {
 }
 
 // @internal
-export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
+export type NoListenersCallback<TListeners extends object> = (eventName: keyof Listeners<TListeners>) => void;
 
 // @internal
 export const noopValidator: JsonValidator;
@@ -1382,6 +1377,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
     // (undocumented)
     readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 }
+
+// @public
+export type Off = () => void;
 
 // @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
@@ -1900,7 +1898,11 @@ export interface TreeLocation {
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
+    entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) => void, thisArg?: any): void;
+    keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
+    values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
 // @public
@@ -2014,7 +2016,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 }
 
 // @internal
-export interface TreeStoredSchemaSubscription extends ISubscribable<SchemaEvents>, TreeStoredSchema {
+export interface TreeStoredSchemaSubscription extends Listenable<SchemaEvents>, TreeStoredSchema {
 }
 
 // @internal (undocumented)
@@ -2037,7 +2039,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 // @public
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
-    readonly events: ISubscribable<TreeViewEvents>;
+    readonly events: Listenable<TreeViewEvents>;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;

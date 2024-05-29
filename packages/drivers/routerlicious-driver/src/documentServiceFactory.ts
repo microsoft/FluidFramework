@@ -20,7 +20,7 @@ import {
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,

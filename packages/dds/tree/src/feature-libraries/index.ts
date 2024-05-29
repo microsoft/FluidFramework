@@ -196,13 +196,14 @@ export {
 
 export {
 	compareLocalNodeKeys,
-	LocalNodeKey,
 	createNodeKeyManager,
-	createMockNodeKeyManager,
-	StableNodeKey,
+	isStableNodeKey,
+	LocalNodeKey,
+	MockNodeKeyManager,
 	NodeKeyIndex,
 	NodeKeyManager,
 	nodeKeyTreeIdentifier,
+	StableNodeKey,
 } from "./node-key/index.js";
 
 export {

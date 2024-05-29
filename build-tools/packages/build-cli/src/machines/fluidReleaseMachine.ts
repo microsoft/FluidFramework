@@ -4,10 +4,12 @@
  */
 
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { FileSystem as fs } from "@rushstack/node-core-library";
 import { from as createStateMachine } from "jssm";
 
-// eslint-disable-next-line unicorn/prefer-module
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const machineDefinitionFile = path.join(__dirname, "FluidRelease.fsl");
 const fsl = fs.readFile(machineDefinitionFile).toString();
 

@@ -22,7 +22,7 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/in
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
@@ -318,7 +318,7 @@ export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof Interv
 export enum IntervalType {
     // (undocumented)
     Simple = 0,
-    SlideOnRemove = 2,
+    SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
     // @internal
     Transient = 4
 }

@@ -39,7 +39,6 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -57,7 +56,7 @@
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"broken": {}

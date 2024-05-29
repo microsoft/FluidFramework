@@ -112,7 +112,7 @@
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.0.0-rc.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
@@ -128,7 +128,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"broken": {}

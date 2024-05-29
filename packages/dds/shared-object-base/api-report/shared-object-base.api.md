@@ -13,7 +13,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions/internal'
 import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -23,7 +23,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';

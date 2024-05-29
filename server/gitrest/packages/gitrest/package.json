@@ -35,7 +35,7 @@
 		"cors": "^2.8.5",
 		"debug": "^4.3.4",
 		"express": "^4.19.2",
-		"isomorphic-git": "^1.14.0",
+		"isomorphic-git": "^1.25.10",
 		"json-stringify-safe": "^5.0.1",
 		"nconf": "^0.11.4",
 		"uuid": "^3.3.2",

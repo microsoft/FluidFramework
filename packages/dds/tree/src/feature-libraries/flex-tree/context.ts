@@ -12,7 +12,7 @@ import {
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import { ISubscribable } from "../../events/index.js";
+import { Listenable } from "../../events/index.js";
 import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
 import { NodeKeyManager } from "../node-key/index.js";
@@ -28,7 +28,7 @@ import type { ITreeCheckout } from "../../shared-tree/index.js";
  * It handles group operations like transforming cursors into anchors for edits.
  * @internal
  */
-export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeContext extends Listenable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */

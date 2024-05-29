@@ -4,7 +4,7 @@
  */
 
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IAttachMessage,
 	IEnvelope,

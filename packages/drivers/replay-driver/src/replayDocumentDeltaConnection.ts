@@ -11,19 +11,19 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ConnectionMode,
 	IClientConfiguration,
 	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	IVersion,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import {
+	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
 
 import { ReplayController } from "./replayController.js";
 

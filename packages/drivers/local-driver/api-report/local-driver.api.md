@@ -6,13 +6,13 @@
 
 import { DocumentDeltaConnection } from '@fluidframework/driver-base/internal';
 import { GitManager } from '@fluidframework/server-services-client';
-import { IClient } from '@fluidframework/protocol-definitions';
-import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
+import { IClient } from '@fluidframework/driver-definitions';
+import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
 import { IDatabaseManager } from '@fluidframework/server-services-core';
 import { IDb } from '@fluidframework/server-services-core';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { IDocumentService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
@@ -22,21 +22,21 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
-import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeEx } from '@fluidframework/driver-definitions/internal';
 import { IStream } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryHandle } from '@fluidframework/driver-definitions';
+import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { IVersion } from '@fluidframework/protocol-definitions';
+import { IVersion } from '@fluidframework/driver-definitions/internal';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
-import { NackErrorType } from '@fluidframework/protocol-definitions';
+import { NackErrorType } from '@fluidframework/driver-definitions/internal';
 import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
