@@ -37,9 +37,11 @@ export const compareArrays = <T>(
 		return false;
 	}
 
-	for (const [index, leftItem] of left.entries()) {
+	for (let index = 0; index < left.length; index++) {
+		const leftItem = left[index];
 		const rightItem = right[index];
 		assert(rightItem !== undefined, "rightItem is undefined in compareArrays");
+		assert(leftItem !== undefined, "leftItem is undefined in compareArrays");
 		if (!comparator(leftItem, rightItem, index)) {
 			return false;
 		}
