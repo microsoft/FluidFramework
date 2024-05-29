@@ -87,7 +87,6 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [0, 1, 2]);
-				array.removeAt(1);
 				assert.throws(
 					() => array.insertAt(4, 0),
 					validateUsageError(
@@ -100,7 +99,223 @@ describe("ArrayNode", () => {
 				);
 			});
 		});
-		
+
+		describe("moveToStart", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveToStart(1);
+				assert.deepEqual([...array], [2, 1, 3]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveToStart(1, array2);
+				assert.deepEqual([...array1], [2, 1, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveToStart(4),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveToStart is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveToStart(-1),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("moveToEnd", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveToEnd(1);
+				assert.deepEqual([...array], [1, 3, 2]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveToEnd(1, array2);
+				assert.deepEqual([...array1], [1, 2, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveToEnd(4),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveToEnd is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveToEnd(-1),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("moveToIndex", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveToIndex(0, 1);
+				assert.deepEqual([...array], [2, 1, 3]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveToIndex(1, 0, array2);
+				assert.deepEqual([...array1], [1, 1, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveToIndex(4, 0),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveToIndex(0, 4),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveToIndex(-1, 0),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("moveRangeToStart", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveRangeToStart(1, 3);
+				assert.deepEqual([...array], [2, 3, 1]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveRangeToStart(0, 2, array2);
+				assert.deepEqual([...array1], [1, 2, 1, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveRangeToStart(0, 4),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveRangeToStart is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToStart(2, 1),
+					validateUsageError(
+						/Too large of "start" value passed to TreeArrayNode.moveRangeToStart./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToStart(-1, 0),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("moveRangeToEnd", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveRangeToEnd(0, 2);
+				assert.deepEqual([...array], [3, 1, 2]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveRangeToEnd(0, 2, array2);
+				assert.deepEqual([...array1], [1, 2, 1, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveRangeToEnd(0, 4),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveRangeToEnd is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToEnd(2, 1),
+					validateUsageError(
+						/Too large of "start" value passed to TreeArrayNode.moveRangeToEnd./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToEnd(-1, 0),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("moveRangeToIndex", () => {
+			it("move within field", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.moveRangeToIndex(0, 1, 3);
+				assert.deepEqual([...array], [2, 3, 1]);
+			});
+
+			it("cross-field move", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
+				array1.moveRangeToIndex(0, 0, 2, array2);
+				assert.deepEqual([...array1], [1, 2, 1, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				assert.throws(
+					() => array.moveRangeToIndex(4, 0, 2),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToIndex(0, 2, 1),
+					validateUsageError(
+						/Too large of "start" value passed to TreeArrayNode.moveRangeToIndex./,
+					),
+				);
+				assert.throws(
+					() => array.moveRangeToIndex(-1, 0, 1),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
 		describe("removeRange", () => {
 			it("no arguments", () => {
 				const jsArray = [0, 1, 2];
