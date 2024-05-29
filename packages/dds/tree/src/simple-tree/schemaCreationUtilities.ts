@@ -190,7 +190,9 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	members: Members,
 ) {
 	const enumObject: {
-		[key in keyof Members as Members[key] extends string ? Members[key] : string]: Members[key];
+		[key in keyof Members as Members[key] extends string
+			? Members[key]
+			: string]: Members[key] extends string ? Members[key] : string;
 	} = Object.create(null);
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {

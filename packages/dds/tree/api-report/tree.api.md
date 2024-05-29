@@ -1178,11 +1178,6 @@ export type JsonCompatibleObject = {
 };
 
 // @internal
-export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]?: JsonCompatibleReadOnly;
-};
-
-// @internal
 export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }

@@ -103,7 +103,6 @@ export {
 	brand,
 	ValueFromBranded,
 	NameFromBranded,
-	JsonCompatibleReadOnly,
 	JsonCompatible,
 	JsonCompatibleObject,
 	NestedMap,

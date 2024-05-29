@@ -15,8 +15,7 @@
 	"bin": {
 		"fluid-build": "bin/fluid-build",
 		"fluid-doc-stats": "bin/fluid-doc-stats",
-		"fluid-tsc": "bin/fluid-tsc",
-		"fluid-type-test-generator": "bin/fluid-type-test-generator"
+		"fluid-tsc": "bin/fluid-tsc"
 	},
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
