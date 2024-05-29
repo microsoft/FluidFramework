@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.38.0",
+	"version": "0.39.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,7 +52,7 @@
 		"debug": "^4.3.4",
 		"detect-indent": "^6.1.0",
 		"find-up": "^7.0.0",
-		"fs-extra": "^9.1.0",
+		"fs-extra": "^11.2.0",
 		"glob": "^7.2.3",
 		"ignore": "^5.2.4",
 		"json5": "^2.2.3",
@@ -69,9 +69,9 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@types/async": "^3.2.20",
-		"@types/fs-extra": "^8.1.2",
+		"@types/fs-extra": "^11.0.4",
 		"@types/glob": "^7.2.0",
 		"@types/lodash": "^4.14.195",
 		"@types/lodash.isequal": "^4.5.6",
@@ -85,11 +85,6 @@
 		"mocha": "^10.2.0"
 	},
 	"engines": {
-		"node": ">=14.17.0"
-	},
-	"pnpm": {
-		"updateConfig": {
-			"ignoreDependencies": ["type-fest", "typescript"]
-		}
+		"node": ">=18.17.1"
 	}
 }

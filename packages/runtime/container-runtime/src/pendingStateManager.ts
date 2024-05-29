@@ -6,7 +6,7 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -86,6 +86,7 @@ function buildPendingMessageContent(
  */
 export class PendingStateManager implements IDisposable {
 	private readonly pendingMessages = new Deque<IPendingMessage>();
+	// This queue represents already acked messages.
 	private readonly initialMessages = new Deque<IPendingMessage>();
 
 	/**
@@ -116,6 +117,15 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
+	 *
+	 * We need this so that we can properly keep local data and maintain the correct sequence window.
+	 */
+	public get minimumPendingMessageSequenceNumber(): number | undefined {
+		return this.pendingMessages.peekFront()?.referenceSequenceNumber;
+	}
+
+	/**
 	 * Called to check if there are any pending messages in the pending message queue.
 	 * @returns A boolean indicating whether there are messages or not.
 	 */
@@ -131,7 +141,7 @@ export class PendingStateManager implements IDisposable {
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,
-				"saved op should already have a sequence number",
+				0x97c /* saved op should already have a sequence number */,
 			);
 			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
 		});

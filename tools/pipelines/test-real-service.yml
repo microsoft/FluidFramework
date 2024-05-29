@@ -164,7 +164,6 @@ stages:
             flags: --compatVersion=V2_INT_3 --tenantIndex=3
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
-          login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 

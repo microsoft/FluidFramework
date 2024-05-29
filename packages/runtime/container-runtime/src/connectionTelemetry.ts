@@ -4,16 +4,13 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	IEventSampler,
 	ITelemetryLoggerExt,
@@ -95,6 +92,13 @@ class OpPerfTelemetry {
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
+
+	/**
+	 * A sampled logger to log Ops that have been processed by the current client, the NoOp sent and the
+	 * size of the ops processed within one sampling window of this log event.
+	 * The data from this logger will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+	 * Note: no log events are sent when sampling is disabled, because logging at every op will be too noisy.
+	 */
 	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
@@ -167,7 +171,11 @@ class OpPerfTelemetry {
 				},
 			};
 		})();
-		this.opsLogger = createSampledLogger(logger, opsEventSampler);
+		this.opsLogger = createSampledLogger(
+			logger,
+			opsEventSampler,
+			true /* skipLoggingWhenSamplingIsDisabled */,
+		);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));

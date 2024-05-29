@@ -18,6 +18,7 @@ import {
 	NackErrorType,
 	IClient,
 	IDocumentMessage,
+	type ISentSignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
@@ -75,6 +76,14 @@ class TestRevokedTokenChecker implements IRevokedTokenChecker {
 	public async isTokenRevoked(): Promise<boolean> {
 		return this.isRevoked;
 	}
+}
+
+interface TestSignalClient {
+	socket: LocalWebSocket;
+	clientId: string;
+	signalsReceived: ISignalMessage[];
+	nacksReceived: INack[];
+	version: 1 | 2;
 }
 
 describe("Routerlicious", () => {
@@ -184,6 +193,7 @@ describe("Routerlicious", () => {
 					tenantId: string,
 					secret: string,
 					socket: LocalWebSocket,
+					v2Signals: boolean = false,
 				): Promise<IConnected> {
 					const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 					const token = generateToken(tenantId, id, secret, scopes);
@@ -195,6 +205,7 @@ describe("Routerlicious", () => {
 						tenantId,
 						token,
 						versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
+						supportedFeatures: v2Signals ? { submit_signals_v2: true } : {},
 					};
 
 					const deferred = new Deferred<IConnected>();
@@ -402,131 +413,457 @@ describe("Routerlicious", () => {
 				});
 
 				describe("#submitSignal", () => {
-					it("Single Signal", async () => {
-						const signalContent = "TestSignal";
-
-						const firstSocket = webSocketServer.createConnection();
-
-						const firstConnectMessage = await connectToServer(
+					async function createClient(
+						testId: string,
+						testTenantId: string,
+						testSecret: string,
+						version: 1 | 2 = 1,
+					): Promise<TestSignalClient> {
+						const socket = webSocketServer.createConnection();
+						const connectMessage = await connectToServer(
 							testId,
 							testTenantId,
 							testSecret,
-							firstSocket,
+							socket,
+							version == 2 ? true : false,
 						);
+						const clientId = connectMessage.clientId;
+						const client: TestSignalClient = {
+							socket,
+							clientId,
+							signalsReceived: [],
+							nacksReceived: [],
+							version,
+						};
 
-						const secondSocket = webSocketServer.createConnection();
+						return client;
+					}
 
-						await connectToServer(testId, testTenantId, testSecret, secondSocket);
+					function listenForSignals(clients: TestSignalClient[]) {
+						clients.forEach((client) => {
+							client.socket.on("signal", (message: ISignalMessage) => {
+								if (message.clientId !== null) {
+									client.signalsReceived.push(message);
+								}
+							});
+						});
+					}
 
-						const promises = [
-							new Promise<void>((resolve) => {
-								firstSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										signalContent,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									resolve();
-								});
-							}),
-							new Promise<void>((resolve) => {
-								secondSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										signalContent,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									resolve();
-								});
-							}),
-						];
+					function verifyExpectedClientSignals(
+						clients: TestSignalClient[],
+						expectedSignals: ISignalMessage[],
+					) {
+						clients.forEach((client, index) => {
+							assert.equal(
+								client.signalsReceived.length,
+								expectedSignals.length,
+								`User ${index + 1} should have received ${
+									expectedSignals.length
+								} signal(s)`,
+							);
+							expectedSignals.forEach((signal, signalIndex) => {
+								const receivedSignal = client.signalsReceived[signalIndex];
+								assert.deepEqual(
+									receivedSignal,
+									signal,
+									`received signal does not match expected signal`,
+								);
+							});
+						});
+					}
 
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent,
-						]);
-						await Promise.all(promises);
-					});
-
-					it("Multiple Signals", async () => {
-						const signalContent1 = "TestSignal1";
-						const signalContent2 = "TestSignal2";
-
-						const firstSocket = webSocketServer.createConnection();
-
-						const firstConnectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							firstSocket,
+					function isSentSignalMessage(obj: unknown): obj is ISentSignalMessage {
+						return (
+							typeof obj === "object" &&
+							obj !== null &&
+							"content" in obj &&
+							(!("type" in obj) || typeof obj.type === "string") &&
+							(!("clientConnectionNumber" in obj) ||
+								typeof obj.clientConnectionNumber === "number") &&
+							(!("referenceSequenceNumber" in obj) ||
+								typeof obj.referenceSequenceNumber === "number") &&
+							(!("targetClientId" in obj) || typeof obj.targetClientId === "string")
 						);
+					}
 
-						const secondSocket = webSocketServer.createConnection();
+					function sendValidAndReturnExpectedSignals(
+						client: TestSignalClient,
+						content: unknown[],
+					): ISignalMessage[] {
+						const signals = content.map((c) =>
+							client.version === 2 ? { content: c } : c,
+						);
+						return sendAndReturnExpectedSignals(client, signals);
+					}
 
-						await connectToServer(testId, testTenantId, testSecret, secondSocket);
+					function sendAndReturnExpectedSignals(
+						client: TestSignalClient,
+						signals: unknown[],
+					): ISignalMessage[] {
+						client.socket.send("submitSignal", client.clientId, signals);
+						let expectedSignalMessages: ISignalMessage[];
+						if (client.version === 2) {
+							expectedSignalMessages = signals.map((signal) => {
+								if (isSentSignalMessage(signal)) {
+									return {
+										...signal,
+										clientId: client.clientId,
+									};
+								} else {
+									// Dummy signal for v2 clients
+									return {
+										clientId: "invalid client ID",
+										content: undefined,
+									};
+								}
+							});
+						} else {
+							expectedSignalMessages = signals.map((signal) => ({
+								clientId: client.clientId,
+								content: signal,
+							}));
+						}
+						return expectedSignalMessages;
+					}
 
-						const promises = [
-							new Promise<void>((resolve) => {
-								let count = 0;
+					function listenForNacks(client: TestSignalClient) {
+						client.socket.on("nack", (reason: string, nackMessages: INack[]) => {
+							client.nacksReceived.push(nackMessages[0]);
+						});
+					}
 
-								firstSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										count == 0 ? signalContent1 : signalContent2,
-										signal.content,
-										"Signal content mismatch",
+					function checkNack(
+						client: TestSignalClient,
+						expectedNackMessageContent: string,
+					) {
+						assert.equal(
+							client.nacksReceived.length,
+							1,
+							"Client should have received 1 nack",
+						);
+						const nackMessage = client.nacksReceived[0];
+						assert.equal(nackMessage.content.code, 400, "Nack code should be 400");
+						assert.equal(
+							nackMessage.content.type,
+							NackErrorType.BadRequestError,
+							"Nack type should be BadRequestError",
+						);
+						assert.deepEqual(
+							nackMessage.content.message,
+							expectedNackMessageContent,
+							"Nack message should be 'Invalid signal message'",
+						);
+					}
+
+					const stringSignalContent = "TestSignal";
+
+					let clients: TestSignalClient[];
+
+					const numberOfClients = 3; // Change the amount of clients to test with (at least 2 required)
+
+					assert(numberOfClients > 1, "Test requires at least 2 clients");
+
+					[
+						["with v1 clients", () => 1 as const] as const,
+						["with v2 clients", () => 2 as const] as const,
+						[
+							"with v1 and v2 clients",
+							(index: number) => (1 + (index % 2)) as 1 | 2,
+						] as const,
+					].forEach(([description, fnVersion]) =>
+						describe(description, () => {
+							const clientVersion: TestSignalClient["version"][] = [];
+							for (let i = 0; i < numberOfClients; i++) {
+								clientVersion.push(fnVersion(i));
+							}
+
+							beforeEach(async () => {
+								clients = await Promise.all(
+									clientVersion.map((version) =>
+										createClient(testId, testTenantId, testSecret, version),
+									),
+								);
+								listenForSignals(clients);
+							});
+							describe("sending one signal", () => {
+								[0, 1].forEach((clientIndex) => {
+									const fromClient = `from client ${clientIndex} (v${clientVersion[clientIndex]})`;
+									it(`${fromClient} should broadcast signal to all connected clients`, () => {
+										const expectedSignals = sendValidAndReturnExpectedSignals(
+											clients[clientIndex],
+											[stringSignalContent],
+										);
+
+										verifyExpectedClientSignals(clients, expectedSignals);
+									});
+									it(`${fromClient} should broadcast batched signals to all connected clients`, () => {
+										const expectedSignals = sendValidAndReturnExpectedSignals(
+											clients[clientIndex],
+											["first signal", "second signal", "third signal"],
+										);
+
+										verifyExpectedClientSignals(clients, expectedSignals);
+									});
+									it(`${fromClient} does not broadcast to disconnected client`, () => {
+										clients[clientIndex ^ 1].socket.disconnect();
+										const expectedSignals = sendValidAndReturnExpectedSignals(
+											clients[clientIndex],
+											[stringSignalContent],
+										);
+										verifyExpectedClientSignals(
+											clients.filter(
+												(_, index) => index !== (clientIndex ^ 1),
+											),
+											expectedSignals,
+										);
+										verifyExpectedClientSignals([clients[clientIndex ^ 1]], []);
+									});
+									[null, "invalid"].forEach((clientId) => {
+										it(`${fromClient} should nack signal with ${clientId} client ID`, () => {
+											listenForNacks(clients[clientIndex]);
+											clients[clientIndex].socket.send(
+												"submitSignal",
+												clientId,
+												[stringSignalContent],
+											);
+											checkNack(clients[clientIndex], "Nonexistent client");
+										});
+									});
+									it(`${fromClient} nacks signal that is not an array`, () => {
+										listenForNacks(clients[clientIndex]);
+										clients[clientIndex].socket.send(
+											"submitSignal",
+											clients[clientIndex].clientId,
+											stringSignalContent,
+										);
+										checkNack(clients[clientIndex], "Invalid signal message");
+									});
+									[
+										42,
+										true,
+										stringSignalContent,
+										{ key1: "value1", key2: 42, key3: true },
+									].forEach((signalContent) =>
+										it(`${fromClient} should broadcast signal with ${typeof signalContent} content`, () => {
+											const expectedSignals =
+												sendValidAndReturnExpectedSignals(
+													clients[clientIndex],
+													[signalContent],
+												);
+											verifyExpectedClientSignals(clients, expectedSignals);
+										}),
 									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									count++;
-
-									if (count == 2) {
-										resolve();
-									}
 								});
-							}),
-							new Promise<void>((resolve) => {
-								let count = 0;
 
-								secondSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										count == 0 ? signalContent1 : signalContent2,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									count++;
+								if (description === "with v2 clients") {
+									it("can transmit signal to a specific targeted client", () => {
+										const targetedSignal: ISentSignalMessage = {
+											targetClientId: clients[0].clientId,
+											content: "TargetSignal",
+											clientConnectionNumber: 1,
+											referenceSequenceNumber: 1,
+										};
 
-									if (count == 2) {
-										resolve();
-									}
+										const expectedSignals = sendAndReturnExpectedSignals(
+											clients[1],
+											[targetedSignal],
+										);
+										verifyExpectedClientSignals([clients[0]], expectedSignals);
+										verifyExpectedClientSignals(
+											clients.filter((_, index) => index !== 0),
+											[],
+										);
+									});
+
+									it("drops signal on targeted client disconnect", () => {
+										const targetedSignal: ISentSignalMessage = {
+											targetClientId: clients[1].clientId,
+											content: "TargetSignal",
+										};
+
+										clients[1].socket.disconnect();
+										sendAndReturnExpectedSignals(clients[0], [targetedSignal]);
+										verifyExpectedClientSignals(clients, []);
+									});
+									describe("Invalid/Malformed signals", () => {
+										beforeEach(() => {
+											listenForNacks(clients[0]);
+										});
+
+										it("should drop signal when given an invalid target client ID", () => {
+											const targetedSignal: ISentSignalMessage = {
+												targetClientId: "invalidClientID",
+												content: stringSignalContent,
+											};
+
+											sendAndReturnExpectedSignals(clients[0], [
+												targetedSignal,
+											]);
+
+											verifyExpectedClientSignals(clients, []);
+										});
+
+										it("transmits signal with an additional signal field", () => {
+											const targetedSignal = {
+												targetClientId: clients[0].clientId,
+												content: stringSignalContent,
+												additionalField: "test field",
+											};
+
+											const expectedSignals = sendAndReturnExpectedSignals(
+												clients[1],
+												[targetedSignal],
+											);
+
+											verifyExpectedClientSignals(
+												[clients[0]],
+												expectedSignals,
+											);
+											verifyExpectedClientSignals(
+												clients.filter((_, index) => index !== 0),
+												[],
+											);
+										});
+
+										it("nacks invalid targetClientID type", () => {
+											const targetedSignal = {
+												targetClientId: true,
+												content: stringSignalContent,
+											};
+
+											sendAndReturnExpectedSignals(clients[0], [
+												targetedSignal,
+											]);
+
+											checkNack(clients[0], "Invalid signal message");
+										});
+
+										it("should nack signals with invalid client ID", () => {
+											const targetedSignal = {
+												targetClientId: clients[1],
+												content: stringSignalContent,
+											};
+											clients[0].socket.send(
+												"submitSignal",
+												"invalidClientID",
+												[targetedSignal],
+											);
+											checkNack(clients[0], "Nonexistent client");
+										});
+
+										it("nacks missing content field", () => {
+											const targetedSignal = {
+												targetClientId: clients[1].clientId,
+											};
+
+											sendAndReturnExpectedSignals(clients[0], [
+												targetedSignal,
+											]);
+
+											checkNack(clients[0], "Invalid signal message");
+										});
+
+										it("nacks invalid optional signal fields", () => {
+											const targetedSignal = {
+												targetClientId: clients[1].clientId,
+												content: stringSignalContent,
+												clientConnectionNumber: false,
+												referenceSequenceNumber: "invalid",
+											};
+
+											sendAndReturnExpectedSignals(clients[0], [
+												targetedSignal,
+											]);
+
+											checkNack(clients[0], "Invalid signal message");
+										});
+
+										it("nacks signal that is not an array", () => {
+											const targetedSignal = {
+												targetClientId: clients[1].clientId,
+												content: stringSignalContent,
+											};
+
+											clients[0].socket.send(
+												"submitSignal",
+												clients[0].clientId,
+												targetedSignal,
+											);
+											checkNack(clients[0], "Invalid signal message");
+										});
+									});
+								} else if (description === "with v1 and v2 clients") {
+									it("can target a v1 client from a v2 client", () => {
+										const targetedSignal: ISentSignalMessage = {
+											targetClientId: clients[0].clientId,
+											content: stringSignalContent,
+										};
+
+										const expectedSignals = sendAndReturnExpectedSignals(
+											clients[1],
+											[targetedSignal],
+										);
+
+										verifyExpectedClientSignals([clients[0]], expectedSignals);
+										verifyExpectedClientSignals(
+											clients.filter((client) => client !== clients[0]),
+											[],
+										);
+									});
+								}
+							});
+							describe("sending multiple signals", () => {
+								[0, 1].forEach((clientIndex) => {
+									it("should broadcast signals sent from multiple clients to all connected clients", () => {
+										const firstSignal = sendValidAndReturnExpectedSignals(
+											clients[clientIndex],
+											["first signal"],
+										);
+										const secondSignal = sendValidAndReturnExpectedSignals(
+											clients[clientIndex ^ 1],
+											["second signal"],
+										);
+
+										verifyExpectedClientSignals(
+											clients,
+											firstSignal.concat(secondSignal),
+										);
+									});
 								});
-							}),
-						];
+								if (description === "with v2 clients") {
+									it("can transmit both targeted and broadcast signals", () => {
+										const targetedSignal: ISentSignalMessage = {
+											targetClientId: clients[0].clientId,
+											content: "TargetedSignal",
+										};
+										const broadcastSignal: ISentSignalMessage = {
+											content: "BroadcastSignal",
+										};
 
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent1,
-						]);
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent2,
-						]);
-						await Promise.all(promises);
-					});
+										const expectedTargetedSignals =
+											sendAndReturnExpectedSignals(clients[1], [
+												targetedSignal,
+											]);
+										const expectedBroadcastSignals =
+											sendAndReturnExpectedSignals(clients[1], [
+												broadcastSignal,
+											]);
+
+										verifyExpectedClientSignals(
+											[clients[0]],
+											expectedTargetedSignals.concat(
+												expectedBroadcastSignals,
+											),
+										);
+										verifyExpectedClientSignals(
+											clients.filter((_, index) => index !== 0),
+											expectedBroadcastSignals,
+										);
+									});
+								}
+							});
+						}),
+					);
 				});
 
 				describe("#submitOp", () => {
@@ -819,6 +1156,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					clientType: string,
 					secret: string,
 					socket: LocalWebSocket,
+					v2Signals: boolean = false,
 				): Promise<IConnected> {
 					const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 					const token = generateToken(tenantId, id, secret, scopes);
@@ -840,6 +1178,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						tenantId,
 						token,
 						versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
+						supportedFeatures: v2Signals ? { submit_signals_v2: true } : {},
 					};
 
 					const deferred = new Deferred<IConnected>();
@@ -919,35 +1258,40 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				});
 
 				describe("signal count", () => {
-					it("Should store the signal count when throttler is invoked", async () => {
-						const socket = webSocketServer.createConnection();
-						const connectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							"client",
-							testSecret,
-							socket,
-						);
+					[1, 2].forEach((version) => {
+						describe(`with v${version} signals`, () => {
+							it("Should store the signal count when throttler is invoked", async () => {
+								const socket = webSocketServer.createConnection();
+								const connectMessage = await connectToServer(
+									testId,
+									testTenantId,
+									"client",
+									testSecret,
+									socket,
+									version === 2,
+								);
 
-						let i = 0;
-						const signalCount = 10;
-						const message = "testSignalMessage";
-						for (; i < signalCount; i++) {
-							socket.send("submitSignal", connectMessage.clientId, [message]);
-						}
-						Sinon.clock.tick(minThrottleCheckInterval + 1);
-						socket.send("submitSignal", connectMessage.clientId, [message]);
-						// wait for throttler to be checked
-						await Sinon.clock.nextAsync();
+								let i = 0;
+								const signalCount = 100;
+								const message = "testSignalMessage";
+								for (; i < signalCount; i++) {
+									socket.send("submitSignal", connectMessage.clientId, [message]);
+								}
+								Sinon.clock.tick(minThrottleCheckInterval + 1);
+								socket.send("submitSignal", connectMessage.clientId, [message]);
+								// wait for throttler to be checked
+								await Sinon.clock.nextAsync();
 
-						const usageData =
-							await testThrottleAndUsageStorageManager.getUsageData(
-								signalUsageStorageId,
-							);
-						assert.equal(usageData.value, signalCount + 1);
-						assert.equal(usageData.clientId, connectMessage.clientId);
-						assert.equal(usageData.tenantId, testTenantId);
-						assert.equal(usageData.documentId, testId);
+								const usageData =
+									await testThrottleAndUsageStorageManager.getUsageData(
+										signalUsageStorageId,
+									);
+								assert.equal(usageData.value, signalCount + 1);
+								assert.equal(usageData.clientId, connectMessage.clientId);
+								assert.equal(usageData.tenantId, testTenantId);
+								assert.equal(usageData.documentId, testId);
+							});
+						});
 					});
 				});
 			});

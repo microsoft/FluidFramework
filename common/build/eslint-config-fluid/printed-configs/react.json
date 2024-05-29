@@ -118,7 +118,7 @@
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
-                "allowExpressions": false,
+                "allowExpressions": true,
                 "allowTypedFunctionExpressions": true,
                 "allowHigherOrderFunctions": true,
                 "allowDirectConstAssertionInArrowFunctions": true,
@@ -201,7 +201,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "error"
+            "error",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -605,6 +608,7 @@
             {
                 "allow": [
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }
@@ -1484,7 +1488,7 @@
             "error"
         ],
         "unicorn/number-literal-case": [
-            "error"
+            "off"
         ],
         "unicorn/numeric-separators-style": [
             "error",

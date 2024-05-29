@@ -5,23 +5,17 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { Deferred } from '@fluidframework/core-utils/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions';
-import type { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
@@ -30,12 +24,7 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/in
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
@@ -46,7 +35,7 @@ import { PropertiesManager } from '@fluidframework/merge-tree/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { ReferencePosition } from '@fluidframework/merge-tree/internal';
 import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base/internal';
 import { SlidingPreference } from '@fluidframework/merge-tree/internal';
 import { TextSegment } from '@fluidframework/merge-tree/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -55,7 +44,11 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
-export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
+export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+    [FieldKind.Required]: T;
+    [FieldKind.Optional]: T | undefined;
+    [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
+}[Kind];
 
 // @public
 export enum AttachState {
@@ -99,77 +92,21 @@ export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionS
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
-// @alpha
-export const ContainerErrorTypes: {
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
-    readonly usageError: "usageError";
-};
-
-// @alpha
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
-
 // @public
 export interface ContainerSchema {
-    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
-    readonly initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly SharedObjectKind[];
+    readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
-    readonly factory: {
-        readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"];
-    };
-} & (new (...args: any[]) => T);
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
+}
 
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-// @alpha @sealed
-export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
-    static readonly Type = "https://graph.microsoft.com/types/directory";
-    get type(): string;
-}
-
 // @public
 export const disposeSymbol: unique symbol;
-
-// @public
-export const DriverErrorTypes: {
-    readonly genericNetworkError: "genericNetworkError";
-    readonly authorizationError: "authorizationError";
-    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
-    readonly offlineError: "offlineError";
-    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
-    readonly writeError: "writeError";
-    readonly fetchFailure: "fetchFailure";
-    readonly fetchTokenError: "fetchTokenError";
-    readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
-    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
-    readonly locationRedirection: "locationRedirection";
-    readonly fluidInvalidSchema: "fluidInvalidSchema";
-    readonly fileIsLocked: "fileIsLocked";
-    readonly outOfStorageError: "outOfStorageError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly usageError: "usageError";
-};
-
-// @public
-export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
-
-// @public
-export type Events<E> = {
-    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
-};
 
 // @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -183,6 +120,7 @@ export enum FieldKind {
 
 // @public
 export interface FieldProps {
+    readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
 }
 
@@ -207,6 +145,13 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @public
+export interface IBranchOrigin {
+    id: string;
+    minimumSequenceNumber: number;
+    sequenceNumber: number;
+}
 
 // @public
 export interface IConnection {
@@ -256,7 +201,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
@@ -349,7 +294,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<infer TChannel> ? TChannel : never;
 };
 
 // @public
@@ -363,10 +308,10 @@ export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<Restrict
 };
 
 // @public
-export type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
+export type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @public
-export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
+export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
@@ -417,9 +362,30 @@ export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof Interv
 export enum IntervalType {
     // (undocumented)
     Simple = 0,
-    SlideOnRemove = 2,
+    SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
     // @internal
     Transient = 4
+}
+
+// @public
+export interface ISequencedDocumentMessage {
+    clientId: string | null;
+    clientSequenceNumber: number;
+    // @deprecated
+    compression?: string;
+    contents: unknown;
+    data?: string;
+    // @deprecated
+    expHash1?: string;
+    metadata?: unknown;
+    minimumSequenceNumber: number;
+    origin?: IBranchOrigin;
+    referenceSequenceNumber: number;
+    sequenceNumber: number;
+    serverMetadata?: unknown;
+    timestamp: number;
+    traces?: ITrace[];
+    type: string;
 }
 
 // @alpha
@@ -472,9 +438,6 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
-// @public
-export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
-
 // @alpha
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
@@ -510,6 +473,57 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 // @alpha
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
+    bindToContext(): void;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+}
+
+// @alpha
+export interface ISharedObjectEvents extends IErrorEvent {
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @alpha (undocumented)
+export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+    annotateRange(start: number, end: number, props: PropertySet): void;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    getContainingSegment(pos: number): {
+        segment: T | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getCurrentSeq(): number;
+    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
+    getLength(): number;
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    getPropertiesAtPosition(pos: number): PropertySet | undefined;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number | undefined;
+        posAfterEnd: number | undefined;
+    };
+    // @deprecated (undocumented)
+    groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    initializeLocal(): void;
+    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    obliterateRange(start: number, end: number): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+    // (undocumented)
+    removeRange(start: number, end: number): void;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+}
+
+// @alpha
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
@@ -520,7 +534,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 // @alpha
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
     annotateMarker(marker: Marker, props: PropertySet): void;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
@@ -537,9 +551,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 }
 
 // @public
-export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
-}
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
@@ -547,8 +559,20 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 }
 
 // @public
-export interface ITree extends IChannel {
+export interface ITrace {
+    action: string;
+    service: string;
+    timestamp: number;
+}
+
+// @public
+export interface ITree extends IFluidLoadable {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+}
+
+// @public
+export interface ITreeConfigurationOptions {
+    enableSchemaValidation?: boolean;
 }
 
 // @alpha @sealed
@@ -561,23 +585,17 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
+export interface Listenable<TListeners extends object> {
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
 
 // @public
 export interface MakeNominal {
-}
-
-// @alpha @sealed
-export class MapFactory implements IChannelFactory<ISharedMap> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    get type(): string;
 }
 
 // @public
@@ -625,6 +643,9 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @public
+export type Off = () => void;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -677,8 +698,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
-    get identifier(): FieldSchema<FieldKind.Identifier>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
+    get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
@@ -691,10 +712,10 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
-    optional<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Optional, T>;
-    optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: FieldProps): FieldSchemaUnsafe<FieldKind.Optional, T>;
-    required<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Required, T>;
-    requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: FieldProps): FieldSchemaUnsafe<FieldKind.Required, T>;
+    optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
+    optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
+    required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
+    requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Required, T>;
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
@@ -778,77 +799,23 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
 // @alpha
-export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
 
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
-export const SharedMap: ISharedObjectKind<ISharedMap>;
+export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind_2<ISharedMap>;
 
 // @alpha
 export type SharedMap = ISharedMap;
 
-// @alpha (undocumented)
-export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
-    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    annotateRange(start: number, end: number, props: PropertySet): void;
-    protected applyStashedOp(content: any): void;
-    // (undocumented)
-    protected client: Client;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    protected didAttach(): void;
-    getContainingSegment(pos: number): {
-        segment: T | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getCurrentSeq(): number;
-    getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
-    // (undocumented)
-    getIntervalCollectionLabels(): IterableIterator<string>;
-    getLength(): number;
-    getPosition(segment: ISegment): number;
-    // (undocumented)
-    getPropertiesAtPosition(pos: number): PropertySet | undefined;
-    // (undocumented)
-    getRangeExtentsOfPosition(pos: number): {
-        posStart: number | undefined;
-        posAfterEnd: number | undefined;
-    };
-    // @deprecated (undocumented)
-    groupOperation(groupOp: IMergeTreeGroupMsg): void;
-    protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
-    // (undocumented)
-    id: string;
-    protected initializeLocalCore(): void;
-    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
-    insertFromSpec(pos: number, spec: IJSONSegment): void;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    get loaded(): Promise<void>;
-    protected loadedDeferred: Deferred<void>;
-    localReferencePositionToPosition(lref: ReferencePosition): number;
-    obliterateRange(start: number, end: number): void;
-    protected onConnect(): void;
-    protected onDisconnect(): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: IFluidSerializer): void;
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    removeRange(start: number, end: number): void;
-    protected replaceRange(start: number, end: number, segment: ISegment): void;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+// @public
+export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 }
 
 // @alpha
-export const SharedString: ISharedObjectKind<ISharedString>;
+export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind_2<ISharedString>;
 
 // @alpha
 export type SharedString = ISharedString;
@@ -857,7 +824,7 @@ export type SharedString = ISharedString;
 export type SharedStringSegment = TextSegment | Marker;
 
 // @public
-export const SharedTree: ISharedObjectKind<ITree>;
+export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha
 export enum Side {
@@ -921,18 +888,19 @@ export interface TreeChangeEvents {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }
 
 // @public
-export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
+export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @public
-export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
@@ -940,7 +908,11 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
+    entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) => void, thisArg?: any): void;
+    keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
+    values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
 // @public
@@ -957,7 +929,7 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
+    is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
@@ -1013,7 +985,7 @@ export enum TreeStatus {
 // @public
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
-    readonly events: ISubscribable<TreeViewEvents>;
+    readonly events: Listenable<TreeViewEvents>;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;

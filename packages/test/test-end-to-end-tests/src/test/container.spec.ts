@@ -35,7 +35,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	FiveDaysMs,
 	IDocumentServiceFactory,
@@ -47,7 +47,8 @@ import {
 	NonRetryableError,
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,

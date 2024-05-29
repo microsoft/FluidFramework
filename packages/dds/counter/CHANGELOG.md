@@ -1,5 +1,13 @@
 # @fluidframework/counter
 
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   counter: SharedCounter now uses ISharedObjectKind and does not export the class [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Most users of `SharedCounter` should be unaffected as long as they stick to the factory patterns supported by ISharedObjectKind.
+
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes

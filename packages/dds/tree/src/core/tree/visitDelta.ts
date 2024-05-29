@@ -141,7 +141,7 @@ function fixedPointVisitOfRoots(
 	visitor: DeltaVisitor,
 	roots: Map<ForestRootId, Delta.FieldMap>,
 	config: PassConfig,
-) {
+): void {
 	while (roots.size > 0) {
 		for (const [root, modifications] of roots) {
 			roots.delete(root);
@@ -155,7 +155,7 @@ function fixedPointVisitOfRoots(
 }
 
 /**
- * Transfers roots from one detached field to another. 
+ * Transfers roots from one detached field to another.
  * This is done when there is a composition of changes that effectively move and remove a node, or restore and move a node, or restore and remove a node.
  * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
  *
@@ -445,7 +445,7 @@ function buildTrees(
 	trees: readonly ITreeCursorSynchronous[],
 	config: PassConfig,
 	visitor: DeltaVisitor,
-) {
+): void {
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
@@ -460,7 +460,7 @@ function processBuilds(
 	builds: readonly Delta.DetachedNodeBuild[] | undefined,
 	config: PassConfig,
 	visitor: DeltaVisitor,
-) {
+): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
 			buildTrees(id, trees, config, visitor);
@@ -471,7 +471,7 @@ function processBuilds(
 function collectDestroys(
 	destroys: readonly Delta.DetachedNodeDestruction[] | undefined,
 	config: PassConfig,
-) {
+): void {
 	if (destroys !== undefined) {
 		config.rootDestructions.push(...destroys);
 	}

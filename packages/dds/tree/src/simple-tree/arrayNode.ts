@@ -18,9 +18,9 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
+	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
-	FactoryContent,
 	InsertableContent,
 	getOrCreateNodeProxy,
 	markContentType,
@@ -39,10 +39,11 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData } from "./toMapTree.js";
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
+import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -85,10 +86,16 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	/**
 	 * Removes all items between the specified indices.
 	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the array.
-	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if `start` is not in the range [0, `array.length`).
+	 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
+	 * @throws Throws if `start` is not in the range [0, `array.length`].
 	 * @throws Throws if `end` is less than `start`.
 	 * If `end` is not supplied or is greater than the length of the array, all items after `start` are removed.
+	 *
+	 * @remarks
+	 * The default values for start and end are computed when this is called,
+	 * and thus the behavior is the same as providing them explicitly, even with respect to merge resolution with concurrent edits.
+	 * For example, two concurrent transactions both emptying the array with `node.removeRange()` then inserting an item,
+	 * will merge to result in the array having both inserted items.
 	 */
 	removeRange(start?: number, end?: number): void;
 
@@ -271,20 +278,6 @@ function getSequenceField<
 	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
 }
 
-// Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
-// typed data prior to forwarding to 'LazySequence.insert*()'.
-function contextualizeInsertedArrayContent(
-	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-	sequenceField: FlexTreeSequenceField<FlexAllowedTypes>,
-): FactoryContent {
-	return prepareContentForInsert(
-		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-		),
-		sequenceField.context.forest,
-	);
-}
-
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the array node proxy.  Over time, we should replace these with efficient implementations on LazySequence
 // to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
@@ -350,36 +343,71 @@ const TreeNodeWithArrayFeatures = (() => {
 		});
 	});
 
-	type AugmentedInstanceType<T extends ImplicitAllowedTypes> = TreeNodeValid<
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
-	> &
-		Pick<readonly TreeNodeFromImplicitAllowedTypes<T>[], (typeof arrayPrototypeKeys)[number]>;
-
-	type AugmentedConstructor = abstract new <T extends ImplicitAllowedTypes>(
-		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
-	) => AugmentedInstanceType<T>;
-
-	/**
-	 * Type of {@link TreeNodeWithArrayFeaturesUntyped}, but with its array members added to the instance type.
-	 *
-	 * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
-	 * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
-	 * is not supported.
-	 *
-	 * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
-	 * See https://github.com/microsoft/TypeScript/issues/35416 for details.
-	 *
-	 * Thus this has to replace the constructor type, and cannot do so while preserving the protected static members of TreeNodeValid.
-	 */
-	type StaticsWithoutConstructor = {
-		// As noted above, this loses all the protected members: this us undesired (but unavoidable).
-		// Since the constructor, which we do want to remove, is also protected, no extra work is needed to remove it.
-		[P in keyof typeof TreeNodeWithArrayFeaturesUntyped]: (typeof TreeNodeWithArrayFeaturesUntyped)[P];
-	};
-
-	return TreeNodeWithArrayFeaturesUntyped as unknown as StaticsWithoutConstructor &
-		AugmentedConstructor;
+	return TreeNodeWithArrayFeaturesUntyped as unknown as typeof NodeWithArrayFeatures;
 })();
+
+/**
+ * Type of {@link TreeNodeValid}, but with array members added to the instance type.
+ *
+ * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
+ * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
+ * is not supported.
+ *
+ * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
+ * See https://github.com/microsoft/TypeScript/issues/35416 for details.
+ *
+ * TypeScript also does not support explicitly specifying the instance type in a class definition as the constructor return type.
+ *
+ * Thus to replace the instance type, while preserving the protected static members of TreeNodeValid,
+ * the only option seems to be actually declaring a class with all the members explicitly inline.
+ *
+ * To avoid incurring any bundle size / runtime overhead from this and having to stub out the function bodies,
+ * the class uses `declare`.
+ * TypeScript does not support `declare` inside scopes, so this is not inside the function scope above.
+ *
+ * The members of this class were generated using the "implement interface" refactoring.
+ * Since that refactoring does not add `public`, the lint to require it is disabled for this section of the file.
+ * To update this class delete all members and reapply the "implement interface" refactoring.
+ * As these signatures get formatted to be over three times as many lines with prettier (which is not helpful), it is also suppressed.
+ */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
+// prettier-ignore
+declare abstract class NodeWithArrayFeatures<Input, T>
+	extends TreeNodeValid<Input>
+	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
+{
+	concat(...items: ConcatArray<T>[]): T[];
+	concat(...items: (T | ConcatArray<T>)[]): T[];
+	entries(): IterableIterator<[number, T]>;
+	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
+	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
+	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
+	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
+	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
+	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	includes(searchElement: T, fromIndex?: number | undefined): boolean;
+	indexOf(searchElement: T, fromIndex?: number | undefined): number;
+	join(separator?: string | undefined): string;
+	keys(): IterableIterator<number>;
+	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
+	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
+	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
+	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	slice(start?: number | undefined, end?: number | undefined): T[];
+	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	toLocaleString(): string;
+	toString(): string;
+	values(): IterableIterator<T>;
+}
+/* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
 /**
  * Attempts to coerce the given property key to an integer index property.
@@ -537,7 +565,10 @@ type Insertable<T extends ImplicitAllowedTypes> = readonly (
 )[];
 
 abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
-	extends TreeNodeWithArrayFeatures<T>
+	extends TreeNodeWithArrayFeatures<
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		TreeNodeFromImplicitAllowedTypes<T>
+	>
 	implements TreeArrayNode<T>
 {
 	// Indexing must be provided by subclass.
@@ -548,16 +579,28 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
-		const content = contextualizeInsertedArrayContent(
-			value as readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-			getSequenceField(this),
+		const sequenceField = getSequenceField(this);
+
+		const content = prepareContentForInsert(
+			(
+				value as readonly (
+					| InsertableContent
+					| IterableTreeArrayContent<InsertableContent>
+				)[]
+			).flatMap((c) => (c instanceof IterableTreeArrayContent ? Array.from(c) : [c])),
+			sequenceField.context.checkout.forest,
 		);
 
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
 		// but it works since cursorFromFieldData special cases arrays.
 		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
 
-		return cursorFromFieldData(content, simpleFieldSchema);
+		return cursorFromFieldData(
+			content,
+			simpleFieldSchema,
+			getFlexNode(this).context.nodeKeyManager,
+			getSchemaAndPolicy(sequenceField),
+		);
 	}
 
 	public toJSON(): unknown {
@@ -569,7 +612,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
 	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
-	public get length() {
+	public get length(): number {
 		return fail("Proxy should intercept length");
 	}
 
@@ -577,6 +620,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return this.values();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get [Symbol.unscopables]() {
 		// This might not be the exact right set of values, but it only matters for `with` clauses which are deprecated and are banned in strict mode, so it shouldn't matter much.
 		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with for details.
@@ -606,7 +650,18 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		getSequenceField(this).removeAt(index);
 	}
 	public removeRange(start?: number, end?: number): void {
-		getSequenceField(this).removeRange(start, end);
+		const field = getSequenceField(this);
+		const fieldEditor = field.sequenceEditor();
+		const { length } = field;
+		const removeStart = start ?? 0;
+		const removeEnd = Math.min(length, end ?? length);
+		validatePositiveIndex(removeStart);
+		validatePositiveIndex(removeEnd);
+		if (removeEnd < removeStart) {
+			// This catches both the case where start is > array.length and when start is > end.
+			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
+		}
+		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		if (source !== undefined) {
@@ -693,7 +748,7 @@ export function arraySchema<
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
 	class schema extends CustomArrayNodeBase<T> {
-		public static prepareInstance<T2>(
+		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
@@ -713,7 +768,7 @@ export function arraySchema<
 			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
 		}
 
-		public static buildRawNode<T2>(
+		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
@@ -727,9 +782,9 @@ export function arraySchema<
 			);
 		}
 
-		protected static constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
 		}
 
@@ -770,4 +825,17 @@ function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>
 	const copy = Array.from(content);
 	markContentType(typeName, copy);
 	return copy;
+}
+
+function validateSafeInteger(index: number): void {
+	if (!Number.isSafeInteger(index)) {
+		throw new UsageError(`Expected a safe integer, got ${index}.`);
+	}
+}
+
+function validatePositiveIndex(index: number): void {
+	validateSafeInteger(index);
+	if (index < 0) {
+		throw new UsageError(`Expected non-negative index, got ${index}.`);
+	}
 }

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,

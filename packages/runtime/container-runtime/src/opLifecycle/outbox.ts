@@ -112,9 +112,9 @@ export class Outbox {
 		// We need to allow infinite size batches if we enable compression
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 
-		this.mainBatch = new BatchManager({ hardLimit });
-		this.blobAttachBatch = new BatchManager({ hardLimit });
-		this.idAllocationBatch = new BatchManager({ hardLimit });
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
 	}
 
 	public get messageCount(): number {
@@ -201,32 +201,7 @@ export class Outbox {
 	public submitIdAllocation(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		if (
-			!this.idAllocationBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
-			// when queue is not empty.
-			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.idAllocationBatch);
-
-			this.addMessageToBatchManager(this.idAllocationBatch, message);
-		}
-
-		// If compression is enabled, we will always successfully receive
-		// attach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.idAllocationBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.idAllocationBatch);
-		}
+		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
 	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
@@ -270,7 +245,7 @@ export class Outbox {
 		const rawBatch = batchManager.popBatch();
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
-		if (rawBatch.hasReentrantOps === true && shouldGroup) {
+		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -300,6 +275,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
@@ -433,6 +409,7 @@ export class Outbox {
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
 			mainBatch,
+			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}

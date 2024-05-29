@@ -5,12 +5,12 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, noopValidator } from "../../codec/index.js";

@@ -21,22 +21,22 @@ import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
+	type ITree,
+	SchemaFactory,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

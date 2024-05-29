@@ -7,8 +7,8 @@
 import { DataObject } from '@fluidframework/aqueduct/internal';
 import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IUser } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { IUser } from '@fluidframework/driver-definitions';
 import { SharedSummaryBlock } from '@fluidframework/shared-summary-block/internal';
 
 // @internal (undocumented)

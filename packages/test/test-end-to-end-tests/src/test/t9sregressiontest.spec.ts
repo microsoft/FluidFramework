@@ -14,6 +14,7 @@ import {
 	ITestFluidObject,
 	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const mapId = "map";
 
@@ -53,7 +54,8 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		[...Array(60).keys()].map((i) => map2.set(`test op ${i}`, i));
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container2);
-		assert(dataStore2.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+
 		map2.set("a key", "a value");
 		await provider.ensureSynchronized();
 		container2.close();

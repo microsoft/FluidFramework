@@ -10,7 +10,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IIntervalCollection,

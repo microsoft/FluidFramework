@@ -6,10 +6,10 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { IClientDetails } from '@fluidframework/driver-definitions';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IContainer } from '@fluidframework/container-definitions/internal';
-import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentAttributes } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
@@ -22,7 +22,7 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions/internal';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
@@ -46,10 +46,11 @@ export interface IContainerExperimental extends IContainer {
     getPendingLocalState?(): Promise<string>;
 }
 
-// @alpha
+// @alpha @deprecated
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
     getBlobIds(): string[];
+    dispose?(): void;
 };
 
 // @alpha @deprecated (undocumented)
@@ -80,6 +81,7 @@ export interface ILoaderProps {
 // @alpha
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
+    // @deprecated
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;

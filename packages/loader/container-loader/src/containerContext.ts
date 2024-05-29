@@ -7,27 +7,30 @@ import {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
-	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
 	IContainerContext,
 	ILoader,
 	ILoaderOptions,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	IClientDetails,
+	IDocumentStorageService,
+	ISnapshot,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**

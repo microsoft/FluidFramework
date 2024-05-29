@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-
+import {
+	LoaderCachingPolicy,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 import { canRetryOnError } from "./network.js";
 

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -18,6 +17,7 @@ import { RawTreeNode } from "../../simple-tree/rawNode.js";
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { validateUsageError } from "../utils.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -49,7 +49,7 @@ describe("simple-tree types", () => {
 		it("Valid subclass", () => {
 			const log: string[] = [];
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			const customThis: TreeNodeValid<any> = {} as TreeNodeValid<any>;
+			const customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
 
 			class Subclass extends TreeNodeValid<number> {
 				public static readonly kind = NodeKind.Array;
@@ -239,19 +239,3 @@ describe("simple-tree types", () => {
 		});
 	});
 });
-
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
-}

@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-parameters:  
+parameters:
 - name: buildDirectory
   type: string
-  
+
 - name: STORAGE_ACCOUNT
   type: string
 
@@ -28,14 +28,21 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir upload_release_reports
-      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports
-      
+      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
+
+- task: CopyFiles@2
+  displayName: Copy release reports
+  inputs:
+    SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+    TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
+
 - task: AzureCLI@2
   displayName: Upload release reports
   continueOnError: true
   inputs:
     azureSubscription: 'fluid-docs'
     scriptType: bash
+    workingDirectory: ${{ parameters.buildDirectory }}
     scriptLocation: inlineScript
     inlineScript: |
       for file in upload_release_reports/*; do

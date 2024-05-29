@@ -3,18 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import {
+	IDocumentStorageService,
+	IDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -62,7 +69,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
 		private readonly interactive: boolean = true,
@@ -130,7 +137,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
 

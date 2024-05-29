@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

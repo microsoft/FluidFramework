@@ -108,7 +108,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 	}
 
-	public get shape() {
+	public get shape(): NodeShape {
 		return this;
 	}
 }
@@ -129,27 +129,30 @@ export function encodeFieldShapes(
 	]);
 }
 
-function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {
+function encodeIdentifier(
+	identifier: string,
+	identifiers: DeduplicationTable<string>,
+): string | number {
 	return identifiers.valueToIndex.get(identifier) ?? identifier;
 }
 
 function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
-) {
+): string | number | undefined {
 	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
 }
 
 function encodeOptionalFieldShape(
 	shape: FieldEncoder | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number | undefined {
 	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
 }
 
 function dedupShape(
 	shape: Shape<EncodedChunkShape>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number {
 	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
 }

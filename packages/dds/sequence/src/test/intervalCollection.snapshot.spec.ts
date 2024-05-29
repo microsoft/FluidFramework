@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -28,7 +28,8 @@ async function loadSharedString(
 ): Promise<ISharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
+	dataStoreRuntime.deltaManagerInternal.lastSequenceNumber =
+		containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
@@ -39,7 +40,6 @@ async function loadSharedString(
 		SharedStringFactory.Attributes,
 	);
 	await sharedString.load(services);
-	await sharedString.loaded;
 	return sharedString;
 }
 

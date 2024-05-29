@@ -7,16 +7,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
@@ -24,7 +23,7 @@ import {
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
 	FlexFieldSchema,
@@ -35,21 +34,22 @@ import {
 	buildChunkedForest,
 	buildForest,
 	createNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
+import {
+	DefaultResubmitMachine,
+	ExplicitCoreCodecVersions,
+	SharedTreeCore,
+} from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
-import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
-import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -147,7 +147,7 @@ export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
-	private readonly _events: ISubscribable<CheckoutEvents> &
+	private readonly _events: Listenable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly checkout: TreeCheckout;
@@ -176,7 +176,7 @@ export class SharedTree
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
+			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -223,6 +223,7 @@ export class SharedTree
 				throw error;
 			},
 		);
+		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
@@ -234,15 +235,11 @@ export class SharedTree
 			telemetryContextPrefix,
 			schema,
 			defaultSchemaPolicy,
-			new DefaultCommitEnricher(
+			new DefaultResubmitMachine(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
-				() => {
-					return new SharedTreeChangeEnricher(
-						forest.clone(schema, new AnchorSet()),
-						removedRoots.clone(),
-					);
-				},
+				changeEnricher,
 			),
+			changeEnricher,
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -291,7 +288,6 @@ export class SharedTree
 			viewSchema,
 			onDispose,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 	}
 
@@ -302,7 +298,6 @@ export class SharedTree
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
-			brand(defaultNodeKeyFieldKey),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
 		if (view.error?.canInitialize === true) {
@@ -426,13 +421,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
