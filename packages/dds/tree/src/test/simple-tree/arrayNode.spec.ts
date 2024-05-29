@@ -55,10 +55,50 @@ describe("ArrayNode", () => {
 			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
 		});
 
-		it("removeAt()", () => {
-			const array = hydrate(schemaType, [0, 1, 2]);
-			array.removeAt(1);
-			assert.deepEqual([...array], [0, 2]);
+		describe("removeAt", () => {
+			it("valid index", () => {
+				const array = hydrate(schemaType, [0, 1, 2]);
+				array.removeAt(1);
+				assert.deepEqual([...array], [0, 2]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [0, 1, 2]);
+				array.removeAt(1);
+				assert.throws(
+					() => array.removeAt(5),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.removeAt is too large./,
+					),
+				);
+				assert.throws(
+					() => array.removeAt(-1),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
+		});
+
+		describe("insertAt", () => {
+			it("valid index", () => {
+				const array = hydrate(schemaType, [1, 2, 3]);
+				array.insertAt(0, 0);
+				assert.deepEqual([...array], [0, 1, 2, 3]);
+			});
+
+			it("invalid index", () => {
+				const array = hydrate(schemaType, [0, 1, 2]);
+				array.removeAt(1);
+				assert.throws(
+					() => array.insertAt(4, 0),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.insertAt is too large./,
+					),
+				);
+				assert.throws(
+					() => array.insertAt(-1, 0),
+					validateUsageError(/Expected non-negative index, got -1./),
+				);
+			});
 		});
 
 		describe("removeRange", () => {

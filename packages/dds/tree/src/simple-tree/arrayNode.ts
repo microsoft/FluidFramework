@@ -638,7 +638,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return getOrCreateNodeProxy(val);
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
-		getSequenceField(this).insertAt(index, this.#cursorFromFieldData(value));
+		const field = getSequenceField(this);
+		validateIndex(
+			index,
+			field,
+			false,
+			"Index value passed to TreeArrayNode.insertAt is too large.",
+		);
+		field.insertAt(index, this.#cursorFromFieldData(value));
 	}
 	public insertAtStart(...value: Insertable<T>): void {
 		getSequenceField(this).insertAtStart(this.#cursorFromFieldData(value));
@@ -647,7 +654,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		getSequenceField(this).insertAtEnd(this.#cursorFromFieldData(value));
 	}
 	public removeAt(index: number): void {
-		getSequenceField(this).removeAt(index);
+		const field = getSequenceField(this);
+		validateIndex(
+			index,
+			field,
+			false,
+			"Index value passed to TreeArrayNode.removeAt is too large.",
+		);
+		field.removeAt(index);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
@@ -678,10 +692,17 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
+		const field = getSequenceField(this)
+		validateIndex(
+			index,
+			field,
+			false,
+			"Index value passed to TreeArrayNode.removeAt is too large.",
+		);
 		if (source !== undefined) {
-			getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
+			field.moveToIndex(index, sourceIndex, getSequenceField(source));
 		} else {
-			getSequenceField(this).moveToIndex(index, sourceIndex);
+			field.moveToIndex(index, sourceIndex);
 		}
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
@@ -837,5 +858,23 @@ function validatePositiveIndex(index: number): void {
 	validateSafeInteger(index);
 	if (index < 0) {
 		throw new UsageError(`Expected non-negative index, got ${index}.`);
+	}
+}
+
+function validateIndex(
+	index: number,
+	array: { readonly length: number },
+	allowOnePastEnd: boolean = false,
+	error: string,
+): void {
+	validatePositiveIndex(index);
+	if (allowOnePastEnd) {
+		if (index > array.length) {
+			throw new UsageError(error);
+		}
+	} else {
+		if (index >= array.length) {
+			throw new UsageError(error);
+		}
 	}
 }
