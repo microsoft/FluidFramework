@@ -53,9 +53,9 @@ import {
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { StableId } from "../../../../../../runtime/id-compressor/dist/index.js";
+import { SummaryType } from "@fluidframework/driver-definitions";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -84,7 +84,7 @@ function getIdentifierEncodingContext(id: StableId) {
 		identifier: id,
 	}));
 
-	const flexConfig = toFlexConfig(config, createMockNodeKeyManager());
+	const flexConfig = toFlexConfig(config, new MockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 
 	const encoderContext = {
@@ -246,7 +246,7 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is an unknown/invalid identifier", () => {
 			// generate an id from a different id compressor.
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);

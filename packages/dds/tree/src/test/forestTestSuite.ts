@@ -642,7 +642,12 @@ export function testForest(config: ForestTestConfiguration): void {
 					const forest = factory(
 						new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 					);
-					initializeForest(forest, [singleJsonCursor(1)], testRevisionTagCodec);
+					initializeForest(
+						forest,
+						[singleJsonCursor(1)],
+						testRevisionTagCodec,
+						testIdCompressor,
+					);
 
 					const log: string[] = [];
 					forest.on("beforeChange", () => {
@@ -662,7 +667,12 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(
 					new TreeStoredSchemaRepository(intoStoredSchema(jsonSequenceRootSchema)),
 				);
-				initializeForest(forest, [singleJsonCursor(1)], testRevisionTagCodec);
+				initializeForest(
+					forest,
+					[singleJsonCursor(1)],
+					testRevisionTagCodec,
+					testIdCompressor,
+				);
 
 				const log: string[] = [];
 				forest.on("beforeChange", () => {
