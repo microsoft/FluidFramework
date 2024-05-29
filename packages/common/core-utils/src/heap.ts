@@ -130,10 +130,7 @@ export class Heap<T> {
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {
 			const swappedNode = this.L[position];
-			assert(
-				swappedNode !== undefined,
-				"swappedNode is undefined in remove",
-			);
+			assert(swappedNode !== undefined, "swappedNode is undefined in remove");
 			this.update(swappedNode);
 		}
 	}

@@ -53,9 +53,9 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",
-		"@fluid-experimental/property-properties": "workspace:~"
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
