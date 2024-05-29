@@ -7,6 +7,7 @@
 
 import * as child_process from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import * as readline from "node:readline";
@@ -21,6 +22,8 @@ import {
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import { Handler, readFile, writeFile } from "./common.js";
+
+const require = createRequire(import.meta.url);
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -1178,7 +1181,8 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
-			const config = (await import(path.resolve(jestConfigFile))) as { reporters?: unknown };
+			// This assumes that the jest config will be in CommonJS, because if it's ESM the require call will fail.
+			const config = require(path.resolve(jestConfigFile)) as { reporters?: unknown };
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
 			}

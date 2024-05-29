@@ -4,6 +4,7 @@
  */
 
 import { ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
+import { JsonCompatibleReadOnly, JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 export function sum(cursor: ITreeCursor): number {
 	let total = 0;
@@ -37,7 +38,9 @@ export function sumMap(cursor: ITreeCursor): number {
 	return total;
 }
 
-export function sumDirect(jsonObj: object): number {
+export function sumDirect(
+	jsonObj: JsonCompatibleReadOnlyObject | readonly JsonCompatibleReadOnly[],
+): number {
 	let total = 0;
 	for (const value of Object.values(jsonObj)) {
 		if (typeof value === "object" && value !== null) {
@@ -50,27 +53,28 @@ export function sumDirect(jsonObj: object): number {
 }
 
 /**
- * Benchmarking "consumer" that calculates two averages of two values, it takes a callback which enables this benchmark
- * to be used with any shape of tree since the callback defines the tree navigation.
+ * Benchmarking "consumer" that calculates averages of values.
+ * This takes a callback which enables this benchmark to be used with any shape of tree since the callback defines the tree navigation.
  * @param cursor - a Shared Tree cursor
  * @param dataConsumer - Function that should use the given cursor to retrieve data and call calculate().
- * @returns a set of two average values.
+ * @returns average of values passed to callback.
+ * @remarks
+ * This is useful to help ensure an optimizer does not optimize out parts of the benchmark
+ * by computing something using the data retrieved in the benchmark.
  */
-export function averageTwoValues(
-	cursor: ITreeCursor,
-	dataConsumer: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
-): [number, number] {
+export function averageValues<T>(
+	cursor: T,
+	dataConsumer: (cursor: T, calculate: (x: number) => void) => void,
+): number {
 	let count = 0;
 	let xTotal = 0;
-	let yTotal = 0;
 
-	const calculate = (x: number, y: number) => {
+	const calculate = (x: number) => {
 		count += 1;
 		xTotal += x;
-		yTotal += y;
 	};
 
 	dataConsumer(cursor, calculate);
 
-	return [xTotal / count, yTotal / count];
+	return xTotal / count;
 }
