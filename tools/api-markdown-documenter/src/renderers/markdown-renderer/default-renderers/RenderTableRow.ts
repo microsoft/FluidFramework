@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import type { TableRowNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import { renderNode } from "../Render.js";
@@ -24,6 +25,7 @@ export function renderTableRow(
 	writer.write("| ");
 	for (let i = 0; i < node.children.length; i++) {
 		const child = node.children[i];
+		assert(child !== undefined, "child is undefined in renderTableRow");
 		renderNode(child, writer, {
 			...context,
 			insideTable: true,

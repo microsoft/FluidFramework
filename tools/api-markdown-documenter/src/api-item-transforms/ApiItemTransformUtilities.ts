@@ -239,6 +239,8 @@ export function getHeadingForApiItem(
 		? undefined
 		: getHeadingIdForApiItem(apiItem, config);
 
+	assert(id !== undefined, "id is undefined in getHeadingForApiItem");
+
 	return {
 		title: config.getHeadingTextForItem(apiItem),
 		id,
