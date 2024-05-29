@@ -30,7 +30,7 @@ import {
 	compressedEncode,
 } from "./compressedEncode.js";
 import { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
+import { EncodedFieldBatch, EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -86,8 +86,16 @@ export function fieldShaper(
 				nodeSchema instanceof LeafNodeStoredSchema,
 				"nodeSchema must be LeafNodeStoredSchema",
 			);
-			assert(nodeSchema.leafValue === 1, "identifier field can only be type string");
-			const identifierNodeEncoder = new NodeShape(type, 0, [], undefined);
+			assert(
+				nodeSchema.leafValue === ValueSchema.String,
+				"identifier field can only be type string",
+			);
+			const identifierNodeEncoder = new NodeShape(
+				type,
+				SpecialField.Identifier,
+				[],
+				undefined,
+			);
 			return asFieldEncoder(identifierNodeEncoder);
 		}
 		return asFieldEncoder(nodeEncoder);
