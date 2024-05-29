@@ -225,7 +225,11 @@ async function eslintGetScriptDependencies(
 	let config: EslintConfig;
 	try {
 		const { ext } = path.parse(eslintConfig);
-		if (ext !== ".js" && ext !== ".cjs" && ext !== ".mjs") {
+		if (ext === ".mjs") {
+			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
+		}
+
+		if (ext !== ".js" && ext !== ".cjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
