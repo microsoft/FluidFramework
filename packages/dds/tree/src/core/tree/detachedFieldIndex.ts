@@ -186,7 +186,7 @@ export class DetachedFieldIndex {
 	 * Removes all entries created by the given revision, no matter what their latest
 	 * relevant revision is.
 	 */
-	public deleteRoots(revision: RevisionTag) {
+	public deleteRoots(revision: RevisionTag): void {
 		const entries = this.detachedNodeToField.get(revision);
 		assert(entries !== undefined, "no entries created by the given revision");
 		for (const [_, { root, latestRelevantRevision }] of entries.entries()) {
@@ -198,7 +198,7 @@ export class DetachedFieldIndex {
 	/**
 	 * Removes all entries last created or used by the given revision.
 	 */
-	public deleteLatestRelevantRoots(revision: RevisionTag) {
+	public deleteLatestRelevantRoots(revision: RevisionTag): void {
 		const entries = this.latestRelevantRevisionToFields.get(revision);
 		if (entries === undefined) {
 			return;
@@ -230,7 +230,7 @@ export class DetachedFieldIndex {
 	private deleteRootFromLatestRelevantRevisionsMap(
 		root: ForestRootId,
 		latestRelevantRevision: RevisionTag | undefined,
-	) {
+	): void {
 		const revisionRoots =
 			this.latestRelevantRevisionToFields.get(latestRelevantRevision) ??
 			fail("Unable to delete unknown entry");
@@ -275,7 +275,7 @@ export class DetachedFieldIndex {
 	/**
 	 * Updates the latest revision that is relevant to the provided root
 	 */
-	public updateLatestRevision(id: Delta.DetachedNodeId, revision: RevisionTag | undefined) {
+	public updateLatestRevision(id: Delta.DetachedNodeId, revision: RevisionTag | undefined): void {
 		const fieldEntry =
 			tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor) ??
 			fail("detached node id does not exist in the detached field index");

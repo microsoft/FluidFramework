@@ -1143,7 +1143,7 @@ describe("SharedTree", () => {
 				const root2 = tree2.flexTree;
 
 				// remove in first tree
-				root1.removeRange(0, 2);
+				root1.sequenceEditor().remove(0, 2);
 
 				provider.processMessages();
 				const removeSequenceNumber = provider.sequenceNumber;
@@ -1250,7 +1250,7 @@ describe("SharedTree", () => {
 				const root2 = tree2.flexTree;
 
 				// remove in first tree
-				root1.removeRange(0, 2);
+				root1.sequenceEditor().remove(0, 2);
 
 				provider.processMessages();
 				assert.deepEqual([...root1], ["C", "D"]);

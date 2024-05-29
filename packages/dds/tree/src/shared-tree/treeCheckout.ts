@@ -636,7 +636,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return trees;
 	}
 
-	public setRevisionsForLoadedData(revision: RevisionTag) {
+	public setRevisionsForLoadedData(revision: RevisionTag): void {
 		this.removedRoots.setRevisionsForLoadedData(revision);
 	}
 
