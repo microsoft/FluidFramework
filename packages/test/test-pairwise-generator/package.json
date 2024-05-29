@@ -74,6 +74,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluidframework/core-utils": "workspace:~",
 		"random-js": "^2.1.0"
 	},
 	"devDependencies": {

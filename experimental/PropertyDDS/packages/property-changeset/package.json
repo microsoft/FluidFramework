@@ -78,6 +78,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"ajv": "^8.12.0",
 		"ajv-keywords": "^5.1.0",
 		"async": "^3.2.2",

@@ -13,6 +13,7 @@ import {
 	PropertyFactory,
 	SetProperty,
 } from "@fluid-experimental/property-properties";
+import { assert } from "@fluidframework/core-utils";
 
 import { PropertyProxy } from "../index.js";
 
@@ -3066,6 +3067,18 @@ describe("JS-Object-like property accessing ", function () {
 			});
 
 			it("check .lastIndexOf() functionality", function () {
+				const element0 = arrayWithJsOutfit[0];
+				assert(
+					element0 !== undefined,
+					"element0 is undefined in check .lastIndexOf() functionality",
+				);
+
+				const element1 = arrayWithJsOutfit[1];
+				assert(
+					element1 !== undefined,
+					"element1 is undefined in check .lastIndexOf() functionality",
+				);
+
 				expect(state.myTestProperty.myComplexArray.lastIndexOf({ x: 1, y: 2 })).toEqual(
 					arrayWithJsOutfit.lastIndexOf({ x: 1, y: 2 }),
 				);
@@ -3073,48 +3086,48 @@ describe("JS-Object-like property accessing ", function () {
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[1],
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[1]));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element1));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[1],
 						1,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[1], 1));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element1, 1));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[1],
 						2,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[1], 2));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element1, 2));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[1],
 						-1,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[1], -1));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element1, -1));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						rootNode.resolvePath("myTestProperty.myComplexArray[0]"),
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[0]));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element0));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[0],
 						-1,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[0], -1));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element0, -1));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[0],
 						-2,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[0], -2));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element0, -2));
 				expect(
 					state.myTestProperty.myComplexArray.lastIndexOf(
 						state.myTestProperty.myComplexArray[0],
 						-3,
 					),
-				).toEqual(arrayWithJsOutfit.lastIndexOf(arrayWithJsOutfit[0], -3));
+				).toEqual(arrayWithJsOutfit.lastIndexOf(element0, -3));
 			});
 
 			it("check .map() functionality", function () {
@@ -4478,24 +4491,52 @@ describe("JS-Object-like property accessing ", function () {
 						checkAssignment();
 
 						// Assign iterables of properties
-						const entriesAsProperties = (): [string, BaseProperty][] => [
-							[
-								entries[0][0],
-								PropertyFactory.create(
-									vector2DTemplate.typeid,
-									"single",
-									entries[0][1],
-								),
-							],
-							[
-								entries[1][0],
-								PropertyFactory.create(
-									vector2DTemplate.typeid,
-									"single",
-									entries[1][1],
-								),
-							],
-						];
+						const entriesAsProperties = (): [string, BaseProperty][] => {
+							const entry0 = entries[0];
+							assert(
+								entry0 !== undefined,
+								"entry0 is undefined in entriesAsProperties",
+							);
+							const key0 = entry0[0];
+							assert(key0 !== undefined, "key0 is undefined in entriesAsProperties");
+							const value0 = entry0[1];
+							assert(
+								value0 !== undefined,
+								"value0 is undefined in entriesAsProperties",
+							);
+							const entry1 = entries[1];
+							assert(
+								entry1 !== undefined,
+								"entry1 is undefined in entriesAsProperties",
+							);
+
+							const key1 = entry1[0];
+							assert(key1 !== undefined, "key1 is undefined in entriesAsProperties");
+							const value1 = entry1[1];
+							assert(
+								value1 !== undefined,
+								"value1 is undefined in entriesAsProperties",
+							);
+
+							return [
+								[
+									key0,
+									PropertyFactory.create(
+										vector2DTemplate.typeid,
+										"single",
+										value0,
+									),
+								],
+								[
+									key1,
+									PropertyFactory.create(
+										vector2DTemplate.typeid,
+										"single",
+										value1,
+									),
+								],
+							];
+						};
 
 						state.myTestProperty.myComplexMap = new Map(entriesAsProperties());
 						checkAssignment();

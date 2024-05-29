@@ -14,6 +14,7 @@
  * @fileoverview In this file, we will test template validation.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { constants } from "@fluid-experimental/property-common";
 import { expect } from "chai";
 import semver from "semver";
@@ -1066,10 +1067,12 @@ import {
 						expect(result.isValid).to.equal(false);
 						// console.log(result.errors);
 						expect(result.errors.length).to.equal(5);
-						expect(result.errors[3].message).to.include(
-							"must have required property 'inherits'",
-						);
-						expect(result.errors[4].message).to.include(
+						const error3 = result.errors[3];
+						assert(error3 !== undefined, "error3 is undefined in validate");
+						expect(error3.message).to.include("must have required property 'inherits'");
+						const error4 = result.errors[4];
+						assert(error4 !== undefined, "error4 is undefined in validate");
+						expect(error4.message).to.include(
 							"/constants/0 must have required property 'typeid'",
 						);
 						return result;
@@ -1155,7 +1158,9 @@ import {
 					function (result) {
 						expect(result.isValid).to.equal(false);
 						expect(result.errors.length).to.equal(1);
-						expect(result.errors[0].message).to.include(
+						const error0 = result.errors[0];
+						assert(error0 !== undefined, "error0 is undefined in entriesAsProperties");
+						expect(error0.message).to.include(
 							"should match one of the following: typeid,string",
 						);
 						return result;

@@ -5,6 +5,7 @@
 
 import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import * as appinsights from "applicationinsights";
 
 /**
@@ -30,6 +31,10 @@ export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
 			);
 			const users = Object.keys(passwords);
 			const username = users[0];
+			assert(
+				username !== undefined,
+				"username is undefined in AppInsightsTestLogger.constructor",
+			);
 			this.telemetryClient.commonProperties.envUserName = username;
 		}
 	}

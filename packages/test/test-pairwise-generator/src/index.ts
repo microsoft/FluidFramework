@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { Engine, MersenneTwister19937, pick } from "random-js";
 
 /**
@@ -97,7 +98,9 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
 	}
 
 	if (matrixKeys.length === 1) {
-		const values = optionsMatrix[matrixKeys[0]];
+		const matrixKeysAt0 = matrixKeys[0];
+		assert(mj !== undefined, "matrix[j] is undefined in validatePairsExhaustively");
+		const values = optionsMatrix[matrixKeysAt0];
 		return values.map<T>((v) => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			return { [matrixKeys[0]]: v } as T;
