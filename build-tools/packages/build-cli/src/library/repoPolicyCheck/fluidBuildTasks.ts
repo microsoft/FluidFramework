@@ -230,7 +230,7 @@ async function eslintGetScriptDependencies(
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// This code assumes that the jest config will be in CommonJS, because if it's ESM the require call will fail.
+			// This code assumes that the eslint config will be in CommonJS, because if it's ESM the require call will fail.
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
