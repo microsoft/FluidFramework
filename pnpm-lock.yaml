@@ -184,8 +184,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -4662,8 +4662,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -6342,8 +6342,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -7694,8 +7694,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -7761,8 +7761,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -7934,8 +7934,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -8058,8 +8058,8 @@ importers:
         specifier: npm:@fluidframework/container-definitions@2.0.0-rc.4.0.0
         version: /@fluidframework/container-definitions@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -8103,8 +8103,8 @@ importers:
         specifier: npm:@fluidframework/core-interfaces@2.0.0-rc.4.0.0
         version: /@fluidframework/core-interfaces@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -8154,8 +8154,8 @@ importers:
         specifier: npm:@fluidframework/core-utils@2.0.0-rc.4.0.0
         version: /@fluidframework/core-utils@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -8233,8 +8233,8 @@ importers:
         specifier: npm:@fluidframework/driver-definitions@2.0.0-rc.4.0.0
         version: /@fluidframework/driver-definitions@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -9813,8 +9813,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -10064,8 +10064,8 @@ importers:
         specifier: npm:@fluidframework/debugger@2.0.0-rc.4.0.0
         version: /@fluidframework/debugger@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -10131,8 +10131,8 @@ importers:
         specifier: npm:@fluidframework/driver-base@2.0.0-rc.4.0.0
         version: /@fluidframework/driver-base@2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -10216,8 +10216,8 @@ importers:
         specifier: npm:@fluidframework/driver-web-cache@2.0.0-rc.4.0.0
         version: /@fluidframework/driver-web-cache@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11114,8 +11114,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11208,8 +11208,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11584,8 +11584,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11742,8 +11742,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11921,8 +11921,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -12279,8 +12279,8 @@ importers:
         specifier: npm:@fluidframework/container-loader@2.0.0-rc.4.0.0
         version: /@fluidframework/container-loader@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -12394,8 +12394,8 @@ importers:
         specifier: npm:@fluidframework/driver-utils@2.0.0-rc.4.0.0
         version: /@fluidframework/driver-utils@2.0.0-rc.4.0.0(debug@4.3.4)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -12479,8 +12479,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -12676,8 +12676,8 @@ importers:
         specifier: npm:@fluidframework/container-runtime-definitions@2.0.0-rc.4.0.0
         version: /@fluidframework/container-runtime-definitions@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -12849,8 +12849,8 @@ importers:
         specifier: npm:@fluidframework/datastore-definitions@2.0.0-rc.4.0.0
         version: /@fluidframework/datastore-definitions@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -14170,8 +14170,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -14352,8 +14352,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -14471,8 +14471,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -14571,8 +14571,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -14834,8 +14834,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -15260,8 +15260,8 @@ importers:
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -15372,8 +15372,8 @@ importers:
         specifier: npm:@fluidframework/devtools@2.0.0-rc.4.0.0
         version: /@fluidframework/devtools@2.0.0-rc.4.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.1.0
-        version: 5.1.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -22337,35 +22337,6 @@ packages:
       idb: 6.1.5
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@fluidframework/eslint-config-fluid@5.1.0(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-PJEe6Otz3bJScEUg20oaPnzj3L9cM3L10vNz0o6AooskqLLUcV7BMUTucOSFhad20CffWXMIY7XarvRSTWVDDw==}
-    dependencies:
-      '@fluid-internal/eslint-plugin-fluid': 0.1.1(eslint@8.55.0)(typescript@5.4.5)
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/eslint-patch': 1.4.0
-      '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.4.5)
-      '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.55.0)(typescript@5.4.5)
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.4.5)
-      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
-      eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.0)(eslint@8.55.0)
-      eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: /eslint-plugin-i@2.29.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
-      eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
-      eslint-plugin-promise: 6.1.1(eslint@8.55.0)
-      eslint-plugin-react: 7.33.2(eslint@8.55.0)
-      eslint-plugin-react-hooks: 4.6.0(eslint@8.55.0)
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 48.0.1(eslint@8.55.0)
-      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5)(eslint@8.55.0)
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - supports-color
-      - typescript
     dev: true
 
   /@fluidframework/eslint-config-fluid@5.3.0(eslint@8.55.0)(typescript@5.4.5):
