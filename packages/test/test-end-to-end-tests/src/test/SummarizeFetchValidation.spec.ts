@@ -316,13 +316,6 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
-			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
-				this.skip();
-			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
 			const versionWrap1 = await incrementCellValueAndRunSummary(
 				summarizerClient,
@@ -339,7 +332,10 @@ describeCompat(
 				2 /* expectedMatrixCellValue */,
 			);
 			// Only ODSP driver uses snapshot cache due to which the summarizer would have loaded from an older summary.
-			if (provider.driver.type === "odsp") {
+			if (
+				provider.driver.type === "odsp" ||
+				(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs")
+			) {
 				assert(versionWrap2.fetchCount === 1, "Fetch should have happened");
 				assert.strictEqual(
 					versionWrap2.fetchSnapshotRefSeq,
