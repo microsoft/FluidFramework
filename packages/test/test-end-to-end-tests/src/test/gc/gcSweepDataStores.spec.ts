@@ -32,6 +32,8 @@ import { IErrorBase } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -43,8 +45,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,

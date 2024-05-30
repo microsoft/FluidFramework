@@ -17,6 +17,11 @@ import {
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorTypes,
@@ -28,11 +33,6 @@ import {
 	NonRetryableError,
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,

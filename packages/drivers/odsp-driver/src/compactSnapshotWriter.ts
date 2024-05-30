@@ -5,8 +5,8 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot, IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISnapshot, IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";

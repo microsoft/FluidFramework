@@ -14,13 +14,13 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

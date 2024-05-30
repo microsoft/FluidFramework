@@ -6,7 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -14,8 +15,6 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createNewFluidFile } from "../createFile.js";

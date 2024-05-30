@@ -21,12 +21,12 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ILoadTestConfig } from "./testConfigFile.js";
 

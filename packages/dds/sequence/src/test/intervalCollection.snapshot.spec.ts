@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
