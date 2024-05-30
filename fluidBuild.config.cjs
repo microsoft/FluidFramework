@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// ts-check
+
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 // These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
@@ -18,6 +20,8 @@ const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
  *
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
+ *
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
  */
 module.exports = {
 	tasks: {
@@ -414,25 +418,26 @@ module.exports = {
 			// A list of script commands and the package that contains the command
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
-				["mocha", "mocha"],
-				["rimraf", "rimraf"],
-				["tsc", "typescript"],
-				["eslint", "eslint"],
-				["prettier", "prettier"],
-				["webpack", "webpack"],
-				["nyc", "nyc"],
+				["attw", "@arethetypeswrong/cli"],
 				["c8", "c8"],
-				["gf", "good-fences"],
+				["concurrently", "concurrently"],
+				["copyfiles", "copyfiles"],
 				["cross-env", "cross-env"],
+				["depcruise", "dependency-cruiser"],
+				["eslint", "eslint"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
-				["depcruise", "dependency-cruiser"],
-				["copyfiles", "copyfiles"],
+				["gf", "good-fences"],
+				["mocha", "mocha"],
+				["nyc", "nyc"],
 				["oclif", "oclif"],
+				["prettier", "prettier"],
 				["renamer", "renamer"],
-				["ts2esm", "ts2esm"],
+				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
-				["attw", "@arethetypeswrong/cli"],
+				["ts2esm", "ts2esm"],
+				["tsc", "typescript"],
+				["webpack", "webpack"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
