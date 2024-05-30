@@ -197,7 +197,6 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -206,7 +205,15 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]?: JsonCompatibleReadOnly };
+	| JsonCompatibleReadOnlyObject;
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
  * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance

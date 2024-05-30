@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
-import { EventEmitter, ISubscribable, createEmitter } from "../../events/index.js";
+import { EventEmitter, Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -99,12 +96,13 @@ describe("EventEmitter", () => {
 		assert(!closed);
 	});
 
-	it("allows duplicate event listeners", () => {
+	it("correctly handles multiple event listeners", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count: number;
 		const listener = () => (count += 1);
 		const off1 = emitter.on("open", listener);
-		const off2 = emitter.on("open", listener);
+		assert.throws(() => emitter.on("open", listener)); // Registering the exact same function is currently forbidden.
+		const off2 = emitter.on("open", () => listener());
 
 		count = 0;
 		emitter.emit("open");
@@ -121,28 +119,14 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 0);
 	});
 
-	it("fails on duplicate deregistrations", () => {
+	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
 		const deregisterB = emitter.on("open", () => {});
 		deregister();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Listener does not exist. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregister();
 		deregisterB();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Event has no listeners. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregisterB();
 	});
 
 	it("skips events adding during event", () => {
@@ -192,7 +176,7 @@ class MyInheritanceClass extends EventEmitter<MyEvents> {
 	}
 }
 
-class MyCompositionClass implements ISubscribable<MyEvents> {
+class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
 	private load() {

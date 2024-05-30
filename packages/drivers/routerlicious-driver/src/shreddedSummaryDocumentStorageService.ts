@@ -122,7 +122,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = (await manager.getTree(requestVersion!.treeId)).content;
+				const response = (await manager.getTree(requestVersion.treeId)).content;
 				event.end({
 					size: response.tree.length,
 				});

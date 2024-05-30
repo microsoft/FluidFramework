@@ -19,7 +19,7 @@ export type BatchMessage = IBatchMessage & {
 /**
  * Batch interface used internally by the runtime.
  */
-export interface IBatch {
+export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.
@@ -28,7 +28,7 @@ export interface IBatch {
 	/**
 	 * All the messages in the batch
 	 */
-	readonly content: BatchMessage[];
+	readonly content: TMessages;
 	/**
 	 * The reference sequence number for the batch
 	 */
