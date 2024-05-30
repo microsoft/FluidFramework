@@ -8,10 +8,11 @@ set -eux -o pipefail
 
 # Set format scripts to use prettier since we're not enabling biome yet
 npe scripts.format "npm run format:prettier"
-npe scripts.check:format "npm run check:biome"
+npe scripts.check:format "npm run check:prettier"
 
 npe scripts.check:biome "biome check . --formatter-enabled=true --organize-imports-enabled=true"
 npe scripts.format:biome "biome check . --formatter-enabled=true --organize-imports-enabled=true --apply"
+npe devDependencies.@biomejs/biome "^1.7.3"
 
 # sd --fixed-strings '"check:prettier": "p' '"check:prettier:old": "p' package.json
 # sd --fixed-strings '"format:prettier": "p' '"format:prettier:old": "p' package.json
