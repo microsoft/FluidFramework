@@ -32,6 +32,7 @@
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.js",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
+		"check:format": "fluid-build --task check:format",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -152,7 +153,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.37.0",
@@ -249,6 +250,12 @@
 			"build:readme": {
 				"dependsOn": []
 			},
+			"check:format": {
+				"dependsOn": [
+					"^check:format"
+				],
+				"script": false
+			},
 			"checks": {
 				"dependsOn": [
 					"^checks",
@@ -311,10 +318,7 @@
 			},
 			"format": {
 				"dependsOn": [
-					"prettier:root:fix",
-					"^prettier:fix",
-					"^format:prettier",
-					"^format:biome"
+					"^format"
 				],
 				"script": false
 			},
