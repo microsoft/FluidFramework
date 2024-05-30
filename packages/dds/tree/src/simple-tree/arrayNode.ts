@@ -697,7 +697,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
 		const field = getSequenceField(this);
-		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToStart");
+		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToStart");
 		if (source !== undefined) {
 			field.moveRangeToStart(sourceStart, sourceEnd, getSequenceField(source));
 		} else {
@@ -706,7 +706,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
 		const field = getSequenceField(this);
-		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToEnd");
+		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToEnd");
 		if (source !== undefined) {
 			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
 		} else {
@@ -721,7 +721,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, field, "moveRangeToIndex");
+		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
 		if (source !== undefined) {
 			getSequenceField(this).moveRangeToIndex(
 				index,

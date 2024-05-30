@@ -64,13 +64,14 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [0, 1, 2]);
-				array.removeAt(1);
+				// Index too large
 				assert.throws(
-					() => array.removeAt(5),
+					() => array.removeAt(3),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.removeAt is out of bounds./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.removeAt(-1),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -87,12 +88,14 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [0, 1, 2]);
+				// Index too large
 				assert.throws(
 					() => array.insertAt(4, 0),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.insertAt is out of bounds./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.insertAt(-1, 0),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -119,12 +122,14 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// Index too large
 				assert.throws(
 					() => array.moveToStart(4),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveToStart is out of bounds./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveToStart(-1),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -151,12 +156,14 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// Index too large
 				assert.throws(
 					() => array.moveToEnd(4),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveToEnd is out of bounds./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveToEnd(-1),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -183,18 +190,21 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// Destination index too large
 				assert.throws(
 					() => array.moveToIndex(4, 0),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
 					),
 				);
+				// Source index too large
 				assert.throws(
 					() => array.moveToIndex(0, 4),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveToIndex(-1, 0),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -221,18 +231,21 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// End index too large
 				assert.throws(
 					() => array.moveRangeToStart(0, 4),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveRangeToStart is out of bounds./,
 					),
 				);
+				// Start index is larger than end index
 				assert.throws(
 					() => array.moveRangeToStart(2, 1),
 					validateUsageError(
 						/Too large of "start" value passed to TreeArrayNode.moveRangeToStart./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveRangeToStart(-1, 0),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -259,18 +272,21 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// End index too large
 				assert.throws(
 					() => array.moveRangeToEnd(0, 4),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveRangeToEnd is out of bounds./,
 					),
 				);
+				// Start index is larger than the end index
 				assert.throws(
 					() => array.moveRangeToEnd(2, 1),
 					validateUsageError(
 						/Too large of "start" value passed to TreeArrayNode.moveRangeToEnd./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveRangeToEnd(-1, 0),
 					validateUsageError(/Expected non-negative index, got -1./),
@@ -297,18 +313,28 @@ describe("ArrayNode", () => {
 
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
+				// Destination index too large
 				assert.throws(
 					() => array.moveRangeToIndex(4, 0, 2),
 					validateUsageError(
 						/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
 					),
 				);
+				// End index is too large
+				assert.throws(
+					() => array.moveRangeToIndex(0, 0, 4),
+					validateUsageError(
+						/Too large of "start" value passed to TreeArrayNode.moveRangeToIndex./,
+					),
+				);
+				// Start index larger than end index
 				assert.throws(
 					() => array.moveRangeToIndex(0, 2, 1),
 					validateUsageError(
 						/Too large of "start" value passed to TreeArrayNode.moveRangeToIndex./,
 					),
 				);
+				// Index is negative
 				assert.throws(
 					() => array.moveRangeToIndex(-1, 0, 1),
 					validateUsageError(/Expected non-negative index, got -1./),
