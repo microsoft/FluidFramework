@@ -14,6 +14,10 @@ npe scripts.check:biome "biome check . --formatter-enabled=true --organize-impor
 npe scripts.format:biome "biome check . --formatter-enabled=true --organize-imports-enabled=true --apply"
 npe devDependencies.@biomejs/biome "^1.7.3"
 
+# Some packages might be missing the prettier scripts, so add them defensively
+npe scripts.check:prettier "prettier --check . --cache --ignore-path ../../../.prettierignore"
+npe scripts.format:prettier "prettier --write . --cache --ignore-path ../../../.prettierignore"
+
 # sd --fixed-strings '"check:prettier": "p' '"check:prettier:old": "p' package.json
 # sd --fixed-strings '"format:prettier": "p' '"format:prettier:old": "p' package.json
 

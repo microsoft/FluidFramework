@@ -87,9 +87,11 @@ module.exports = {
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		"check:format": {
+			dependencies: [],
 			script: true,
 		},
 		"format": {
+			dependencies: [],
 			script: true,
 		},
 		"check:biome": [],
