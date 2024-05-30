@@ -22,10 +22,10 @@ type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
 type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
 	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+	? Key extends WellKnownSymbols
+		? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+		: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+	: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
 /**
  * Remove details of T which are incompatible with type testing while keeping as much as is practical.
  *
@@ -34,12 +34,12 @@ type SkipUniqueSymbols<Key> = symbol extends Key
 type TypeOnly<T> = T extends number
 	? number
 	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+	? T
+	: T extends symbol
+	? SkipUniqueSymbols<T>
+	: {
+			[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+	  };
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -48,12 +48,13 @@ type TypeOnly<T> = T extends number
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
-    TypeOnly<old.ContainerDevtoolsProps>;
+declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps(): TypeOnly<old.ContainerDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<current.ContainerDevtoolsProps>): void;
+	use: TypeOnly<current.ContainerDevtoolsProps>,
+): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    get_old_InterfaceDeclaration_ContainerDevtoolsProps());
+	get_old_InterfaceDeclaration_ContainerDevtoolsProps(),
+);
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -62,13 +63,14 @@ use_current_InterfaceDeclaration_ContainerDevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
-    TypeOnly<current.ContainerDevtoolsProps>;
+declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps(): TypeOnly<current.ContainerDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<old.ContainerDevtoolsProps>): void;
+	use: TypeOnly<old.ContainerDevtoolsProps>,
+): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_ContainerDevtoolsProps());
+	// @ts-expect-error compatibility expected to be broken
+	get_current_InterfaceDeclaration_ContainerDevtoolsProps(),
+);
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -77,12 +79,11 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
  * typeValidation.broken:
  * "TypeAliasDeclaration_ContainerKey": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_ContainerKey():
-    TypeOnly<old.ContainerKey>;
+declare function get_old_TypeAliasDeclaration_ContainerKey(): TypeOnly<old.ContainerKey>;
 declare function use_current_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<current.ContainerKey>): void;
-use_current_TypeAliasDeclaration_ContainerKey(
-    get_old_TypeAliasDeclaration_ContainerKey());
+	use: TypeOnly<current.ContainerKey>,
+): void;
+use_current_TypeAliasDeclaration_ContainerKey(get_old_TypeAliasDeclaration_ContainerKey());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -91,12 +92,9 @@ use_current_TypeAliasDeclaration_ContainerKey(
  * typeValidation.broken:
  * "TypeAliasDeclaration_ContainerKey": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_ContainerKey():
-    TypeOnly<current.ContainerKey>;
-declare function use_old_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<old.ContainerKey>): void;
-use_old_TypeAliasDeclaration_ContainerKey(
-    get_current_TypeAliasDeclaration_ContainerKey());
+declare function get_current_TypeAliasDeclaration_ContainerKey(): TypeOnly<current.ContainerKey>;
+declare function use_old_TypeAliasDeclaration_ContainerKey(use: TypeOnly<old.ContainerKey>): void;
+use_old_TypeAliasDeclaration_ContainerKey(get_current_TypeAliasDeclaration_ContainerKey());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -105,12 +103,11 @@ use_old_TypeAliasDeclaration_ContainerKey(
  * typeValidation.broken:
  * "InterfaceDeclaration_DevtoolsProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_DevtoolsProps():
-    TypeOnly<old.DevtoolsProps>;
+declare function get_old_InterfaceDeclaration_DevtoolsProps(): TypeOnly<old.DevtoolsProps>;
 declare function use_current_InterfaceDeclaration_DevtoolsProps(
-    use: TypeOnly<current.DevtoolsProps>): void;
-use_current_InterfaceDeclaration_DevtoolsProps(
-    get_old_InterfaceDeclaration_DevtoolsProps());
+	use: TypeOnly<current.DevtoolsProps>,
+): void;
+use_current_InterfaceDeclaration_DevtoolsProps(get_old_InterfaceDeclaration_DevtoolsProps());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -119,13 +116,12 @@ use_current_InterfaceDeclaration_DevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_DevtoolsProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_DevtoolsProps():
-    TypeOnly<current.DevtoolsProps>;
-declare function use_old_InterfaceDeclaration_DevtoolsProps(
-    use: TypeOnly<old.DevtoolsProps>): void;
+declare function get_current_InterfaceDeclaration_DevtoolsProps(): TypeOnly<current.DevtoolsProps>;
+declare function use_old_InterfaceDeclaration_DevtoolsProps(use: TypeOnly<old.DevtoolsProps>): void;
 use_old_InterfaceDeclaration_DevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_DevtoolsProps());
+	// @ts-expect-error compatibility expected to be broken
+	get_current_InterfaceDeclaration_DevtoolsProps(),
+);
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -134,12 +130,11 @@ use_old_InterfaceDeclaration_DevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_HasContainerKey": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_HasContainerKey():
-    TypeOnly<old.HasContainerKey>;
+declare function get_old_InterfaceDeclaration_HasContainerKey(): TypeOnly<old.HasContainerKey>;
 declare function use_current_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<current.HasContainerKey>): void;
-use_current_InterfaceDeclaration_HasContainerKey(
-    get_old_InterfaceDeclaration_HasContainerKey());
+	use: TypeOnly<current.HasContainerKey>,
+): void;
+use_current_InterfaceDeclaration_HasContainerKey(get_old_InterfaceDeclaration_HasContainerKey());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -148,12 +143,11 @@ use_current_InterfaceDeclaration_HasContainerKey(
  * typeValidation.broken:
  * "InterfaceDeclaration_HasContainerKey": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_HasContainerKey():
-    TypeOnly<current.HasContainerKey>;
+declare function get_current_InterfaceDeclaration_HasContainerKey(): TypeOnly<current.HasContainerKey>;
 declare function use_old_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<old.HasContainerKey>): void;
-use_old_InterfaceDeclaration_HasContainerKey(
-    get_current_InterfaceDeclaration_HasContainerKey());
+	use: TypeOnly<old.HasContainerKey>,
+): void;
+use_old_InterfaceDeclaration_HasContainerKey(get_current_InterfaceDeclaration_HasContainerKey());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -162,12 +156,9 @@ use_old_InterfaceDeclaration_HasContainerKey(
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtools": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IDevtools():
-    TypeOnly<old.IDevtools>;
-declare function use_current_InterfaceDeclaration_IDevtools(
-    use: TypeOnly<current.IDevtools>): void;
-use_current_InterfaceDeclaration_IDevtools(
-    get_old_InterfaceDeclaration_IDevtools());
+declare function get_old_InterfaceDeclaration_IDevtools(): TypeOnly<old.IDevtools>;
+declare function use_current_InterfaceDeclaration_IDevtools(use: TypeOnly<current.IDevtools>): void;
+use_current_InterfaceDeclaration_IDevtools(get_old_InterfaceDeclaration_IDevtools());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -176,12 +167,9 @@ use_current_InterfaceDeclaration_IDevtools(
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtools": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IDevtools():
-    TypeOnly<current.IDevtools>;
-declare function use_old_InterfaceDeclaration_IDevtools(
-    use: TypeOnly<old.IDevtools>): void;
-use_old_InterfaceDeclaration_IDevtools(
-    get_current_InterfaceDeclaration_IDevtools());
+declare function get_current_InterfaceDeclaration_IDevtools(): TypeOnly<current.IDevtools>;
+declare function use_old_InterfaceDeclaration_IDevtools(use: TypeOnly<old.IDevtools>): void;
+use_old_InterfaceDeclaration_IDevtools(get_current_InterfaceDeclaration_IDevtools());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -190,12 +178,11 @@ use_old_InterfaceDeclaration_IDevtools(
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsLogger": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IDevtoolsLogger():
-    TypeOnly<old.IDevtoolsLogger>;
+declare function get_old_InterfaceDeclaration_IDevtoolsLogger(): TypeOnly<old.IDevtoolsLogger>;
 declare function use_current_InterfaceDeclaration_IDevtoolsLogger(
-    use: TypeOnly<current.IDevtoolsLogger>): void;
-use_current_InterfaceDeclaration_IDevtoolsLogger(
-    get_old_InterfaceDeclaration_IDevtoolsLogger());
+	use: TypeOnly<current.IDevtoolsLogger>,
+): void;
+use_current_InterfaceDeclaration_IDevtoolsLogger(get_old_InterfaceDeclaration_IDevtoolsLogger());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -204,12 +191,11 @@ use_current_InterfaceDeclaration_IDevtoolsLogger(
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsLogger": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IDevtoolsLogger():
-    TypeOnly<current.IDevtoolsLogger>;
+declare function get_current_InterfaceDeclaration_IDevtoolsLogger(): TypeOnly<current.IDevtoolsLogger>;
 declare function use_old_InterfaceDeclaration_IDevtoolsLogger(
-    use: TypeOnly<old.IDevtoolsLogger>): void;
-use_old_InterfaceDeclaration_IDevtoolsLogger(
-    get_current_InterfaceDeclaration_IDevtoolsLogger());
+	use: TypeOnly<old.IDevtoolsLogger>,
+): void;
+use_old_InterfaceDeclaration_IDevtoolsLogger(get_current_InterfaceDeclaration_IDevtoolsLogger());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -218,12 +204,15 @@ use_old_InterfaceDeclaration_IDevtoolsLogger(
  * typeValidation.broken:
  * "FunctionDeclaration_createDevtoolsLogger": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_createDevtoolsLogger():
-    TypeOnly<typeof old.createDevtoolsLogger>;
+declare function get_old_FunctionDeclaration_createDevtoolsLogger(): TypeOnly<
+	typeof old.createDevtoolsLogger
+>;
 declare function use_current_FunctionDeclaration_createDevtoolsLogger(
-    use: TypeOnly<typeof current.createDevtoolsLogger>): void;
+	use: TypeOnly<typeof current.createDevtoolsLogger>,
+): void;
 use_current_FunctionDeclaration_createDevtoolsLogger(
-    get_old_FunctionDeclaration_createDevtoolsLogger());
+	get_old_FunctionDeclaration_createDevtoolsLogger(),
+);
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -232,12 +221,15 @@ use_current_FunctionDeclaration_createDevtoolsLogger(
  * typeValidation.broken:
  * "FunctionDeclaration_createDevtoolsLogger": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_createDevtoolsLogger():
-    TypeOnly<typeof current.createDevtoolsLogger>;
+declare function get_current_FunctionDeclaration_createDevtoolsLogger(): TypeOnly<
+	typeof current.createDevtoolsLogger
+>;
 declare function use_old_FunctionDeclaration_createDevtoolsLogger(
-    use: TypeOnly<typeof old.createDevtoolsLogger>): void;
+	use: TypeOnly<typeof old.createDevtoolsLogger>,
+): void;
 use_old_FunctionDeclaration_createDevtoolsLogger(
-    get_current_FunctionDeclaration_createDevtoolsLogger());
+	get_current_FunctionDeclaration_createDevtoolsLogger(),
+);
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -246,12 +238,15 @@ use_old_FunctionDeclaration_createDevtoolsLogger(
  * typeValidation.broken:
  * "FunctionDeclaration_initializeDevtools": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_initializeDevtools():
-    TypeOnly<typeof old.initializeDevtools>;
+declare function get_old_FunctionDeclaration_initializeDevtools(): TypeOnly<
+	typeof old.initializeDevtools
+>;
 declare function use_current_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof current.initializeDevtools>): void;
+	use: TypeOnly<typeof current.initializeDevtools>,
+): void;
 use_current_FunctionDeclaration_initializeDevtools(
-    get_old_FunctionDeclaration_initializeDevtools());
+	get_old_FunctionDeclaration_initializeDevtools(),
+);
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -260,9 +255,12 @@ use_current_FunctionDeclaration_initializeDevtools(
  * typeValidation.broken:
  * "FunctionDeclaration_initializeDevtools": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_initializeDevtools():
-    TypeOnly<typeof current.initializeDevtools>;
+declare function get_current_FunctionDeclaration_initializeDevtools(): TypeOnly<
+	typeof current.initializeDevtools
+>;
 declare function use_old_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof old.initializeDevtools>): void;
+	use: TypeOnly<typeof old.initializeDevtools>,
+): void;
 use_old_FunctionDeclaration_initializeDevtools(
-    get_current_FunctionDeclaration_initializeDevtools());
+	get_current_FunctionDeclaration_initializeDevtools(),
+);
