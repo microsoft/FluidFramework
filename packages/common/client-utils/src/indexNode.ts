@@ -8,7 +8,7 @@ export { bufferToString, IsoBuffer, stringToBuffer, Uint8ArrayToString } from ".
 export { gitHashFile, hashFile } from "./hashFileNode.js";
 export { performance } from "./performanceIsomorphic.js";
 
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingNode.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { IsomorphicPerformance } from "./performanceIsomorphic.js";

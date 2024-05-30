@@ -13,7 +13,7 @@ export {
 export { gitHashFile, hashFile } from "./hashFileBrowser.js";
 export { performance } from "./performanceIsomorphic.js";
 
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingBrowser.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { type IsomorphicPerformance } from "./performanceIsomorphic.js";

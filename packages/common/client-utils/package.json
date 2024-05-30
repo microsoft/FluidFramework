@@ -34,28 +34,6 @@
 					"default": "./dist/indexBrowser.js"
 				}
 			}
-		},
-		"./bufferBrowser.js": {
-			"node": {
-				"import": {
-					"types": "./lib/bufferNode.d.ts",
-					"default": "./lib/bufferNode.js"
-				},
-				"require": {
-					"types": "./dist/bufferNode.d.ts",
-					"default": "./dist/bufferNode.js"
-				}
-			},
-			"default": {
-				"import": {
-					"types": "./lib/bufferBrowser.d.ts",
-					"default": "./lib/bufferBrowser.js"
-				},
-				"require": {
-					"types": "./dist/bufferBrowser.d.ts",
-					"default": "./dist/bufferBrowser.js"
-				}
-			}
 		}
 	},
 	"main": "lib/indexBrowser.js",
