@@ -6408,20 +6408,7 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  experimental/PropertyDDS/packages/property-common/platform-dependent:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^1.7.3
-        version: 1.7.3
-      '@fluidframework/build-tools':
-        specifier: ^0.39.0-264124
-        version: 0.39.0-264124(@types/node@18.19.1)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
+  experimental/PropertyDDS/packages/property-common/platform-dependent: {}
 
   experimental/PropertyDDS/packages/property-dds:
     dependencies:
