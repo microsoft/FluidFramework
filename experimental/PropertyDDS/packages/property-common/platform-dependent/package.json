@@ -13,22 +13,6 @@
 	"author": "Microsoft and contributors",
 	"main": "server.js",
 	"browser": "browser.js",
-	"scripts": {
-		"build": "fluid-build . --task build",
-		"check:biome": "biome check . --formatter-enabled=true --organize-imports-enabled=true",
-		"check:format": "npm run check:prettier",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
-		"format": "npm run format:prettier",
-		"format:biome": "biome check . --formatter-enabled=true --organize-imports-enabled=true --apply",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0"
-	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
