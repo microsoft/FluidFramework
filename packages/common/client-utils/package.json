@@ -58,8 +58,8 @@
 			}
 		}
 	},
-	"main": "lib/indexNode.js",
-	"types": "lib/indexNode.d.ts",
+	"main": "lib/indexBrowser.js",
+	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
