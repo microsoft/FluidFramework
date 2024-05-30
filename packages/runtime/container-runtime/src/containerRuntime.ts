@@ -2853,13 +2853,13 @@ export class ContainerRuntime
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
 	 */
-	private flush(): void {
+	private flush(batchId?: string): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(batchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4092,13 +4092,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+	private reSubmitBatch(batch: IPendingBatchMessage[], batchId: string) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+		this.flush(batchId);
 	}
 
 	private reSubmit(message: IPendingBatchMessage) {

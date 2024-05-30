@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import * as sinon from "sinon";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
@@ -21,6 +22,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
+import { PendingStateManager } from "../../pendingStateManager.js";
 
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {
@@ -36,6 +38,7 @@ describe("RemoteMessageProcessor", () => {
 				},
 				logger,
 			),
+			sinon.createStubInstance(PendingStateManager),
 		);
 	}
 
@@ -79,7 +82,7 @@ describe("RemoteMessageProcessor", () => {
 			contents: {
 				key: value,
 			},
-		} as ISequencedDocumentMessage;
+		} as ISequencedDocumentMessage & { localOpMetadata: undefined };
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
@@ -167,16 +170,26 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				actual.push(...messageProcessor.process(inboundMessage));
+				actual.push(...messageProcessor.process(inboundMessage, false /* local */));
 			}
 
 			const expected = option.grouping
 				? [
-						getProcessedMessage("a", startSeqNum, 1, true),
-						getProcessedMessage("b", startSeqNum, 2),
-						getProcessedMessage("c", startSeqNum, 3),
-						getProcessedMessage("d", startSeqNum, 4),
-						getProcessedMessage("e", startSeqNum, 5, false),
+						Object.assign(getProcessedMessage("a", startSeqNum, 1, true), {
+							localOpMetadata: undefined,
+						}),
+						Object.assign(getProcessedMessage("b", startSeqNum, 2), {
+							localOpMetadata: undefined,
+						}),
+						Object.assign(getProcessedMessage("c", startSeqNum, 3), {
+							localOpMetadata: undefined,
+						}),
+						Object.assign(getProcessedMessage("d", startSeqNum, 4), {
+							localOpMetadata: undefined,
+						}),
+						Object.assign(getProcessedMessage("e", startSeqNum, 5, false), {
+							localOpMetadata: undefined,
+						}),
 				  ]
 				: [
 						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
@@ -203,7 +216,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage, false /* local */);
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -221,7 +234,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage, false /* local */);
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -258,7 +271,10 @@ describe("RemoteMessageProcessor", () => {
 			},
 		};
 		const messageProcessor = getMessageProcessor();
-		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+		const result = messageProcessor.process(
+			groupedBatch as ISequencedDocumentMessage,
+			false /* local */,
+		);
 
 		const expected = [
 			{
@@ -267,6 +283,7 @@ describe("RemoteMessageProcessor", () => {
 				clientSequenceNumber: 1,
 				compression: undefined,
 				metadata: undefined,
+				localOpMetadata: undefined,
 				contents: {
 					contents: "a",
 				},
@@ -277,6 +294,7 @@ describe("RemoteMessageProcessor", () => {
 				clientSequenceNumber: 2,
 				compression: undefined,
 				metadata: undefined,
+				localOpMetadata: undefined,
 				contents: {
 					contents: "b",
 				},

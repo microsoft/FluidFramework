@@ -61,7 +61,7 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch): IBatch<[GroupedBatchMessage]> {
+	public groupBatch(batch: IBatch, batchId?: string): IBatch<[GroupedBatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.content.length >= 1000) {
@@ -98,7 +98,7 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					metadata: { batchId: uuid() },
+					metadata: { batchId: batchId ?? uuid() },
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent, //* it's IGroupedBatchMessageContents
 				},

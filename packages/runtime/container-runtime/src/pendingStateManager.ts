@@ -53,7 +53,7 @@ export interface IRuntimeStateHandler {
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
-	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	reSubmitBatch(batch: IPendingBatchMessage[], batchId: string): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -510,15 +510,17 @@ export class PendingStateManager implements IDisposable {
 				0x41b /* We cannot process batches in chunks */,
 			);
 
-			//* DEBUG: Did I get it right.......?
 			const ungroupedBatch = (
-				JSON.parse(pendingMessage.content) as { contents: { contents: any[] } }
-			).contents.contents.map(({ content, localOpMetadata, metadata }) => ({
-				content,
-				localOpMetadata,
+				JSON.parse(pendingMessage.content) as { contents: { contents; metadata }[] }
+			).contents.map(({ contents, metadata }, i) => ({
+				content: JSON.stringify(contents),
+				localOpMetadata: pendingMessage.loms?.[i],
 				opMetadata: metadata,
 			}));
-			this.stateHandler.reSubmitBatch(ungroupedBatch);
+			this.stateHandler.reSubmitBatch(
+				ungroupedBatch,
+				pendingMessage.opMetadata?.batchId as string, //* Todo: better typing
+			);
 
 			//* Prototype: Always Grouped Batches, this logic is unneeded
 			/**

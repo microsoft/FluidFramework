@@ -221,23 +221,28 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	public flush(batchId?: string) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(batchId);
 	}
 
-	private flushAll() {
+	//* TODO: Deal properly with the separate batch managers
+	private flushAll(mainBatchId?: string) {
 		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch);
+		this.flushInternal(this.mainBatch, false /* disableGroupedBatching */, mainBatchId);
 	}
 
-	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
+	private flushInternal(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		batchId?: string,
+	) {
 		if (batchManager.empty) {
 			return;
 		}
@@ -258,7 +263,7 @@ export class Outbox {
 		//* TODO: We need to ensure this batch is "sealed" - no more messages try to get added, and it doesn't merge with another,
 		//* even on reconnect
 		const groupedBatch = shouldGroup
-			? this.params.groupingManager.groupBatch(rawBatch)
+			? this.params.groupingManager.groupBatch(rawBatch, batchId)
 			: undefined;
 
 		// Did we disconnect? (i.e. is shouldSend false?)

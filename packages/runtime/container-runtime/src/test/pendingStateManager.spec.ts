@@ -17,10 +17,10 @@ import type {
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { IPendingBatch, PendingStateManager } from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessage>;
+	initialMessages: Deque<IPendingBatch>;
 };
 
 describe("Pending State Manager", () => {
@@ -503,13 +503,15 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Minimum sequence number", () => {
-		const messages: IPendingMessage[] = [
+		const messages: IPendingBatch[] = [
 			{
 				type: "message",
 				content: '{"type":"component"}',
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchId: "BATCH_ID", //*
+				loms: [],
 			},
 			{
 				type: "message",
@@ -517,6 +519,8 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchId: "BATCH_ID", //*
+				loms: [],
 			},
 			{
 				type: "message",
@@ -524,6 +528,8 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchId: "BATCH_ID", //*
+				loms: [],
 			},
 			{
 				type: "message",
@@ -531,10 +537,12 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchId: "BATCH_ID", //*
+				loms: [],
 			},
 		];
 
-		function createPendingStateManager(pendingStates?: IPendingMessage[]): PendingStateManager {
+		function createPendingStateManager(pendingStates?: IPendingBatch[]): PendingStateManager {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{

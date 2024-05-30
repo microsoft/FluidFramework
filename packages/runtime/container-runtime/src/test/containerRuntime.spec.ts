@@ -67,11 +67,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import {
-	IPendingLocalState,
-	IPendingMessage,
-	PendingStateManager,
-} from "../pendingStateManager.js";
+import { IPendingLocalState, IPendingBatch, PendingStateManager } from "../pendingStateManager.js";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
 
 function submitDataStoreOp(
@@ -260,16 +256,18 @@ describe("Runtime", () => {
 
 				changeConnectionState(containerRuntime, false, mockClientId);
 
-				submitDataStoreOp(containerRuntime, "1", "test");
+				submitDataStoreOp(containerRuntime, "1", "test", "lom1");
+				submitDataStoreOp(containerRuntime, "1.5", "test", "lom1.5");
 				(containerRuntime as any).flush();
 
-				submitDataStoreOp(containerRuntime, "2", "test");
+				submitDataStoreOp(containerRuntime, "2", "test", "lom2");
 				changeConnectionState(containerRuntime, true, mockClientId);
 				(containerRuntime as any).flush();
 
 				assert.strictEqual(submittedOps.length, 2);
-				assert.strictEqual(submittedOps[0].contents.address, "1");
-				assert.strictEqual(submittedOps[1].contents.address, "2");
+				assert.strictEqual(submittedOps[0].contents[0].contents.contents.address, "1");
+				assert.strictEqual(submittedOps[0].contents[1].contents.contents.address, "1.5");
+				assert.strictEqual(submittedOps[1].contents[0].contents.contents.address, "2");
 			});
 		});
 
@@ -1795,12 +1793,14 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IPendingBatch>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchId: "BATCH_ID", //*
+					loms: [],
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1837,12 +1837,14 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IPendingBatch>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchId: "BATCH_ID", //*
+					loms: [],
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1905,12 +1907,14 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates = Array.from({ length: 5 }).map<IPendingBatch>((_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchId: "BATCH_ID", //*
+					loms: [],
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
