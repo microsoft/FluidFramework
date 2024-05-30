@@ -16,6 +16,11 @@ export type BatchMessage = IBatchMessage & {
 	compression?: CompressionAlgorithms;
 };
 
+export type GroupedBatchMessage = BatchMessage & {
+	localOpMetadata?: undefined;
+	metadata: { batchId: string };
+};
+
 /**
  * Batch interface used internally by the runtime.
  */

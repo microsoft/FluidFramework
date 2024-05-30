@@ -18,19 +18,20 @@ import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 
-//* Switch to Batch not Message semantics (but it'll be a single grouped/compressed/chunked batch-as-message)
+//* Switching to Batch not Message semantics (but it'll be a single grouped/compressed/chunked batch-as-message)
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
  */
 export interface IPendingBatch {
 	type: "message";
-	referenceSequenceNumber: number;
-	content: string;
-	localOpMetadata: unknown;
-	opMetadata: Record<string, unknown> | undefined;
+	referenceSequenceNumber: number; //* Consistent across Grouped Batch
+	content: string; //* coallesced Grouped Batch content
+	localOpMetadata: unknown; //* Needs to be an array...?
+	opMetadata: Record<string, unknown> | undefined; //* How does this aggregate across a batch?
 	sequenceNumber?: number;
-	batchId?: string; //* needed here?
+	batchId: string; //* Always set for this prototype
+	loms: unknown[];
 }
 
 export interface IPendingLocalState {
@@ -57,25 +58,25 @@ export interface IRuntimeStateHandler {
 	isAttached: () => boolean;
 }
 
-/** Union of keys of T */
-type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
-/** *Partial* type all possible combinations of properties and values of union T.
- * This loosens typing allowing access to all possible properties without
- * narrowing.
- */
-type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
+// /** Union of keys of T */
+// type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
+// /** *Partial* type all possible combinations of properties and values of union T.
+//  * This loosens typing allowing access to all possible properties without
+//  * narrowing.
+//  */
+// type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
 
-function buildPendingMessageContent(
-	// AnyComboFromUnion is needed need to gain access to compatDetails that
-	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
-): string {
-	// IMPORTANT: Order matters here, this must match the order of the properties used
-	// when submitting the message.
-	const { type, contents, compatDetails } = message;
-	// Any properties that are not defined, won't be emitted by stringify.
-	return JSON.stringify({ type, contents, compatDetails });
-}
+// function buildPendingMessageContent(
+// 	// AnyComboFromUnion is needed need to gain access to compatDetails that
+// 	// is only defined for some cases.
+// 	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+// ): string {
+// 	// IMPORTANT: Order matters here, this must match the order of the properties used
+// 	// when submitting the message.
+// 	const { type, contents, compatDetails } = message;
+// 	// Any properties that are not defined, won't be emitted by stringify.
+// 	return JSON.stringify({ type, contents, compatDetails });
+// }
 
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
@@ -87,13 +88,14 @@ function buildPendingMessageContent(
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
+	//* Grouped Batches
 	private readonly pendingMessages = new Deque<IPendingBatch>();
-	// This queue represents already acked messages.
 	private readonly initialMessages = new Deque<IPendingBatch>();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
+	//* Grouped Batches
 	private savedOps: IPendingBatch[] = [];
 
 	private readonly disposeOnce = new Lazy<void>(() => {
@@ -135,6 +137,9 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
+	/**
+	 * Get local state when serializing the container for later rehydrating
+	 */
 	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
 		assert(
 			this.initialMessages.isEmpty(),
@@ -157,7 +162,7 @@ export class PendingStateManager implements IDisposable {
 		});
 		return {
 			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
-				return { ...message, localOpMetadata: undefined };
+				return { ...message, localOpMetadata: undefined, loms: [] };
 			}),
 		};
 	}
@@ -168,6 +173,7 @@ export class PendingStateManager implements IDisposable {
 		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
 		if (initialLocalState?.pendingStates) {
+			//* Need to make sure this serialization is not old format (needs to be Grouped Batches, not individual messages)
 			this.initialMessages.push(...initialLocalState.pendingStates);
 		}
 	}
@@ -177,6 +183,7 @@ export class PendingStateManager implements IDisposable {
 	}
 	public readonly dispose = () => this.disposeOnce.value;
 
+	//* Unused
 	/**
 	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
 	 * queue.
@@ -188,15 +195,39 @@ export class PendingStateManager implements IDisposable {
 		content: string,
 		referenceSequenceNumber: number,
 		localOpMetadata: unknown,
-		opMetadata: (Record<string, unknown> & { batchId: string }) | undefined,
+		opMetadata: Record<string, unknown> | undefined,
+	) {
+		assert(false, "onSubmitMessage not supported in prototype (see onSubmitGroupedBatch)");
+		//*
+		// const pendingMessage: IPendingMessage = {
+		// 	type: "message",
+		// 	referenceSequenceNumber,
+		// 	content,
+		// 	localOpMetadata,
+		// 	opMetadata,
+		// 	batchId: "NOT A GROUPED BATCH", //* Ignore
+		// 	loms: [], //* Ignore
+		// };
+
+		// this.pendingMessages.push(pendingMessage);
+		//*
+	}
+
+	//* For whole batches with batchId
+	public onSubmitGroupedBatch(
+		content: string,
+		referenceSequenceNumber: number,
+		loms: unknown[],
+		opMetadata: { batchId: string },
 	) {
 		const pendingMessage: IPendingBatch = {
 			type: "message",
 			referenceSequenceNumber,
 			content,
-			localOpMetadata,
+			localOpMetadata: undefined, //* individual localOpMetadata are put in loms
 			opMetadata,
-			batchId: opMetadata?.batchId ?? "NO_BATCH_ID", //*
+			batchId: opMetadata.batchId,
+			loms,
 		};
 
 		this.pendingMessages.push(pendingMessage);
@@ -220,19 +251,29 @@ export class PendingStateManager implements IDisposable {
 				}
 			}
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nextMessage = this.initialMessages.shift()!;
+			const nextMessage = this.initialMessages.shift()!; //* Grouped Batch
+			const loms: unknown[] = [];
 			try {
-				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				if (!this.stateHandler.isAttached()) {
-					if (localOpMetadata !== undefined) {
-						throw new Error("Local Op Metadata must be undefined when not attached");
+				//* DEBUG: Did I get it right...?
+				const allContents = (
+					JSON.parse(nextMessage.content) as { contents: { contents: any }[] }
+				).contents.map((c) => JSON.stringify(c.contents));
+				for (const content of allContents) {
+					// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+					const localOpMetadata = await this.stateHandler.applyStashedOp(content);
+					if (!this.stateHandler.isAttached()) {
+						if (localOpMetadata !== undefined) {
+							throw new Error(
+								"Local Op Metadata must be undefined when not attached",
+							);
+						}
+					} else {
+						loms.push(localOpMetadata);
 					}
-				} else {
-					nextMessage.localOpMetadata = localOpMetadata;
-					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-					this.pendingMessages.push(nextMessage);
 				}
+				// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+				nextMessage.loms = loms;
+				this.pendingMessages.push(nextMessage);
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
@@ -244,51 +285,118 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(
-		//* Grouped Batch, maybe compressed/chunked.  Key is, it has batchId on metadata
-		message: ISequencedDocumentMessage,
-	): unknown {
-		// Pre-processing part - This may be the start of a batch.
-		this.maybeProcessBatchBegin(message);
-		// Get the next message from the pending queue. Verify a message exists.
-		const pendingMessage = this.pendingMessages.peekFront();
+	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
 		assert(
-			pendingMessage !== undefined,
+			false,
+			"processPendingLocalMessage not supported in prototype (see processPendingLocalBatch)",
+		);
+		// // Pre-processing part - This may be the start of a batch.
+		// this.maybeProcessBatchBegin(message);
+		// // Get the next message from the pending queue. Verify a message exists.
+		// const pendingMessage = this.pendingMessages.peekFront();
+		// assert(
+		// 	pendingMessage !== undefined,
+		// 	0x169 /* "No pending message found for this remote message" */,
+		// );
+		// pendingMessage.sequenceNumber = message.sequenceNumber;
+		// this.savedOps.push(pendingMessage);
+		// this.pendingMessages.shift();
+		// const messageContent = buildPendingMessageContent(message);
+		// // Stringified content should match
+		// if (pendingMessage.content !== messageContent) {
+		// 	this.stateHandler.close(
+		// 		DataProcessingError.create(
+		// 			"pending local message content mismatch",
+		// 			"unexpectedAckReceived",
+		// 			message,
+		// 			{
+		// 				expectedMessageType: JSON.parse(pendingMessage.content).type,
+		// 			},
+		// 		),
+		// 	);
+		// 	return;
+		// }
+		// // Post-processing part - If we are processing a batch then this could be the last message in the batch.
+		// this.maybeProcessBatchEnd(message);
+		// return pendingMessage.localOpMetadata;
+	}
+
+	/**
+	 * See if the incoming batch matches the next pending batch ID
+	 * @returns true if the batch IDs match
+	 */
+	public checkForMatchingBatchId(
+		incomingBatch: ISequencedDocumentMessage & { metadata: { batchId: string } },
+	): boolean {
+		const pendingBatch = this.pendingMessages.peekFront();
+		if (pendingBatch === undefined) {
+			return false;
+		}
+		return pendingBatch.batchId === incomingBatch.metadata.batchId;
+	}
+
+	/**
+	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
+	 * the batch information was preserved for batch messages.
+	 * @param incomingBatch - The Grouped Batch that got ack'd and needs to be processed.
+	 */
+	public processPendingLocalBatch(
+		//* Unchunked/Uncompressed Grouped Batch.  Key is, it has batchId on metadata
+		incomingBatch: ISequencedDocumentMessage & { metadata: { batchId: string } },
+	): unknown[] {
+		//* Skip for now
+		// Pre-processing part - This may be the start of a batch.
+		//* this.maybeProcessBatchBegin(incomingBatch);
+
+		// Get the next message from the pending queue. Verify a message exists.
+		const pendingBatch = this.pendingMessages.peekFront();
+		assert(
+			pendingBatch !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
-		pendingMessage.sequenceNumber = message.sequenceNumber;
-		this.savedOps.push(pendingMessage);
+		pendingBatch.sequenceNumber = incomingBatch.sequenceNumber;
+		this.savedOps.push(pendingBatch);
 
 		this.pendingMessages.shift();
 
-		const messageContent = buildPendingMessageContent(message);
+		const pendingBatchId = pendingBatch.batchId;
+		const incomingBatchId = incomingBatch.metadata.batchId;
 
-		// Stringified content should match
-		if (pendingMessage.content !== messageContent) {
+		//* bye bye :) -- except we'll need it when GroupedBatching is disabled (and thus Offline 3 is disabled too)
+		//* const messageContent = buildPendingMessageContent(incomingBatch);
+
+		// If batchIds match but refSeq's don't, then the remote container resubmitted/rebased, and we can't reconcile that - the container was forked.
+		if (
+			pendingBatchId !== incomingBatchId ||
+			pendingBatch.referenceSequenceNumber !== incomingBatch.referenceSequenceNumber
+		) {
 			this.stateHandler.close(
+				//* Should be ForkedContainerError (at least in the mismatch refSeqNum case)
 				DataProcessingError.create(
-					"pending local message content mismatch",
+					"pending local message content or refseq mismatch",
 					"unexpectedAckReceived",
-					message,
+					incomingBatch,
 					{
-						expectedMessageType: JSON.parse(pendingMessage.content).type,
+						expectedMessageType: JSON.parse(pendingBatch.content).type,
 					},
 				),
 			);
-			return;
+			return [];
 		}
 
+		//* Skip for now
 		// Post-processing part - If we are processing a batch then this could be the last message in the batch.
-		this.maybeProcessBatchEnd(message);
+		//* this.maybeProcessBatchEnd(incomingBatch);
 
-		return pendingMessage.localOpMetadata;
+		return pendingBatch.loms;
 	}
 
+	//* TODO: Figure out what validation we need on batch metadata
 	/**
 	 * This message could be the first message in batch. If so, set batch state marking the beginning of a batch.
 	 * @param message - The message that is being processed.
 	 */
-	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
+	public maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
 		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
@@ -303,11 +411,12 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	//* TODO: Figure out what validation we need on batch metadata
 	/**
 	 * This message could be the last message in batch. If so, clear batch state since the batch is complete.
 	 * @param message - The message that is being processed.
 	 */
-	private maybeProcessBatchEnd(message: ISequencedDocumentMessage) {
+	public maybeProcessBatchEnd(message: ISequencedDocumentMessage) {
 		if (!this.isProcessingBatch) {
 			return;
 		}
@@ -394,57 +503,67 @@ export class PendingStateManager implements IDisposable {
 		// which must not be replayed.
 		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let pendingMessage = this.pendingMessages.shift()!;
+			const pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
 			);
 
-			//* N/A now that we deal with grouped batch
+			//* DEBUG: Did I get it right.......?
+			const ungroupedBatch = (
+				JSON.parse(pendingMessage.content) as { contents: { contents: any[] } }
+			).contents.contents.map(({ content, localOpMetadata, metadata }) => ({
+				content,
+				localOpMetadata,
+				opMetadata: metadata,
+			}));
+			this.stateHandler.reSubmitBatch(ungroupedBatch);
+
+			//* Prototype: Always Grouped Batches, this logic is unneeded
 			/**
 			 * We want to ensure grouped messages get processed in a batch.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
 			 * either receive the whole batch ack or nothing at all.
 			 */
-			if (pendingMessage.opMetadata?.batch) {
-				assert(
-					remainingPendingMessagesCount > 0,
-					0x554 /* Last pending message cannot be a batch begin */,
-				);
+			// if (pendingMessage.opMetadata?.batch) {
+			// 	assert(
+			// 		remainingPendingMessagesCount > 0,
+			// 		0x554 /* Last pending message cannot be a batch begin */,
+			// 	);
 
-				const batch: IPendingBatchMessage[] = [];
+			// 	const batch: IPendingBatchMessage[] = [];
 
-				// check is >= because batch end may be last pending message
-				while (remainingPendingMessagesCount >= 0) {
-					batch.push({
-						content: pendingMessage.content,
-						localOpMetadata: pendingMessage.localOpMetadata,
-						opMetadata: pendingMessage.opMetadata,
-					});
+			// 	// check is >= because batch end may be last pending message
+			// 	while (remainingPendingMessagesCount >= 0) {
+			// 		batch.push({
+			// 			content: pendingMessage.content,
+			// 			localOpMetadata: pendingMessage.localOpMetadata,
+			// 			opMetadata: pendingMessage.opMetadata,
+			// 		});
 
-					if (pendingMessage.opMetadata?.batch === false) {
-						break;
-					}
-					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
+			// 		if (pendingMessage.opMetadata?.batch === false) {
+			// 			break;
+			// 		}
+			// 		assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
 
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					pendingMessage = this.pendingMessages.shift()!;
-					remainingPendingMessagesCount--;
-					assert(
-						pendingMessage.opMetadata?.batch !== true,
-						0x556 /* Batch start needs a corresponding batch end */,
-					);
-				}
+			// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			// 		pendingMessage = this.pendingMessages.shift()!;
+			// 		remainingPendingMessagesCount--;
+			// 		assert(
+			// 			pendingMessage.opMetadata?.batch !== true,
+			// 			0x556 /* Batch start needs a corresponding batch end */,
+			// 		);
+			// 	}
 
-				this.stateHandler.reSubmitBatch(batch);
-			} else {
-				this.stateHandler.reSubmit({
-					content: pendingMessage.content,
-					localOpMetadata: pendingMessage.localOpMetadata,
-					opMetadata: pendingMessage.opMetadata,
-				});
-			}
+			// 	this.stateHandler.reSubmitBatch(batch);
+			// } else {
+			// 	this.stateHandler.reSubmit({
+			// 		content: pendingMessage.content,
+			// 		localOpMetadata: pendingMessage.localOpMetadata,
+			// 		opMetadata: pendingMessage.opMetadata,
+			// 	});
+			// }
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit

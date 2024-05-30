@@ -1508,12 +1508,6 @@ export class ContainerRuntime
 			this.mc.logger,
 		);
 
-		this.remoteMessageProcessor = new RemoteMessageProcessor(
-			opSplitter,
-			new OpDecompressor(this.mc.logger),
-			opGroupingManager,
-		);
-
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 		this.pendingStateManager = new PendingStateManager(
 			{
@@ -1531,6 +1525,13 @@ export class ContainerRuntime
 			},
 			pendingRuntimeState?.pending,
 			this.logger,
+		);
+
+		this.remoteMessageProcessor = new RemoteMessageProcessor(
+			opSplitter,
+			new OpDecompressor(this.mc.logger),
+			opGroupingManager,
+			this.pendingStateManager,
 		);
 
 		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -2581,14 +2582,10 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 
-		//* Shoot....... losing easy access to localOpMetadata... :(
-		let localOpMetadata: unknown;
-		if (local && modernRuntimeMessage) {
-			localOpMetadata = this.pendingStateManager.processPendingLocalMessage(messageCopy);
-		}
-
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		for (const message of this.remoteMessageProcessor.process(messageCopy, local)) {
+			//* Now message already has localOpMetadata on it if local! (from remoteMessageProcessor.process)
+			//* Would need to update the types to reflect this...
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2647,14 +2644,13 @@ export class ContainerRuntime
 				0x93b /* we should never get here with chunked ops */,
 			);
 
-			let localOpMetadata: unknown;
-			//* Shoot....... losing easy access to localOpMetadata... :(
+			//* TODO: Fix typings.  A bit awkward that sometimes localOpMetadata is here. Eh, it's a prototype.
+			const localOpMetadata: unknown = (message as any).localOpMetadata;
 			// if (local && messageWithContext.modernRuntimeMessage) {
 			// 	localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 			// 		messageWithContext.message,
 			// 	);
 			// }
-			//*
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.

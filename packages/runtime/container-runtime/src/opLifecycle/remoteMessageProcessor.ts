@@ -5,6 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
@@ -13,6 +14,7 @@ import {
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 
+import type { PendingStateManager } from "../pendingStateManager.js";
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
@@ -28,6 +30,7 @@ export class RemoteMessageProcessor {
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
 		private readonly opGroupingManager: OpGroupingManager,
+		private readonly psm: PendingStateManager,
 	) {}
 
 	public get partialMessages(): ReadonlyMap<string, string[]> {
@@ -60,6 +63,7 @@ export class RemoteMessageProcessor {
 	 */
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
+		local: boolean,
 	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
 		let message = remoteMessageCopy;
 		ensureContentsDeserialized(message);
@@ -86,8 +90,20 @@ export class RemoteMessageProcessor {
 			}
 		}
 
+		//* DEBUG: Where's the metadata at this point??  I'm disoriented.
 		if (isGroupedBatch(message)) {
-			return this.opGroupingManager.ungroupOp(message).map(unpack);
+			if (this.psm.checkForMatchingBatchId(message)) {
+				if (!local) {
+					//* This would be the first case to try to support after the initial MVP.
+					//* We can afford to bail in this case because we can provide guidance to hosts to always serialize agin on reconnect
+					throw new LoggingError(
+						"Forked Container Error! Matching batchIds but mismatched clientId",
+					);
+				}
+				//* Btw, now we know processPendingLocalBatch will succeed / return a value
+			}
+			const loms = local ? this.psm.processPendingLocalBatch(message) : undefined;
+			return this.opGroupingManager.ungroupOp(message, loms).map(unpack);
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked

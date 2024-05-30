@@ -23,7 +23,7 @@ import {
 	estimateSocketSize,
 	sequenceNumbersMatch,
 } from "./batchManager.js";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import { BatchMessage, IBatch, IBatchCheckpoint, type GroupedBatchMessage } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
@@ -254,32 +254,38 @@ export class Outbox {
 			return;
 		}
 
+		//* This will add the batchId.
+		//* TODO: We need to ensure this batch is "sealed" - no more messages try to get added, and it doesn't merge with another,
+		//* even on reconnect
+		const groupedBatch = shouldGroup
+			? this.params.groupingManager.groupBatch(rawBatch)
+			: undefined;
+
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(
-				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
-			);
-			if (!shouldGroup) {
-				//* BatchId not supported here yet
-				this.sendBatch(processedBatch);
-				return;
-			}
-
+			const processedBatch = this.compressBatch(groupedBatch ?? rawBatch);
+			//* Meh
 			assert(
-				processedBatch.content.length === 1,
-				"Grouped Batch should have single message even after compression/chunking",
+				groupedBatch === undefined || processedBatch.content.length === 1,
+				"Grouped Batch should have single message even after compression/chunking (the last chunk)",
 			);
-			//* TODO: Remove !'s
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			processedBatch.content[0]!.metadata!.batchId = uuid();
+
 			this.sendBatch(processedBatch);
-			this.persistBatch2(processedBatch.content[0]!);
 		}
 
-		//* Probably should group/compress in either case now.
-		this.persistBatch(rawBatch.content);
+		//* Prototype: This will always be true
+		if (groupedBatch) {
+			this.persistGroupedBatch(
+				groupedBatch.content[0],
+				rawBatch.content.map((m) => m.localOpMetadata),
+			);
+		} else {
+			//* Prototype: This is a no-op
+			this.persistBatch(rawBatch.content);
+			assert(false, "Not expected in prototype");
+		}
 	}
 
 	/**
@@ -325,7 +331,8 @@ export class Outbox {
 	/**
 	 * As necessary and enabled, compresses and chunks the given batch.
 	 *
-	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are sent immediately.
+	 * As such, callers should verify connected state beforehand
 	 *
 	 * @param batch - Raw or Grouped batch to consider for compression/chunking
 	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
@@ -413,17 +420,18 @@ export class Outbox {
 		}
 	}
 
-	private persistBatch2(message: BatchMessage) {
-		this.params.pendingStateManager.onSubmitMessage(
+	private persistGroupedBatch(message: GroupedBatchMessage, loms: unknown[]) {
+		this.params.pendingStateManager.onSubmitGroupedBatch(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			message.contents!,
 			message.referenceSequenceNumber,
-			message.localOpMetadata,
-			message.metadata as any, //* plumb batchId through better
+			loms,
+			message.metadata, //* Just has batchId
 		);
 	}
 
-	private persistBatch(batch: BatchMessage[]) {
+	//* Prototype: Not used / no-op
+	public persistBatch(batch: BatchMessage[]) {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
@@ -447,7 +455,4 @@ export class Outbox {
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
-}
-function uuid(): unknown {
-	throw new Error("Function not implemented.");
 }
