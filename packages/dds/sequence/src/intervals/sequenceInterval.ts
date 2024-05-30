@@ -7,6 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	Client,
 	ISegment,
@@ -24,7 +25,6 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -473,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(

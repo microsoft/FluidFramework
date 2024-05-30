@@ -16,7 +16,7 @@ import {
 	UpPath,
 	topDownPath,
 } from "../core/index.js";
-import { Events, ISubscribable } from "../events/index.js";
+import { Listeners, Listenable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
 import { FlexTreeNode } from "./flex-tree/index.js";
@@ -81,9 +81,9 @@ export interface BinderOptions {
  *
  * @internal
  */
-export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
+export interface FlushableBinderOptions<E extends Listeners<E>> extends BinderOptions {
 	autoFlush: boolean;
-	autoFlushPolicy: keyof Events<E>;
+	autoFlushPolicy: keyof Listeners<E>;
 	sortAnchorsFn?: AnchorsCompare;
 }
 
@@ -125,7 +125,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 * @param eventTrees - The {@link BindPolicy}s to filter on.
 	 * @param listener - The listener to register
 	 */
-	register<K extends keyof Events<B>>(
+	register<K extends keyof Listeners<B>>(
 		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
@@ -204,7 +204,7 @@ export interface BindPolicy {
  *
  * @internal
  */
-export const indexSymbol = Symbol("editable-tree-binder:index");
+export const indexSymbol = Symbol("flex-tree-binder:index");
 
 /**
  * A syntax node for the bind language
@@ -433,7 +433,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		tree: BindTree,
 		listener: Listener,
 		callTree: CallTree,
-	) {
+	): void {
 		if (tree.children.size === 0) {
 			callTree.listeners.add(listener);
 		} else {
@@ -462,7 +462,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		tree: BindTree,
 		listener: Listener,
 		callTree?: CallTree,
-	) {
+	): void {
 		const foundTree = callTree ?? this.findRoot(contextType, tree.field);
 		if (foundTree !== undefined) {
 			if (tree.children.size === 0) {
@@ -727,7 +727,7 @@ class AbstractDataBinder<
 		protected readonly visitorFactory: (anchor: FlexTreeNode) => V,
 	) {}
 
-	public register<K extends keyof Events<B>>(
+	public register<K extends keyof Listeners<B>>(
 		anchor: FlexTreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
@@ -775,7 +775,7 @@ class AbstractDataBinder<
 	}
 }
 
-class BufferingDataBinder<E extends Events<E>>
+class BufferingDataBinder<E extends Listeners<E>>
 	extends AbstractDataBinder<
 		OperationBinderEvents,
 		BufferingPathVisitor,
@@ -783,9 +783,9 @@ class BufferingDataBinder<E extends Events<E>>
 	>
 	implements FlushableDataBinder<OperationBinderEvents>
 {
-	protected readonly view: ISubscribable<E>;
-	protected readonly autoFlushPolicy: keyof Events<E>;
-	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
+	protected readonly view: Listenable<E>;
+	protected readonly autoFlushPolicy: keyof Listeners<E>;
+	public constructor(view: Listenable<E>, options: FlushableBinderOptions<E>) {
 		super(options, (anchor: FlexTreeNode) => new BufferingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -797,7 +797,7 @@ class BufferingDataBinder<E extends Events<E>>
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
 		const unsortedVisitors: BufferingPathVisitor[] = Array.from(this.visitorLocations.keys());
 		const sortFn = this.options.sortAnchorsFn ?? (() => 0);
-		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
+		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor): number => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
 			assert(pathA !== undefined, 0x6dd /* pathA expected to be defined */);
@@ -814,24 +814,24 @@ class BufferingDataBinder<E extends Events<E>>
 	private enableAutoFlush(): FlushableDataBinder<OperationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
-		}) as E[keyof Events<E>];
+		}) as E[keyof Listeners<E>];
 		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
 	}
 }
 
-class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
+class DirectDataBinder<E extends Listeners<E>> extends AbstractDataBinder<
 	OperationBinderEvents,
 	DirectPathVisitor,
 	BinderOptions
 > {
-	public constructor(view: ISubscribable<E>, options: BinderOptions) {
+	public constructor(view: Listenable<E>, options: BinderOptions) {
 		super(options, (anchor: FlexTreeNode) => new DirectPathVisitor(options));
 	}
 }
 
-class InvalidateDataBinder<E extends Events<E>>
+class InvalidateDataBinder<E extends Listeners<E>>
 	extends AbstractDataBinder<
 		InvalidationBinderEvents,
 		InvalidatingPathVisitor,
@@ -839,9 +839,9 @@ class InvalidateDataBinder<E extends Events<E>>
 	>
 	implements FlushableDataBinder<InvalidationBinderEvents>
 {
-	protected readonly view: ISubscribable<E>;
-	protected readonly autoFlushPolicy: keyof Events<E>;
-	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
+	protected readonly view: Listenable<E>;
+	protected readonly autoFlushPolicy: keyof Listeners<E>;
+	public constructor(view: Listenable<E>, options: FlushableBinderOptions<E>) {
 		super(options, (anchor: FlexTreeNode) => new InvalidatingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -858,7 +858,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	private enableAutoFlush(): FlushableDataBinder<InvalidationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
-		}) as E[keyof Events<E>];
+		}) as E[keyof Listeners<E>];
 		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
@@ -884,8 +884,8 @@ export function toDownPath(upPath: UpPath): DownPath {
  *
  * @internal
  */
-export function createDataBinderBuffering<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderBuffering<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder<OperationBinderEvents> {
 	return new BufferingDataBinder(view, options);
@@ -896,8 +896,8 @@ export function createDataBinderBuffering<E extends Events<E>>(
  *
  * @internal
  */
-export function createDataBinderDirect<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderDirect<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: BinderOptions,
 ): DataBinder<OperationBinderEvents> {
 	return new DirectDataBinder(view, options);
@@ -908,8 +908,8 @@ export function createDataBinderDirect<E extends Events<E>>(
  *
  * @internal
  */
-export function createDataBinderInvalidating<E extends Events<E>>(
-	view: ISubscribable<E>,
+export function createDataBinderInvalidating<E extends Listeners<E>>(
+	view: Listenable<E>,
 	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder<InvalidationBinderEvents> {
 	return new InvalidateDataBinder(view, options);
@@ -933,7 +933,7 @@ export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }
  *
  * @internal
  */
-export function createFlushableBinderOptions<E extends Events<E>>({
+export function createFlushableBinderOptions<E extends Listeners<E>>({
 	sortFn,
 	sortAnchorsFn,
 	autoFlush = true,
@@ -942,7 +942,7 @@ export function createFlushableBinderOptions<E extends Events<E>>({
 	sortFn?: BinderEventsCompare;
 	sortAnchorsFn?: AnchorsCompare;
 	autoFlush?: boolean;
-	autoFlushPolicy: keyof Events<E>;
+	autoFlushPolicy: keyof Listeners<E>;
 }): FlushableBinderOptions<E> {
 	return {
 		sortFn,

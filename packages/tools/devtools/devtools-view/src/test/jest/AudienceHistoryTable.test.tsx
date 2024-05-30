@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { render, screen } from "@testing-library/react";
 import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
 
 import {
 	AudienceHistoryTable,

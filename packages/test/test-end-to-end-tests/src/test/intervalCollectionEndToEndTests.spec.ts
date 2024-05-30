@@ -10,6 +10,7 @@ import { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	IIntervalCollection,
 	SequenceInterval,
@@ -128,7 +129,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);

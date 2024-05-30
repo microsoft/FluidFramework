@@ -8,7 +8,7 @@ import {
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as winston from "winston";
+
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
  */
@@ -28,10 +28,7 @@ export class RedisTenantCache {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("Redis Tenant Cache Error:", error);
-			Lumberjack.error("Redis Tenant Cache Error", undefined, error);
-		});
+		redisClientConnectionManager.addErrorHandler(undefined, "Redis Tenant Cache Error");
 	}
 
 	public async exists(item: string): Promise<boolean> {

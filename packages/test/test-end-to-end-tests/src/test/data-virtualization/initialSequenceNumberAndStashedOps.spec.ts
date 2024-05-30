@@ -4,18 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	type ITestObjectProvider,
 	ITestContainerConfig,
-	createTestConfigProvider,
 } from "@fluidframework/test-utils/internal";
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
-	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -24,7 +26,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				},
 			},
 		},
-		loaderProps: { configProvider },
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
 	};
 
 	let provider: ITestObjectProvider;

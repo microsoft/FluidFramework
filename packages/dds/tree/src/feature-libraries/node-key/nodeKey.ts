@@ -40,15 +40,6 @@ export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 |
 }
 
 /**
- * The key for the special field for {@link LocalNodeKey}s,
- * which allows nodes to be given keys that can be used to find the nodes via the node key index.
- * @internal
- * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for fields defined by the system.
- * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
- */
-export const nodeKeyFieldKey = "__n_id__";
-
-/**
  * The TreeNodeSchemaIdentifier for node keys.
  * @internal
  * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for types defined by the system.

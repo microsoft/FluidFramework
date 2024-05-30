@@ -13,7 +13,7 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
@@ -41,7 +41,7 @@ export function createChildMonitoringContext(props: Parameters<typeof createChil
 export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt;
 
 // @internal
-export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
+export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler, skipLoggingWhenSamplingIsDisabled?: boolean): ISampledTelemetryLogger;
 
 // @internal
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
@@ -110,7 +110,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 }
 
 // @internal
-export const getCircularReplacer: () => (key: string, value: unknown) => any;
+export const getCircularReplacer: () => ((key: string, value: unknown) => any);
 
 // @internal
 export const hasErrorInstanceId: (x: unknown) => x is {
@@ -318,7 +318,7 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
 
 // @internal
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, emitLogs?: boolean);
     // (undocumented)
     cancel(props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
@@ -328,9 +328,9 @@ export class PerformanceEvent {
     reportEvent(eventNameSuffix: string, props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
     reportProgress(props?: ITelemetryPropertiesExt, eventNameSuffix?: string): void;
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, emitLogs?: boolean): PerformanceEvent;
     static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
-    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, sampleThreshold?: number): Promise<T>;
 }
 
 // @internal

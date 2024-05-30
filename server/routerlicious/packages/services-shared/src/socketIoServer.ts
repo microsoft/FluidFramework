@@ -11,8 +11,8 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
+import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
+import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
@@ -20,8 +20,13 @@ import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
+import type { Cluster, Redis } from "ioredis";
 
 class SocketIoSocket implements core.IWebSocket {
+	private readonly eventListeners: { event: string; listener: () => void }[] = [];
+
+	private isDisposed = false;
+
 	public get id(): string {
 		return this.socket.id;
 	}
@@ -29,23 +34,44 @@ class SocketIoSocket implements core.IWebSocket {
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
-		this.socket.on(event, listener);
+		if (!this.isDisposed) {
+			this.eventListeners.push({ event, listener });
+			this.socket.on(event, listener);
+		}
 	}
 
 	public async join(id: string): Promise<void> {
-		return this.socket.join(id);
+		if (!this.isDisposed) {
+			return this.socket.join(id);
+		}
 	}
 
 	public emit(event: string, ...args: any[]) {
-		this.socket.emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.emit(event, ...args);
+		}
 	}
 
 	public emitToRoom(roomId: string, event: string, ...args: any[]) {
-		this.socket.nsp.to(roomId).emit(event, ...args);
+		if (!this.isDisposed) {
+			this.socket.nsp.to(roomId).emit(event, ...args);
+		}
 	}
 
 	public disconnect(close?: boolean) {
-		this.socket.disconnect(close);
+		if (!this.isDisposed) {
+			this.socket.disconnect(close);
+		}
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+		if (!this.socket.disconnected) {
+			this.disconnect(true);
+		}
+		for (const { event, listener } of this.eventListeners) {
+			this.socket.off(event, listener);
+		}
 	}
 }
 
@@ -77,11 +103,40 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
+			const socketConnectionMetric = Lumberjack.newLumberMetric(
+				LumberEventName.SocketConnection,
+				{},
+			);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 
+			//
+			webSocket.on("disconnect", (reason: DisconnectReason) => {
+				// The following should be considered as normal disconnects and not logged as errors.
+				// For more information about each reason, see https://socket.io/docs/v4/server-socket-instance/#disconnect
+				const isOk = [
+					// server used socket.disconnect()
+					"server namespace disconnect",
+					// client used socket.disconnect()
+					"client namespace disconnect",
+					// server shutting down
+					"server shutting down",
+					// connection closed for normal reasons
+					"transport close",
+				].includes(reason);
+				socketConnectionMetric.setProperties({
+					reason,
+					transport: socket.conn.transport.name,
+				});
+				if (isOk) {
+					socketConnectionMetric.success("Socket connection ended");
+				} else {
+					socketConnectionMetric.error("Socket connection closed", reason);
+				}
+			});
+
 			// Server side listening for ping events
-			socket.on("ping", (cb) => {
+			webSocket.on("ping", (cb) => {
 				if (typeof cb === "function") {
 					cb();
 				}
@@ -208,23 +263,32 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 }
 
-export function create(
+type SocketIoAdapter = typeof Adapter | ((nsp: Namespace) => Adapter);
+
+/**
+ * @internal
+ */
+export type SocketIoAdapterCreator = (
+	pub: Redis | Cluster,
+	sub: Redis | Cluster,
+) => SocketIoAdapter;
+
+function getRedisAdapter(
 	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
-	server: http.Server,
 	socketIoAdapterConfig?: any,
-	socketIoConfig?: any,
-	ioSetup?: (io: Server) => void,
-): core.IWebSocketServer {
-	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
-	});
-	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis sub connection", undefined, err);
-	});
+	customCreateAdapter?: SocketIoAdapterCreator,
+): SocketIoAdapter {
+	if (customCreateAdapter !== undefined) {
+		// Use the externally provided Socket.io Adapter
+		return customCreateAdapter(
+			redisClientConnectionManagerForPub.getRedisClient(),
+			redisClientConnectionManagerForSub.getRedisClient(),
+		);
+	}
 
-	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
+		// Use the custom Socket.io Redis Adapter from the services-shared package
 		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
 			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
 			subConnection: new SocketIoRedisSubscriptionConnection(
@@ -237,13 +301,40 @@ export function create(
 			socketIoAdapterConfig?.shouldDisableDefaultNamespace,
 		);
 
-		adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
-	} else {
-		adapter = createAdapter(
-			redisClientConnectionManagerForPub.getRedisClient(),
-			redisClientConnectionManagerForSub.getRedisClient(),
-		);
+		return redisSocketIoAdapter.RedisSocketIoAdapter;
 	}
+
+	// Use the default, official Socket.io Redis Adapter from the @socket.io/redis-adapter package
+	return createRedisAdapter(
+		redisClientConnectionManagerForPub.getRedisClient(),
+		redisClientConnectionManagerForSub.getRedisClient(),
+	);
+}
+
+export function create(
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+	server: http.Server,
+	socketIoAdapterConfig?: any,
+	socketIoConfig?: any,
+	ioSetup?: (io: Server) => void,
+	customCreateAdapter?: SocketIoAdapterCreator,
+): core.IWebSocketServer {
+	redisClientConnectionManagerForPub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis pub connection", // error message
+	);
+
+	redisClientConnectionManagerForSub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis sub connection", // error message
+	);
+	const adapter = getRedisAdapter(
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+		socketIoAdapterConfig,
+		customCreateAdapter,
+	);
 
 	// Create and register a socket.io connection on the server
 	const io = new Server(server, {

@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IntervalType } from "@fluidframework/sequence-previous";
+import { IntervalType } from "@fluidframework/sequence-previous/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -18,8 +18,8 @@ import {
 import { IIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
 import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -56,7 +56,7 @@ describe("Interval Stashed Ops on client ", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,

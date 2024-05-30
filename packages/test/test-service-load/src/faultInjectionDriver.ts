@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
@@ -17,14 +17,11 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	IClient,
+	DriverErrorTypes,
 	IDocumentMessage,
 	INack,
-	ISummaryTree,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
@@ -47,8 +44,8 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 			clientIsSummarizer,
 		);
 		const ds = new FaultInjectionDocumentService(internal);
-		assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
-		this._documentServices.set(resolvedUrl, ds);
+		assert(!this._documentServices.has(ds.resolvedUrl), "one ds per resolved url instance");
+		this._documentServices.set(ds.resolvedUrl, ds);
 		return ds;
 	}
 	async createContainer(

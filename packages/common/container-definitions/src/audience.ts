@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
  * @alpha
@@ -60,7 +60,7 @@ export interface ISelf {
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
 	 * It changes only when client has reconnected, caught up with latest ops.
 	 */
-	clientId: string;
+	readonly clientId: string;
 
 	/**
 	 * Information about current client (including user identity, connection properties), supplied by ordering service when
@@ -72,7 +72,7 @@ export interface ISelf {
 	 * 2) Container is in the process of establishing new connection. Information about old connection is already reset
 	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
-	client?: IClient;
+	readonly client?: IClient;
 }
 
 /**
@@ -141,5 +141,5 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
 	 */
-	getSelf: () => ISelf | undefined;
+	getSelf(): ISelf | undefined;
 }

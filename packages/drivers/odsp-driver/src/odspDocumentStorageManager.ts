@@ -7,11 +7,15 @@ import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
+	ICreateBlobResponse,
+	IVersion,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
@@ -21,7 +25,6 @@ import {
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -117,7 +120,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return this._isFirstSnapshotFromNetwork;
 	}
 
-	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		this.checkAttachmentPOSTUrl();
 
 		const response = await getWithRetryForTokenRefresh(async (options) => {
@@ -138,7 +141,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				},
 				async (event) => {
 					const res = await this.createBlobRateLimiter.schedule(async () =>
-						this.epochTracker.fetchAndParseAsJSON<api.ICreateBlobResponse>(
+						this.epochTracker.fetchAndParseAsJSON<ICreateBlobResponse>(
 							url,
 							{
 								body: file,
@@ -208,10 +211,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getSnapshotTree(
-		version?: api.IVersion,
+		version?: IVersion,
 		scenarioName?: string,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<api.ISnapshotTree | null> {
+	): Promise<ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
 			// eslint-disable-next-line unicorn/no-null
 			return null;
@@ -446,7 +449,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		count: number,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
-	): Promise<api.IVersion[]> {
+	): Promise<IVersion[]> {
 		// Regular load workflow uses blobId === documentID to indicate "latest".
 		if (blobid !== this.documentId && blobid) {
 			// FluidFetch & FluidDebugger tools use empty sting to query for versions
@@ -685,7 +688,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async uploadSummaryWithContext(
-		summary: api.ISummaryTree,
+		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
 		this.checkSnapshotUrl();
@@ -804,7 +807,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	protected async fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | undefined> {
+	): Promise<ISnapshotTree | undefined> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			const storageToken = await this.getStorageToken(options, "ReadCommit");
 			const snapshotDownloader = async (

@@ -15,34 +15,39 @@ import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
+	IChannel,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+	IChannelFactory,
+	type IDeltaManagerErased,
+} from "@fluidframework/datastore-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	ITreeEntry,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,
@@ -50,13 +55,15 @@ import {
 import {
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
+	toDeltaManagerErased,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
-import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -207,7 +214,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.deltaManager.minimumSequenceNumber = msn;
 		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-		this.dataStoreRuntime.deltaManager = this.deltaManager;
+		this.dataStoreRuntime.deltaManagerInternal = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
 		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
@@ -447,7 +454,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public async resolveHandle(handle: IFluidHandle) {
-		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+		return this.dataStoreRuntime.resolveHandle({
+			url: toFluidHandleInternal(handle).absolutePath,
+		});
 	}
 }
 
@@ -773,10 +782,13 @@ export class MockFluidDataStoreRuntime
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
+		registry?: readonly IChannelFactory[];
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
-		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.entryPoint = toFluidHandleInternal(
+			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
+		);
 		this.id = overrides?.id ?? uuid();
 		this.logger = createChildLogger({
 			logger: overrides?.logger,
@@ -784,9 +796,14 @@ export class MockFluidDataStoreRuntime
 		});
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
+
+		const registry = overrides?.registry;
+		if (registry) {
+			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
+		}
 	}
 
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -808,7 +825,10 @@ export class MockFluidDataStoreRuntime
 	public clientId: string;
 	public readonly path = "";
 	public readonly connected = true;
-	public deltaManager = new MockDeltaManager();
+	public deltaManagerInternal = new MockDeltaManager();
+	public get deltaManager(): IDeltaManagerErased {
+		return toDeltaManagerErased(this.deltaManagerInternal);
+	}
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
@@ -816,6 +836,8 @@ export class MockFluidDataStoreRuntime
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
+	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
+
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
@@ -858,8 +880,15 @@ export class MockFluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		return null as any as IChannel;
 	}
-	public createChannel(id: string, type: string): IChannel {
-		return null as any as IChannel;
+	public createChannel(id: string | undefined, type: string): IChannel {
+		if (this.registry === undefined) {
+			// This preserves the behavior of this mock from before registry support was added.
+			return null as any as IChannel;
+		}
+
+		const factory = this.registry.get(type);
+		assert(factory !== undefined, "type missing from registry");
+		return factory.create(this, id ?? uuid());
 	}
 
 	public addChannel(channel: IChannel): void {}

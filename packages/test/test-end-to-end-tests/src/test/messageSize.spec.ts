@@ -15,12 +15,9 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -45,7 +42,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	afterEach(async () => provider.reset());
+	afterEach(async function () {
+		provider.reset();
+	});
 
 	let localContainer: IContainer;
 	let remoteContainer: IContainer;
@@ -511,6 +510,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								this.skip();
 							}
 
+							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
+							if (provider.driver.type === "routerlicious") {
+								this.skip();
+							}
+
 							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
@@ -586,6 +590,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
+
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
@@ -603,6 +615,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// This is not supported by the local server. See ADO:2690
 				// This test is flaky on tinylicious. See ADO:2964
 				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
 					this.skip();
 				}
 
@@ -668,6 +688,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// This is not supported by the local server. See ADO:2690
 				// This test is flaky on tinylicious. See ADO:2964
 				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				// TODO: This test is consistently failing when ran against FRS. See ADO:7969
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
 					this.skip();
 				}
 

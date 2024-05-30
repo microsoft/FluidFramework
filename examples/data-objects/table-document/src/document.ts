@@ -11,7 +11,7 @@ import {
 } from "@fluid-experimental/sequence-deprecated";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	PropertySet,
 	ReferencePosition,

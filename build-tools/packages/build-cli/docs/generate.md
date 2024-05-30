@@ -135,10 +135,12 @@ Generate a changelog for packages based on changesets.
 ```
 USAGE
   $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
+    [--install]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
+      --[no-]install           Update lockfiles by running 'npm install' automatically.
       --version=<value>        The version for which to generate the changelog. If this is not provided, the version of
                                the package according to package.json will be used.
 

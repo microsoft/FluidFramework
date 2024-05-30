@@ -12,9 +12,9 @@ import {
 	type IEvent,
 	type IFluidHandle,
 	type IFluidLoadable,
-	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type FluidObjectId } from "../CommonInterfaces.js";
 
@@ -498,6 +498,7 @@ export async function visualizeChildData(
 		};
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;

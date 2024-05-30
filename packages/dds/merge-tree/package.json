@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-rc.4.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -94,7 +94,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -123,7 +123,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -136,13 +136,13 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.8.0.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-rc.4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -158,12 +158,54 @@
 		"prettier": "~3.0.3",
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_Client": {
-				"backCompat": false
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttributionCollection": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITrackingGroup": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SegmentGroup": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SortedSegmentSet": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_Trackable": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeSegmentDelta": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+				"forwardCompat": false
 			}
 		}
 	}

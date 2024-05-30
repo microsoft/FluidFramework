@@ -6,7 +6,7 @@
 
 import { DriverError } from '@fluidframework/driver-definitions/internal';
 import { FiveDaysMs } from '@fluidframework/driver-definitions/internal';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @alpha (undocumented)

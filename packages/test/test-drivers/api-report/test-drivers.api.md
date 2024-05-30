@@ -12,6 +12,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/inte
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver/internal';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils/internal';
+import type { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ITestDriver } from '@fluid-internal/test-driver-definitions';
@@ -129,6 +130,8 @@ export class OdspTestDriver implements ITestDriver {
     readonly endpointName?: string | undefined;
     // (undocumented)
     getUrlFromItemId(itemId: string): string;
+    // (undocumented)
+    setPersistedCache(cache: IPersistedCache): void;
     // (undocumented)
     readonly tenantName?: string | undefined;
     // (undocumented)

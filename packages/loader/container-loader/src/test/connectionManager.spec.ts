@@ -4,14 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { stub, useFakeTimers } from "sinon";
+
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
-import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IAnyDriverError,
+	IDocumentService,
+	INack,
+	NackErrorType,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
-import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { stub, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";

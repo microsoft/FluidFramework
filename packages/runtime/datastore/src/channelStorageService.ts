@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 

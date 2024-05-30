@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 
-import { ISummaryBlob, SummaryType } from '@fluidframework/protocol-definitions';
+import { ISummaryBlob, SummaryType } from '@fluidframework/driver-definitions';
 import { assert, expect } from 'chai';
 import { v5 } from 'uuid';
 

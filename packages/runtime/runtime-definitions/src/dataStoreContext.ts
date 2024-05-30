@@ -3,27 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
-	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	IFluidHandleInternal,
+	IProvideFluidHandleContext,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	IDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -159,7 +165,7 @@ export interface IDataStore {
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 }
 
 /**
@@ -168,7 +174,7 @@ export interface IDataStore {
  * @alpha
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
 
@@ -362,7 +368,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
 	 * with the component.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
 
@@ -397,7 +403,7 @@ export interface IFluidParentContext
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly logger: ITelemetryBaseLogger;
+	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
 	/**
@@ -490,7 +496,10 @@ export interface IFluidParentContext
 
 	deleteChildSummarizerNode(id: string): void;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.

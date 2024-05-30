@@ -12,6 +12,8 @@ import {
 	TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
@@ -56,8 +58,8 @@ export const Change = {
 	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
-		src: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
+		src: RegisterId | ChangesetLocalId | ChangeAtomId,
+		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
 	): OptionalChangeset | ProtoChange => {
 		if (dst === "self") {
 			return {
@@ -150,7 +152,7 @@ export const Change = {
 		const changeset: Mutable<OptionalChangeset> = { moves, childChanges };
 		for (const changeLike of changes) {
 			if ("type" in changeLike === false) {
-				const change = changeLike as OptionalChangeset;
+				const change = changeLike;
 				// Note: this will stack overflow if there are too many moves.
 				moves.push(...change.moves);
 				// Note: this will stack overflow if there are too many child changes.
@@ -307,6 +309,17 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function tagChangeInline(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<OptionalChangeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
 }
 
 export function inlineRevision(

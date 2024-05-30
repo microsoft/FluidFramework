@@ -29,7 +29,7 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const collaborativeText = await runtime.createDataStore(
 			CollaborativeText.getFactory().type,
 		);
@@ -39,7 +39,10 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<CollaborativeTextAppModel> {
 		return new CollaborativeTextAppModel(
 			await getDataStoreEntryPoint<CollaborativeText>(runtime, collaborativeTextId),
 		);
