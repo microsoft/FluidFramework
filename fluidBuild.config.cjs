@@ -35,13 +35,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: [
-				"check:format",
-				"eslint",
-				"good-fences",
-				"depcruise",
-				"check:release-tags",
-			],
+			dependsOn: ["check:format", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
