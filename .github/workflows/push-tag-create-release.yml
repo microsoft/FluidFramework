@@ -65,7 +65,7 @@ jobs:
           echo "RELEASE_JSON=$(cat release-metadata.json)" >> $GITHUB_ENV
       - name: Set releaseType output variable
         run: |
-         echo "releaseType=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}" >> "$GITHUB_OUTPUT"
+          echo "releaseType=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}" >> "$GITHUB_OUTPUT"
 
       # Generate release reports
       - name: Check out tag
@@ -103,7 +103,7 @@ jobs:
         run: |
           echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
 
-      # Only creates GH releases for client and build-tools releases.
+      # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
         uses: ncipollo/release-action@eb05307dcee34deaad054e98128088a30d7980dc # ratchet:ncipollo/release-action@main
@@ -114,10 +114,15 @@ jobs:
           # Will skip if a published (non-draft) release already exists.
           skipIfReleaseExists: true
 
-          # Leave the release as a draft so that the release engineer can verify it before it's public. Once we are
-          # more confident in the automation, we may update this workflow to publish the release as well.
-          draft: true
-          omitDraftDuringUpdate: true # don't change the draft state when updating
+          # If the release is NOT a patch, leave it as a draft. Only patch releases are auto-published because their
+          # auto-generated release notes are sufficient for those releases. Minor and major releases currently require
+          # some curation of the release notes.
+          draft: ${{ fromJson(env.RELEASE_JSON).releaseType != 'patch' }}
+
+          # Don't change the draft state when updating an existing release. This setting is not really necessary for us
+          # in most cases because we don't pre-create releases, so this workflow always creates a new GH release. It's
+          # included mostly for safety reasons, to ensure that existing drafts aren't published accidentally.
+          omitDraftDuringUpdate: true
 
           name: ${{ fromJson(env.RELEASE_JSON).title }}
           omitNameDuringUpdate: false # always overwrite the name
