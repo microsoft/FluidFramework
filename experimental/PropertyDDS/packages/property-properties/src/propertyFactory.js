@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// These imports are grouped manually to ensure that the imports are in the correct order.
 /* eslint-disable import/order */
 
 /**
