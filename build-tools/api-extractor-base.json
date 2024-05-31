@@ -5,14 +5,14 @@
 	"apiReport": {
 		// `build-tools` packages do not currently generate separate entry-points based on release levels.
 		// If that changes, this override should be removed.
-		"reportVariants": ["complete"]
+		"reportVariants": ["complete"],
 	},
 	"messages": {
 		"extractorMessageReporting": {
 			// TODO: Consider enabling this in the future.
 			"ae-missing-release-tag": {
-				"logLevel": "none"
-			}
-		}
-	}
+				"logLevel": "none",
+			},
+		},
+	},
 }
