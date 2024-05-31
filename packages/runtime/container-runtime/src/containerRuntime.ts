@@ -2656,7 +2656,8 @@ export class ContainerRuntime
 					);
 					//* TODO: Clarify error control flow (throw v. close)
 					this.closeFn(forkedContainerError);
-					throw forkedContainerError;
+					this.scheduleManager.afterOpProcessing(undefined, message);
+					return;
 				}
 			}
 

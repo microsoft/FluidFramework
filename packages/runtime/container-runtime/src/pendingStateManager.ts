@@ -323,9 +323,10 @@ export class PendingStateManager implements IDisposable {
 				0x16b /* "The pending batch state indicates we are already processing a batch" */,
 			);
 			const batchId = metadata.batchId ?? "BACK-COMPAT-BATCH-ID"; //* Trying to get tests to pass
+			(message.metadata as any).batchId = batchId; //* back compat hack for prototype
 
 			// Set the pending batch state indicating we have started processing a batch.
-			this.pendingBatchBeginMessage = { ...message, metadata: { ...metadata, batchId } }; //* back compat hack for prototype
+			this.pendingBatchBeginMessage = message;
 			this.processingBatchId = batchId;
 		}
 	}
@@ -345,15 +346,17 @@ export class PendingStateManager implements IDisposable {
 			0x16d /* "There is no pending batch begin message" */,
 		);
 
+		// Get the batch begin metadata from the first message in the batch.
+		const batchBeginMetadata = asBatchMetadata(this.pendingBatchBeginMessage.metadata);
+
+		// Check if this message is the end of a batch (does not apply to size === 1)
 		const batchEndMetadataFlag = (message.metadata as IBatchMetadata | undefined)?.batch;
+
 		if (
 			this.pendingMessages.isEmpty() || //* No more pending messages...? How?
 			batchEndMetadataFlag === false || // end of a batch (size > 1)
-			this.pendingBatchBeginMessage === message // Single message batch
+			(batchBeginMetadata?.batchId !== undefined && batchBeginMetadata.batch === undefined) // Single message batch
 		) {
-			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = asBatchMetadata(this.pendingBatchBeginMessage.metadata);
-
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
 			if (this.pendingBatchBeginMessage === message) {
@@ -467,6 +470,15 @@ export class PendingStateManager implements IDisposable {
 					);
 				}
 
+				this.stateHandler.reSubmitBatch(batch);
+			} else if (pendingMessage.opMetadata?.batchId !== undefined) {
+				// This is a single message batch
+				const batch: IPendingBatchMessage[] = [];
+				batch.push({
+					content: pendingMessage.content,
+					localOpMetadata: pendingMessage.localOpMetadata,
+					opMetadata: pendingMessage.opMetadata,
+				});
 				this.stateHandler.reSubmitBatch(batch);
 			} else {
 				this.stateHandler.reSubmit({
