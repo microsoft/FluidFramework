@@ -56,33 +56,29 @@ export class OpGroupingManager {
 	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
-	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
-		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
+	public groupBatch(rawBatch: IBatch): IBatch<[BatchMessage]> {
+		assert(this.shouldGroup(rawBatch), 0x946 /* cannot group the provided batch */);
 
-		if (batch.content.length >= 1000) {
+		if (rawBatch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
-				length: batch.content.length,
+				length: rawBatch.content.length,
 				threshold: this.config.opCountThreshold,
-				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+				reentrant: rawBatch.hasReentrantOps,
+				referenceSequenceNumber: rawBatch.content[0].referenceSequenceNumber,
 			});
 		}
 
-		for (const message of batch.content) {
+		for (const message of rawBatch.content) {
 			if (message.metadata) {
-				const keys = Object.keys(message.metadata);
-				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(
-					keys.length === 0 || keys[0] === "batch",
-					0x5de /* unexpected op metadata */,
-				);
+				const { batch, batchId, ...rest } = message.metadata;
+				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
 			}
 		}
 
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
-			contents: batch.content.map<IGroupedMessage>((message) => ({
+			contents: rawBatch.content.map<IGroupedMessage>((message) => ({
 				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
@@ -90,11 +86,11 @@ export class OpGroupingManager {
 		});
 
 		const groupedBatch: IBatch<[BatchMessage]> = {
-			...batch,
+			...rawBatch,
 			content: [
 				{
 					metadata: undefined,
-					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+					referenceSequenceNumber: rawBatch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],

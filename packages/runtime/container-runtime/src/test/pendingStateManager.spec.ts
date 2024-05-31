@@ -380,16 +380,20 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
+				const futureRuntimeMessage: Pick<
+					ISequencedDocumentMessage,
+					"type" | "contents" | "referenceSequenceNumber"
+				> &
 					RecentlyAddedContainerRuntimeMessageDetails = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
+					referenceSequenceNumber: 1337,
 				};
 
 				pendingStateManager.onSubmitMessage(
 					JSON.stringify(futureRuntimeMessage),
-					0,
+					1337,
 					undefined,
 					undefined,
 				);

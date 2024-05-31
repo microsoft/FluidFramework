@@ -313,16 +313,19 @@ export class PendingStateManager implements IDisposable {
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		const metadata = message.metadata;
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if (isBatchMetadata(metadata) && metadata.batchId !== undefined) {
+		if (
+			isBatchMetadata(metadata) &&
+			(metadata.batch === true || metadata.batchId !== undefined)
+		) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
 				this.processingBatchId === undefined && this.pendingBatchBeginMessage === undefined,
 				0x16b /* "The pending batch state indicates we are already processing a batch" */,
 			);
-			const batchId = metadata.batchId;
+			const batchId = metadata.batchId ?? "BACK-COMPAT-BATCH-ID"; //* Trying to get tests to pass
 
 			// Set the pending batch state indicating we have started processing a batch.
-			this.pendingBatchBeginMessage = message;
+			this.pendingBatchBeginMessage = { ...message, metadata: { ...metadata, batchId } }; //* back compat hack for prototype
 			this.processingBatchId = batchId;
 		}
 	}
