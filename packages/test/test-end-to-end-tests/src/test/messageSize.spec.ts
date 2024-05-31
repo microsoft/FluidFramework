@@ -16,7 +16,7 @@ import {
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
+import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
@@ -539,12 +539,17 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Resiliency", () => {
-		const messageSize = 5 * 1024 * 1024;
+		const messageSize = 50 * 1024; // 50 KB
 		const messagesInBatch = 3;
 		const config: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+				compressionOptions: {
+					minimumBatchSizeInBytes: 51 * 1024, // 51 KB
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: 20 * 1024, // 20 KB
 			},
 		};
 
@@ -590,14 +595,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
-				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
-				if (
-					provider.driver.type === "routerlicious" &&
-					provider.driver.endpointName === "frs"
-				) {
-					this.skip();
-				}
-
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
@@ -609,7 +606,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 
 			it("Reconnects while processing compressed batch", async function () {
 				// This is not supported by the local server. See ADO:2690
@@ -618,25 +615,22 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
-				// TODO: This test is consistently failing when ran against FRS. See ADO:7944
-				if (
-					provider.driver.type === "routerlicious" &&
-					provider.driver.endpointName === "frs"
-				) {
-					this.skip();
-				}
-
 				await setupContainers(config);
-				// Force the container to reconnect after processing 2 empty ops
-				// which would unroll the original ops from compression
+				// Force the container to reconnect after processing all the chunks
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
-					(op) => op.type === MessageType.Operation && op.contents === undefined,
-					2,
+					(op) => {
+						const contents = op.contents as any | undefined;
+						return (
+							contents?.type === ContainerMessageType.ChunkedOp &&
+							contents?.contents?.chunkId === contents?.contents?.totalChunks
+						);
+					},
+					1,
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 		});
 
 		describe("Local container", () => {
@@ -682,7 +676,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 
 			it("Reconnects while sending compressed batch", async function () {
 				// This is not supported by the local server. See ADO:2690
@@ -691,25 +685,22 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
-				// TODO: This test is consistently failing when ran against FRS. See ADO:7969
-				if (
-					provider.driver.type === "routerlicious" &&
-					provider.driver.endpointName === "frs"
-				) {
-					this.skip();
-				}
-
 				await setupContainers(config);
-				// Force the container to reconnect after sending the compressed batch
+				// Force the container to reconnect after sending the compressed batch (i.e. send all chunks)
 				const secondConnection = reconnectAfterBatchSending(
 					localContainer,
-					(batch) =>
-						batch.length > 1 && batch.slice(1).every((x) => x.contents === undefined),
+					(batch) => {
+						const parsedContent = JSON.parse(batch[0].contents as string);
+						return (
+							parsedContent?.type === ContainerMessageType.ChunkedOp &&
+							parsedContent.contents.chunkId === parsedContent.contents.totalChunks
+						);
+					},
 					1,
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 		});
 	});
 });
