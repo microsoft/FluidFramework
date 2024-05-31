@@ -37,6 +37,8 @@ prereleaseIndentifier: string
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
+// Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
+//
 // @public
 export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions?: boolean, log?: boolean): boolean;
 
