@@ -274,6 +274,7 @@ export {
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeViewConfiguration,
+	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 	TreeView,
 	TreeViewEvents,

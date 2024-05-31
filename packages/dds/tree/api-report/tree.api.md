@@ -1158,6 +1158,12 @@ export enum ITreeSubscriptionCursorState {
     Freed = 2
 }
 
+// @public
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    readonly enableSchemaValidation?: boolean;
+    readonly schema: TSchema;
+}
+
 // @internal
 export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
     // (undocumented)
@@ -1855,9 +1861,9 @@ export enum TreeCompressionStrategy {
 // @public @deprecated
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
+    readonly enableSchemaValidation: boolean;
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }
@@ -2050,9 +2056,8 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 
 // @public
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, options?: ITreeConfigurationOptions);
-    readonly options: Required<ITreeConfigurationOptions>;
-    // (undocumented)
+    constructor(props: ITreeViewConfiguration<TSchema>);
+    readonly enableSchemaValidation: boolean;
     readonly schema: TSchema;
 }
 

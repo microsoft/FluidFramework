@@ -9,6 +9,7 @@ export {
 	TreeViewEvents,
 	TreeConfiguration,
 	TreeViewConfiguration,
+	ITreeViewConfiguration,
 	SchemaCompatibilityStatus,
 	ITreeConfigurationOptions,
 } from "./tree.js";

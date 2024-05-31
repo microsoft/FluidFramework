@@ -103,24 +103,58 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 };
 
 /**
+ * Property-bag configuration for {@link TreeViewConfiguration} construction.
+ * @public
+ */
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	/**
+	 * The schema which the application wants to view the tree with.
+	 */
+	readonly schema: TSchema;
+
+	/**
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
+	 */
+	readonly enableSchemaValidation?: boolean;
+}
+
+/**
  * Configuration for {@link ITree.viewWith}.
  * @public
  */
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
-	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 * The schema which the application wants to view the tree with.
 	 */
-	public readonly options: Required<ITreeConfigurationOptions>;
+	public readonly schema: TSchema;
+
+	/**
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
+	 */
+	public readonly enableSchemaValidation: boolean;
 
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
 	 */
-	public constructor(
-		public readonly schema: TSchema,
-		options?: ITreeConfigurationOptions,
-	) {
-		this.options = { ...defaultTreeConfigurationOptions, ...options };
+	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		const config = { ...defaultTreeConfigurationOptions, ...props };
+		this.schema = config.schema;
+		this.enableSchemaValidation = config.enableSchemaValidation;
 	}
 }
 
@@ -131,9 +165,16 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
-	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
 	 */
-	public readonly options: Required<ITreeConfigurationOptions>;
+	public readonly enableSchemaValidation: boolean;
 
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
@@ -148,7 +189,9 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 		options?: ITreeConfigurationOptions,
 	) {
-		this.options = { ...defaultTreeConfigurationOptions, ...options };
+		this.enableSchemaValidation =
+			options?.enableSchemaValidation ??
+			defaultTreeConfigurationOptions.enableSchemaValidation;
 	}
 }
 
