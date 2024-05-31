@@ -54,7 +54,7 @@ export interface IHeapNode<T> {
  * @internal
  */
 export class Heap<T> {
-	private L: IHeapNode<T>[];
+	private readonly L: IHeapNode<T>[];
 
 	/**
 	 * Creates an instance of `Heap` with comparer.
@@ -188,17 +188,15 @@ export class Heap<T> {
 	}
 
 	private swap(k: number, j: number): void {
-		const tmp = this.L[k];
-		assert(tmp !== undefined, "tmp is undefined in swap");
-		const jOfHeap = this.L[j];
-		assert(jOfHeap !== undefined, "jOfHeap is undefined in swap");
+		let heapK = this.L[k];
+		assert(heapK !== undefined, "heapK is undefined in swap");
+		let heapJ = this.L[j];
+		assert(heapJ !== undefined, "heapJ is undefined in swap");
 
-		this.L[k] = jOfHeap;
-		assert(this.L[k] !== undefined, "this.L[k] is undefined after swap");
-		this.L[k].position = k;
+		heapK = heapJ;
+		heapK.position = k;
 
-		this.L[j] = tmp;
-		assert(this.L[j] !== undefined, "this.L[j] is undefined after swap");
-		this.L[j].position = j;
+		heapJ = heapK;
+		heapJ.position = j;
 	}
 }
