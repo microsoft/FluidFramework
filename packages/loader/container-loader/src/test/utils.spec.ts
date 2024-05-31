@@ -5,21 +5,22 @@
 
 import { strict as assert } from "assert";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+
+import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
+import type { ISnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
 	runSingle,
 } from "../utils.js";
-import type { ISnapshotInfo } from "../serializedStateManager.js";
-import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
 
 describe("container-loader utils", () => {
 	describe("runSingle", () => {

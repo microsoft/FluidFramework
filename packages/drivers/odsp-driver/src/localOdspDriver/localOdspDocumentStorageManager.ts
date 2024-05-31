@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import { IVersion } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
