@@ -138,6 +138,8 @@ Before reading through the next section, the reader should familiarize themselve
 This section outlines some compatibility policies applications can implement, including code samples on how to do so.
 Choices here are non-committal in the sense that an application won't incur indefinite backward-compatibility promises in their ecosystem for making some particular choice.
 
+> **_WARNING_** Currently, `SharedTree` only supports the 'enforce exact schema match' policy. There are near-term plans (with the same API) to allow opening a document which has additional optional fields in its stored schema that are not present in the view schema, and longer-term plans to allow opening documents using older view schemas when a document's stored schema has been upgraded with other types of backward-compatible changes.
+
 The main consequences for particular policies are the constraints around how application logic modifications can be made over time.
 Policies which are stricter about schemas aligning cross-client will require applications to wait longer for code saturation before leveraging new features.
 On the other hand, they reduce the complexity of the compatibility matrix that application authors must consider.
