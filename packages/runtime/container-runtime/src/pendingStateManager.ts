@@ -17,21 +17,17 @@ import Deque from "double-ended-queue";
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
+import type { IBatch } from "./opLifecycle/index.js";
 
-//* Switching to Batch not Message semantics (but it'll be a single grouped/compressed/chunked batch-as-message)
+//* Switching to Batch not Message semantics
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
  */
-export interface IPendingBatch {
-	type: "message";
-	referenceSequenceNumber: number; //* Consistent across Grouped Batch
-	content: string; //* coallesced Grouped Batch content
-	localOpMetadata: unknown; //* Needs to be an array...?
-	opMetadata: Record<string, unknown> | undefined; //* How does this aggregate across a batch?
+export interface IPendingBatch extends IBatch {
+	type: "message"; //* Can remove?
+	referenceSequenceNumber: number; //* Why is it optional on IBatch?
 	sequenceNumber?: number;
-	batchId: string; //* Always set for this prototype
-	loms: unknown[];
 }
 
 export interface IPendingLocalState {
@@ -53,7 +49,7 @@ export interface IRuntimeStateHandler {
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
-	reSubmitBatch(batch: IPendingBatchMessage[], batchId: string): void;
+	reSubmitBatch(batch: IPendingBatchMessage[], batchId: string): void; //* Switch to IPendingBatch?
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -88,14 +84,14 @@ export interface IRuntimeStateHandler {
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
-	//* Grouped Batches
+	//* Batches
 	private readonly pendingMessages = new Deque<IPendingBatch>();
 	private readonly initialMessages = new Deque<IPendingBatch>();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
-	//* Grouped Batches
+	//* Batches
 	private savedOps: IPendingBatch[] = [];
 
 	private readonly disposeOnce = new Lazy<void>(() => {
@@ -162,7 +158,7 @@ export class PendingStateManager implements IDisposable {
 		});
 		return {
 			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
-				return { ...message, localOpMetadata: undefined, loms: [] };
+				return { ...message, localOpMetadata: undefined };
 			}),
 		};
 	}
@@ -173,7 +169,7 @@ export class PendingStateManager implements IDisposable {
 		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
 		if (initialLocalState?.pendingStates) {
-			//* Need to make sure this serialization is not old format (needs to be Grouped Batches, not individual messages)
+			//* What if this serialization is old format (individual messages, not batches)?
 			this.initialMessages.push(...initialLocalState.pendingStates);
 		}
 	}
@@ -214,23 +210,14 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	//* For whole batches with batchId
-	public onSubmitGroupedBatch(
-		content: string,
-		referenceSequenceNumber: number,
-		loms: unknown[],
-		opMetadata: { batchId: string },
-	) {
-		const pendingMessage: IPendingBatch = {
+	//* refSeq needed due to gap in typing - the IBatch is non-empty so in fact it will already have refSeq set
+	public onSubmitBatch(batch: IBatch, referenceSequenceNumber: number) {
+		const pendingBatch: IPendingBatch = {
+			...batch,
 			type: "message",
 			referenceSequenceNumber,
-			content,
-			localOpMetadata: undefined, //* individual localOpMetadata are put in loms
-			opMetadata,
-			batchId: opMetadata.batchId,
-			loms,
 		};
-
-		this.pendingMessages.push(pendingMessage);
+		this.pendingMessages.push(pendingBatch);
 	}
 
 	/**
@@ -250,17 +237,15 @@ export class PendingStateManager implements IDisposable {
 					throw new Error("loaded from snapshot too recent to apply stashed ops");
 				}
 			}
+			//* FIX
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nextMessage = this.initialMessages.shift()!; //* Grouped Batch
-			const loms: unknown[] = [];
+			const nextBatch = this.initialMessages.shift()!;
 			try {
-				//* DEBUG: Did I get it right...?
-				const allContents = (
-					JSON.parse(nextMessage.content) as { contents: { contents: any }[] }
-				).contents.map((c) => JSON.stringify(c.contents));
-				for (const content of allContents) {
+				for (const nextMessage of nextBatch.content) {
 					// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-					const localOpMetadata = await this.stateHandler.applyStashedOp(content);
+					const localOpMetadata = await this.stateHandler.applyStashedOp(
+						nextMessage.contents,
+					);
 					if (!this.stateHandler.isAttached()) {
 						if (localOpMetadata !== undefined) {
 							throw new Error(
@@ -272,10 +257,10 @@ export class PendingStateManager implements IDisposable {
 					}
 				}
 				// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-				nextMessage.loms = loms;
-				this.pendingMessages.push(nextMessage);
+				nextBatch.loms = loms;
+				this.pendingMessages.push(nextBatch);
 			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextBatch);
 			}
 		}
 	}
@@ -321,6 +306,7 @@ export class PendingStateManager implements IDisposable {
 		// return pendingMessage.localOpMetadata;
 	}
 
+	//* Moves?
 	/**
 	 * See if the incoming batch matches the next pending batch ID
 	 * @returns true if the batch IDs match

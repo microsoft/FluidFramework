@@ -23,7 +23,7 @@ import {
 	estimateSocketSize,
 	sequenceNumbersMatch,
 } from "./batchManager.js";
-import { BatchMessage, IBatch, IBatchCheckpoint, type GroupedBatchMessage } from "./definitions.js";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
@@ -247,7 +247,9 @@ export class Outbox {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch();
+		//* TODO? We need to ensure this batch is "sealed" - no more messages try to get added, and it doesn't merge with another,
+		//* even on reconnect
+		const rawBatch = batchManager.popBatch(batchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
@@ -259,38 +261,17 @@ export class Outbox {
 			return;
 		}
 
-		//* This will add the batchId.
-		//* TODO: We need to ensure this batch is "sealed" - no more messages try to get added, and it doesn't merge with another,
-		//* even on reconnect
-		const groupedBatch = shouldGroup
-			? this.params.groupingManager.groupBatch(rawBatch, batchId)
-			: undefined;
-
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(groupedBatch ?? rawBatch);
-			//* Meh
-			assert(
-				groupedBatch === undefined || processedBatch.content.length === 1,
-				"Grouped Batch should have single message even after compression/chunking (the last chunk)",
+			const processedBatch = this.compressBatch(
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
-
 			this.sendBatch(processedBatch);
 		}
 
-		//* Prototype: This will always be true
-		if (groupedBatch) {
-			this.persistGroupedBatch(
-				groupedBatch.content[0],
-				rawBatch.content.map((m) => m.localOpMetadata),
-			);
-		} else {
-			//* Prototype: This is a no-op
-			this.persistBatch(rawBatch.content);
-			assert(false, "Not expected in prototype");
-		}
+		this.persistBatch(rawBatch);
 	}
 
 	/**
@@ -425,29 +406,14 @@ export class Outbox {
 		}
 	}
 
-	private persistGroupedBatch(message: GroupedBatchMessage, loms: unknown[]) {
-		this.params.pendingStateManager.onSubmitGroupedBatch(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			message.contents!,
-			message.referenceSequenceNumber,
-			loms,
-			message.metadata, //* Just has batchId
+	public persistBatch(batch: IBatch) {
+		assert(
+			batch.referenceSequenceNumber !== undefined,
+			"Batch must be non-empty thus has refSeq",
 		);
-	}
 
-	//* Prototype: Not used / no-op
-	public persistBatch(batch: BatchMessage[]) {
-		// Let the PendingStateManager know that a message was submitted.
-		// In future, need to shift toward keeping batch as a whole!
-		for (const message of batch) {
-			this.params.pendingStateManager.onSubmitMessage(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.referenceSequenceNumber,
-				message.localOpMetadata,
-				message.metadata as any, //* Handle back-compat as needed (batchId)
-			);
-		}
+		// Let the PendingStateManager know that a batch was submitted.
+		this.params.pendingStateManager.onSubmitBatch(batch, batch.referenceSequenceNumber);
 	}
 
 	public checkpoint() {

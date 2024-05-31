@@ -102,8 +102,9 @@ export class RemoteMessageProcessor {
 				}
 				//* Btw, now we know processPendingLocalBatch will succeed / return a value
 			}
-			const loms = local ? this.psm.processPendingLocalBatch(message) : undefined;
-			return this.opGroupingManager.ungroupOp(message, loms).map(unpack);
+			//* Moving away from GroupedBatch dependency
+			//* const loms = local ? this.psm.processPendingLocalBatch(message) : undefined;
+			return this.opGroupingManager.ungroupOp(message).map(unpack);
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked

@@ -12,19 +12,16 @@ import { CompressionAlgorithms } from "../containerRuntime.js";
  */
 export type BatchMessage = IBatchMessage & {
 	localOpMetadata?: unknown;
-	referenceSequenceNumber: number;
+	referenceSequenceNumber: number; //* Could move up to IBatch
 	compression?: CompressionAlgorithms;
-};
-
-export type GroupedBatchMessage = BatchMessage & {
-	localOpMetadata?: undefined;
-	metadata: { batchId: string };
 };
 
 /**
  * Batch interface used internally by the runtime.
  */
 export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
+	/** Unique ID for this batch, stable across resubmit and container rehydrate */
+	readonly batchId: string;
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.
@@ -33,11 +30,11 @@ export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 	/**
 	 * All the messages in the batch
 	 */
-	readonly content: TMessages;
+	readonly content: TMessages; //* Rename to messages - too many "content"s!
 	/**
 	 * The reference sequence number for the batch
 	 */
-	readonly referenceSequenceNumber: number | undefined;
+	readonly referenceSequenceNumber: number | undefined; //* When is it undefined? Empty batch
 	/**
 	 * Wether or not the batch contains at least one op which was produced as the result
 	 * of processing another op. This means that the batch must be rebased before

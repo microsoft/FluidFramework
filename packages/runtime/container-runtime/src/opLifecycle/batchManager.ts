@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
+
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
@@ -93,8 +95,8 @@ export class BatchManager {
 		return this.pendingBatch.length === 0;
 	}
 
-	public popBatch(): IBatch {
-		const batch: IBatch = {
+	public popBatch(batchId?: string): IBatch {
+		const batch: Omit<IBatch, "batchId"> = {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
@@ -106,7 +108,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch);
+		return addBatchMetadata(batch, batchId);
 	}
 
 	/**
@@ -129,11 +131,14 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch): IBatch => {
+//* existingBatchId param used to preserve batchId across resubmit
+const addBatchMetadata = (batch: Omit<IBatch, "batchId">, existingBatchId?: string): IBatch => {
+	const batchId = existingBatchId ?? uuid();
 	if (batch.content.length > 1) {
 		batch.content[0].metadata = {
 			...batch.content[0].metadata,
 			batch: true,
+			batchId,
 		};
 		batch.content[batch.content.length - 1].metadata = {
 			...batch.content[batch.content.length - 1].metadata,
@@ -141,7 +146,7 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
 		};
 	}
 
-	return batch;
+	return { ...batch, batchId };
 };
 
 /**
