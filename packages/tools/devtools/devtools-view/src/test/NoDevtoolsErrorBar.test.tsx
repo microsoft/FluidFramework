@@ -10,7 +10,7 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 
-import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../../components/index.js";
+import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../components/index.js";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {
