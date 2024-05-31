@@ -5,22 +5,15 @@
 Implement compatibility-based schema evolution API
 
 This change adjusts some top-level APIs for using SharedTree in a context that may necessitate changing a document's schema.
-First of all, `SharedTree`'s restrictions around view schema and stored schema compatibility have been slightly relaxed:
-A particular view schema can now be used to open documents whose stored schema supports a superset of that view schema.
-Beware that applications which choose to do this may experience runtime incompatibilities in application logic: for instance,
-the stored schema for a document may contain allowed types in fields which the view schema isn't expecting,
-which could result in application errors.
-The motivation for this change is to eventually allow more flexible application policies around what types of schema incompatibilities
-are OK to allow different clients to collaborate using.
+The motivation for these changes is to allow future relaxation of `SharedTree`'s restrictions around view schema and stored schema compatibility,
+which will enable more flexible policies around how applications can update their documents' schemas over time.
 
 Application authors are encouraged to develop a compatibility policy which they are comfortable with using the guidance in the
 "Schema Evolvability" section of `@fluidframework/tree`'s readme.
 
 To make the details of schema compatibilities that SharedTree supports more clear,
 `TreeView.error` has been functionally replaced with the `compatibility` property.
-Users desiring the previous strict behavior can use `view.compatibility.isExactMatch` at appropriate places in application logic.
-
-In addition to this functional change to the types of collaboration that `SharedTree` permits, several APIs have been tweaked.
+Users desiring the previous strict behavior should use `view.compatibility.isExactMatch` at appropriate places in application logic.
 
 # `ITree.schematize` deprecation
 
@@ -39,7 +32,7 @@ Now, that code would look like this on the create codepath:
 
 ```typescript
 const tree = SharedTree.create(runtime, "foo");
-const view = await tree.viewWith({ schema: Point });
+const view = await tree.viewWith(new TreeViewConfiguration(Point));
 view.initialize(new Point({ x: 0, y: 0 }));
 ```
 
@@ -47,10 +40,11 @@ and this on the load codepath:
 
 ```typescript
 const tree = SharedTree.create(runtime, "foo");
-const view = await tree.viewWith({ schema: Point });
+const view = await tree.viewWith(new TreeConfiguration(Point));
 ```
 
 Besides only making the initial tree required to specify in places that actually perform document initialization, this is beneficial for mutation semantics: `tree.viewWith` never modifies the state of the underlying tree.
+This means applications are free to attempt to view a document using multiple schemas (e.g. legacy versions of their document format) without worrying about altering the document state.
 
 # Separate `schemaChanged` event on `TreeView`
 
