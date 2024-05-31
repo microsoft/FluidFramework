@@ -17,15 +17,18 @@ import {
 	waitForContainerConnection,
 	type ChannelFactoryRegistry,
 	type ITestObjectProvider,
+	type ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
+	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const testConfigs = generatePairwiseOptions({
@@ -37,7 +40,59 @@ const testConfigs = generatePairwiseOptions({
 	summaryWhileOffline: [true, false],
 	waitForRefresh: [true, false],
 	idCompressorEnabled: ["on", undefined, "delayed"],
+	loadOffline: [true, false],
 });
+
+/**
+ * Load a Container using testContainerConfig and the given testObjectProvider,
+ * Deferring connection to the service until the returned connect function is called
+ * (simulating returning from offline)
+ *
+ * @param testObjectProvider - For accessing Loader/Driver
+ * @param request - Request to use when loading
+ * @param pendingLocalState - (Optional) custom PendingLocalState to load from. Defaults to using getPendingOps helper if omitted.
+ * @returns A container instance with a connect function to unblock the Driver (simulating coming back from offline)
+ */
+async function loadOffline(
+	testContainerConfig: ITestContainerConfig,
+	testObjectProvider: ITestObjectProvider,
+	request: IRequest,
+	pendingLocalState: string,
+): Promise<IContainerExperimental> {
+	const p = new Deferred();
+	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
+	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+		testObjectProvider.documentServiceFactory,
+		{
+			createDocumentService: {
+				connectToDeltaStream: (ds) => async (client) => {
+					await p.promise;
+					return ds.connectToDeltaStream(client);
+				},
+				connectToDeltaStorage: (ds) => async () => {
+					await p.promise;
+					return ds.connectToDeltaStorage();
+				},
+				connectToStorage: (ds) => async () => {
+					await p.promise;
+					return ds.connectToStorage();
+				},
+			},
+		},
+	);
+
+	const loader = testObjectProvider.createLoader(
+		[
+			[
+				testObjectProvider.defaultCodeDetails,
+				testObjectProvider.createFluidEntryPoint(testContainerConfig),
+			],
+		],
+		{ ...testContainerConfig.loaderProps, documentServiceFactory },
+	);
+	const container: IContainerExperimental = await loader.resolve(request, pendingLocalState);
+	return container;
+}
 
 describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
@@ -133,6 +188,7 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 				await provider.ensureSynchronized();
 			}
 			if (testConfig.pendingOps) {
+				await waitForContainerConnection(container1);
 				await provider.opProcessingController.pauseProcessing(container1);
 				map1.set(`${i}`, i++);
 				map1.set(`${i}`, i++);
@@ -146,28 +202,33 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
-				map.set(`${i}`, i++);
 				await waitForSummary(container);
 			}
-			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
+
+			const container2: IContainerExperimental = testConfig.loadOffline
+				? await loadOffline(testContainerConfig, provider, { url }, pendingOps)
+				: await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-			if (
-				testConfig.waitForRefresh &&
-				(testConfig.savedOps || testConfig.summaryWhileOffline)
-			) {
+			const summaryExists = testConfig.savedOps || testConfig.summaryWhileOffline;
+
+			// We can only wait for snapshot refresh if a summary exists and we're online
+			if (testConfig.waitForRefresh && summaryExists && !testConfig.loadOffline) {
 				await timeoutAwait(getLatestSnapshotInfoP.promise, {
 					errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 				});
 			}
 
-			if (testConfig.savedOps2) {
+			// we can't produce a summary offline
+			if (testConfig.savedOps2 && !testConfig.loadOffline) {
 				map2.set(`${i}`, i++);
 				await waitForSummary(container2);
 				await provider.ensureSynchronized();
 			}
+
 			if (testConfig.pendingOps2) {
-				await provider.opProcessingController.pauseProcessing(container2);
+				if (!testConfig.loadOffline)
+					await provider.opProcessingController.pauseProcessing(container2);
 				map2.set(`${i}`, i++);
 				map2.set(`${i}`, i++);
 			}
