@@ -412,6 +412,8 @@ export interface IGarbageCollectorCreateParams {
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 	readonly sessionExpiryTimerStarted?: number | undefined;
+	/** If local ids for blobs is turned on, GC will be disabled for this container permanently. */
+	readonly noLocalIdsForBlobs?: boolean;
 }
 
 /**

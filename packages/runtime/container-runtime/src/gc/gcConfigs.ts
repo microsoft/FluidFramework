@@ -42,6 +42,8 @@ import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelp
  * gcOptions - The garbage collector runtime options.
  * metadata - The container runtime's createParams.metadata.
  * existing - Whether the container is new or an existing one.
+ * isSummarizerClient - Whether this is a summarizer client.
+ * noLocalIdsForBlobs - Whether local ids for attachment blobs is supported.
  * @returns The garbage collector configurations.
  */
 export function generateGCConfigs(
@@ -51,6 +53,7 @@ export function generateGCConfigs(
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
+		noLocalIdsForBlobs?: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean = true;
@@ -97,6 +100,15 @@ export function generateGCConfigs(
 		if (gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = { gcGeneration };
 		}
+	}
+
+	/**
+	 * If local ids for attachment blobs isn't supported, turn GC off for this container permanently. GC for attachment
+	 * blobs doesn't work correctly when local id isn't used. The "noLocalIdsForBlobs" option is only used in back
+	 * compat scenarios when upgrading from 1.x to a newer version. For these documents, GC won't run.
+	 */
+	if (createParams.noLocalIdsForBlobs) {
+		gcEnabled = false;
 	}
 
 	// The persisted GC generation must indicate Sweep is allowed for this document,

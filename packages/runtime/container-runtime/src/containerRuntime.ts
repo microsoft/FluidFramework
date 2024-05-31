@@ -480,10 +480,10 @@ export interface IContainerRuntimeOptions {
 	readonly explicitSchemaControl?: boolean;
 
 	/**
-	 * When this property is set to true, the blob manager will not return local ids for attachment
-	 * blobs that it uploads. It will instead return the id returned by storage after the blob has
-	 * been uploaded. This is added to ensure that clients running versions 1.x and older can read blobs
-	 * created by clients running versions 2.x. 1.x didn't support local ids for attachment blobs.
+	 * When this property is set to true, the blob manager will not return local ids for attachment blobs that it
+	 * uploads. It will instead return the id returned by storage after the blob has been uploaded. 1.x didn't support
+	 * local ids for attachment blobs so this will ensure that clients running versions 1.x and older can read blobs
+	 * created by clients running versions 2.x and newer versions.
 	 */
 	readonly noLocalIdsForAttachmentBlobs?: boolean;
 }
@@ -1614,6 +1614,7 @@ export class ContainerRuntime
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
+			noLocalIdsForBlobs: runtimeOptions.noLocalIdsForAttachmentBlobs,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;

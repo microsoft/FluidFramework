@@ -30,6 +30,7 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -178,10 +179,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		const { summarizer, container: summarizerContainer } = await createSummarizer(
 			provider,
 			container,
-			{
-				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider },
-			},
+			summarizerContainerConfig,
 		);
 
 		return { dataStore, summarizer, summarizerContainer };
@@ -205,6 +203,45 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	});
 
 	describe("Attachment blobs in attached container", () => {
+		it("allows retrieval of in-use attachment blobs", async () => {
+			const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
+
+			// Upload an attachment blob.
+			const blobContents = "Blob contents";
+			const blobHandle = toFluidHandleInternal(
+				await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
+			);
+
+			// Reference the attachment blob.
+			mainDataStore._root.set("blob1", blobHandle);
+
+			// Summarize - The above attachment blob should be referenced.
+			await provider.ensureSynchronized();
+			const summary1 = await summarizeNow(summarizer);
+			assert(summary1 !== undefined);
+
+			// Wait for sweep timeout so the any blob ready for sweep are deleted.
+			await delay(sweepTimeoutMs + 10);
+
+			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+			mainDataStore._root.set("key", "value");
+			await provider.ensureSynchronized();
+
+			// Summarize so that sweep runs and gc op with sweep ready blobs are sent.
+			const summary2 = await summarizeNow(summarizer);
+			const container2 = await loadContainer(summary2.summaryVersion);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
+
+			// Wait for the gc op to be processed so that the sweep ready blobs are deleted.
+			await provider.ensureSynchronized();
+
+			// Retrieving the blob should succeeded. Note that the blob is requested via its url since this container does
+			// not have access to the blob's handle since it loaded after the blob was deleted.
+			const blobHandle2 = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob1");
+			assert(blobHandle2 !== undefined, "Blob handle doesn't exist");
+			await assert.doesNotReject(blobHandle2.get(), "The blob retrieval should succeed");
+		});
+
 		itExpects(
 			"fails retrieval of deleted attachment blobs",
 			[
