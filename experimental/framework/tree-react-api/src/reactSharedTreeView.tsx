@@ -136,14 +136,14 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly ViewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
 	/**
-	 * Component to display instead of the {@link TreeViewProps.ViewComponent}
+	 * Component to display instead of the {@link TreeViewProps.viewComponent}
 	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeConfiguration}.
 	 *
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeConfiguration} if possible.
 	 */
-	readonly ErrorComponent?: React.FC<SchemaIncompatibleProps>;
+	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
 }
 
 /**
@@ -190,13 +190,13 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
-		ViewComponent,
-		ErrorComponent,
+		viewComponent,
+		errorComponent,
 	}: TreeViewProps<TSchema>) =>
 		TreeViewComponent<TSchema>({
 			tree: this,
-			ViewComponent,
-			ErrorComponent,
+			viewComponent,
+			errorComponent,
 		});
 }
 
@@ -249,8 +249,8 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
-	ViewComponent,
-	ErrorComponent,
+	viewComponent: ViewComponent,
+	errorComponent,
 }: TreeViewProps<TSchema> & {
 	tree: TreeDataObject<TSchema>;
 }) {
@@ -267,7 +267,7 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	// code rollout is in progress.
 	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
 	if (!compatibility.isExactMatch) {
-		const Error = ErrorComponent ?? TreeErrorComponent;
+		const Error = errorComponent ?? TreeErrorComponent;
 		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
 	}
 
