@@ -71,7 +71,9 @@ import { ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
+	CrossFieldKeyTable,
 	FieldChangeMap,
+	FieldId,
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
@@ -1503,9 +1505,24 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
+	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
 	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
+	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
+	const crossFieldKeyTable: CrossFieldKeyTable = new BTree();
 
-	const normalizeNodeChanges = (nodeId: NodeId): NodeId | undefined => {
+	const remapNodeId = (nodeId: NodeId): NodeId => {
+		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
+		assert(newId !== undefined, "Unknown node ID");
+		return newId;
+	};
+
+	const remapFieldId = (fieldId: FieldId): FieldId => {
+		return fieldId.nodeId === undefined
+			? fieldId
+			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
+	};
+
+	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
 		const nodeChangeset = tryGetFromNestedMap(
 			change.nodeChanges,
 			nodeId.revision,
@@ -1521,7 +1538,13 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		}
 
 		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
+		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
 		setInNestedMap(nodeChanges, newId.revision, newId.localId, normalizedNodeChangeset);
+
+		const parent = tryGetFromNestedMap(change.nodeToParent, nodeId.revision, nodeId.localId);
+		assert(parent !== undefined, "Every node should have a parent");
+		const newParent = remapFieldId(parent);
+		setInNestedMap(nodeToParent, newId.revision, newId.localId, newParent);
 
 		return newId;
 	};
@@ -1538,6 +1561,13 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 				field,
 				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
 			);
+
+			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
+			for (const key of crossFieldKeys) {
+				const prevId = change.crossFieldKeys.get(key);
+				assert(prevId !== undefined, "Should be an entry for each cross-field key");
+				crossFieldKeyTable.set(key, remapFieldId(prevId));
+			}
 		}
 
 		return normalizedFieldChanges;
@@ -1545,7 +1575,13 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
 	assert(nodeChanges.size === change.nodeChanges.size);
-	return { ...change, nodeChanges, fieldChanges };
+	return {
+		...change,
+		nodeChanges,
+		fieldChanges,
+		nodeToParent,
+		crossFieldKeys: crossFieldKeyTable,
+	};
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
