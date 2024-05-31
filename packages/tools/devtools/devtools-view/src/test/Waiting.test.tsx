@@ -6,7 +6,7 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
 
-import { Waiting, defaultWaitingLabel } from "../../components/index.js";
+import { Waiting, defaultWaitingLabel } from "../components/index.js";
 
 describe("Waiting component tests", () => {
 	it("Displays default label when a label is not specified", async (): Promise<void> => {

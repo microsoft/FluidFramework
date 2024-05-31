@@ -33,14 +33,9 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
-		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest",
-		"build:test:jest": "concurrently npm:build:test:jest:cjs npm:build:test:jest:esm",
-		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
-		"build:test:jest:esm": "fluid-tsc module --project ./src/test/jest/tsconfig.esm.json",
-		"build:test:mocha": "fluid-tsc module --project ./src/test/screenshot/tsconfig.json",
-		"build:test:utils": "concurrently npm:build:test:utils:cjs npm:build:test:utils:esm",
-		"build:test:utils:cjs": "fluid-tsc commonjs --project ./src/test/utils/tsconfig.cjs.json",
-		"build:test:utils:esm": "fluid-tsc module --project ./src/test/utils/tsconfig.esm.json",
+		"build:test": "concurrently npm:build:test:cjs npm:build:test:esm",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -55,15 +50,13 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"rebuild": "npm run clean && npm run build",
-		"test": "concurrently npm:test:jest npm:test:mocha",
+		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
 		"test:jest:cjs": "jest --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
-		"test:mocha:fail": "mocha lib/test/screenshot/Screenshot.test.js --delay --exit",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:screenshots": "npm run test:mocha",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json"
 	},
@@ -148,36 +141,6 @@
 				],
 				"library": "main"
 			}
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:test:jest:cjs": [
-				"tsc",
-				"build:test:utils:cjs"
-			],
-			"build:test:jest:esm": [
-				"build:esnext",
-				"build:test:utils:esm"
-			],
-			"build:test:mocha": [
-				"build:esnext",
-				"build:test:utils:esm"
-			],
-			"build:test:utils:cjs": [
-				"^tsc"
-			],
-			"build:test:utils:esm": [
-				"^tsc",
-				"^build:esnext"
-			],
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:jest:esm",
-				"build:test:mocha",
-				"build:test:utils:esm"
-			]
 		}
 	},
 	"typeValidation": {
