@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+
 import { isFluidHandle } from "../handles.js";
 
 describe("Handles", () => {

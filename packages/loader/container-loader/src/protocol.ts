@@ -4,12 +4,6 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
-import {
-	IProtocolHandler as IBaseProtocolHandler,
-	IQuorumSnapshot,
-	ProtocolOpHandler,
-} from "@fluidframework/protocol-base";
 import { ISequencedDocumentMessage, ISignalMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentAttributes,
@@ -17,6 +11,12 @@ import {
 	ISignalClient,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
+import {
+	IProtocolHandler as IBaseProtocolHandler,
+	IQuorumSnapshot,
+	ProtocolOpHandler,
+} from "@fluidframework/protocol-base";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {

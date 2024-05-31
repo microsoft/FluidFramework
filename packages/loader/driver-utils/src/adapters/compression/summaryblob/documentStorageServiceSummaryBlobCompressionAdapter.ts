@@ -6,18 +6,18 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IDocumentStorageService,
-	ISummaryContext,
-	ISnapshotTree,
-	IVersion,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import { compress, decompress } from "lz4js";
 
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";

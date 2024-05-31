@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
@@ -13,7 +14,6 @@ import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 
 /**

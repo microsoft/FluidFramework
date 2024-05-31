@@ -11,7 +11,7 @@ import { IClientDetails } from '@fluidframework/driver-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';

@@ -6,13 +6,13 @@
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IGitTree, IGitTreeEntry } from "@fluidframework/driver-definitions/internal";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	FileMode,
 	ISnapshotTree,
 	ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import { v4 as uuid } from "uuid";
 
 function flattenCore(

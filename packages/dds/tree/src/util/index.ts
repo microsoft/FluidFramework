@@ -52,6 +52,7 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
