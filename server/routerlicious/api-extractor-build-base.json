@@ -23,8 +23,7 @@
 		"enabled": true,
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
-		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "internal"?
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
 	},
 
 	/**
