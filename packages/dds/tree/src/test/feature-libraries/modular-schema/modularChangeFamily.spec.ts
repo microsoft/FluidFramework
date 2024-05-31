@@ -269,41 +269,50 @@ const rootChange1bGeneric: ModularChangeset = mainEditor.buildChanges([
 	},
 ]);
 
-const rebasedChange: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA,
-		fieldKind: singleNodeField.identifier,
-		change: brand(undefined),
-	},
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rebasedChange: ModularChangeset = Change.build(
+	{ family, maxId: rootChange1b.maxId },
+	Change.field(
+		fieldA,
+		singleNodeField.identifier,
+		singleNodeField.changeHandler.createEmpty(),
+		Change.nodeWithId(
+			0,
+			{ localId: brand(2) },
+			Change.field(fieldA, valueField.identifier, valueChange2),
+			Change.field(fieldB, valueField.identifier, valueChange1a),
+		),
+	),
+);
 
-const rebasedChangeGeneric: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rebasedChangeGeneric: ModularChangeset = Change.build(
+	{ family, maxId: rootChange1bGeneric.maxId },
+	Change.field(
+		fieldA,
+		genericFieldKind.identifier,
+		genericFieldKind.changeHandler.createEmpty(),
+		Change.nodeWithId(
+			0,
+			{ localId: brand(4) },
+			Change.field(fieldA, valueField.identifier, valueChange2),
+			Change.field(fieldB, valueField.identifier, valueChange1a),
+		),
+	),
+);
+
+const genericChangeRebasedOverSpecific: ModularChangeset = Change.build(
+	{ family, maxId: rootChange1bGeneric.maxId },
+	Change.field(
+		fieldA,
+		singleNodeField.identifier,
+		singleNodeField.changeHandler.createEmpty(),
+		Change.nodeWithId(
+			0,
+			{ localId: brand(4) },
+			Change.field(fieldA, valueField.identifier, valueChange2),
+			Change.field(fieldB, valueField.identifier, valueChange1a),
+		),
+	),
+);
 
 const rootChange2: ModularChangeset = mainEditor.buildChanges([
 	{
@@ -970,7 +979,7 @@ describe("ModularChangeFamily", () => {
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
-			assert.deepEqual(rebased, rebasedChange);
+			assert.deepEqual(rebased, genericChangeRebasedOverSpecific);
 		});
 
 		it("rebase generic ↷ generic", () => {
@@ -1472,23 +1481,16 @@ describe("ModularChangeFamily", () => {
 			[],
 		);
 		const changes = getChanges();
-		const nodeChange: NodeChangeset = {
-			fieldChanges: new Map([
-				[fieldB, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
-			]),
-		};
 
-		const nodeId0: NodeId = { localId: brand(0) };
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId0);
-		const expectedChange: ModularChangeset = {
-			maxId: brand(0),
-			nodeChanges: nestedMapFromFlatList([[nodeId0.revision, nodeId0.localId, nodeChange]]),
-			fieldChanges: new Map([
-				[fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
-			]),
-			nodeToParent: new Map(), // XXX
-			crossFieldKeys: new BTree(),
-		};
+		const expectedChange: ModularChangeset = Change.build(
+			{ family, maxId: 0 },
+			Change.field(
+				fieldA,
+				genericFieldKind.identifier,
+				genericFieldKind.changeHandler.createEmpty(),
+				Change.node(0, Change.field(fieldB, valueField.identifier, valueChange1a)),
+			),
+		);
 
 		assert.deepEqual(changes, [expectedChange]);
 	});
