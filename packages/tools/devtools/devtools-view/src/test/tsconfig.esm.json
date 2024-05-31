@@ -2,14 +2,11 @@
 	// This config must be used in a "type": "module" environment. (Use fluid-tsc module.)
 	"extends": "./tsconfig.jest.json",
 	"compilerOptions": {
-		"outDir": "../../../lib/test/jest",
+		"outDir": "../../lib/test",
 	},
 	"references": [
 		{
-			"path": "../../../tsconfig.esm.json",
-		},
-		{
-			"path": "../utils/tsconfig.esm.json",
+			"path": "../../tsconfig.esm.json",
 		},
 	],
 }

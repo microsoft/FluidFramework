@@ -133,7 +133,7 @@ export class ObjectForest implements IEditableForest {
 		// This pattern could be generalized/formalized with a concept of an exclusive cursor,
 		// which can edit, but is the only cursor allowed at the time.
 
-		const cursor: Cursor = this.allocateCursor();
+		const cursor: Cursor = this.allocateCursor("acquireVisitor");
 		cursor.setToAboveDetachedSequences();
 
 		/**
@@ -142,39 +142,47 @@ export class ObjectForest implements IEditableForest {
 		 */
 		const preEdit = (): void => {
 			this.events.emit("beforeChange");
-			assert(
-				this.currentCursors.size === 1,
-				0x374 /* No cursors can be current when modifying forest */,
-			);
-			assert(this.currentCursors.has(cursor), "unexpected cursor while editing");
+			assert(this.currentCursors.has(cursor), "missing visitor cursor while editing");
+			if (this.currentCursors.size > 1) {
+				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
+					c === cursor ? [] : c.source ?? null,
+				);
+
+				throw new Error(
+					`Found unexpected cursors when editing with the following annotations: ${JSON.stringify(
+						unexpectedSources,
+					)}`,
+				);
+			}
 		};
 
-		const visitor = {
-			forest: this,
-			cursor,
-			free() {
-				this.cursor.free();
+		class Visitor implements DeltaVisitor {
+			public constructor(private readonly forest: ObjectForest) {}
+			public free(): void {
+				cursor.free();
 				assert(
 					this.forest.activeVisitor !== undefined,
 					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-			},
-			destroy(detachedField: FieldKey, count: number): void {
+			}
+			public destroy(detachedField: FieldKey, count: number): void {
 				preEdit();
 				this.forest.delete(detachedField);
-			},
-			create(content: ProtoNodes, destination: FieldKey): void {
+			}
+			public create(content: ProtoNodes, destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.events.emit("afterRootFieldCreated", destination);
-			},
-			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+			}
+			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+				preEdit();
 				this.attachEdit(source, count, destination);
-			},
-			detach(source: Range, destination: FieldKey): void {
+			}
+			public detach(source: Range, destination: FieldKey): void {
+				preEdit();
 				this.detachEdit(source, destination);
-			},
+			}
 			/**
 			 * Attaches the nodes from the given source field into the current field.
 			 * Does not invalidate dependents.
@@ -183,8 +191,7 @@ export class ObjectForest implements IEditableForest {
 			 * Expected to match the number of nodes in the source detached field.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
-				preEdit();
+			private attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assertNonNegativeSafeInteger(count);
 				if (count === 0) {
 					return;
@@ -205,7 +212,7 @@ export class ObjectForest implements IEditableForest {
 				// TODO: this will fail for very large insertions due to argument limits.
 				currentField.splice(destination, 0, ...sourceField);
 				this.forest.delete(source);
-			},
+			}
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
 			 * Does not invalidate dependents.
@@ -213,8 +220,7 @@ export class ObjectForest implements IEditableForest {
 			 * @param destination - If specified, the destination to transfer the detached range to.
 			 * If not specified, the detached range is destroyed.
 			 */
-			detachEdit(source: Range, destination: FieldKey | undefined): void {
-				preEdit();
+			private detachEdit(source: Range, destination: FieldKey | undefined): void {
 				const [parent, key] = cursor.getParent();
 				assert(
 					destination === undefined ||
@@ -233,32 +239,35 @@ export class ObjectForest implements IEditableForest {
 				if (currentField.length === 0) {
 					parent.fields.delete(key);
 				}
-			},
-			replace(
+			}
+			public replace(
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
 			): void {
+				preEdit();
 				assert(
 					newContentSource !== oldContentDestination,
 					0x7ba /* Replace detached source field and detached destination field must be different */,
 				);
 				this.detachEdit(range, oldContentDestination);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
-			},
-			enterNode(index: number): void {
-				this.cursor.enterNode(index);
-			},
-			exitNode(index: number): void {
-				this.cursor.exitNode();
-			},
-			enterField(key: FieldKey): void {
-				this.cursor.enterField(key);
-			},
-			exitField(key: FieldKey): void {
-				this.cursor.exitField();
-			},
-		};
+			}
+			public enterNode(index: number): void {
+				cursor.enterNode(index);
+			}
+			public exitNode(index: number): void {
+				cursor.exitNode();
+			}
+			public enterField(key: FieldKey): void {
+				cursor.enterField(key);
+			}
+			public exitField(key: FieldKey): void {
+				cursor.exitField();
+			}
+		}
+
+		const visitor = new Visitor(this);
 		this.activeVisitor = visitor;
 		return visitor;
 	}
@@ -286,8 +295,8 @@ export class ObjectForest implements IEditableForest {
 		this.#roots.fields.delete(field);
 	}
 
-	public allocateCursor(): Cursor {
-		return new Cursor(this);
+	public allocateCursor(source?: string): Cursor {
+		return new Cursor(this, source);
 	}
 
 	public tryMoveCursorToNode(
@@ -368,6 +377,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	 */
 	public constructor(
 		public readonly forest: ObjectForest,
+		public readonly source: string | undefined,
 		private innerCursor?: CursorWithNode<MutableMapTree>,
 	) {
 		super();
@@ -511,9 +521,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		return [node, key];
 	}
 
-	public fork(): ITreeSubscriptionCursor {
+	public fork(source?: string): ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
-		return new Cursor(this.forest, this.innerCursor.fork());
+		return new Cursor(this.forest, source ?? `fork: ${this.source}`, this.innerCursor.fork());
 	}
 
 	public free(): void {
