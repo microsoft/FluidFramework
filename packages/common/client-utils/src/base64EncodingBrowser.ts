@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Note: The exports map in package.json will correct this import to "./bufferNode.js" in node environments
+// Note: See 'Isomorphic Code' section in the package README.md
 import { IsoBuffer } from "./bufferBrowser.js";
 
 /**

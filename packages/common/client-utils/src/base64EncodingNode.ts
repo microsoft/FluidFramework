@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Note: See 'Isomorphic Code' section in the package README.md
 import { IsoBuffer } from "./bufferNode.js";
 
 /**

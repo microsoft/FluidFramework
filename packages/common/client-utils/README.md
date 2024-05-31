@@ -36,6 +36,27 @@ If you want to add code that does not meet these requirements, these other packa
     **core-interfaces** package.
 -   **Zero-dependency shared code** should be put in the **core-utils** package.
 
+## Isomorphic Code
+
+One of the primary reasons for this package's existence is to provide isomorphic implementations of
+Buffer and related utilities that work in both browser and Node.js environments.
+
+Our general strategy for this is as follows:
+
+-   We use the export map in package.json to provide different entrypoints for browser (indexBrowser.js)
+    vs. Node.js (indexNode.js).
+
+-   Because the browser ecosystem is more complex (bunders, etc.), we improve our odds of success by making
+    the browser the default. Only Node.js relies on remapping via the export map.
+
+-   We further simplify things by only using the export map to resolve the initial entrypoint. We do not
+    rely on export maps to remap imports within the module. (Basically, the browser / node.js specific
+    implementations fork at the entrypoint and from that point on explicitly import browser or node
+    specific files.)
+
+One thing it is important to be aware of is that our CJS support relies on copying a stub package.json
+file to to dist/package.json to set the module type to commonjs. This prevents internal imports
+
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Entrypoint for browser-specific code in the package.
+// (See 'Isomorphic Code' section in the package README.md.)
+
 export {
 	bufferToString,
 	isArrayBuffer,
