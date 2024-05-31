@@ -3,12 +3,25 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
- */
-export interface IBatchMetadata {
-	batch?: boolean;
+export function isBatchMetadata(metadata: unknown): metadata is IBatchMetadata {
+	return (
+		typeof metadata === "object" &&
+		metadata !== null &&
+		("batch" in metadata || "batchId" in metadata)
+	);
 }
+
+export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
+	return isBatchMetadata(metadata) ? metadata : undefined;
+}
+
+/**
+ * Batch metadata is used to identify the start and end of a batch of ops, and the ID of the batch
+ */
+export type IBatchMetadata =
+	| { batch: undefined; batchId: string } // Single op batch
+	| { batch: true; batchId: string } // First op in a batch
+	| { batch: false; batchId: undefined }; // Last op in a batch
 
 /**
  * Blob handling makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.

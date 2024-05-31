@@ -151,7 +151,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
+import { IBatchMetadata, ISavedOpMetadata, asBatchMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -2641,10 +2641,23 @@ export class ContainerRuntime
 			);
 
 			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-				);
+			if (messageWithContext.modernRuntimeMessage) {
+				const runtimeMessage = messageWithContext.message;
+				if (local) {
+					localOpMetadata =
+						this.pendingStateManager.processPendingLocalMessage(runtimeMessage);
+				} else if (this.pendingStateManager.checkForMatchingBatchId(runtimeMessage)) {
+					// If the batchId matches, but the clientId does not, then we have a forked container.
+
+					//* This would be the first case to try to support after the initial MVP.
+					//* We can afford to bail in this case because we can provide guidance to hosts to always serialize again on reconnect
+					const forkedContainerError = new GenericError(
+						"Forked Container Error! Matching batchIds but mismatched clientId",
+					);
+					//* TODO: Clarify error control flow (throw v. close)
+					this.closeFn(forkedContainerError);
+					throw forkedContainerError;
+				}
 			}
 
 			// If there are no more pending messages after processing a local message,
@@ -2848,13 +2861,13 @@ export class ContainerRuntime
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
 	 */
-	private flush(): void {
+	private flush(batchId?: string): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(batchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4088,12 +4101,14 @@ export class ContainerRuntime
 	}
 
 	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+		const batchId = asBatchMetadata(batch[0].opMetadata)?.batchId;
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+		// Re-use the same batchId on resubmit
+		this.flush(batchId);
 	}
 
 	private reSubmit(message: IPendingBatchMessage) {

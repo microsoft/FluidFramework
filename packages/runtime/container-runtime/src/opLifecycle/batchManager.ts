@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
+
+import { assert } from "@fluidframework/core-utils/internal";
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
@@ -93,8 +96,10 @@ export class BatchManager {
 		return this.pendingBatch.length === 0;
 	}
 
-	public popBatch(): IBatch {
-		const batch: IBatch = {
+	public popBatch(batchId?: string): IBatch {
+		assert(!this.empty, "Attempting to pop an empty batch");
+
+		const batch: Omit<IBatch, "batchId"> = {
 			content: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
@@ -106,7 +111,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch);
+		return addBatchMetadata(batch, batchId);
 	}
 
 	/**
@@ -129,11 +134,22 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch): IBatch => {
-	if (batch.content.length > 1) {
+//* existingBatchId param used to preserve batchId across resubmit
+const addBatchMetadata = (batch: Omit<IBatch, "batchId">, existingBatchId?: string): IBatch => {
+	assert(batch.content.length > 0, "Batch must have at least one op");
+
+	const batchId = existingBatchId ?? uuid();
+	// Always need batchId even for single op batch
+	if (batch.content.length === 1) {
+		batch.content[0].metadata = {
+			...batch.content[0].metadata,
+			batchId,
+		};
+	} else {
 		batch.content[0].metadata = {
 			...batch.content[0].metadata,
 			batch: true,
+			batchId,
 		};
 		batch.content[batch.content.length - 1].metadata = {
 			...batch.content[batch.content.length - 1].metadata,
@@ -141,7 +157,7 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
 		};
 	}
 
-	return batch;
+	return { ...batch, batchId };
 };
 
 /**

@@ -45,6 +45,9 @@ export class OpCompressor {
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
 
+		const batchId = batch.batchId;
+		assert(typeof batchId === "string", "Batch ID should be set");
+
 		const messages: BatchMessage[] = [];
 		messages.push({
 			...batch.content[0],
@@ -63,6 +66,7 @@ export class OpCompressor {
 		}
 
 		const compressedBatch: IBatch = {
+			batchId,
 			contentSizeInBytes: compressedContent.length,
 			content: messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,

@@ -221,28 +221,32 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	public flush(batchId?: string) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(batchId);
 	}
 
-	private flushAll() {
+	private flushAll(mainBatchId?: string) {
 		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch);
+		this.flushInternal(this.mainBatch, false /* disableGroupedBatching */, mainBatchId);
 	}
 
-	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
+	private flushInternal(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		existingBatchId?: string,
+	) {
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch();
+		const rawBatch = batchManager.popBatch(existingBatchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
@@ -251,6 +255,7 @@ export class Outbox {
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			this.rebase(rawBatch, batchManager);
+			//* TODO: Anything to do for rebase?
 			return;
 		}
 

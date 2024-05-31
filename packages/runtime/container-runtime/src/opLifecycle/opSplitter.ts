@@ -138,6 +138,9 @@ export class OpSplitter {
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
 
+		const batchId = batch.batchId;
+		assert(typeof batchId === "string", "Batch ID should be set");
+
 		const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 		const socketSize = estimateSocketSize(batch);
 		const chunks = splitOp(
@@ -177,6 +180,7 @@ export class OpSplitter {
 		});
 
 		return {
+			batchId,
 			content: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,

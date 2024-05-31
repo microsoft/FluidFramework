@@ -106,6 +106,7 @@ describe("RemoteMessageProcessor", () => {
 	messageGenerationOptions.forEach((option) => {
 		it(`Correctly processes incoming messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
+				batchId: "batchId-1",
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
 				content: [

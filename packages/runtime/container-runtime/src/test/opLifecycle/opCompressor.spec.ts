@@ -21,6 +21,7 @@ describe("OpCompressor", () => {
 	const createBatch = (length: number, messageSize: number) =>
 		messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize))));
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
+		batchId: "batchId-1",
 		content: messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
