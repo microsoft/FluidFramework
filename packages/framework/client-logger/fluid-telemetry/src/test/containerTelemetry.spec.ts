@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type Sinon from "sinon";
-import { spy } from "sinon";
-import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
-import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
+import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
+import { expect } from "chai";
+import { spy } from "sinon";
+import type Sinon from "sinon";
+
 import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
+import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,

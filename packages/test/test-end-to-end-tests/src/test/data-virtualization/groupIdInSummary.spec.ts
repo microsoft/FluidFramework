@@ -16,15 +16,16 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
+
 import { TestSnapshotCache } from "./testSnapshotCache.js";
 import { supportsDataVirtualization } from "./utils.js";
 

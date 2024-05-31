@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, Compatibility } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
 	NodeKeyManager,
@@ -57,7 +57,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly flexConfig: TreeContent;
-	public readonly events: ISubscribable<TreeViewEvents> &
+	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
 

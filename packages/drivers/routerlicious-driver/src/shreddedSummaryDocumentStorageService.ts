@@ -4,6 +4,7 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -13,7 +14,6 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -122,7 +122,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = (await manager.getTree(requestVersion!.treeId)).content;
+				const response = (await manager.getTree(requestVersion.treeId)).content;
 				event.end({
 					size: response.tree.length,
 				});

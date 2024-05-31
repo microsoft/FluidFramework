@@ -193,6 +193,7 @@ declare function get_old_VariableDeclaration_FluidFetchReaderFileSnapshotWriter(
 declare function use_current_VariableDeclaration_FluidFetchReaderFileSnapshotWriter(
     use: TypeOnly<typeof current.FluidFetchReaderFileSnapshotWriter>): void;
 use_current_VariableDeclaration_FluidFetchReaderFileSnapshotWriter(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_FluidFetchReaderFileSnapshotWriter());
 
 /*

@@ -7,11 +7,15 @@ import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
+	ICreateBlobResponse,
+	IVersion,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
@@ -21,12 +25,6 @@ import {
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ICreateBlobResponse,
-	IVersion,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,

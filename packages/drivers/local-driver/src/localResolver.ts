@@ -11,6 +11,7 @@ import {
 	IUrlResolver,
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
+
 import { generateToken } from "./auth.js";
 
 /**

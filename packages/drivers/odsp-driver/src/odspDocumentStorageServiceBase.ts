@@ -5,6 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ISequencedDocumentMessage,
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import {
 	FetchSource,
 	FiveDaysMs,
 	IDocumentStorageService,
@@ -13,18 +18,11 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions/internal";
-import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
-import {
 	ISnapshotTree,
 	ICreateBlobResponse,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
+import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {

@@ -5,6 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -12,7 +13,6 @@ import {
 	PropertySet,
 	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { SequencePlace, Side } from "../intervalCollection.js";
 

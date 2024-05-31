@@ -9,6 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IRuntime } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -17,20 +18,18 @@ import {
 	type IUrlResolver,
 	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
+	isFluidError,
 	MockLogger,
 	wrapConfigProviderWithDefaults,
 	mixinMonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
+import { Container } from "../container.js";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
-import { Container } from "../container.js";
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
 

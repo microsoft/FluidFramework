@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { expect, test } from "@oclif/test";
+import { expect } from "@oclif/test";
+
+import { initializeCommandTestFunction } from "../../init.js";
+const test = initializeCommandTestFunction(import.meta.url);
 
 /**
  * This list of git tags is deliberately unordered since often the list provided to commands is unordered.

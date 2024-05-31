@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IGitBlob,
 	IGitCommitDetails,
@@ -11,7 +12,6 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
