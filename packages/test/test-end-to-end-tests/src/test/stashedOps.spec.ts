@@ -2005,11 +2005,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("Prototype tests for Offline Phase 3 - serializing without closing", () => {
+	describe("Prototype tests for Offline Phase 3 - serializing without closing", () => {
 		it(`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
 			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(
