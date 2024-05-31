@@ -14,10 +14,10 @@ import {
 	type IChannel,
 	type IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
+import { type ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { MessageType } from '@fluidframework/driver-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { MessageType } from '@fluidframework/driver-definitions/internal';
-import { type ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,

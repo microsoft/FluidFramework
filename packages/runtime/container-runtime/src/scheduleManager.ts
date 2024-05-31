@@ -7,9 +7,9 @@ import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,

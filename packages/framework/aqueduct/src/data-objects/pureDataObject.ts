@@ -10,9 +10,10 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleInternal,
-	type IProvideFluidHandle,
+import type {
+	IFluidHandleInternal,
+	// eslint-disable-next-line import/no-deprecated
+	IProvideFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
@@ -32,6 +33,7 @@ import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**

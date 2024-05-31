@@ -20,16 +20,16 @@ import type {
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
 import type {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";

@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import lodash from "lodash";
-
-// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
-const { isEmpty, findIndex, find, isEqual, range } = lodash;
-
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
@@ -20,7 +15,6 @@ import {
 } from "@fluid-experimental/property-properties";
 import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -28,13 +22,18 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import { copy as cloneDeep } from "fastest-json-copy";
+import lodash from "lodash";
 import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 

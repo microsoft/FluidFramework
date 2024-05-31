@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	DataVisualization,
 	type FluidObjectTreeNode,
@@ -17,6 +16,7 @@ import {
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../components/index.js";

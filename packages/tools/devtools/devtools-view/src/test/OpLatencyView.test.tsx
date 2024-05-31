@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
+import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { OpLatencyView } from "../components/index.js";
