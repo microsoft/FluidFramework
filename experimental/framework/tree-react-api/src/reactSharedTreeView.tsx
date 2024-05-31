@@ -16,6 +16,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ITree,
 	type SchemaCompatibilityStatus,
+	// eslint-disable-next-line import/no-deprecated
 	type TreeConfiguration,
 	type TreeFieldFromImplicitField,
 	type TreeView,
@@ -41,6 +42,7 @@ const SharedTree = configuredSharedTree({
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
+	// eslint-disable-next-line import/no-deprecated
 	treeConfiguration: TreeConfiguration<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> {
 	return treeDataObjectInternal(key, treeConfiguration);
@@ -55,6 +57,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
  */
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	key: string,
+	// eslint-disable-next-line import/no-deprecated
 	treeConfiguration: TreeConfiguration<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
 	readonly factory: IFluidDataStoreFactory;
@@ -98,6 +101,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly config: TreeConfiguration<TSchema>;
 
 	/**
@@ -181,6 +185,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	public abstract readonly key: string;
 
+	// eslint-disable-next-line import/no-deprecated
 	public abstract readonly config: TreeConfiguration<TSchema>;
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type

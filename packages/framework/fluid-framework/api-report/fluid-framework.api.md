@@ -891,7 +891,7 @@ export interface TreeChangeEvents {
     treeChanged(): void;
 }
 
-// @public
+// @public @deprecated
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
     // (undocumented)
@@ -998,10 +998,11 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 }
 
 // @public
-export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    constructor(schema: TSchema, options?: ITreeConfigurationOptions);
+    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
-    options?: ITreeConfigurationOptions;
-    schema: TSchema;
+    readonly schema: TSchema;
 }
 
 // @public

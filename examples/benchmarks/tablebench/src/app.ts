@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// eslint-disable-next-line import/no-deprecated
 import { TreeConfiguration } from "@fluidframework/tree";
 
 import { initFluid } from "./azure.js";
@@ -14,6 +14,7 @@ export { Table };
 
 export async function initApp() {
 	const { tree } = await initFluid();
+	// eslint-disable-next-line import/no-deprecated
 	const view = tree.schematize(new TreeConfiguration(Table, () => generateTable(10000)));
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
