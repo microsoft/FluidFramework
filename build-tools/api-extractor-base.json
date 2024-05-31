@@ -5,7 +5,8 @@
 	"apiReport": {
 		// `build-tools` packages do not currently generate separate entry-points based on release levels.
 		// If that changes, this override should be removed.
-		"reportVariants": ["complete"],
+		// TODO: something is going wrong with "extends" resolution here with the config array. Adding "complete" 3 times to override the 3 entries in the base config seems to work around it.
+		"reportVariants": ["complete", "complete", "complete"],
 	},
 	"messages": {
 		"extractorMessageReporting": {
