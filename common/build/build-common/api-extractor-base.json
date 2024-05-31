@@ -21,7 +21,7 @@
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "internal"?
+		"reportVariants": ["public", "beta", "alpha"] // TODO: add "complete"?
 	},
 
 	/**
