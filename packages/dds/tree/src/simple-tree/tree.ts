@@ -6,7 +6,7 @@
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { CommitMetadata } from "../core/index.js";
-import { ISubscribable } from "../events/index.js";
+import { Listenable } from "../events/index.js";
 import { RevertibleFactory } from "../shared-tree/index.js";
 import { IDisposable } from "../util/index.js";
 
@@ -169,7 +169,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	/**
 	 * Events for the tree.
 	 */
-	readonly events: ISubscribable<TreeViewEvents>;
+	readonly events: Listenable<TreeViewEvents>;
 }
 
 /**

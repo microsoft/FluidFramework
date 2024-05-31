@@ -19,10 +19,10 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type ConnectionMode } from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import { type ConnectionMode } from "@fluidframework/driver-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
 

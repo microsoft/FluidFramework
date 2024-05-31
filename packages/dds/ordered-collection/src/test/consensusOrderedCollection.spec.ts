@@ -15,8 +15,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 
+import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
 	ConsensusQueueFactory,
 	type ConsensusQueue,

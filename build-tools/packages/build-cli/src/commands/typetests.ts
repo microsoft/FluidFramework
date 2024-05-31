@@ -11,8 +11,8 @@ import {
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
-import { PackageCommand } from "../BasePackageCommand";
-import type { PackageSelectionDefault } from "../flags";
+import { PackageCommand } from "../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../flags.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
