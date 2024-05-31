@@ -29,7 +29,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat.only("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -295,6 +295,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				enableGroupedBatching,
+				chunkSizeInBytes: 204800, // compatUtils.ts is currently defaulting to 1000 (TODO: should remove this line and reduce sizes in these tests)
 			},
 		};
 
@@ -507,11 +508,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								provider.driver.type === "local" ||
 								provider.driver.type === "tinylicious"
 							) {
-								this.skip();
-							}
-
-							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
-							if (provider.driver.type === "routerlicious") {
 								this.skip();
 							}
 
