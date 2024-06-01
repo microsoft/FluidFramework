@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// ts-check
+// Enable TypeScript type-checking for this file.
+// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
+// @ts-check
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
