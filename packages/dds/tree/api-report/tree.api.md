@@ -501,17 +501,19 @@ export interface FieldMapObject<TChild> {
 }
 
 // @public
-export interface FieldProps {
+export interface FieldProps<TMetadata = unknown> {
     readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
+    readonly metadata?: TMetadata;
 }
 
 // @public @sealed
-export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes, out TMetadata = unknown> {
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
-    readonly props?: FieldProps | undefined;
+    get metadata(): TMetadata | undefined;
+    readonly props?: FieldProps<TMetadata> | undefined;
     protected _typeCheck?: MakeNominal;
 }
 
@@ -556,16 +558,18 @@ export class FlexFieldNodeSchema<Name extends string = string, Specification ext
 }
 
 // @internal @sealed
-export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes> {
+export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes, const out TMetadata = unknown> {
     // (undocumented)
     readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
-    static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types>;
-    static createUnsafe<TKind extends FlexFieldKind, const Types extends Unenforced<FlexAllowedTypes>>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types>;
-    static readonly empty: FlexFieldSchema<Forbidden, readonly []>;
+    static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes, const TMetadata = unknown>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types>;
+    static createUnsafe<TKind extends FlexFieldKind, const Types extends Unenforced<FlexAllowedTypes>, const TMetadata = unknown>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types>;
+    static readonly empty: FlexFieldSchema<Forbidden, readonly [], unknown>;
     equals(other: FlexFieldSchema): boolean;
     // (undocumented)
     readonly kind: TKind;
+    // (undocumented)
+    readonly metadata: TMetadata | undefined;
     get monomorphicChildType(): FlexTreeNodeSchema | undefined;
     // (undocumented)
     readonly stored: TreeFieldStoredSchema;
@@ -1618,9 +1622,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
-    optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
+    optional<const T extends ImplicitAllowedTypes, const TMetadata = unknown>(t: T, props?: Omit<FieldProps<TMetadata>, "defaultProvider">): FieldSchema<FieldKind.Optional, T, TMetadata>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
-    required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
+    required<const T extends ImplicitAllowedTypes, const TMetadata = unknown>(t: T, props?: Omit<FieldProps<TMetadata>, "defaultProvider">): FieldSchema<FieldKind.Required, T, TMetadata>;
     requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Required, T>;
     // (undocumented)
     readonly scope: TScope;
@@ -1923,6 +1927,7 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
+    fieldMetadata(node: TreeNode, key: string | number): unknown | undefined;
     is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;

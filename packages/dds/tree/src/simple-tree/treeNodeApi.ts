@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { FieldKey, Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
 	LazyItem,
@@ -108,6 +108,12 @@ export interface TreeNodeApi {
 	 * If the node has no identifier (that is, it has no field of an {@link FieldKind.Identifier | identifier} field kind), then this returns undefined.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
+
+	/**
+	 * Gets the metadata for the field associated with the provided key under the provided node.
+	 * Will return `undefined` if no metadata was provided for the field.
+	 */
+	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined;
 }
 
 /**
@@ -212,6 +218,11 @@ export const treeNodeApi: TreeNodeApi = {
 					: identifierValue;
 			}
 		}
+	},
+	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined {
+		const flexNode = getFlexNode(node);
+		const field = flexNode.tryGetField(key as FieldKey);
+		return field?.schema.metadata;
 	},
 };
 
