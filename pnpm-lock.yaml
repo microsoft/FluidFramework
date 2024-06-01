@@ -8063,6 +8063,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
