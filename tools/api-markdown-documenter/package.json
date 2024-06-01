@@ -72,7 +72,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/core-utils": "workspace:~",
 		"@microsoft/api-extractor-model": "~7.28.2",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
@@ -85,7 +84,6 @@
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/chai": "^4.3.4",

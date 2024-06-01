@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,11 +85,15 @@ function generateModel(testReportFileName: string): ApiModel {
 function getApiItems(apiModel: ApiModel): readonly ApiItem[] {
 	const packages = apiModel.packages;
 	expect(packages.length).to.equal(1);
+	const packages0 = packages[0];
+	assert(packages0 !== undefined, "packages0 is undefined in getApiItems");
 
-	const entryPoints = packages[0].entryPoints;
+	const entryPoints = packages0.entryPoints;
 	expect(entryPoints.length).to.equal(1);
+	const entryPoints0 = entryPoints[0];
+	assert(entryPoints0 !== undefined, "entryPoints0 is undefined in getApiItems");
 
-	return entryPoints[0].members;
+	return entryPoints0.members;
 }
 
 /**
@@ -607,8 +612,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 		});
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
+		const modelPackages0 = model.packages[0];
+		assert(modelPackages0 !== undefined, "modelPackages0 is undefined in getApiItems");
 		const expectedEntryPointADocument = new DocumentNode({
-			apiItem: model.packages[0].entryPoints[0],
+			apiItem: modelPackages0.entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			children: [
 				new SectionNode(
@@ -694,7 +701,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
 		const expectedEntryPointBDocument = new DocumentNode({
-			apiItem: model.packages[0].entryPoints[1],
+			apiItem: modelPackages0.entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			children: [
 				new SectionNode(

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import {
 	type DocumentationNode,
 	DocumentationParentNodeBase,
@@ -81,7 +82,9 @@ export class SectionNode extends DocumentationParentNodeBase implements MultiLin
 		}
 
 		if (sections.length === 1) {
-			return sections[0];
+			const sections0 = sections[0];
+			assert(sections0 !== undefined, "sections0 is undefined in combine");
+			return sections0;
 		}
 
 		const childNodes: DocumentationNode[] = [];

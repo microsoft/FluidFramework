@@ -56,12 +56,13 @@ export function documentationNodeToHtml(
 	node: DocumentationNode,
 	context: TransformationContext,
 ): HastNodes {
-	if (context.transformations[node.type] === undefined) {
+	const nodeType = context.transformations[node.type];
+	if (nodeType === undefined) {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a transformation for this type.`,
 		);
 	}
-	return context.transformations[node.type](node, context);
+	return nodeType(node, context);
 }
 
 /**

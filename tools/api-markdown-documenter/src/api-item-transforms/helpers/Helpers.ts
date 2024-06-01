@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import {
 	ApiClass,
 	ApiDeclaredItem,
@@ -595,7 +596,12 @@ export function createExamplesSection(
 
 	// If there is only 1 example, render it with a single default (un-numbered) heading
 	if (exampleBlocks.length === 1) {
-		return createExampleSection({ apiItem, content: exampleBlocks[0] }, config);
+		const exampleBlocks0 = exampleBlocks[0];
+		assert(
+			exampleBlocks0 !== undefined,
+			"exampleBlocks0 is undefined in createExamplesSection",
+		);
+		return createExampleSection({ apiItem, content: exampleBlocks0 }, config);
 	}
 
 	const exampleSections: SectionNode[] = [];
@@ -765,7 +771,9 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
 
 			return undefined;
 		}
-		currentNode = children[0];
+		const children0 = children[0];
+		assert(children0 !== undefined, "children0 is undefined in extractTitleFromExampleSection");
+		currentNode = children0;
 	}
 }
 
@@ -805,6 +813,7 @@ function stripTitleFromParagraph(
 	}
 
 	const firstChild = children[0];
+	assert(firstChild !== undefined, "firstChild is undefined in stripTitleFromParagraph");
 	if (firstChild.isParent) {
 		const newFirstChild = stripTitleFromParagraph(
 			firstChild as DocumentationParentNode,
@@ -827,9 +836,14 @@ function stripTitleFromParagraph(
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
+				const newChildren0 = newChildren[0];
+				assert(
+					newChildren0 !== undefined,
+					"newChildren0 is undefined in filterNewlinesAdjacentToParagraphs",
+				);
 				while (
 					newChildren.length > 0 &&
-					newChildren[0].type === DocumentationNodeType.LineBreak
+					newChildren0.type === DocumentationNodeType.LineBreak
 				) {
 					newChildren.shift();
 				}

@@ -4,6 +4,7 @@
  */
 
 import * as Path from "node:path";
+import assert from "node:assert/strict";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 

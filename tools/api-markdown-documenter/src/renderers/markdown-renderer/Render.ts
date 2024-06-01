@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import assert from "node:assert/strict";
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
 import { DocumentWriter } from "../DocumentWriter.js";
 import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
@@ -19,13 +19,13 @@ import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = DocumentWriter.create();
-	const headingLevel= config.startingHeadingLevel
-	const customRenderers= config.customRenderers
+	const headingLevel = config.startingHeadingLevel;
+	const customRenderers = config.customRenderers;
 	assert(headingLevel !== undefined, "headingLevel is undefined in renderDocument");
 	assert(customRenderers !== undefined, "customRenderers is undefined in renderDocument");
 	const renderContext = getContextWithDefaults({
 		headingLevel,
-		customRenderers
+		customRenderers,
 	});
 
 	renderNodes(document.children, writer, renderContext);
@@ -54,14 +54,20 @@ export function renderNode(
 		context.customRenderers !== undefined &&
 		Object.keys(context.customRenderers).includes(node.type)
 	) {
-		const customRenderersForNode = context.customRenderers[node.type]
-		assert(customRenderersForNode !== undefined, "customRenderersForNode is undefined in renderNode");
+		const customRenderersForNode = context.customRenderers[node.type];
+		assert(
+			customRenderersForNode !== undefined,
+			"customRenderersForNode is undefined in renderNode",
+		);
 		// User-provided renderers take precedence. If we found an appropriate one, use it.
 		customRenderersForNode(node, writer, context);
 	} else if (Object.keys(defaultRenderers).includes(node.type)) {
 		// If no user-provided renderer was given for this node type, but we have a default, use the default.
-		const defaultRenderersForType = defaultRenderers[node.type]
-		assert(defaultRenderersForType !== undefined, "customRenderersForNode is undefined in renderNode");
+		const defaultRenderersForType = defaultRenderers[node.type];
+		assert(
+			defaultRenderersForType !== undefined,
+			"customRenderersForNode is undefined in renderNode",
+		);
 		defaultRenderersForType(node, writer, context);
 	} else {
 		throw new Error(

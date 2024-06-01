@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { type ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
@@ -317,21 +318,29 @@ function createParagraph(
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
-		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+		const transformedChildren0 = transformedChildren[0];
+		assert(
+			transformedChildren0 !== undefined,
+			"transformedChildren0 is undefined in createParagraph",
+		);
+
+		if (transformedChildren0.type === DocumentationNodeType.PlainText) {
 			const plainTextNode = transformedChildren[0] as PlainTextNode;
 			transformedChildren[0] = new PlainTextNode(
 				plainTextNode.value.trimStart(),
 				plainTextNode.escaped,
 			);
 		}
-		if (
-			transformedChildren[transformedChildren.length - 1].type ===
-			DocumentationNodeType.PlainText
-		) {
+		let transformedChildrenMinusOne = transformedChildren[transformedChildren.length - 1];
+		assert(
+			transformedChildrenMinusOne !== undefined,
+			"transformedChildrenMinusOne is undefined in createParagraph",
+		);
+		if (transformedChildrenMinusOne.type === DocumentationNodeType.PlainText) {
 			const plainTextNode = transformedChildren[
 				transformedChildren.length - 1
 			] as PlainTextNode;
-			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
+			transformedChildrenMinusOne = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
 				plainTextNode.escaped,
 			);
@@ -340,11 +349,15 @@ function createParagraph(
 
 	// To reduce unnecessary hierarchy, if the only child of this paragraph is a single paragraph,
 	// return it, rather than wrapping it.
-	if (
-		transformedChildren.length === 1 &&
-		transformedChildren[0].type === DocumentationNodeType.Paragraph
-	) {
-		return transformedChildren[0] as ParagraphNode;
+	if (transformedChildren.length === 1) {
+		const transformedChildren0 = transformedChildren[0];
+		assert(
+			transformedChildren0 !== undefined,
+			"transformedChildren0 is undefined in createParagraph",
+		);
+		if (transformedChildren0.type === DocumentationNodeType.Paragraph) {
+			return transformedChildren[0] as ParagraphNode;
+		}
 	}
 
 	return new ParagraphNode(transformedChildren);
@@ -435,7 +448,9 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
+		const nodesI = nodes[i];
+		assert(nodesI !== undefined, "nodesI is undefined in trimLeadingAndTrailingLineBreaks");
+		if (nodesI.type === DocumentationNodeType.LineBreak) {
 			endIndex--;
 		} else {
 			break;
@@ -459,18 +474,30 @@ function filterNewlinesAdjacentToParagraphs(
 
 	const result: DocumentationNode[] = [];
 	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
+		const nodesI = nodes[i];
+		assert(nodesI !== undefined, "nodesI is undefined in filterNewlinesAdjacentToParagraphs");
+		if (nodesI.type === DocumentationNodeType.LineBreak) {
+			const nodesIMinusOne = nodes[i - 1];
+			assert(
+				nodesIMinusOne !== undefined,
+				"nodesI is undefined in filterNewlinesAdjacentToParagraphs",
+			);
+			const nodesIPlusOne = nodes[i + 1];
+			assert(
+				nodesIPlusOne !== undefined,
+				"nodesIPlusOne is undefined in filterNewlinesAdjacentToParagraphs",
+			);
 			const previousIsParagraph =
-				i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
+				i > 0 ? nodesIMinusOne.type === DocumentationNodeType.Paragraph : false;
 			const nextIsParagraph =
 				i < nodes.length - 1
-					? nodes[i + 1].type === DocumentationNodeType.Paragraph
+					? nodesIPlusOne.type === DocumentationNodeType.Paragraph
 					: false;
 			if (previousIsParagraph || nextIsParagraph) {
 				continue;
 			}
 		}
-		result.push(nodes[i]);
+		result.push(nodesI);
 	}
 	return result;
 }
