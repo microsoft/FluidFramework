@@ -14,7 +14,7 @@
  * @fileoverview In this file, we will test template validation.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import assert from "node:assert/strict";
 import { constants } from "@fluid-experimental/property-common";
 import { expect } from "chai";
 import semver from "semver";
