@@ -302,12 +302,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
 			],
-			"npm-package-json-clean-script": [
-				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"^tools/markdown-magic",
-				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"^tools/getkeys",
-			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
@@ -324,7 +318,9 @@ module.exports = {
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",
 				"server/historian/package.json",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys/package.json",
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 			],
 			"npm-strange-package-name": [
