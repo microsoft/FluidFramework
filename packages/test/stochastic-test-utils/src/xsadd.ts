@@ -5,6 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
+import assert from "node:assert/strict";
 import { Random } from "best-random";
 
 // Perf: We avoid the use of an ES6 'class' for a modest performance gain, but allow the use
@@ -45,16 +46,25 @@ export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 	//
 	// To avoid a fixed point at state { x: 0, y: 0, z: 0, w: 0 }, continue scrambling until at least
 	// one seed is non-zero.
-	for (let i = 1; i < 8 || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
+	const seed0 = seed[0]
+	const seed1 = seed[1]
+	const seed2 = seed[2]
+	const seed3 = seed[3]
+	assert(seed0 !== undefined, "seed0 is undefined in XSadd");
+	assert(seed1 !== undefined, "seed1 is undefined in XSadd");
+	assert(seed2 !== undefined, "seed2 is undefined in XSadd");
+	assert(seed3 !== undefined, "seed3 is undefined in XSadd");
+	for (let i = 1; i < 8 || (seed0 | seed1 | seed2 | seed3) === 0; i++) {
 		const seed_i = seed[(i - 1) & 3];
+		assert(seed_i !== undefined, "seed_i is undefined in XSadd");
 		seed[i & 3] ^= i + Math.imul(0x6c078965, seed_i ^ (seed_i >>> 30));
 	}
 
 	const s = {
-		x: seed[0] | 0,
-		y: seed[1] | 0,
-		z: seed[2] | 0,
-		w: seed[3] | 0,
+		x: seed0 | 0,
+		y: seed1 | 0,
+		z: seed2 | 0,
+		w: seed3 | 0,
 	};
 
 	const uint32 = () => {
