@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// Enable TypeScript type-checking for this file.
+// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
+// @ts-check
+
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 // These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
@@ -18,6 +22,8 @@ const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
  *
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
+ *
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
  */
 module.exports = {
 	tasks: {
@@ -296,12 +302,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
 			],
-			"npm-package-json-clean-script": [
-				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"^tools/markdown-magic",
-				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"^tools/getkeys",
-			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
@@ -318,7 +318,9 @@ module.exports = {
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",
 				"server/historian/package.json",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys/package.json",
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 			],
 			"npm-strange-package-name": [
@@ -414,25 +416,26 @@ module.exports = {
 			// A list of script commands and the package that contains the command
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
-				["mocha", "mocha"],
-				["rimraf", "rimraf"],
-				["tsc", "typescript"],
-				["eslint", "eslint"],
-				["prettier", "prettier"],
-				["webpack", "webpack"],
-				["nyc", "nyc"],
+				["attw", "@arethetypeswrong/cli"],
 				["c8", "c8"],
-				["gf", "good-fences"],
+				["concurrently", "concurrently"],
+				["copyfiles", "copyfiles"],
 				["cross-env", "cross-env"],
+				["depcruise", "dependency-cruiser"],
+				["eslint", "eslint"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
-				["depcruise", "dependency-cruiser"],
-				["copyfiles", "copyfiles"],
+				["gf", "good-fences"],
+				["mocha", "mocha"],
+				["nyc", "nyc"],
 				["oclif", "oclif"],
+				["prettier", "prettier"],
 				["renamer", "renamer"],
-				["ts2esm", "ts2esm"],
+				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
-				["attw", "@arethetypeswrong/cli"],
+				["ts2esm", "ts2esm"],
+				["tsc", "typescript"],
+				["webpack", "webpack"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
