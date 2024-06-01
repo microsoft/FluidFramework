@@ -3,59 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
-import {
-	MockLogger,
-	createChildLogger,
-	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGCMetadata,
 	IGarbageCollectionRuntime,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollector,
-	IGarbageCollectorCreateParams,
-	stableGCVersion,
+	type IGCRuntimeOptions,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
-import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
+import { parseNothing } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {
 	baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
 	initializeOrUpdateGCState: () => Promise<void>;
 };
 
-function createGarbageCollector(params: {
-	deleteSweepReadyNodes: (sweepReadyRoutes: string[]) => string[];
-	getGCData: () => Promise<IGarbageCollectionData>;
-	logger: MockLogger;
-	createParams?: Partial<IGarbageCollectorCreateParams>;
-	gcBlobsMap?: Map<string, any>;
-	gcMetadata?: IGCMetadata;
-	closeFn?: (error?: ICriticalContainerError) => void;
-	isSummarizerClient?: boolean;
-}): GcWithPrivates {
-	const {
-		createParams = {},
-		gcBlobsMap = new Map(),
-		gcMetadata = {},
-		closeFn = () => {},
-		isSummarizerClient = true,
-		getGCData,
-		deleteSweepReadyNodes,
-		logger,
-	} = params;
-	const testPkgPath = ["testPkg"];
-
+function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 	const getNodeType = (nodePath: string) => {
 		if (nodePath.split("/").length !== 2) {
 			return GCNodeType.Other;
@@ -66,92 +35,51 @@ function createGarbageCollector(params: {
 	// The runtime to be passed to the garbage collector.
 	const gcRuntime: IGarbageCollectionRuntime = {
 		updateStateBeforeGC: async () => {},
-		getGCData,
+		getGCData: async () => {
+			return { gcNodes: {} };
+		},
 		updateUsedRoutes: (usedRoutes: string[]) => {
 			return { totalNodeCount: 0, unusedNodeCount: 0 };
 		},
-		deleteSweepReadyNodes,
+		deleteSweepReadyNodes: (sweepReadyRoutes: string[]) => {
+			return [];
+		},
 		updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 		getNodeType,
 		getCurrentReferenceTimestampMs: () => Date.now(),
-		closeFn,
+		closeFn: () => {},
 	};
 
-	let metadata = createParams.metadata;
-	const existing = createParams.baseSnapshot !== undefined;
-	// For existing, add container runtime metadata which is required for GC to be enabled.
-	if (existing) {
-		metadata = {
-			...metadata,
-			...gcMetadata,
-			gcFeature: gcMetadata.gcFeature ?? stableGCVersion,
-			summaryFormatVersion: 1,
-			message: undefined,
-		};
-	}
-
 	return GarbageCollector.create({
-		...createParams,
 		runtime: gcRuntime,
-		gcOptions: createParams.gcOptions ?? {},
-		baseSnapshot: createParams.baseSnapshot,
-		baseLogger: createChildLogger({ logger }),
-		existing,
-		metadata,
+		gcOptions,
+		baseSnapshot: undefined,
+		baseLogger: createChildLogger({}),
+		existing: false,
+		metadata: undefined,
 		createContainerMetadata: {
 			createContainerRuntimeVersion: pkgVersion,
 			createContainerTimestamp: Date.now(),
 		},
-		isSummarizerClient,
-		readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
-		getNodePackagePath: async (nodeId: string) => testPkgPath,
+		isSummarizerClient: true,
+		readAndParseBlob: parseNothing,
+		getNodePackagePath: async (nodeId: string) => ["gcBenchmarkTestPkg"],
 		getLastSummaryTimestampMs: () => Date.now(),
 		submitMessage: (message: ContainerRuntimeGCMessage) => {},
-		sessionExpiryTimerStarted: createParams.sessionExpiryTimerStarted,
 	}) as GcWithPrivates;
 }
 
 describe("GC benchmark tests", () => {
-	/**
-	 * Called when sweep runs. It deleted the nodes from gcData.
-	 */
-	function deleteSweepReadyNodes(
-		sweepReadyRoutes: string[],
-		gcData: IGarbageCollectionData,
-	): string[] {
-		for (const nodeId of sweepReadyRoutes) {
-			assert(gcData.gcNodes[nodeId] !== undefined, `Deleted node ${nodeId} doesn't exist`);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete gcData.gcNodes[nodeId];
-		}
-		return sweepReadyRoutes;
-	}
-
 	describe("initializeOrUpdateGCState", () => {
-		const configProvider = createTestConfigProvider();
 		const inactiveTimeoutMs = 100;
-
-		// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
-		let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
 		let garbageCollector: GcWithPrivates;
-		let mockLogger: MockLogger;
 
 		/**
 		 * Sets up the garbage collector to have unreferenced nodes that will be updated
 		 * in the benchmark tests.
 		 */
 		const setup = async (unrefNodeCount: number) => {
-			mockLogger = new MockLogger();
-			const mc = mixinMonitoringContext(mockLogger, configProvider);
-			garbageCollector = createGarbageCollector({
-				createParams: {
-					gcOptions: { inactiveTimeoutMs },
-				},
-				deleteSweepReadyNodes: (sweepReadyNodes: string[]) =>
-					deleteSweepReadyNodes(sweepReadyNodes, defaultGCData),
-				getGCData: async () => Promise.resolve(defaultGCData),
-				logger: mc.logger,
-			});
+			garbageCollector = createGarbageCollector({ inactiveTimeoutMs });
 
 			const currentTime = Date.now();
 			// Set the unreferenced timestamp to older than inactive timeout so that the nodes start
@@ -183,9 +111,6 @@ describe("GC benchmark tests", () => {
 		};
 
 		const cleanup = () => {
-			mockLogger.clear();
-			configProvider.clear();
-			defaultGCData = { gcNodes: {} };
 			garbageCollector?.dispose();
 		};
 
