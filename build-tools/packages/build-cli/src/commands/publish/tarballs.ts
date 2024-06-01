@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { untar } from "@andrewbranch/untar.js";
 import { type Logger, type PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import { Gunzip } from "fflate";
-import { readFile } from "fs-extra";
 import globby from "globby";
 import latestVersion from "latest-version";
-import { BaseCommand, getTarballName } from "../../library";
+import { BaseCommand, getTarballName } from "../../library/index.js";
 
 interface TarballMetadata {
 	name: string;
