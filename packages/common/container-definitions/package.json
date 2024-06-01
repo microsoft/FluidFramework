@@ -59,7 +59,7 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
-		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports": "concurrently npm:check:exports:bundle-release-tags npm:check:exports:cjs:legacy npm:check:exports:cjs:public npm:check:exports:esm:legacy npm:check:exports:esm:public",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor-lint-public.cjs.json",
