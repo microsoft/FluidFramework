@@ -13,7 +13,7 @@ import {
 	PropertyFactory,
 	SetProperty,
 } from "@fluid-experimental/property-properties";
-import { assert } from "@fluidframework/core-utils";
+import assert from "node:assert/strict";
 
 import { PropertyProxy } from "../index.js";
 
