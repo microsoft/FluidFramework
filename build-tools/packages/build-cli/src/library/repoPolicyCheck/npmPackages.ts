@@ -580,9 +580,9 @@ async function removeLintedExportsPathsAsync(
 								needLinted.delete(mainEntryPointFilePath);
 							}
 						})
-						.catch(() =>
+						.catch((error) =>
 							console.warn(
-								`Error parsing API Extractor config: ${configFileAbsPath} for ${packageJson.name} "${name}".`,
+								`Error parsing API Extractor config: ${configFileAbsPath} for ${packageJson.name} "${name}".\n\t${error}`,
 							),
 						),
 				);
@@ -633,7 +633,8 @@ async function getApiLintElementsMissing(
 	);
 
 	const needsLinted = new Map<string, string>();
-	let bundleLintTarget: string | undefined;
+	let internalLintTarget: string | undefined;
+	let rootLintTarget: string | undefined;
 	for (const [relPath, exports] of mapTypesPathToExportPaths.entries()) {
 		const onlyRequire = exports.every((e) => e.conditions.includes("require"));
 		const onlyImport = exports.every((e) => e.conditions.includes("import"));
@@ -645,24 +646,42 @@ async function getApiLintElementsMissing(
 			} else if (existingSkew !== skew) {
 				needsLinted.set(relPath, "");
 			}
+			// Keep track of root exports for cross group consistency checks
+			// in case there isn't an ./internal export.
+			if (exports.some((e) => e.exportPath === ".")) {
+				// Only one file needs to be checked for this. Prefer export that
+				// is not 'require' restricted.
+				// eslint-disable-next-line unicorn/no-lonely-if
+				if (rootLintTarget === undefined || !onlyRequire) {
+					rootLintTarget = relPath;
+				}
+			}
 		} else if (exports.some((e) => e.exportPath === "./internal")) {
-			// ./internal export should be checked for cross repo consistency.
+			// ./internal export should be checked for cross group consistency.
 			// Only one file needs to be checked for this. Prefer export that
 			// is not 'require' restricted.
 			// eslint-disable-next-line unicorn/no-lonely-if
-			if (bundleLintTarget === undefined || !onlyRequire) {
-				bundleLintTarget = relPath;
+			if (internalLintTarget === undefined || !onlyRequire) {
+				internalLintTarget = relPath;
 			}
 		}
 	}
-	if (needsLinted.size === 0) {
-		// No files need linting or the only file that should be linted is internal,
-		// which is not checked by policy
+	if (needsLinted.size === 0 && internalLintTarget === undefined) {
+		// No files need linting
 		return missing;
 	}
 
 	// -------------------------------------------------------------------------
 	// There are files that need linting.
+
+	function addAllTargets(): void {
+		if (internalLintTarget !== undefined) {
+			targetsImpacted.add(internalLintTarget);
+		}
+		for (const target of needsLinted.keys()) {
+			targetsImpacted.add(target);
+		}
+	}
 
 	// Make sure the package.json has the check:exports script that runs others.
 	const checkExports = packageJson.scripts?.["check:exports"];
@@ -671,27 +690,40 @@ async function getApiLintElementsMissing(
 			name: "check:exports",
 			commandLine: 'concurrently "npm:check:exports:*"',
 		});
+		addAllTargets();
 	}
 
-	// Make sure `concurrently` is available.
+	// Make sure `concurrently` and `@microsoft/api-extractor` are available.
 	if (packageJson.devDependencies?.concurrently === undefined) {
 		devDependencies.push("concurrently");
+		addAllTargets();
+	}
+	if (packageJson.devDependencies?.["@microsoft/api-extractor"] === undefined) {
+		devDependencies.push("@microsoft/api-extractor");
+		addAllTargets();
 	}
 
-	// ./internal is specially linted using bundling checks for cross repo consistency.
-	if (bundleLintTarget !== undefined) {
-		const lintBundleTags = packageJson.scripts?.["check:exports:bundle-release-tags"];
-		const apiExtractorFile = "api-extractor/api-extractor-lint-bundle.json";
-		const commandLine = `api-extractor run --config ${apiExtractorFile}`;
-		if (lintBundleTags !== commandLine) {
-			scriptEntries.push({
-				name: "check:exports:bundle-release-tags",
-				commandLine,
-			});
-			targetsImpacted.add(bundleLintTarget);
+	// The bundle target is specially linted using bundling checks for cross group consistency.
+	{
+		const bundleLintTarget = internalLintTarget ?? rootLintTarget;
+		if (bundleLintTarget !== undefined) {
+			const lintBundleTags = packageJson.scripts?.["check:exports:bundle-release-tags"];
+			const apiExtractorFile = "api-extractor/api-extractor-lint-bundle.json";
+			const commandLine = `api-extractor run --config ${apiExtractorFile}`;
+			if (lintBundleTags !== commandLine) {
+				scriptEntries.push({
+					name: "check:exports:bundle-release-tags",
+					commandLine,
+				});
+				targetsImpacted.add(bundleLintTarget);
+			}
+			const configFileAbsPath = path.resolve(dir, apiExtractorFile);
+			// If the bundle target is not the internal target, then it is the root target
+			// or any target appropriate for cross group consistency checks. "*|" is used
+			// as a sentinel to allow any target, but also encodes a default file when
+			// fixing is invoked.
+			configFiles.set(configFileAbsPath, internalLintTarget ?? `*|${rootLintTarget}`);
 		}
-		const configFileAbsPath = path.resolve(dir, apiExtractorFile);
-		configFiles.set(configFileAbsPath, bundleLintTarget);
 	}
 
 	// Remove any entries from needLinted that are already covered.
@@ -721,7 +753,10 @@ async function getApiLintElementsMissing(
 		configAndTargetFilesArray.map(async ([configFileNeeded, target]) =>
 			readConfigMainEntryPointFilePath(configFileNeeded, dir)
 				.then((mainEntryPointFilePath) => {
-					if (mainEntryPointFilePath === target) {
+					if (
+						mainEntryPointFilePath !== undefined &&
+						(mainEntryPointFilePath === target || target.startsWith("*|"))
+					) {
 						// Satisfied, remove from map of missing.
 						configFiles.delete(configFileNeeded);
 					}
@@ -732,7 +767,9 @@ async function getApiLintElementsMissing(
 	// Make sure remaining config targets are in impacted set.
 	// Bundle target might not be.
 	for (const target of configFiles.values()) {
-		targetsImpacted.add(target);
+		targetsImpacted.add(
+			target.startsWith("*|") ? "any .d.ts file (for bundle check)" : target,
+		);
 	}
 
 	return missing;
@@ -1720,11 +1757,22 @@ export const handlers: Handler[] = [
 			await updatePackageJsonFileAsync(dir, async (packageJson) => {
 				try {
 					const missingElements = await getApiLintElementsMissing(packageJson, dir);
-					// Fix scripts
-					for (const { name, commandLine } of missingElements.scriptEntries) {
-						packageJson.scripts[name] = commandLine;
-					}
-					// Fix config files
+					// 1. Fix config files.
+					//    Config files are written first before any scripts are updated that
+					//    would reference them. In case of failure, the package.json is not
+					//    updated, which helps to avoid noise checking policy again.
+					//    a. Make sure config directories exist using set of unique directories.
+					const configDirs = new Set(
+						[...missingElements.configFiles.keys()].map((configFile) =>
+							path.dirname(configFile),
+						),
+					);
+					await Promise.all(
+						[...configDirs].map(async (configDir) =>
+							fs.promises.mkdir(configDir, { recursive: true }),
+						),
+					);
+					//    b. Write config files.
 					await Promise.all(
 						[...missingElements.configFiles.entries()].map(
 							async ([configFile, mainEntryPointFilePath]) =>
@@ -1736,8 +1784,12 @@ export const handlers: Handler[] = [
 										extends: configFile.endsWith("-bundle.json")
 											? commonApiLintConfig.replace(".entrypoint.json", ".json")
 											: commonApiLintConfig,
+										// <projectFolder> is used in place of . to allow
+										// various config file locations. This replace()
+										// also removes a possible `*|` prefix sentinel
+										// for special bundle target.
 										mainEntryPointFilePath: mainEntryPointFilePath.replace(
-											/^.\//,
+											/^(\*\|)?.\//,
 											"<projectFolder>/",
 										),
 									},
@@ -1745,7 +1797,7 @@ export const handlers: Handler[] = [
 								),
 						),
 					);
-					// Fix devDependencies
+					// 2. Fix devDependencies.
 					if (missingElements.devDependencies.length > 0) {
 						packageJson.devDependencies = packageJson.devDependencies ?? {};
 						for (const devDep of missingElements.devDependencies) {
@@ -1753,6 +1805,12 @@ export const handlers: Handler[] = [
 							// packages. Accept any version and let user set version.
 							packageJson.devDependencies[devDep] = "*";
 						}
+						result.message = `Please set the version for the new devDependencies in ${packageJson.name}.`;
+					}
+					// 3. Fix scripts.
+					//    Final step using all prior elements.
+					for (const { name, commandLine } of missingElements.scriptEntries) {
+						packageJson.scripts[name] = commandLine;
 					}
 				} catch (error: unknown) {
 					result.resolved = false;

@@ -304,6 +304,20 @@ module.exports = {
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
 			],
+			"npm-package-exports-apis-linted": [
+				// Rollout suppressions - enable only after tools are updated to support policy
+				// as new build-tools will have the concurrently fluid-build support it uses.
+				"^azure/",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				// packages with APIs that don't need strict API linting
+				"^build-tools/",
+				"^common/build/",
+				"^experimental/PropertyDDS/",
+				"^tools/api-markdown-documenter/",
+			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
