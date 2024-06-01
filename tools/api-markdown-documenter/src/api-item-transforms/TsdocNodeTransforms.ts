@@ -478,20 +478,16 @@ function filterNewlinesAdjacentToParagraphs(
 		assert(nodesI !== undefined, "nodesI is undefined in filterNewlinesAdjacentToParagraphs");
 		if (nodesI.type === DocumentationNodeType.LineBreak) {
 			const nodesIMinusOne = nodes[i - 1];
-			assert(
-				nodesIMinusOne !== undefined,
-				"nodesI is undefined in filterNewlinesAdjacentToParagraphs",
-			);
-			const nodesIPlusOne = nodes[i + 1];
-			assert(
-				nodesIPlusOne !== undefined,
-				"nodesIPlusOne is undefined in filterNewlinesAdjacentToParagraphs",
-			);
 			const previousIsParagraph =
-				i > 0 ? nodesIMinusOne.type === DocumentationNodeType.Paragraph : false;
+				nodesIMinusOne !== undefined &&
+				nodesIMinusOne.type === DocumentationNodeType.Paragraph
+					? true
+					: false;
+			const nodesIPlusOne = nodes[i + 1];
 			const nextIsParagraph =
-				i < nodes.length - 1
-					? nodesIPlusOne.type === DocumentationNodeType.Paragraph
+				nodesIPlusOne !== undefined &&
+				nodesIPlusOne.type === DocumentationNodeType.Paragraph
+					? true
 					: false;
 			if (previousIsParagraph || nextIsParagraph) {
 				continue;

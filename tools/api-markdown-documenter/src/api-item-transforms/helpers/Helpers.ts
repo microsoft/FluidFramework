@@ -837,12 +837,9 @@ function stripTitleFromParagraph(
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
 				const newChildren0 = newChildren[0];
-				assert(
-					newChildren0 !== undefined,
-					"newChildren0 is undefined in filterNewlinesAdjacentToParagraphs",
-				);
 				while (
 					newChildren.length > 0 &&
+					newChildren0 !== undefined &&
 					newChildren0.type === DocumentationNodeType.LineBreak
 				) {
 					newChildren.shift();

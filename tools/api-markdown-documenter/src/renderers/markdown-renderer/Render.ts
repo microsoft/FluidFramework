@@ -19,13 +19,9 @@ import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = DocumentWriter.create();
-	const headingLevel = config.startingHeadingLevel;
-	const customRenderers = config.customRenderers;
-	assert(headingLevel !== undefined, "headingLevel is undefined in renderDocument");
-	assert(customRenderers !== undefined, "customRenderers is undefined in renderDocument");
 	const renderContext = getContextWithDefaults({
-		headingLevel,
-		customRenderers,
+		headingLevel: config.startingHeadingLevel,
+		customRenderers: config.customRenderers,
 	});
 
 	renderNodes(document.children, writer, renderContext);
