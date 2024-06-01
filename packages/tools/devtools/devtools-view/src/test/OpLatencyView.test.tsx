@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
+import React from "react";
 
-import { MessageRelayContext } from "../../MessageRelayContext.js";
-import { OpLatencyView } from "../../components/index.js";
-import { MockMessageRelay } from "../utils/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
+import { OpLatencyView } from "../components/index.js";
+import { MockMessageRelay } from "./utils/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any

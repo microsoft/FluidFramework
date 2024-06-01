@@ -2,14 +2,11 @@
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 	"extends": "./tsconfig.jest.json",
 	"compilerOptions": {
-		"outDir": "../../../dist/test/jest",
+		"outDir": "../../dist/test",
 	},
 	"references": [
 		{
-			"path": "../../../tsconfig.cjs.json",
-		},
-		{
-			"path": "../utils/tsconfig.cjs.json",
+			"path": "../../tsconfig.cjs.json",
 		},
 	],
 }

@@ -7,9 +7,9 @@ import {
 	type IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { type IUser } from "@fluidframework/driver-definitions";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/driver-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**

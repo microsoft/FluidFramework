@@ -109,11 +109,6 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 export const disposeSymbol: unique symbol;
 
 // @public
-export type Events<E> = {
-    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
-};
-
-// @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -443,9 +438,6 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
-// @public
-export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
-
 // @alpha
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
@@ -559,9 +551,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 }
 
 // @public
-export interface ISubscribable<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): Off;
-}
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
@@ -595,6 +585,16 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
+export interface Listenable<TListeners extends object> {
+    on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+}
+
+// @public
+export type Listeners<T extends object> = {
+    [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+};
+
+// @public
 export interface MakeNominal {
 }
 
@@ -621,9 +621,9 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T exten
 // @public
 export interface NodeInDocumentConstraint {
     // (undocumented)
-    node: TreeNode;
+    readonly node: TreeNode;
     // (undocumented)
-    type: "nodeInDocument";
+    readonly type: "nodeInDocument";
 }
 
 // @public
@@ -680,12 +680,12 @@ export interface RunTransaction {
     <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback): TResult | typeof rollback;
     <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
     <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void): void;
-    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: TransactionConstraint[]): TResult;
-    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: TransactionConstraint[]): TResult;
-    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
-    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
-    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: TransactionConstraint[]): void;
-    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: TransactionConstraint[]): void;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: readonly TransactionConstraint[]): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: readonly TransactionConstraint[]): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: readonly TransactionConstraint[]): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: readonly TransactionConstraint[]): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: readonly TransactionConstraint[]): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: readonly TransactionConstraint[]): void;
     readonly rollback: typeof rollback;
 }
 
@@ -977,6 +977,7 @@ export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<
 
 // @public
 export enum TreeStatus {
+    Created = 3,
     Deleted = 2,
     InDocument = 0,
     Removed = 1
@@ -985,7 +986,7 @@ export enum TreeStatus {
 // @public
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
-    readonly events: ISubscribable<TreeViewEvents>;
+    readonly events: Listenable<TreeViewEvents>;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
