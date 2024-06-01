@@ -12,12 +12,7 @@ module.exports = {
 		"prettier",
 	],
 	parserOptions: {
-		project: [
-			"./tsconfig.esm.json",
-			"./src/test/jest/tsconfig.esm.json",
-			"./src/test/screenshot/tsconfig.json",
-			"./src/test/utils/tsconfig.esm.json",
-		],
+		project: ["./tsconfig.esm.json", "./src/test/tsconfig.esm.json"],
 	},
 	rules: {
 		// Disabled because they disagrees with React common patterns / best practices.

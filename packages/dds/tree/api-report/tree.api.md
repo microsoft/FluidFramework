@@ -955,7 +955,7 @@ export interface IEmitter<TListeners extends Listeners<TListeners>> {
 
 // @internal
 export interface IForestSubscription extends Listenable<ForestEvents> {
-    allocateCursor(): ITreeSubscriptionCursor;
+    allocateCursor(source?: string): ITreeSubscriptionCursor;
     readonly anchors: AnchorSet;
     clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
@@ -1144,7 +1144,7 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildFieldAnchor(): FieldAnchor;
     clear(): void;
     // (undocumented)
-    fork(): ITreeSubscriptionCursor;
+    fork(source?: string): ITreeSubscriptionCursor;
     free(): void;
     readonly state: ITreeSubscriptionCursorState;
 }
@@ -1315,9 +1315,9 @@ export type NodeIndex = number;
 // @public
 export interface NodeInDocumentConstraint {
     // (undocumented)
-    node: TreeNode;
+    readonly node: TreeNode;
     // (undocumented)
-    type: "nodeInDocument";
+    readonly type: "nodeInDocument";
 }
 
 // @internal
@@ -1538,12 +1538,12 @@ export interface RunTransaction {
     <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback): TResult | typeof rollback;
     <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
     <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void): void;
-    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: TransactionConstraint[]): TResult;
-    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: TransactionConstraint[]): TResult;
-    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
-    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
-    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: TransactionConstraint[]): void;
-    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: TransactionConstraint[]): void;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: readonly TransactionConstraint[]): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: readonly TransactionConstraint[]): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: readonly TransactionConstraint[]): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: readonly TransactionConstraint[]): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: readonly TransactionConstraint[]): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: readonly TransactionConstraint[]): void;
     readonly rollback: typeof rollback;
 }
 
@@ -2002,6 +2002,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 
 // @public
 export enum TreeStatus {
+    Created = 3,
     Deleted = 2,
     InDocument = 0,
     Removed = 1
