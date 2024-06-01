@@ -312,7 +312,16 @@ module.exports = {
 				"^examples/",
 				"^experimental/",
 				"^packages/",
-				// packages with APIs that don't need strict API linting
+
+				// Packages that violate the API linting rules
+				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
+				"^packages/service-clients/azure-client/",
+				// ae-missing-release-tags, ae-incompatible-release-tags
+				"^examples/data-objects/table-document/",
+				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
+				"^experimental/dds/tree/",
+
+				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
