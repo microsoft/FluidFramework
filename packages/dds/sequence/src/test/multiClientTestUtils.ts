@@ -9,8 +9,10 @@ import {
 	MockStorage,
 	type MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedString } from "../sequenceFactory.js";
 import { type ISharedString } from "../sharedString.js";
+
 import { Client } from "./intervalTestUtils.js";
 
 export function constructClient(
