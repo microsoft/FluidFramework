@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	GCNodeType,
@@ -17,6 +17,7 @@ import {
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
+
 import { parseNothing } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {
