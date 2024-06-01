@@ -515,18 +515,37 @@ function getPreferredScriptLine(scriptLine: string): string {
 /**
  * Read the "mainEntryPointFilePath" value from the api-extractor-lint config file.
  * @param configFileAbsPath - api-exractor-lint config file path
- * @returns "mainEntryPointFilePath" value
+ * @param projectRoot - project root directory (package.json directory)
+ * @returns "mainEntryPointFilePath" value relative to {@link projectRoot}
  */
 async function readConfigMainEntryPointFilePath(
 	configFileAbsPath: string,
+	projectRoot: string,
 ): Promise<string | undefined> {
 	return fs.promises
 		.readFile(configFileAbsPath, { encoding: "utf8" })
 		.then(async (configContent) => {
-			const config = JSON.parse(configContent) as {
+			const { mainEntryPointFilePath } = JSON.parse(configContent) as {
 				mainEntryPointFilePath?: string;
 			};
-			return config.mainEntryPointFilePath;
+			if (mainEntryPointFilePath === undefined) {
+				return undefined;
+			}
+			// mainEntryPointFilePath is relative to the config file
+			// directory unless it is prefixed with <projectFolder>
+			// which is replaced with the project root directory.
+			const mainEntryPointFilePathWithoutProjectFolder = mainEntryPointFilePath.replace(
+				/^<projectFolder>\//,
+				"./",
+			);
+			if (mainEntryPointFilePathWithoutProjectFolder !== mainEntryPointFilePath) {
+				return mainEntryPointFilePathWithoutProjectFolder;
+			}
+			const mainEntryPointFileAbsPath = path.join(
+				path.parse(configFileAbsPath).dir,
+				mainEntryPointFilePath,
+			);
+			return path.relative(mainEntryPointFileAbsPath, projectRoot).replaceAll("\\", "/");
 		});
 }
 
@@ -553,7 +572,7 @@ async function removeLintedExportsPathsAsync(
 				const configFileRelPath = getApiExtractorConfigFilePath(command);
 				const configFileAbsPath = path.resolve(dir, configFileRelPath);
 				promises.push(
-					readConfigMainEntryPointFilePath(configFileAbsPath)
+					readConfigMainEntryPointFilePath(configFileAbsPath, dir)
 						.then((mainEntryPointFilePath) => {
 							if (mainEntryPointFilePath !== undefined) {
 								needLinted.delete(mainEntryPointFilePath);
@@ -660,7 +679,7 @@ async function getApiLintElementsMissing(
 	// ./internal is specially linted using bundling checks for cross repo consistency.
 	if (bundleLintTarget !== undefined) {
 		const lintBundleTags = packageJson.scripts?.["check:exports:bundle-release-tags"];
-		const apiExtractorFile = "api-extractor-lint-bundle.json";
+		const apiExtractorFile = "api-extractor/api-extractor-lint-bundle.json";
 		const commandLine = `api-extractor run --config ${apiExtractorFile}`;
 		if (lintBundleTags !== commandLine) {
 			scriptEntries.push({
@@ -681,7 +700,7 @@ async function getApiLintElementsMissing(
 	for (const [relPath, skew] of needsLinted) {
 		const pathMatch = regexPath.exec(relPath);
 		const scriptEntry = pathMatch?.groups?.path.replace(/\//g, ":") ?? "";
-		const apiExtractorFile = `api-extractor-lint-${scriptEntry.replaceAll(
+		const apiExtractorFile = `api-extractor/api-extractor-lint-${scriptEntry.replaceAll(
 			":",
 			"_",
 		)}.${skew.replaceAll(":", ".")}json`;
@@ -698,7 +717,7 @@ async function getApiLintElementsMissing(
 	const configAndTargetFilesArray = [...configFiles.entries()];
 	await Promise.all(
 		configAndTargetFilesArray.map(async ([configFileNeeded, target]) =>
-			readConfigMainEntryPointFilePath(configFileNeeded)
+			readConfigMainEntryPointFilePath(configFileNeeded, dir)
 				.then((mainEntryPointFilePath) => {
 					if (mainEntryPointFilePath === target) {
 						// Satisfied, remove from map of missing.
@@ -1691,8 +1710,10 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			const dir = path.dirname(file);
 			const pathToRoot = path.relative(dir, root);
+			// This common config file path assumes that config is nested one level
+			// below the package root and thus add one ".." to the path.
 			const commonApiLintConfig = path
-				.join(pathToRoot, "common/build/build-common/api-extractor-lint.entrypoint.json")
+				.join(pathToRoot, "..", "common/build/build-common/api-extractor-lint.entrypoint.json")
 				.replaceAll("\\", "/");
 			await updatePackageJsonFileAsync(dir, async (packageJson) => {
 				try {
@@ -1713,7 +1734,10 @@ export const handlers: Handler[] = [
 										extends: configFile.endsWith("-bundle.json")
 											? commonApiLintConfig.replace(".entrypoint.json", ".json")
 											: commonApiLintConfig,
-										mainEntryPointFilePath,
+										mainEntryPointFilePath: mainEntryPointFilePath.replace(
+											/^.\//,
+											"<projectFolder>/",
+										),
 									},
 									{ spaces: "\t" },
 								),
