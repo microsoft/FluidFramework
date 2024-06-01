@@ -542,10 +542,12 @@ async function readConfigMainEntryPointFilePath(
 				return mainEntryPointFilePathWithoutProjectFolder;
 			}
 			const mainEntryPointFileAbsPath = path.join(
-				path.parse(configFileAbsPath).dir,
+				path.dirname(configFileAbsPath),
 				mainEntryPointFilePath,
 			);
-			return path.relative(mainEntryPointFileAbsPath, projectRoot).replaceAll("\\", "/");
+			return `./${path
+				.relative(projectRoot, mainEntryPointFileAbsPath)
+				.replaceAll("\\", "/")}`;
 		});
 }
 
@@ -1710,11 +1712,11 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			const dir = path.dirname(file);
 			const pathToRoot = path.relative(dir, root);
-			// This common config file path assumes that config is nested one level
-			// below the package root and thus add one ".." to the path.
-			const commonApiLintConfig = path
-				.join(pathToRoot, "..", "common/build/build-common/api-extractor-lint.entrypoint.json")
-				.replaceAll("\\", "/");
+			// <projectFolder> is used in path to allow config file to be located anywhere
+			// within project (projectFolder = package.json directory).
+			const commonApiLintConfig = `<projectFolder>/${path
+				.join(pathToRoot, "common/build/build-common/api-extractor-lint.entrypoint.json")
+				.replaceAll("\\", "/")}`;
 			await updatePackageJsonFileAsync(dir, async (packageJson) => {
 				try {
 					const missingElements = await getApiLintElementsMissing(packageJson, dir);
