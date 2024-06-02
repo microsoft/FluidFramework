@@ -5,6 +5,7 @@
 
 import * as path from "path";
 
+import type { WrittenConfig } from "@changesets/types";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
@@ -55,6 +56,12 @@ export interface IFluidBuildConfig {
 	branchReleaseTypes?: {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
+
+	/**
+	 * A configuration for changesets. All fields are supported; an entire changeset config can be included here, and any
+	 * values set here will be written to the changeset config file created by `flub generate changeset-config`.
+	 */
+	changesetConfig?: WrittenConfig;
 }
 
 /**

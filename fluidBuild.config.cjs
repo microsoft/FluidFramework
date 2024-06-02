@@ -536,4 +536,33 @@ module.exports = {
 		"release/**": "patch",
 		"next": "major",
 	},
+
+	{
+		// "$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
+		changelog: [
+			"@fluid-private/changelog-generator-wrapper",
+			{
+				repoBaseUrl: "https://github.com/microsoft/FluidFramework",
+				issueTemplate: " ([#$issue]($repoBaseUrl/pull/$issue))",
+				commitTemplate: " [$abbrevHash]($repoBaseUrl/commit/$hash)",
+			},
+		],
+		commit: false,
+		fixed: [
+			[
+				"@fluid-example/*",
+				"@fluid-experimental/*",
+				"@fluid-internal/*",
+				"@fluid-private/*",
+				"@fluid-tools/*",
+				"@fluidframework/*",
+				"fluid-framework",
+			],
+		],
+		linked: [],
+		access: "public",
+		baseBranch: "main",
+		updateInternalDependencies: "patch",
+		ignore: [],
+	}
 };
