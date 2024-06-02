@@ -161,31 +161,3 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		}
 	}
 }
-
-/**
- * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
- * published there.
- */
-export function FeedsForPackages(
-	packages: Package[],
-	config: PackageNamePolicyConfig,
-): Map<Feed, Package[]> {
-	const mapping = new Map<Feed, Package[]>();
-	for (const pkg of packages) {
-		for (const feed of feeds) {
-			let pkgList = mapping.get(feed);
-			if (pkgList === undefined) {
-				pkgList = [];
-			}
-
-			if (!mapping.has(feed)) {
-				mapping.set(feed, []);
-			}
-
-			if (packagePublishesToFeed(pkg.name, config, feed)) {
-				mapping.get(feed)?.push(pkg);
-			}
-		}
-	}
-	return mapping;
-}
