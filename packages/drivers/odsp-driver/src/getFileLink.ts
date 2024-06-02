@@ -11,8 +11,13 @@ import {
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
+	type IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
@@ -55,7 +60,12 @@ export async function getFileLink(
 			fileLinkCore = await runWithRetry(
 				async () =>
 					runWithRetryForCoherencyAndServiceReadOnlyErrors(
-						async () => getFileLinkCore(getToken, odspUrlParts, logger),
+						async () =>
+							getFileLinkWithLocationRedirectionHandling(
+								getToken,
+								odspUrlParts,
+								logger,
+							),
 						"getFileLinkCore",
 						logger,
 					),
@@ -93,6 +103,46 @@ export async function getFileLink(
 	const fileLink = fileLinkGenerator();
 	fileLinkCache.set(cacheKey, fileLink);
 	return fileLink;
+}
+
+/**
+ * Handles location redirection while fulfilling the getFilelink call.
+ * @param getToken - token fetcher to fetch the token.
+ * @param odspUrlParts - parts of odsp resolved url.
+ * @param logger - logger to send events.
+ * @returns Response from the API call.
+ * @alpha
+ */
+async function getFileLinkWithLocationRedirectionHandling(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+): Promise<string> {
+	// We can have chains of location redirection one after the other, so have a for loop
+	// so that we can keep handling the same type of error.
+	for (;;) {
+		try {
+			return await getFileLinkCore(getToken, odspUrlParts, logger);
+		} catch (error: unknown) {
+			if (
+				isFluidError(error) &&
+				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
+			) {
+				logger.sendTelemetryEvent({
+					eventName: "LocationRedirectionErrorForGetOdspFileLink",
+				});
+				const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
+				if (redirectLocation !== undefined) {
+					// Generate the new SiteUrl from the redirection location.
+					const newSiteDomain = new URL(redirectLocation).origin;
+					const newSiteUrl = `${newSiteDomain}${new URL(odspUrlParts.siteUrl).pathname}`;
+					odspUrlParts.siteUrl = newSiteUrl;
+					continue;
+				}
+			}
+			throw error;
+		}
+	}
 }
 
 async function getFileLinkCore(
@@ -138,6 +188,7 @@ async function getFileLinkCore(
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
 						"Accept": "application/json;odata=verbose",
+						"prefer": "manualredirect",
 						...headers,
 					},
 				};
@@ -219,6 +270,7 @@ async function getFileItemLite(
 					storageToken,
 					forceAccessTokenViaAuthorizationHeader,
 				);
+				headers.prefer = "manualredirect";
 				const requestInit = { method: "GET", headers };
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
