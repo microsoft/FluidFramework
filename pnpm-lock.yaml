@@ -26,8 +26,8 @@ importers:
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@changesets/cli':
         specifier: ^2.26.1
         version: 2.26.2
@@ -120,8 +120,8 @@ importers:
         version: 4.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -169,8 +169,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -290,8 +290,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -378,8 +378,8 @@ importers:
         version: link:../../../packages/runtime/runtime-utils
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -466,8 +466,8 @@ importers:
         version: 1.3.0(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -596,8 +596,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -759,8 +759,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -913,8 +913,8 @@ importers:
         version: 0.11.10
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -1034,8 +1034,8 @@ importers:
         version: 1.3.0(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -1185,8 +1185,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -1312,8 +1312,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
@@ -1427,8 +1427,8 @@ importers:
         version: 7.1.0(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -1494,8 +1494,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
@@ -1612,8 +1612,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
@@ -1699,8 +1699,8 @@ importers:
   examples/benchmarks/bubblebench/shared-tree:
     dependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/bubblebench-common':
         specifier: workspace:~
         version: link:../common
@@ -1845,8 +1845,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
@@ -1966,8 +1966,8 @@ importers:
         version: 4.15.2(webpack-cli@4.10.0)(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -2069,8 +2069,8 @@ importers:
         version: link:../../../packages/dds/tree
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -2184,8 +2184,8 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2305,8 +2305,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2426,8 +2426,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2562,8 +2562,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2638,8 +2638,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2750,8 +2750,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2862,8 +2862,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -2953,8 +2953,8 @@ importers:
         version: link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2990,8 +2990,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3069,8 +3069,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
@@ -3175,8 +3175,8 @@ importers:
         version: link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3206,8 +3206,8 @@ importers:
         version: link:../../../utils/example-utils
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -3246,8 +3246,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3286,8 +3286,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3326,8 +3326,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3438,8 +3438,8 @@ importers:
         version: 17.0.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -3559,8 +3559,8 @@ importers:
         version: 1.11.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -3650,8 +3650,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -3753,8 +3753,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -3889,8 +3889,8 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
@@ -4103,8 +4103,8 @@ importers:
         version: 1.0.9
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4260,8 +4260,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4408,8 +4408,8 @@ importers:
         version: 1.3.0(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -4511,8 +4511,8 @@ importers:
         version: 2.0.2(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@cerner/duplicate-package-checker-webpack-plugin':
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.89.0)
@@ -4650,8 +4650,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -4774,8 +4774,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -4898,8 +4898,8 @@ importers:
         version: 1.3.0(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5055,8 +5055,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5230,8 +5230,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5399,8 +5399,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5535,8 +5535,8 @@ importers:
         version: 17.0.2(react@17.0.2)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5650,8 +5650,8 @@ importers:
         version: 1.3.0(webpack@5.89.0)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5771,8 +5771,8 @@ importers:
         version: 3.4.21(typescript@5.4.5)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)(webpack-cli@4.10.0)
@@ -5976,8 +5976,8 @@ importers:
         version: 1.0.7(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6072,8 +6072,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6127,8 +6127,8 @@ importers:
         specifier: ^7.24.1
         version: 7.24.1(@babel/core@7.24.4)
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6227,8 +6227,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -6330,8 +6330,8 @@ importers:
         version: 0.6.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -6471,8 +6471,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/property-common':
         specifier: workspace:~
         version: link:../property-common
@@ -6622,8 +6622,8 @@ importers:
         specifier: ^7.24.4
         version: 7.24.4
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/property-binder':
         specifier: workspace:~
         version: link:../property-binder
@@ -6803,8 +6803,8 @@ importers:
         version: 1.13.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -6876,8 +6876,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6967,8 +6967,8 @@ importers:
         version: 0.6.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/property-properties':
         specifier: workspace:~
         version: link:../property-properties
@@ -7037,8 +7037,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7119,8 +7119,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/attributable-map-previous':
         specifier: npm:@fluid-experimental/attributable-map@2.0.0-rc.4.0.0
         version: /@fluid-experimental/attributable-map@2.0.0-rc.4.0.0
@@ -7228,8 +7228,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
@@ -7325,8 +7325,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../../../packages/test/mocha-test-setup
@@ -7422,8 +7422,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -7552,8 +7552,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -7682,8 +7682,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -7749,8 +7749,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -7816,8 +7816,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -7916,8 +7916,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/client-utils-previous':
         specifier: npm:@fluid-internal/client-utils@2.0.0-rc.4.0.0
         version: /@fluid-internal/client-utils@2.0.0-rc.4.0.0
@@ -8043,8 +8043,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -8091,8 +8091,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -8136,8 +8136,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8221,8 +8221,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -8285,8 +8285,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8388,8 +8388,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8488,8 +8488,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8603,8 +8603,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8736,8 +8736,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8869,8 +8869,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -8990,8 +8990,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9096,8 +9096,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9199,8 +9199,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9314,8 +9314,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9453,8 +9453,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9562,8 +9562,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9677,8 +9677,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9801,8 +9801,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -9916,8 +9916,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10052,8 +10052,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -10116,8 +10116,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10204,8 +10204,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -10277,8 +10277,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -10368,8 +10368,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10486,8 +10486,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10571,8 +10571,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -10635,8 +10635,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10720,8 +10720,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -10811,8 +10811,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -10911,8 +10911,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11002,8 +11002,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11102,8 +11102,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -11193,8 +11193,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11299,8 +11299,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11387,8 +11387,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -11575,8 +11575,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -11633,8 +11633,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11733,8 +11733,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -11818,8 +11818,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -11909,8 +11909,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-private/test-dds-utils':
         specifier: workspace:~
         version: link:../../dds/test-dds-utils
@@ -11973,8 +11973,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12052,8 +12052,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12146,8 +12146,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12261,8 +12261,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12379,8 +12379,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12470,8 +12470,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -12558,8 +12558,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12664,8 +12664,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -12743,8 +12743,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12837,8 +12837,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -12898,8 +12898,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -12992,8 +12992,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -13068,8 +13068,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -13189,8 +13189,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -13301,8 +13301,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -13473,8 +13473,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -13588,8 +13588,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -13676,8 +13676,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -13776,8 +13776,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -13842,8 +13842,8 @@ importers:
   packages/test/functional-tests:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
@@ -13971,8 +13971,8 @@ importers:
   packages/test/local-server-tests:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
@@ -14161,8 +14161,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -14270,8 +14270,8 @@ importers:
         version: 10.2.0
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -14337,8 +14337,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -14419,8 +14419,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -14462,8 +14462,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -14562,8 +14562,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -14758,8 +14758,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -14822,8 +14822,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -14955,8 +14955,8 @@ importers:
         version: 4.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -15079,8 +15079,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -15357,8 +15357,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -15469,8 +15469,8 @@ importers:
         version: 9.0.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../../examples/utils/example-utils
@@ -15692,8 +15692,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -15855,8 +15855,8 @@ importers:
         version: 0.20.2
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16024,8 +16024,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -16217,8 +16217,8 @@ importers:
         version: link:../../utils/tool-utils
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -16290,8 +16290,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -16444,8 +16444,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
@@ -16511,8 +16511,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -16599,8 +16599,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -16705,8 +16705,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.6.2
-        version: 1.6.2
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
@@ -19195,80 +19195,80 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@biomejs/biome@1.6.2:
-    resolution: {integrity: sha512-vw6JhYnpLRRDaawI+d7NaQj17F7LSSJrgT03IQUETwRUG3Q1/a4ByJRphTVXPuhiTnaKVmUlEF3I5NSitcdD+g==}
-    engines: {node: '>=14.*'}
+  /@biomejs/biome@1.7.3:
+    resolution: {integrity: sha512-ogFQI+fpXftr+tiahA6bIXwZ7CSikygASdqMtH07J2cUzrpjyTMVc9Y97v23c7/tL1xCZhM+W9k4hYIBm7Q6cQ==}
+    engines: {node: '>=14.21.3'}
     hasBin: true
     requiresBuild: true
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 1.6.2
-      '@biomejs/cli-darwin-x64': 1.6.2
-      '@biomejs/cli-linux-arm64': 1.6.2
-      '@biomejs/cli-linux-arm64-musl': 1.6.2
-      '@biomejs/cli-linux-x64': 1.6.2
-      '@biomejs/cli-linux-x64-musl': 1.6.2
-      '@biomejs/cli-win32-arm64': 1.6.2
-      '@biomejs/cli-win32-x64': 1.6.2
+      '@biomejs/cli-darwin-arm64': 1.7.3
+      '@biomejs/cli-darwin-x64': 1.7.3
+      '@biomejs/cli-linux-arm64': 1.7.3
+      '@biomejs/cli-linux-arm64-musl': 1.7.3
+      '@biomejs/cli-linux-x64': 1.7.3
+      '@biomejs/cli-linux-x64-musl': 1.7.3
+      '@biomejs/cli-win32-arm64': 1.7.3
+      '@biomejs/cli-win32-x64': 1.7.3
 
-  /@biomejs/cli-darwin-arm64@1.6.2:
-    resolution: {integrity: sha512-2sGcNO1wDuQ6r97/SDaPzP3ehrCL7qHXpVggcB/OonbVBEamqIkN1tHsID/snnX3R2ax2QTarjb4bQ+1BpEWzA==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-darwin-arm64@1.7.3:
+    resolution: {integrity: sha512-eDvLQWmGRqrPIRY7AIrkPHkQ3visEItJKkPYSHCscSDdGvKzYjmBJwG1Gu8+QC5ed6R7eiU63LEC0APFBobmfQ==}
+    engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-darwin-x64@1.6.2:
-    resolution: {integrity: sha512-qtHDXIHd7eRIHv41XdG6pt1dbw+qiD0OgLlJn5rvW20kSSFfLxW8yc4upcC1PzlruP1BQpKFec3r5rx1duTtzw==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-darwin-x64@1.7.3:
+    resolution: {integrity: sha512-JXCaIseKRER7dIURsVlAJacnm8SG5I0RpxZ4ya3dudASYUc68WGl4+FEN03ABY3KMIq7hcK1tzsJiWlmXyosZg==}
+    engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-linux-arm64-musl@1.6.2:
-    resolution: {integrity: sha512-ej3Jj6O9KUSCJUWqVs+9aOo6IcRIALHaGFB20wnQTWtRMFhu1PluM48MrQtMKputgdk5/CopQ662IdKf1PeuEg==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-linux-arm64-musl@1.7.3:
+    resolution: {integrity: sha512-c8AlO45PNFZ1BYcwaKzdt46kYbuP6xPGuGQ6h4j3XiEDpyseRRUy/h+6gxj07XovmyxKnSX9GSZ6nVbZvcVUAw==}
+    engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-linux-arm64@1.6.2:
-    resolution: {integrity: sha512-e1FJ59lx84QoqQgu1/uzAPIcYGcTkZY/m6Aj8ZHwi7KoWAE5xSogximFHNQ82lS4qkUfG7KaPTbYT6cGJjN9jQ==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-linux-arm64@1.7.3:
+    resolution: {integrity: sha512-phNTBpo7joDFastnmZsFjYcDYobLTx4qR4oPvc9tJ486Bd1SfEVPHEvJdNJrMwUQK56T+TRClOQd/8X1nnjA9w==}
+    engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-linux-x64-musl@1.6.2:
-    resolution: {integrity: sha512-uOVt4UBkFTFtdXgPX3QuSHRPVIvj07FP0P7A0UOP++idd0r9Bxyt5iIBaAORM3eQyGQqzCGPln1GuM6GalYKzg==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-linux-x64-musl@1.7.3:
+    resolution: {integrity: sha512-UdEHKtYGWEX3eDmVWvQeT+z05T9/Sdt2+F/7zmMOFQ7boANeX8pcO6EkJPK3wxMudrApsNEKT26rzqK6sZRTRA==}
+    engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-linux-x64@1.6.2:
-    resolution: {integrity: sha512-S6Wc5YX6aLDLMzwlDmiw/kjK62Ex+xzE432M5ge9q8tSCluGeHIzrenrJlu8E0xPG2FEipDaK4iqwnjS9O6e2A==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-linux-x64@1.7.3:
+    resolution: {integrity: sha512-vnedYcd5p4keT3iD48oSKjOIRPYcjSNNbd8MO1bKo9ajg3GwQXZLAH+0Cvlr+eMsO67/HddWmscSQwTFrC/uPA==}
+    engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-win32-arm64@1.6.2:
-    resolution: {integrity: sha512-5zuxNyvnKy7oLN7KLkqcYpsMKGubfMaeQ+RqnpFsmrofQAxpOo6EL/TyJvr8g533Z0a2/cQ/ALqnwl0mN3KQoQ==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-win32-arm64@1.7.3:
+    resolution: {integrity: sha512-unNCDqUKjujYkkSxs7gFIfdasttbDC4+z0kYmcqzRk6yWVoQBL4dNLcCbdnJS+qvVDNdI9rHp2NwpQ0WAdla4Q==}
+    engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
     optional: true
 
-  /@biomejs/cli-win32-x64@1.6.2:
-    resolution: {integrity: sha512-O3nf09/m3cb3/U3M+uO4l236iTZr4F4SmLNG3okKXPfyZqKLNnF6OjdTHOYEiNXnGEtlRuUeemqb3vht9JkXaw==}
-    engines: {node: '>=14.*'}
+  /@biomejs/cli-win32-x64@1.7.3:
+    resolution: {integrity: sha512-ZmByhbrnmz/UUFYB622CECwhKIPjJLLPr5zr3edhu04LzbfcOrz16VYeNq5dpO1ADG70FORhAJkaIGdaVBG00w==}
+    engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
     requiresBuild: true
