@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { execSync } from "node:child_process";
 import path from "node:path";
 import { parseISO } from "date-fns";
 import registerDebug from "debug";
@@ -270,4 +271,12 @@ export class GitRepo {
 	private async execNoError(command: string, pipeStdIn?: string) {
 		return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
 	}
+}
+
+export function getGitRoot(): string {
+	const gitRoot = execSync("git rev-parse --show-toplevel", {
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "ignore"],
+	}).trim();
+	return gitRoot;
 }
