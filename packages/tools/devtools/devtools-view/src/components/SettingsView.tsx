@@ -111,6 +111,7 @@ export function SettingsView(): React.ReactElement {
 			<div className={styles.section}>
 				<h4 className={styles.sectionHeader}>Theme</h4>
 				<Dropdown
+					aria-label="Theme Dropdown"
 					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}

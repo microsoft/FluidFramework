@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.jest.json",
+	"include": ["./**/*"],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../../dist/test/a11y",
+	},
+	"references": [
+		{
+			"path": "../../../tsconfig.esm.json",
+		},
+		{
+			"path": "../utils/tsconfig.esm.json",
+		},
+	],
+}
