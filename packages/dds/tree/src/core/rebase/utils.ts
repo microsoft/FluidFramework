@@ -74,6 +74,15 @@ export interface BranchRebaseResult<TChange> {
 	 * Details about how the commits on the source branch changed
 	 */
 	readonly commits: RebasedCommits<TChange>;
+	/**
+	 * The length of the source branch after the rebase.
+	 */
+	readonly sourceBranchLength?: number;
+
+	/**
+	 * Number of commits rebased over to the target branch.
+	 */
+	readonly rebaseDistance?: number;
 }
 
 /**
@@ -177,6 +186,8 @@ export function rebaseBranch<TChange>(
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+			sourceBranchLength: sourcePath.length,
+			rebaseDistance: 0,
 		};
 	}
 
@@ -232,6 +243,8 @@ export function rebaseBranch<TChange>(
 				targetCommits,
 				sourceCommits,
 			},
+			sourceBranchLength: sourcePath.length, // The length of the sourcePath should be EQUAL to the length of the targetPath.
+			rebaseDistance: 0,
 		};
 	}
 
@@ -276,6 +289,8 @@ export function rebaseBranch<TChange>(
 			targetCommits,
 			sourceCommits,
 		},
+		sourceBranchLength: sourcePath.length,
+		rebaseDistance: targetCommits.length - (sourcePath.length - sourceSet.size),
 	};
 }
 

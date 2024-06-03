@@ -618,6 +618,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			change = makeAnonChange(
+				// Case 4: Rebasing the inverse of a revertible
 				rebaseChange(
 					this.changeFamily.rebaser,
 					change,
