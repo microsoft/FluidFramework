@@ -111,7 +111,12 @@ describe("object-forest", () => {
 
 	it("uses cursor sources in errors", () => {
 		const forest = buildForest();
-		initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+		initializeForest(
+			forest,
+			[singleJsonCursor(content)],
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 		const named = forest.allocateCursor("named");
 		moveToDetachedField(forest, named);
 		const forkOfNamed = named.fork();
