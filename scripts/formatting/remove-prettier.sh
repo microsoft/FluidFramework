@@ -6,8 +6,9 @@ set -eux -o pipefail
 # REMOVE PRETTIER
 ##################
 
-# Add format script if needed
-npe scripts.format "fluid-build . --task format"
+# Update format scripts to make sure they're using biome
+npe scripts.format "npm run format:biome"
+npe scripts.check:format "npm run check:biome"
 
 # remove prettier scripts
 npe scripts.format:prettier --delete
