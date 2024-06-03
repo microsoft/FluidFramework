@@ -30,6 +30,10 @@ fi
 npe scripts.check:prettier "prettier --check . --cache --ignore-path $prettierIgnore"
 npe scripts.format:prettier "prettier --write . --cache --ignore-path $prettierIgnore"
 
+# Also remove some scripts that aren't needed anymore
+npe scripts.prettier --delete
+npe scripts.prettier:fix --delete
+
 if [ ! -f "biome.jsonc" ]; then
 	# Add local biome config file. Note that the `extends` property should point to the root biome.json file and may need
 	# to be updated depending on the project.
