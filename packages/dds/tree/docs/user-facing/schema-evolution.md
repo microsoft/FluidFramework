@@ -198,8 +198,10 @@ Once the application version that understands both schemas saturates sufficientl
 > **_WARNING:_** The policy outlined in this section is not currently implementable. There are plans to extend the `compatibility` API with information that allows implementing policies such as this, but the exact API is not finalized.
 
 Adding an optional field to an object node is one of the safer types of schema changes from the perspective of clients running older code collaborating with clients running newer code.
-This is because newer code must already have fallback behavior for absence of the optional field for backward-compatibility reasons, and older application code can generally just "ignore the extra field"
-That isn't strictly true--e.g. old client code code using a spread operation or reflection APIs like `Object.keys` might fail upon encountering objects with a populated optional field it wasn't expecting--but this caveat might be acceptable for application authors enough for them to allow collaboration between such clients.
+This is because newer code must already have fallback behavior for absence of the optional field for backward-compatibility reasons, and older application code can generally just "ignore the extra field".
+That isn't strictly true--old client code code using a spread operation or reflection APIs like `Object.keys` will only receive properties present in its view schema, even if extra optional properties are present.
+Thus, certain types of edits made by that old client can end up losing data in the optional field (e.g. old client constructs a new object for insertion elsewhere in the tree by spread-copying fields from an existing one).
+This caveat might be acceptable for application authors enough for them to allow collaboration between such clients.
 
 This policy can be implemented as follows:
 
@@ -296,7 +298,8 @@ view.events.on("schemaChanged", () => {
 renderApplication(view.root);
 ```
 
-which will work "as well as the application does," in the sense that `SharedTree` will successfully report data changes, but clients running old application code may crash at unexpected places in application logic due to schema mismatches.
+which will work "as well as the application does," in the sense that `SharedTree` will successfully report data changes and allow collaboration within the limits of what is possible: optional fields can be added to object nodes over time and old clients will still be permitted to collaborate.
+After other types of backward-compatible document upgrades, clients using older view schemas will fail to open the document with a clear error message (accessing `view.root` will throw).
 
 ## Further Reading
 
