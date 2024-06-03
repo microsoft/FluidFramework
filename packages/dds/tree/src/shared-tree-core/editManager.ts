@@ -611,6 +611,7 @@ export class EditManager<
 				change: newChangeFullyRebased,
 			});
 		}
+
 		this.localBranch.rebaseOnto(this.trunk);
 	}
 

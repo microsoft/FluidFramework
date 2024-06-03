@@ -504,6 +504,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		if (head === upTo) {
 			return undefined;
 		}
+
 		const rebaseResult = rebaseBranch(
 			this.mintRevisionTag,
 			this.changeFamily.rebaser,
