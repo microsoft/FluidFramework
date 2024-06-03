@@ -7,9 +7,9 @@
  * @fileoverview Definition of the valuemap property class
  */
 
-const _ = require("lodash");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { Int64, Uint64 } = require("@fluid-experimental/property-common");
+const _ = require("lodash");
 
 const { validationsEnabled } = require("../enableValidations");
 const { Int64Property, Uint64Property } = require("../properties/intProperties");

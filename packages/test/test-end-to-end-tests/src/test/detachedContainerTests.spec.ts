@@ -26,6 +26,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -42,7 +43,6 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

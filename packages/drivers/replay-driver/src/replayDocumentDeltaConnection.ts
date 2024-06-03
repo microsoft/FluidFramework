@@ -7,6 +7,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import {
+	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -19,11 +24,6 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ConnectionMode,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 
 import { ReplayController } from "./replayController.js";
 

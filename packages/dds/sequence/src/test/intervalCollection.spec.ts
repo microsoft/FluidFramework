@@ -28,9 +28,9 @@ import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
+import { assertInterval } from "./intervalIndexTestUtils.js";
 import { assertConsistent, assertSequenceIntervals, type Client } from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
-import { assertInterval } from "./intervalIndexTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>

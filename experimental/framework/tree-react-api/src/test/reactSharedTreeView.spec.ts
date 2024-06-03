@@ -5,9 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+
 import { treeDataObject } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {

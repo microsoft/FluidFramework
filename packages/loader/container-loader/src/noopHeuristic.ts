@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 
 const defaultNoopTimeFrequency = 2000;
 const defaultNoopCountFrequency = 50;

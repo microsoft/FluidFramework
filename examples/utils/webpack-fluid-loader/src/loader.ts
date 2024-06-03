@@ -19,6 +19,7 @@ import {
 import { Loader } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { IUser } from "@fluidframework/driver-definitions";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
@@ -27,7 +28,6 @@ import {
 	HostStoragePolicy,
 	IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IUser } from "@fluidframework/driver-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";

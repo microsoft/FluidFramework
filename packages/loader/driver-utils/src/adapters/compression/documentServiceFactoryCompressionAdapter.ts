@@ -4,12 +4,12 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
 

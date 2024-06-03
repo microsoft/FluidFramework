@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
+import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+
 // eslint-disable-next-line import/no-deprecated
 import type { IDetachedBlobStorage } from "./loader.js";
 
