@@ -11,7 +11,6 @@ import {
 	Tree,
 	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
-	disposeSymbol,
 } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
@@ -105,7 +104,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 		// This is required because schematizing the tree twice will result in an error
 		if (initialTree !== undefined) {
-			view[disposeSymbol]();
+			view.dispose();
 		}
 	}
 

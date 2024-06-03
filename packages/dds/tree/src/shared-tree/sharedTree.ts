@@ -268,7 +268,7 @@ export class SharedTree
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
-		const cursor = this.checkout.forest.allocateCursor();
+		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
 			moveToDetachedField(this.checkout.forest, cursor);
 			return {

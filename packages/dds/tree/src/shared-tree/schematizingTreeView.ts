@@ -65,7 +65,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	private readonly unregisterCallbacks = new Set<() => void>();
 
-	private disposed = false;
+	public disposed = false;
 	/**
 	 * This is set to true while an edit impacting the document schema is in progress.
 	 * This allows suppressing extra rootChanged / schemaChanged events until the edit concludes.
@@ -289,8 +289,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		return this.currentCompatibility;
 	}
 
-	public [disposeSymbol](): void {
-		this.ensureUndisposed();
+	public dispose(): void {
 		this.disposed = true;
 		this.disposeView();
 		this.currentCompatibility = undefined;
