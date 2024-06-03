@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// Enable TypeScript type-checking for this file.
+// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
+// @ts-check
+
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
@@ -11,6 +15,8 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
  *
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
+ *
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
  */
 module.exports = {
 	tasks: {
@@ -82,6 +88,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:exports": ["api"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
@@ -283,11 +290,28 @@ module.exports = {
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
 			],
-			"npm-package-json-clean-script": [
-				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"^tools/markdown-magic",
-				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"^tools/getkeys",
+			"npm-package-exports-apis-linted": [
+				// Rollout suppressions - enable only after tools are updated to support policy
+				// as new build-tools will have the concurrently fluid-build support it uses.
+				"^azure/",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+
+				// Packages that violate the API linting rules
+				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
+				"^packages/service-clients/azure-client/",
+				// ae-missing-release-tags, ae-incompatible-release-tags
+				"^examples/data-objects/table-document/",
+				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
+				"^experimental/dds/tree/",
+
+				// Packages with APIs that don't need strict API linting
+				"^build-tools/",
+				"^common/build/",
+				"^experimental/PropertyDDS/",
+				"^tools/api-markdown-documenter/",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -305,7 +329,9 @@ module.exports = {
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",
 				"server/historian/package.json",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys/package.json",
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 			],
 			"npm-strange-package-name": [
@@ -401,25 +427,26 @@ module.exports = {
 			// A list of script commands and the package that contains the command
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
-				["mocha", "mocha"],
-				["rimraf", "rimraf"],
-				["tsc", "typescript"],
-				["eslint", "eslint"],
-				["prettier", "prettier"],
-				["webpack", "webpack"],
-				["nyc", "nyc"],
+				["attw", "@arethetypeswrong/cli"],
 				["c8", "c8"],
-				["gf", "good-fences"],
+				["concurrently", "concurrently"],
+				["copyfiles", "copyfiles"],
 				["cross-env", "cross-env"],
+				["depcruise", "dependency-cruiser"],
+				["eslint", "eslint"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
-				["depcruise", "dependency-cruiser"],
-				["copyfiles", "copyfiles"],
+				["gf", "good-fences"],
+				["mocha", "mocha"],
+				["nyc", "nyc"],
 				["oclif", "oclif"],
+				["prettier", "prettier"],
 				["renamer", "renamer"],
-				["ts2esm", "ts2esm"],
+				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],
-				["attw", "@arethetypeswrong/cli"],
+				["ts2esm", "ts2esm"],
+				["tsc", "typescript"],
+				["webpack", "webpack"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
