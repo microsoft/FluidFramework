@@ -8,6 +8,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate changeset-config`](#flub-generate-changeset-config)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate typetests`](#flub-generate-typetests)
@@ -215,6 +216,27 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
+
+## `flub generate changeset-config`
+
+Generates a configuration file for changesets.
+
+```
+USAGE
+  $ flub generate changeset-config -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [-o <value>]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  -o, --outFile=<value>        [default: .changeset/config.json] Path to write the changeset config file to. The file
+                               will always be overwritten.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+```
+
+_See code: [src/commands/generate/changeset-config.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset-config.ts)_
 
 ## `flub generate entrypoints`
 

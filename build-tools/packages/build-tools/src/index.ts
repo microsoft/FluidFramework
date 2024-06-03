@@ -22,11 +22,16 @@ export { Timer } from "./common/timer";
 export type {
 	IFluidBuildConfig,
 	PackageNamePolicyConfig,
+	PackageNameOrScope,
+	PackageName,
+	PackageScope,
+	ChangesetConfig,
 	PolicyConfig,
 	PreviousVersionStyle,
 	ScriptRequirement,
+	ChangesetConfigWritten,
 } from "./common/fluidRepo";
-
+export { isPackageScope } from "./common/fluidRepo";
 // For repo policy check
 export {
 	normalizeGlobalTaskDefinitions,

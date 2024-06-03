@@ -61,7 +61,30 @@ export interface IFluidBuildConfig {
 	 * A configuration for changesets. All fields are supported; an entire changeset config can be included here, and any
 	 * values set here will be written to the changeset config file created by `flub generate changeset-config`.
 	 */
-	changesetConfig?: WrittenConfig;
+	changesetConfig?: ChangesetConfig;
+}
+
+export type PackageName = string;
+
+export type PackageScope = `${"@"}${string}`;
+
+export function isPackageScope(value: string): value is PackageScope {
+	return value.startsWith("@") && !value.includes("/");
+}
+
+export type PackageNameOrScope = PackageName | PackageScope;
+
+export interface ChangesetConfigWritten extends WrittenConfig {
+	"$schema"?: string;
+}
+
+export interface ChangesetConfig extends Omit<ChangesetConfigWritten, "fixed" | "linked"> {
+	fixed?: {
+		[name: string]: PackageNameOrScope[];
+	};
+	linked?: {
+		[name: string]: PackageNameOrScope[];
+	};
 }
 
 /**
