@@ -191,9 +191,14 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.workspace, undefined, {
-					kind: "independentPackage",
-				}),
+				Package.load(
+					pkg.packageJsonFileName,
+					pkg.workspace,
+					undefined /* release group */,
+					{
+						kind: "independentPackage" as PackageKind,
+					},
+				),
 			);
 		}
 	}

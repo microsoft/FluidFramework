@@ -186,6 +186,18 @@ module.exports = {
 	},
 
 	repoLayout: {
+		packages: [
+			"common/build/build-common",
+			"common/build/eslint-config-fluid",
+			"common/build/eslint-plugin-fluid",
+			"common/lib/common-utils",
+			"common/lib/protocol-definitions",
+			"tools/api-markdown-documenter",
+			"tools/benchmark",
+			"tools/changelog-generator-wrapper",
+			"tools/getkeys",
+			"tools/test-tools",
+		],
 		workspaces: {
 			client: {
 				directory: ".",
@@ -230,6 +242,26 @@ module.exports = {
 			},
 			historian: {
 				directory: "server/historian",
+				defaultInterdependencyRange: "^",
+			},
+			"api-markdown-documenter": {
+				directory: "tools/api-markdown-documenter",
+				defaultInterdependencyRange: "^",
+			},
+			benchmark: {
+				directory: "tools/benchmark",
+				defaultInterdependencyRange: "^",
+			},
+			"changelog-generator-wrapper": {
+				directory: "tools/changelog-generator-wrapper",
+				defaultInterdependencyRange: "^",
+			},
+			getkeys: {
+				directory: "tools/getkeys",
+				defaultInterdependencyRange: "^",
+			},
+			"test-tools": {
+				directory: "tools/test-tools",
 				defaultInterdependencyRange: "^",
 			},
 		},

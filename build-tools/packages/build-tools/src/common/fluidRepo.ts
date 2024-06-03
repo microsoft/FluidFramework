@@ -41,6 +41,10 @@ export interface IFluidBuildConfig {
 			 */
 			[name: string]: WorkspaceDefinition;
 		};
+		/**
+		 * An array of paths containing individual packages that are not part of a workspace.
+		 */
+		packages?: string[]
 	};
 
 	/**
@@ -413,12 +417,19 @@ export class FluidRepo {
 		const fluidBuildConfig = loadFluidBuildConfig(resolvedRoot);
 		const loadedPackages: Package[] = [];
 		if (fluidBuildConfig.repoLayout !== undefined) {
+			// Load workspaces
 			for (const [workspaceName, definition] of Object.entries(
 				fluidBuildConfig.repoLayout.workspaces,
 			)) {
 				const workspace = Workspace.load(workspaceName, definition);
 				this.workspaces.set(workspaceName, workspace);
 				loadedPackages.push(...workspace.packages);
+			}
+
+			// Load independent packages
+			for(const pkgPath of fluidBuildConfig.repoLayout.packages ?? []) {
+				const packageDir = path.resolve(resolvedRoot, pkgPath);
+				loadedPackages.push(Package.load(packageDir, undefined));
 			}
 		} else if (fluidBuildConfig.repoPackages !== undefined) {
 			throw new Error(
@@ -429,6 +440,60 @@ export class FluidRepo {
 		}
 		this.packages = new Packages(loadedPackages);
 	}
+
+	// public static create(resolvedRoot: string) {
+	// 	const packageManifest = loadFluidBuildConfig(resolvedRoot);
+
+	// 			// Expand to full IFluidRepoPackage and full path
+	// 			const normalizeEntry = (
+	// 				item: IFluidRepoPackageEntry,
+	// 			): IFluidRepoPackage | IFluidRepoPackage[] => {
+	// 				if (Array.isArray(item)) {
+	// 					return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
+	// 				}
+	// 				if (typeof item === "string") {
+	// 					traceInit(
+	// 						`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+	// 					);
+	// 					return {
+	// 						directory: path.join(resolvedRoot, item),
+	// 						ignoredDirs: undefined,
+	// 						defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
+	// 					};
+	// 				}
+	// 				const directory = path.join(resolvedRoot, item.directory);
+	// 				return {
+	// 					directory,
+	// 					ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+	// 					defaultInterdependencyRange: item.defaultInterdependencyRange,
+	// 				};
+	// 			};
+	// 			const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
+	// 				return Packages.loadDir(item.directory, group, item.ignoredDirs);
+	// 			};
+
+	// 			const loadedPackages: Package[] = [];
+	// 			for (const group in packageManifest.repoPackages) {
+	// 				const item = normalizeEntry(packageManifest.repoPackages[group]);
+	// 				if (Array.isArray(item)) {
+	// 					for (const i of item) {
+	// 						loadedPackages.push(...loadOneEntry(i, group));
+	// 					}
+	// 					continue;
+	// 				}
+	// 				const monoRepo = Workspace.load(group, item);
+	// 				if (monoRepo) {
+	// 					this.releaseGroups.set(group, monoRepo);
+	// 					loadedPackages.push(...monoRepo.packages);
+	// 				} else {
+	// 					loadedPackages.push(...loadOneEntry(item, group));
+	// 				}
+	// 			}
+	// 			this.packages = new Packages(loadedPackages);
+	// 		}
+
+	// 	return new FluidRepo(resolvedRoot, packageManifest);
+	// }
 
 	public createPackageMap() {
 		return new Map<string, Package>(this.packages.packages.map((pkg) => [pkg.name, pkg]));
