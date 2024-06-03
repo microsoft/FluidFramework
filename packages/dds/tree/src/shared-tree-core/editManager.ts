@@ -588,7 +588,6 @@ export class EditManager<
 			() =>
 				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
-
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
