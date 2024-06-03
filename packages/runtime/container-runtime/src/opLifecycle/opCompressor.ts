@@ -26,6 +26,13 @@ export class OpCompressor {
 		this.logger = createChildLogger({ logger, namespace: "OpCompressor" });
 	}
 
+	/**
+	 * Combines the contents of the batch into a single JSON string and compresses it, putting
+	 * the resulting string as the first message of the batch. The rest of the messages are
+	 * empty placeholders to reserve sequence numbers.
+	 * @param batch - The batch to compress
+	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
+	 */
 	public compressBatch(batch: IBatch): IBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
@@ -33,7 +40,7 @@ export class OpCompressor {
 		);
 
 		const compressionStart = Date.now();
-		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatch(batch));
+		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));
 		const compressedContents = compress(contentsAsBuffer);
 		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 		const duration = Date.now() - compressionStart;
@@ -75,8 +82,12 @@ export class OpCompressor {
 		return compressedBatch;
 	}
 
-	private serializeBatch(batch: IBatch): string {
+	/**
+	 * Combine the batch's content strings into a single JSON string (a serialized array)
+	 */
+	private serializeBatchContents(batch: IBatch): string {
 		try {
+			// Yields a valid JSON array, since each message.contents is already serialized to JSON
 			return `[${batch.content.map((message) => message.contents).join(",")}]`;
 		} catch (e: any) {
 			if (e.message === "Invalid string length") {

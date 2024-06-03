@@ -76,7 +76,7 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@types/jest": "29.5.3",
@@ -102,7 +102,7 @@
 		"style-loader": "^1.0.0",
 		"tinylicious": "^5.0.0-265463",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.3.3",
+		"typescript": "~5.4.5",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.15.1"

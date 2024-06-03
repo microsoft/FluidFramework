@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -14,7 +15,6 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**

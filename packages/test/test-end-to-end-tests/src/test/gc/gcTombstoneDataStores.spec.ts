@@ -28,9 +28,10 @@ import {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
@@ -47,7 +48,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 import {
 	getGCStateFromSummary,

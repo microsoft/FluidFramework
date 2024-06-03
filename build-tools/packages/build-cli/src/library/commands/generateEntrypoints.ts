@@ -11,16 +11,16 @@ import { Flags } from "@oclif/core";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
-import type { CommandLogger } from "../../logging";
-import { BaseCommand } from "./base";
+import type { CommandLogger } from "../../logging.js";
+import { BaseCommand } from "./base.js";
 
-import { ApiLevel } from "../apiLevel";
-import { ApiTag } from "../apiTag";
-import type { ExportData, Node10CompatExportData } from "../packageExports";
-import { queryTypesResolutionPathsFromPackageExports } from "../packageExports";
-import { getApiExports } from "../typescriptApi";
+import { ApiLevel } from "../apiLevel.js";
+import { ApiTag } from "../apiTag.js";
+import type { ExportData, Node10CompatExportData } from "../packageExports.js";
+import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import { getApiExports } from "../typescriptApi.js";
 
-import { unscopedPackageNameString } from "./constants";
+import { unscopedPackageNameString } from "./constants.js";
 
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
@@ -220,7 +220,7 @@ function getOutputConfiguration(
 		queryTypesResolutionPathsFromPackageExports(
 			packageJson,
 			mapQueryPathToApiTagLevel,
-			node10TypeCompat,
+			{ node10TypeCompat, onlyFirstMatches: true },
 			logger,
 		);
 

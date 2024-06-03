@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISnapshotTree,
@@ -12,7 +13,6 @@ import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,

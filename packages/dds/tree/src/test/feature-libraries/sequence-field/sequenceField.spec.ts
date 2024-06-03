@@ -9,6 +9,7 @@ import { testMarkListFactory } from "./markListFactory.test.js";
 import { testGenerateRandomChange } from "./randomChangeGenerator.test.js";
 import { testRebase } from "./rebase.test.js";
 import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test.js";
+import { testReplaceRevisions } from "./replaceRevisions.test.js";
 import {
 	testComposedSandwichRebasing,
 	testExamples,
@@ -41,4 +42,5 @@ describe("SequenceField", () => {
 	testExamples();
 	testCodecs();
 	testSnapshots();
+	testReplaceRevisions();
 });

@@ -27,6 +27,7 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
@@ -35,7 +36,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
 	manufactureHandle,
@@ -128,7 +128,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 		return containerRuntime.summarize({
 			runGC: true,
 			fullTree: true,
-			trackState: false,
 		});
 	}
 

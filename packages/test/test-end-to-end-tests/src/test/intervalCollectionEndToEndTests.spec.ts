@@ -10,6 +10,7 @@ import { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	IIntervalCollection,
 	SequenceInterval,
@@ -24,7 +25,6 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

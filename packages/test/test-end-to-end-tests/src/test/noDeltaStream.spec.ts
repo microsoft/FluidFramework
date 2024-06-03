@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import {
 	DefaultSummaryConfiguration,
 	SummaryCollection,
@@ -26,7 +27,6 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
-import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

@@ -4,22 +4,23 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createTestConfigProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { TestSnapshotCache } from "./testSnapshotCache.js";
 import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 

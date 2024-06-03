@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
