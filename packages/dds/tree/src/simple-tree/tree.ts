@@ -128,27 +128,21 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
  * Configuration for {@link ITree.viewWith}.
  * @public
  */
-export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
+	implements Required<ITreeViewConfiguration<TSchema>>
+{
 	/**
-	 * The schema which the application wants to view the tree with.
+	 * {@inheritDoc TreeViewConfiguration.schema}
 	 */
 	public readonly schema: TSchema;
 
 	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
-	 *
-	 * @defaultValue `false`.
-	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
-	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
-	 * bit slower.
+	 * {@inheritDoc TreeViewConfiguration.enableSchemaValidation}
 	 */
 	public readonly enableSchemaValidation: boolean;
 
 	/**
-	 * @param schema - The schema which the application wants to view the tree with.
-	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 * @param props - Property bag of configuration options.
 	 */
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		const config = { ...defaultTreeConfigurationOptions, ...props };
@@ -195,7 +189,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 }
 
 /**
- * An editable view of a branch of a shared tree based on some schema.
+ * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
  * This schema--known as the view schema--may or may not align the stored schema of the document.
  * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
@@ -293,12 +287,6 @@ export interface SchemaCompatibilityStatus {
 	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
 	 * If false, {@link TreeView.root} will throw upon access.
 	 *
-	 * A necessary condition for this to be true is that the documents allowed by the view schema are a subset of those allowed by the stored schema.
-	 * This is not sufficient: the simple-tree layer does not tolerate read APIs which return out-of-schema data.
-	 * For example, if the view schema for a node has a required `Point` field but the stored schema has an optional `Point` field,
-	 * read APIs on the view schema do not work correctly when the document has a node with a missing `Point` field.
-	 * Similar issues happen when the view schema has a field with less allowed types than the stored schema and the document actually leverages those types.
-	 *
 	 * Currently, this field is true iff `isExactMatch` is true.
 	 * Do not rely on this:
 	 * there are near-term plans to extend support for viewing documents when the stored schema contains additional optional fields not present in the view schema.
@@ -312,11 +300,18 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
 	 * this is false because writes to the document using the view schema could make the document violate its stored schema.
-	 * In this case, the stored schema could be updated to match the provided view schema, allowing read write access to the tree.
+	 * In this case, the stored schema could be updated to match the provided view schema, allowing read-write access to the tree.
 	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
 	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe,
 	 * but this is not currently supported.
+	 *
+	 * @privateRemarks
+	 * A necessary condition for this to be true is that the documents allowed by the view schema are a subset of those allowed by the stored schema.
+	 * This is not sufficient: the simple-tree layer's read APIs do not tolerate out-of-schema data.
+	 * For example, if the view schema for a node has a required `Point` field but the stored schema has an optional `Point` field,
+	 * read APIs on the view schema do not work correctly when the document has a node with a missing `Point` field.
+	 * Similar issues happen when the view schema has a field with less allowed types than the stored schema and the document actually leverages those types.
 	 */
 	readonly canView: boolean;
 

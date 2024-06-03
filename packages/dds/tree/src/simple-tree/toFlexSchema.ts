@@ -81,10 +81,7 @@ export function cursorFromUnhydratedRoot(
 function isTreeConfiguration(
 	config: TreeViewConfiguration | TreeConfiguration,
 ): config is TreeConfiguration {
-	return (
-		(config as TreeConfiguration).initialTree !== undefined &&
-		typeof (config as TreeConfiguration).initialTree === "function"
-	);
+	return config instanceof TreeConfiguration;
 }
 /* eslint-enable import/no-deprecated */
 
