@@ -89,7 +89,7 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	ContextuallyTypedNodeData,
@@ -100,7 +100,6 @@ import {
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
-	createMockNodeKeyManager,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -108,6 +107,7 @@ import {
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
+	MockNodeKeyManager,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -672,7 +672,7 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -688,7 +688,7 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
@@ -698,7 +698,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
-		args?.nodeKeyManager ?? createMockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -722,7 +722,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -733,7 +733,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
-	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
+	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
@@ -1063,7 +1063,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>): {
+export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1134,7 +1134,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		tree.checkout,
 		viewSchema,
 		onDispose ?? (() => {}),
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -1187,12 +1187,12 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -1220,10 +1220,10 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public get transaction(): ITransaction {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
-	public get events(): ISubscribable<CheckoutEvents> {
+	public get events(): Listenable<CheckoutEvents> {
 		throw new Error("'events' property not implemented in MockTreeCheckout.");
 	}
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+	public get rootEvents(): Listenable<AnchorSetRootEvents> {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 

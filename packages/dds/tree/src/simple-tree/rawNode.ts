@@ -92,8 +92,7 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 	}
 
 	public treeStatus(): TreeStatus {
-		// TODO: We could add a new TreeStatus for "raw" nodes.
-		throw rawError("Status querying");
+		return TreeStatus.Created;
 	}
 
 	public value: undefined;

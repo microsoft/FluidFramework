@@ -51,7 +51,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
@@ -71,7 +71,7 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
@@ -104,7 +104,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.3.3",
+		"typescript": "~5.4.5",
 		"uuid": "^9.0.0",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"

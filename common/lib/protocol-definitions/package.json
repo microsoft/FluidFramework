@@ -69,17 +69,17 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --level public",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
@@ -112,7 +112,7 @@
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.43.1": "../../../patches/@microsoft__api-extractor@7.43.1.patch"
+			"@microsoft/api-extractor@7.45.1": "../../../patches/@microsoft__api-extractor@7.45.1.patch"
 		}
 	},
 	"typeValidation": {

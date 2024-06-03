@@ -17,13 +17,12 @@ import {
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IDocumentStorageService,
 	IBlob,
 	ISnapshotTree,
-	ISummaryBlob,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,

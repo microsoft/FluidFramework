@@ -7,12 +7,12 @@
  * @fileoverview Declaration of the PropertyTemplate module.
  * PropertyTemplate is used to describe a static property.
  */
-const _ = require("lodash");
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const fastestJSONCopy = require("fastest-json-copy");
-const deepCopy = fastestJSONCopy.copy;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const { MSG } = require("@fluid-experimental/property-common").constants;
+const fastestJSONCopy = require("fastest-json-copy");
+const _ = require("lodash");
+const deepCopy = fastestJSONCopy.copy;
 
 /**
  * @internal

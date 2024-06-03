@@ -35,6 +35,12 @@ export type {
 } from "@fluidframework/fluid-static";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
+export type {
+	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
+	IBranchOrigin, // Required for ISequencedDocumentMessage
+	ITrace, // Required for ISequencedDocumentMessage
+} from "@fluidframework/driver-definitions";
+
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
 // desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree

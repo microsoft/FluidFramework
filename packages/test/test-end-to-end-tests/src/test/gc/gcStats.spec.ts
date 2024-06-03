@@ -18,7 +18,7 @@ import {
 	IGCStats,
 } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
@@ -180,7 +180,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,
@@ -249,7 +249,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		let summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		let summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 		]);
@@ -276,7 +276,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 			dataStore2._context.id,
@@ -379,7 +379,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,

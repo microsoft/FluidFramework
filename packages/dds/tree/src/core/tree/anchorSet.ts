@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ISubscribable, createEmitter } from "../../events/index.js";
+import { Listenable, createEmitter } from "../../events/index.js";
 import {
 	Brand,
 	BrandedKey,
@@ -175,7 +175,7 @@ export interface AnchorSetRootEvents {
  * Node in a tree of anchors.
  * @internal
  */
-export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
@@ -241,7 +241,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * @sealed
  * @internal
  */
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.

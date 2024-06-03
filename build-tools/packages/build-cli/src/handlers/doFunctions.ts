@@ -16,12 +16,12 @@ import {
 	getPreReleaseDependencies,
 	npmCheckUpdates,
 	setVersion,
-} from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+} from "../library/index.js";
+import { CommandLogger } from "../logging.js";
+import { MachineState } from "../machines/index.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Bumps any pre-release dependencies that have been released.
