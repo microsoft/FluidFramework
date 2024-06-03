@@ -92,7 +92,7 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 	}
 
 	public treeStatus(): TreeStatus {
-		return TreeStatus.Created;
+		return TreeStatus.New;
 	}
 
 	public value: undefined;

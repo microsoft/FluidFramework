@@ -592,9 +592,9 @@ export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<
 
 // @public
 export enum TreeStatus {
-    Created = 3,
     Deleted = 2,
     InDocument = 0,
+    New = 3,
     Removed = 1
 }
 
