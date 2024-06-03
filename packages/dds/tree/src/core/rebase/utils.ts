@@ -322,7 +322,23 @@ export function rebaseChange<TChange>(
 		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
 	);
 	inverses.reverse();
-	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
+
+	const telemetryProperties = {
+		sourceBranchLength: sourcePath.length,
+		rebaseDistance: targetPath.length, // TODO: Change the value.
+		...(change.telemetryProperties ?? {}),
+	};
+
+	const rebasedChange = rebaseChangeOverChanges(
+		changeRebaser,
+		{
+			...change,
+			telemetryProperties,
+		},
+		[...inverses, ...targetPath],
+	);
+
+	return rebasedChange;
 }
 
 /**

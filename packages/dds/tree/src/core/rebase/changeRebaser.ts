@@ -102,6 +102,8 @@ export interface TaggedChange<TChangeset> {
 	 */
 	readonly rollbackOf?: RevisionTag;
 	readonly change: TChangeset;
+
+	readonly telemetryProperties?: { [key: string]: number };
 }
 
 export function mapTaggedChange<TIn, TOut>(
