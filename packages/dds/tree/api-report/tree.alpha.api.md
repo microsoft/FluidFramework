@@ -5,6 +5,7 @@
 ```ts
 
 import { ErasedType } from '@fluidframework/core-interfaces';
+import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
@@ -43,9 +44,6 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 }
 
 // @public
-export const disposeSymbol: unique symbol;
-
-// @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -82,11 +80,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
-
-// @public
-export interface IDisposable {
-    [disposeSymbol](): void;
-}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -217,7 +210,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
@@ -445,7 +438,7 @@ export enum TreeStatus {
 }
 
 // @public
-export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable_2 {
     readonly error?: SchemaIncompatible;
     readonly events: Listenable<TreeViewEvents>;
     get root(): TreeFieldFromImplicitField<TSchema>;

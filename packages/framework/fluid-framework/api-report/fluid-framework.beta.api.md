@@ -7,7 +7,7 @@
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -103,9 +103,6 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 }
 
 // @public
-export const disposeSymbol: unique symbol;
-
-// @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -158,11 +155,6 @@ export interface IConnection {
 
 // @public
 export type ICriticalContainerError = IErrorBase;
-
-// @public
-export interface IDisposable {
-    [disposeSymbol](): void;
-}
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
@@ -375,7 +367,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
