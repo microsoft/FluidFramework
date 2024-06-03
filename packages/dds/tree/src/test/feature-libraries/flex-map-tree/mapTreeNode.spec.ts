@@ -196,9 +196,9 @@ describe("MapTreeNodes", () => {
 	});
 
 	it("can get their tree status", () => {
-		assert.equal(map.treeStatus(), TreeStatus.Created);
-		assert.equal(fieldNode.treeStatus(), TreeStatus.Created);
-		assert.equal(object.treeStatus(), TreeStatus.Created);
+		assert.equal(map.treeStatus(), TreeStatus.New);
+		assert.equal(fieldNode.treeStatus(), TreeStatus.New);
+		assert.equal(object.treeStatus(), TreeStatus.New);
 	});
 
 	describe("cannot", () => {

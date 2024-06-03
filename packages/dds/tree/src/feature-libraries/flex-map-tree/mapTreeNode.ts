@@ -156,7 +156,7 @@ export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTree
 	}
 
 	public treeStatus(): TreeStatus {
-		return TreeStatus.Created;
+		return TreeStatus.New;
 	}
 
 	public get value(): Value {
@@ -366,7 +366,7 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 		throw new Error("Cannot get context of raw field");
 	},
 	treeStatus(): TreeStatus {
-		return TreeStatus.Created;
+		return TreeStatus.New;
 	},
 	mapTrees: [],
 };
@@ -447,7 +447,7 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 	}
 
 	public treeStatus(): TreeStatus {
-		return TreeStatus.Created;
+		return TreeStatus.New;
 	}
 }
 
