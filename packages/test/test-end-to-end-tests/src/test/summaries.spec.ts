@@ -622,7 +622,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeCompat.only("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	const testCache = new TestSnapshotCache();
