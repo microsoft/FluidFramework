@@ -178,8 +178,8 @@ const selectPackagesFromContext = (
 				selection.directory === "." ? process.cwd() : selection.directory,
 				"package.json",
 			),
-			"none",
-			undefined,
+			undefined /* workspace */,
+			undefined /* release group */,
 			{
 				kind: "packageFromDirectory" as PackageKind,
 			},
@@ -191,7 +191,7 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				Package.load(pkg.packageJsonFileName, pkg.workspace, undefined, {
 					kind: "independentPackage",
 				}),
 			);
@@ -202,7 +202,7 @@ const selectPackagesFromContext = (
 	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				Package.load(pkg.packageJsonFileName, pkg.workspace, undefined, {
 					kind: "releaseGroupChildPackage",
 				}),
 			);
@@ -216,13 +216,15 @@ const selectPackagesFromContext = (
 			continue;
 		}
 
-		if (packages[0].monoRepo === undefined) {
+		if (packages[0].workspace === undefined) {
 			throw new Error(`No release group found for package: ${packages[0].name}`);
 		}
 
-		const dir = packages[0].monoRepo.directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+		const dir = packages[0].workspace.directory;
+		const pkg = Package.load(dir, packages[0].workspace);
+		selected.push(
+			Package.load(dir, pkg.workspace, undefined, { kind: "releaseGroupRootPackage" }),
+		);
 	}
 
 	return selected;

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
+import { FluidRepo, Workspace } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
@@ -78,10 +78,10 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 	const updatedPkgs = new Set<ReleasePackage>();
 
 	for (const pkg of updatedPackages) {
-		if (pkg.monoRepo === undefined) {
+		if (pkg.workspace === undefined) {
 			updatedPkgs.add(pkg.name);
 		} else {
-			updatedReleaseGroups.add(pkg.monoRepo.releaseGroup);
+			updatedReleaseGroups.add(pkg.workspace.name as ReleaseGroup);
 		}
 	}
 
@@ -93,10 +93,10 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 			continue;
 		}
 
-		if (pkg.monoRepo === undefined) {
+		if (pkg.workspace === undefined) {
 			updatedDeps.add(pkg.name);
 		} else {
-			updatedDeps.add(pkg.monoRepo.kind);
+			updatedDeps.add(pkg.workspace.name);
 		}
 	}
 
@@ -159,13 +159,13 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			context.repo.releaseGroups.get(releaseGroup)!
+			context.repo.workspaces.get(releaseGroup)!
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			context.fullPackageMap.get(releaseGroup)!;
 
 	const scheme = detectVersionScheme(releaseVersion);
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
-	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
+	const packages = rgRepo instanceof Workspace ? rgRepo.packages : [rgRepo];
 
 	log.info(
 		`Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion.version} (${chalk.blue(
@@ -177,7 +177,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		context,
 		rgRepo,
 		newVersion,
-		rgRepo instanceof MonoRepo ? rgRepo.interdependencyRange : undefined,
+		rgRepo instanceof Workspace ? rgRepo.interdependencyRange : undefined,
 		log,
 	);
 

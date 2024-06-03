@@ -51,7 +51,7 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = FluidRepo.create(rootDir);
+		const repo = new FluidRepo(rootDir);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -558,7 +558,7 @@ function getTscCommandDependencies(
 		}
 	}
 
-	const curPkgRepoGroup = packageMap.get(json.name)?.group;
+	const curPkgRepoGroup = packageMap.get(json.name)?.workspace;
 	const tscPredecessors = fluidBuildDatabaseCache.getPossiblePredecessorTasks(
 		packageMap,
 		json.name,
@@ -583,7 +583,7 @@ function getTscCommandDependencies(
 				// Not known to repo, can be ignored.
 				return true;
 			}
-			if (depPackage.group !== curPkgRepoGroup) {
+			if (depPackage.workspace !== curPkgRepoGroup) {
 				return true;
 			}
 			const satisfied = semver.satisfies(depPackage.version, depSpec.version);

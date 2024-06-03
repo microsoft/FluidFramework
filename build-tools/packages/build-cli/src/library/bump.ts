@@ -11,7 +11,7 @@ import {
 	bumpVersionScheme,
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
-import { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
+import { Logger, Package, Workspace } from "@fluidframework/build-tools";
 import { Context } from "./context.js";
 
 import { setVersion } from "./package.js";
@@ -60,7 +60,7 @@ export function isDependencyUpdateType(str: string | undefined): str is Dependen
 // eslint-disable-next-line max-params
 export async function bumpReleaseGroup(
 	context: Context,
-	releaseGroupOrPackage: MonoRepo | Package,
+	releaseGroupOrPackage: Workspace | Package,
 	bumpType: VersionChangeType,
 	scheme?: VersionScheme,
 	interdependencyRange: InterdependencyRange = DEFAULT_INTERDEPENDENCY_RANGE,

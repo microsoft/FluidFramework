@@ -9,7 +9,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
 
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+import { FluidRepo, Package, Workspace } from "@fluidframework/build-tools";
 
 import {
 	InterdependencyRange,
@@ -155,7 +155,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 
 		let repoVersion: ReleaseVersion;
-		let packageOrReleaseGroup: Package | MonoRepo;
+		let packageOrReleaseGroup: Package | Workspace;
 		let scheme: VersionScheme | undefined;
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
@@ -164,7 +164,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (rgOrPackage instanceof MonoRepo) {
+		if (rgOrPackage instanceof Workspace) {
 			const releaseRepo = rgOrPackage;
 			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackage.name}`);
 
@@ -177,8 +177,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		} else {
 			const releasePackage = rgOrPackage;
 
-			if (releasePackage.monoRepo !== undefined) {
-				const rg = releasePackage.monoRepo.kind;
+			if (releasePackage.workspace !== undefined) {
+				const rg = releasePackage.workspace.name;
 				this.errorLog(`${releasePackage.name} is part of the ${rg} release group.`);
 				this.errorLog(
 					`If you want to bump that package, run the following command to bump the whole release group:\n\n    ${

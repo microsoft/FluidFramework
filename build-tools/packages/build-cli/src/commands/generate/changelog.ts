@@ -85,13 +85,13 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			this.error("ReleaseGroup is possibly 'undefined'");
 		}
 
-		const monorepo =
-			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
-		if (monorepo === undefined) {
+		const workspace =
+			releaseGroup === undefined ? undefined : context.repo.workspaces.get(releaseGroup);
+		if (workspace === undefined) {
 			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
 		}
 
-		const execDir = monorepo?.directory ?? gitRoot;
+		const execDir = workspace?.directory ?? gitRoot;
 		await execCommand("pnpm exec changeset version", { cwd: execDir });
 
 		const packagesToCheck = isReleaseGroup(releaseGroup)

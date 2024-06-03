@@ -185,6 +185,56 @@ module.exports = {
 		],
 	},
 
+	repoLayout: {
+		workspaces: {
+			client: {
+				directory: ".",
+				independentPackages: ["common", "tools"],
+				releaseGroups: {
+					"client": {
+						include: [
+							"@fluidframework",
+							"@fluid-experimental",
+							// "@fluid-example",
+							"@fluid-tools",
+						],
+						defaultInterdependencyRange: "workspace:~",
+					},
+					"examples": {
+						include: ["@fluid-example"],
+						defaultInterdependencyRange: "workspace:~",
+					},
+					// "build-tools": {
+					// 	include: [
+					// 		"@fluid-private/readme-command",
+					// 		"@fluid-tools/build-cli",
+					// 		"@fluid-tools/version-tools",
+					// 		"@fluidframework/build--tools",
+					// 		"@fluidframework/bundle-size-tools",
+					// 	],
+					// 	defaultInterdependencyRange: "workspace:~",
+					// },
+				},
+			},
+			"build-tools": {
+				directory: "./build-tools",
+				defaultInterdependencyRange: "workspace:~",
+			},
+			server: {
+				directory: "./server/routerlicious",
+				defaultInterdependencyRange: "workspace:~",
+			},
+			gitrest: {
+				directory: "server/gitrest",
+				defaultInterdependencyRange: "^",
+			},
+			historian: {
+				directory: "server/historian",
+				defaultInterdependencyRange: "^",
+			},
+		},
+	},
+
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [

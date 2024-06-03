@@ -386,18 +386,18 @@ export type IFluidRepoPackageEntry =
 
 export class FluidRepo {
 	private readonly _workspaces = new Map<string, Workspace>();
-	private _releaseGroups: Set<string> | undefined;
+	// private _releaseGroups: Set<string> | undefined;
 
-	public get releaseGroups(): Set<string> {
-		if(this._releaseGroups === undefined) {
-			this._releaseGroups = new Set<string>();
-			for(const ws of this.workspaces.values()) {
-				for (const releaseGroup of ws.releaseGroups.keys())
-					this._releaseGroups.add(releaseGroup);
-			}
-		}
-		return this._releaseGroups;
-	}
+	// public get releaseGroups(): Set<string> {
+	// 	if(this._releaseGroups === undefined) {
+	// 		this._releaseGroups = new Set<string>();
+	// 		for(const ws of this.workspaces.values()) {
+	// 			for (const releaseGroup of ws.releaseGroups.keys())
+	// 				this._releaseGroups.add(releaseGroup);
+	// 		}
+	// 	}
+	// 	return this._releaseGroups;
+	// }
 
 	public get independentPackages(): Package[] {
 		return this.packages.packages.filter((pkg) => pkg.isIndependentPackage);
@@ -420,6 +420,10 @@ export class FluidRepo {
 				this.workspaces.set(workspaceName, workspace);
 				loadedPackages.push(...workspace.packages);
 			}
+		} else if (fluidBuildConfig.repoPackages !== undefined) {
+			throw new Error(
+				"No repoLayout in fluid-build config, but there is a repoPackages setting; this must be converted to repoLayout manually.",
+			);
 		} else {
 			throw new Error("No repoLayout in fluid-build config.");
 		}
