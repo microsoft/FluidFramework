@@ -2127,16 +2127,15 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 					id,
 				]);
 
-				if (baseFieldId !== undefined) {
-					this.table.affectedBaseFields.set(
-						[
-							baseFieldId.nodeId?.revision,
-							baseFieldId.nodeId?.localId,
-							baseFieldId.field,
-						],
-						true,
-					);
-				}
+				assert(
+					baseFieldId !== undefined,
+					"Cross field key not registered in base or new change",
+				);
+
+				this.table.affectedBaseFields.set(
+					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
+					true,
+				);
 			}
 		}
 
@@ -2176,16 +2175,15 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 					id,
 				]);
 
-				if (baseFieldId !== undefined) {
-					this.table.affectedBaseFields.set(
-						[
-							baseFieldId.nodeId?.revision,
-							baseFieldId.nodeId?.localId,
-							baseFieldId.field,
-						],
-						true,
-					);
-				}
+				assert(
+					baseFieldId !== undefined,
+					"Cross field key not registered in base or new change",
+				);
+
+				this.table.affectedBaseFields.set(
+					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
+					true,
+				);
 			}
 		}
 
@@ -2391,7 +2389,7 @@ function buildModularChangesetFromField(
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator = idAllocatorFromMaxId(),
 	localCrossFieldKeys: CrossFieldKey[] = [],
-	childNode: NodeId | undefined = undefined,
+	childId: NodeId | undefined = undefined,
 ): ModularChangeset {
 	const fieldChanges: FieldChangeMap = new Map([[path.field, fieldChange]]);
 
@@ -2400,8 +2398,8 @@ function buildModularChangesetFromField(
 			crossFieldKeys.set(key, { nodeId: undefined, field: path.field });
 		}
 
-		if (childNode !== undefined) {
-			setInNestedMap(nodeToParent, childNode.revision, childNode.localId, {
+		if (childId !== undefined) {
+			setInNestedMap(nodeToParent, childId.revision, childId.localId, {
 				nodeId: undefined,
 				field: path.field,
 			});
@@ -2420,8 +2418,18 @@ function buildModularChangesetFromField(
 		fieldChanges,
 	};
 
-	const childData: [FieldKey, NodeId] | undefined =
-		childNode !== undefined ? [path.field, childNode] : undefined;
+	const parentId: NodeId = { localId: brand(idAllocator.allocate()) };
+
+	for (const key of localCrossFieldKeys) {
+		crossFieldKeys.set(key, { nodeId: parentId, field: path.field });
+	}
+
+	if (childId !== undefined) {
+		setInNestedMap(nodeToParent, childId.revision, childId.localId, {
+			nodeId: parentId,
+			field: path.field,
+		});
+	}
 
 	return buildModularChangesetFromNode(
 		path.parent,
@@ -2430,8 +2438,7 @@ function buildModularChangesetFromField(
 		nodeToParent,
 		crossFieldKeys,
 		idAllocator,
-		childData,
-		localCrossFieldKeys,
+		parentId,
 	);
 }
 
@@ -2442,10 +2449,8 @@ function buildModularChangesetFromNode(
 	nodeToParent: ChangeAtomIdMap<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator,
-	childNode: [FieldKey, NodeId] | undefined = undefined,
-	localCrossFieldKeys: CrossFieldKey[] = [],
+	nodeId: NodeId = { localId: brand(idAllocator.allocate()) },
 ): ModularChangeset {
-	const nodeId: NodeId = { localId: brand(idAllocator.allocate()) };
 	setInNestedMap(nodeChanges, nodeId.revision, nodeId.localId, nodeChange);
 	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChange(
 		path.parentIndex,
@@ -2456,18 +2461,6 @@ function buildModularChangesetFromNode(
 		fieldKind: genericFieldKind.identifier,
 		change: fieldChangeset,
 	};
-
-	for (const key of localCrossFieldKeys) {
-		crossFieldKeys.set(key, { nodeId, field: path.parentField });
-	}
-
-	if (childNode !== undefined) {
-		const [childField, childId] = childNode;
-		setInNestedMap(nodeToParent, childId.revision, childId.localId, {
-			nodeId,
-			field: childField,
-		});
-	}
 
 	return buildModularChangesetFromField(
 		{ parent: path.parent, field: path.parentField },

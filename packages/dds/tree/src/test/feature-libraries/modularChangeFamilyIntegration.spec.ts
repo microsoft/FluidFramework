@@ -60,6 +60,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { Change } from "./modular-schema/modularChangesetUtil.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -600,52 +601,50 @@ describe("ModularChangeFamily integration", () => {
 			]);
 
 			const inverse = family.invert(tagChangeInline(moves, tag1), false);
-			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(3) })];
 
-			const nodeId2: NodeId = { revision: tag1, localId: brand(4) };
-			const node2Expected: NodeChangeset = {
-				fieldChanges: new Map([
-					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
-				]),
-			};
-
-			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(1), {
-					changes: nodeId2,
-					idOverride: { revision: tag1, localId: brand(1) },
-				}),
-				{ count: 1 },
-				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
-			];
-
-			const nodeId1: NodeId = { revision: tag1, localId: brand(2) };
-			const node1Expected: NodeChangeset = {
-				fieldChanges: new Map([
-					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
-				]),
-			};
-
-			const fieldAExpected = [
+			const fieldAExpected: SF.Changeset = [
 				MarkMaker.moveOut(1, brand(0), {
-					changes: nodeId1,
 					idOverride: { revision: tag1, localId: brand(0) },
 				}),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];
 
-			const expected: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, node1Expected],
-					[nodeId2.revision, nodeId2.localId, node2Expected],
-				]),
-				fieldChanges: new Map([
-					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
-				]),
-				nodeToParent: new Map(), // XXX
-				crossFieldKeys: new BTree(),
-				maxId: brand(5),
-			};
+			const fieldBExpected = [
+				MarkMaker.moveOut(1, brand(1), {
+					idOverride: { revision: tag1, localId: brand(1) },
+				}),
+				{ count: 1 },
+				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+			];
+
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(3) })];
+
+			const nodeId1: NodeId = { revision: tag1, localId: brand(2) };
+			const nodeId2: NodeId = { revision: tag1, localId: brand(4) };
+
+			const expected: ModularChangeset = Change.build(
+				{ family, maxId: 5 },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					fieldAExpected,
+					Change.nodeWithId(
+						0,
+						nodeId1,
+						Change.field(
+							fieldB,
+							sequence.identifier,
+							fieldBExpected,
+							Change.nodeWithId(
+								0,
+								nodeId2,
+								Change.field(fieldC, sequence.identifier, fieldCExpected),
+							),
+						),
+					),
+				),
+			);
 
 			assert.deepEqual(inverse, expected);
 		});
