@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -198,17 +198,6 @@ export interface IDeltaConnection {
 	 * that needs to be part of the summary but does not generate ops.
 	 */
 	dirty(): void;
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 /**

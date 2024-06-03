@@ -4,7 +4,6 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
@@ -55,7 +54,6 @@ export class RemoteChannelContext implements IChannelContext {
 		storageService: IDocumentStorageService,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
 		registry: ISharedObjectRegistry,
@@ -74,7 +72,6 @@ export class RemoteChannelContext implements IChannelContext {
 			dataStoreContext.connected,
 			submitFn,
 			() => dirtyFn(this.id),
-			addedGCOutboundReferenceFn,
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,

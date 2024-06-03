@@ -188,8 +188,8 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		uploadBlob: async (...args) => {
 			return context.uploadBlob(...args);
 		},
-		addedGCOutboundReference: (...args) => {
-			return context.addedGCOutboundReference?.(...args);
+		addedGCOutboundRoute: (...args) => {
+			return context.addedGCOutboundRoute(...args);
 		},
 		getCreateChildSummarizerNodeFn: (...args) => {
 			return context.getCreateChildSummarizerNodeFn?.(...args);
@@ -407,10 +407,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-			this.parentContext.addedGCOutboundReference?.(
-				{ absolutePath: fromPath },
-				{ absolutePath: toPath },
-			);
+			this.parentContext.addedGCOutboundRoute(fromPath, toPath);
 		});
 
 		// Only log once per container to avoid noise/cost.
@@ -536,7 +533,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			internalId,
 			this.parentContext.IFluidHandleContext,
 		);
-		this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
+		this.parentContext.addedGCOutboundRoute(
+			this.containerRuntimeHandle.absolutePath,
+			handle.absolutePath,
+		);
 
 		this.aliasMap.set(alias, context.id);
 		this.aliasedDataStores.add(context.id);
@@ -816,7 +816,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
-		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -838,10 +838,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 				// By default, we use the new behavior of detecting outbound routes here.
 				// If this setting is true, then DataStoreContext would be notifying GC instead.
-				if (
-					this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true &&
-					addedOutboundReference !== undefined
-				) {
+				if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
 					// Notify GC of any outbound references that were added by this op.
 					detectOutboundReferences(
 						envelope.address,
@@ -1195,7 +1192,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					id,
 					this.parentContext.IFluidHandleContext,
 				);
-				this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
+				this.parentContext.addedGCOutboundRoute(
+					this.containerRuntimeHandle.absolutePath,
+					handle.absolutePath,
+				);
 			}
 		}
 		this.dataStoresSinceLastGC = [];

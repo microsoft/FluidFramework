@@ -1663,7 +1663,11 @@ export class ContainerRuntime
 			snapshot,
 			parentContext,
 			this.mc.logger,
-			(props) => this.garbageCollector.nodeUpdated(props),
+			(props) =>
+				this.garbageCollector.nodeUpdated({
+					timestampMs: this.getCurrentReferenceTimestampMs(),
+					...props,
+				}),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1689,6 +1693,7 @@ export class ContainerRuntime
 				this.garbageCollector.nodeUpdated({
 					node: { type: "Blob", path: blobPath },
 					reason: "Loaded",
+					timestampMs: this.getCurrentReferenceTimestampMs(),
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
@@ -2954,6 +2959,7 @@ export class ContainerRuntime
 			node: { type: "DataStore", path: `/${internalId}` },
 			reason: "Loaded",
 			packagePath: context.packagePath,
+			timestampMs: this.getCurrentReferenceTimestampMs(),
 		});
 		return channel.entryPoint;
 	}
@@ -3420,14 +3426,8 @@ export class ContainerRuntime
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	) {
-		this.garbageCollector.addedOutboundReference(
-			srcHandle.absolutePath,
-			outboundHandle.absolutePath,
-		);
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this.garbageCollector.addedOutboundReference(fromPath, toPath);
 	}
 
 	/**

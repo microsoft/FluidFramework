@@ -68,8 +68,6 @@ export interface IChannelStorageService {
 
 // @alpha
 export interface IDeltaConnection {
-    // @deprecated (undocumented)
-    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     attach(handler: IDeltaHandler): void;
     // (undocumented)
     connected: boolean;
