@@ -242,7 +242,7 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => array.moveRangeToStart(2, 1),
 					validateUsageError(
-						/Too large of "start" value passed to TreeArrayNode.moveRangeToStart./,
+						/Index value passed to TreeArrayNode.moveRangeToStart is out of bounds./,
 					),
 				);
 				// Index is negative
@@ -283,7 +283,7 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => array.moveRangeToEnd(2, 1),
 					validateUsageError(
-						/Too large of "start" value passed to TreeArrayNode.moveRangeToEnd./,
+						/Index value passed to TreeArrayNode.moveRangeToEnd is out of bounds./,
 					),
 				);
 				// Index is negative
@@ -324,14 +324,14 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => array.moveRangeToIndex(0, 0, 4),
 					validateUsageError(
-						/Too large of "start" value passed to TreeArrayNode.moveRangeToIndex./,
+						/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
 					),
 				);
 				// Start index larger than end index
 				assert.throws(
 					() => array.moveRangeToIndex(0, 2, 1),
 					validateUsageError(
-						/Too large of "start" value passed to TreeArrayNode.moveRangeToIndex./,
+						/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
 					),
 				);
 				// Index is negative

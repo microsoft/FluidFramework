@@ -885,6 +885,6 @@ function validateIndexRange(
 	validateIndex(startIndex, array, methodName);
 	validateIndex(endIndex, array, methodName, true);
 	if (startIndex > endIndex) {
-		throw new UsageError(`Too large of "start" value passed to TreeArrayNode.${methodName}.`);
+		throw new UsageError(`Index value passed to TreeArrayNode.${methodName} is out of bounds.`);
 	}
 }
