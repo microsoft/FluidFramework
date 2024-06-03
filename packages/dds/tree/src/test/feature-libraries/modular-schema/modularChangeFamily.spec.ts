@@ -60,7 +60,6 @@ import {
 import {
 	EncodingTestData,
 	assertDeltaEqual,
-	defaultRevInfosFromChanges,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
