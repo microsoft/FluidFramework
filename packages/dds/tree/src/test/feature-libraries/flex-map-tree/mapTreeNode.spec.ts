@@ -9,12 +9,13 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
-	getOrCreateMapTreeNode,
 } from "../../../feature-libraries/index.js";
 import { TreeStatus } from "../../../../dist/index.js";
 import { EmptyKey, FieldKey, MapTree } from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getOrCreateNode } from "../../../feature-libraries/flex-map-tree/index.js";
 
 describe("MapTreeNodes", () => {
 	// #region The schema used in this test suite
@@ -66,14 +67,14 @@ describe("MapTreeNodes", () => {
 	// #endregion
 
 	// The `MapTreeNode`s used in this test suite:
-	const map = getOrCreateMapTreeNode(mapSchema, mapMapTree);
-	const fieldNode = getOrCreateMapTreeNode(fieldNodeSchema, fieldNodeMapTree);
-	const object = getOrCreateMapTreeNode(objectSchema, objectMapTree);
+	const map = getOrCreateNode(mapSchema, mapMapTree);
+	const fieldNode = getOrCreateNode(fieldNodeSchema, fieldNodeMapTree);
+	const object = getOrCreateNode(objectSchema, objectMapTree);
 
 	it("are cached", () => {
-		assert.equal(getOrCreateMapTreeNode(mapSchema, mapMapTree), map);
-		assert.equal(getOrCreateMapTreeNode(fieldNodeSchema, fieldNodeMapTree), fieldNode);
-		assert.equal(getOrCreateMapTreeNode(objectSchema, objectMapTree), object);
+		assert.equal(getOrCreateNode(mapSchema, mapMapTree), map);
+		assert.equal(getOrCreateNode(fieldNodeSchema, fieldNodeMapTree), fieldNode);
+		assert.equal(getOrCreateNode(objectSchema, objectMapTree), object);
 	});
 
 	it("can get their type", () => {
@@ -154,7 +155,7 @@ describe("MapTreeNodes", () => {
 
 	it("cannot be multiparented", () => {
 		assert.throws(() =>
-			getOrCreateMapTreeNode(objectSchema, {
+			getOrCreateNode(objectSchema, {
 				type: brand("Parent of a node that already has another parent"),
 				fields: new Map([[brand("fieldKey"), [mapMapTree]]]),
 			}),
@@ -166,7 +167,7 @@ describe("MapTreeNodes", () => {
 			fields: new Map(),
 		};
 		assert.throws(() => {
-			getOrCreateMapTreeNode(fieldNodeSchema, {
+			getOrCreateNode(fieldNodeSchema, {
 				type: brand("Parent with the same child twice in the same field"),
 				fields: new Map([[EmptyKey, [duplicateChild, duplicateChild]]]),
 			});

@@ -3,4 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { MapTreeNode, getOrCreateMapTreeNode, tryGetMapTreeNode } from "./mapTreeNode.js";
+export {
+	MapTreeNode,
+	getOrCreateNode,
+	getOrCreateMapTreeNode,
+	tryGetMapTreeNode,
+} from "./mapTreeNode.js";
