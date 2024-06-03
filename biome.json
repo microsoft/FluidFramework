@@ -23,7 +23,7 @@
 		"maxSize": 2097152
 	},
 	"organizeImports": {
-		"enabled": true
+		"enabled": false
 	},
 	"linter": {
 		"enabled": false,
