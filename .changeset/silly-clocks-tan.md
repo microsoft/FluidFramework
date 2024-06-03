@@ -41,7 +41,8 @@ view.initialize(new Point({ x: 0, y: 0 }));
 and this on the load codepath:
 
 ```typescript
-const tree = SharedTree.create(runtime, "foo");
+// 'tree' would typically be obtained by retrieving it from a well-known location, e.g. within a `DataObject`'s
+// root directory or in `IFluidContainer.initialObjects`
 const view = await tree.viewWith(treeConfig);
 ```
 
