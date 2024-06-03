@@ -72,19 +72,19 @@ interface LocationInField {
  */
 export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-
 	private readonly events = createEmitter<FlexTreeNodeEvents>();
 
 	/**
 	 * Create a new MapTreeNode.
-	 * @param schema - the schema of this node
-	 * @param mapTree - the {@link MapTree} containing the data that this node wraps
 	 * @param location - the parentage of this node, if it is being created underneath an existing node and field, or undefined if not
 	 * @remarks This class (and its subclasses) should not be directly constructed outside of this module.
 	 * Instead, use {@link getOrCreateMapTreeNode} to create a MapTreeNode from a {@link MapTree}.
+	 * A `MapTreeNode` may never be constructed more than once for the same {@link MapTree} object.
+	 * Instead, it should always be acquired via {@link getOrCreateMapTreeNode}.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
+		/** The underlying {@link MapTree} that this `MapTreeNode` reads its data from */
 		public readonly mapTree: MapTree,
 		private location: LocationInField | undefined,
 	) {
@@ -107,14 +107,10 @@ export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTree
 
 	/**
 	 * Set this node's parentage (see {@link FlexTreeNode.parentField}).
-	 * @remarks A node may only be adopted to a new parent one time, though this method may be called idempotently with the same parent and index.
+	 * @remarks A node may only be adopted to a new parent one time, and only if it was not constructed with a parent.
 	 */
 	public adopt(parent: MapTreeField<FlexAllowedTypes>, index: number): void {
-		assert(
-			this.location === undefined ||
-				(parent.isSameAs(this.location.parent) && index === this.location.index),
-			"Node may not be reparented",
-		);
+		assert(this.location === undefined, "Node may not be adopted if it already has a parent");
 		this.location = { parent, index };
 	}
 
@@ -141,6 +137,7 @@ export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTree
 
 	public tryGetField(key: FieldKey): MapTreeField<FlexAllowedTypes> | undefined {
 		const field = this.mapTree.fields.get(key);
+		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
 			return getOrCreateField(this, key, field, this.schema.getFieldSchema(key));
 		}
@@ -174,10 +171,14 @@ export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTree
 	}
 
 	public get context(): FlexTreeContext {
+		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
+		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
 		throw unsupportedError("Getting context");
 	}
 
 	public get anchorNode(): AnchorNode {
+		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
+		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
 		throw unsupportedError("Reading anchor node");
 	}
 
@@ -191,7 +192,7 @@ export class MapTreeNode<TSchema extends FlexTreeNodeSchema> implements FlexTree
 					{ parent: field, index },
 				);
 				// These next asserts detect the case where `getOrCreateChild` gets a cache hit of a different node than the one we're trying to create
-				assert(child.location !== undefined, "Expected child to have parent");
+				assert(child.location !== undefined, "Expected node to have parent");
 				assert(child.location.parent.parent === this, "Node may not be multi-parented");
 				assert(child.location.index === index, "Node may not be multi-parented");
 				child.walkTree();
@@ -303,10 +304,12 @@ export class MapTreeMapNode<TSchema extends FlexMapNodeSchema>
 	}
 
 	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+		// `MapTreeNode`s cannot be mutated
 		throw unsupportedError("Setting a map entry");
 	}
 
 	public delete(key: string): void {
+		// `MapTreeNode`s cannot be mutated
 		throw unsupportedError("Deleting a map entry");
 	}
 
