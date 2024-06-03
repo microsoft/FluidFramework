@@ -116,7 +116,7 @@ export class Outbox {
 		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit, canRebase: true });
 		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
 	}
 
 	public get messageCount(): number {
