@@ -329,7 +329,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: string, targetClientId?: string) {
+	public submitSignal(content: unknown, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 

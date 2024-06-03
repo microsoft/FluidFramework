@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import type { JsonableOrBinary, Jsonable } from "@fluidframework/core-interfaces/internal";
+
 import { encodeJsonableOrBinary, decodeJsonableOrBinary } from "../binaryEncoding.js";
 
 describe("Binary encoding", () => {
-	function testSameAsJson(content: Jsonable) {
+	function testSameAsJson(content: unknown) {
 		const res = JSON.stringify(content);
 		const res2 = encodeJsonableOrBinary(content);
 		assert(res === res2, "not same as JSON.stringify");
@@ -29,7 +29,7 @@ describe("Binary encoding", () => {
 		testSameAsJson({ a: "test", b: { c: "test", d: undefined, e: [5, 6, undefined] } });
 	});
 
-	function testBinaryRoundtrip(content: JsonableOrBinary) {
+	function testBinaryRoundtrip(content: unknown) {
 		const res = encodeJsonableOrBinary(content);
 		const content2 = decodeJsonableOrBinary(res);
 

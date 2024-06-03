@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonableOrBinary, Jsonable } from "@fluidframework/core-interfaces/internal";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 
 const binaryType = "__fluid_binary__";
@@ -14,8 +13,8 @@ const binaryType = "__fluid_binary__";
  * @returns string
  * @internal
  */
-export function encodeJsonableOrBinary<T>(content: JsonableOrBinary<T>): string {
-	return JSON.stringify(content, (_key: string, value: JsonableOrBinary<T>) => {
+export function encodeJsonableOrBinary<T>(content: unknown): string {
+	return JSON.stringify(content, (_key: string, value: unknown) => {
 		if (value instanceof ArrayBuffer) {
 			return {
 				type: binaryType,
@@ -33,11 +32,11 @@ export function encodeJsonableOrBinary<T>(content: JsonableOrBinary<T>): string 
  * @returns decoded JS object
  * @internal
  */
-export function decodeJsonableOrBinary(content: string): JsonableOrBinary {
-	return JSON.parse(content, (_key: string, value: Jsonable) => {
+export function decodeJsonableOrBinary(content: string): unknown {
+	return JSON.parse(content, (_key: string, value: unknown) => {
 		if (value !== null && (value as any).type === binaryType) {
 			return stringToBuffer((value as any).content, "base64");
 		}
 		return value;
-	}) as JsonableOrBinary;
+	}) as unknown;
 }
