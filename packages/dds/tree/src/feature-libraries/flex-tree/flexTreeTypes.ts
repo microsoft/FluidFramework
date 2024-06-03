@@ -135,7 +135,7 @@ export enum TreeStatus {
 	/**
 	 * Is created but has not yet been inserted into the tree.
 	 */
-	Created = 3,
+	New = 3,
 }
 
 /**

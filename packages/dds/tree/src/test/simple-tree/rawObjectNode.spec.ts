@@ -61,7 +61,7 @@ describe("raw object nodes", () => {
 
 	it("allow reading tree status", () => {
 		const { rawObjectNode } = getRawObjectNode();
-		assert.equal(rawObjectNode.treeStatus(), TreeStatus.Created);
+		assert.equal(rawObjectNode.treeStatus(), TreeStatus.New);
 	});
 
 	it("disallow reading most node properties", () => {
