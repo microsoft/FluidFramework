@@ -677,7 +677,7 @@ function setEndpoint(
 	count: number,
 	endpoint: ChangeAtomId,
 ): void {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count, false);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
