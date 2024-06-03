@@ -80,14 +80,14 @@
 		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
 		"check:exports:esm:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.esm.json",
 		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --organize-imports-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -105,21 +105,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "dist/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "dist/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -182,18 +172,10 @@
 				"build:test:jest",
 				"build:test:types"
 			],
-			"build:test:jest": [
-				"tsc"
-			],
-			"build:test:mocha:cjs": [
-				"tsc"
-			],
-			"build:test:mocha:esm": [
-				"build:esnext"
-			],
-			"build:test:types": [
-				"build:esnext"
-			]
+			"build:test:jest": ["tsc"],
+			"build:test:mocha:cjs": ["tsc"],
+			"build:test:mocha:esm": ["build:esnext"],
+			"build:test:types": ["build:esnext"]
 		}
 	},
 	"typeValidation": {

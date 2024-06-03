@@ -19,12 +19,12 @@
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
 		"check:biome": "biome check . --formatter-enabled=true --organize-imports-enabled=true",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --organize-imports-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -113,10 +113,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": [
-					"...",
-					"webpack"
-				],
+				"dependsOn": ["...", "webpack"],
 				"script": false
 			},
 			"build:esnext": [
@@ -131,9 +128,7 @@
 		"buildDependencies": {
 			"merge": {
 				"build:esnext": {
-					"@fluid-experimental/property-inspector-table": [
-						"build:webpack"
-					]
+					"@fluid-experimental/property-inspector-table": ["build:webpack"]
 				}
 			}
 		}
