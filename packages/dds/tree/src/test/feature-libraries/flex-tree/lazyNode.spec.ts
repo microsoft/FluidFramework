@@ -43,7 +43,6 @@ import {
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeNodeSchema,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
@@ -52,6 +51,7 @@ import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
 import { contextWithContentReadonly } from "./utils.js";
+import { MockNodeKeyManager } from "../../../feature-libraries/node-key/mockNodeKeyManager.js";
 
 function collectPropertyNames(obj: object): Set<string> {
 	if (obj == null) {
@@ -337,7 +337,7 @@ describe("LazyNode", () => {
 		const context = getTreeContext(
 			schema,
 			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
-			createMockNodeKeyManager(),
+			new MockNodeKeyManager(),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);
@@ -432,7 +432,7 @@ describe("LazyNode", () => {
 		const context = getTreeContext(
 			schema,
 			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
-			createMockNodeKeyManager(),
+			new MockNodeKeyManager(),
 		);
 
 		const cursor = initializeCursor(context, rootFieldAnchor);

@@ -10,8 +10,8 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -110,7 +110,7 @@ describe("class-tree tree", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: undefined,
 			}));
@@ -122,7 +122,7 @@ describe("class-tree tree", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),
 			});
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				testOptionalField: undefined,
 			}));

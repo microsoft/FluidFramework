@@ -9,6 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IRuntime } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -17,10 +18,16 @@ import {
 	type IUrlResolver,
 	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	isFluidError,
+	MockLogger,
+	wrapConfigProviderWithDefaults,
+	mixinMonitoringContext,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { Container } from "../container.js";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
@@ -217,5 +224,38 @@ describe("loader unit test", () => {
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.ok(parsedState.baseSnapshot);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("ConnectionStateHandler feature gate overrides", () => {
+		const configProvider = wrapConfigProviderWithDefaults(
+			undefined, // original provider
+			{
+				"Fluid.Container.DisableCatchUpBeforeDeclaringConnected": true,
+				"Fluid.Container.DisableJoinSignalWait": true,
+			},
+		);
+
+		const logger = mixinMonitoringContext(
+			createChildLogger({ logger: new MockLogger() }),
+			configProvider,
+		);
+
+		// Ensure that this call does not crash due to potential reentrnacy:
+		// - Container.constructor
+		// - ConnectionStateHandler.constructor
+		// - fetching overwrites from config
+		// - logs event about fetching config
+		// - calls property getters on logger setup by Container.constructor
+		// - containerConnectionState getter
+		// - Container.connectionState getter
+		// - Container.connectionStateHandler.connectionState - crash, as Container.connectionStateHandler is undefined (not setup yet).
+		new Container({
+			urlResolver: failProxy(),
+			documentServiceFactory: failProxy(),
+			codeLoader,
+			options: {},
+			scope: {},
+			subLogger: logger.logger,
+		});
 	});
 });

@@ -17,6 +17,11 @@ import {
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentMessage,
@@ -29,12 +34,6 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -57,6 +56,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -22,6 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,

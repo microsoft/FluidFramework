@@ -6,13 +6,13 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";

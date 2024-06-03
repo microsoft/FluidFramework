@@ -37,20 +37,22 @@ import {
 	DefaultEditBuilder,
 	FieldKinds,
 	FlexFieldSchema,
+	ModularChangeset,
 	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import {
+	ChangeEnricherReadonlyCheckout,
 	EditManager,
-	ICommitEnricher,
+	ResubmitMachine,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { brand } from "../../util/index.js";
+import { brand, disposeSymbol } from "../../util/index.js";
 import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
@@ -342,61 +344,94 @@ describe("SharedTreeCore", () => {
 	});
 
 	describe("commit enrichment", () => {
-		interface Enrichment {
-			readonly input: GraphCommit<DefaultChangeset>;
-			readonly output: GraphCommit<DefaultChangeset>;
+		interface EnrichedCommit extends GraphCommit<ModularChangeset> {
+			readonly original?: GraphCommit<ModularChangeset>;
 		}
-
-		class MockCommitEnricher implements ICommitEnricher<DefaultChangeset> {
-			public readonly enrichmentLog: Enrichment[] = [];
-
-			public enrichCommit(
-				commit: GraphCommit<DefaultChangeset>,
-			): GraphCommit<DefaultChangeset> {
-				const enriched = { ...commit };
-				this.enrichmentLog.push({ input: commit, output: enriched });
-				return enriched;
-			}
-
-			public isInResubmitPhase: boolean = false;
-			public toResubmit?: GraphCommit<DefaultChangeset>[];
-
-			public prepareForResubmit(toResubmit: Iterable<GraphCommit<DefaultChangeset>>): void {
-				assert.equal(this.toResubmit, undefined);
-				this.toResubmit = Array.from(toResubmit);
-				assert.equal(this.toResubmit.length, this.enrichmentLog.length);
-				this.isInResubmitPhase = true;
-			}
-
+		class MockResubmitMachine implements ResubmitMachine<DefaultChangeset> {
+			public readonly resubmitQueue: EnrichedCommit[] = [];
 			public readonly sequencingLog: boolean[] = [];
+			public readonly submissionLog: EnrichedCommit[] = [];
+			public readonly resubmissionLog: GraphCommit<DefaultChangeset>[][] = [];
 
+			public prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
+				assert.equal(this.resubmitQueue.length, 0);
+				assert.equal(toResubmit.length, this.submissionLog.length);
+				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
+				this.isInResubmitPhase = true;
+				this.resubmissionLog.push(toResubmit.slice());
+			}
+			public peekNextCommit(): GraphCommit<ModularChangeset> {
+				assert.equal(this.isInResubmitPhase, true);
+				assert.equal(this.resubmitQueue.length > 0, true);
+				return this.resubmitQueue[0];
+			}
+			public isInResubmitPhase: boolean = false;
+			public onCommitSubmitted(commit: GraphCommit<ModularChangeset>): void {
+				const toResubmit = this.resubmitQueue.shift();
+				if (toResubmit !== commit) {
+					this.resubmitQueue.shift();
+				}
+				this.submissionLog.push(commit);
+			}
 			public onSequencedCommitApplied(isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
 			}
 		}
 
-		it("notifies the enricher of sequenced commits", () => {
-			const enricher = new MockCommitEnricher();
-			const tree1 = createTree([], enricher);
+		interface Enrichment<T extends object> {
+			readonly input: T;
+			readonly output: T;
+		}
+
+		class MockChangeEnricher<T extends object> implements ChangeEnricherReadonlyCheckout<T> {
+			public isDisposed = false;
+			public enrichmentLog: Enrichment<T>[] = [];
+
+			public fork(): never {
+				// SharedTreeCore should never call fork on a change enricher
+				throw new Error("Unexpected use of fork");
+			}
+
+			public updateChangeEnrichments(input: T): T {
+				assert.equal(this.isDisposed, false);
+				const output = { ...input };
+				this.enrichmentLog.push({ input, output });
+				return output;
+			}
+
+			public [disposeSymbol](): void {
+				assert.equal(this.isDisposed, false);
+				this.isDisposed = true;
+			}
+		}
+
+		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			tree1.connect({
+			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
 
-			assert.equal(enricher.sequencingLog.length, 0);
-			changeTree(tree1);
+			assert.equal(machine.submissionLog.length, 0);
+			assert.equal(machine.sequencingLog.length, 0);
+			changeTree(tree);
+			assert.equal(machine.submissionLog.length, 1);
+			assert.equal(machine.sequencingLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
-			assert.deepEqual(enricher.sequencingLog, [true]);
+			assert.equal(machine.submissionLog.length, 1);
+			assert.deepEqual(machine.sequencingLog, [true]);
 		});
 
 		it("enriches commits on first submit", () => {
-			const enricher = new MockCommitEnricher();
-			const tree = createTree([], enricher);
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -409,13 +444,42 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
-			assert.equal(enricher.enrichmentLog[0].output, tree.submitted[0]);
+			assert.equal(machine.submissionLog.length, 1);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
-		it("enriches commits on re-submit", () => {
-			const enricher = new MockCommitEnricher();
-			const tree = createTree([], enricher);
+		it("enriches transactions on first submit", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			tree.getLocalBranch().startTransaction();
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 2);
+			assert.equal(enricher.enrichmentLog[1].input, tree.getLocalBranch().getHead().change);
+			tree.getLocalBranch().commitTransaction();
+			assert.equal(enricher.enrichmentLog.length, 2);
+			assert.equal(machine.submissionLog.length, 1);
+			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
+		});
+
+		it("update commit enrichments on re-submit", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -430,16 +494,50 @@ describe("SharedTreeCore", () => {
 			changeTree(tree);
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(enricher.toResubmit === undefined, true);
+			assert.equal(machine.resubmitQueue.length, 0);
+			assert.equal(machine.submissionLog.length, 2);
+			assert.equal(machine.sequencingLog.length, 0);
 			runtime.connected = true;
-			assert.equal(enricher.toResubmit?.length, 2);
-			assert.equal(enricher.enrichmentLog.length, 4);
-			assert.equal(enricher.toResubmit[0], enricher.enrichmentLog[0].input);
-			assert.equal(enricher.toResubmit[0], enricher.enrichmentLog[2].input);
-			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[1].input);
-			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[3].input);
-			assert.equal(enricher.enrichmentLog[2].output, tree.submitted[2]);
-			assert.equal(enricher.enrichmentLog[3].output, tree.submitted[3]);
+
+			assert.equal(machine.resubmissionLog.length, 1);
+			assert.equal(machine.resubmissionLog[0].length, 2);
+			assert.equal(machine.resubmitQueue.length, 0);
+			assert.equal(machine.submissionLog.length, 4);
+			assert.equal(machine.submissionLog[2].original, machine.resubmissionLog[0][0]);
+			assert.equal(machine.submissionLog[3].original, machine.resubmissionLog[0][1]);
+			assert.equal(machine.sequencingLog.length, 0);
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(machine.sequencingLog.length, 2);
+		});
+
+		it("does not leak enriched commits that are not sent", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			assert.equal(tree.preparedCommitsCount, 0);
+
+			// Temporarily make commit application fail
+			const disableFailure = tree.getLocalBranch().on("beforeChange", () => {
+				throw new Error("Invalid commit");
+			});
+			assert.throws(() => changeTree(tree));
+			disableFailure();
+
+			// The invalid commit has been prepared but not sent
+			assert.equal(tree.preparedCommitsCount, 1);
+
+			// Making a valid change should purge the invalid commit
+			changeTree(tree);
+			assert.equal(tree.preparedCommitsCount, 0);
 		});
 	});
 
@@ -449,7 +547,8 @@ describe("SharedTreeCore", () => {
 
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
-		enricher?: ICommitEnricher<DefaultChangeset>,
+		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
+		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	): TestSharedTreeCore {
 		return new TestSharedTreeCore(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -457,6 +556,7 @@ describe("SharedTreeCore", () => {
 			indexes,
 			undefined,
 			undefined,
+			resubmitMachine,
 			enricher,
 		);
 	}

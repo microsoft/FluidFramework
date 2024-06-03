@@ -108,12 +108,12 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@types/express": "^4.17.21",
 		"@types/fs-extra": "^9.0.11",
 		"@types/mocha": "^9.1.1",
@@ -132,7 +132,7 @@
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.3.3",
+		"typescript": "~5.4.5",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
 	},

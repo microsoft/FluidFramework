@@ -45,6 +45,14 @@ import {
 	delay,
 } from "@fluidframework/core-utils/internal";
 import {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
@@ -63,15 +71,6 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
 import {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -88,6 +87,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

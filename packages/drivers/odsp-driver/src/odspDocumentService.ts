@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -21,7 +22,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

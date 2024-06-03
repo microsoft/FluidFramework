@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -28,7 +29,6 @@ import {
 	TokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

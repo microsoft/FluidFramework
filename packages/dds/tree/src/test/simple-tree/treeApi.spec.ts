@@ -8,9 +8,9 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { UpPath, rootFieldKey } from "../../core/index.js";
 import {
-	TreeStatus,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
+	MockNodeKeyManager,
+	TreeStatus,
 } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
@@ -187,7 +187,7 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: id,
@@ -224,7 +224,7 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
-			const nodeKeyManager = createMockNodeKeyManager();
+			const nodeKeyManager = new MockNodeKeyManager();
 			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
 				nodeKeyManager.generateLocalNodeKey(),
 			);

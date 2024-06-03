@@ -11,9 +11,9 @@ overrides:
   sharp: ^0.33.2
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.43.1':
+  '@microsoft/api-extractor@7.45.1':
     hash: f66stvskxun56mencgf6l5564y
-    path: patches/@microsoft__api-extractor@7.43.1.patch
+    path: patches/@microsoft__api-extractor@7.45.1.patch
 
 importers:
 
@@ -38,8 +38,8 @@ importers:
         specifier: ^7.21.6
         version: 7.22.21
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -86,8 +86,8 @@ importers:
         specifier: npm:@fluidframework/gitresources@4.0.0
         version: /@fluidframework/gitresources@4.0.0
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -432,8 +432,8 @@ importers:
         specifier: npm:@fluidframework/server-local-server@4.0.0
         version: /@fluidframework/server-local-server@4.0.0
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.12
@@ -632,8 +632,8 @@ importers:
         specifier: npm:@fluidframework/protocol-base@4.0.0
         version: /@fluidframework/protocol-base@4.0.0
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@types/assert':
         specifier: ^1.5.1
         version: 1.5.6
@@ -1039,8 +1039,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       socket.io:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.7.5
+        version: 4.7.5
       telegrafjs:
         specifier: ^0.1.3
         version: 0.1.3
@@ -1179,8 +1179,8 @@ importers:
         specifier: npm:@fluidframework/server-services-client@4.0.0
         version: /@fluidframework/server-services-client@4.0.0
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.8
@@ -1528,8 +1528,8 @@ importers:
         specifier: workspace:~
         version: link:../services-utils
       '@socket.io/redis-adapter':
-        specifier: ^7.2.0
-        version: 7.2.0
+        specifier: ^8.3.0
+        version: 8.3.0(socket.io-adapter@2.5.4)
       '@socket.io/sticky':
         specifier: ^1.0.4
         version: 1.0.4
@@ -1561,11 +1561,11 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0
       socket.io:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.7.5
+        version: 4.7.5
       socket.io-adapter:
-        specifier: ^2.4.0
-        version: 2.5.2
+        specifier: ^2.5.4
+        version: 2.5.4
       socket.io-parser:
         specifier: ^4.2.4
         version: 4.2.4
@@ -2045,8 +2045,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       socket.io:
-        specifier: ^4.6.2
-        version: 4.6.2
+        specifier: ^4.7.5
+        version: 4.7.5
       split:
         specifier: ^1.0.0
         version: 1.0.1
@@ -2067,8 +2067,8 @@ importers:
         specifier: ~2.0.0-internal.6.2.0
         version: 2.0.0-internal.7.0.0
       '@microsoft/api-extractor':
-        specifier: ^7.43.1
-        version: 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4)
       '@types/compression':
         specifier: ^1.7.2
         version: 1.7.3
@@ -3619,7 +3619,7 @@ packages:
       '@fluid-tools/version-tools': 0.39.0-264124
       '@fluidframework/build-tools': 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
       '@oclif/plugin-commands': 3.3.1
@@ -3680,7 +3680,7 @@ packages:
       '@fluid-tools/version-tools': 0.39.0-264124
       '@fluidframework/build-tools': 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
       '@oclif/plugin-commands': 3.3.1
@@ -3741,7 +3741,7 @@ packages:
       '@fluid-tools/version-tools': 0.39.0-264124
       '@fluidframework/build-tools': 0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0)
       '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
       '@oclif/plugin-commands': 3.3.1
@@ -4272,8 +4272,8 @@ packages:
       nconf: 0.12.1
       notepack.io: 2.3.0
       serialize-error: 8.1.0
-      socket.io: 4.7.2
-      socket.io-adapter: 2.5.2
+      socket.io: 4.7.5
+      socket.io-adapter: 2.5.4
       socket.io-parser: 4.2.4
       uuid: 9.0.1
       winston: 3.9.0
@@ -4340,7 +4340,7 @@ packages:
       lru-cache: 6.0.0
       mongodb: 4.17.1
       nconf: 0.12.1
-      socket.io: 4.7.2
+      socket.io: 4.7.5
       telegrafjs: 0.1.3
       uuid: 9.0.1
       winston: 3.9.0
@@ -4633,37 +4633,37 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model@7.28.14(@types/node@18.17.6):
-    resolution: {integrity: sha512-Bery/c8A8SsKPSvA82cTTuy/+OcxZbLRmKhPkk91/AJOQzxZsShcrmHFAGeiEqSIrv1nPZ3tKq9kfMLdCHmsqg==}
+  /@microsoft/api-extractor-model@7.28.21(@types/node@18.17.6):
+    resolution: {integrity: sha512-AZSdhK/vO4ddukfheXZmrkI5180XLeAqwzu/5pTsJHsXYSyNt3H3VJyynUYKMeNcveG9QLgljH3XRr/LqEfC0Q==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.17.6)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.17.6)
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model@7.28.14(@types/node@18.18.4):
-    resolution: {integrity: sha512-Bery/c8A8SsKPSvA82cTTuy/+OcxZbLRmKhPkk91/AJOQzxZsShcrmHFAGeiEqSIrv1nPZ3tKq9kfMLdCHmsqg==}
+  /@microsoft/api-extractor-model@7.28.21(@types/node@18.18.4):
+    resolution: {integrity: sha512-AZSdhK/vO4ddukfheXZmrkI5180XLeAqwzu/5pTsJHsXYSyNt3H3VJyynUYKMeNcveG9QLgljH3XRr/LqEfC0Q==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.4)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.18.4)
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor@7.43.1(patch_hash=f66stvskxun56mencgf6l5564y):
-    resolution: {integrity: sha512-ohg40SsvFFgzHFAtYq5wKJc8ZDyY46bphjtnSvhSSlXpPTG7GHwyyXkn48UZiUCBwr2WC7TRC1Jfwz7nreuiyQ==}
+  /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y):
+    resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.14(@types/node@18.18.4)
+      '@microsoft/api-extractor-model': 7.28.21(@types/node@18.18.4)
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.4)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.18.4)
       '@rushstack/rig-package': 0.5.2
-      '@rushstack/terminal': 0.10.1(@types/node@18.18.4)
-      '@rushstack/ts-command-line': 4.19.2(@types/node@18.18.4)
+      '@rushstack/terminal': 0.12.2(@types/node@18.18.4)
+      '@rushstack/ts-command-line': 4.21.4(@types/node@18.18.4)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.8
@@ -4675,17 +4675,17 @@ packages:
     dev: true
     patched: true
 
-  /@microsoft/api-extractor@7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6):
-    resolution: {integrity: sha512-ohg40SsvFFgzHFAtYq5wKJc8ZDyY46bphjtnSvhSSlXpPTG7GHwyyXkn48UZiUCBwr2WC7TRC1Jfwz7nreuiyQ==}
+  /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6):
+    resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.14(@types/node@18.17.6)
+      '@microsoft/api-extractor-model': 7.28.21(@types/node@18.17.6)
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.17.6)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.17.6)
       '@rushstack/rig-package': 0.5.2
-      '@rushstack/terminal': 0.10.1(@types/node@18.17.6)
-      '@rushstack/ts-command-line': 4.19.2(@types/node@18.17.6)
+      '@rushstack/terminal': 0.12.2(@types/node@18.17.6)
+      '@rushstack/ts-command-line': 4.21.4(@types/node@18.17.6)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.8
@@ -4697,17 +4697,17 @@ packages:
     dev: true
     patched: true
 
-  /@microsoft/api-extractor@7.43.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4):
-    resolution: {integrity: sha512-ohg40SsvFFgzHFAtYq5wKJc8ZDyY46bphjtnSvhSSlXpPTG7GHwyyXkn48UZiUCBwr2WC7TRC1Jfwz7nreuiyQ==}
+  /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.18.4):
+    resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.14(@types/node@18.18.4)
+      '@microsoft/api-extractor-model': 7.28.21(@types/node@18.18.4)
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.4)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.18.4)
       '@rushstack/rig-package': 0.5.2
-      '@rushstack/terminal': 0.10.1(@types/node@18.18.4)
-      '@rushstack/ts-command-line': 4.19.2(@types/node@18.18.4)
+      '@rushstack/terminal': 0.12.2(@types/node@18.18.4)
+      '@rushstack/ts-command-line': 4.21.4(@types/node@18.18.4)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.8
@@ -5270,8 +5270,8 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library@4.1.0(@types/node@18.17.6):
-    resolution: {integrity: sha512-qz4JFBZJCf1YN5cAXa1dP6Mki/HrsQxc/oYGAGx29dF2cwF2YMxHoly0FBhMw3IEnxo5fMj0boVfoHVBkpkx/w==}
+  /@rushstack/node-core-library@5.3.0(@types/node@18.17.6):
+    resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
     peerDependencies:
       '@types/node': ^18.17.1
     peerDependenciesMeta:
@@ -5279,16 +5279,18 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.17.6
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
       resolve: 1.22.8
       semver: 7.5.4
-      z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library@4.1.0(@types/node@18.18.4):
-    resolution: {integrity: sha512-qz4JFBZJCf1YN5cAXa1dP6Mki/HrsQxc/oYGAGx29dF2cwF2YMxHoly0FBhMw3IEnxo5fMj0boVfoHVBkpkx/w==}
+  /@rushstack/node-core-library@5.3.0(@types/node@18.18.4):
+    resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
     peerDependencies:
       '@types/node': ^18.17.1
     peerDependenciesMeta:
@@ -5296,12 +5298,14 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.18.4
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
       resolve: 1.22.8
       semver: 7.5.4
-      z-schema: 5.0.5
     dev: true
 
   /@rushstack/rig-package@0.5.2:
@@ -5311,28 +5315,28 @@ packages:
       strip-json-comments: 3.1.1
     dev: true
 
-  /@rushstack/terminal@0.10.1(@types/node@18.17.6):
-    resolution: {integrity: sha512-C6Vi/m/84IYJTkfzmXr1+W8Wi3MmBjVF/q3za91Gb3VYjKbpALHVxY6FgH625AnDe5Z0Kh4MHKWA3Z7bqgAezA==}
+  /@rushstack/terminal@0.12.2(@types/node@18.17.6):
+    resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
     peerDependencies:
       '@types/node': ^18.17.1
     peerDependenciesMeta:
       '@types/node':
         optional: true
     dependencies:
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.17.6)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.17.6)
       '@types/node': 18.17.6
       supports-color: 8.1.1
     dev: true
 
-  /@rushstack/terminal@0.10.1(@types/node@18.18.4):
-    resolution: {integrity: sha512-C6Vi/m/84IYJTkfzmXr1+W8Wi3MmBjVF/q3za91Gb3VYjKbpALHVxY6FgH625AnDe5Z0Kh4MHKWA3Z7bqgAezA==}
+  /@rushstack/terminal@0.12.2(@types/node@18.18.4):
+    resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
     peerDependencies:
       '@types/node': ^18.17.1
     peerDependenciesMeta:
       '@types/node':
         optional: true
     dependencies:
-      '@rushstack/node-core-library': 4.1.0(@types/node@18.18.4)
+      '@rushstack/node-core-library': 5.3.0(@types/node@18.18.4)
       '@types/node': 18.18.4
       supports-color: 8.1.1
     dev: true
@@ -5350,10 +5354,10 @@ packages:
       string-argv: 0.3.2
     dev: true
 
-  /@rushstack/ts-command-line@4.19.2(@types/node@18.17.6):
-    resolution: {integrity: sha512-cqmXXmBEBlzo9WtyUrHtF9e6kl0LvBY7aTSVX4jfnBfXWZQWnPq9JTFPlQZ+L/ZwjZ4HrNwQsOVvhe9oOucZkw==}
+  /@rushstack/ts-command-line@4.21.4(@types/node@18.17.6):
+    resolution: {integrity: sha512-3ZjQ11kpQwk/lDQqbmxC8UuU6yD20Sy4uNTWIaBEJ5474hEFEE4cbDOS4F9R4zcyCkkaQYv674K2QTunDF5dsQ==}
     dependencies:
-      '@rushstack/terminal': 0.10.1(@types/node@18.17.6)
+      '@rushstack/terminal': 0.12.2(@types/node@18.17.6)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -5361,10 +5365,10 @@ packages:
       - '@types/node'
     dev: true
 
-  /@rushstack/ts-command-line@4.19.2(@types/node@18.18.4):
-    resolution: {integrity: sha512-cqmXXmBEBlzo9WtyUrHtF9e6kl0LvBY7aTSVX4jfnBfXWZQWnPq9JTFPlQZ+L/ZwjZ4HrNwQsOVvhe9oOucZkw==}
+  /@rushstack/ts-command-line@4.21.4(@types/node@18.18.4):
+    resolution: {integrity: sha512-3ZjQ11kpQwk/lDQqbmxC8UuU6yD20Sy4uNTWIaBEJ5474hEFEE4cbDOS4F9R4zcyCkkaQYv674K2QTunDF5dsQ==}
     dependencies:
-      '@rushstack/terminal': 0.10.1(@types/node@18.18.4)
+      '@rushstack/terminal': 0.12.2(@types/node@18.18.4)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -6018,6 +6022,7 @@ packages:
   /@smithy/types@2.7.0:
     resolution: {integrity: sha512-1OIFyhK+vOkMbu4aN2HZz/MomREkrAC/HqY5mlJMUJfGrPRwijJDTeiN8Rnj9zUaB8ogXAfIOtZrrgqZ4w7Wnw==}
     engines: {node: '>=14.0.0'}
+    requiresBuild: true
     dependencies:
       tslib: 2.6.2
 
@@ -6324,12 +6329,27 @@ packages:
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       notepack.io: 2.2.0
-      socket.io-adapter: 2.5.2
+      socket.io-adapter: 2.5.4
       uid2: 0.0.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
+
+  /@socket.io/redis-adapter@8.3.0(socket.io-adapter@2.5.4):
+    resolution: {integrity: sha512-ly0cra+48hDmChxmIpnESKrc94LjRL80TEmZVscuQ/WWkRP81nNj8W8cCGMqbI4L6NCuAaPRSzZF1a9GlAxxnA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      socket.io-adapter: ^2.5.4
+    dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
+      notepack.io: 3.0.1
+      socket.io-adapter: 2.5.4
+      uid2: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@socket.io/redis-emitter@4.1.1:
     resolution: {integrity: sha512-N0wfcfcVJvPF1AjIlZ5efxGCz+8uY6qeCwIaRU+QUCNdqvtXQtlC/MtUJQCwVqs1MWP6Bv3TDuZGC04gIj7YuQ==}
@@ -7277,6 +7297,28 @@ packages:
       indent-string: 4.0.0
     dev: true
 
+  /ajv-draft-04@1.0.0(ajv@8.13.0):
+    resolution: {integrity: sha512-mv00Te6nmYbRp5DCwclxtt7yV/joXJPGS7nM+97GdxvuttCOfgI3K4U25zboyeX0O+myI8ERluxQe5wljMmVIw==}
+    peerDependencies:
+      ajv: ^8.5.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.13.0
+    dev: true
+
+  /ajv-formats@3.0.1(ajv@8.13.0):
+    resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
+    peerDependencies:
+      ajv: ^8.0.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.13.0
+    dev: true
+
   /ajv-keywords@3.5.2(ajv@6.12.6):
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
     peerDependencies:
@@ -7296,6 +7338,15 @@ packages:
 
   /ajv@8.12.0:
     resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
+    dependencies:
+      fast-deep-equal: 3.1.3
+      json-schema-traverse: 1.0.0
+      require-from-string: 2.0.2
+      uri-js: 4.4.1
+    dev: true
+
+  /ajv@8.13.0:
+    resolution: {integrity: sha512-PRA911Blj99jR5RMeTunVbNXMF6Lp4vZXnk5GQjcnUWUTsrXtekg/pnmFFI2u/I36Y/2bITGS30GZCXei6uNkA==}
     dependencies:
       fast-deep-equal: 3.1.3
       json-schema-traverse: 1.0.0
@@ -9120,35 +9171,9 @@ packages:
     dependencies:
       once: 1.4.0
 
-  /engine.io-parser@5.0.7:
-    resolution: {integrity: sha512-P+jDFbvK6lE3n1OL+q9KuzdOFWkkZ/cMV9gol/SbVfpyqfvrfrFTOFJ6fQm2VC3PZHlU3QPhVwmbsCnauHF2MQ==}
-    engines: {node: '>=10.0.0'}
-    dev: false
-
   /engine.io-parser@5.2.1:
     resolution: {integrity: sha512-9JktcM3u18nU9N2Lz3bWeBgxVgOKpw7yhRaoxQA3FUDZzzw+9WlA6p4G4u0RixNkg14fH7EfEc/RhpurtiROTQ==}
     engines: {node: '>=10.0.0'}
-    dev: true
-
-  /engine.io@6.4.2:
-    resolution: {integrity: sha512-FKn/3oMiJjrOEOeUub2WCox6JhxBXq/Zn3fZOMCBxKnNYtsdKjxhl7yR3fZhM9PV+rdE75SU5SYMc+2PGzo+Tg==}
-    engines: {node: '>=10.0.0'}
-    dependencies:
-      '@types/cookie': 0.4.1
-      '@types/cors': 2.8.17
-      '@types/node': 18.19.3
-      accepts: 1.3.8
-      base64id: 2.0.0
-      cookie: 0.4.2
-      cors: 2.8.5
-      debug: 4.3.4(supports-color@8.1.1)
-      engine.io-parser: 5.0.7
-      ws: 8.11.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-    dev: false
 
   /engine.io@6.5.4:
     resolution: {integrity: sha512-KdVSDKhVKyOi+r5uEabrDLZw2qXStVvCsEB/LN3mw4WFi6Gx50jTyuxYVCwAAC0U46FdnzP/ScKRBTXb/NiEOg==}
@@ -9168,7 +9193,6 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
-    dev: true
 
   /enhanced-resolve@5.15.0:
     resolution: {integrity: sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==}
@@ -12740,9 +12764,14 @@ packages:
 
   /notepack.io@2.2.0:
     resolution: {integrity: sha512-9b5w3t5VSH6ZPosoYnyDONnUTF8o0UkBw7JLA6eBlYJWyGT1Q3vQa8Hmuj1/X6RYvHjjygBDgw6fJhe0JEojfw==}
+    dev: true
 
   /notepack.io@2.3.0:
     resolution: {integrity: sha512-9RiFDxeydHsWOqdthRUck2Kd4UW2NzVd2xxOulZiQ9mvge6ElsHXLpwD3HEJyql6sFEnEn/eMO7HSdS0M5mWkA==}
+
+  /notepack.io@3.0.1:
+    resolution: {integrity: sha512-TKC/8zH5pXIAMVQio2TvVDTtPRX+DJPHDqjRbxogtFiByHyzKmy96RA0JtCQJ+WouyyL4A10xomQzgbUT+1jCg==}
+    dev: false
 
   /npm-bundled@3.0.0:
     resolution: {integrity: sha512-Vq0eyEQy+elFpzsKjMss9kxqb9tG3YHg4dsyWuUENuzvSUWe1TCnW/vV9FkhvBk/brEDoDiVd+M1Btosa6ImdQ==}
@@ -14708,12 +14737,14 @@ packages:
       prebuild-install: 5.3.0
     optional: true
 
-  /socket.io-adapter@2.5.2:
-    resolution: {integrity: sha512-87C3LO/NOMc+eMcpcxUBebGjkpMDkNBS9tf7KJqcDsmL936EChtVva71Dw2q4tQcuVC+hAUy4an2NO/sYXmwRA==}
+  /socket.io-adapter@2.5.4:
+    resolution: {integrity: sha512-wDNHGXGewWAjQPt3pyeYBtpWSq9cLE5UW1ZUPL/2eGK9jtse/FpXib7epSTsz0Q0m+6sg6Y4KtcFTlah1bdOVg==}
     dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
       ws: 8.11.0
     transitivePeerDependencies:
       - bufferutil
+      - supports-color
       - utf-8-validate
 
   /socket.io-parser@4.2.4:
@@ -14725,24 +14756,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /socket.io@4.6.2:
-    resolution: {integrity: sha512-Vp+lSks5k0dewYTfwgPT9UeGGd+ht7sCpB7p0e83VgO4X/AHYWhXITMrNk/pg8syY2bpx23ptClCQuHhqi2BgQ==}
-    engines: {node: '>=10.0.0'}
-    dependencies:
-      accepts: 1.3.8
-      base64id: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
-      engine.io: 6.4.2
-      socket.io-adapter: 2.5.2
-      socket.io-parser: 4.2.4
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-    dev: false
-
-  /socket.io@4.7.2:
-    resolution: {integrity: sha512-bvKVS29/I5fl2FGLNHuXlQaUH/BlzX1IN6S+NKLNZpBsPZIDH+90eQmCs2Railn4YUiww4SzUedJ6+uzwFnKLw==}
+  /socket.io@4.7.5:
+    resolution: {integrity: sha512-DmeAkF6cwM9jSfmp6Dr/5/mfMwb5Z5qRrSXLpo3Fq5SqyU8CMF15jIN4ZhfSwu35ksM1qmHZDQ/DK5XTccSTvA==}
     engines: {node: '>=10.2.0'}
     dependencies:
       accepts: 1.3.8
@@ -14750,13 +14765,12 @@ packages:
       cors: 2.8.5
       debug: 4.3.4(supports-color@8.1.1)
       engine.io: 6.5.4
-      socket.io-adapter: 2.5.2
+      socket.io-adapter: 2.5.4
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
-    dev: true
 
   /socks-proxy-agent@7.0.0:
     resolution: {integrity: sha512-Fgl0YPZ902wEsAyiQ+idGd1A7rSFx/ayC1CQVMw5P+EQx2V0SgpGtf6OKFhVjPflPUl9YMmEOnmfjCdMUsygww==}
@@ -15649,6 +15663,12 @@ packages:
 
   /uid2@0.0.3:
     resolution: {integrity: sha512-5gSP1liv10Gjp8cMEnFd6shzkL/D6W1uhXSFNCxDC+YI8+L8wkCYCbJ7n77Ezb4wE/xzMogecE+DtamEe9PZjg==}
+    dev: true
+
+  /uid2@1.0.0:
+    resolution: {integrity: sha512-+I6aJUv63YAcY9n4mQreLUt0d4lvwkkopDNmpomkAUz0fAkEMV9pRWxN0EjhW1YfRhcuyHg2v3mwddCDW1+LFQ==}
+    engines: {node: '>= 4.0.0'}
+    dev: false
 
   /unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}

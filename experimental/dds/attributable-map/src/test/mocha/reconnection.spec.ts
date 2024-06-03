@@ -12,8 +12,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { AttributableMapClass, MapFactory } from "../../map.js";
 import type { ISharedMap } from "../../interfaces.js";
+import { AttributableMapClass, MapFactory } from "../../map.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {

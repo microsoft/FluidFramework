@@ -111,8 +111,10 @@ export class OpSplitter {
 	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
+	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch which can be sent over the wire
+	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
@@ -203,16 +205,19 @@ export class OpSplitter {
 		const serializedContent = this.chunkMap.get(clientId)!.join("");
 		this.clearPartialChunks(clientId);
 
-		const newMessage = { ...message };
-		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
+		// The final/complete message will contain the data from all the chunks.
+		// It will have the sequenceNumber of the last chunk
+		const completeMessage = { ...message };
+		completeMessage.contents =
+			serializedContent === "" ? undefined : JSON.parse(serializedContent);
 		// back-compat with 1.x builds
 		// This is only required / present for non-compressed, chunked ops
 		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
-		newMessage.type = (chunkedContent as any).originalType;
-		newMessage.metadata = chunkedContent.originalMetadata;
-		newMessage.compression = chunkedContent.originalCompression;
+		completeMessage.type = (chunkedContent as any).originalType;
+		completeMessage.metadata = chunkedContent.originalMetadata;
+		completeMessage.compression = chunkedContent.originalCompression;
 		return {
-			message: newMessage,
+			message: completeMessage,
 			isFinalChunk: true,
 		};
 	}

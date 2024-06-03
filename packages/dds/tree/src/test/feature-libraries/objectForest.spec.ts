@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FieldKey, initializeForest, rootFieldKey } from "../../core/index.js";
+import { FieldKey, initializeForest, moveToDetachedField, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
@@ -87,5 +87,29 @@ describe("object-forest", () => {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
 		assert.deepEqual(cursor.getFieldKey(), cursorForMapTreeNode(forest.roots).getFieldKey());
+	});
+
+	it("uses cursor sources in errors", () => {
+		const forest = buildForest();
+		initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+		const named = forest.allocateCursor("named");
+		moveToDetachedField(forest, named);
+		const forkOfNamed = named.fork();
+		const namedFork = named.fork("namedFork");
+		const unnamed = forest.allocateCursor();
+		moveToDetachedField(forest, unnamed);
+		const forkOfUnnamed = unnamed.fork();
+		const visitor = forest.acquireVisitor();
+		visitor.enterField(rootFieldKey);
+		assert.throws(
+			() => visitor.destroy(detachedFieldKey, 1),
+			(error: Error) =>
+				validateAssertionError(
+					error,
+					`Found unexpected cursors when editing with the following annotations: ["named","fork: named","namedFork",null,"fork: undefined"]`,
+				),
+		);
+		visitor.exitField(rootFieldKey);
+		visitor.free();
 	});
 });

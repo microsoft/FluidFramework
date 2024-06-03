@@ -16,7 +16,7 @@ import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 // TODO:
