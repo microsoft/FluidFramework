@@ -13,7 +13,7 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
@@ -30,16 +30,6 @@
 			},
 			"require": {
 				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
