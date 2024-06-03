@@ -76,7 +76,7 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
 ## Snapshot Format
 
-Snapshot is downloaded from the storage and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [this file](../../../../../common/lib/protocol-definitions/src/storage.ts) and has the following basic structure (some optional properties are removed for simplicity):
+Snapshot is downloaded from the storage (typically on document load) and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [this file](../../../../../common/lib/protocol-definitions/src/storage.ts) and has the following basic structure (some optional properties are removed for simplicity):
 
 ```typescript
 export interface ISnapshotTree {
