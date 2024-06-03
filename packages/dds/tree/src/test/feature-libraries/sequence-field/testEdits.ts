@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
-import { brand } from "../../../util/index.js";
+import { Mutable, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -351,7 +351,11 @@ function createTomb(
 	localId: ChangesetLocalId = brand(0),
 	count: number = 1,
 ): SF.CellMark<SF.NoopMark> {
-	return { count, cellId: { revision, localId } };
+	const cellId: Mutable<SF.CellId> = { localId };
+	if (revision !== undefined) {
+		cellId.revision = revision;
+	}
+	return { count, cellId };
 }
 
 function createAttachAndDetachMark<TChange>(

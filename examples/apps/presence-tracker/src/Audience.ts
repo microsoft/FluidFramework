@@ -4,7 +4,7 @@
  */
 
 import type { AzureMember, AzureUser } from "@fluidframework/azure-client/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 
 export function createMockServiceMember(audienceMember: IClient): AzureMember {
 	const azureUser = audienceMember.user as AzureUser;

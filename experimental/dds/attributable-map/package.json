@@ -83,8 +83,8 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -92,7 +92,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-rc.4.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -102,9 +102,9 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/path-browserify": "^1.0.0",
@@ -118,7 +118,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"broken": {}

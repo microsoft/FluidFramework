@@ -4,16 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,

@@ -13,8 +13,9 @@ import {
 } from "@fluid-internal/replay-tool";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import { FileStorageDocumentName } from "@fluidframework/file-driver/internal";
-import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
 	IFileSnapshot,
 	StaticStorageDocumentServiceFactory,

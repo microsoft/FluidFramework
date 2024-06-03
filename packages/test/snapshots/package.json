@@ -76,7 +76,6 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -85,12 +84,12 @@
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
@@ -103,7 +102,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

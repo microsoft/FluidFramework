@@ -4,21 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createTestConfigProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -78,9 +82,14 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	let provider: ITestObjectProvider;
 	let callCount = 0;
+	let latestSnapshot: ISnapshot | undefined;
+	const persistedCache = new TestSnapshotCache();
+	beforeEach("setup", async function () {
+		provider = getTestObjectProvider({ persistedCache });
+		if (!supportsDataVirtualization(provider)) {
+			this.skip();
+		}
 
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider();
 		const documentServiceFactory = provider.documentServiceFactory;
 		interceptResult(
 			documentServiceFactory,
@@ -89,6 +98,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 				interceptResult(documentService, documentService.connectToStorage, (storage) => {
 					assert(storage.getSnapshot !== undefined, "Test can't run without getSnapshot");
 					interceptResult(storage, storage.getSnapshot, (snapshot) => {
+						latestSnapshot = snapshot;
 						callCount++;
 					});
 				});
@@ -96,12 +106,13 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	afterEach("teardown", async () => {
+		persistedCache.reset();
+	});
+
 	const loadingGroupId = "loadingGroupId";
 
 	it("GroupId offline regular flow", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
@@ -164,9 +175,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("GroupId offline with older snapshot", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider,
@@ -204,6 +212,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		const { summaryVersion } = await summarizeNow(summarizer);
+		clearCacheIfOdsp(provider, persistedCache);
 
 		const container2 = (await provider.loadContainer(
 			runtimeFactory,
@@ -258,9 +267,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("GroupId offline with refresh", async () => {
-		if (provider.driver.type !== "local") {
-			return;
-		}
 		// Load basic container stuff
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
@@ -295,10 +301,12 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			undefined,
 			configProvider,
 		);
-
-		await provider.ensureSynchronized();
+		const initialSummaryVersion = latestSnapshot?.snapshotTree.id;
+		assert(initialSummaryVersion !== undefined, "Initial summary version should be defined");
 		const { summaryVersion } = await summarizeNow(summarizer);
 		await provider.ensureSynchronized();
+
+		clearCacheIfOdsp(provider, persistedCache);
 
 		const container2 = (await provider.loadContainer(
 			runtimeFactory,
@@ -334,6 +342,8 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 				};
 			}
 		).serializedStateManager;
+		clearCacheIfOdsp(provider, persistedCache);
+
 		await serializedStateManager.refreshLatestSnapshot(true);
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot

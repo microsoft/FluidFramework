@@ -38,10 +38,12 @@
 			"name": "isomorphic-git"
 		},
 		"filesystem": {
-			"name": "nodeFs"
+			"name": "nodeFs",
+			"maxFileSizeBytes": 0
 		},
 		"ephemeralfilesystem": {
-			"name": "redisFs"
+			"name": "redisFs",
+			"maxFileSizeBytes": 0
 		},
 		"persistLatestFullSummary": false,
 		"persistLatestFullEphemeralSummary": false,

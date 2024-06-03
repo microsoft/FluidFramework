@@ -5,6 +5,7 @@
 
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	IFluidHandle,
 	ITelemetryBaseProperties,
@@ -21,10 +22,8 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -33,6 +32,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal, TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -44,10 +44,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
-import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
