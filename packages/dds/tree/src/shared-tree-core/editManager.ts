@@ -589,7 +589,6 @@ export class EditManager<
 				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 
-		// Case 2:rebasing a peer branch over trunk edits when adjusting the branch to the peer's new ref seq
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
@@ -598,7 +597,6 @@ export class EditManager<
 			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
-			// Case 3: Rebasing a new peer edit to the tip of the trunk
 			const newChangeFullyRebased = rebaseChange(
 				this.changeFamily.rebaser,
 				newCommit,
@@ -613,7 +611,6 @@ export class EditManager<
 				change: newChangeFullyRebased,
 			});
 		}
-		// Case 1: Rebasing the local branch on to the peer.
 		this.localBranch.rebaseOnto(this.trunk);
 	}
 
