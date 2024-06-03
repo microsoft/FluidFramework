@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { render } from "@testing-library/react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
-
+import { render } from "@testing-library/react";
 import * as axe from "axe-core";
+import React from "react";
 
-import { SettingsView } from "../../components/index.js";
+import { SettingsView } from "../components/index.js";
 
 describe("SettingsView Accessibility Check", () => {
 	it("SettingsView is accessible", async () => {
