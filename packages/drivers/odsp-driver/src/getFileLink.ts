@@ -183,6 +183,10 @@ async function getFileLinkCore(
 					storageToken,
 					true,
 				);
+				// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+				// Adding below header will make VROOM API return 404 instead of 308 and browser can not intercept it.
+				// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+				// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 				const requestInit = {
 					method: "POST",
 					headers: {
