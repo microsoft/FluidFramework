@@ -2329,9 +2329,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	// unknown should be removed once `@alpha` tag is removed from IContainerContext
-	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
-		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
+	private submitSignal(content: unknown, targetClientId?: string) {
+		this._deltaManager.submitSignal(content, targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {

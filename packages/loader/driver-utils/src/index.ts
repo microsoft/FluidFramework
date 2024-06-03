@@ -55,3 +55,4 @@ export {
 	blobHeadersBlobName,
 } from "./adapters/index.js";
 export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
+export { encodeJsonableOrBinary, decodeJsonableOrBinary } from "./binaryEncoding.js";

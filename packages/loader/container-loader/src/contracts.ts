@@ -136,7 +136,7 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming signal.
 	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (signals: ISignalMessage[]) => void;
+	readonly signalHandler: (signal: ISignalMessage) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

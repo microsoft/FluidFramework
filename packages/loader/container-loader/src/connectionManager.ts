@@ -26,6 +26,8 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
+	decodeJsonableOrBinary,
+	encodeJsonableOrBinary,
 } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
@@ -944,9 +946,9 @@ export class ConnectionManager implements IConnectionManager {
 		// protocol in Container.
 		const clearSignal: ISignalMessage = {
 			clientId: null, // system message
-			content: JSON.stringify({
+			content: {
 				type: SignalType.Clear,
-			}),
+			},
 		};
 
 		// list of signals to process due to this new connection
@@ -955,10 +957,10 @@ export class ConnectionManager implements IConnectionManager {
 		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
 			(priorClient) => ({
 				clientId: null, // system signal
-				content: JSON.stringify({
+				content: {
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
-				}),
+				},
 			}),
 		);
 		if (clientJoinSignals.length > 0) {
@@ -973,7 +975,9 @@ export class ConnectionManager implements IConnectionManager {
 			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
 
-		this.props.signalHandler(signalsToProcess);
+		for (const signal of signalsToProcess) {
+			this.signalHandler(signal);
+		}
 	}
 
 	/**
@@ -1099,9 +1103,17 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: string, targetClientId?: string) {
+	public submitSignal(content: unknown, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content, targetClientId);
+			// If connection supports sending JS objects as is (submitSignal2 method), use it.
+			// This allows more efficient encoding (as we do not have double sringification of content),
+			// and it also natively supports binary (ArrayBuffer) properties
+			if (this.connection.submitSignal2 !== undefined) {
+				this.connection.submitSignal2(content, targetClientId);
+			} else {
+				// This flow does not currently supports binary properties!
+				this.connection.submitSignal(encodeJsonableOrBinary(content), targetClientId);
+			}
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}
@@ -1193,7 +1205,16 @@ export class ConnectionManager implements IConnectionManager {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
-		this.props.signalHandler(signals);
+		for (const signalArg of signals) {
+			const signal = { ...signalArg }; // make a copy.
+			// If IDocumentDeltaConnection implements submitSignal2(), then content is coming as JS objects
+			// Same if these are synthesized join/clean signals coming from setupNewSuccessfulConnection()
+			// Otherwise it's a string, and it may contain serialized ArrayBuffer's.
+			if (typeof signal.content === "string") {
+				signal.content = decodeJsonableOrBinary(signal.content);
+			}
+			this.props.signalHandler(signal);
+		}
 	};
 
 	// Always connect in write mode after getting nacked.
