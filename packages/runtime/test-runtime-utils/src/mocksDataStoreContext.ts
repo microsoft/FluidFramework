@@ -42,7 +42,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
-	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
+	public clientDetails: IClientDetails;
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
@@ -73,7 +73,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
 		private readonly interactive: boolean = true,
-	) {}
+	) {
+		this.clientDetails = { capabilities: { interactive: this.interactive } };
+	}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
 		switch (event) {

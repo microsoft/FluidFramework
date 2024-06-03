@@ -32,6 +32,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -83,6 +84,7 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
+		this.baseLogger = this.mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as any,
 			snapshot,
@@ -162,7 +164,7 @@ export class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public baseLogger = this.mc.logger;
+	public baseLogger: ITelemetryLoggerExt;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();

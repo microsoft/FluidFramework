@@ -18,7 +18,23 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-	) {}
+	) {
+		this.getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(
+			this.internalStorageService,
+		);
+		this.getSnapshot = this.internalStorageService.getSnapshot?.bind(
+			this.internalStorageService,
+		);
+		this.getVersions = this.internalStorageService.getVersions.bind(
+			this.internalStorageService,
+		);
+		this.createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
+		this.readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
+		this.downloadSummary = this.internalStorageService.downloadSummary.bind(
+			this.internalStorageService,
+		);
+		this.dispose = this.internalStorageService.dispose.bind(this.internalStorageService);
+	}
 	public get policies() {
 		return this.internalStorageService.policies;
 	}
@@ -26,13 +42,13 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		return this.internalStorageService.disposed;
 	}
 
-	getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(this.internalStorageService);
-	getSnapshot = this.internalStorageService.getSnapshot?.bind(this.internalStorageService);
-	getVersions = this.internalStorageService.getVersions.bind(this.internalStorageService);
-	createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
-	readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
-	downloadSummary = this.internalStorageService.downloadSummary.bind(this.internalStorageService);
-	dispose = this.internalStorageService.dispose.bind(this.internalStorageService);
+	getSnapshotTree: IDocumentStorageService["getSnapshotTree"];
+	getSnapshot: IDocumentStorageService["getSnapshot"];
+	getVersions: IDocumentStorageService["getVersions"];
+	createBlob: IDocumentStorageService["createBlob"];
+	readBlob: IDocumentStorageService["readBlob"];
+	downloadSummary: IDocumentStorageService["downloadSummary"];
+	dispose: IDisposable["dispose"];
 
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
