@@ -11,6 +11,7 @@
 		"ignore": [
 			"**/*.generated.*",
 			"**/_api-extractor-temp/**",
+			"**/api-report/*",
 			"**/test/snapshots/content/**",
 			"**/snapshots/*.json",
 			"**/localOdspSnapshots/**",
