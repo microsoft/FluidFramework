@@ -208,6 +208,9 @@ importers:
       sort-json:
         specifier: ^2.0.1
         version: 2.0.1
+      sort-object-keys:
+        specifier: ^1.1.3
+        version: 1.1.3
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
@@ -281,6 +284,9 @@ importers:
       '@types/sort-json':
         specifier: ^2.0.1
         version: 2.0.1
+      '@types/sort-object-keys':
+        specifier: ^1.1.3
+        version: 1.1.3
       c8:
         specifier: ^7.14.0
         version: 7.14.0
@@ -4046,6 +4052,10 @@ packages:
 
   /@types/sort-json@2.0.1:
     resolution: {integrity: sha512-HAeJLCXpLg9aMSCJVQcMR3yU0y2PwJUtWv7vogaz0mEhuK1bhvDX/DeDxl4spPUYpnK7PM7hmX2bU5lsghOJNQ==}
+    dev: true
+
+  /@types/sort-object-keys@1.1.3:
+    resolution: {integrity: sha512-DBHXe+SvV5yZASv/RnIoIID5cwl4N0dY5aC19jOINFzydZkpJXt8DwRzWUjVnscPQsRkkmQRrcOqMMozSvP5tg==}
     dev: true
 
   /@types/through@0.0.30:

@@ -3,39 +3,44 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
+import path from "node:path";
 import {
-	type ChangesetConfig,
 	type ChangesetConfigWritten,
 	Package,
 	type PackageNameOrScope,
+	type PackageScopeSelectors,
 	isPackageScope,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { mkdirp, readJSON, writeJSON } from "fs-extra/esm";
+import sortObject from "sort-object-keys";
 import { releaseGroupFlag } from "../../flags.js";
 import { BaseCommand, type Context } from "../../library/index.js";
 import type { ReleaseGroup } from "../../releaseGroups.js";
 
 const defaultConfig: ChangesetConfigWritten = {
-	"$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
+	$schema: "https://unpkg.com/@changesets/config@2.3.0/schema.json",
 	commit: false,
 	access: "public",
 	baseBranch: "main",
 	updateInternalDependencies: "patch",
 };
 
-// type PackageName = string;
-
-function packageMatchesFixedConfig(pkg: Package, changesetConfig: ChangesetConfig): boolean {
-	for (const config of Object.values(changesetConfig.fixed ?? {})) {
-		for (const configEntry of config) {
-			if (pkg.name === configEntry) {
+/**
+ * Returns true if a package matches one of the provided selectors.
+ *
+ * @param pkg - The package to check.
+ * @param selectors - The selectors to apply.
+ * @returns true if the package matches; false otherwise.
+ */
+function packageMatchesSelectors(pkg: Package, selectors: PackageScopeSelectors): boolean {
+	for (const selector of Object.values(selectors)) {
+		for (const entry of selector) {
+			if (pkg.name === entry) {
 				return true;
 			}
-			if (isPackageScope(configEntry) && pkg.name.startsWith(configEntry)) {
+			if (isPackageScope(entry) && pkg.name.startsWith(entry)) {
 				return true;
 			}
 		}
@@ -49,17 +54,18 @@ function packageMatchesFixedConfig(pkg: Package, changesetConfig: ChangesetConfi
 function getFixedPackageGroups(
 	context: Context,
 	releaseGroups: ReleaseGroup[],
-	changesetConfig: ChangesetConfig,
+	selectors: PackageScopeSelectors | undefined,
 ): PackageNameOrScope[][] {
-	// const packagesToCheck = releaseGroup === undefined ? context.packages : context.packagesInReleaseGroup(releaseGroup);
-	// const results: Map<string, PackageName[]> = new Map();
 	const results: PackageNameOrScope[][] = [];
 
 	for (const releaseGroup of releaseGroups) {
 		const packagesToCheck = context
 			.packagesInReleaseGroup(releaseGroup)
-			.filter((pkg) => packageMatchesFixedConfig(pkg, changesetConfig));
-		results.push(packagesToCheck.map((p) => p.name).sort());
+			.filter((pkg) => selectors !== undefined && packageMatchesSelectors(pkg, selectors));
+		const names = packagesToCheck.map((p) => p.name).sort();
+		if (names.length > 0) {
+			results.push(names);
+		}
 	}
 	return results;
 }
@@ -69,16 +75,15 @@ export default class GenerateChangesetConfigCommand extends BaseCommand<
 > {
 	static readonly summary = "Generates a configuration file for changesets.";
 
-	// static readonly aliases: string[] = [
-	// 	// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
-	// 	"changeset:add",
-	// ];
+	static readonly description =
+		"This command is used to dynamically create fixed and linked package groups in the changesets config. Existing settings in the changeset config will be retained EXCEPT for fixed and linked groups. Those are always overwritten.";
 
 	// Enables the global JSON flag in oclif.
-	// static readonly enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
+			// Changeset config is currently per-workspace/release group, so require a release group to be provided.
 			required: true,
 		}),
 		outFile: Flags.file({
@@ -87,30 +92,8 @@ export default class GenerateChangesetConfigCommand extends BaseCommand<
 				"Path to write the changeset config file to. The file will always be overwritten.",
 			default: ".changeset/config.json",
 		}),
-		// fixedPackages: Flags.file({
-		// 	description: "Path to a"
-		// }),
 		...BaseCommand.flags,
 	} as const;
-
-	// static readonly examples = [
-	// 	{
-	// 		description: "Create an empty changeset using the --empty flag.",
-	// 		command: "<%= config.bin %> <%= command.id %> --empty",
-	// 	},
-	// 	{
-	// 		description: `Create a changeset interactively. Any package whose contents has changed relative to the '${DEFAULT_BRANCH}' branch will be selected by default.`,
-	// 		command: "<%= config.bin %> <%= command.id %>",
-	// 	},
-	// 	{
-	// 		description: `You can compare with a different branch using --branch (-b).`,
-	// 		command: "<%= config.bin %> <%= command.id %> --branch next",
-	// 	},
-	// 	{
-	// 		description: `By default example and private packages are excluded, but they can be included with --all.`,
-	// 		command: "<%= config.bin %> <%= command.id %> --all",
-	// 	},
-	// ];
 
 	public async run(): Promise<ChangesetConfigWritten> {
 		const context = await this.getContext();
@@ -127,16 +110,17 @@ export default class GenerateChangesetConfigCommand extends BaseCommand<
 			? ((await readJSON(outFile)) as ChangesetConfigWritten)
 			: defaultConfig;
 
-		// Always override the fixed/linked packages.
-		// TODO: merge with existing in some way?
+		const newConfig = { ...defaultConfig, ...currentConfig };
 
-		// Fixed packages
-		const newFixed = getFixedPackageGroups(context, [releaseGroup], changesetConfig ?? {});
-		currentConfig.fixed = newFixed.length === 0 ? currentConfig.fixed : newFixed;
+		// Always override the fixed/linked packages.
+		const newFixed = getFixedPackageGroups(context, [releaseGroup], changesetConfig?.fixed);
+		const newLinked = getFixedPackageGroups(context, [releaseGroup], changesetConfig?.linked);
+		newConfig.fixed = newFixed.length === 0 ? newConfig.fixed : newFixed;
+		newConfig.linked = newLinked.length === 0 ? newConfig.linked : newLinked;
 
 		await mkdirp(path.dirname(outFile));
-		await writeJSON(outFile, currentConfig, { spaces: "\t" });
+		await writeJSON(outFile, sortObject(newConfig), { spaces: "\t" });
 
-		return currentConfig;
+		return sortObject(newConfig);
 	}
 }

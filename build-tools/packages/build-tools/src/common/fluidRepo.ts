@@ -75,16 +75,14 @@ export function isPackageScope(value: string): value is PackageScope {
 export type PackageNameOrScope = PackageName | PackageScope;
 
 export interface ChangesetConfigWritten extends WrittenConfig {
-	"$schema"?: string;
+	$schema?: string;
 }
 
+export type PackageScopeSelectors = Record<string, PackageNameOrScope[]>;
+
 export interface ChangesetConfig extends Omit<ChangesetConfigWritten, "fixed" | "linked"> {
-	fixed?: {
-		[name: string]: PackageNameOrScope[];
-	};
-	linked?: {
-		[name: string]: PackageNameOrScope[];
-	};
+	fixed?: PackageScopeSelectors;
+	linked?: PackageScopeSelectors;
 }
 
 /**

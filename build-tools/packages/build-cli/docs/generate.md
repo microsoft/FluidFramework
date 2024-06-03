@@ -223,7 +223,8 @@ Generates a configuration file for changesets.
 
 ```
 USAGE
-  $ flub generate changeset-config -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [-o <value>]
+  $ flub generate changeset-config -g client|server|azure|build-tools|gitrest|historian [--json] [-v | --quiet] [-o
+  <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
@@ -234,6 +235,15 @@ FLAGS
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Generates a configuration file for changesets.
+
+  This command is used to dynamically create fixed and linked package groups in the changesets config. Existing settings
+  in the changeset config will be retained EXCEPT for fixed and linked groups. Those are always overwritten.
 ```
 
 _See code: [src/commands/generate/changeset-config.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset-config.ts)_
