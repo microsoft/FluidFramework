@@ -199,11 +199,11 @@ module.exports = {
 			"tools/test-tools",
 		],
 		workspaces: {
-			client: {
+			"client": {
 				directory: ".",
 				independentPackages: ["common", "tools"],
 				releaseGroups: {
-					"client": {
+					client: {
 						include: [
 							"@fluidframework",
 							"@fluid-experimental",
@@ -212,7 +212,7 @@ module.exports = {
 						],
 						defaultInterdependencyRange: "workspace:~",
 					},
-					"examples": {
+					examples: {
 						include: ["@fluid-example"],
 						defaultInterdependencyRange: "workspace:~",
 					},
@@ -232,36 +232,16 @@ module.exports = {
 				directory: "./build-tools",
 				defaultInterdependencyRange: "workspace:~",
 			},
-			server: {
+			"server": {
 				directory: "./server/routerlicious",
 				defaultInterdependencyRange: "workspace:~",
 			},
-			gitrest: {
+			"gitrest": {
 				directory: "server/gitrest",
 				defaultInterdependencyRange: "^",
 			},
-			historian: {
+			"historian": {
 				directory: "server/historian",
-				defaultInterdependencyRange: "^",
-			},
-			"api-markdown-documenter": {
-				directory: "tools/api-markdown-documenter",
-				defaultInterdependencyRange: "^",
-			},
-			benchmark: {
-				directory: "tools/benchmark",
-				defaultInterdependencyRange: "^",
-			},
-			"changelog-generator-wrapper": {
-				directory: "tools/changelog-generator-wrapper",
-				defaultInterdependencyRange: "^",
-			},
-			getkeys: {
-				directory: "tools/getkeys",
-				defaultInterdependencyRange: "^",
-			},
-			"test-tools": {
-				directory: "tools/test-tools",
 				defaultInterdependencyRange: "^",
 			},
 		},
