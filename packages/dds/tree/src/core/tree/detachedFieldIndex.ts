@@ -147,8 +147,11 @@ export class DetachedFieldIndex {
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
 				assert(
-					tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i) ===
-						undefined,
+					tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor + i,
+					) === undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);

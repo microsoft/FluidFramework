@@ -9,8 +9,4 @@ import {
 } from "../../feature-libraries/index.js";
 import { testGeneralPurposeTreeCursor } from "../cursorTestSuite.js";
 
-testGeneralPurposeTreeCursor(
-	"textTreeFormat",
-	cursorForJsonableTreeNode,
-	jsonableTreeFromCursor,
-);
+testGeneralPurposeTreeCursor("textTreeFormat", cursorForJsonableTreeNode, jsonableTreeFromCursor);

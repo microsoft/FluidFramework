@@ -50,7 +50,10 @@ describe("container-loader utils", () => {
 			await p2
 				.then(() => assert.fail("should fail"))
 				.catch((e: Error) =>
-					assert.strictEqual(e.message, "Subsequent calls cannot use different arguments."),
+					assert.strictEqual(
+						e.message,
+						"Subsequent calls cannot use different arguments.",
+					),
 				);
 		});
 	});

@@ -18,12 +18,7 @@ import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {

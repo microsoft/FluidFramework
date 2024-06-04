@@ -355,8 +355,8 @@ describe("GenericField", () => {
 				child === nodeId1
 					? [{ minor: 42 }]
 					: child === nodeId2
-						? [{ minor: 43 }]
-						: assert.fail("Unexpected child"),
+					? [{ minor: 43 }]
+					: assert.fail("Unexpected child"),
 		);
 		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
 	});

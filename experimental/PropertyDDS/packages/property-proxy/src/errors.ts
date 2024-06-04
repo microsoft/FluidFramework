@@ -27,8 +27,7 @@ export const PropertyProxyErrors = {
 	/**
 	 * @alias PropertyProxy-003
 	 */
-	NON_ITERABLE:
-		"PropertyProxy-003: A valid iterable, that is not a string, should be provided.",
+	NON_ITERABLE: "PropertyProxy-003: A valid iterable, that is not a string, should be provided.",
 
 	/**
 	 * @alias PropertyProxy-004
@@ -38,8 +37,7 @@ export const PropertyProxyErrors = {
 	/**
 	 * @alias PropertyProxy-005
 	 */
-	INVALID_GUID:
-		"PropertyProxy-005: The specified value is not compatible with a NamedProperty.",
+	INVALID_GUID: "PropertyProxy-005: The specified value is not compatible with a NamedProperty.",
 
 	/**
 	 * @alias PropertyProxy-006

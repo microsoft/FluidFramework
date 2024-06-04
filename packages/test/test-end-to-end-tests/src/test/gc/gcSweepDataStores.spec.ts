@@ -435,7 +435,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				await delay(0);
 				mockLogger.assertMatch([
 					{
-						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						...tagCodeArtifacts({ id: `/${unreferencedId}` }),
 					},
 					{
@@ -474,7 +475,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				await delay(0);
 				mockLogger.assertMatch([
 					{
-						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						...tagCodeArtifacts({ id: `/${unreferencedId}/some-child-id` }),
 					},
 					{
@@ -618,7 +620,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					summaryVersion: unreferencedSummaryVersion,
 				} = await summarizationWithUnreferencedDataStoreAfterTime();
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const sendingDataObject = (await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const sendingDataObject =
+					(await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = sendingDataObject._context
 					.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime.resolveHandle({
@@ -856,7 +859,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 						error: summarizeErrorMessage,
 					},
 					{
-						eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 						clientType: "interactive",
 					},
 				],
@@ -901,7 +905,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 					// Validate that the summary succeeded on final attempt.
 					const props = await summarizePromiseP;
-					assert.equal(props.result, "success", "The summary should have been successful");
+					assert.equal(
+						props.result,
+						"success",
+						"The summary should have been successful",
+					);
 					assert.equal(
 						props.currentAttempt,
 						defaultMaxAttemptsForSubmitFailures,
@@ -909,7 +917,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					);
 
 					if (gcOps === "multiple") {
-						assert.equal(gcSweepOpCount, props.currentAttempt, "Incorrect number of GC ops");
+						assert.equal(
+							gcSweepOpCount,
+							props.currentAttempt,
+							"Incorrect number of GC ops",
+						);
 					} else {
 						assert(gcSweepOpCount >= 1, "Incorrect number of GC ops");
 					}

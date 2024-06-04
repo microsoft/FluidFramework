@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ConnectionMode,
@@ -459,7 +455,10 @@ export class DocumentDeltaConnection
 					this.disconnect(err);
 				} catch (failError) {
 					const normalizedError = this.addPropsToError(failError);
-					this.logger.sendErrorEvent({ eventName: "FailConnectionError" }, normalizedError);
+					this.logger.sendErrorEvent(
+						{ eventName: "FailConnectionError" },
+						normalizedError,
+					);
 				}
 				reject(err);
 			};
@@ -483,7 +482,9 @@ export class DocumentDeltaConnection
 
 						// Self-Signed Certificate ErrorCode Found in error.context
 						if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-							failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+							failAndCloseSocket(
+								this.createErrorObject("connect_error", error, false),
+							);
 							return;
 						}
 					} else if (description && typeof description === "object") {
@@ -491,7 +492,9 @@ export class DocumentDeltaConnection
 
 						// Self-Signed Certificate ErrorCode Found in error.description
 						if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-							failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+							failAndCloseSocket(
+								this.createErrorObject("connect_error", error, false),
+							);
 							return;
 						}
 

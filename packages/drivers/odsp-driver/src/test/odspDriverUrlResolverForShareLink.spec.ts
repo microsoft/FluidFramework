@@ -240,7 +240,10 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		const absoluteUrl = await mockGetFileLink(
 			Promise.reject(new Error("No Sharelink")),
 			async () => {
-				return urlResolverWithShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
+				return urlResolverWithShareLinkFetcher.getAbsoluteUrl(
+					mockResolvedUrl,
+					dataStorePath,
+				);
 			},
 		).catch((error) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -260,7 +263,10 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	it("getAbsoluteUrl - Should throw if using resolver without TokenFetcher", async () => {
 		let success = true;
 		const absoluteUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
-			return urlResolverWithoutShareLinkFetcher.getAbsoluteUrl(mockResolvedUrl, dataStorePath);
+			return urlResolverWithoutShareLinkFetcher.getAbsoluteUrl(
+				mockResolvedUrl,
+				dataStorePath,
+			);
 		}).catch(() => {
 			success = false;
 		});
@@ -335,11 +341,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		const locator = getLocatorFromOdspUrl(encodedUrl);
 		assert.strictEqual(locator?.driveId, driveId, "Drive id should be equal");
 		assert.strictEqual(locator?.itemId, itemId, "Item id should be equal");
-		assert.strictEqual(
-			locator?.dataStorePath,
-			dataStorePath,
-			"DataStore path should be equal",
-		);
+		assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
 		assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
 		assert.strictEqual(locator?.context, contextStringified, "Context should be equal");
 		const parsedContext = JSON.parse(locator?.context) as Record<

@@ -22,11 +22,7 @@ import { fail, isReadonlyArray } from "../util/index.js";
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema/index.js";
 import { TreeDataContext } from "./fieldGenerator.js";
-import {
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	mapTreeFromCursor,
-} from "./mapTreeCursor.js";
+import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
 import { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
@@ -148,8 +144,7 @@ export const arrayLikeMarkerSymbol: unique symbol = Symbol("flex-tree:arrayLikeM
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
  * @internal
  */
-export interface MarkedArrayLike<TGet, TSet extends TGet = TGet>
-	extends ArrayLikeMut<TGet, TSet> {
+export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
 	[Symbol.iterator](): IterableIterator<TGet>;
 }
@@ -339,11 +334,7 @@ export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(
 	schema: T,
 	data: InsertableFlexNode<T>,
 ): ITreeCursorSynchronous {
-	return cursorFromContextualData(
-		context,
-		new Set([schema]),
-		data as ContextuallyTypedNodeData,
-	);
+	return cursorFromContextualData(context, new Set([schema]), data as ContextuallyTypedNodeData);
 }
 
 /**

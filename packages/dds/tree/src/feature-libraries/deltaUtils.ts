@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeAtomId,
-	DeltaDetachedNodeId,
-	DeltaRoot,
-	makeDetachedNodeId,
-} from "../core/index.js";
+import { ChangeAtomId, DeltaDetachedNodeId, DeltaRoot, makeDetachedNodeId } from "../core/index.js";
 import { Mutable } from "../util/index.js";
 
 export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {

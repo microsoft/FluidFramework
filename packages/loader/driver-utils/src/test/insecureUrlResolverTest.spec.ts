@@ -123,9 +123,7 @@ describe("Insecure Url Resolver Test", () => {
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
 
-		const expectedResolvedUrl = `https://${
-			new URL(ordererUrl).host
-		}/${tenantId}/${fileName}//`;
+		const expectedResolvedUrl = `https://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
 		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 

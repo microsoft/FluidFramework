@@ -91,9 +91,7 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	compose: (change1, change2, composeChild) =>
-		change1 === undefined && change2 === undefined
-			? undefined
-			: composeChild(change1, change2),
+		change1 === undefined && change2 === undefined ? undefined : composeChild(change1, change2),
 	invert: (change) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
@@ -785,7 +783,9 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
 				},
 				tag1,
 			);
@@ -831,7 +831,9 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
 				},
 				tag1,
 			);
@@ -996,7 +998,9 @@ describe("ModularChangeFamily", () => {
 							[
 								fieldA,
 								{
-									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
 								},
 							],
 						]),
@@ -1111,10 +1115,7 @@ describe("ModularChangeFamily", () => {
 			nested: NodeId[];
 		}
 
-		const handler: FieldChangeHandler<
-			HasRemovedRootsRefs,
-			FieldEditor<HasRemovedRootsRefs>
-		> = {
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>> = {
 			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,

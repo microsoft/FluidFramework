@@ -156,7 +156,10 @@ describe("No Index Paging", () => {
 						},
 					},
 				},
-				queryPaths: ["myNodeProperty.myPointsMap.pointG", "myNodeProperty.myPointsMap.pointH"],
+				queryPaths: [
+					"myNodeProperty.myPointsMap.pointG",
+					"myNodeProperty.myPointsMap.pointH",
+				],
 			});
 		});
 	});
@@ -1080,7 +1083,10 @@ describe("No Index Paging", () => {
 						},
 					},
 				},
-				queryPaths: ["myNodeProperty.myPointsMap.pointI", "myNodeProperty.myPointsMap.pointH"],
+				queryPaths: [
+					"myNodeProperty.myPointsMap.pointI",
+					"myNodeProperty.myPointsMap.pointH",
+				],
 			});
 		});
 	});
@@ -1188,7 +1194,10 @@ describe("No Index Paging", () => {
 						},
 					},
 				},
-				queryPaths: ["myNodeProperty.myPersonsMap.John", "myNodeProperty.myPersonsMap.Jack"],
+				queryPaths: [
+					"myNodeProperty.myPersonsMap.John",
+					"myNodeProperty.myPersonsMap.Jack",
+				],
 			});
 		});
 	});
@@ -1308,7 +1317,10 @@ describe("No Index Paging", () => {
 						},
 					},
 				},
-				queryPaths: ["myNodeProperty.myPersonsMap.ZAlex", "myNodeProperty.myPersonsMap.Jack"],
+				queryPaths: [
+					"myNodeProperty.myPersonsMap.ZAlex",
+					"myNodeProperty.myPersonsMap.Jack",
+				],
 			});
 		});
 	});

@@ -23,10 +23,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
-const nodeChange1: TestNodeId = TestNodeId.create(
-	{ localId: brand(0) },
-	TestChange.mint([], 1),
-);
+const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const tag1 = mintRevisionTag();
 
 const change1 = inlineRevision(
@@ -90,9 +87,6 @@ export function testCodecs() {
 			],
 		};
 
-		makeEncodingTestSuite(
-			makeOptionalFieldCodecFamily(testRevisionTagCodec),
-			encodingTestData,
-		);
+		makeEncodingTestSuite(makeOptionalFieldCodecFamily(testRevisionTagCodec), encodingTestData);
 	});
 }

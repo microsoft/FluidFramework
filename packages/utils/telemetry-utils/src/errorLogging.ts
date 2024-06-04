@@ -246,10 +246,7 @@ export function wrapError<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
 ): T {
-	const { message, stack } = extractLogSafeErrorProperties(
-		innerError,
-		false /* sanitizeStack */,
-	);
+	const { message, stack } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
 
 	const newError = newErrorFn(message);
 

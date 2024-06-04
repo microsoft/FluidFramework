@@ -5,12 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	Adapters,
-	TreeAdapter,
-	TreeNodeSchemaIdentifier,
-	Multiplicity,
-} from "../../core/index.js";
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier, Multiplicity } from "../../core/index.js";
 import { fail, requireAssignableTo } from "../../util/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 

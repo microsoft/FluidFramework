@@ -19,11 +19,7 @@ import { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { EditManager, SummaryData } from "./editManager.js";
 import { EditManagerEncodingContext } from "./editManagerCodecs.js";
-import {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "./sharedTreeCore.js";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
 
 const stringKey = "String";
 

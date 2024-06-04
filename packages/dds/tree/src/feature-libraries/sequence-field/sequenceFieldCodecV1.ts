@@ -92,7 +92,7 @@ export function makeV1Codec(
 											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
 											type: DetachIdOverrideType.Unattach,
 											id: cellIdCodec.encode(effect.idOverride, context),
-										},
+									  },
 							id: effect.id,
 						},
 					};
@@ -111,15 +111,21 @@ export function makeV1Codec(
 											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
 											type: DetachIdOverrideType.Unattach,
 											id: cellIdCodec.encode(effect.idOverride, context),
-										},
+									  },
 							id: effect.id,
 						},
 					};
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(effect.attach, context) as Encoded.Attach,
-							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
+							attach: markEffectCodec.encode(
+								effect.attach,
+								context,
+							) as Encoded.Attach,
+							detach: markEffectCodec.encode(
+								effect.detach,
+								context,
+							) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -138,7 +144,10 @@ export function makeV1Codec(
 		context: ChangeEncodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
-			assert(context.revision !== undefined, 0x965 /* Implicit revision should be provided */);
+			assert(
+				context.revision !== undefined,
+				0x965 /* Implicit revision should be provided */,
+			);
 			return context.revision;
 		}
 
@@ -215,12 +224,7 @@ export function makeV1Codec(
 		},
 	});
 
-	const cellIdCodec: IJsonCodec<
-		CellId,
-		Encoded.CellId,
-		Encoded.CellId,
-		ChangeEncodingContext
-	> = {
+	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
 		encode: (cellId: CellId, context: ChangeEncodingContext): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
 				atom: changeAtomIdCodec.encode(cellId, context),
@@ -272,7 +276,10 @@ export function makeV1Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
+					Object.assign(
+						decodedMark,
+						markEffectCodec.decode(mark.effect, context.baseContext),
+					);
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);

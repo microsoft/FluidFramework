@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { compareArrays } from "@fluidframework/core-utils/internal";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { compareArrays } from '@fluidframework/core-utils/internal';
+import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
 
-import { Payload } from "./persisted-types/index.js";
+import { Payload } from './persisted-types/index.js';
 
 /**
  * @returns true if two `Payloads` are identical.
@@ -53,7 +53,7 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	}
 
 	// Primitives which are equal would have early returned above, so now if the values are not both objects, they are unequal.
-	if (typeof a !== "object" || typeof b !== "object") {
+	if (typeof a !== 'object' || typeof b !== 'object') {
 		return false;
 	}
 

@@ -123,7 +123,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 			const provider = this.resolveProvider(key);
 			if (provider === undefined) {
 				throw new Error(
-					`Object attempted to be created without registered required provider ${String(key)}`,
+					`Object attempted to be created without registered required provider ${String(
+						key,
+					)}`,
 				);
 			}
 			Object.defineProperty(base, key, provider);

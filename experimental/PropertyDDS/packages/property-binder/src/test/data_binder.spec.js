@@ -117,16 +117,22 @@ describe("DataBinder", function () {
 				new DataBinder(workspace);
 			}).not.toThrow();
 			workspace.root.insert("children", PropertyFactory.create("Float32", "array"));
-			workspace.root.get("children").insert(0, PropertyFactory.create("Float32", "single", 1));
+			workspace.root
+				.get("children")
+				.insert(0, PropertyFactory.create("Float32", "single", 1));
 		});
 
 		it("should be possible to pass and modify a populated workspace to the constructor", function () {
 			workspace.root.insert("children", PropertyFactory.create("Float32", "array"));
-			workspace.root.get("children").insert(0, PropertyFactory.create("Float32", "single", 1));
+			workspace.root
+				.get("children")
+				.insert(0, PropertyFactory.create("Float32", "single", 1));
 			expect(() => {
 				new DataBinder(workspace);
 			}).not.toThrow();
-			workspace.root.get("children").insert(1, PropertyFactory.create("Float32", "single", 2));
+			workspace.root
+				.get("children")
+				.insert(1, PropertyFactory.create("Float32", "single", 2));
 		});
 
 		it("should invoke DataBinding callbacks when a workspace is passed to the constructor", function () {
@@ -215,7 +221,10 @@ describe("DataBinder", function () {
 			dataBinder.activateDataBinding("BINDING");
 
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
-			workspace.root.insert("parent", PropertyFactory.create(ParentTemplate.typeid, "single"));
+			workspace.root.insert(
+				"parent",
+				PropertyFactory.create(ParentTemplate.typeid, "single"),
+			);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 			workspace.root.insert("child", PropertyFactory.create(ChildTemplate.typeid, "single"));
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
@@ -799,7 +808,10 @@ describe("DataBinder", function () {
 			);
 			initializeProperties(primitiveChildren["map"]);
 
-			var wrapperPset = PropertyFactory.create(PrimitiveChildWrapperTemplate.typeid, "single");
+			var wrapperPset = PropertyFactory.create(
+				PrimitiveChildWrapperTemplate.typeid,
+				"single",
+			);
 			wrapperPset._properties.primitiveChildrenArray.push(primitiveChildren["array"]);
 			wrapperPset._properties.primitiveChildrenSet.insert(primitiveChildren["set"]);
 			wrapperPset._properties.primitiveChildrenMap.insert(
@@ -1182,7 +1194,10 @@ describe("DataBinder", function () {
 
 			for (var i = 0; i < pathPrefixes.length; i++) {
 				var childPset = PropertyFactory.create(ChildTemplate.typeid, "single");
-				var unrepresentedPset = PropertyFactory.create(UnrepresentedTemplate.typeid, "single");
+				var unrepresentedPset = PropertyFactory.create(
+					UnrepresentedTemplate.typeid,
+					"single",
+				);
 				var subArrayPath = pathPrefixes[i] + "subArray";
 				var unrepresentedSubArrayPath = pathPrefixes[i] + "unrepresentedSubArray";
 
@@ -1250,7 +1265,10 @@ describe("DataBinder", function () {
 				var childPset1 = PropertyFactory.create(ChildTemplate.typeid, "single");
 				var childPset2 = PropertyFactory.create(ChildTemplate.typeid, "single");
 				var childPset3 = PropertyFactory.create(ChildTemplate.typeid, "single");
-				var unrepresentedPset = PropertyFactory.create(UnrepresentedTemplate.typeid, "single");
+				var unrepresentedPset = PropertyFactory.create(
+					UnrepresentedTemplate.typeid,
+					"single",
+				);
 				var subArrayPath = pathPrefixes[i] + "subArray";
 				var unrepresentedSubArrayPath = pathPrefixes[i] + "unrepresentedSubArray";
 
@@ -1960,7 +1978,10 @@ describe("DataBinder", function () {
 
 			for (var i = 0; i < pathPrefixes.length; i++) {
 				var childPset = PropertyFactory.create(ChildTemplate.typeid, "single");
-				var unrepresentedPset = PropertyFactory.create(UnrepresentedTemplate.typeid, "single");
+				var unrepresentedPset = PropertyFactory.create(
+					UnrepresentedTemplate.typeid,
+					"single",
+				);
 				var subSetPath = pathPrefixes[i] + "subSet";
 				var unrepresentedSubSetPath = pathPrefixes[i] + "unrepresentedSubSet";
 
@@ -2114,7 +2135,9 @@ describe("DataBinder", function () {
 			);
 			parentDataBinding.onModify.mockClear();
 			parentDataBinding.onPreModify.mockClear();
-			expect(dataBinder.resolve("myMapPset", "BINDING").onPostCreate).toHaveBeenCalledTimes(1);
+			expect(dataBinder.resolve("myMapPset", "BINDING").onPostCreate).toHaveBeenCalledTimes(
+				1,
+			);
 			dataBinder._resetDebugCounters();
 		};
 
@@ -2232,7 +2255,10 @@ describe("DataBinder", function () {
 
 			for (var i = 0; i < pathPrefixes.length; i++) {
 				var childPset = PropertyFactory.create(ChildTemplate.typeid, "single");
-				var unrepresentedPset = PropertyFactory.create(UnrepresentedTemplate.typeid, "single");
+				var unrepresentedPset = PropertyFactory.create(
+					UnrepresentedTemplate.typeid,
+					"single",
+				);
 				var subMapPath = pathPrefixes[i] + "subMap";
 				var unrepresentedSubMapPath = pathPrefixes[i] + "unrepresentedSubMap";
 
@@ -2960,7 +2986,10 @@ describe("DataBinder", function () {
 			dataBinder.register("BINDING", ChildTemplate.typeid, ChildDataBinding);
 
 			// Create PSet for inherited child typeid
-			var inheritedChildPset = PropertyFactory.create(InheritedChildTemplate.typeid, "single");
+			var inheritedChildPset = PropertyFactory.create(
+				InheritedChildTemplate.typeid,
+				"single",
+			);
 
 			// Add the inherited child to the workspace and bind
 			workspace.root.insert(inheritedChildPset);
@@ -3004,11 +3033,18 @@ describe("DataBinder", function () {
 		it("should create DataBinding with correct template if the template and its parent are both registered", () => {
 			// Register the base and inherited template ids
 			dataBinder.register("BINDING", ChildTemplate.typeid, ChildDataBinding);
-			dataBinder.register("BINDING", InheritedChildTemplate.typeid, InheritedChildDataBinding);
+			dataBinder.register(
+				"BINDING",
+				InheritedChildTemplate.typeid,
+				InheritedChildDataBinding,
+			);
 
 			// Create PSet for child, inheritedChild
 			var childPset = PropertyFactory.create(ChildTemplate.typeid, "single");
-			var inheritedChildPset = PropertyFactory.create(InheritedChildTemplate.typeid, "single");
+			var inheritedChildPset = PropertyFactory.create(
+				InheritedChildTemplate.typeid,
+				"single",
+			);
 
 			// bind workspace
 			dataBinder.attachTo(workspace);
@@ -3111,7 +3147,10 @@ describe("DataBinder", function () {
 
 			// Create PSet for child, inheritedChild
 			var childPset = PropertyFactory.create(ChildTemplate.typeid, "single");
-			var inheritedChildPset = PropertyFactory.create(InheritedChildTemplate.typeid, "single");
+			var inheritedChildPset = PropertyFactory.create(
+				InheritedChildTemplate.typeid,
+				"single",
+			);
 
 			// bind workspace
 			dataBinder.attachTo(workspace);
@@ -4479,7 +4518,10 @@ describe("DataBinder", function () {
 			// parentPset should produce a ParentDataBinding and a myDerivedDataBinding
 			workspace.root.insert(parentPset);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
-			parentDataBinding = dataBinder.resolve(parentPset.getAbsolutePath(), "DataBindingTest1");
+			parentDataBinding = dataBinder.resolve(
+				parentPset.getAbsolutePath(),
+				"DataBindingTest1",
+			);
 			const derivedDataBinding = dataBinder.resolve(
 				parentPset.getAbsolutePath(),
 				"DataBindingTest2",
@@ -4511,7 +4553,9 @@ describe("DataBinder", function () {
 					// above overwrites stuff in the prototype at ctor time
 					this.onModify = jest.fn(function (in_modificationContext) {
 						expect(in_modificationContext.getDataBinding()).toEqual(this);
-						expect(in_modificationContext.getDataBinding("DataBindingTest2")).toEqual(this);
+						expect(in_modificationContext.getDataBinding("DataBindingTest2")).toEqual(
+							this,
+						);
 						expect(in_modificationContext.getDataBinding("DataBindingTest1")).toEqual(
 							parentDataBinding,
 						);
@@ -4533,7 +4577,10 @@ describe("DataBinder", function () {
 			// parentPset should produce a ParentDataBinding and a myDerivedDataBinding
 			workspace.root.insert(parentPset);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
-			parentDataBinding = dataBinder.resolve(parentPset.getAbsolutePath(), "DataBindingTest1");
+			parentDataBinding = dataBinder.resolve(
+				parentPset.getAbsolutePath(),
+				"DataBindingTest1",
+			);
 			const derivedDataBinding = dataBinder.resolve(
 				parentPset.getAbsolutePath(),
 				"DataBindingTest2",
@@ -4586,7 +4633,10 @@ describe("DataBinder", function () {
 			// parentPset should produce a ParentDataBinding and a myDerivedDataBinding
 			workspace.root.insert(parentPset);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
-			parentDataBinding = dataBinder.resolve(parentPset.getAbsolutePath(), "DataBindingTest1");
+			parentDataBinding = dataBinder.resolve(
+				parentPset.getAbsolutePath(),
+				"DataBindingTest1",
+			);
 			const derivedDataBinding = dataBinder.resolve(
 				parentPset.getAbsolutePath(),
 				"DataBindingTest2",
@@ -4761,7 +4811,10 @@ describe("DataBinder", function () {
 			const childDataBindingWithUserData = dataBinder.resolve("/child", "BINDING");
 			expect(childDataBindingWithUserData.getUserData()).toEqual(myUserData);
 			// Add a Parent PSet
-			workspace.root.insert("parent", PropertyFactory.create(ParentTemplate.typeid, "single"));
+			workspace.root.insert(
+				"parent",
+				PropertyFactory.create(ParentTemplate.typeid, "single"),
+			);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(2);
 			const childDataBindingNoUserData = dataBinder.resolve("/parent", "BINDING");
 			expect(childDataBindingNoUserData.getUserData()).toBeUndefined();
@@ -5049,7 +5102,11 @@ describe("DataBinder", function () {
 			// Now register
 			ChildDataBinding.registerOnPath("", ["collectionInsert"], primitiveArrayInsertSpy);
 			ChildDataBinding.registerOnPath("", ["collectionRemove"], primitiveArrayRemoveSpy);
-			const primArrayHandle = dataBinder.register("BINDING", "array<Int32>", ChildDataBinding);
+			const primArrayHandle = dataBinder.register(
+				"BINDING",
+				"array<Int32>",
+				ChildDataBinding,
+			);
 
 			// Everything should be created now
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
@@ -5120,9 +5177,9 @@ describe("DataBinder", function () {
 
 			expect(dataBinder.hasDataBinding("BINDING", ChildTemplate.typeid)).toEqual(true);
 			expect(dataBinder.hasDataBinding("POTATO", ChildTemplate.typeid)).toEqual(false);
-			expect(dataBinder.hasDataBinding("BINDING", "autodesk.vegetables:potato-1.0.0")).toEqual(
-				false,
-			);
+			expect(
+				dataBinder.hasDataBinding("BINDING", "autodesk.vegetables:potato-1.0.0"),
+			).toEqual(false);
 		});
 
 		it("should correctly pass different userData with different activations", function () {
@@ -5356,10 +5413,16 @@ describe("DataBinder", function () {
 
 		it("should work when registering an exactPath to an element in an array (LYNXDEV-5380)", function () {
 			dataBinder.attachTo(workspace);
-			workspace.root.insert("arrTest", PropertyFactory.create(ParentTemplate.typeid, "array"));
-			const handle = dataBinder.register("BINDING", ParentTemplate.typeid, ParentDataBinding, {
-				exactPath: "arrTest[0]",
-			});
+			workspace.root.insert(
+				"arrTest",
+				PropertyFactory.create(ParentTemplate.typeid, "array"),
+			);
+			const handle = dataBinder.register(
+				"BINDING",
+				ParentTemplate.typeid,
+				ParentDataBinding,
+				{ exactPath: "arrTest[0]" },
+			);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 			workspace.root
 				.get("arrTest")
@@ -5371,11 +5434,17 @@ describe("DataBinder", function () {
 
 		it("should work when explicitly unreg. an array elem. (w/ exactPath) already removed (LYNXDEV-5380)", function () {
 			dataBinder.attachTo(workspace);
-			workspace.root.insert("arrTest", PropertyFactory.create(ParentTemplate.typeid, "array"));
+			workspace.root.insert(
+				"arrTest",
+				PropertyFactory.create(ParentTemplate.typeid, "array"),
+			);
 			workspace.root.get("arrTest").push(PropertyFactory.create(ParentTemplate.typeid));
-			const handle = dataBinder.register("BINDING", ParentTemplate.typeid, ParentDataBinding, {
-				exactPath: "arrTest[0]",
-			});
+			const handle = dataBinder.register(
+				"BINDING",
+				ParentTemplate.typeid,
+				ParentDataBinding,
+				{ exactPath: "arrTest[0]" },
+			);
 			expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 			workspace.root.get("arrTest").remove(0);
 			expect(dataBinder._dataBindingRemovedCounter).toEqual(1);

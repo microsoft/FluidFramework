@@ -109,10 +109,7 @@ export function expectedPositionFromSequencePlace(
 /**
  * @returns the index to be used with methods such as substring, taking side into account.
  */
-export function expectedIndexFromSequencePlace(
-	place: SequencePlace,
-	ifEnd: number = -1,
-): number {
+export function expectedIndexFromSequencePlace(place: SequencePlace, ifEnd: number = -1): number {
 	if (place === "start") {
 		return 0;
 	} else if (place === "end") {

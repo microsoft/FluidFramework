@@ -163,10 +163,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return response.content;
 	}
 
-	protected async fetchBlobFromStorage(
-		blobId: string,
-		evicted: boolean,
-	): Promise<ArrayBuffer> {
+	protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
 		this.checkAttachmentGETUrl();
 
 		const blob = await getWithRetryForTokenRefresh(async (options) => {
@@ -312,7 +309,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 											snapshotTree: snapshotCachedEntry.snapshotTree,
 											blobContents: snapshotCachedEntry.blobs,
 											ops: snapshotCachedEntry.ops,
-											latestSequenceNumber: snapshotCachedEntry.latestSequenceNumber,
+											latestSequenceNumber:
+												snapshotCachedEntry.latestSequenceNumber,
 											sequenceNumber: snapshotCachedEntry.sequenceNumber,
 											snapshotFormatV: 1,
 										};

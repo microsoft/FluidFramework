@@ -9,10 +9,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	ISharedObject,
-	ISharedObjectEvents,
-} from "@fluidframework/shared-object-base/internal";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 /**
  * @alpha

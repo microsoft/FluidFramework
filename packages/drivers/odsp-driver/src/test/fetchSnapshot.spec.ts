@@ -9,10 +9,7 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
@@ -190,7 +187,11 @@ describe("Tests1 for snapshot fetch", () => {
 			}
 		}
 		const odspResponse: IOdspResponse<Response> = {
-			content: (await createResponse({}, new Uint8Array().buffer, 200)) as unknown as Response,
+			content: (await createResponse(
+				{},
+				new Uint8Array().buffer,
+				200,
+			)) as unknown as Response,
 			duration: 10,
 			headers: new Map([
 				["x-fluid-epoch", "epoch1"],
@@ -317,9 +318,7 @@ describe("Tests1 for snapshot fetch", () => {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(ungroupedData, "should have asked for ungroupedData");
-		const cachedValue = (await epochTracker.get(
-			createCacheSnapshotKey(resolved),
-		)) as ISnapshot;
+		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
@@ -338,7 +337,10 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
-				assert(getDownloadSnapshotStub.args[0][2]?.[0] === "g1", "should ask for g1 groupId");
+				assert(
+					getDownloadSnapshotStub.args[0][2]?.[0] === "g1",
+					"should ask for g1 groupId",
+				);
 				success = true;
 			}
 		}
@@ -438,9 +440,7 @@ describe("Tests1 for snapshot fetch", () => {
 		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
-		const cachedValue = (await epochTracker.get(
-			createCacheSnapshotKey(resolved),
-		)) as ISnapshot;
+		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");

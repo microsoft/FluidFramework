@@ -46,10 +46,7 @@ export function schemaCompressedEncode(
 	return compressedEncode(fieldBatch, buildCache(schema, policy));
 }
 
-export function buildCache(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),

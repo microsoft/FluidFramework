@@ -67,10 +67,7 @@ export async function validateSnapshots(
 
 		// We must have a corresponding destination snapshot for the source snapshot.
 		const referenceDir = `${destDir}/${file.name}`;
-		assert(
-			fs.existsSync(referenceDir),
-			`Destination snapshot does not exist for ${file.name}`,
-		);
+		assert(fs.existsSync(referenceDir), `Destination snapshot does not exist for ${file.name}`);
 
 		const snapshotFileName = file.name.split(".")[0];
 		const sourceDir = `${srcDir}/${file.name}`;

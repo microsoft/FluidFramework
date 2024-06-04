@@ -7,10 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";

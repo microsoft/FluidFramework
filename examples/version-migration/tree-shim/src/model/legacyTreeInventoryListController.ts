@@ -18,11 +18,7 @@ import {
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IInventoryItem,
-	IInventoryItemEvents,
-	IInventoryList,
-} from "../modelInterfaces.js";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 /**
  * LegacyTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -140,7 +136,8 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const inventoryItemNodeId = quantityNode.parentage!.parent;
-					const inventoryItemNode = this._tree.currentView.getViewNode(inventoryItemNodeId);
+					const inventoryItemNode =
+						this._tree.currentView.getViewNode(inventoryItemNodeId);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 					const idNode = this._tree.currentView.getViewNode(idNodeId);

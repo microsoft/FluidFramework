@@ -35,10 +35,7 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
-		() => linkedListSchema,
-		leaf.number,
-	]),
+	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
 const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {

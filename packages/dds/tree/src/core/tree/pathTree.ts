@@ -94,9 +94,7 @@ export interface Range {
  * This object only characterizes the location of the range, it does not own/contain the nodes in the range.
  * @internal
  */
-export interface RangeUpPath<TUpPath extends UpPath = UpPath>
-	extends FieldUpPath<TUpPath>,
-		Range {}
+export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range {}
 
 /**
  * A place in a field.

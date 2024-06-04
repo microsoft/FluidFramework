@@ -26,7 +26,4 @@ const monacoViewCallback = (model: MonacoRunner): React.ReactElement =>
 /**
  * @internal
  */
-export const fluidExport = new ContainerViewRuntimeFactory(
-	componentFactory,
-	monacoViewCallback,
-);
+export const fluidExport = new ContainerViewRuntimeFactory(componentFactory, monacoViewCallback);

@@ -35,12 +35,7 @@ import {
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
 
-import {
-	fieldKinds,
-	optional,
-	sequence,
-	required as valueFieldKind,
-} from "./defaultFieldKinds.js";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -49,9 +44,7 @@ export type DefaultChangeset = ModularChangeset;
  *
  * @sealed
  */
-export class DefaultChangeFamily
-	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
-{
+export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {

@@ -21,11 +21,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/intern
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
-import {
-	AzureClientConnectionConfig,
-	ContainerFactorySchema,
-	IRunConfig,
-} from "./interface.js";
+import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
 
 export interface AzureClientConfig {
 	id?: string;

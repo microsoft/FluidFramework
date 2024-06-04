@@ -109,7 +109,11 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 			</tr>
 			<tr>
 				<td colSpan={2}>
-					<button style={{ width: "100%" }} onClick={onAddItemButtonClick} disabled={disabled}>
+					<button
+						style={{ width: "100%" }}
+						onClick={onAddItemButtonClick}
+						disabled={disabled}
+					>
 						Add new item
 					</button>
 				</td>

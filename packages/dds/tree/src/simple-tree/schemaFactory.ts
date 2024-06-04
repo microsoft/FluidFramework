@@ -39,11 +39,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import {
-	InsertableObjectFromSchemaRecord,
-	TreeObjectNode,
-	objectSchema,
-} from "./objectNode.js";
+import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
 	FieldSchemaUnsafe,
@@ -162,9 +158,10 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
+		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
+			TScope,
+			Name
+		>;
 	}
 
 	/**
@@ -674,7 +671,12 @@ export class SchemaFactory<
 			public constructor(
 				data:
 					| Iterable<
-							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
+							[
+								string,
+								InsertableTreeNodeFromImplicitAllowedTypes<
+									T & ImplicitAllowedTypes
+								>,
+							]
 					  >
 					| FlexTreeNode,
 			) {

@@ -29,13 +29,7 @@ import {
 	performFuzzActions,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
-import {
-	FinalCompressedId,
-	LocalCompressedId,
-	fail,
-	isFinalId,
-	isLocalId,
-} from "./testCommon.js";
+import { FinalCompressedId, LocalCompressedId, fail, isFinalId, isLocalId } from "./testCommon.js";
 
 const initialClusterCapacity = 512;
 
@@ -304,7 +298,11 @@ describe("IdCompressor Perf", () => {
 			} client into a stable ID`,
 			before: () => {
 				const network = setupCompressors(initialClusterCapacity, true, true);
-				finalIdToDecompress = getIdMadeBy(local ? localClient : remoteClient, true, network);
+				finalIdToDecompress = getIdMadeBy(
+					local ? localClient : remoteClient,
+					true,
+					network,
+				);
 			},
 			benchmarkFn: () => {
 				perfCompressor!.decompress(finalIdToDecompress);
@@ -345,7 +343,9 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((manySessions) => {
 		benchmark({
 			type,
-			title: `serialize an IdCompressor (${manySessions ? "many sessions" : "many clusters"})`,
+			title: `serialize an IdCompressor (${
+				manySessions ? "many sessions" : "many clusters"
+			})`,
 			before: () => {
 				if (manySessions) {
 					perfCompressor = buildHugeCompressor(undefined, initialClusterCapacity);

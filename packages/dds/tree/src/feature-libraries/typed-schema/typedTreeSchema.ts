@@ -95,10 +95,7 @@ export class FlexMapNodeSchema<
 	}
 
 	protected _typeCheck2?: MakeNominal;
-	public static create<
-		const Name extends string,
-		const Specification extends FlexMapFieldSchema,
-	>(
+	public static create<const Name extends string, const Specification extends FlexMapFieldSchema>(
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
@@ -558,9 +555,7 @@ export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 /**
  * Converts a {@link SchemaCollection} into a {@link StoredSchemaCollection}.
  */
-export function intoStoredSchemaCollection(
-	treeSchema: SchemaCollection,
-): StoredSchemaCollection {
+export function intoStoredSchemaCollection(treeSchema: SchemaCollection): StoredSchemaCollection {
 	return {
 		nodeSchema: new Map(
 			mapIterable(treeSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -613,8 +608,6 @@ export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFie
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexObjectNodeSchema}.
  * @internal
  */
-export function schemaIsObjectNode(
-	schema: FlexTreeNodeSchema,
-): schema is FlexObjectNodeSchema {
+export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is FlexObjectNodeSchema {
 	return schema instanceof FlexObjectNodeSchema;
 }

@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
-import {
-	IResolvedUrl,
-	type IAnyDriverError,
-} from "@fluidframework/driver-definitions/internal";
+import { IResolvedUrl, type IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,

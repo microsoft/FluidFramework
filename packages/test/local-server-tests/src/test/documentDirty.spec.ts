@@ -10,10 +10,7 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
@@ -174,11 +171,7 @@ describe("Document Dirty", () => {
 			loaderContainerTracker.reset();
 		});
 
-		function checkDirtyState(
-			when: string,
-			expectedDirty: boolean,
-			expectedCleanCount: number,
-		) {
+		function checkDirtyState(when: string, expectedDirty: boolean, expectedCleanCount: number) {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,
@@ -520,11 +513,7 @@ describe("Document Dirty", () => {
 			});
 		}
 
-		function checkDirtyState(
-			when: string,
-			expectedDirty: boolean,
-			expectedCleanCount: number,
-		) {
+		function checkDirtyState(when: string, expectedDirty: boolean, expectedCleanCount: number) {
 			assert.equal(
 				containerRuntime.isDirty,
 				expectedDirty,

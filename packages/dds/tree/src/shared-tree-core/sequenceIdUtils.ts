@@ -22,6 +22,6 @@ export const decrementSequenceId = (sequenceId: SequenceId): SequenceId => {
 		? {
 				sequenceNumber: brand(sequenceId.sequenceNumber),
 				indexInBatch: sequenceId.indexInBatch - 1,
-			}
+		  }
 		: { sequenceNumber: brand(sequenceId.sequenceNumber - 1) };
 };

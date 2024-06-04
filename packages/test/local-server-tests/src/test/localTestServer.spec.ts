@@ -12,10 +12,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import { IUrlResolver, MessageType } from "@fluidframework/driver-definitions/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,

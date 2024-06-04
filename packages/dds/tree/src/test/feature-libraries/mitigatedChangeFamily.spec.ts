@@ -87,10 +87,7 @@ const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
-		assert.equal(
-			mitigatedReturningFamily.buildEditor(arg1),
-			returningFamily.buildEditor(arg1),
-		);
+		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
 			returningRebaser.rebase(arg1, arg2, arg3),

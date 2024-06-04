@@ -10,10 +10,7 @@ import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import {
-	EncodedNodeChangeset,
-	type FieldChangeEncodingContext,
-} from "../modular-schema/index.js";
+import { EncodedNodeChangeset, type FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
@@ -76,7 +73,10 @@ export function makeOptionalFieldCodec(
 				// When the source of the replace is "self", the destination is a reserved ID that will only be used if
 				// the tree in the field is concurrently replaced.
 				if (change.valueReplace.isEmpty || change.valueReplace.src === "self") {
-					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context.baseContext);
+					encoded.d = registerIdCodec.encode(
+						change.valueReplace.dst,
+						context.baseContext,
+					);
 				} else {
 					encoded.m.push([
 						registerIdCodec.encode("self", context.baseContext),

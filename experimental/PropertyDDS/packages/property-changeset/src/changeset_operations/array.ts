@@ -698,12 +698,7 @@ const splitOverlapping = function (
 		io_resultingSegment.flag = ArrayChangeSetRangeType.partOfA;
 
 		// cut the remaining segment entry
-		_splitOperation(
-			io_rangeA,
-			io_resultingSegment.op,
-			io_rangeB.begin - io_rangeA.begin,
-			true,
-		);
+		_splitOperation(io_rangeA, io_resultingSegment.op, io_rangeB.begin - io_rangeA.begin, true);
 
 		io_rangeA.begin = io_rangeB.begin;
 		io_rangeA.op.operation[0] = io_rangeB.begin;
@@ -829,7 +824,9 @@ const mergeWithLastIfPossible = function (
 				let mergedRangeMetaInformation;
 				if (in_options && in_options.applyAfterMetaInformation) {
 					const previousMetaInfo = in_options.applyAfterMetaInformation.get(lastOp[1]);
-					const currentMetaInfo = in_options.applyAfterMetaInformation.get(in_op.operation[1]);
+					const currentMetaInfo = in_options.applyAfterMetaInformation.get(
+						in_op.operation[1],
+					);
 					if (previousMetaInfo || currentMetaInfo) {
 						// Get the range information attached to the segments that get merged
 						const previousRange =
@@ -995,7 +992,11 @@ const pushOp = function (
 		case ArrayChangeSetIterator.types.MODIFY: {
 			if (!mergeWithLastIfPossible(in_op, io_changeset, writeTargetIndex, in_options)) {
 				if (in_op.operation[2] !== undefined) {
-					io_changeset.modify.push([writeTargetIndex, in_op.operation[1], in_op.operation[2]]);
+					io_changeset.modify.push([
+						writeTargetIndex,
+						in_op.operation[1],
+						in_op.operation[2],
+					]);
 				} else {
 					io_changeset.modify.push([writeTargetIndex, in_op.operation[1]]);
 				}
@@ -1082,7 +1083,9 @@ const handleCombinations = function (in_segment: SegmentType, in_isPrimitiveType
 		}
 		case ArrayChangeSetIterator.types.REMOVE: {
 			// this combination is not reachable since this case has already been handled before
-			console.error("this combination should not occur in handleCombinations - this is a bug");
+			console.error(
+				"this combination should not occur in handleCombinations - this is a bug",
+			);
 			break;
 		}
 		case ArrayChangeSetIterator.types.MODIFY: {
@@ -1352,7 +1355,10 @@ const handleRebaseCombinations = function (
 		case ArrayChangeSetIterator.types.MODIFY: {
 			if (in_isPrimitiveType) {
 				// just use opB and notify accordingly
-				if (opB.type === ArrayChangeSetIterator.types.MODIFY && opB.operation[1].length > 0) {
+				if (
+					opB.type === ArrayChangeSetIterator.types.MODIFY &&
+					opB.operation[1].length > 0
+				) {
 					delete opA._absoluteBegin;
 					delete opB.offset;
 					let conflict = {
@@ -1640,8 +1646,13 @@ export namespace ChangeSetArrayFunctions {
 						// we have to adjust the position to the end of this operation (an insert that is
 						// applied at the position of the remove would be shifted behind this insert)
 						if (opA.removeInsertOperation) {
-							if (opA.removeInsertOperation[0] + opA.offset === lastIteratorARemove.position) {
-								lastIteratorARemove.position += getOpLength(opA.removeInsertOperation);
+							if (
+								opA.removeInsertOperation[0] + opA.offset ===
+								lastIteratorARemove.position
+							) {
+								lastIteratorARemove.position += getOpLength(
+									opA.removeInsertOperation,
+								);
 							}
 						}
 					}

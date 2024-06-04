@@ -34,10 +34,7 @@ const config = new TreeConfiguration(SomeType, () => ({
 	bump: undefined,
 }));
 
-function createConnectedTree(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): ISharedTree {
+function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory): ISharedTree {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});

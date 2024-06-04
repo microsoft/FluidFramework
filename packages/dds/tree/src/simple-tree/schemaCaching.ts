@@ -58,9 +58,7 @@ export function setFlexSchemaFromClassSchema(
  * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
  * Returns `undefined` if no cached value is found.
  */
-export function tryGetSimpleNodeSchema(
-	flexSchema: FlexTreeNodeSchema,
-): TreeNodeSchema | undefined {
+export function tryGetSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
 	if (simpleNodeSchemaSymbol in flexSchema) {
 		return flexSchema[simpleNodeSchemaSymbol] as TreeNodeSchema;
 	}

@@ -45,10 +45,7 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<
-	Operation,
-	BranchedTreeFuzzTestState
->({
+const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
 	treeEdit: async (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {

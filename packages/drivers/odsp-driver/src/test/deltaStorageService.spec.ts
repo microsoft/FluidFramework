@@ -8,27 +8,18 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
-import {
-	IFileEntry,
-	IOdspResolvedUrl,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
-import {
-	OdspDeltaStorageService,
-	OdspDeltaStorageWithCache,
-} from "../odspDeltaStorageService.js";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 
 import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
-const createUtEpochTracker = (
-	fileEntry: IFileEntry,
-	logger: ITelemetryBaseLogger,
-): EpochTracker =>
+const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryBaseLogger): EpochTracker =>
 	new EpochTracker(createUtLocalCache(), fileEntry, logger as ITelemetryLoggerExt);
 
 describe("DeltaStorageService", () => {
@@ -120,7 +111,11 @@ describe("DeltaStorageService", () => {
 				expectedDeltaFeedResponse,
 			);
 			assert(!partialResult, "partialResult === false");
-			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+			assert.equal(
+				messages.length,
+				2,
+				"Deserialized feed response is not of expected length",
+			);
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,
@@ -189,7 +184,11 @@ describe("DeltaStorageService", () => {
 				expectedDeltaFeedResponse,
 			);
 			assert(!partialResult, "partialResult === false");
-			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+			assert.equal(
+				messages.length,
+				2,
+				"Deserialized feed response is not of expected length",
+			);
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,

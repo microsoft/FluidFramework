@@ -60,12 +60,7 @@ class BaseDataArray {
 	 * @returns the array of values in the range
 	 */
 	getValueRange(in_idxStart: number, in_idxEnd: number) {
-		if (
-			in_idxStart >= this.size ||
-			in_idxEnd > this.size ||
-			in_idxStart < 0 ||
-			in_idxEnd < 0
-		) {
+		if (in_idxStart >= this.size || in_idxEnd > this.size || in_idxStart < 0 || in_idxEnd < 0) {
 			throw new Error("Trying to access out of bounds!");
 		}
 
@@ -440,12 +435,7 @@ class UniversalDataArray extends BaseDataArray {
 	 * @returns the array of values in the range
 	 */
 	getValueRange(in_idxStart: number, in_idxEnd: number) {
-		if (
-			in_idxStart >= this.size ||
-			in_idxEnd > this.size ||
-			in_idxStart < 0 ||
-			in_idxEnd < 0
-		) {
+		if (in_idxStart >= this.size || in_idxEnd > this.size || in_idxStart < 0 || in_idxEnd < 0) {
 			throw new Error("Trying to access out of bounds!");
 		}
 		return this._buffer.slice(in_idxStart, in_idxEnd);
@@ -535,12 +525,7 @@ class StringDataArray extends BaseDataArray {
 	 * @returns the characters in the range
 	 */
 	getValueRange(in_idxStart: number, in_idxEnd: number): string {
-		if (
-			in_idxStart >= this.size ||
-			in_idxEnd > this.size ||
-			in_idxStart < 0 ||
-			in_idxEnd < 0
-		) {
+		if (in_idxStart >= this.size || in_idxEnd > this.size || in_idxStart < 0 || in_idxEnd < 0) {
 			throw new Error("Trying to access out of bounds!");
 		}
 		return this._buffer.slice(in_idxStart, in_idxEnd);

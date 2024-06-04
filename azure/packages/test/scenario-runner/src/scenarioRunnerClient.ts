@@ -78,7 +78,10 @@ const scenarioRunners: Record<string, ChildRunner> = {
 		program
 			.requiredOption("-s, --schema <schema>", "Container Schema")
 			.requiredOption("-n, --numMaps <numMaps>", "Number of nested maps")
-			.requiredOption("-k, --initialMapKey <initialMapKey>", "Key of initial map to nest from")
+			.requiredOption(
+				"-k, --initialMapKey <initialMapKey>",
+				"Key of initial map to nest from",
+			)
 			.option("-d, --docId <docId>", "Document id")
 			.option(
 				"-wr, --writeRatePerMin <writeRatePerMin>",

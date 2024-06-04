@@ -29,10 +29,7 @@ import {
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -101,10 +98,7 @@ async function loadSummarizer(
  */
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
-	summarizerClient: {
-		containerRuntime: ContainerRuntime;
-		summaryCollection: SummaryCollection;
-	},
+	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
 	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
@@ -112,8 +106,7 @@ async function submitAndAckSummary(
 ) {
 	// Wait for all pending ops to be processed by all clients.
 	await provider.ensureSynchronized();
-	const summarySequenceNumber =
-		summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
+	const summarySequenceNumber = summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
@@ -278,7 +271,8 @@ describeCompat(
 			latestAckedSummary = summaryResult.ackedSummary;
 			assert(
 				latestSummaryContext &&
-					latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
+					latestSummaryContext.referenceSequenceNumber >=
+						summaryResult.summarySequenceNumber,
 				`Did not get expected summary. Expected: ${summaryResult.summarySequenceNumber}. ` +
 					`Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
 			);
@@ -302,17 +296,20 @@ describeCompat(
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
 				(provider as any)._documentServiceFactory =
-					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
-						createDocumentService: {
-							connectToStorage: {
-								uploadSummaryWithContext: (dss) => async (summary, context) => {
-									uploadSummaryCb(summary, context);
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-									return dss.uploadSummaryWithContext(summary, context);
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
 								},
 							},
 						},
-					});
+					);
 
 				mainContainer = await createContainer();
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

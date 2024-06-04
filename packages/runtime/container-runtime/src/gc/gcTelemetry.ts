@@ -390,7 +390,8 @@ export class GCTelemetryTracker {
 			 */
 			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
 			const active =
-				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
+				nodeStateTracker === undefined ||
+				nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(eventProps.id.value);
 				const fromPkg = eventProps.fromId

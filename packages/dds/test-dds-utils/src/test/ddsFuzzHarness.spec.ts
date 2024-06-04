@@ -199,7 +199,8 @@ describe("DDS Fuzz Harness", () => {
 				);
 				await runTestForSeed(model, options, 0);
 				assert.equal(
-					generatedOperations.filter((op) => op !== done && op.type === "synchronize").length,
+					generatedOperations.filter((op) => op !== done && op.type === "synchronize")
+						.length,
 					2,
 				);
 				assert.deepEqual(generatedOperations[2], synchronize);
@@ -916,7 +917,10 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["workload: 2: .only via options seed: 4", "workload: 2: .only via options seed: 7"],
+					[
+						"workload: 2: .only via options seed: 4",
+						"workload: 2: .only via options seed: 7",
+					],
 				);
 			});
 
@@ -955,7 +959,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `workload: 1: .skip via function seed: ${i}`),
+					[0, 1, 4, 5, 6, 7, 8, 9].map(
+						(i) => `workload: 1: .skip via function seed: ${i}`,
+					),
 				);
 			});
 
@@ -965,7 +971,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `workload: 2: .skip via options seed: ${i}`),
+					[0, 1, 2, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 2: .skip via options seed: ${i}`,
+					),
 				);
 			});
 
@@ -1008,7 +1016,9 @@ describe("DDS Fuzz Harness", () => {
 					],
 				);
 				assert(
-					runResults.failures.every((test) => test.err.message.includes("Injected failure")),
+					runResults.failures.every((test) =>
+						test.err.message.includes("Injected failure"),
+					),
 				);
 			});
 

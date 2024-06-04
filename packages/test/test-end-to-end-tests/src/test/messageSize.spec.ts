@@ -305,10 +305,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				: [
 						{
 							eventName: "fluid:telemetry:Container:ContainerClose",
-							error:
-								"Runtime detected too many reconnects with no progress syncing local ops.",
+							error: "Runtime detected too many reconnects with no progress syncing local ops.",
 						},
-					], // Without grouped batching, it is expected for the container to never make progress
+				  ], // Without grouped batching, it is expected for the container to never make progress
 			async function () {
 				await setupContainers(containerConfig);
 				// This is not supported by the local server. See ADO:2690
@@ -355,7 +354,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						async function () {
 							// This is not supported by the local server. See ADO:2690
 							// This test is flaky on tinylicious. See ADO:2964
-							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+							if (
+								provider.driver.type === "local" ||
+								provider.driver.type === "tinylicious"
+							) {
 								this.skip();
 							}
 
@@ -491,15 +493,20 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						"Payload size check, " +
 							"Sending " +
 							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
-							`${((config.messagesInBatch * config.messageSize) / (1024 * 1024)).toFixed(
-								4,
-							)} MB, expecting ${(config.expectedSize / (1024 * 1024)).toFixed(
-								4,
-							)} MB on the wire`,
+							`${(
+								(config.messagesInBatch * config.messageSize) /
+								(1024 * 1024)
+							).toFixed(4)} MB, expecting ${(
+								config.expectedSize /
+								(1024 * 1024)
+							).toFixed(4)} MB on the wire`,
 						async function () {
 							// This is not supported by the local server due to chunking. See ADO:2690
 							// This test is flaky on tinylicious. See ADO:2964
-							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+							if (
+								provider.driver.type === "local" ||
+								provider.driver.type === "tinylicious"
+							) {
 								this.skip();
 							}
 
@@ -511,7 +518,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
-								localMap.set(`key${i}`, config.payloadGenerator(config.messageSize));
+								localMap.set(
+									`key${i}`,
+									config.payloadGenerator(config.messageSize),
+								);
 							}
 
 							await provider.ensureSynchronized();
@@ -666,7 +676,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents as string)?.type === ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -692,7 +703,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				// Force the container to reconnect after sending the compressed batch
 				const secondConnection = reconnectAfterBatchSending(
 					localContainer,
-					(batch) => batch.length > 1 && batch.slice(1).every((x) => x.contents === undefined),
+					(batch) =>
+						batch.length > 1 && batch.slice(1).every((x) => x.contents === undefined),
 					1,
 				);
 

@@ -260,5 +260,4 @@ function removeNullTreeIds(tree: ITree) {
 /**
  * @internal
  */
-export const FluidFetchReaderFileSnapshotWriter =
-	FileSnapshotWriterClassFactory(FluidFetchReader);
+export const FluidFetchReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(FluidFetchReader);

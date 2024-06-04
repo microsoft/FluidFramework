@@ -4,9 +4,7 @@
  */
 
 const Long = require("long");
-const {
-	convertPathToChunkBoundaryFormat,
-} = require("../change_set_processing/chunk_change_set");
+const { convertPathToChunkBoundaryFormat } = require("../change_set_processing/chunk_change_set");
 
 /**
  * Handles comparison for HFDM Types
@@ -106,11 +104,7 @@ class KeyComparator extends JSComparableComparator {
 		const comparableKeyA = convertPathToChunkBoundaryFormat(aPath);
 		const comparableKeyB = convertPathToChunkBoundaryFormat(bPath);
 
-		return JSComparableComparator.prototype._compare.call(
-			this,
-			comparableKeyA,
-			comparableKeyB,
-		);
+		return JSComparableComparator.prototype._compare.call(this, comparableKeyA, comparableKeyB);
 	}
 }
 

@@ -34,10 +34,7 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number): void 
  * @param snapshotNode - node to serialize to.
  * @param blobs - blobs that is being serialized
  */
-function writeBlobsSection(
-	snapshotNode: NodeCore,
-	blobs: Map<string, IBlob | ArrayBuffer>,
-): void {
+function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>): void {
 	snapshotNode.addDictionaryString("blobs");
 	const blobsNode = snapshotNode.addNode("list");
 	for (const [storageBlobId, blob] of blobs) {
@@ -47,7 +44,9 @@ function writeBlobsSection(
 		if (blob instanceof ArrayBuffer) {
 			blobNode.addBlob(new Uint8Array(blob));
 		} else {
-			blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")));
+			blobNode.addBlob(
+				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")),
+			);
 		}
 	}
 }
@@ -164,11 +163,7 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 
 	writeSnapshotProps(rootNode, latestSequenceNumber);
 
-	writeSnapshotSection(
-		rootNode,
-		snapshotContents.snapshotTree,
-		snapshotContents.sequenceNumber,
-	);
+	writeSnapshotSection(rootNode, snapshotContents.snapshotTree, snapshotContents.sequenceNumber);
 
 	// Add Blobs
 	writeBlobsSection(rootNode, snapshotContents.blobContents);

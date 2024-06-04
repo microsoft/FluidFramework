@@ -8,11 +8,7 @@ import {
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	type FluidObject,
-	type IRequest,
-	type IResponse,
-} from "@fluidframework/core-interfaces";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import { type RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import {

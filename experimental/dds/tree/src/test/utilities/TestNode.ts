@@ -3,22 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { BuildTreeNode } from "../../ChangeTypes.js";
-import { fail, identity, memoizeGetter, setPropertyIfDefined } from "../../Common.js";
-import { convertTreeNodes } from "../../EditUtilities.js";
-import { convertNodeDataIds } from "../../IdConversion.js";
-import {
-	Definition,
-	NodeId,
-	OpSpaceNodeId,
-	SessionId,
-	StableNodeId,
-	TraitLabel,
-} from "../../Identifiers.js";
-import { initialTree } from "../../InitialTree.js";
-import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from "../../NodeIdUtilities.js";
-import { RevisionView } from "../../RevisionView.js";
-import { TraitLocation } from "../../TreeView.js";
+import { BuildTreeNode } from '../../ChangeTypes.js';
+import { fail, identity, memoizeGetter, setPropertyIfDefined } from '../../Common.js';
+import { convertTreeNodes } from '../../EditUtilities.js';
+import { convertNodeDataIds } from '../../IdConversion.js';
+import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { initialTree } from '../../InitialTree.js';
+import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
+import { RevisionView } from '../../RevisionView.js';
+import { TraitLocation } from '../../TreeView.js';
 import {
 	BuildNodeInternal,
 	ChangeNode,
@@ -27,7 +20,7 @@ import {
 	TraitLocationInternal_0_0_2,
 	TraitMap,
 	TreeNode,
-} from "../../persisted-types/index.js";
+} from '../../persisted-types/index.js';
 
 /** A legacy format of a `TestNode` */
 export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;
@@ -35,7 +28,7 @@ export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;
 /**
  * A node with no children
  */
-export type LeafNode<T> = Omit<T, "traits"> & { traits: Record<string, never> };
+export type LeafNode<T> = Omit<T, 'traits'> & { traits: Record<string, never> };
 
 /**
  * Test extension of {@link TraitLocation} which can be converted to stable or legacy formats
@@ -83,10 +76,7 @@ export interface TestTree extends TestNode, NodeIdContext, NodeIdNormalizer<OpSp
 	 * If no `id` is explicitly provided, one will be generated.
 	 * @param id - Explicit ID to use as the new node's identifier. If not provided, one will be generated.
 	 */
-	buildLeafInternal(
-		id?: NodeId,
-		payload?: Payload,
-	): LeafNode<TreeNode<BuildNodeInternal, NodeId>>;
+	buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, NodeId>>;
 }
 
 /**
@@ -94,10 +84,10 @@ export interface TestTree extends TestNode, NodeIdContext, NodeIdNormalizer<OpSp
  * different instances of `SimpleTestTree` are never equivalent.
  */
 export class SimpleTestTree implements TestTree {
-	public static readonly definition = "node" as Definition;
-	public static readonly traitLabel = "e276f382-fa99-49a1-ae81-42001791c733" as TraitLabel;
-	public static readonly leftTraitLabel = "left" as TraitLabel;
-	public static readonly rightTraitLabel = "right" as TraitLabel;
+	public static readonly definition = 'node' as Definition;
+	public static readonly traitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
+	public static readonly leftTraitLabel = 'left' as TraitLabel;
+	public static readonly rightTraitLabel = 'right' as TraitLabel;
 
 	private readonly root: TestNode;
 	public readonly left: TestNode;
@@ -107,7 +97,7 @@ export class SimpleTestTree implements TestTree {
 	public constructor(
 		private readonly nodeIdContext: NodeIdContext,
 		private readonly nodeIdNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
-		expensiveValidation = true,
+		expensiveValidation = true
 	) {
 		const leftIdentifier = nodeIdContext.generateNodeId();
 		const rightIdentifier = nodeIdContext.generateNodeId();
@@ -122,32 +112,20 @@ export class SimpleTestTree implements TestTree {
 				parent: rootIdentifier,
 				label: SimpleTestTree.leftTraitLabel,
 				get stable() {
-					return memoizeGetter(
-						this,
-						"stable",
-						convertToTraitLocation_0_0_2(this, nodeIdContext),
-					);
+					return memoizeGetter(this, 'stable', convertToTraitLocation_0_0_2(this, nodeIdContext));
 				},
 				translate: (idConverter: NodeIdConverter) =>
-					translateTraitLocation(
-						SimpleTestTree.leftTraitLabel,
-						rootIdentifier,
-						nodeIdContext,
-						idConverter,
-					),
+					translateTraitLocation(SimpleTestTree.leftTraitLabel, rootIdentifier, nodeIdContext, idConverter),
 			},
 			get view() {
-				return memoizeGetter(this, "view", RevisionView.fromTree(this, expensiveValidation));
+				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
 			get stable() {
-				return memoizeGetter(this, "stable", convertToTestNode_0_0_2(this, nodeIdContext));
+				return memoizeGetter(this, 'stable', convertToTestNode_0_0_2(this, nodeIdContext));
 			},
-			translateId: (idConverter: NodeIdConverter) =>
-				translateId(leftIdentifier, nodeIdContext, idConverter),
+			translateId: (idConverter: NodeIdConverter) => translateId(leftIdentifier, nodeIdContext, idConverter),
 			toChangeNode: () =>
-				convertTreeNodes<ChangeNode, ChangeNode>(this.left, (node) =>
-					convertNodeDataIds(node, identity),
-				),
+				convertTreeNodes<ChangeNode, ChangeNode>(this.left, (node) => convertNodeDataIds(node, identity)),
 		};
 		this.right = {
 			definition: SimpleTestTree.definition,
@@ -158,32 +136,20 @@ export class SimpleTestTree implements TestTree {
 				parent: rootIdentifier,
 				label: SimpleTestTree.rightTraitLabel,
 				get stable() {
-					return memoizeGetter(
-						this,
-						"stable",
-						convertToTraitLocation_0_0_2(this, nodeIdContext),
-					);
+					return memoizeGetter(this, 'stable', convertToTraitLocation_0_0_2(this, nodeIdContext));
 				},
 				translate: (idConverter: NodeIdConverter) =>
-					translateTraitLocation(
-						SimpleTestTree.rightTraitLabel,
-						rootIdentifier,
-						nodeIdContext,
-						idConverter,
-					),
+					translateTraitLocation(SimpleTestTree.rightTraitLabel, rootIdentifier, nodeIdContext, idConverter),
 			},
 			get view() {
-				return memoizeGetter(this, "view", RevisionView.fromTree(this, expensiveValidation));
+				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
 			get stable() {
-				return memoizeGetter(this, "stable", convertToTestNode_0_0_2(this, nodeIdContext));
+				return memoizeGetter(this, 'stable', convertToTestNode_0_0_2(this, nodeIdContext));
 			},
-			translateId: (idConverter: NodeIdConverter) =>
-				translateId(rightIdentifier, nodeIdContext, idConverter),
+			translateId: (idConverter: NodeIdConverter) => translateId(rightIdentifier, nodeIdContext, idConverter),
 			toChangeNode: () =>
-				convertTreeNodes<ChangeNode, ChangeNode>(this.right, (node) =>
-					convertNodeDataIds(node, identity),
-				),
+				convertTreeNodes<ChangeNode, ChangeNode>(this.right, (node) => convertNodeDataIds(node, identity)),
 		};
 		const rootParent = nodeIdContext.convertToNodeId(initialTree.identifier);
 		this.root = {
@@ -198,32 +164,20 @@ export class SimpleTestTree implements TestTree {
 				label: SimpleTestTree.traitLabel,
 				parent: rootParent,
 				get stable() {
-					return memoizeGetter(
-						this,
-						"stable",
-						convertToTraitLocation_0_0_2(this, nodeIdContext),
-					);
+					return memoizeGetter(this, 'stable', convertToTraitLocation_0_0_2(this, nodeIdContext));
 				},
 				translate: (idConverter: NodeIdConverter) =>
-					translateTraitLocation(
-						SimpleTestTree.traitLabel,
-						rootParent,
-						nodeIdContext,
-						idConverter,
-					),
+					translateTraitLocation(SimpleTestTree.traitLabel, rootParent, nodeIdContext, idConverter),
 			},
 			get view() {
-				return memoizeGetter(this, "view", RevisionView.fromTree(this, expensiveValidation));
+				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
 			get stable() {
-				return memoizeGetter(this, "stable", convertToTestNode_0_0_2(this, nodeIdContext));
+				return memoizeGetter(this, 'stable', convertToTestNode_0_0_2(this, nodeIdContext));
 			},
-			translateId: (idConverter: NodeIdConverter) =>
-				translateId(rootIdentifier, nodeIdContext, idConverter),
+			translateId: (idConverter: NodeIdConverter) => translateId(rootIdentifier, nodeIdContext, idConverter),
 			toChangeNode: () =>
-				convertTreeNodes<ChangeNode, ChangeNode>(this.root, (node) =>
-					convertNodeDataIds(node, identity),
-				),
+				convertTreeNodes<ChangeNode, ChangeNode>(this.root, (node) => convertNodeDataIds(node, identity)),
 		};
 	}
 
@@ -260,26 +214,18 @@ export class SimpleTestTree implements TestTree {
 	}
 
 	public toChangeNode(): ChangeNode {
-		return convertTreeNodes<ChangeNode, ChangeNode>(this, (node) =>
-			convertNodeDataIds(node, identity),
-		);
+		return convertTreeNodes<ChangeNode, ChangeNode>(this, (node) => convertNodeDataIds(node, identity));
 	}
 
 	public buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
 
 	public buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
 
-	public buildLeaf(
-		id?: NodeId,
-		payload?: Payload,
-	): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+	public buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
 		return id === undefined ? buildLeaf(undefined, payload) : buildLeaf(id, payload);
 	}
 
-	public buildLeafInternal(
-		id?: NodeId,
-		payload?: Payload,
-	): LeafNode<TreeNode<BuildNodeInternal, NodeId>> {
+	public buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, NodeId>> {
 		return buildLeafInternal(this, id, payload);
 	}
 
@@ -333,7 +279,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 		return (
 			this._testTree ??
 			fail(
-				"RefreshingTestTree should be created within a describe() block and should only be read within it() blocks",
+				'RefreshingTestTree should be created within a describe() block and should only be read within it() blocks'
 			)
 		);
 	}
@@ -379,26 +325,16 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	}
 
 	public toChangeNode(): ChangeNode {
-		return convertTreeNodes<ChangeNode, ChangeNode>(this.testTree, (node) =>
-			convertNodeDataIds(node, identity),
-		);
+		return convertTreeNodes<ChangeNode, ChangeNode>(this.testTree, (node) => convertNodeDataIds(node, identity));
 	}
 
 	public buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
 	public buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
-	public buildLeaf(
-		id?: NodeId,
-		payload?: Payload,
-	): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
-		return id === undefined
-			? this.testTree.buildLeaf(undefined, payload)
-			: this.testTree.buildLeaf(id, payload);
+	public buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+		return id === undefined ? this.testTree.buildLeaf(undefined, payload) : this.testTree.buildLeaf(id, payload);
 	}
 
-	public buildLeafInternal(
-		id?: NodeId,
-		payload?: Payload,
-	): LeafNode<TreeNode<BuildNodeInternal, NodeId>> {
+	public buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, NodeId>> {
 		return this.testTree.buildLeafInternal(id, payload);
 	}
 
@@ -440,16 +376,13 @@ export function buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTree
 /** Create a new node with the given ID and payload */
 export function buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
 /** Create a new node with the given ID and payload */
-export function buildLeaf(
-	id?: NodeId,
-	payload?: Payload,
-): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+export function buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
 	const node: LeafNode<BuildTreeNode> = {
 		definition: SimpleTestTree.definition,
 		traits: {},
 	};
-	setPropertyIfDefined(id, node, "identifier");
-	setPropertyIfDefined(payload, node, "payload");
+	setPropertyIfDefined(id, node, 'identifier');
+	setPropertyIfDefined(payload, node, 'payload');
 	return node;
 }
 
@@ -461,7 +394,7 @@ export function buildLeaf(
 export function buildLeafInternal(
 	nodeIdContext: NodeIdContext,
 	id?: NodeId,
-	payload?: Payload,
+	payload?: Payload
 ): LeafNode<TreeNode<BuildNodeInternal, NodeId>> {
 	const leaf = buildLeaf(undefined, payload);
 	return {
@@ -480,31 +413,28 @@ function translateTraitLocation(
 	label: TraitLabel,
 	parentId: NodeId,
 	from: NodeIdConverter,
-	to: NodeIdConverter,
+	to: NodeIdConverter
 ): TestTraitLocation {
 	return {
 		label,
 		parent: translateId(parentId, from, to),
 		get stable() {
-			return memoizeGetter(this, "stable", convertToTraitLocation_0_0_2(this, to));
+			return memoizeGetter(this, 'stable', convertToTraitLocation_0_0_2(this, to));
 		},
 		translate: (idManager) => translateTraitLocation(label, parentId, to, idManager),
 	};
 }
 
-function convertToTestNode_0_0_2(
-	node: TestNode,
-	idConverter: NodeIdConverter,
-): TestNode_0_0_2 {
+function convertToTestNode_0_0_2(node: TestNode, idConverter: NodeIdConverter): TestNode_0_0_2 {
 	// This is equivalent to calling tryConvertToChangeNode_0_0_2 but that causes lint to stack overflow
 	return convertTreeNodes<TestNode, TestNode_0_0_2>(node, (nodeData) =>
-		convertNodeDataIds(nodeData, (id) => idConverter.convertToStableNodeId(id)),
+		convertNodeDataIds(nodeData, (id) => idConverter.convertToStableNodeId(id))
 	);
 }
 
 function convertToTraitLocation_0_0_2(
 	traitLocation: TraitLocationInternal,
-	idConverter: NodeIdConverter,
+	idConverter: NodeIdConverter
 ): TraitLocationInternal_0_0_2 {
 	const parent = idConverter.convertToStableNodeId(traitLocation.parent);
 	return {

@@ -218,7 +218,10 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
+				const tree2 = schematizeFlexTree(
+					provider.trees[1],
+					emptyJsonSequenceConfig,
+				).checkout;
 				provider.processMessages();
 
 				// Insert node

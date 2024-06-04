@@ -182,7 +182,9 @@ class BTreeManager {
 						childNodes.push({
 							nodeRef: children[j].nodeRef,
 							startPath: children[j].startPath,
-							endPath: children[j + 1] ? children[j + 1].startPath : in_nodes[i].endPath,
+							endPath: children[j + 1]
+								? children[j + 1].startPath
+								: in_nodes[i].endPath,
 						});
 					}
 				}
@@ -211,7 +213,9 @@ class BTreeManager {
 						if (in_nodes[j].endPath !== undefined && startPath > in_nodes[j].endPath) {
 							continue;
 						}
-						let nodeChildren = InternalNode.prototype.decodeCsChildren(in_nodes[j].changeSet);
+						let nodeChildren = InternalNode.prototype.decodeCsChildren(
+							in_nodes[j].changeSet,
+						);
 						let firstChildIndex = _.sortedIndex(
 							nodeChildren.slice(1).map((x) => x.startPath),
 							startPath,
@@ -379,7 +383,9 @@ class BTreeManager {
 
 				let nodes = _.map(nodeChangeSets, (x, i) => {
 					let originalNode =
-						i < childNodes.length ? childNodes[i] : previousChildNodes[i - childNodes.length];
+						i < childNodes.length
+							? childNodes[i]
+							: previousChildNodes[i - childNodes.length];
 					return {
 						changeSet: x,
 						ref: originalNode.nodeRef,
@@ -474,7 +480,9 @@ class BTreeManager {
 						HTTPStatus.INTERNAL_SERVER_ERROR,
 					);
 				}
-				let startLeafNodeGuid = parseNodeReference(overlappingPreviousNodes[0].nodeRef).guid;
+				let startLeafNodeGuid = parseNodeReference(
+					overlappingPreviousNodes[0].nodeRef,
+				).guid;
 				let endLeafNodeGuid = parseNodeReference(in_nodeInfo.nodeRef).guid;
 
 				// We want to get the history between two leaf nodes. For this, we first have to find
@@ -505,7 +513,11 @@ class BTreeManager {
 					// Find a common leaf node in the histories of both nodes
 					// We search the available levels upwards, until we find a leaf node reference
 					// that is shared by both nodes
-					for (let i = 0; i < endCommitHistoryNode.levels.length && !commonLeafNode; i++) {
+					for (
+						let i = 0;
+						i < endCommitHistoryNode.levels.length && !commonLeafNode;
+						i++
+					) {
 						let startLevel = Math.min(i, startCommitHistoryNode.levels.length - 1);
 
 						let currentEndEntries = endCommitHistoryNode.levels[i].current;
@@ -549,7 +561,10 @@ class BTreeManager {
 							: commonLeafNode.endIdx + 1;
 
 					currentNodes = endCommitHistoryNode.levels[commonLeafNode.level].current;
-					currentNodes = currentNodes.slice(currentNodesStartIndex, currentNodes.length - 1);
+					currentNodes = currentNodes.slice(
+						currentNodesStartIndex,
+						currentNodes.length - 1,
+					);
 					historySequence.unshift.apply(historySequence, currentNodes);
 
 					// Now we need to search through the lists of previous nodes to see,

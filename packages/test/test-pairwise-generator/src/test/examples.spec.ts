@@ -84,7 +84,9 @@ describe("generatePairwiseOptions.examples", () => {
 		const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
 			numbers: [
 				undefined,
-				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a)),
+				...generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) =>
+					Array.from(a),
+				),
 			],
 			subObject: generatePairwiseOptions<{ str: string }>({ str: ["a", "b", "c"] }),
 		};

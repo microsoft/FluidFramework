@@ -276,7 +276,11 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 				);
 				return true;
 			};
-			await assert.rejects(summarizeNow(summarizer1), errorFn, "Summarize should have failed");
+			await assert.rejects(
+				summarizeNow(summarizer1),
+				errorFn,
+				"Summarize should have failed",
+			);
 			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 

@@ -46,10 +46,7 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements
-		ISerializedStateManagerDocumentStorageService,
-		IDocumentStorageService,
-		IDisposable
+	implements ISerializedStateManagerDocumentStorageService, IDocumentStorageService, IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
@@ -156,7 +153,9 @@ export class ContainerStorageAdapter
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			const localSnapshot =
-				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
+				this.loadingGroupIdSnapshotsFromPendingState[
+					snapshotFetchOptions.loadingGroupIds[0]
+				];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);

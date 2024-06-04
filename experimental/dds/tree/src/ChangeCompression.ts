@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from "./Common.js";
-import { convertStablePlaceIds, convertStableRangeIds } from "./IdConversion.js";
-import { DetachedSequenceId, NodeId, OpSpaceNodeId } from "./Identifiers.js";
-import { ContextualizedNodeIdNormalizer } from "./NodeIdUtilities.js";
-import { StringInterner } from "./StringInterner.js";
-import { TreeCompressor } from "./TreeCompressor.js";
+import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from './Common.js';
+import { convertStablePlaceIds, convertStableRangeIds } from './IdConversion.js';
+import { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers.js';
+import { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import { StringInterner } from './StringInterner.js';
+import { TreeCompressor } from './TreeCompressor.js';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -21,7 +21,7 @@ import {
 	DetachInternal,
 	InsertInternal,
 	SetValueInternal,
-} from "./persisted-types/index.js";
+} from './persisted-types/index.js';
 
 /**
  * Encapsulates knowledge of how to compress/decompress a change into a compressed change
@@ -34,7 +34,7 @@ export class ChangeCompressor {
 	public compress<TId extends OpSpaceNodeId>(
 		change: ChangeInternal,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): CompressedChangeInternal<TId> {
 		if (change.type === ChangeTypeInternal.Build) {
 			const source: CompressedPlaceholderTree<TId, DetachedSequenceId>[] = [];
@@ -55,7 +55,7 @@ export class ChangeCompressor {
 	public decompress<TId extends OpSpaceNodeId>(
 		change: CompressedChangeInternal<TId>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): ChangeInternal {
 		if (change.type === ChangeTypeInternal.CompressedBuild) {
 			const source: BuildNodeInternal[] = [];
@@ -74,12 +74,9 @@ export class ChangeCompressor {
 	}
 }
 
-function normalizeChange<
-	From extends NodeId | OpSpaceNodeId,
-	To extends NodeId | OpSpaceNodeId,
->(
+function normalizeChange<From extends NodeId | OpSpaceNodeId, To extends NodeId | OpSpaceNodeId>(
 	change: ReplaceRecursive<Exclude<ChangeInternal, BuildInternal>, NodeId, From>,
-	normalizeId: (id: From) => To,
+	normalizeId: (id: From) => To
 ): ReplaceRecursive<Exclude<ChangeInternal, BuildInternal>, NodeId, To> {
 	switch (change.type) {
 		case ChangeTypeInternal.Insert: {
@@ -95,7 +92,7 @@ function normalizeChange<
 				source: convertStableRangeIds(change.source, normalizeId),
 				type: ChangeTypeInternal.Detach,
 			};
-			copyPropertyIfDefined(change, detach, "destination");
+			copyPropertyIfDefined(change, detach, 'destination');
 			return detach;
 		}
 		case ChangeTypeInternal.SetValue: {
@@ -112,17 +109,17 @@ function normalizeChange<
 				toConstrain: convertStableRangeIds(change.toConstrain, normalizeId),
 				type: ChangeTypeInternal.Constraint,
 			};
-			copyPropertyIfDefined(change, constraint, "contentHash");
-			copyPropertyIfDefined(change, constraint, "identityHash");
-			copyPropertyIfDefined(change, constraint, "label");
-			copyPropertyIfDefined(change, constraint, "length");
+			copyPropertyIfDefined(change, constraint, 'contentHash');
+			copyPropertyIfDefined(change, constraint, 'identityHash');
+			copyPropertyIfDefined(change, constraint, 'label');
+			copyPropertyIfDefined(change, constraint, 'length');
 			if (change.parentNode !== undefined) {
 				constraint.parentNode = normalizeId(change.parentNode);
 			}
 			return constraint;
 		}
 		default:
-			fail("unexpected change type");
+			fail('unexpected change type');
 	}
 }
 
@@ -130,15 +127,12 @@ function normalizeChange<
  * Compresses the provided edit by applying `compressor` to each change and leaving other fields
  * untouched.
  */
-export function compressEdit<
-	TId extends OpSpaceNodeId,
-	TEdit extends { changes: readonly ChangeInternal[] },
->(
+export function compressEdit<TId extends OpSpaceNodeId, TEdit extends { changes: readonly ChangeInternal[] }>(
 	compressor: ChangeCompressor,
 	interner: StringInterner,
 	idNormalizer: ContextualizedNodeIdNormalizer<TId>,
-	edit: TEdit,
-): Omit<TEdit, "changes"> & { changes: readonly CompressedChangeInternal<TId>[] } {
+	edit: TEdit
+): Omit<TEdit, 'changes'> & { changes: readonly CompressedChangeInternal<TId>[] } {
 	return {
 		...edit,
 		changes: edit.changes.map((change) => compressor.compress(change, interner, idNormalizer)),
@@ -156,12 +150,10 @@ export function decompressEdit<
 	compressor: ChangeCompressor,
 	interner: StringInterner,
 	idNormalizer: ContextualizedNodeIdNormalizer<TId>,
-	edit: TEdit,
-): Omit<TEdit, "changes"> & { changes: readonly ChangeInternal[] } {
+	edit: TEdit
+): Omit<TEdit, 'changes'> & { changes: readonly ChangeInternal[] } {
 	return {
 		...edit,
-		changes: edit.changes.map((change) =>
-			compressor.decompress(change, interner, idNormalizer),
-		),
+		changes: edit.changes.map((change) => compressor.decompress(change, interner, idNormalizer)),
 	};
 }

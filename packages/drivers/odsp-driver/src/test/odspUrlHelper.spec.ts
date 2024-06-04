@@ -46,7 +46,9 @@ describe("odspUrlHelper", () => {
 			);
 			assert.equal(
 				isSpoUrl(
-					new URL("https://foo.sharepoint.com.example.com/_api/v2.1/drives/bar/items/baz"),
+					new URL(
+						"https://foo.sharepoint.com.example.com/_api/v2.1/drives/bar/items/baz",
+					),
 				),
 				false,
 			);
@@ -71,7 +73,9 @@ describe("odspUrlHelper", () => {
 			);
 			assert.equal(
 				isSpoUrl(
-					new URL("https://foo.sharepoint-df.com.example.com/_api/v2.1/drives/bar/items/baz"),
+					new URL(
+						"https://foo.sharepoint-df.com.example.com/_api/v2.1/drives/bar/items/baz",
+					),
 				),
 				false,
 			);
@@ -84,7 +88,9 @@ describe("odspUrlHelper", () => {
 				false,
 			);
 			assert.equal(
-				isSpoUrl(new URL("https://foo.sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz")),
+				isSpoUrl(
+					new URL("https://foo.sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz"),
+				),
 				false,
 			);
 		});
@@ -144,11 +150,15 @@ describe("odspUrlHelper", () => {
 
 		it("validates malformed paths correctly", async () => {
 			assert.equal(
-				isOdcUrl(new URL("https://foo.onedrive.com/qux/v2.1/drives/ABC123/items/ABC123!123")),
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/qux/v2.1/drives/ABC123/items/ABC123!123"),
+				),
 				false,
 			);
 			assert.equal(
-				isOdcUrl(new URL("https://foo.onedrive.com/_api/v2.1/drives/ABC123/items/ABC123!123")),
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/_api/v2.1/drives/ABC123/items/ABC123!123"),
+				),
 				false,
 			);
 			assert.equal(
@@ -158,13 +168,17 @@ describe("odspUrlHelper", () => {
 
 			assert.equal(
 				isOdcUrl(
-					new URL("https://foo.onedrive.com/qux/v2.1/drives('ABC123')/items('ABC123!123')"),
+					new URL(
+						"https://foo.onedrive.com/qux/v2.1/drives('ABC123')/items('ABC123!123')",
+					),
 				),
 				false,
 			);
 			assert.equal(
 				isOdcUrl(
-					new URL("https://foo.onedrive.com/_api/v2.1/drives('ABC123')/items('ABC123!123')"),
+					new URL(
+						"https://foo.onedrive.com/_api/v2.1/drives('ABC123')/items('ABC123!123')",
+					),
 				),
 				false,
 			);

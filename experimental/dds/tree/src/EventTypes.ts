@@ -26,7 +26,7 @@ export enum SharedTreeEvent {
 	 * Note that, for locally generated edits, this event will not be emitted again when that edit is sequenced.
 	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
 	 */
-	EditCommitted = "committedEdit",
+	EditCommitted = 'committedEdit',
 
 	/**
 	 * Note: It is _strongly_ recommended that you avoid this API and instead use the `viewChange` event
@@ -43,7 +43,7 @@ export enum SharedTreeEvent {
 	 * and is an implementation detail.
 	 * Supports callbacks of type {@link SequencedEditAppliedHandler}.
 	 */
-	SequencedEditApplied = "sequencedEditApplied",
+	SequencedEditApplied = 'sequencedEditApplied',
 }
 
 /**
@@ -55,39 +55,39 @@ export enum SharedTreeDiagnosticEvent {
 	/**
 	 * A single catch up blob has been uploaded.
 	 */
-	CatchUpBlobUploaded = "uploadedCatchUpBlob",
+	CatchUpBlobUploaded = 'uploadedCatchUpBlob',
 	/**
 	 * An edit chunk blob has been uploaded. This includes catchup blobs.
 	 */
-	EditChunkUploaded = "uploadedEditChunk",
+	EditChunkUploaded = 'uploadedEditChunk',
 	/**
 	 * A valid edit (local or remote) has been applied.
 	 * Passed the EditId of the applied edit.
 	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
 	 * and/or due to not caching the output of every edit.
 	 */
-	AppliedEdit = "appliedEdit",
+	AppliedEdit = 'appliedEdit',
 	/**
 	 * An invalid edit (local or remote) has been dropped.
 	 * Passed the EditId of the dropped edit.
 	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
 	 * and/or due to not caching the output of every edit.
 	 */
-	DroppedInvalidEdit = "droppedInvalidEdit",
+	DroppedInvalidEdit = 'droppedInvalidEdit',
 	/**
 	 * A malformed edit (local or remote) has been dropped.
 	 * Passed the EditId of the dropped edit.
 	 * Note that this may be called multiple times, due to concurrent edits causing reordering,
 	 * and/or due to not caching the output of every edit.
 	 */
-	DroppedMalformedEdit = "droppedMalformedEdit",
+	DroppedMalformedEdit = 'droppedMalformedEdit',
 	/**
 	 * A history chunk has been received that does not have a corresponding edit chunk on the edit log.
 	 */
-	UnexpectedHistoryChunk = "unexpectedHistoryChunk",
+	UnexpectedHistoryChunk = 'unexpectedHistoryChunk',
 	/**
 	 * The current write format changed, either because an old summary was loaded or an update op was successfully processed.
 	 * This event is emitted with the new version as an argument.
 	 */
-	WriteVersionChanged = "writeVersionChanged",
+	WriteVersionChanged = 'writeVersionChanged',
 }

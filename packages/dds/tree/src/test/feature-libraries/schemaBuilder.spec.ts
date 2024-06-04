@@ -6,12 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
-import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	LeafNodeSchema,
-} from "../../feature-libraries/index.js";
+import { Any, FieldKinds, FlexFieldSchema, LeafNodeSchema } from "../../feature-libraries/index.js";
 import {
 	SchemaBuilderBase,
 	normalizeAllowedTypes,

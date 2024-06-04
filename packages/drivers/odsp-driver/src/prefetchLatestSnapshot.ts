@@ -117,8 +117,7 @@ export async function prefetchLatestSnapshot(
 		return cacheP;
 	};
 
-	const removeEntries = async (): Promise<void> =>
-		persistedCache.removeEntries(snapshotKey.file);
+	const removeEntries = async (): Promise<void> => persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
 		{ eventName: "PrefetchLatestSnapshot" },
@@ -146,7 +145,10 @@ export async function prefetchLatestSnapshot(
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
-					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);
+					assert(
+						!!snapshotEpoch,
+						0x585 /* prefetched snapshot should have a valid epoch */,
+					);
 					snapshotContentsWithEpochP.resolve({
 						...value,
 						fluidEpoch: snapshotEpoch,

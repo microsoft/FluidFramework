@@ -145,9 +145,7 @@ describe("schemaFactory", () => {
 
 	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
 	it("Typed factories are assignable to default typing", () => {
-		type _check1 = requireTrue<
-			requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>
-		>;
+		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
 		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
 		type _check3 = requireTrue<
 			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
@@ -720,11 +718,20 @@ describe("schemaFactory", () => {
 						nodes.sort(compareComboNodes);
 						for (let i = nodes.length - 1; i >= 0; i--) {
 							const node = nodes[i];
-							if (node instanceof ComboChildObject || node instanceof ComboParentObject) {
+							if (
+								node instanceof ComboChildObject ||
+								node instanceof ComboParentObject
+							) {
 								Object.entries(node);
-							} else if (node instanceof ComboChildList || node instanceof ComboParentList) {
+							} else if (
+								node instanceof ComboChildList ||
+								node instanceof ComboParentList
+							) {
 								for (const __ of node.entries());
-							} else if (node instanceof ComboChildMap || node instanceof ComboParentMap) {
+							} else if (
+								node instanceof ComboChildMap ||
+								node instanceof ComboParentMap
+							) {
 								for (const __ of node.entries());
 							}
 							assert.equal(Tree.status(node), TreeStatus.InDocument);

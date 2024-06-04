@@ -73,10 +73,7 @@ function extractCoordinatesFromCanadaDirect(
 	}
 }
 
-function extractAvgValsFromTwitterDirect(
-	directObj: Twitter,
-	calculate: (x: number) => void,
-): void {
+function extractAvgValsFromTwitterDirect(directObj: Twitter, calculate: (x: number) => void): void {
 	for (const status of directObj.statuses) {
 		calculate(status.retweet_count + status.favorite_count);
 	}
@@ -88,18 +85,11 @@ const canada = generateCanada(
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
-	true,
-);
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 
 describe("Direct Object", () => {
 	jsObjectBench([
-		{
-			name: "canada",
-			getJson: () => canada,
-			dataConsumer: extractCoordinatesFromCanadaDirect,
-		},
+		{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
 	]);
 	jsObjectBench([
 		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },

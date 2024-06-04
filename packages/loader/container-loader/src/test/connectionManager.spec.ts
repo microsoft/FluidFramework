@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluid-private/test-loader-utils";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -149,10 +146,7 @@ describe("connectionManager", () => {
 		connection = await waitForConnection();
 
 		// Assert I
-		assert(
-			oldConnection.disposed,
-			"Old connection should be disposed after emitting an error",
-		);
+		assert(oldConnection.disposed, "Old connection should be disposed after emitting an error");
 		assert.equal(
 			connection.clientId,
 			"mock_client_1",
@@ -160,11 +154,7 @@ describe("connectionManager", () => {
 		);
 		assert(!closed, "Don't expect closeHandler to be called when connection emits an error");
 		assert.equal(disconnectCount, 1, "Expected 1 disconnect from emitting an error");
-		assert.equal(
-			connectionCount,
-			2,
-			"Expected 2 connections after the first emitted an error",
-		);
+		assert.equal(connectionCount, 2, "Expected 2 connections after the first emitted an error");
 
 		// Act II - nonretryable disconnect
 		const disconnectReason: IAnyDriverError = new NonRetryableError(

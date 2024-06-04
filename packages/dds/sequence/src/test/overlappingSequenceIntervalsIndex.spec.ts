@@ -69,10 +69,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	let collection;
 	let results;
 
-	const queryIntervalsByPositions = (
-		start: number,
-		end: number,
-	): Iterable<SequenceInterval> => {
+	const queryIntervalsByPositions = (start: number, end: number): Iterable<SequenceInterval> => {
 		const startSegOff = testSharedString.getContainingSegment(start);
 		const endSegOff = testSharedString.getContainingSegment(end);
 

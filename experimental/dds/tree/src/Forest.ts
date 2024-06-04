@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
+import { assert } from '@fluidframework/core-utils/internal';
+import { BTree } from '@tylerbu/sorted-btree-es6';
 
-import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from "./Common.js";
-import { NodeId, TraitLabel } from "./Identifiers.js";
-import { comparePayloads } from "./PayloadUtilities.js";
-import { NodeData, Payload } from "./persisted-types/index.js";
+import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from './Common.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { comparePayloads } from './PayloadUtilities.js';
+import { NodeData, Payload } from './persisted-types/index.js';
 
 /**
  * A node that can be contained within a Forest
@@ -35,10 +35,7 @@ export function isParentedForestNode(node: ForestNode): node is ParentedForestNo
 	const parentedNode = node as ForestNode & Partial<ParentedForestNode>;
 	const hasParent = parentedNode.parentId !== undefined;
 	const hasTraitParent = parentedNode.traitParent !== undefined;
-	assert(
-		hasParent === hasTraitParent,
-		0x610 /* node must have either both parent and traitParent set or neither */,
-	);
+	assert(hasParent === hasTraitParent, 0x610 /* node must have either both parent and traitParent set or neither */);
 	return hasParent;
 }
 
@@ -104,7 +101,7 @@ export class Forest {
 	private constructor(expensiveValidation: boolean);
 
 	private constructor(data?: ForestState | boolean) {
-		if (typeof data === "object") {
+		if (typeof data === 'object') {
 			this.nodes = data.nodes;
 			this.expensiveValidation = data.expensiveValidation;
 		} else {
@@ -149,18 +146,12 @@ export class Forest {
 		for (const node of newNodes) {
 			const { identifier } = node;
 			for (const [traitLabel, trait] of node.traits) {
-				assert(
-					trait.length > 0,
-					0x611 /* any trait arrays present in a node must be non-empty */,
-				);
+				assert(trait.length > 0, 0x611 /* any trait arrays present in a node must be non-empty */);
 				for (const childId of trait) {
 					const child = mutableNodes.get(childId);
 					if (child !== undefined) {
 						// A child already exists in the forest, and its parent is now being added
-						assert(
-							!isParentedForestNode(child),
-							0x612 /* can not give a child multiple parents */,
-						);
+						assert(!isParentedForestNode(child), 0x612 /* can not give a child multiple parents */);
 						const parentedChild = {
 							definition: child.definition,
 							identifier: child.identifier,
@@ -168,7 +159,7 @@ export class Forest {
 							parentId: identifier,
 							traitParent: traitLabel,
 						};
-						copyPropertyIfDefined(child, parentedChild, "payload");
+						copyPropertyIfDefined(child, parentedChild, 'payload');
 						// Overwrite the existing child with its parented version
 						mutableNodes.set(childId, parentedChild);
 					} else {
@@ -182,10 +173,7 @@ export class Forest {
 		// Now add each node to the forest and apply any parentage information that was recorded above
 		for (const node of newNodes) {
 			const parentData = childToParent.get(node.identifier);
-			assert(
-				!mutableNodes.has(node.identifier),
-				0x613 /* can not add node with already existing id */,
-			);
+			assert(!mutableNodes.has(node.identifier), 0x613 /* can not add node with already existing id */);
 			if (parentData !== undefined) {
 				// This is a child whom we haven't added yet, but whose parent we already added above. Supply the recorded parentage info.
 				const child = {
@@ -194,7 +182,7 @@ export class Forest {
 					traits: node.traits,
 					...parentData,
 				};
-				copyPropertyIfDefined(node, child, "payload");
+				copyPropertyIfDefined(node, child, 'payload');
 				mutableNodes.set(node.identifier, child);
 			} else {
 				// This is a node that has no parent. Add it with no parentage information.
@@ -219,14 +207,11 @@ export class Forest {
 		parentId: NodeId,
 		label: TraitLabel,
 		index: number,
-		childIds: readonly NodeId[],
+		childIds: readonly NodeId[]
 	): Forest {
 		assert(index >= 0, 0x614 /* invalid attach index */);
 		const parentNode = this.nodes.get(parentId);
-		assert(
-			parentNode !== undefined,
-			0x615 /* can not insert children under node that does not exist */,
-		);
+		assert(parentNode !== undefined, 0x615 /* can not insert children under node that does not exist */);
 		const mutableNodes = this.nodes.clone();
 		const traits = new Map(parentNode.traits);
 		const trait = traits.get(label) ?? [];
@@ -243,10 +228,7 @@ export class Forest {
 
 		for (const childId of childIds) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
-				assert(
-					!isParentedForestNode(n),
-					0x617 /* can not attach node that already has a parent */,
-				);
+				assert(!isParentedForestNode(n), 0x617 /* can not attach node that already has a parent */);
 				const breakVal: { value: ParentedForestNode } = {
 					value: {
 						...n,
@@ -276,14 +258,11 @@ export class Forest {
 		parentId: NodeId,
 		label: TraitLabel,
 		startIndex: number,
-		endIndex: number,
+		endIndex: number
 	): { forest: Forest; detached: readonly NodeId[] } {
 		assert(startIndex >= 0 && endIndex >= startIndex, 0x618 /* invalid detach index range */);
 		const parentNode = this.nodes.get(parentId);
-		assert(
-			parentNode !== undefined,
-			0x619 /* can not detach children under node that does not exist */,
-		);
+		assert(parentNode !== undefined, 0x619 /* can not detach children under node that does not exist */);
 		if (startIndex === endIndex) {
 			return { forest: this, detached: [] };
 		}
@@ -311,7 +290,7 @@ export class Forest {
 						traits: n.traits,
 					},
 				};
-				copyPropertyIfDefined(n, breakVal.value, "payload");
+				copyPropertyIfDefined(n, breakVal.value, 'payload');
 				return breakVal;
 			});
 		}
@@ -333,10 +312,7 @@ export class Forest {
 	// eslint-disable-next-line @rushstack/no-new-null
 	public setValue(nodeId: NodeId, value: Payload | null): Forest {
 		const node = this.nodes.get(nodeId);
-		assert(
-			node !== undefined,
-			0x61b /* can not replace payload for node that does not exist */,
-		);
+		assert(node !== undefined, 0x61b /* can not replace payload for node that does not exist */);
 		const mutableNodes = this.nodes.clone();
 		const newNode = { ...node };
 		if (value !== null) {
@@ -362,7 +338,7 @@ export class Forest {
 	 * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
 	 */
 	public get(id: NodeId): ForestNode {
-		return this.nodes.get(id) ?? fail("NodeId not found");
+		return this.nodes.get(id) ?? fail('NodeId not found');
 	}
 
 	/**
@@ -389,12 +365,8 @@ export class Forest {
 		});
 	}
 
-	private deleteRecursive(
-		mutableNodes: BTree<NodeId, ForestNode>,
-		id: NodeId,
-		deleteChildren: boolean,
-	): void {
-		const node = mutableNodes.get(id) ?? fail("node to delete must exist");
+	private deleteRecursive(mutableNodes: BTree<NodeId, ForestNode>, id: NodeId, deleteChildren: boolean): void {
+		const node = mutableNodes.get(id) ?? fail('node to delete must exist');
 		assert(!isParentedForestNode(node), 0x61c /* deleted nodes must be unparented */);
 		mutableNodes.delete(id);
 		for (const trait of node.traits.values()) {
@@ -407,7 +379,7 @@ export class Forest {
 							traits: n.traits,
 						},
 					};
-					copyPropertyIfDefined(n, breakVal.value, "payload");
+					copyPropertyIfDefined(n, breakVal.value, 'payload');
 					return breakVal;
 				});
 
@@ -438,17 +410,14 @@ export class Forest {
 					const child = this.nodes.get(childId);
 					assert(child !== undefined, 0x620 /* child in trait is not in forest */);
 					assert(isParentedForestNode(child), 0x621 /* child is not parented */);
-					assert(
-						child.parentId === node.identifier,
-						0x622 /* child parent pointer is incorrect */,
-					);
+					assert(child.parentId === node.identifier, 0x622 /* child parent pointer is incorrect */);
 					assert(
 						!checkedChildren.has(childId),
-						0x623 /* the item tree tree must not contain cycles or multi-parented nodes */,
+						0x623 /* the item tree tree must not contain cycles or multi-parented nodes */
 					);
 					assert(
-						(child.parentId ?? fail("each node must have associated metadata")) === nodeId,
-						0x624 /* cached parent is incorrect */,
+						(child.parentId ?? fail('each node must have associated metadata')) === nodeId,
+						0x624 /* cached parent is incorrect */
 					);
 					checkedChildren.add(childId);
 				}
@@ -462,7 +431,7 @@ export class Forest {
 	public getParent(id: NodeId): ParentData {
 		const child = this.nodes.get(id);
 		if (child === undefined) {
-			fail("NodeId not found");
+			fail('NodeId not found');
 		}
 
 		assert(isParentedForestNode(child), 0x625 /* Node is not parented */);
@@ -524,7 +493,7 @@ export class Forest {
 				if (!compareForestNodes(nodeThis, nodeOther)) {
 					changed.push(id);
 				}
-			},
+			}
 		);
 		return {
 			changed,

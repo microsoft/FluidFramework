@@ -22,10 +22,7 @@ import {
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	NodeId,
-	RebaseRevisionMetadata,
-} from "../../../feature-libraries/modular-schema/index.js";
+import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -67,10 +64,7 @@ import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-export function assertWrappedChangesetsEqual(
-	actual: WrappedChange,
-	expected: WrappedChange,
-): void {
+export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
 	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
 }
 
@@ -88,7 +82,13 @@ export function composeDeep(
 		(change1, change2) =>
 			makeAnonChange(
 				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+					composePair(
+						c1.change,
+						c2.change,
+						composeChild,
+						metadata,
+						idAllocatorFromMaxId(),
+					),
 				),
 			),
 		makeAnonChange(ChangesetWrapper.create([])),
@@ -125,10 +125,7 @@ export function prune(
 	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldChangeRebaser.prune(
-		change,
-		childPruner ?? ((child: NodeId) => child),
-	);
+	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
 }
 
 export function shallowCompose(
@@ -649,9 +646,5 @@ export function tagChangeInline(
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(
-		change,
-		new Set([undefined]),
-		revision,
-	);
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

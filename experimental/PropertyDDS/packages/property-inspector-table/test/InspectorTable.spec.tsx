@@ -108,7 +108,10 @@ describe("InspectorTable", () => {
 			// Mount table with empty workspace and data creation disabled
 			const newProperty = PropertyFactory.create("NodeProperty") as NodeProperty;
 			newProperty.insert("test", PropertyFactory.create("String")!);
-			const wrapper = mountInspectorTable(PropertyProxy.proxify(newProperty), noCreationProps);
+			const wrapper = mountInspectorTable(
+				PropertyProxy.proxify(newProperty),
+				noCreationProps,
+			);
 			expect(wrapper.find(Empty).exists()).toEqual(true);
 			expect(wrapper.find(Empty).props().description).toEqual(InspectorMessages.NO_WORKSPACE);
 		});
@@ -493,7 +496,11 @@ describe("InspectorTable", () => {
 						Object.keys(typContext).forEach((type) => {
 							workspace.root.insert(
 								type,
-								PropertyFactory.create(type, context, typContext[type].initialValue),
+								PropertyFactory.create(
+									type,
+									context,
+									typContext[type].initialValue,
+								),
 							);
 							wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 							expandRow(wrapper, type);
@@ -535,14 +542,18 @@ describe("InspectorTable", () => {
 			});
 			describe("property creation at root", () => {
 				const propsTemplates = fetchRegisteredTemplates();
-				(propsTemplates[0][1] as Array<{ value: string; label: string }>).forEach((prop) => {
-					it(`should work for ${prop.label} creation`, () => {
-						wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
-						findAndClick(wrapper);
-						addProperty(wrapper, prop.label, "single", "test");
-						expect(workspace.getEntriesReadOnly().test.getTypeid()).toEqual(prop.value);
-					});
-				});
+				(propsTemplates[0][1] as Array<{ value: string; label: string }>).forEach(
+					(prop) => {
+						it(`should work for ${prop.label} creation`, () => {
+							wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
+							findAndClick(wrapper);
+							addProperty(wrapper, prop.label, "single", "test");
+							expect(workspace.getEntriesReadOnly().test.getTypeid()).toEqual(
+								prop.value,
+							);
+						});
+					},
+				);
 				it(`should not allow to create property with the same name`, () => {
 					const mProp = propsTemplates[0][1][0] as { value: string; label: string };
 					wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
@@ -591,7 +602,10 @@ describe("InspectorTable", () => {
 					);
 
 					// Inserting dummy prop for custom type to be visible in workspace
-					workspace.root.insert("dummy", PropertyFactory.create(inheritsNamedNodeProp.typeid));
+					workspace.root.insert(
+						"dummy",
+						PropertyFactory.create(inheritsNamedNodeProp.typeid),
+					);
 					workspace.commit();
 					wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
 
@@ -665,9 +679,9 @@ describe("InspectorTable", () => {
 				const menuButtonWrapper = findRowMenuButton(wrapper, 1);
 				deleteProperty(wrapper, menuButtonWrapper);
 				// check that item was deleted
-				expect(workspace.get("propertyCollectionSchema").get("array").getIds().length).toEqual(
-					2,
-				);
+				expect(
+					workspace.get("propertyCollectionSchema").get("array").getIds().length,
+				).toEqual(2);
 			});
 
 			it("should delete element of static map", () => {
@@ -682,9 +696,9 @@ describe("InspectorTable", () => {
 				// Find context menu button inside row
 				const menuButtonWrapper = findRowMenuButton(wrapper, "a");
 				deleteProperty(wrapper, menuButtonWrapper);
-				expect(workspace.get("propertyCollectionSchema").get("map").getIds().length).toEqual(
-					1,
-				);
+				expect(
+					workspace.get("propertyCollectionSchema").get("map").getIds().length,
+				).toEqual(1);
 			});
 
 			it("should delete primitive property from mix of static and dynamic", () => {
@@ -727,7 +741,10 @@ describe("InspectorTable", () => {
 
 			it("should delete array from mix of static and dynamic", () => {
 				const temp = PropertyFactory.create(primitiveCollectionsNodeSchema.typeid);
-				(temp as NodeProperty).insert("Int_Array", PropertyFactory.create("Int32", "array")!);
+				(temp as NodeProperty).insert(
+					"Int_Array",
+					PropertyFactory.create("Int32", "array")!,
+				);
 				workspace.root.insert("mixedProperty", temp);
 				wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode }, true);
 
@@ -801,9 +818,9 @@ describe("InspectorTable", () => {
 				const menuButtonWrapper = findRowMenuButton(wrapper, "numbersConst");
 				expect(menuButtonWrapper.length).toEqual(1);
 				expect(menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").length).toEqual(1);
-				expect(menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").props().svgId).toEqual(
-					"copy-16",
-				);
+				expect(
+					menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").props().svgId,
+				).toEqual("copy-16");
 			});
 
 			it("should not provide context menu for deletion of constant child - array element", () => {
@@ -817,9 +834,9 @@ describe("InspectorTable", () => {
 				const menuButtonWrapper = findRowMenuButton(wrapper, 1);
 				expect(menuButtonWrapper.length).toEqual(1);
 				expect(menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").length).toEqual(1);
-				expect(menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").props().svgId).toEqual(
-					"copy-16",
-				);
+				expect(
+					menuButtonWrapper.find(".MuiPaper-root").find("SvgIcon").props().svgId,
+				).toEqual("copy-16");
 			});
 
 			const getValueField = (row) => {
@@ -869,7 +886,10 @@ describe("InspectorTable", () => {
 			});
 
 			it("reference should point to the 2nd element of the array after the 1st is deleted", () => {
-				workspace.root.insert("IntArray", PropertyFactory.create("Int8", "array", [1, 2, 3]));
+				workspace.root.insert(
+					"IntArray",
+					PropertyFactory.create("Int8", "array", [1, 2, 3]),
+				);
 				workspace.root.insert(
 					"ReferenceProperty",
 					PropertyFactory.create("Reference", "single", "IntArray[1]"),
@@ -999,7 +1019,12 @@ describe("InspectorTable", () => {
 								PropertyFactory.create(typContext, context, initialValue),
 							);
 							const newValue = typIds[context][typContext].newValue;
-							mountExpandUpdateCollection(newValue, collectionPath, collectionKey, typContext);
+							mountExpandUpdateCollection(
+								newValue,
+								collectionPath,
+								collectionKey,
+								typContext,
+							);
 							if (typIds[context][typContext].is64) {
 								// workaround to get the toString method for base 64 values
 								const prop64 = PropertyFactory.create(
@@ -1009,7 +1034,9 @@ describe("InspectorTable", () => {
 								)!;
 								expect(prop64.toString()).toEqual(newValue);
 							} else {
-								expect(workspace.get([collectionPath, collectionKey])).toEqual(newValue);
+								expect(workspace.get([collectionPath, collectionKey])).toEqual(
+									newValue,
+								);
 							}
 						}
 					});
@@ -1029,7 +1056,11 @@ describe("InspectorTable", () => {
 							PropertyFactory.create(typeid, ...numberTests[key].args),
 						);
 						const newValue = generateRandomValidNumber(typeid);
-						mountExpandUpdateCollection(newValue, "test", numberTests[key].collectionKey);
+						mountExpandUpdateCollection(
+							newValue,
+							"test",
+							numberTests[key].collectionKey,
+						);
 						const valProperty = workspace.get(["test"].concat(numberTests[key].path));
 						expect(key === "single" ? valProperty.value : valProperty).toBeCloseTo(
 							newValue,

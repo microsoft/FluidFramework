@@ -108,7 +108,10 @@ describe("basic chunk", () => {
 				const withKeysShape = new BasicChunk(
 					schema,
 					new Map(
-						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
+						keys.map((key) => [
+							key,
+							[uniformChunk(emptyShape.withTopLevelLength(1), [])],
+						]),
 					),
 				);
 				return withKeysShape;
@@ -154,7 +157,11 @@ describe("basic chunk", () => {
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), numericBasicChunk(1), numericBasicChunk(2)]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					numericBasicChunk(1),
+					numericBasicChunk(2),
+				]),
 				numberSequenceField(3),
 			);
 		});
@@ -165,7 +172,10 @@ describe("basic chunk", () => {
 				numberSequenceField(1),
 			);
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					new SequenceChunk([numericBasicChunk(1)]),
+				]),
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
@@ -178,7 +188,9 @@ describe("basic chunk", () => {
 			validateChunkCursor(
 				new SequenceChunk([
 					numericBasicChunk(0),
-					new SequenceChunk([new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)])]),
+					new SequenceChunk([
+						new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)]),
+					]),
 				]),
 				numberSequenceField(3),
 			);
@@ -186,7 +198,10 @@ describe("basic chunk", () => {
 
 		it("nested at offset", () => {
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					new SequenceChunk([numericBasicChunk(1)]),
+				]),
 				numberSequenceField(2),
 			);
 		});

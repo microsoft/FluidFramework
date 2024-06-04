@@ -13,10 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import {
-	ITestFluidObject,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils/internal";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,
@@ -434,7 +431,10 @@ describe("SharedTree", () => {
 					libraries: [leaf.library],
 				});
 				const node = b.objectRecursive("test node", {
-					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
+						() => node,
+						leaf.number,
+					]),
 				});
 				const schema = b.intoSchema(node);
 
@@ -454,14 +454,17 @@ describe("SharedTree", () => {
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+						objectStorage: MockStorage.createFromSummary(
+							(await tree1.summarize()).summary,
+						),
 					},
 					factory.attributes,
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber: dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
+					summarySequenceNumber:
+						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					latestSummarySequenceNumber:
 						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
@@ -1622,9 +1625,7 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor
-				.sequenceField({ parent: undefined, field: rootFieldKey })
-				.remove(0, 99),
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
 		);
 
 		provider.processMessages();

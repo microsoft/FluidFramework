@@ -4,6 +4,6 @@
 	"apiReport": {
 		"enabled": true,
 		// Note: `tree.api.md` is the file used for the upcoming tree DDS's API report.
-		"reportFileName": "experimental-<unscopedPackageName>.api.md",
-	},
+		"reportFileName": "experimental-<unscopedPackageName>.api.md"
+	}
 }

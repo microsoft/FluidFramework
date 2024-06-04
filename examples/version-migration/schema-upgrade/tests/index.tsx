@@ -88,12 +88,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new Migrator(
-		modelLoader,
-		model,
-		id,
-		inventoryListDataTransformationCallback,
-	);
+	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
 	migrator.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);

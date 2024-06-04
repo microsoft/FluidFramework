@@ -9,12 +9,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import {
-	TreeConfiguration,
-	SchemaFactory,
-	type TreeView,
-	type ITree,
-} from "@fluidframework/tree";
+import { TreeConfiguration, SchemaFactory, type TreeView, type ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
@@ -86,11 +81,12 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.createContainerWithSharedTree,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.createContainerWithSharedTree,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
@@ -140,19 +136,24 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData1: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.createLoadContainerWithSharedTree,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.createLoadContainerWithSharedTree,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
-				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(treeConfiguration);
+				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
+					treeConfiguration,
+				);
 			} else {
 				({ container: container1 } = await client.createContainer(schema, "2"));
 
-				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(treeConfiguration);
+				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
+					treeConfiguration,
+				);
 
 				containerId = await container1.attach();
 			}

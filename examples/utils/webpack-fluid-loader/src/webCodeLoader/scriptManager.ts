@@ -52,10 +52,7 @@ export class ScriptManager {
 		return returnP;
 	}
 
-	private static async internalLoadScript(
-		scriptUrl: string,
-		library: string,
-	): Promise<unknown> {
+	private static async internalLoadScript(scriptUrl: string, library: string): Promise<unknown> {
 		if (!this.loadCache.has(scriptUrl)) {
 			while (this.loadingEntrypoints.has(library)) {
 				await this.loadingEntrypoints.get(library);
@@ -136,7 +133,10 @@ export class ScriptManager {
 			return Promise.all(
 				libraryDetails.files.map(async (file) => ({
 					file,
-					entryPoint: await ScriptManager.internalLoadScript(file, libraryDetails.library),
+					entryPoint: await ScriptManager.internalLoadScript(
+						file,
+						libraryDetails.library,
+					),
 				})),
 			);
 		});

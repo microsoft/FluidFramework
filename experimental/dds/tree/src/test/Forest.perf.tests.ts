@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from 'assert';
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { v4 } from "uuid";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
+import { v4 } from 'uuid';
 
-import { Forest, ForestNode } from "../Forest.js";
-import { Definition, NodeId, TraitLabel } from "../Identifiers.js";
-import { RevisionView } from "../RevisionView.js";
-import { TreeViewNode } from "../TreeView.js";
-import { ChangeNode, Side } from "../persisted-types/index.js";
+import { Forest, ForestNode } from '../Forest.js';
+import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
+import { RevisionView } from '../RevisionView.js';
+import { TreeViewNode } from '../TreeView.js';
+import { ChangeNode, Side } from '../persisted-types/index.js';
 
-import { TestTree } from "./utilities/TestNode.js";
-import { refreshTestTree } from "./utilities/TestUtilities.js";
+import { TestTree } from './utilities/TestNode.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
-describe("Forest Perf", () => {
+describe('Forest Perf', () => {
 	const testTree = refreshTestTree();
 	// Larger sizes can slow down correctness test runs, or even time out, so only run smaller sizes as correctness tests.
 	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_000];

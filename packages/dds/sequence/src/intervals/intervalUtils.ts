@@ -79,8 +79,7 @@ export const IntervalDeltaOpType = {
 	CHANGE: "change",
 } as const;
 
-export type IntervalDeltaOpType =
-	(typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
+export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof IntervalDeltaOpType];
 
 /**
  * Values are used in revertibles.
@@ -178,10 +177,7 @@ export interface ISerializableInterval extends IInterval {
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
  * @internal
  */
-export type SerializedIntervalDelta = Omit<
-	ISerializedInterval,
-	"start" | "end" | "properties"
-> &
+export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> &
 	Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
 /**
@@ -289,18 +285,14 @@ export const IntervalStickiness = {
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
-export function startReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
-): SlidingPreference {
+export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
 		: SlidingPreference.BACKWARD;
 }
 
-export function endReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
-): SlidingPreference {
+export function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD
