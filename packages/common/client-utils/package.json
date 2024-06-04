@@ -34,32 +34,10 @@
 					"default": "./dist/indexBrowser.js"
 				}
 			}
-		},
-		"./bufferBrowser.js": {
-			"node": {
-				"import": {
-					"types": "./lib/bufferNode.d.ts",
-					"default": "./lib/bufferNode.js"
-				},
-				"require": {
-					"types": "./dist/bufferNode.d.ts",
-					"default": "./dist/bufferNode.js"
-				}
-			},
-			"default": {
-				"import": {
-					"types": "./lib/bufferBrowser.d.ts",
-					"default": "./lib/bufferBrowser.js"
-				},
-				"require": {
-					"types": "./dist/bufferBrowser.d.ts",
-					"default": "./dist/bufferBrowser.js"
-				}
-			}
 		}
 	},
-	"main": "lib/indexNode.js",
-	"types": "lib/indexNode.d.ts",
+	"main": "lib/indexBrowser.js",
+	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -73,6 +51,12 @@
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
+		"check:exports": "concurrently npm:check:exports:bundle-release-tags npm:check:exports:cjs:indexBrowser npm:check:exports:cjs:indexNode npm:check:exports:esm:indexBrowser npm:check:exports:esm:indexNode",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.cjs.json",
+		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
+		"check:exports:esm:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.esm.json",
+		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -89,7 +73,7 @@
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v --level public",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -125,14 +109,14 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.4.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/base64-js": "^1.3.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
@@ -162,7 +146,7 @@
 		"sinon": "^17.0.1",
 		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.1",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {

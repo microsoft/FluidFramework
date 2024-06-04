@@ -10,16 +10,22 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	ValueType,
+	bindHandles,
+	parseHandles,
+} from "@fluidframework/shared-object-base/internal";
 import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
@@ -37,7 +43,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker, makeSerializable } from "./localValues.js";
+import { LocalValueMaker } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -1306,11 +1312,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// Create a local value and serialize it.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(
-			localValue,
-			this.serializer,
-			this.directory.handle,
-		);
+		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -1324,7 +1326,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;

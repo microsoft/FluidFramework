@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
 import { IValueChanged } from "@fluidframework/map/internal";
+import events_pkg from "events_pkg";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

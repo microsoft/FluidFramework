@@ -9,20 +9,20 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
-	IDocumentStorageService,
-	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
-import type {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
-	ISummaryTree,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";

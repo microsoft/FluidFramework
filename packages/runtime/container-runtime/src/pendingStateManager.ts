@@ -6,7 +6,7 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -73,6 +73,13 @@ function buildPendingMessageContent(
 	const { type, contents, compatDetails } = message;
 	// Any properties that are not defined, won't be emitted by stringify.
 	return JSON.stringify({ type, contents, compatDetails });
+}
+
+function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+	return {
+		...message,
+		localOpMetadata: undefined,
+	};
 }
 
 /**
@@ -154,9 +161,10 @@ export class PendingStateManager implements IDisposable {
 			}
 		});
 		return {
-			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
-				return { ...message, localOpMetadata: undefined };
-			}),
+			pendingStates: [
+				...newSavedOps,
+				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+			],
 		};
 	}
 
@@ -251,7 +259,7 @@ export class PendingStateManager implements IDisposable {
 			0x169 /* "No pending message found for this remote message" */,
 		);
 		pendingMessage.sequenceNumber = message.sequenceNumber;
-		this.savedOps.push(pendingMessage);
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
 

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

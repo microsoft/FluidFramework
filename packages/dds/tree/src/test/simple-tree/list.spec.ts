@@ -386,7 +386,6 @@ describe("List", () => {
 				// The results of both are compared to the result of invoking the same function on a true JS array.
 				//
 				// The optional 'init' parameter provides an initial state, otherwise both are empty.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				function test3(fnName: string, callback: (...args: any[]) => unknown = predicate) {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.

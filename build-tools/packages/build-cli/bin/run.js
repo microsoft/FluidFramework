@@ -4,8 +4,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/prefer-top-level-await
-(async () => {
-	const oclif = await import("@oclif/core");
-	await oclif.execute({ development: false, dir: __dirname });
-})();
+import { execute } from "@oclif/core";
+
+await execute({ dir: import.meta.url });

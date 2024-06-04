@@ -5,8 +5,9 @@
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
-import { FeedsForPackages } from "../../src/commands/list";
-import { Context } from "../../src/library";
+
+import { FeedsForPackages } from "../../src/commands/list.js";
+import { Context } from "../../src/library/index.js";
 
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();

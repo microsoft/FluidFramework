@@ -9,11 +9,27 @@ import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ConnectionMode,
+	IClient,
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
 	DriverErrorTypes,
 	IAnyDriverError,
+	IClientConfiguration,
+	IDocumentMessage,
+	INack,
+	INackContent,
+	ISequencedDocumentSystemMessage,
+	ISignalClient,
+	ITokenClaims,
+	MessageType,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -24,22 +40,6 @@ import {
 	isRuntimeMessage,
 	logNetworkFailure,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	IClientDetails,
-	IDocumentMessage,
-	INack,
-	INackContent,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ISignalClient,
-	ISignalMessage,
-	ITokenClaims,
-	MessageType,
-	ScopeType,
-} from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,
