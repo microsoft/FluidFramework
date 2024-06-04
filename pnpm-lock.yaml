@@ -11477,6 +11477,9 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
         version: 0.15.2
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../../experimental/dds/tree
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -11489,6 +11492,12 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.39.0-264124
         version: 0.39.0-264124(@types/node@18.19.1)
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
@@ -11525,6 +11534,12 @@ importers:
       sinon:
         specifier: ^17.0.1
         version: 17.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.3
+      tinylicious:
+        specifier: ^4.0.0
+        version: 4.0.1
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -23193,6 +23208,39 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/server-services-shared@4.0.1:
+    resolution: {integrity: sha512-x3laEE8ALUvya8FGgMoWfskHdtGasl1n2/sE9g9EovzM0dPWaWsyNHCnaHQL28yF+pJuLeUtR6/W/Bcb6GTHOQ==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 4.0.1
+      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 4.0.1
+      '@fluidframework/server-services-core': 4.0.1
+      '@fluidframework/server-services-telemetry': 4.0.1
+      '@fluidframework/server-services-utils': 4.0.1
+      '@socket.io/redis-adapter': 7.2.0
+      '@socket.io/sticky': 1.0.4
+      body-parser: 1.20.2
+      debug: 4.3.4(supports-color@8.1.1)
+      events: 3.3.0
+      fast-redact: 3.3.0
+      ioredis: 5.3.2
+      lodash: 4.17.21
+      nconf: 0.12.1
+      notepack.io: 2.3.0
+      serialize-error: 8.1.0
+      socket.io: 4.7.2
+      socket.io-adapter: 2.5.2
+      socket.io-parser: 4.2.4
+      uuid: 9.0.1
+      winston: 3.11.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: true
+
   /@fluidframework/server-services-shared@5.0.0-265463:
     resolution: {integrity: sha512-Keq2/Zp4gowZ2WkkjTMtxSZIj5MfFPgWXA+sVOhzE9Bi+3Mcecyo662RxZUs6EA8Z0aD9EVzV/PlKXErK5edzg==}
     dependencies:
@@ -23243,6 +23291,30 @@ packages:
       path-browserify: 1.0.1
       serialize-error: 8.1.0
       uuid: 9.0.1
+
+  /@fluidframework/server-services-utils@4.0.1:
+    resolution: {integrity: sha512-EY4oO8QwMrkwBG3wlzX9ni1xvhZzgOlEhbqlln8hNr8+MSf/7Q4YOYAFrGSK8/YqHeaNQNToftAsaB/B3jqcrg==}
+    dependencies:
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 4.0.1
+      '@fluidframework/server-services-core': 4.0.1
+      '@fluidframework/server-services-telemetry': 4.0.1
+      debug: 4.3.4(supports-color@8.1.1)
+      express: 4.19.2
+      ioredis: 5.3.2
+      json-stringify-safe: 5.0.1
+      jsonwebtoken: 9.0.2
+      morgan: 1.10.0
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+      sillyname: 0.1.0
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.11.0
+      winston-transport: 4.6.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /@fluidframework/server-services-utils@5.0.0-265463:
     resolution: {integrity: sha512-gF80gyBTRGmOL1UN89qZ7PYRoCX6W8mzokFMQ7zzl/Lx/TAWseINL0DdWb+GCUNNBJhyqH+9uLa0nBpREmaLqg==}
@@ -45964,6 +46036,51 @@ packages:
   /tiny-warning@1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
     dev: false
+
+  /tinylicious@4.0.1:
+    resolution: {integrity: sha512-lZN7wEELdjPnAtzskddeaOxBLUU6v0AHzd+gmjjV959PEHjleqnxgiPO5hy9cZSMFtXMTrfR31muvB5Bag0iGQ==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 4.0.1
+      '@fluidframework/protocol-base': 4.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 4.0.1(debug@4.3.4)
+      '@fluidframework/server-local-server': 4.0.1
+      '@fluidframework/server-memory-orderer': 4.0.1
+      '@fluidframework/server-services-client': 4.0.1
+      '@fluidframework/server-services-core': 4.0.1
+      '@fluidframework/server-services-shared': 4.0.1
+      '@fluidframework/server-services-telemetry': 4.0.1
+      '@fluidframework/server-services-utils': 4.0.1
+      '@fluidframework/server-test-utils': 4.0.1
+      agentkeepalive: 4.5.0
+      axios: 1.6.2(debug@4.3.4)
+      body-parser: 1.20.2
+      charwise: 3.0.1
+      compression: 1.7.4
+      cookie-parser: 1.4.6
+      cors: 2.8.5
+      detect-port: 1.5.1
+      express: 4.19.2
+      isomorphic-git: 1.25.7
+      json-stringify-safe: 5.0.1
+      level: 8.0.0
+      level-sublevel: 6.6.4
+      lodash: 4.17.21
+      morgan: 1.10.0
+      nconf: 0.12.1
+      socket.io: 4.7.2
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.11.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+    dev: true
 
   /tinylicious@5.0.0-265463:
     resolution: {integrity: sha512-cbH+htyiPGBpRPllhIlc8CjHqjNNZPTsUcqOHSWlYC8c/6Fux4M6Q1onzrqbgslbm6sU4i2kA//G4sl+gxZ/0A==}
