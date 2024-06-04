@@ -124,7 +124,7 @@
 		"semver": "^7.5.3",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^4.0.1",
+		"tinylicious": "^5.0.0-265463",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -151,7 +151,8 @@
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
-				"build:genver"
+				"build:genver",
+				"^tsc"
 			]
 		}
 	},
