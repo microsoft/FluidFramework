@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import * as base64js from "base64-js";
 
 /**
@@ -191,7 +192,9 @@ export class IsoBuffer extends Uint8Array {
 		let sanitizedStr = str;
 		// Remove everything after padding - Node buffer ignores everything
 		// after any padding whereas base64-js does not
-		sanitizedStr = sanitizedStr.split("=")[0];
+		const splitStr = sanitizedStr.split("=")[0];
+		assert(splitStr !== undefined, "splitStr is undefined in IsoBuffer.sanitizeBase64");
+		sanitizedStr = splitStr;
 
 		// Remove invalid characters - Node buffer strips invalid characters
 		// whereas base64-js replaces them with "A"

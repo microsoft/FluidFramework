@@ -5,7 +5,7 @@
 
 import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import * as appinsights from "applicationinsights";
 
 /**
