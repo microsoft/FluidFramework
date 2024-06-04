@@ -14,6 +14,14 @@
 	"type": "module",
 	"exports": {
 		".": {
+			"trimmedAPI": {
+				"import": {
+					"types": "./lib/public.d.ts"
+				},
+				"require": {
+					"types": "./dist/public.d.ts"
+				}
+			},
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"

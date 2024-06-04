@@ -19,7 +19,7 @@
 					"types": "./lib/public.d.ts"
 				},
 				"require": {
-					"types": "./dist/pubic.d.ts"
+					"types": "./dist/public.d.ts"
 				}
 			},
 			"import": {
