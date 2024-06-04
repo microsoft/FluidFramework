@@ -27,13 +27,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
@@ -58,7 +52,7 @@ const migrate = (legacyTree: LegacySharedTree, newTree: ITree): void => {
 				quantity,
 			})),
 		)
-		[disposeSymbol]();
+		.dispose();
 };
 
 // Useful for modifying the legacy tree

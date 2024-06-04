@@ -15,13 +15,13 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";

@@ -24,7 +24,6 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IChannelServices,
 	IChannelStorageService,
@@ -35,8 +34,7 @@ import {
 	IChannelFactory,
 	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -45,6 +43,8 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
@@ -61,9 +61,9 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
-import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing

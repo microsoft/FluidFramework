@@ -6,8 +6,8 @@
 import { strict as assert, fail } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

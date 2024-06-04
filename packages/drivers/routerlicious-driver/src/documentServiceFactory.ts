@@ -6,6 +6,7 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -20,7 +21,6 @@ import {
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,

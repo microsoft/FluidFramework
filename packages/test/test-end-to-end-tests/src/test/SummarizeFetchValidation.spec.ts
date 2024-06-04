@@ -14,6 +14,7 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISummaryContext,
 	ISnapshotTree,
@@ -21,7 +22,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";

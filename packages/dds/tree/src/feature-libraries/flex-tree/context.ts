@@ -137,7 +137,7 @@ export class Context implements FlexTreeContext, IDisposable {
 
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
-		const cursor = this.checkout.forest.allocateCursor();
+		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema, cursor);
 		cursor.free();

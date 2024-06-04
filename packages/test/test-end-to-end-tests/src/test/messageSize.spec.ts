@@ -15,9 +15,9 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
-import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
