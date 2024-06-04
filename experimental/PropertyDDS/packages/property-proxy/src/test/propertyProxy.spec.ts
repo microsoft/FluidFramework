@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
+
 /* eslint-env jest */
-/* eslint-disable no-param-reassign */
 import {
 	ArrayProperty,
 	BaseProperty,
@@ -13,7 +14,6 @@ import {
 	PropertyFactory,
 	SetProperty,
 } from "@fluid-experimental/property-properties";
-import assert from "node:assert/strict";
 
 import { PropertyProxy } from "../index.js";
 
@@ -1245,6 +1245,7 @@ describe("JS-Object-like property accessing ", function () {
 							]);
 
 						state.myTestProperty.myReferenceArray.sort((a, b) => {
+							/* eslint-disable no-param-reassign */
 							if (a.x) {
 								a = a.x;
 							}
@@ -1252,6 +1253,7 @@ describe("JS-Object-like property accessing ", function () {
 							if (b.x) {
 								b = b.x;
 							}
+							/* eslint-enable no-param-reassign */
 
 							return a - b;
 						});
@@ -3015,6 +3017,10 @@ describe("JS-Object-like property accessing ", function () {
 			});
 
 			it("check .includes() functionality", function () {
+				assert(
+					arrayWithJsOutfit[0] !== undefined,
+					"arrayWithJsOutfit[0] is undefined in check .forEach() functionality",
+				);
 				expect(
 					state.myTestProperty.myComplexArray.includes(
 						state.myTestProperty.myComplexArray[0],
@@ -3046,6 +3052,10 @@ describe("JS-Object-like property accessing ", function () {
 						-100,
 					),
 				).toEqual(arrayWithJsOutfit.includes(arrayWithJsOutfit[0], -100));
+				assert(
+					arrayWithJsOutfit[1] !== undefined,
+					"arrayWithJsOutfit[1] is undefined in check .forEach() functionality",
+				);
 				expect(
 					state.myTestProperty.myComplexArray.includes(
 						state.myTestProperty.myComplexArray[1],
@@ -4136,16 +4146,22 @@ describe("JS-Object-like property accessing ", function () {
 						state.myTestProperty.myMap = entries;
 						checkAssignment();
 
+						const entries0 = entries[0];
+						assert(
+							entries0 !== undefined,
+							"entries0 is undefined in check .forEach() functionality",
+						);
+
+						const entries1 = entries[1];
+						assert(
+							entries1 !== undefined,
+							"entries1 is undefined in check .forEach() functionality",
+						);
+
 						// Assign iterables of properties
 						const entriesAsProperties = (): [string, BaseProperty][] => [
-							[
-								entries[0][0],
-								PropertyFactory.create("Int32", "single", entries[0][1]),
-							],
-							[
-								entries[1][0],
-								PropertyFactory.create("Int32", "single", entries[1][1]),
-							],
+							[entries0[0], PropertyFactory.create("Int32", "single", entries0[1])],
+							[entries1[0], PropertyFactory.create("Int32", "single", entries1[1])],
 						];
 
 						state.myTestProperty.myMap = new Map(entriesAsProperties());
