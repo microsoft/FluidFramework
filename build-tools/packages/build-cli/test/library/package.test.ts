@@ -28,17 +28,32 @@ describe("VersionDetails sorting", async () => {
 
 	it("sortedByVersion", async () => {
 		const sortedByVersion = sortVersions(versions, "version");
-		assert(sortedByVersion[0], "sortedByVersion[0] is undefined VersionDetails sorting sortedByVersion")
-		assert(sortedByVersion[3], "sortedByVersion[3] is undefined VersionDetails sorting sortedByVersion")
+		assert(
+			sortedByVersion[0],
+			"sortedByVersion[0] is undefined VersionDetails sorting sortedByVersion",
+		);
+		assert(
+			sortedByVersion[3],
+			"sortedByVersion[3] is undefined VersionDetails sorting sortedByVersion",
+		);
 		assert.equal(sortedByVersion[0].version, "1.0.2");
 		assert.equal(sortedByVersion[3].version, "0.59.3001");
 	});
 
 	it("sortedByDate", async () => {
 		const sortedByDate = sortVersions(versions, "date");
-		assert(sortedByDate[0], "sortedByDate[0] is undefined VersionDetails sorting sortedByDate")
-		assert(sortedByDate[1], "sortedByDate[1] is undefined VersionDetails sorting sortedByDate")
-		assert(sortedByDate[4], "sortedByDate[4] is undefined VersionDetails sorting sortedByDate")
+		assert(
+			sortedByDate[0],
+			"sortedByDate[0] is undefined VersionDetails sorting sortedByDate",
+		);
+		assert(
+			sortedByDate[1],
+			"sortedByDate[1] is undefined VersionDetails sorting sortedByDate",
+		);
+		assert(
+			sortedByDate[4],
+			"sortedByDate[4] is undefined VersionDetails sorting sortedByDate",
+		);
 		assert.equal(sortedByDate[0].version, "0.59.3001");
 		assert.equal(sortedByDate[1].version, "1.0.2");
 		assert.equal(sortedByDate[4].version, "0.59.3000");

@@ -301,6 +301,10 @@ describe("library/packageExports", () => {
 
 					// Verify
 					assert(logger.calls.length === 1, "logs one warning");
+					assert(
+						logger.calls[0] !== undefined && logger.calls[0][0] !== undefined,
+						"logger.calls is undefined in warning on double referenced export paths",
+					);
 					const message = logger.calls[0][0];
 					assert(typeof message === "string");
 					assert(
