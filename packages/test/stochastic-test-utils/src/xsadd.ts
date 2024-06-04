@@ -46,10 +46,10 @@ export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 	//
 	// To avoid a fixed point at state { x: 0, y: 0, z: 0, w: 0 }, continue scrambling until at least
 	// one seed is non-zero.
-	const seed0 = seed[0]
-	const seed1 = seed[1]
-	const seed2 = seed[2]
-	const seed3 = seed[3]
+	const seed0 = seed[0];
+	const seed1 = seed[1];
+	const seed2 = seed[2];
+	const seed3 = seed[3];
 	assert(seed0 !== undefined, "seed0 is undefined in XSadd");
 	assert(seed1 !== undefined, "seed1 is undefined in XSadd");
 	assert(seed2 !== undefined, "seed2 is undefined in XSadd");

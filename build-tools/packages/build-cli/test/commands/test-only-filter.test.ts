@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { Package } from "@fluidframework/build-tools";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
@@ -37,6 +38,7 @@ describe("flub test-only-filter", () => {
 			expect(filtered).to.be.ofSize(1);
 
 			const pkg = filtered[0];
+			assert(pkg !== undefined, "pkg is undefined in flub test-only-filter");
 
 			expect(pkg.name).to.equal("@fluid-tools/build-cli");
 			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
