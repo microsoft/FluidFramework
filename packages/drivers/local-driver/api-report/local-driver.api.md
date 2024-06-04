@@ -60,7 +60,9 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(message: string): void;
+    submitSignal(content: string): void;
+    // (undocumented)
+    submitSignal2(content: unknown): void;
 }
 
 // @internal
