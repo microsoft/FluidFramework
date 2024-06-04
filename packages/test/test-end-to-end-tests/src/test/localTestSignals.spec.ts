@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IContainerRuntimeBase,
+	IInboundSignalMessage,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -16,6 +20,15 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
+
+type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
+
+interface SignalClient {
+	dataStoreRuntime: IFluidDataStoreRuntime;
+	containerRuntime: IContainerRuntimeBaseWithClientId;
+	signalReceivedCount: number;
+	clientId: string | undefined;
+}
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -30,6 +43,29 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 			}),
 		),
 	);
+
+const waitForTargetedSignal = async (
+	targetedSignaller: { once(e: "signal", l: () => void): void },
+	otherSignallers: { once(e: "signal", l: () => void): void }[],
+) =>
+	Promise.all([
+		timeoutPromise((resolve) => targetedSignaller.once("signal", () => resolve()), {
+			durationMs: 2000,
+			errorMsg: `Targeted Signaller Timeout`,
+		}),
+		otherSignallers.map(async (signaller, index) =>
+			timeoutPromise(
+				(reject) =>
+					signaller.once("signal", () =>
+						reject(`Signaller[${index}] should not have recieved a signal`),
+					),
+				{
+					durationMs: 100,
+					value: "No Signal Received",
+				},
+			),
+		),
+	]);
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -189,5 +225,101 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			1,
 			"client 2 did not receive signal on data store runtime",
 		);
+	});
+});
+
+describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
+	const numberOfClients = 3;
+	assert(numberOfClients >= 2, "Need at least 2 clients for targeted signals");
+	let clients: SignalClient[];
+	let provider: ITestObjectProvider;
+
+	beforeEach("setup containers", async () => {
+		provider = getTestObjectProvider();
+		clients = [];
+		for (let i = 0; i < numberOfClients; i++) {
+			const container = await (i === 0
+				? provider.makeTestContainer(testContainerConfig)
+				: provider.loadTestContainer(testContainerConfig));
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			clients.push({
+				dataStoreRuntime: dataObject.runtime,
+				containerRuntime: dataObject.context.containerRuntime,
+				signalReceivedCount: 0,
+				clientId: container.clientId,
+			});
+			if (container.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container.once("connected", resolve));
+			}
+		}
+	});
+	async function sendAndVerifyRemoteSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
+		clients.forEach((client) => {
+			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
+				assert.equal(local, false, "Signal should be remote");
+				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
+				assert.equal(message.content, true, "Signal content should be true");
+				client.signalReceivedCount += 1;
+			});
+		});
+
+		for (let i = 0; i < numberOfClients; i++) {
+			const targetClient = clients[(i + 1) % numberOfClients];
+			clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
+			await waitForTargetedSignal(
+				targetClient[runtime],
+				clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
+			);
+		}
+
+		clients.forEach((client, index) => {
+			assert.equal(
+				client.signalReceivedCount,
+				1,
+				`client ${index + 1} did not receive signal`,
+			);
+		});
+	}
+	async function sendAndVerifyLocalSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
+		clients.forEach((client) => {
+			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
+				assert.equal(local, true, "Signal should be local");
+				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
+				assert.equal(message.content, true, "Signal content should be true");
+				client.signalReceivedCount += 1;
+			});
+		});
+
+		for (let i = 0; i < numberOfClients; i++) {
+			clients[i][runtime].submitSignal("TestSignal", true, clients[i].clientId);
+			await waitForTargetedSignal(
+				clients[i][runtime],
+				clients.filter((c) => c !== clients[i]).map((c) => c[runtime]),
+			);
+		}
+
+		clients.forEach((client, index) => {
+			assert.equal(
+				client.signalReceivedCount,
+				1,
+				`client ${index + 1} did not receive signal`,
+			);
+		});
+	}
+
+	it("Validates data store runtime remote signals", async () => {
+		await sendAndVerifyRemoteSignals("dataStoreRuntime");
+	});
+
+	it("Validates ContainerRuntime remote signals", async () => {
+		await sendAndVerifyRemoteSignals("containerRuntime");
+	});
+
+	it("Validates data store local signals", async () => {
+		await sendAndVerifyLocalSignals("dataStoreRuntime");
+	});
+
+	it("Validates ContainerRuntime local signals", async () => {
+		await sendAndVerifyLocalSignals("containerRuntime");
 	});
 });

@@ -18,11 +18,12 @@ import {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
+	type ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
@@ -312,7 +313,7 @@ export class DocumentDeltaConnection
 	}
 
 	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
-	protected emitMessages(type: "submitSignal", messages: string[][]): void;
+	protected emitMessages(type: "submitSignal", messages: string[][] | ISentSignalMessage[]): void;
 	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
@@ -341,11 +342,16 @@ export class DocumentDeltaConnection
 	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
-		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
-			throw new UsageError("Sending signals to specific client ids is not supported.");
+		// Check for server-side support of v2 signals
+		if (this.details.supportedFeatures?.submit_signals_v2 === true) {
+			const signal: ISentSignalMessage = { content };
+			if (targetClientId !== undefined) {
+				signal.targetClientId = targetClientId;
+			}
+			this.emitMessages("submitSignal", [signal]);
+		} else {
+			this.emitMessages("submitSignal", [[content]]);
 		}
-
-		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**

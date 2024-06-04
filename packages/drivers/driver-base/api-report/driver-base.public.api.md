@@ -14,6 +14,7 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISentSignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISignalClient } from '@fluidframework/driver-definitions/internal';
 import { ISignalMessage } from '@fluidframework/driver-definitions';
