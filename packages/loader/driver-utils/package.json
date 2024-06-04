@@ -98,7 +98,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^4.0.0",
+		"@fluidframework/protocol-base": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2",
 		"lz4js": "^0.2.0",

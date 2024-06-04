@@ -106,7 +106,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^4.0.1",
+		"tinylicious": "^5.0.0-265463",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

@@ -4,7 +4,7 @@
 		"enabled": true,
 		"clientKind": "git",
 		"root": ".",
-		"useIgnoreFile": true
+		"useIgnoreFile": true,
 	},
 	"files": {
 		"ignoreUnknown": true,
@@ -23,18 +23,18 @@
 			"common/**",
 			"docs/**",
 			"server/**",
-			"tools/**"
+			"tools/**",
 		],
-		"maxSize": 2097152
+		"maxSize": 2097152,
 	},
 	"organizeImports": {
-		"enabled": false
+		"enabled": false,
 	},
 	"linter": {
 		"enabled": false,
 		"rules": {
-			"recommended": true
-		}
+			"recommended": true,
+		},
 	},
 	"formatter": {
 		"enabled": true,
@@ -42,7 +42,7 @@
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"lineWidth": 95,
-		"lineEnding": "lf"
+		"lineEnding": "lf",
 	},
 	"javascript": {
 		"formatter": {
@@ -52,13 +52,13 @@
 			"trailingComma": "all",
 			"quoteProperties": "preserve",
 			"quoteStyle": "double",
-			"bracketSpacing": true
-		}
+			"bracketSpacing": true,
+		},
 	},
 	"json": {
 		"formatter": {
-			"indentStyle": "tab"
-		}
+			"indentStyle": "tab",
+		},
 	},
 	"overrides": [
 		{
@@ -66,25 +66,25 @@
 				"**/*.jsonc",
 				"**/.vscode/*.json",
 				"**/tsconfig*.json",
-				"**/api-extractor*.json"
+				"**/api-extractor*.json",
 			],
 			"json": {
 				"parser": {
 					"allowComments": true,
-					"allowTrailingCommas": true
+					"allowTrailingCommas": true,
 				},
 				"formatter": {
-					"trailingCommas": "all"
-				}
-			}
+					"trailingCommas": "all",
+				},
+			},
 		},
 		{
 			"include": ["**/package.json"],
 			"json": {
 				"formatter": {
-					"lineWidth": 80
-				}
-			}
-		}
-	]
+					"lineWidth": 80,
+				},
+			},
+		},
+	],
 }

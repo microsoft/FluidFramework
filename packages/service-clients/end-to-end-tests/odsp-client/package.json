@@ -87,7 +87,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": ["^api-extractor:esnext", "^build:esnext"]
+			"build:test": ["^api-extractor:esnext", "^build:esnext", "^tsc"]
 		}
 	},
 	"typeValidation": {
