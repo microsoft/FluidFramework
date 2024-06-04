@@ -58,6 +58,7 @@
 		"eslint:fix": "fluid-build --task eslint:fix",
 		"format": "fluid-build --task format",
 		"format:biome": "fluid-build --task format:biome",
+		"format:prettier": "fluid-build --task format:prettier",
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "biome check --formatter-enabled=true --apply --changed --since=main",
 		"format:changed:next": "biome check --formatter-enabled=true --apply --changed --since=next",
