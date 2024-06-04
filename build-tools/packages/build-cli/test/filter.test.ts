@@ -68,6 +68,7 @@ describe("filterPackages", async () => {
 		expect(actual).to.be.ofSize(1);
 
 		const pkg = actual[0];
+		assert(pkg !== undefined, "pkg is undefined in filterPackages private=true");
 		assert.equal(pkg.nameUnscoped, "readme-command");
 	});
 
@@ -249,6 +250,7 @@ describe("selectAndFilterPackages", async () => {
 		expect(filtered).to.be.ofSize(1);
 
 		const pkg = filtered[0];
+		assert(pkg !== undefined, "pkg is undefined in selectAndFilterPackages select directory");
 
 		expect(pkg.name).to.equal("@fluid-tools/build-cli");
 		expect(context.repo.relativeToRepo(pkg.directory)).to.equal(
