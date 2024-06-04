@@ -152,7 +152,40 @@ export function typedObjectValues<TKey extends string, TValues>(
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(
+export function enumFromStrings<TScope extends string, const Members extends string>(
+	factory: SchemaFactory<TScope>,
+	members: readonly Members[],
+) {
+	const names = new Set(members);
+	if (names.size !== members.length) {
+		throw new UsageError("All members of enums must have distinct names");
+	}
+
+	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const factoryOut = <TValue extends Members>(value: TValue) => {
+		return new out[value]({}) as NodeFromSchema<
+			ReturnType<typeof singletonSchema<TScope, TValue>>
+		>;
+	};
+	const out = factoryOut as typeof factoryOut & TOut;
+	for (const name of members) {
+		Object.defineProperty(out, name, {
+			enumerable: true,
+			configurable: false,
+			writable: false,
+			value: singletonSchema(factory, name),
+		});
+	}
+
+	return out;
+}
+
+// TODO: Why does this one generate an invalid d.ts file if exported?
+// Tracked by https://github.com/microsoft/TypeScript/issues/58688
+// TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,
 ) {
