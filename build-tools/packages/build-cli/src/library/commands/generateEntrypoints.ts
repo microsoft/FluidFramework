@@ -323,6 +323,14 @@ const generatedHeader: string = `/*!
 
 `;
 
+/**
+ * Generate "rollup" entrypoints for the given main entrypoint file.
+ *
+ * @param mainEntrypoint - path to main entrypoint file
+ * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
+ * @param log - logger
+ * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
+ */
 async function generateEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
@@ -354,7 +362,11 @@ async function generateEntrypoints(
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile);
 
-	// This order is critical as public should include beta should include alpha.
+	// This order is critical as alpha should include beta should include public.
+	// Legacy is separate and should not be included in any other level. But it
+	// may include public.
+	//   (public) -> (legacy)
+	//           `-> (beta) -> (alpha)
 	const apiTagLevels: readonly Exclude<ApiTag, typeof ApiTag.internal>[] = [
 		ApiTag.public,
 		ApiTag.legacy,

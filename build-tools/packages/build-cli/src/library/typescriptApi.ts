@@ -91,6 +91,10 @@ function getNodeApiTags(node: Node): ApiTag[] | undefined {
 /**
  * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
  *
+ * @remarks One of api-extractor standard tags will always be present as required by
+ * api-extractor. So, "legacy" is treated as priority over other tags for determining
+ * level. Otherwise, exactly one tag is required and will be exact level.
+ *
  * @returns Computed {@link ApiLevel} from JSDocs or undefined.
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
