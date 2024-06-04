@@ -21,21 +21,21 @@ import {
 	prepareContentForInsert,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
-import { RawTreeNode, nodeContent, rawError } from "./rawNode.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
 import {
+	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
+	TreeNodeSchema,
+	TreeNodeFromImplicitAllowedTypes,
 	type,
 } from "./schemaTypes.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeNode, TreeNodeValid } from "./types.js";
+import { getFlexSchema } from "./toFlexSchema.js";
+import { RawTreeNode, nodeContent, rawError } from "./rawNode.js";
 
 /**
  * A map of string keys to tree objects.
@@ -142,7 +142,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getFlexNode(this);
 		for (const key of node.keys()) {
-			yield [key, getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>];
+			yield [
+				key,
+				getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {

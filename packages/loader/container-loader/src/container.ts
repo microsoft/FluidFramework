@@ -16,7 +16,6 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -25,8 +24,9 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	ReadOnlyInfo,
 	isFluidCodeDetails,
+	IDeltaManager,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -48,27 +48,27 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	IQuorumProposals,
 	IResolvedUrl,
-	ISequencedProposal,
 	ISnapshot,
-	ISnapshotTree,
-	ISummaryContent,
 	IThrottlingWarning,
 	IUrlResolver,
+	ICommittedProposal,
+	IDocumentAttributes,
+	IDocumentMessage,
+	IQuorumProposals,
+	ISequencedProposal,
+	ISnapshotTree,
+	ISummaryContent,
 	IVersion,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	getSnapshotTree,
 	MessageType2,
 	OnlineStatus,
-	getSnapshotTree,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
 	isOnline,
@@ -77,38 +77,31 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
+	type TelemetryEventCategory,
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	type TelemetryEventCategory,
 	UsageError,
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
 	formatTick,
-	loggerToMonitoringContext,
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
-import {
-	AttachProcessProps,
-	AttachmentData,
-	runRetriableAttachProcess,
-} from "./attachment.js";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
-import {
-	IConnectionStateHandler,
-	createConnectionStateHandler,
-} from "./connectionStateHandler.js";
+import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
@@ -122,8 +115,8 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
-	createMemoryDetachedBlobStorage,
 	serializeMemoryDetachedBlobStorage,
+	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
@@ -276,7 +269,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 					? wrapError(
 							err,
 							(innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`),
-						)
+					  )
 					: new GenericError(baseMessage),
 			);
 		};
@@ -335,8 +328,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 	});
 }
 
-const getCodeProposal = (quorum: IQuorumProposals) =>
-	quorum.get("code") ?? quorum.get("code2");
+const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
@@ -392,7 +384,9 @@ export class Container
 
 					const onClosed = (err?: ICriticalContainerError) => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
-						reject(err ?? new GenericError("Container closed without error during load"));
+						reject(
+							err ?? new GenericError("Container closed without error during load"),
+						);
 					};
 					container.on("closed", onClosed);
 
@@ -911,7 +905,8 @@ export class Container
 						mode,
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
-							performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+							performance.now() -
+							this.connectionTransitionTimes[ConnectionState.CatchingUp],
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -1060,7 +1055,9 @@ export class Container
 					{
 						eventName: "ContainerClose",
 						category:
-							this._lifecycleState !== "loading" && error !== undefined ? "error" : "generic",
+							this._lifecycleState !== "loading" && error !== undefined
+								? "error"
+								: "generic",
 					},
 					error,
 				);
@@ -1132,7 +1129,10 @@ export class Container
 				// Driver need to ensure all caches are cleared on critical errors
 				this.service?.dispose(error);
 			} catch (exception) {
-				this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, exception);
+				this.mc.logger.sendErrorEvent(
+					{ eventName: "ContainerDisposeException" },
+					exception,
+				);
 			}
 
 			this.emit("disposed", error);
@@ -1301,7 +1301,8 @@ export class Container
 						async (summary) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
-								const createNewResolvedUrl = await this.urlResolver.resolve(request);
+								const createNewResolvedUrl =
+									await this.urlResolver.resolve(request);
 								assert(
 									this.client.details.type !== summarizerClientType &&
 										createNewResolvedUrl !== undefined,
@@ -1336,7 +1337,9 @@ export class Container
 					});
 
 					// only enable the new behavior if the config is set
-					if (this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true) {
+					if (
+						this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true
+					) {
 						attachP = attachP.catch((error) => {
 							throw normalizeErrorAndClose(error);
 						});
@@ -1448,9 +1451,7 @@ export class Container
 		this.connectToDeltaStream(args);
 	}
 
-	public readonly getAbsoluteUrl = async (
-		relativeUrl: string,
-	): Promise<string | undefined> => {
+	public readonly getAbsoluteUrl = async (relativeUrl: string): Promise<string | undefined> => {
 		if (this.resolvedUrl === undefined) {
 			return undefined;
 		}
@@ -1844,12 +1845,18 @@ export class Container
 			const baseTree = getProtocolSnapshotTree(snapshot);
 			[quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] =
 				await Promise.all([
-					readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
+					readAndParse<[string, ISequencedClient][]>(
+						storage,
+						baseTree.blobs.quorumMembers,
+					),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
 						baseTree.blobs.quorumProposals,
 					),
-					readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
+					readAndParse<[string, ICommittedProposal][]>(
+						storage,
+						baseTree.blobs.quorumValues,
+					),
 				]);
 		}
 
@@ -1951,7 +1958,7 @@ export class Container
 						permission: [],
 						scopes: [],
 						user: { id: "" },
-					};
+				  };
 
 		if (clientDetailsOverride !== undefined) {
 			client.details = {
@@ -2144,7 +2151,9 @@ export class Container
 				opsBehind,
 				online: OnlineStatus[isOnline()],
 				lastVisible:
-					this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
+					this.lastVisible !== undefined
+						? performance.now() - this.lastVisible
+						: undefined,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				isDirty: this.isDirty,

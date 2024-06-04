@@ -22,11 +22,18 @@ describe("snapshot tests", () => {
 				const options: SharedTreeOptions = {
 					treeEncodeType,
 					formatVersion:
-						SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion],
+						SharedTreeFormatVersion[
+							formatVersionKey as keyof typeof SharedTreeFormatVersion
+						],
 				};
 				const testTrees = generateTestTrees(options);
 
-				for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+				for (const {
+					name: testName,
+					runScenario,
+					skip = false,
+					only = false,
+				} of testTrees) {
 					const itFn = only ? it.only : skip ? it.skip : it;
 
 					itFn(testName, async () => {

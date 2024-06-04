@@ -11,12 +11,12 @@ import express from "express";
 import fetch from "node-fetch";
 import request from "supertest";
 
-import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import {
 	ExternalDataSource,
 	MockWebhook,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
+import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 import { closeServer } from "./utilities.js";

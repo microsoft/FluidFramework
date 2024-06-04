@@ -26,16 +26,12 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		return this.internalStorageService.disposed;
 	}
 
-	getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(
-		this.internalStorageService,
-	);
+	getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(this.internalStorageService);
 	getSnapshot = this.internalStorageService.getSnapshot?.bind(this.internalStorageService);
 	getVersions = this.internalStorageService.getVersions.bind(this.internalStorageService);
 	createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
 	readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
-	downloadSummary = this.internalStorageService.downloadSummary.bind(
-		this.internalStorageService,
-	);
+	downloadSummary = this.internalStorageService.downloadSummary.bind(this.internalStorageService);
 	dispose = this.internalStorageService.dispose.bind(this.internalStorageService);
 
 	async uploadSummaryWithContext(

@@ -10,9 +10,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	FieldKinds,
 	FlexFieldSchema,
+	intoStoredSchema,
 	MockNodeKeyManager,
 	SchemaBuilderBase,
-	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UpdateType } from "../../shared-tree/schematizeTree.js";

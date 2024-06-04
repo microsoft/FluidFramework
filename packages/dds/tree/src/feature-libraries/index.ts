@@ -67,11 +67,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
 export { ForestSummarizer } from "./forest-summary/index.js";
-export {
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	mapTreeFromCursor,
-} from "./mapTreeCursor.js";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
 export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
@@ -261,6 +257,7 @@ export {
 	FlexTreeUnknownUnboxed,
 	isFlexTreeNode,
 	ContextSlot,
+
 	// Internal
 	FlexTreeTypedFieldInner,
 	FlexTreeUnboxFieldInner,
@@ -295,6 +292,7 @@ export {
 	InsertableFlexField,
 	AllowedTypesToFlexInsertableTree,
 	ApplyMultiplicity,
+
 	// Internal
 	CollectOptions,
 	TypedFields,
@@ -304,10 +302,6 @@ export {
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
-export {
-	SchemaChange,
-	makeSchemaChangeCodecs,
-	EncodedSchemaChange,
-} from "./schema-edits/index.js";
+export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

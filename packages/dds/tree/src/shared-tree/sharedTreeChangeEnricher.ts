@@ -22,13 +22,13 @@ import {
 	relevantRemovedRoots,
 	updateRefreshers as updateDataChangeRefreshers,
 } from "../feature-libraries/index.js";
+import { disposeSymbol } from "../util/index.js";
+import { updateRefreshers } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import {
 	ChangeEnricherMutableCheckout,
 	ChangeEnricherReadonlyCheckout,
 } from "../shared-tree-core/index.js";
-import { disposeSymbol } from "../util/index.js";
-import { updateRefreshers } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 export class SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>

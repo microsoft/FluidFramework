@@ -9,10 +9,10 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	type IEvent,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -22,9 +22,9 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentMessage,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/driver-definitions/internal";
@@ -35,6 +35,9 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -45,18 +48,15 @@ import {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IInboundSignalMessage,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -99,10 +99,7 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
-export function createAttributesBlob(
-	pkg: readonly string[],
-	isRootDataStore: boolean,
-): ITreeEntry {
+export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
@@ -169,8 +166,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
  * Properties necessary for creating a local FluidDataStoreContext
  * @internal
  */
-export interface ILocalDetachedFluidDataStoreContextProps
-	extends ILocalFluidDataStoreContextProps {
+export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
@@ -444,9 +440,7 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(
-		attachState: AttachState.Attaching | AttachState.Attached,
-	): void;
+	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -463,10 +457,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
-		assert(
-			!this.detachedRuntimeCreation,
-			0x13d /* "Detached runtime creation on realize()" */,
-		);
+		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -1059,10 +1050,7 @@ export abstract class FluidDataStoreContext
 		this.localChangesTelemetryCount--;
 	}
 
-	public getCreateChildSummarizerNodeFn(
-		id: string,
-		createParam: CreateChildSummarizerNodeParam,
-	) {
+	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -1128,10 +1116,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
 		// Check whether we need to fetch the snapshot first to load.
-		if (
-			this.snapshotFetchRequired === undefined &&
-			this._baseSnapshot?.groupId !== undefined
-		) {
+		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
 			assert(
 				this.blobContents !== undefined,
 				0x97a /* Blob contents should be present to evaluate */,
@@ -1199,10 +1184,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(
-			this.pkg !== undefined,
-			0x8f6 /* The datastore context package should be defined */,
-		);
+		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,

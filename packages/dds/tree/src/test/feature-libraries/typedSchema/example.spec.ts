@@ -16,10 +16,7 @@ const ballSchema = builder.object("Ball", {
 
 // Declare an recursive aggregate type via object fields.
 const diagramSchema = builder.objectRecursive("Diagram", {
-	children: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
-		() => diagramSchema,
-		ballSchema,
-	]),
+	children: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
 });
 
 const rootField = builder.optional(diagramSchema);

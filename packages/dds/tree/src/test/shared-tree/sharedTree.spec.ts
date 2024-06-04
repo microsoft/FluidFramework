@@ -6,23 +6,17 @@
 import { strict as assert } from "assert";
 
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import {
-	ITestFluidObject,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils/internal";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
 	AllowedUpdateType,
-	type ChangeFamily,
-	type ChangeFamilyEditor,
 	CommitKind,
 	JsonableTree,
 	Revertible,
@@ -31,6 +25,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -59,7 +55,6 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { EditManager } from "../../shared-tree-core/index.js";
 import {
 	CheckoutFlexTreeView,
 	FlexTreeView,
@@ -72,8 +67,8 @@ import {
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
+import { EditManager } from "../../shared-tree-core/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	ConnectionSetter,
@@ -95,6 +90,8 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 } from "../utils.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -434,7 +431,10 @@ describe("SharedTree", () => {
 					libraries: [leaf.library],
 				});
 				const node = b.objectRecursive("test node", {
-					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
+						() => node,
+						leaf.number,
+					]),
 				});
 				const schema = b.intoSchema(node);
 
@@ -454,14 +454,17 @@ describe("SharedTree", () => {
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+						objectStorage: MockStorage.createFromSummary(
+							(await tree1.summarize()).summary,
+						),
 					},
 					factory.attributes,
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber: dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
+					summarySequenceNumber:
+						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					latestSummarySequenceNumber:
 						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
@@ -1622,9 +1625,7 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor
-				.sequenceField({ parent: undefined, field: rootFieldKey })
-				.remove(0, 99),
+			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
 		);
 
 		provider.processMessages();

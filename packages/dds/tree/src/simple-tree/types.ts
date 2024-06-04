@@ -6,20 +6,20 @@
 import { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { TreeNodeSchema, WithType, type } from "./schemaTypes.js";
 import {
 	FlexTreeNode,
 	FlexTreeNodeSchema,
 	isFlexTreeNode,
 	markEager,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
-import { isTreeNode } from "./proxies.js";
-import { setFlexNode } from "./proxyBinding.js";
-import { RawTreeNode } from "./rawNode.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { TreeNodeSchema, WithType, type } from "./schemaTypes.js";
+import { RawTreeNode } from "./rawNode.js";
+import { isTreeNode } from "./proxies.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { fail } from "../util/index.js";
+import { setFlexNode } from "./proxyBinding.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -199,9 +199,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: FlexTreeNode = isFlexTreeNode(input)
-			? input
-			: schema.buildRawNode(this, input);
+		const node: FlexTreeNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
 		assert(
 			tryGetSimpleNodeSchema(node.schema) === schema,
 			0x83b /* building node with wrong schema */,
@@ -223,8 +221,7 @@ markEager(TreeNodeValid);
  * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
  * @public
  */
-export interface InternalTreeNode
-	extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
 
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
 	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);

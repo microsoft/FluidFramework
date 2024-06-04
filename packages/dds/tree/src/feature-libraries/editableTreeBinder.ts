@@ -16,7 +16,7 @@ import {
 	UpPath,
 	topDownPath,
 } from "../core/index.js";
-import { Listenable, Listeners } from "../events/index.js";
+import { Listeners, Listenable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
 import { FlexTreeNode } from "./flex-tree/index.js";
@@ -152,9 +152,8 @@ export interface Flushable<T> {
  *
  * @internal
  */
-export interface FlushableDataBinder<
-	B extends OperationBinderEvents | InvalidationBinderEvents,
-> extends DataBinder<B>,
+export interface FlushableDataBinder<B extends OperationBinderEvents | InvalidationBinderEvents>
+	extends DataBinder<B>,
 		Flushable<FlushableDataBinder<B>> {}
 
 /**
@@ -638,10 +637,7 @@ type CallableBindingContext = VisitorBindingContext & {
  * A visitor that buffers all events which match the registered event categories and corresponding paths.
  * Listeners are invoked when flushed. Flushing has also the ability to sort and batch the events.
  */
-class BufferingPathVisitor
-	extends AbstractPathVisitor
-	implements Flushable<BufferingPathVisitor>
-{
+class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
 	private readonly eventQueue: CallableBindingContext[] = [];
 
 	public onRemove(path: UpPath, count: number): void {
@@ -925,9 +921,7 @@ export function createDataBinderInvalidating<E extends Listeners<E>>(
  *
  * @internal
  */
-export function createBinderOptions({
-	sortFn,
-}: { sortFn?: BinderEventsCompare }): BinderOptions {
+export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }): BinderOptions {
 	return { sortFn };
 }
 

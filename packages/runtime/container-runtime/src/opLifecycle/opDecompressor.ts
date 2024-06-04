@@ -65,7 +65,8 @@ export class OpDecompressor {
 				IsoBuffer.from(
 					(message.contents as IPackedContentsContents).packedContents,
 					"base64",
-				).toString("base64") === (message.contents as IPackedContentsContents).packedContents
+				).toString("base64") ===
+					(message.contents as IPackedContentsContents).packedContents
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
@@ -138,7 +139,10 @@ export class OpDecompressor {
 
 		if (batchMetadata === false || this.isSingleMessageBatch) {
 			// End of compressed batch
-			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
+			const returnMessage = newMessage(
+				message,
+				this.rootMessageContents[this.processedCount],
+			);
 
 			this.activeBatch = false;
 			this.isSingleMessageBatch = false;

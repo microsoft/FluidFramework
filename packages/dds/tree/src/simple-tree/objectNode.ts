@@ -16,10 +16,9 @@ import {
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
-	NodeKeyManager,
 	getSchemaAndPolicy,
+	NodeKeyManager,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import {
 	InsertableContent,
 	getProxyForField,
@@ -27,24 +26,25 @@ import {
 	prepareContentForInsert,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
-import { RawTreeNode } from "./rawNode.js";
 import {
-	FieldSchema,
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
 	NodeKind,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
+	ImplicitFieldSchema,
 	TreeNodeSchemaClass,
 	WithType,
-	getExplicitStoredKey,
+	TreeNodeSchema,
 	getStoredKey,
+	getExplicitStoredKey,
+	TreeFieldFromImplicitField,
+	InsertableTreeFieldFromImplicitField,
+	FieldSchema,
 	normalizeFieldSchema,
 	type,
 } from "./schemaTypes.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
+import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
+import { getFlexSchema } from "./toFlexSchema.js";
+import { RawTreeNode } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.

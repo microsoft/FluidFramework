@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from 'assert';
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { MockContainerRuntimeFactory } from "@fluidframework/test-runtime-utils/internal";
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 
-import { EditLog } from "../EditLog.js";
-import { SharedTree } from "../SharedTree.js";
+import { EditLog } from '../EditLog.js';
+import { SharedTree } from '../SharedTree.js';
 
-import { runSummaryLoadPerfTests } from "./utilities/SummaryLoadPerfTests.js";
-import { createStableEdits, setUpTestSharedTree } from "./utilities/TestUtilities.js";
+import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests.js';
+import { createStableEdits, setUpTestSharedTree } from './utilities/TestUtilities.js';
 
-describe("SharedTree Perf", () => {
+describe('SharedTree Perf', () => {
 	let tree: SharedTree | undefined;
 	let containerRuntimeFactory: MockContainerRuntimeFactory | undefined;
 	for (const count of [1, 1_000]) {
@@ -45,5 +45,5 @@ describe("SharedTree Perf", () => {
 		});
 	}
 
-	runSummaryLoadPerfTests("Summary Load");
+	runSummaryLoadPerfTests('Summary Load');
 });

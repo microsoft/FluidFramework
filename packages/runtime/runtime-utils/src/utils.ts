@@ -4,10 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IDocumentAttributes,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Reads a blob from storage and parses it from JSON.

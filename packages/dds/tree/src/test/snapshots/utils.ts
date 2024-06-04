@@ -52,12 +52,12 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 								type: "blob",
 								content: JSON.parse(summaryObject.content),
 								encoding: "utf-8",
-							}
+						  }
 						: {
 								type: "blob",
 								content: Uint8ArrayToString(summaryObject.content, "base64"),
 								encoding: "base64",
-							};
+						  };
 				break;
 			}
 			case SummaryType.Handle: {
@@ -86,7 +86,11 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 		};
 		let entry;
 		if (value !== undefined) {
-			assert.equal(id, undefined, "Snapshot entry has both a tree value and a referenced id!");
+			assert.equal(
+				id,
+				undefined,
+				"Snapshot entry has both a tree value and a referenced id!",
+			);
 			entry = {
 				...baseEntry,
 				[encodeURIComponent(key)]: value,

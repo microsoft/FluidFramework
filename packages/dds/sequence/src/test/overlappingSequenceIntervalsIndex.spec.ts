@@ -19,7 +19,7 @@ import {
 	createOverlappingSequenceIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
@@ -69,10 +69,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	let collection;
 	let results;
 
-	const queryIntervalsByPositions = (
-		start: number,
-		end: number,
-	): Iterable<SequenceInterval> => {
+	const queryIntervalsByPositions = (start: number, end: number): Iterable<SequenceInterval> => {
 		const startSegOff = testSharedString.getContainingSegment(start);
 		const endSegOff = testSharedString.getContainingSegment(end);
 

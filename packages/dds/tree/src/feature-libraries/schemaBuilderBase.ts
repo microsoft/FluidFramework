@@ -85,8 +85,7 @@ export class SchemaBuilderBase<
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> =
-		new Map();
+	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 	/**
 	 * Prefix appended to the identifiers of all {@link FlexTreeNodeSchema} produced by this builder.
@@ -137,10 +136,7 @@ export class SchemaBuilderBase<
 	}
 
 	protected addNodeSchema<T extends FlexTreeNodeSchema>(schema: T): void {
-		assert(
-			!this.treeNodeSchema.has(schema.name),
-			0x799 /* Conflicting TreeNodeSchema names */,
-		);
+		assert(!this.treeNodeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
 		this.treeNodeSchema.set(schema.name, schema);
 	}
 
@@ -259,10 +255,7 @@ export class SchemaBuilderBase<
 		name: Name,
 		t: T,
 	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
-		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<
-			`${TScope}.${Name}`,
-			T
-		>;
+		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
@@ -380,8 +373,8 @@ export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
 	TSchema extends FlexTreeNodeSchema
 		? readonly [TSchema]
 		: TSchema extends Any
-			? readonly [Any]
-			: TSchema;
+		? readonly [Any]
+		: TSchema;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
@@ -408,10 +401,7 @@ export type NormalizeField<
 	TDefault extends FlexFieldKind,
 > = TSchema extends FlexFieldSchema
 	? TSchema
-	: FlexFieldSchema<
-			TDefault,
-			NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>
-		>;
+	: FlexFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>>;
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.

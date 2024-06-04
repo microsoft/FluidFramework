@@ -6,18 +6,15 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
+	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import {
-	SharedObject,
-	createSingleBlobSummary,
-} from "@fluidframework/shared-object-base/internal";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
@@ -45,10 +42,7 @@ const snapshotFileName = "header";
  * {@inheritDoc ISharedCounter}
  * @alpha
  */
-export class SharedCounter
-	extends SharedObject<ISharedCounterEvents>
-	implements ISharedCounter
-{
+export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,

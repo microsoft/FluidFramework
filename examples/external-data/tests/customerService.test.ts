@@ -10,13 +10,13 @@ import cors from "cors";
 import express from "express";
 import fetch, { Response } from "node-fetch";
 
-import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
 import { initializeCustomerService } from "../src/mock-customer-service/index.js";
-import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
+import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
 import {
 	MockWebhook,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
+import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData } from "../src/model-interface/index.js";
 
 import { closeServer } from "./utilities.js";

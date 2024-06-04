@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
@@ -49,10 +49,7 @@ export class OdspSummaryUploadManager {
 		this.mc = loggerToMonitoringContext(logger);
 	}
 
-	public async writeSummaryTree(
-		tree: ISummaryTree,
-		context: ISummaryContext,
-	): Promise<string> {
+	public async writeSummaryTree(tree: ISummaryTree, context: ISummaryContext): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
 		// Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
@@ -132,15 +129,16 @@ export class OdspSummaryUploadManager {
 					type: snapshot.type,
 				},
 				async () => {
-					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
-						url,
-						{
-							body: postBody,
-							headers,
-							method: "POST",
-						},
-						"uploadSummary",
-					);
+					const response =
+						await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
+							url,
+							{
+								body: postBody,
+								headers,
+								method: "POST",
+							},
+							"uploadSummary",
+						);
 					return response.content;
 				},
 			);
@@ -207,12 +205,12 @@ export class OdspSummaryUploadManager {
 									type: "blob",
 									content: summaryObject.content,
 									encoding: "utf-8",
-								}
+							  }
 							: {
 									type: "blob",
 									content: Uint8ArrayToString(summaryObject.content, "base64"),
 									encoding: "base64",
-								};
+							  };
 					blobs++;
 					break;
 				}

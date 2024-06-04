@@ -18,16 +18,16 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IFluidDataStoreContext,
-	IGarbageCollectionData,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IGarbageCollectionData,
+	IFluidDataStoreContext,
+	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
-	DataCorruptionError,
 	ITelemetryLoggerExt,
+	DataCorruptionError,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -42,11 +42,7 @@ export interface IChannelContext {
 
 	setConnectionState(connected: boolean, clientId?: string);
 
-	processOp(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata?: unknown,
-	): void;
+	processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
 	summarize(
 		fullTree?: boolean,

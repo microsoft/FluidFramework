@@ -3,22 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 
-import {
-	Mutable,
-	compareFiniteNumbers,
-	compareFiniteNumbersReversed,
-	fail,
-} from "../Common.js";
-import {
-	FinalCompressedId,
-	LocalCompressedId,
-	SessionSpaceCompressedId,
-} from "../Identifiers.js";
+import { Mutable, compareFiniteNumbers, compareFiniteNumbersReversed, fail } from '../Common.js';
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 
-import { AppendOnlyDoublySortedMap } from "./AppendOnlySortedMap.js";
-import { SerializedSessionIdNormalizer } from "./persisted-types/index.js";
+import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap.js';
+import { SerializedSessionIdNormalizer } from './persisted-types/index.js';
 
 /**
  * Maps IDs created by a session between their local and final forms (i.e. normalization). These IDs are in a contiguous range.
@@ -73,7 +64,7 @@ export class SessionIdNormalizer<TRangeObject> {
 			}
 			return Number.POSITIVE_INFINITY as FinalCompressedId;
 		},
-		compareFiniteNumbers,
+		compareFiniteNumbers
 	);
 
 	public constructor(private readonly expensiveAsserts = false) {}
@@ -106,15 +97,12 @@ export class SessionIdNormalizer<TRangeObject> {
 	/**
 	 * Converts the local ID to its corresponding final ID, if one exists.
 	 */
-	public getFinalId(
-		localId: LocalCompressedId,
-	): [FinalCompressedId, TRangeObject] | undefined {
+	public getFinalId(localId: LocalCompressedId): [FinalCompressedId, TRangeObject] | undefined {
 		const localRange =
-			this.idRanges.getPairOrNextLower(localId) ??
-			fail("Local ID was never recorded with this normalizer.");
+			this.idRanges.getPairOrNextLower(localId) ?? fail('Local ID was never recorded with this normalizer.');
 		const [firstLocal, [lastLocal, finalRanges]] = localRange;
 		if (localId < lastLocal) {
-			fail("Local ID was never recorded with this normalizer.");
+			fail('Local ID was never recorded with this normalizer.');
 		}
 		const finalRange = getPairOrNextLower(firstLocal, finalRanges, localId);
 		if (finalRange !== undefined) {
@@ -164,7 +152,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		}
 		const finalRange =
 			getPairOrNextLower(firstLocal, finalRanges, localByIndex) ??
-			fail("Final ranges not aligned with owning local range.");
+			fail('Final ranges not aligned with owning local range.');
 
 		const [alignedLocal, [firstFinal, lastFinal]] = finalRange;
 		const localDelta = alignedLocal - localByIndex;
@@ -180,7 +168,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		return new AppendOnlyDoublySortedMap(
 			compareFiniteNumbersReversed,
 			extractFirstFinalFromRange,
-			compareFiniteNumbers,
+			compareFiniteNumbers
 		);
 	}
 
@@ -230,10 +218,7 @@ export class SessionIdNormalizer<TRangeObject> {
 				for (const [_, [firstFinal, lastFinal]] of entries(firstLocal, finalRanges)) {
 					finalDelta += lastFinal - firstFinal + 1;
 				}
-				assert(
-					localId === firstLocal - finalDelta,
-					0x658 /* Local ID space must be contiguous. */,
-				);
+				assert(localId === firstLocal - finalDelta, 0x658 /* Local ID space must be contiguous. */);
 			}
 		}
 
@@ -264,28 +249,21 @@ export class SessionIdNormalizer<TRangeObject> {
 	 *
 	 * ^final ID 9 is not contiguous and does not have a corresponding local ID
 	 */
-	public addFinalIds(
-		firstFinal: FinalCompressedId,
-		lastFinal: FinalCompressedId,
-		rangeObject: TRangeObject,
-	): void {
+	public addFinalIds(firstFinal: FinalCompressedId, lastFinal: FinalCompressedId, rangeObject: TRangeObject): void {
 		assert(lastFinal >= firstFinal, 0x659 /* Malformed normalization range. */);
 		const [firstLocal, finalRangesObj] =
-			this.idRanges.last() ?? fail("Final IDs must be added to an existing local range.");
+			this.idRanges.last() ?? fail('Final IDs must be added to an existing local range.');
 		const [lastLocal, finalRanges] = finalRangesObj;
 		let nextLocal: LocalCompressedId;
 		if (finalRanges === undefined) {
 			finalRangesObj[1] = [firstFinal, lastFinal, rangeObject];
-			nextLocal = Math.min(
-				this.nextLocalId,
-				firstLocal - (lastFinal - firstFinal) - 1,
-			) as LocalCompressedId;
+			nextLocal = Math.min(this.nextLocalId, firstLocal - (lastFinal - firstFinal) - 1) as LocalCompressedId;
 		} else {
 			const [firstAlignedLocal, lastAlignedLocal, lastAlignedFinal, lastFinalRange] =
 				this.getAlignmentOfLastRange(firstLocal, finalRanges);
 			nextLocal = Math.min(
 				this.nextLocalId,
-				lastAlignedLocal - (lastFinal - firstFinal) - 2,
+				lastAlignedLocal - (lastFinal - firstFinal) - 2
 			) as LocalCompressedId;
 			if (firstFinal === lastAlignedFinal + 1) {
 				lastFinalRange[1] = lastFinal;
@@ -301,10 +279,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					rangeMap = finalRanges;
 				}
 				rangeMap.append(alignedLocal, [firstFinal, lastFinal, rangeObject]);
-				assert(
-					alignedLocal >= lastLocal,
-					0x65a /* Gaps in final space must align to a local. */,
-				);
+				assert(alignedLocal >= lastLocal, 0x65a /* Gaps in final space must align to a local. */);
 			}
 			if (this.expensiveAsserts) {
 				this.idRanges.assertValid();
@@ -338,15 +313,10 @@ export class SessionIdNormalizer<TRangeObject> {
 	 * Finals: [ 0,  1,  2,   5,  6,  X]
 	 *
 	 */
-	public registerFinalIdBlock(
-		firstFinalInBlock: FinalCompressedId,
-		count: number,
-		rangeObject: TRangeObject,
-	): void {
+	public registerFinalIdBlock(firstFinalInBlock: FinalCompressedId, count: number, rangeObject: TRangeObject): void {
 		assert(count >= 1, 0x65b /* Malformed normalization block. */);
 		const [firstLocal, [lastLocal, finalRanges]] =
-			this.idRanges.last() ??
-			fail("Final ID block should not be registered before any locals.");
+			this.idRanges.last() ?? fail('Final ID block should not be registered before any locals.');
 		let unalignedLocalCount: number;
 		if (finalRanges === undefined) {
 			unalignedLocalCount = firstLocal - lastLocal + 1;
@@ -356,17 +326,15 @@ export class SessionIdNormalizer<TRangeObject> {
 		}
 		assert(
 			unalignedLocalCount > 0,
-			0x65c /* Final ID block should not be registered without an existing local range. */,
+			0x65c /* Final ID block should not be registered without an existing local range. */
 		);
-		const lastFinal = (firstFinalInBlock +
-			Math.min(unalignedLocalCount, count) -
-			1) as FinalCompressedId;
+		const lastFinal = (firstFinalInBlock + Math.min(unalignedLocalCount, count) - 1) as FinalCompressedId;
 		this.addFinalIds(firstFinalInBlock, lastFinal, rangeObject);
 	}
 
 	private getAlignmentOfLastRange(
 		firstLocal: LocalCompressedId,
-		finalRanges: FinalRanges<TRangeObject>,
+		finalRanges: FinalRanges<TRangeObject>
 	): [
 		firstAlignedLocal: LocalCompressedId,
 		lastAlignedLocal: LocalCompressedId,
@@ -380,18 +348,12 @@ export class SessionIdNormalizer<TRangeObject> {
 			firstAlignedLocal = firstLocal;
 			lastFinalRange = finalRanges;
 		} else {
-			[firstAlignedLocal, lastFinalRange] =
-				finalRanges.last() ?? fail("Map should be non-empty.");
+			[firstAlignedLocal, lastFinalRange] = finalRanges.last() ?? fail('Map should be non-empty.');
 		}
 
 		const [firstAlignedFinal, lastAlignedFinal] = lastFinalRange;
 		const lastAlignedLocal = firstAlignedLocal - (lastAlignedFinal - firstAlignedFinal);
-		return [
-			firstAlignedLocal,
-			lastAlignedLocal as LocalCompressedId,
-			lastAlignedFinal,
-			lastFinalRange,
-		];
+		return [firstAlignedLocal, lastAlignedLocal as LocalCompressedId, lastAlignedFinal, lastFinalRange];
 	}
 
 	/**
@@ -410,8 +372,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					alignedLocal = firstLocal;
 					lastFinalRange = finalRanges;
 				} else {
-					[alignedLocal, lastFinalRange] =
-						finalRanges.last() ?? fail("Map should be non-empty.");
+					[alignedLocal, lastFinalRange] = finalRanges.last() ?? fail('Map should be non-empty.');
 				}
 				const [firstFinal, lastFinal] = lastFinalRange;
 				const localRangeDelta = alignedLocal - lastLocal;
@@ -423,23 +384,13 @@ export class SessionIdNormalizer<TRangeObject> {
 	}
 
 	public serialize(): SerializedSessionIdNormalizer {
-		const serialized: Mutable<SerializedSessionIdNormalizer> = {
-			localRanges: [],
-			nextLocalId: this.nextLocalId,
-		};
+		const serialized: Mutable<SerializedSessionIdNormalizer> = { localRanges: [], nextLocalId: this.nextLocalId };
 		const localRanges = serialized.localRanges as Mutable<typeof serialized.localRanges>;
 		for (const [firstLocal, finalRanges] of this.idRanges.entries()) {
 			const [lastLocal, finalRangesTable] = finalRanges;
 			if (finalRangesTable !== undefined) {
-				const serializedFinalRanges: [
-					LocalCompressedId,
-					FinalCompressedId,
-					FinalCompressedId,
-				][] = [];
-				for (const [alignedLocal, [firstFinal, lastFinal]] of entries(
-					firstLocal,
-					finalRangesTable,
-				)) {
+				const serializedFinalRanges: [LocalCompressedId, FinalCompressedId, FinalCompressedId][] = [];
+				for (const [alignedLocal, [firstFinal, lastFinal]] of entries(firstLocal, finalRangesTable)) {
 					serializedFinalRanges.push([alignedLocal, firstFinal, lastFinal]);
 				}
 				localRanges.push([firstLocal, lastLocal, serializedFinalRanges]);
@@ -452,28 +403,21 @@ export class SessionIdNormalizer<TRangeObject> {
 
 	public static deserialize<TRangeObject>(
 		serialized: SerializedSessionIdNormalizer,
-		getRangeObject: (finalId: FinalCompressedId) => TRangeObject,
+		getRangeObject: (finalId: FinalCompressedId) => TRangeObject
 	): SessionIdNormalizer<TRangeObject> {
 		const normalizer = new SessionIdNormalizer<TRangeObject>();
 		const { idRanges } = normalizer;
 		for (const [firstLocal, lastLocal, serializedFinalRanges] of serialized.localRanges) {
 			let finalRanges: FinalRanges<TRangeObject> | undefined;
 			if (serializedFinalRanges !== undefined) {
-				assert(
-					serializedFinalRanges.length !== 0,
-					0x65d /* Empty range should not be reified. */,
-				);
+				assert(serializedFinalRanges.length !== 0, 0x65d /* Empty range should not be reified. */);
 				if (serializedFinalRanges.length === 1) {
 					const [_, firstFinal, lastFinal] = serializedFinalRanges[0];
 					finalRanges = [firstFinal, lastFinal, getRangeObject(firstFinal)];
 				} else {
 					finalRanges = SessionIdNormalizer.makeFinalRangesMap<TRangeObject>();
 					for (const [alignedLocal, firstFinal, lastFinal] of serializedFinalRanges) {
-						finalRanges.append(alignedLocal, [
-							firstFinal,
-							lastFinal,
-							getRangeObject(firstFinal),
-						]);
+						finalRanges.append(alignedLocal, [firstFinal, lastFinal, getRangeObject(firstFinal)]);
 					}
 				}
 			}
@@ -485,7 +429,7 @@ export class SessionIdNormalizer<TRangeObject> {
 
 	public equals(
 		other: SessionIdNormalizer<TRangeObject>,
-		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = (a, b) => a === b,
+		compareRangeObjects: (a: TRangeObject, b: TRangeObject) => boolean = (a, b) => a === b
 	): boolean {
 		return (
 			this.nextLocalId === other.nextLocalId &&
@@ -496,10 +440,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					return finalRangesA === finalRangesB;
 				}
 
-				const rangeEquals = (
-					finalRangeA: FinalRange<TRangeObject>,
-					finalRangeB: FinalRange<TRangeObject>,
-				) => {
+				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
 					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
 					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
 					return (
@@ -536,40 +477,32 @@ type FinalRangesMap<TRangeObject> = AppendOnlyDoublySortedMap<
 
 type FinalRanges<TRangeObject> = FinalRange<TRangeObject> | FinalRangesMap<TRangeObject>;
 
-function isSingleRange<TRangeObject>(
-	ranges: FinalRanges<TRangeObject>,
-): ranges is FinalRange<TRangeObject> {
+function isSingleRange<TRangeObject>(ranges: FinalRanges<TRangeObject>): ranges is FinalRange<TRangeObject> {
 	return Array.isArray(ranges);
 }
 
-function getLastRange<TRangeObject>(
-	finalRanges: FinalRanges<TRangeObject>,
-): FinalRange<TRangeObject> {
+function getLastRange<TRangeObject>(finalRanges: FinalRanges<TRangeObject>): FinalRange<TRangeObject> {
 	if (isSingleRange(finalRanges)) {
 		return finalRanges;
 	}
-	return (finalRanges.last() ?? fail("Map must be non-empty"))[1];
+	return (finalRanges.last() ?? fail('Map must be non-empty'))[1];
 }
 
-function getFirstRange<TRangeObject>(
-	finalRanges: FinalRanges<TRangeObject>,
-): FinalRange<TRangeObject> {
+function getFirstRange<TRangeObject>(finalRanges: FinalRanges<TRangeObject>): FinalRange<TRangeObject> {
 	if (isSingleRange(finalRanges)) {
 		return finalRanges;
 	}
-	return (finalRanges.first() ?? fail("Map must be non-empty"))[1];
+	return (finalRanges.first() ?? fail('Map must be non-empty'))[1];
 }
 
-function extractFirstFinalFromRange<TRangeObject>(
-	finalRange: FinalRange<TRangeObject>,
-): FinalCompressedId {
+function extractFirstFinalFromRange<TRangeObject>(finalRange: FinalRange<TRangeObject>): FinalCompressedId {
 	return finalRange[0];
 }
 
 function getPairOrNextLowerByValue<TRangeObject>(
 	firstLocal: LocalCompressedId,
 	finalRanges: FinalRanges<TRangeObject> | undefined,
-	finalId: FinalCompressedId,
+	finalId: FinalCompressedId
 ): readonly [LocalCompressedId, FinalRange<TRangeObject>] | undefined {
 	if (finalRanges === undefined) {
 		return undefined;
@@ -586,7 +519,7 @@ function getPairOrNextLowerByValue<TRangeObject>(
 function getPairOrNextLower<TRangeObject>(
 	firstLocal: LocalCompressedId,
 	finalRanges: FinalRanges<TRangeObject> | undefined,
-	localId: LocalCompressedId,
+	localId: LocalCompressedId
 ): readonly [LocalCompressedId, FinalRange<TRangeObject>] | undefined {
 	if (finalRanges === undefined) {
 		return undefined;
@@ -602,7 +535,7 @@ function getPairOrNextLower<TRangeObject>(
 
 function* entries<TRangeObject>(
 	firstLocal: LocalCompressedId,
-	finalRanges: FinalRanges<TRangeObject> | undefined,
+	finalRanges: FinalRanges<TRangeObject> | undefined
 ): IterableIterator<readonly [LocalCompressedId, FinalRange<TRangeObject>]> {
 	if (finalRanges !== undefined) {
 		if (isSingleRange(finalRanges)) {

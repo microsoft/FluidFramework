@@ -97,7 +97,9 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						name: "Background-Content-Port",
 					});
 
-					console.log(formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`));
+					console.log(
+						formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),
+					);
 
 					// Forward incoming messages from the tab (Content script) to the Devtools script
 
@@ -141,7 +143,11 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						type: devToolsInitAcknowledgementType,
 						data: undefined,
 					};
-					postMessageToPort(ackMessage, devtoolsPort, backgroundScriptMessageLoggingOptions);
+					postMessageToPort(
+						ackMessage,
+						devtoolsPort,
+						backgroundScriptMessageLoggingOptions,
+					);
 				},
 				(error) => {
 					console.error(

@@ -5,11 +5,11 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IConnectionDetails,
 	IDeltaQueue,
-	IFluidCodeDetails,
 	ReadOnlyInfo,
+	IFluidCodeDetails,
 	isFluidPackage,
+	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
@@ -19,8 +19,8 @@ import {
 	ISignalMessage,
 } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IContainerPackageInfo,
+	IClientConfiguration,
 	IDocumentMessage,
 	ISignalClient,
 } from "@fluidframework/driver-definitions/internal";

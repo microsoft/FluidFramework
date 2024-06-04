@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { assertWithMessage, fail } from "../Common.js";
-import { SessionId, StableId } from "../Identifiers.js";
-import { generateStableId } from "../UuidUtilities.js";
+import { assertWithMessage, fail } from '../Common.js';
+import { SessionId, StableId } from '../Identifiers.js';
+import { generateStableId } from '../UuidUtilities.js';
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.
@@ -23,7 +23,7 @@ import { generateStableId } from "../UuidUtilities.js";
  * The string optimizes toString by caching the the majority of the resulting string.
  */
 export type NumericUuid = readonly [string, number] & {
-	readonly NumericUuid: "9132ea20-a811-4756-85f8-aa6da5ca90f8";
+	readonly NumericUuid: '9132ea20-a811-4756-85f8-aa6da5ca90f8';
 };
 
 const bitsInNumericUuidInteger = 52; // Not tunable. Do not change.
@@ -39,11 +39,7 @@ const fiftyThirdBit = 2 ** 52;
  * @param maxDelta - the maximum integer delta (inclusive) to tolerate.
  * @returns undefined if the delta is negative or greater than `maxDelta`
  */
-export function getPositiveDelta(
-	a: NumericUuid,
-	b: NumericUuid,
-	maxDelta: number,
-): number | undefined {
+export function getPositiveDelta(a: NumericUuid, b: NumericUuid, maxDelta: number): number | undefined {
 	const [stringEntryA, lowNumberA] = a;
 	const [stringEntryB, lowNumberB] = b;
 
@@ -97,7 +93,7 @@ export function getPositiveDelta(
 // Used to pad hex strings up to 52 bits
 const zeros: string[] = [];
 for (let i = 0; i < nibblesInNumericUuidInteger; i++) {
-	zeros.push("0".repeat(i));
+	zeros.push('0'.repeat(i));
 }
 
 function padToLengthWithZeros(str: string, count: number): string {
@@ -112,10 +108,7 @@ export function stableIdFromNumericUuid(uuid: NumericUuid, offset = 0): StableId
 	const lowerAdd = uuid[1] + offset;
 	// Common fast-path
 	if (lowerAdd <= maxNumericUuidInteger) {
-		const lowerString = padToLengthWithZeros(
-			lowerAdd.toString(16),
-			nibblesInNumericUuidInteger,
-		);
+		const lowerString = padToLengthWithZeros(lowerAdd.toString(16), nibblesInNumericUuidInteger);
 		return `${uuid[0] + lowerString.slice(0, 1)}-${lowerString.slice(1)}` as StableId;
 	}
 	return stableIdFromNumericUuid(incrementUuid(uuid, offset));
@@ -183,13 +176,13 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 			assertWithMessage(upperNumber <= maxUpperNumber);
 			const newUpperNumber = upperNumber + 1;
 			if (newUpperNumber > maxUpperNumber) {
-				fail("Exceeded maximum numeric UUID");
+				fail('Exceeded maximum numeric UUID');
 			} else {
 				// The variant chunk overflowed but the upper string region did not. Splice in the incremented string region.
 				const newUpperChunk = padToLengthWithZeros(newUpperNumber.toString(16), 12);
 				newUuid = [
 					`${ChunkMath.Upper.hyphenate(newUpperChunk)}-4${ChunkMath.Variant.hyphenate(
-						newVariantChunkString,
+						newVariantChunkString
 					)}`,
 					remainder,
 				];
@@ -197,9 +190,7 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 		} else {
 			// The variant chunk did not overflow, so just splice it back in.
 			newUuid = [
-				`${ChunkMath.Upper.slice(stringEntry)}-4${ChunkMath.Variant.hyphenate(
-					newVariantChunkString,
-				)}`,
+				`${ChunkMath.Upper.slice(stringEntry)}-4${ChunkMath.Variant.hyphenate(newVariantChunkString)}`,
 				remainder,
 			];
 		}
@@ -280,10 +271,7 @@ namespace ChunkMath {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	export namespace Lower {
 		export function parse(stableId: StableId): string {
-			return (
-				stableId.slice(stringEntryLength, stringEntryLength + 1) +
-				stableId.slice(stringEntryLength + 2)
-			);
+			return stableId.slice(stringEntryLength, stringEntryLength + 1) + stableId.slice(stringEntryLength + 2);
 		}
 
 		export function hyphenate(lowerChunk: string): string {
@@ -309,9 +297,7 @@ namespace ChunkMath {
 	 * @returns the resulting hex string and whether or not the new value overflowed, i.e. it exceeds `maxVariantNumber`. In this case,
 	 * the resulting hex string will wrap around to its minimum value '000b00'
 	 */
-	export function increment(
-		stringEntry: string,
-	): [newVariantChunk: string, overflowed: boolean] {
+	export function increment(stringEntry: string): [newVariantChunk: string, overflowed: boolean] {
 		// To implement addition, the variant identifier bits are extracted from the variant chunk, the chunk is interpreted as a number,
 		// that number is incremented by 1, and then the variant identifier bits are returned as we convert the number back into a hex
 		// string.
@@ -337,21 +323,17 @@ namespace ChunkMath {
 		const newUpperVariantBits = (newVariantNumber & (upperVariantChunkMask >> 2)) << 2;
 		const newMiddleVariantBits = (newVariantNumber & middleVariantChunkMask) | variantBitMask; // Add the variant bits back in
 		const newLowerVariantBits = newVariantNumber & lowerVariantChunkMask;
-		const newVariantChunkBits =
-			newUpperVariantBits + newMiddleVariantBits + newLowerVariantBits;
-		const newVariantChunk = padToLengthWithZeros(
-			newVariantChunkBits.toString(16),
-			variantChunk.length,
-		);
+		const newVariantChunkBits = newUpperVariantBits + newMiddleVariantBits + newLowerVariantBits;
+		const newVariantChunk = padToLengthWithZeros(newVariantChunkBits.toString(16), variantChunk.length);
 		return [newVariantChunk, newVariantNumber > maxVariantNumber];
 	}
 }
 
-const maxUpperUuid = "ffffffff-ffff-4fff-bf";
-const maxNibbleCount = [...maxUpperUuid].filter((n) => n === "f").length;
-const newNibbles = ["7", "b", "d", "e"];
+const maxUpperUuid = 'ffffffff-ffff-4fff-bf';
+const maxNibbleCount = [...maxUpperUuid].filter((n) => n === 'f').length;
+const newNibbles = ['7', 'b', 'd', 'e'];
 function isMaxUpperNibble(index: number): boolean {
-	return maxUpperUuid.charAt(index) === "f";
+	return maxUpperUuid.charAt(index) === 'f';
 }
 
 /**
@@ -362,11 +344,7 @@ export function ensureSessionUuid(uuid: StableId): SessionId {
 	if (uuid.startsWith(maxUpperUuid)) {
 		const targetNibble = Math.floor(Math.random() * maxNibbleCount);
 		let actualIndex = 0;
-		for (
-			let nibbleIndex = 0;
-			nibbleIndex < targetNibble && !isMaxUpperNibble(actualIndex);
-			actualIndex += 1
-		) {
+		for (let nibbleIndex = 0; nibbleIndex < targetNibble && !isMaxUpperNibble(actualIndex); actualIndex += 1) {
 			if (isMaxUpperNibble(actualIndex)) {
 				nibbleIndex++;
 			}

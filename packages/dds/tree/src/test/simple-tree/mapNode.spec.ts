@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { Tree } from "../../shared-tree/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
+import { hydrate } from "./utils.js";
+import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
-import { hydrate } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

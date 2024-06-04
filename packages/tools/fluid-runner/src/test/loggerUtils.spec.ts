@@ -143,7 +143,10 @@ describe("logger utils", () => {
 			});
 
 			it("multiple whitespace", () => {
-				const result = validateAndParseTelemetryOptions(undefined, ["    prop1", "value1  "]);
+				const result = validateAndParseTelemetryOptions(undefined, [
+					"    prop1",
+					"value1  ",
+				]);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -153,7 +156,10 @@ describe("logger utils", () => {
 			});
 
 			it("special characters", () => {
-				const result = validateAndParseTelemetryOptions(undefined, ["prop1=aaa", 'aaa"bbb']);
+				const result = validateAndParseTelemetryOptions(undefined, [
+					"prop1=aaa",
+					'aaa"bbb',
+				]);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}

@@ -11,10 +11,10 @@ import {
 	ISignalMessage,
 } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
-	IConnected,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	IClientConfiguration,
+	IConnected,
 	IDocumentMessage,
 	ISignalClient,
 	ITokenClaims,

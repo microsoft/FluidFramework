@@ -357,10 +357,7 @@ export const singlePropertyTableRow = (
 			pathPrefix,
 		);
 	}
-	const unresolvedProperty = parentData.getProperty([
-		propertyId,
-		BaseProperty.PATH_TOKENS.REF,
-	]);
+	const unresolvedProperty = parentData.getProperty([propertyId, BaseProperty.PATH_TOKENS.REF]);
 	if (property === undefined || !followReferences || !property.getContext) {
 		// This could happen if the property is ReferenceProperty that points to an invalid reference.
 		property = unresolvedProperty;
@@ -546,12 +543,7 @@ export const collectionChildTableRow = (
 		currentTypeid,
 		currentContext,
 	);
-	const name = props.nameGetter!(
-		propertyId,
-		collectionProperty,
-		currentTypeid,
-		currentContext,
-	);
+	const name = props.nameGetter!(propertyId, collectionProperty, currentTypeid, currentContext);
 
 	const isPropExpandable = isExpandable(
 		determinedData,
@@ -911,12 +903,11 @@ const determineCellClassName = (
 		currentResult !== -1 && currentResult !== undefined && foundMatches!.length! > 0
 			? foundMatches![currentResult]
 			: { indexOfColumn: -1, rowId: "" };
-	return highlightedResult.rowId === rowData.id &&
-		highlightedResult.indexOfColumn === columnIndex
+	return highlightedResult.rowId === rowData.id && highlightedResult.indexOfColumn === columnIndex
 		? classes.currentMatch
 		: matchesMap![rowData.id] && matchesMap![rowData.id][columnIndex]
-			? classes.match
-			: "";
+		? classes.match
+		: "";
 };
 
 // @TODO: Revisit method arguments

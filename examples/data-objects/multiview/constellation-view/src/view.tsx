@@ -107,9 +107,7 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 				onPointerUp={pointerUpHandler}
 			/>,
 		);
-		sliderViews.push(
-			<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />,
-		);
+		sliderViews.push(<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />);
 	}
 
 	return (

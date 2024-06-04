@@ -54,7 +54,8 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 						demandOption: false,
 					})
 					.option("telemetryFormat", {
-						describe: 'Output format for telemetry. Current options are: ["JSON", "CSV"]',
+						describe:
+							'Output format for telemetry. Current options are: ["JSON", "CSV"]',
 						type: "string",
 						demandOption: false,
 						default: "JSON",
@@ -109,7 +110,7 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
 							argv.disableNetworkFetch,
-						)
+					  )
 					: exportFile(
 							fluidFileConverter!,
 							argv.inputFile,
@@ -119,7 +120,7 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
 							argv.disableNetworkFetch,
-						));
+					  ));
 
 				if (!result.success) {
 					console.error(`${result.eventName}: ${result.errorMessage}`);

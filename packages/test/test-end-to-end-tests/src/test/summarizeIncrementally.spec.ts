@@ -86,22 +86,14 @@ function validateDDSStateInSummary(
 	const ddsSummaryObject = ddsChannelsTree[ddsId];
 
 	if (!expectHandle) {
-		assert.strictEqual(
-			ddsSummaryObject.type,
-			SummaryType.Tree,
-			"DDS summary should be a tree",
-		);
+		assert.strictEqual(ddsSummaryObject.type, SummaryType.Tree, "DDS summary should be a tree");
 		return;
 	}
 
 	// The handle id for DDS should be under ".channels/<dataStoreId>/.channels" as that is where the summary tree
 	// for a DDS is.
 	const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}`;
-	assert.strictEqual(
-		ddsSummaryObject.type,
-		SummaryType.Handle,
-		"DDS summary should be a handle",
-	);
+	assert.strictEqual(ddsSummaryObject.type, SummaryType.Handle, "DDS summary should be a handle");
 	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
 }
 

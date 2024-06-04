@@ -44,7 +44,9 @@ describe("MergeTree.Client", () => {
 				}
 			}
 			for (const group of file) {
-				const logger = new TestClientLogger([...msgClients.values()].map((mc) => mc.client));
+				const logger = new TestClientLogger(
+					[...msgClients.values()].map((mc) => mc.client),
+				);
 				const initialText = logger.validate();
 				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
 				for (const msg of group.msgs) {

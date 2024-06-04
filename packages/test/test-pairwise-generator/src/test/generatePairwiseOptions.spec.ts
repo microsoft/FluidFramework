@@ -16,8 +16,7 @@ interface SimpleOptions {
 	string?: string;
 	array?: number[];
 }
-const optionsToString = <T>(...options: T[]) =>
-	options.map((o) => JSON.stringify(o)).join("\n");
+const optionsToString = <T>(...options: T[]) => options.map((o) => JSON.stringify(o)).join("\n");
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
 	number: [undefined, 7],

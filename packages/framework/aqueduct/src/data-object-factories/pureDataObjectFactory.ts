@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
+import {
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	type IContainerRuntimeBase,
 	type IDataStore,
@@ -79,8 +79,7 @@ async function createDataObject<
 	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
 	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass(
-		// calls new FluidDataStoreRuntime(...)
+	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,
@@ -136,9 +135,10 @@ async function createDataObject<
  * @alpha
  */
 export class PureDataObjectFactory<
-	TObj extends PureDataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;

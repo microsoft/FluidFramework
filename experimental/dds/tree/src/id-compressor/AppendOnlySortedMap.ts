@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 
-import { fail } from "../Common.js";
+import { fail } from '../Common.js';
 
 /**
  * A map in which entries are always added in key-sorted order.
@@ -142,7 +142,7 @@ export class AppendOnlySortedMap<K, V> {
 		const { elements } = this;
 		const { length } = elements;
 		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
-			fail("Inserted key must be > all others in the map.");
+			fail('Inserted key must be > all others in the map.');
 		}
 		elements.push(key);
 		elements.push(value);
@@ -181,10 +181,7 @@ export class AppendOnlySortedMap<K, V> {
 	/**
 	 * Compares two `AppendOnlySortedMap`s.
 	 */
-	public equals(
-		other: AppendOnlySortedMap<K, V>,
-		compareValues: (a: V, b: V) => boolean,
-	): boolean {
+	public equals(other: AppendOnlySortedMap<K, V>, compareValues: (a: V, b: V) => boolean): boolean {
 		if (other === this) {
 			return true;
 		}
@@ -246,7 +243,7 @@ export class AppendOnlySortedMap<K, V> {
 
 	protected getPairOrNextLowerBy<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: K, value: V) => number
 	): readonly [K, V] | undefined {
 		const keyIndex = this.getKeyIndexOfOrNextLower(search, comparator);
 		if (keyIndex === undefined) {
@@ -258,7 +255,7 @@ export class AppendOnlySortedMap<K, V> {
 
 	private getKeyIndexOfOrNextLower<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: K, value: V) => number
 	): number | undefined {
 		const { elements } = this;
 		if (elements.length === 0) {
@@ -277,7 +274,7 @@ export class AppendOnlySortedMap<K, V> {
 
 	protected getPairOrNextHigherBy<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: K, value: V) => number
 	): readonly [K, V] | undefined {
 		const keyIndex = this.getKeyIndexOfOrNextHigher(search, comparator);
 		if (keyIndex === undefined) {
@@ -289,7 +286,7 @@ export class AppendOnlySortedMap<K, V> {
 
 	private getKeyIndexOfOrNextHigher<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: K, value: V) => number
 	): number | undefined {
 		const { elements } = this;
 		const { length } = elements;
@@ -320,7 +317,7 @@ export class AppendOnlySortedMap<K, V> {
 	public static keyIndexOf<T, K, V>(
 		elements: readonly (K | V)[],
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: K, value: V) => number
 	): number {
 		// Low, high, and mid are addresses of [K,V] pairs and *not* key indices
 		let low = 0;
@@ -336,7 +333,7 @@ export class AppendOnlySortedMap<K, V> {
 			} else if (c === 0) {
 				return keyIndex;
 			} else {
-				fail("Invalid comparator.");
+				fail('Invalid comparator.');
 			}
 			mid = (low + high) >> 1;
 		}
@@ -352,7 +349,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	public constructor(
 		keyComparator: (a: K, b: K) => number,
 		private readonly extractSearchValue: (value: V) => S,
-		private readonly valueComparator: (search: S, value: S) => number,
+		private readonly valueComparator: (search: S, value: S) => number
 	) {
 		super(keyComparator);
 	}
@@ -360,12 +357,9 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	public append(key: K, value: V): void {
 		if (
 			this.elements.length !== 0 &&
-			this.valueComparator(
-				this.extractSearchValue(value),
-				this.extractSearchValue(this.maxValue() as V),
-			) <= 0
+			this.valueComparator(this.extractSearchValue(value), this.extractSearchValue(this.maxValue() as V)) <= 0
 		) {
-			fail("Inserted value must be > all others in the map.");
+			fail('Inserted value must be > all others in the map.');
 		}
 		super.append(key, value);
 	}
@@ -412,11 +406,8 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 		for (const kv of this.entries()) {
 			if (prev !== undefined) {
 				assert(
-					this.valueComparator(
-						this.extractSearchValue(kv[1]),
-						this.extractSearchValue(prev[1]),
-					) > 0,
-					0x63f /* Values in map must be sorted. */,
+					this.valueComparator(this.extractSearchValue(kv[1]), this.extractSearchValue(prev[1])) > 0,
+					0x63f /* Values in map must be sorted. */
 				);
 			}
 			prev = kv;

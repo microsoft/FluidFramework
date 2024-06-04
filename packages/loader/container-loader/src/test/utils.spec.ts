@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	IDocumentAttributes,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -50,7 +50,10 @@ describe("container-loader utils", () => {
 			await p2
 				.then(() => assert.fail("should fail"))
 				.catch((e: Error) =>
-					assert.strictEqual(e.message, "Subsequent calls cannot use different arguments."),
+					assert.strictEqual(
+						e.message,
+						"Subsequent calls cannot use different arguments.",
+					),
 				);
 		});
 	});

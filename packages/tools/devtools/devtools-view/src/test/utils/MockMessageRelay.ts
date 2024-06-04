@@ -15,9 +15,7 @@ import {
  *
  * Will return `undefined` if no response message should be emitted.
  */
-export type MockRelayMessageHandler = (
-	message: IDevtoolsMessage,
-) => IDevtoolsMessage | undefined;
+export type MockRelayMessageHandler = (message: IDevtoolsMessage) => IDevtoolsMessage | undefined;
 
 /**
  * Mock implementation of {@link @fluidframework/devtools-core#IMessageRelay} for use in tests.

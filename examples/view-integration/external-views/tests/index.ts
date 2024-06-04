@@ -5,10 +5,7 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import {
-	DiceRollerContainerRuntimeFactory,
-	IDiceRollerAppModel,
-} from "../src/containerCode.js";
+import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "../src/containerCode.js";
 import { renderDiceRoller } from "../src/view.js";
 
 /**

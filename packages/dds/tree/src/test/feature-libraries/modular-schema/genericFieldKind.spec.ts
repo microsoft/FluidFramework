@@ -6,12 +6,19 @@
 import { strict as assert } from "assert";
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { DeltaFieldChanges } from "../../../core/index.js";
 import {
-	CrossFieldManager,
 	GenericChangeset,
+	CrossFieldManager,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries/index.js";
+import { DeltaFieldChanges } from "../../../core/index.js";
+import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	EncodingTestData,
+	defaultRevisionMetadataFromChanges,
+	makeEncodingTestSuite,
+	testRevisionTagCodec,
+} from "../../utils.js";
 import {
 	FieldChangeEncodingContext,
 	NodeId,
@@ -19,15 +26,8 @@ import {
 	genericChangeHandler,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import {
-	EncodingTestData,
-	defaultRevisionMetadataFromChanges,
-	makeEncodingTestSuite,
-	testRevisionTagCodec,
-} from "../../utils.js";
+import { TestChange } from "../../testChange.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
@@ -355,8 +355,8 @@ describe("GenericField", () => {
 				child === nodeId1
 					? [{ minor: 42 }]
 					: child === nodeId2
-						? [{ minor: 43 }]
-						: assert.fail("Unexpected child"),
+					? [{ minor: 43 }]
+					: assert.fail("Unexpected child"),
 		);
 		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
 	});

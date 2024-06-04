@@ -37,12 +37,7 @@ import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWra
 import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions.js";
 import { CallbackOptions, DataBinding } from "./dataBinding.js";
 import { DataBindingRegistry } from "./dataBindingRegistry.js";
-import {
-	ArrayNode,
-	DataBindingTree,
-	NodeType,
-	concatTokenizedPath,
-} from "./dataBindingTree.js";
+import { ArrayNode, DataBindingTree, NodeType, concatTokenizedPath } from "./dataBindingTree.js";
 import {
 	RecursiveCallback,
 	assertOperation,
@@ -644,7 +639,8 @@ export class DataBinder {
 				const rule = in_handle.getUserData();
 				delayedActivationRules.push(rule);
 
-				const byType = dataBinder._activationHandlesByBindingType.get(rule.bindingType) || [];
+				const byType =
+					dataBinder._activationHandlesByBindingType.get(rule.bindingType) || [];
 				byType.push(in_handle);
 				dataBinder._activationHandlesByBindingType.set(rule.bindingType, byType);
 			});
@@ -860,7 +856,11 @@ export class DataBinder {
 						);
 						fakeContext.getUserData().createdBindings = [];
 						if (
-							this._createBindingFromDefinition(fakeContext, definition, rule.activationInfo)
+							this._createBindingFromDefinition(
+								fakeContext,
+								definition,
+								rule.activationInfo,
+							)
 						) {
 							// A binding was created -- call back for postCreate
 							io_instantiatedBindings.push(fakeContext);
@@ -961,7 +961,11 @@ export class DataBinder {
 				if (instantiate) {
 					// Get all the definitions for this typeid, and then filter them for ones that are activated.
 					const definitions = this._registry
-						.getApplicableBindingDefinitions(typeId, rule.bindingType, this._propertyTree)
+						.getApplicableBindingDefinitions(
+							typeId,
+							rule.bindingType,
+							this._propertyTree,
+						)
 						.filter((definition: any) => {
 							return this._activationAppliesToTypeId(
 								rule.activationSplitType!,
@@ -972,7 +976,10 @@ export class DataBinder {
 
 					if (definitions.length > 0) {
 						// We have a databinding that applies to this property.
-						const existingBinding = this.resolve<DataBinding>(in_path, rule.bindingType);
+						const existingBinding = this.resolve<DataBinding>(
+							in_path,
+							rule.bindingType,
+						);
 						if (!existingBinding) {
 							// We don't already have a binding for this property / bindingType pair.
 							// The path options apply; does the definition match this property type?
@@ -1077,7 +1084,9 @@ export class DataBinder {
 				const easy = _.every(
 					in_rules,
 					(rule) =>
-						rule.exactPath === "" && rule.excludePrefix === "" && rule.startPath === in_root,
+						rule.exactPath === "" &&
+						rule.excludePrefix === "" &&
+						rule.startPath === in_root,
 				);
 				if (easy) {
 					this._fastCreateRetroactive(subTreeRootElement, in_rules, instantiated);
@@ -1185,7 +1194,12 @@ export class DataBinder {
 		} else {
 			if (in_activationRule.exactPath === "") {
 				// No precise path, visit recursively
-				recursivelyVisitHierarchy(subTreeRootElement, startPath, this._dataBindingTree, visit);
+				recursivelyVisitHierarchy(
+					subTreeRootElement,
+					startPath,
+					this._dataBindingTree,
+					visit,
+				);
 			} else {
 				// Visit the one node for the exact path
 				const dataBindingTreeNode =
@@ -2138,7 +2152,9 @@ export class DataBinder {
 						orderedDataBindings[i]._invokeModifyCallbacks(modificationContext);
 					} else {
 						orderedDataBindings[i]._onPreModify(modificationContext);
-						if (orderedDataBindings[i].onPreModify !== DataBinding.prototype.onPreModify) {
+						if (
+							orderedDataBindings[i].onPreModify !== DataBinding.prototype.onPreModify
+						) {
 							orderedDataBindings[i].onPreModify(modificationContext);
 						}
 					}
@@ -2174,7 +2190,8 @@ export class DataBinder {
 			console.assert(!_.isArray(in_tokenizedPathSegments));
 			let oldNode = in_context.getUserData().oldTreeNode;
 			console.assert(
-				this._dataBindingTree.getNode(fullPath) === oldNode.getChild(in_tokenizedPathSegments),
+				this._dataBindingTree.getNode(fullPath) ===
+					oldNode.getChild(in_tokenizedPathSegments),
 			);
 
 			// we need to use the "previous" path here as well to be consistent with the array case
@@ -2659,7 +2676,9 @@ export class DataBinder {
 					in_propElement.getTypeId() === in_representationInfo.typeID
 				) {
 					// Found a property that should have a runtime representation associated with it
-					const value = in_dataBindingTreeNode ? in_dataBindingTreeNode.getValue() : undefined;
+					const value = in_dataBindingTreeNode
+						? in_dataBindingTreeNode.getValue()
+						: undefined;
 					if (value && value.representations) {
 						// Delete it if it is there
 						const representationEntry = value.representations.get(
@@ -2841,7 +2860,8 @@ export class DataBinder {
 			}
 		} else {
 			const tokenizedPath = PathHelper.tokenizePathString(path);
-			const dataBindingTreeNode = this._dataBindingTree.getNodeForTokenizedPath(tokenizedPath);
+			const dataBindingTreeNode =
+				this._dataBindingTree.getNodeForTokenizedPath(tokenizedPath);
 			const value =
 				dataBindingTreeNode && dataBindingTreeNode.getValue()
 					? dataBindingTreeNode.getValue()

@@ -29,7 +29,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {
@@ -107,7 +107,11 @@ describe("SharedString", () => {
 			assert.equal(sharedString.getText(), "hello there!", "Could not replace text");
 
 			sharedString.replaceText(0, 5, "hi");
-			assert.equal(sharedString.getText(), "hi there!", "Could not replace text at beginning");
+			assert.equal(
+				sharedString.getText(),
+				"hi there!",
+				"Could not replace text at beginning",
+			);
 		});
 
 		it("can remove text", async () => {
@@ -383,7 +387,9 @@ describe("SharedString", () => {
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary(sharedString.getAttachSummary().summary),
+				objectStorage: MockStorage.createFromSummary(
+					sharedString.getAttachSummary().summary,
+				),
 			};
 
 			const sharedString2 = new SharedStringClass(

@@ -8,14 +8,14 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
-import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
+import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {

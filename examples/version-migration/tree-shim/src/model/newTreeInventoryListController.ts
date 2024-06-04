@@ -14,11 +14,7 @@ import {
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IInventoryItem,
-	IInventoryItemEvents,
-	IInventoryList,
-} from "../modelInterfaces.js";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -62,10 +58,7 @@ export const treeConfiguration = new TreeConfiguration(
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class NewTreeInventoryItem
-	extends TypedEmitter<IInventoryItemEvents>
-	implements IInventoryItem
-{
+class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;

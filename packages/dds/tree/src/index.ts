@@ -308,6 +308,7 @@ export {
 	DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
+
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type ObjectFromSchemaRecordUnsafe,
@@ -323,11 +324,13 @@ export {
 	type InsertableTypedNodeUnsafe,
 	type NodeBuilderDataUnsafe,
 	type NodeFromSchemaUnsafe,
+
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -381,6 +384,7 @@ export {
 	EmptyObject,
 	FlexList,
 	FlexListToUnion,
+
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
 	Required,

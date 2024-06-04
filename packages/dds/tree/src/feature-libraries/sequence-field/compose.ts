@@ -502,11 +502,7 @@ export class ComposeQueue {
 			revisionMetadata,
 			getOutputCellId,
 		);
-		this.newMarksCellSources = cellSourcesFromMarks(
-			newMarks,
-			revisionMetadata,
-			getInputCellId,
-		);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, revisionMetadata, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -524,7 +520,8 @@ export class ComposeQueue {
 			return this.dequeueBase();
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const baseCellId: ChangeAtomId =
-				getOutputCellId(baseMark, this.revisionMetadata) ?? fail("Expected defined output ID");
+				getOutputCellId(baseMark, this.revisionMetadata) ??
+				fail("Expected defined output ID");
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.
@@ -705,9 +702,7 @@ function setTruncatedEndpoint(
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined
-			? { ...effect.value, truncatedEndpoint }
-			: { truncatedEndpoint };
+		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
 
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 

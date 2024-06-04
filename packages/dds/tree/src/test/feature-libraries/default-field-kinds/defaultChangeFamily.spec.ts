@@ -134,10 +134,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	};
 }
 
-function expectForest(
-	actual: IForestSubscription,
-	expected: JsonableTree | JsonableTree[],
-): void {
+function expectForest(actual: IForestSubscription, expected: JsonableTree | JsonableTree[]): void {
 	const reader = actual.allocateCursor();
 	moveToDetachedField(actual, reader);
 	const copy = mapCursorField(reader, jsonableTreeFromCursor);

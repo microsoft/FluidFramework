@@ -7,18 +7,18 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	type IAudienceEvents,
-	ICriticalContainerError,
 	ISelf,
+	ICriticalContainerError,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IBatchMessage,
 	IContainerContext,
-	IDeltaManager,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
 	LoaderHeader,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -55,9 +55,9 @@ import {
 import {
 	DriverHeader,
 	FetchSource,
-	IDocumentMessage,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	MessageType,
@@ -71,6 +71,9 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
 import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -78,16 +81,13 @@ import {
 	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -104,11 +104,11 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
 	IEventSampler,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -126,19 +126,12 @@ import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
-import {
-	ChannelCollection,
-	getSummaryForDatastores,
-	wrapContext,
-} from "./channelCollection.js";
+import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
 import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import {
-	DeltaManagerPendingOpsProxy,
-	DeltaManagerSummarizerProxy,
-} from "./deltaManagerProxies.js";
+import { DeltaManagerPendingOpsProxy, DeltaManagerSummarizerProxy } from "./deltaManagerProxies.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -1142,7 +1135,10 @@ export class ContainerRuntime
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
 		// to reason over such things as session ID space.
 		if (this.idCompressorMode === "on") {
-			assert(this._idCompressor !== undefined, 0x8ea /* compressor should have been loaded */);
+			assert(
+				this._idCompressor !== undefined,
+				0x8ea /* compressor should have been loaded */,
+			);
 			return this._idCompressor;
 		}
 	}
@@ -1176,10 +1172,7 @@ export class ContainerRuntime
 	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
 	 * events which requires access to the actual real only info, this is needed.
 	 */
-	private readonly innerDeltaManager: IDeltaManager<
-		ISequencedDocumentMessage,
-		IDocumentMessage
-	>;
+	private readonly innerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -1544,9 +1537,7 @@ export class ContainerRuntime
 		const useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
-			this.innerDeltaManager,
-		);
+		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 		outerDeltaManager = summarizerDeltaManagerProxy;
 
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
@@ -1757,7 +1748,7 @@ export class ContainerRuntime
 					: ({
 							clientId,
 							client: audience.getMember(clientId),
-						} satisfies ISelf);
+					  } satisfies ISelf);
 			};
 
 			let oldClientId = this.clientId;
@@ -1776,8 +1767,7 @@ export class ContainerRuntime
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
-		this.closeSummarizerDelayMs =
-			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
+		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
@@ -1944,10 +1934,7 @@ export class ContainerRuntime
 		}
 	}
 
-	public getCreateChildSummarizerNodeFn(
-		id: string,
-		createParam: CreateChildSummarizerNodeParam,
-	) {
+	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -2094,7 +2081,9 @@ export class ContainerRuntime
 			// the summarizer state is not up to date.
 			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
 			if (this.isSummarizerClient) {
-				throw new Error("Summarizer client behind, loaded newer snapshot with loadingGroupId");
+				throw new Error(
+					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
+				);
 			}
 
 			// We want to catchup from sequenceNumber to targetSequenceNumber
@@ -2201,7 +2190,7 @@ export class ContainerRuntime
 							status: 200,
 							mimeType: "fluid/object",
 							value: blob,
-						}
+					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
@@ -2602,13 +2591,13 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
-					}
+				  }
 				: // Unrecognized message will be ignored.
-					{
+				  {
 						message,
 						local,
 						modernRuntimeMessage,
-					};
+				  };
 			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
@@ -2755,7 +2744,10 @@ export class ContainerRuntime
 
 				const compatBehavior = messageWithContext.message.compatDetails?.behavior;
 				if (
-					!compatBehaviorAllowsMessageType(messageWithContext.message.type, compatBehavior)
+					!compatBehaviorAllowsMessageType(
+						messageWithContext.message.type,
+						compatBehavior,
+					)
 				) {
 					const { message } = messageWithContext;
 					const error = DataProcessingError.create(
@@ -2810,7 +2802,8 @@ export class ContainerRuntime
 			// Check to see if the signal was lost.
 			if (
 				this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
-				envelope.clientSignalSequenceNumber > this._perfSignalData.trackingSignalSequenceNumber
+				envelope.clientSignalSequenceNumber >
+					this._perfSignalData.trackingSignalSequenceNumber
 			) {
 				this._perfSignalData.signalsLost++;
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
@@ -3546,7 +3539,10 @@ export class ContainerRuntime
 			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
 			 * summarizer nodes.
 			 */
-			if (startSummaryResult.invalidNodes > 0 || startSummaryResult.mismatchNumbers.size > 0) {
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
 				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
@@ -3714,12 +3710,12 @@ export class ContainerRuntime
 							proposalHandle: undefined,
 							ackHandle: this.loadedFromVersionId,
 							referenceSequenceNumber: summaryRefSeqNum,
-						}
+					  }
 					: {
 							proposalHandle: lastAck.summaryOp.contents.handle,
 							ackHandle: lastAck.summaryAck.contents.handle,
 							referenceSequenceNumber: summaryRefSeqNum,
-						};
+					  };
 
 			let handle: string;
 			try {
@@ -4267,7 +4263,10 @@ export class ContainerRuntime
 					"prefetchLatestSummaryBeforeClose",
 					FetchSource.noCache,
 				);
-				assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+				assert(
+					!!versions && !!versions[0],
+					0x137 /* "Failed to get version from storage" */,
+				);
 				stats.getVersionDuration = trace.trace().duration;
 
 				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
@@ -4335,13 +4334,15 @@ export class ContainerRuntime
 					logAndReturnPendingState(
 						event,
 						getSyncState(
-							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
+							await this.blobManager.attachAndGetPendingBlobs(
+								props?.stopBlobAttachingSignal,
+							),
 						),
 					),
-				)
+			  )
 			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
 					logAndReturnPendingState(event, getSyncState()),
-				);
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
@@ -4379,9 +4380,7 @@ export class ContainerRuntime
 		};
 	}
 
-	private validateSummaryHeuristicConfiguration(
-		configuration: ISummaryConfigurationHeuristics,
-	) {
+	private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {
 		// eslint-disable-next-line no-restricted-syntax
 		for (const prop in configuration) {
 			if (typeof configuration[prop] === "number" && configuration[prop] < 0) {

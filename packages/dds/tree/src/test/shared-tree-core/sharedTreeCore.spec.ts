@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -42,6 +42,7 @@ import {
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import {
 	ChangeEnricherReadonlyCheckout,
 	EditManager,
@@ -51,7 +52,6 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
 import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 

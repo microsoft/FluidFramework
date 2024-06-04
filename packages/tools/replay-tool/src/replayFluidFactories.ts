@@ -11,13 +11,13 @@ import {
 } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell/internal";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";

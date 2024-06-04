@@ -105,7 +105,9 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
 				) : null}
 				<CustomChip
 					label={typeid}
-					className={typeid in mapTypeToColor ? mapTypeToColor[typeid] : classes.defaultColor}
+					className={
+						typeid in mapTypeToColor ? mapTypeToColor[typeid] : classes.defaultColor
+					}
 				/>
 				{additionalType ? (
 					<CustomChip label={additionalType} className={classes.defaultColor} />

@@ -220,10 +220,7 @@ ${JSON.stringify(actualEvents)}`);
 	}
 }
 
-function matchObjects(
-	actual: ITelemetryPropertiesExt,
-	expected: ITelemetryPropertiesExt,
-): boolean {
+function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
 		const actualValue = actual[expectedKey];
 		if (

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
-import LRU from "lru-cache";
+import { assert } from '@fluidframework/core-utils/internal';
+import { BTree } from '@tylerbu/sorted-btree-es6';
+import LRU from 'lru-cache';
 
-import { compareFiniteNumbers, fail } from "./Common.js";
+import { compareFiniteNumbers, fail } from './Common.js';
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -41,10 +41,7 @@ export class RevisionValueCache<TValue> {
 	 * This is sorted to allow efficient access to the nearest preceding entry (see getClosestEntry).
 	 * Contains all cached values, regardless of why they are cached (retained, LRU or window).
 	 */
-	private readonly sortedEntries = new BTree<Revision, TValue>(
-		undefined,
-		compareFiniteNumbers,
-	);
+	private readonly sortedEntries = new BTree<Revision, TValue>(undefined, compareFiniteNumbers);
 
 	/**
 	 * Cache of most recently used evictable entries.
@@ -72,21 +69,18 @@ export class RevisionValueCache<TValue> {
 		/**
 		 * The oldest revision that must be retained in memory.
 		 */
-		retainedRevision?: [Revision, TValue],
+		retainedRevision?: [Revision, TValue]
 	) {
-		assert(
-			retentionWindowStart >= 0,
-			0x62c /* retentionWindowStart must be initialized >= 0 */,
-		);
+		assert(retentionWindowStart >= 0, 0x62c /* retentionWindowStart must be initialized >= 0 */);
 		this.evictableRevisions = new LRU({
 			max: evictableSize,
 			noDisposeOnSet: true,
 			dispose: (revision) => {
 				if (revision >= this.retentionWindowStart) {
-					fail("Entries in retention window should never be evicted.");
+					fail('Entries in retention window should never be evicted.');
 				}
 				if (this.retainedRevision === revision) {
-					fail("Retained entries should not be evicted");
+					fail('Retained entries should not be evicted');
 				}
 				this.sortedEntries.delete(revision);
 			},
@@ -110,7 +104,7 @@ export class RevisionValueCache<TValue> {
 	 */
 	public updateRetentionWindow(newRetentionWindowStart: Revision): void {
 		if (newRetentionWindowStart < this.retentionWindowStart) {
-			fail("retention window boundary must not move backwards");
+			fail('retention window boundary must not move backwards');
 		}
 		const prevRetentionWindowStart = this.retentionWindowStart;
 		this.retentionWindowStart = newRetentionWindowStart;
@@ -125,7 +119,7 @@ export class RevisionValueCache<TValue> {
 					// old window entries separately.
 					oldWindowEntries.push([windowRevision, windowEntry]);
 				}
-			},
+			}
 		);
 		oldWindowEntries.forEach(([revision, value]) => {
 			this.evictableRevisions.set(revision, value);
@@ -136,9 +130,7 @@ export class RevisionValueCache<TValue> {
 	 * @returns a [cachedRevision, value] where cachedRevision \<= requestedRevision, or undefined if no such revision
 	 * is cached.
 	 */
-	public getClosestEntry(
-		requestedRevision: Revision,
-	): [revision: Revision, value: TValue] | undefined {
+	public getClosestEntry(requestedRevision: Revision): [revision: Revision, value: TValue] | undefined {
 		const fromLRU = this.evictableRevisions.get(requestedRevision);
 		if (fromLRU !== undefined) {
 			return [requestedRevision, fromLRU];

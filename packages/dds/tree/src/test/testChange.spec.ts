@@ -18,11 +18,11 @@ import {
 } from "../core/index.js";
 import { brand } from "../util/index.js";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
 import { mintRevisionTag } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -154,7 +154,9 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange;
+						return (
+							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
+						);
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);

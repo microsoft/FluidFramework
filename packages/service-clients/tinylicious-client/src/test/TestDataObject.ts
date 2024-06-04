@@ -6,8 +6,8 @@
 import {
 	DataObject,
 	DataObjectFactory,
-	type IDataObjectProps,
 	createDataObjectKind,
+	type IDataObjectProps,
 } from "@fluidframework/aqueduct/internal";
 
 /**

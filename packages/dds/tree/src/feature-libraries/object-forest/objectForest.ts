@@ -102,17 +102,14 @@ export class ObjectForest implements IEditableForest {
 				: {
 						type: aboveRootPlaceholder,
 						fields: new Map(),
-					};
+				  };
 	}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
+	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -226,7 +223,9 @@ export class ObjectForest implements IEditableForest {
 			private detachEdit(source: Range, destination: FieldKey | undefined): void {
 				const [parent, key] = cursor.getParent();
 				assert(
-					destination === undefined || parent !== this.forest.roots || key !== destination,
+					destination === undefined ||
+						parent !== this.forest.roots ||
+						key !== destination,
 					0x7b9 /* Detach destination field must be different from current field */,
 				);
 				const currentField = getOrCreateField(parent, key);

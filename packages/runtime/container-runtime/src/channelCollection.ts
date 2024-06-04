@@ -23,6 +23,9 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -33,14 +36,11 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -90,8 +90,8 @@ import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
 	GCNodeType,
-	IGCNodeUpdatedProps,
 	detectOutboundRoutesViaDDSKey,
+	IGCNodeUpdatedProps,
 	urlToGCNodePath,
 } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
@@ -404,17 +404,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
 		// We need to process the GC Data for both local and remote attach messages
-		const foundGCData = processAttachMessageGCData(
-			attachMessage.snapshot,
-			(nodeId, toPath) => {
-				// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
-				const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-				this.parentContext.addedGCOutboundReference?.(
-					{ absolutePath: fromPath },
-					{ absolutePath: toPath },
-				);
-			},
-		);
+		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
+			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+			this.parentContext.addedGCOutboundReference?.(
+				{ absolutePath: fromPath },
+				{ absolutePath: toPath },
+			);
+		});
 
 		// Only log once per container to avoid noise/cost.
 		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
@@ -987,7 +984,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 
 		const idToLog =
-			originalRequest !== undefined ? urlToGCNodePath(originalRequest.url) : dataStoreNodePath;
+			originalRequest !== undefined
+				? urlToGCNodePath(originalRequest.url)
+				: dataStoreNodePath;
 
 		// Log the package details asynchronously since getInitialSnapshotDetails is async
 		const recentelyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
@@ -1297,9 +1296,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * be deleted.
 	 * @returns The routes of data stores and its objects that were deleted.
 	 */
-	public deleteSweepReadyNodes(
-		sweepReadyDataStoreRoutes: readonly string[],
-	): readonly string[] {
+	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[] {
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
@@ -1377,9 +1374,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/**
 	 * Called by GC to retrieve the package path of a data store node with the given path.
 	 */
-	public async getDataStorePackagePath(
-		nodePath: string,
-	): Promise<readonly string[] | undefined> {
+	public async getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
 		const context = this.contexts.get(nodePath.split("/")[1]);

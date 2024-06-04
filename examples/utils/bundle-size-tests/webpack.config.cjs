@@ -99,8 +99,7 @@ module.exports = {
 			bannedModules: [
 				{
 					moduleName: "assert",
-					reason:
-						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
+					reason: "This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
 				},
 			],
 		}),

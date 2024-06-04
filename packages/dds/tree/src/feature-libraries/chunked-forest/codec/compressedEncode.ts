@@ -41,10 +41,7 @@ import {
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(
-	fieldBatch: FieldBatch,
-	cache: EncoderCache,
-): EncodedFieldBatch {
+export function compressedEncode(fieldBatch: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references

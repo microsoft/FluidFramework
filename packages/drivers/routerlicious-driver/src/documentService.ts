@@ -7,10 +7,10 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
+	IDocumentServiceEvents,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
@@ -179,7 +179,9 @@ export class DocumentService
 
 			if (shouldUpdateDiscoveredSessionInfo) {
 				await this.refreshDiscovery();
-				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+				const rateLimiter = new RateLimiter(
+					this.driverPolicies.maxConcurrentOrdererRequests,
+				);
 				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,

@@ -14,10 +14,10 @@ import {
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import {
+	isFluidError,
 	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
-	isFluidError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -26,7 +26,6 @@ import {
 	IBroadcastSummaryResult,
 	INackSummaryResult,
 	IRefreshSummaryAckOptions,
-	type IRetriableFailureError,
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
@@ -35,6 +34,7 @@ import {
 	SubmitSummaryResult,
 	SummarizeResultPart,
 	SummaryGeneratorTelemetry,
+	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { IClientSummaryWatcher } from "./summaryCollection.js";
 
@@ -318,7 +318,8 @@ export class SummaryGenerator {
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
 				opsSinceLastAttempt: referenceSequenceNumber - lastAttemptRefSeqNum,
 				opsSinceLastSummary:
-					referenceSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+					referenceSequenceNumber -
+					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				stage: summaryData.stage,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
@@ -488,9 +489,13 @@ export class SummaryGenerator {
 				const errorCode: SummarizeErrorCode = "summaryNack";
 
 				// pre-0.58 error message prefix: summaryNack
-				const error = new RetriableSummaryError(getFailMessage(errorCode), retryAfterSeconds, {
-					errorMessage,
-				});
+				const error = new RetriableSummaryError(
+					getFailMessage(errorCode),
+					retryAfterSeconds,
+					{
+						errorMessage,
+					},
+				);
 
 				assert(
 					getRetryDelaySecondsFromError(error) === retryAfterSeconds,

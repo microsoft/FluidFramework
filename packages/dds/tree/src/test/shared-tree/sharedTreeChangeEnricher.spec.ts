@@ -54,18 +54,14 @@ const content: JsonCompatible = { x: 42 };
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
-	dataChanges.push(change),
-);
+const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
 const modularBuilder = new ModularEditBuilder(modularFamily, () => {});
 
 // Side effects results in `dataChanges` being populated
 defaultEditor.optionalField({ parent: undefined, field: rootFieldKey }).set(undefined, false);
 
 const removeRoot: SharedTreeChange = {
-	changes: [
-		{ type: "data", innerChange: dataChanges.at(0) ?? assert.fail("Expected change") },
-	],
+	changes: [{ type: "data", innerChange: dataChanges.at(0) ?? assert.fail("Expected change") }],
 };
 
 const revision1 = testIdCompressor.generateCompressedId();

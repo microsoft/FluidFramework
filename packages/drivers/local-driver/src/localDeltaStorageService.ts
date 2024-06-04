@@ -4,10 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import {
-	IDocumentDeltaStorageService,
-	IStream,
-} from "@fluidframework/driver-definitions/internal";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 

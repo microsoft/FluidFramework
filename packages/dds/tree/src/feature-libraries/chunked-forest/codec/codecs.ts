@@ -5,11 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
-	ICodecOptions,
-	IJsonCodec,
-	makeVersionedValidatedCodec,
-} from "../../../codec/index.js";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
 import { CursorLocationType, SchemaAndPolicy } from "../../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
@@ -32,18 +28,12 @@ export type FieldBatchCodec = IJsonCodec<
 	FieldBatchEncodingContext
 >;
 
-export function makeFieldBatchCodec(
-	options: ICodecOptions,
-	writeVersion: number,
-): FieldBatchCodec {
+export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number): FieldBatchCodec {
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
 	// yet to receive that change).
-	assert(
-		validVersions.has(writeVersion),
-		0x935 /* Invalid write version for FieldBatch codec */,
-	);
+	assert(validVersions.has(writeVersion), 0x935 /* Invalid write version for FieldBatch codec */);
 
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {

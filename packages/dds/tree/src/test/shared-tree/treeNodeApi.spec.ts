@@ -12,19 +12,19 @@ import {
 	rollback,
 } from "../../shared-tree/index.js";
 import {
-	InsertableTypedNode,
 	SchemaFactory,
 	TreeConfiguration,
-	TreeView,
 	ValidateRecursiveSchema,
+	TreeView,
+	InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
-import { runTransaction } from "../../shared-tree/treeApi.js";
+import { hydrate } from "../simple-tree/utils.js";
 import { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { hydrate } from "../simple-tree/utils.js";
+import { runTransaction } from "../../shared-tree/treeApi.js";
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {
@@ -195,7 +195,10 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+						type _ = requireAssignableTo<
+							typeof result,
+							typeof Tree.runTransaction.rollback
+						>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -207,7 +210,10 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+						type _ = requireAssignableTo<
+							typeof result,
+							typeof Tree.runTransaction.rollback
+						>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -261,7 +267,10 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+						type _ = requireAssignableTo<
+							typeof result,
+							typeof Tree.runTransaction.rollback
+						>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -273,7 +282,10 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+						type _ = requireAssignableTo<
+							typeof result,
+							typeof Tree.runTransaction.rollback
+						>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}

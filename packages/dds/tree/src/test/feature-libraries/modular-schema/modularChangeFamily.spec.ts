@@ -9,47 +9,47 @@ import { SessionId } from "@fluidframework/id-compressor";
 
 import { ICodecOptions, IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
 import {
-	ChangeAtomIdMap,
-	ChangeEncodingContext,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaRoot,
-	FieldKey,
-	FieldKindIdentifier,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	Multiplicity,
-	RevisionTag,
-	TaggedChange,
-	UpPath,
-	makeAnonChange,
-	makeDetachedNodeId,
-	replaceAtomRevisions,
-	revisionMetadataSourceFromInfo,
-	tagChange,
-} from "../../../core/index.js";
-import {
-	EditDescription,
-	EncodedModularChangeset,
 	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
+	genericFieldKind,
+	ModularChangeset,
+	FieldKindWithEditor,
+	RelevantRemovedRootsFromChild,
+	chunkTree,
+	defaultChunkPolicy,
+	TreeChunk,
+	cursorForJsonableTreeField,
+	chunkFieldSingle,
+	makeFieldBatchCodec,
+	NodeId,
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
-	FieldKindWithEditor,
-	ModularChangeFamily,
-	ModularChangeset,
-	NodeId,
-	RelevantRemovedRootsFromChild,
-	TreeChunk,
-	chunkFieldSingle,
-	chunkTree,
-	cursorForJsonableTreeField,
-	defaultChunkPolicy,
-	genericFieldKind,
-	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	ModularChangeFamily,
+	EncodedModularChangeset,
+	FieldChangeRebaser,
+	FieldEditor,
+	EditDescription,
 } from "../../../feature-libraries/index.js";
+import {
+	makeAnonChange,
+	makeDetachedNodeId,
+	RevisionTag,
+	tagChange,
+	TaggedChange,
+	FieldKindIdentifier,
+	FieldKey,
+	UpPath,
+	revisionMetadataSourceFromInfo,
+	ITreeCursorSynchronous,
+	DeltaFieldChanges,
+	DeltaRoot,
+	DeltaDetachedNodeId,
+	ChangeEncodingContext,
+	ChangeAtomIdMap,
+	Multiplicity,
+	replaceAtomRevisions,
+	FieldUpPath,
+} from "../../../core/index.js";
 import {
 	brand,
 	idAllocatorFromMaxId,
@@ -66,34 +66,32 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { ValueChangeset, valueField } from "./basicRebasers.js";
+import { ajvValidator } from "../../codec/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
-import {
-	EncodedNodeChangeset,
-	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	getFieldKind,
-	intoDelta,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	updateRefreshers,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	FieldChangeMap,
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import { ajvValidator } from "../../codec/index.js";
-import { ValueChangeset, valueField } from "./basicRebasers.js";
+import {
+	getFieldKind,
+	intoDelta,
+	updateRefreshers,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	EncodedNodeChangeset,
+	FieldChangeEncodingContext,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	compose: (change1, change2, composeChild) =>
-		change1 === undefined && change2 === undefined
-			? undefined
-			: composeChild(change1, change2),
+		change1 === undefined && change2 === undefined ? undefined : composeChild(change1, change2),
 	invert: (change) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
@@ -785,7 +783,9 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
 				},
 				tag1,
 			);
@@ -831,7 +831,9 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
 				},
 				tag1,
 			);
@@ -996,7 +998,9 @@ describe("ModularChangeFamily", () => {
 							[
 								fieldA,
 								{
-									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
 								},
 							],
 						]),
@@ -1111,10 +1115,7 @@ describe("ModularChangeFamily", () => {
 			nested: NodeId[];
 		}
 
-		const handler: FieldChangeHandler<
-			HasRemovedRootsRefs,
-			FieldEditor<HasRemovedRootsRefs>
-		> = {
+		const handler: FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>> = {
 			relevantRemovedRoots: (
 				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,

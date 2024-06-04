@@ -23,16 +23,16 @@ import {
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
 	type Jsonable,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type IQuorumClients,
-	type ISequencedClient,
 	type ISequencedDocumentMessage,
 	type ISummaryTree,
 	SummaryType,
+	type IQuorumClients,
+	type ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -41,8 +41,8 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
-	MockQuorumClients,
 	MockStorage,
+	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
@@ -354,8 +354,7 @@ function getDocuments(): string[] {
 }
 
 // Format a number separating 3 digits by comma
-const formatNumber = (num: number): string =>
-	num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	generator: Generator<Operation, FuzzTestState>;
@@ -414,43 +413,36 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
  * Similarly, function valued properties are removed.
  */
 type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never
-		? true
-		: false
+	T extends never ? true : false
 )
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
-		? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
-		: // eslint-disable-next-line @rushstack/no-new-null
-			/* test for Jsonable primitive types */ T extends
-					| null
-					| boolean
-					| number
-					| string
-					| TReplaced
-			? /* primitive types => */ T
-			: // eslint-disable-next-line @typescript-eslint/ban-types
-				/* test for not a function */ Extract<T, Function> extends never
-				? /* not a function => test for object */ T extends object
-					? /* object => test for array */ T extends (infer E)[]
-						? /* array => */ JsonDeserialized<E, TReplaced>[]
-						: /* property bag => */
-							/* properties with symbol keys or function values are removed */
-							{
-								/* properties with defined values are recursed */
-								[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
-									T[K],
-									TReplaced
-								>;
-							} & {
-								/* properties that may have undefined values are optional */
-								[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
-									T[K],
-									TReplaced
-								>;
-							}
-					: /* not an object => */ never
-				: /* function => */ never;
+	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
+	: // eslint-disable-next-line @rushstack/no-new-null
+	/* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
+	? /* primitive types => */ T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	/* test for not a function */ Extract<T, Function> extends never
+	? /* not a function => test for object */ T extends object
+		? /* object => test for array */ T extends (infer E)[]
+			? /* array => */ JsonDeserialized<E, TReplaced>[]
+			: /* property bag => */
+			  /* properties with symbol keys or function values are removed */
+			  {
+					/* properties with defined values are recursed */
+					[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  } & {
+					/* properties that may have undefined values are optional */
+					[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
+						T[K],
+						TReplaced
+					>;
+			  }
+		: /* not an object => */ never
+	: /* function => */ never;
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
 	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;
@@ -759,7 +751,9 @@ describe("SharedString Attribution", () => {
 				const paths = getDocumentPaths(docName);
 				const operations: Operation[] = readJson(paths.operations);
 				const data = await Promise.all(
-					dataGenerators.map(async ({ factory }) => summaryFromState(factory(operations))),
+					dataGenerators.map(async ({ factory }) =>
+						summaryFromState(factory(operations)),
+					),
 				);
 				table.addRow(docName, data);
 			}

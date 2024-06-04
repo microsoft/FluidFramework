@@ -7,10 +7,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	FieldKindIdentifier,
-	Multiplicity,
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	TreeTypeSet,
+	Multiplicity,
 } from "../../core/index.js";
 
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";

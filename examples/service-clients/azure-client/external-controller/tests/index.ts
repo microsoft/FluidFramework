@@ -5,27 +5,27 @@
 
 /* eslint-disable import/no-internal-modules */
 
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
 } from "@fluidframework/local-driver/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
+import { DiceRollerController } from "../src/controller.js";
+import { makeAppView } from "../src/view.js";
 import {
 	IContainer,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
-import { DiceRollerController } from "../src/controller.js";
-import { makeAppView } from "../src/view.js";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided

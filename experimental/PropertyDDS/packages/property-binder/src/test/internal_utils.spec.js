@@ -12,11 +12,7 @@ import {
 } from "../data_binder/internalUtils";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import {
-	AnimalSchema,
-	PrimitiveChildrenTemplate,
-	registerTestTemplates,
-} from "./testTemplates";
+import { AnimalSchema, PrimitiveChildrenTemplate, registerTestTemplates } from "./testTemplates";
 
 describe("minimalRootPaths", () => {
 	it("should return the same array for exclusive paths", () => {

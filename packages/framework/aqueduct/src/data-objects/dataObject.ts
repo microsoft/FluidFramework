@@ -4,11 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import {
-	type ISharedDirectory,
-	MapFactory,
-	SharedDirectory,
-} from "@fluidframework/map/internal";
+import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";

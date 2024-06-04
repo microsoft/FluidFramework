@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeChanges,
@@ -24,6 +23,7 @@ import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 function visit(
 	delta: DeltaRoot,
@@ -1205,7 +1205,7 @@ describe("visitDelta", () => {
 									["exitField", rootKey],
 									["enterField", rootKey],
 									["exitField", rootKey],
-								]
+							  ]
 							: [
 									["enterField", rootKey],
 									["exitField", rootKey],
@@ -1214,9 +1214,11 @@ describe("visitDelta", () => {
 									["exitField", field0],
 									["enterField", rootKey],
 									["exitField", rootKey],
-								];
+							  ];
 						testTreeVisit(delta, expected, index);
-						assert.deepEqual(Array.from(index.entries()), [{ id: end, root: cycle ? 0 : 1 }]);
+						assert.deepEqual(Array.from(index.entries()), [
+							{ id: end, root: cycle ? 0 : 1 },
+						]);
 					});
 				});
 				describe("2-step", () => {

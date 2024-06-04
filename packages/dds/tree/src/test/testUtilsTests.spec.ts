@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { JsonableTree } from "../core/index.js";
 import { brand } from "../util/index.js";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { prepareTreeForCompare } from "./utils.js";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Test utils", () => {
 	describe("prepareTreeForCompare", () => {

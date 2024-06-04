@@ -8,11 +8,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
-	Multiplicity,
 	ObjectNodeStoredSchema,
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 

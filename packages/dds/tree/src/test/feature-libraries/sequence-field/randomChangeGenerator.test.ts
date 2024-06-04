@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { NodeId } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
+import { NodeId } from "../../../feature-libraries/index.js";
 import { generateRandomChange } from "./randomChangeGenerator.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 

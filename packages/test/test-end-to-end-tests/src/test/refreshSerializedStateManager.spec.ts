@@ -21,13 +21,13 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	DataObjectFactoryType,
 	ITestFluidObject,
+	DataObjectFactoryType,
 	createAndAttachContainer,
 	createDocumentId,
-	timeoutAwait,
-	timeoutPromise,
 	waitForContainerConnection,
+	timeoutPromise,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -89,9 +89,13 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					send: (tb) => (event) => {
 						tb.send(event);
 						if (
-							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
+							event.eventName ===
+							"fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
-							assert(event.snapshotSequenceNumber ?? 0 > 0, "snapshot was not refreshed");
+							assert(
+								event.snapshotSequenceNumber ?? 0 > 0,
+								"snapshot was not refreshed",
+							);
 							assert.strictEqual(
 								event.firstProcessedOpSequenceNumber ?? 0,
 								1,

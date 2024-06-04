@@ -62,9 +62,7 @@ export type MergeTreeMaintenanceType =
 /**
  * @alpha
  */
-export type MergeTreeDeltaOperationTypes =
-	| MergeTreeDeltaOperationType
-	| MergeTreeMaintenanceType;
+export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 /**
  * @alpha

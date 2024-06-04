@@ -107,7 +107,9 @@ storiesOf("InspectorTable", module)
 			>
 				{(data) =>
 					data && (
-						<Loading populateFunction={getPopulateFunctionWithSerializedBranchData(data)} />
+						<Loading
+							populateFunction={getPopulateFunctionWithSerializedBranchData(data)}
+						/>
 					)
 				}
 			</SerializedRepoFetcher>

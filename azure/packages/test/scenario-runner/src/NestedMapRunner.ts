@@ -7,10 +7,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -141,8 +138,9 @@ export class NestedMapRunner extends ScenarioRunner<
 				const scenarioLogger = await loggerP;
 				await timeoutPromise(
 					(resolve) =>
-						scenarioLogger.events.once(FluidSummarizerTelemetryEventNames.Summarize, () =>
-							resolve(),
+						scenarioLogger.events.once(
+							FluidSummarizerTelemetryEventNames.Summarize,
+							() => resolve(),
 						),
 					{
 						durationMs: 600000,
@@ -193,10 +191,13 @@ export class NestedMapRunner extends ScenarioRunner<
 				{ eventName: "connected" },
 				async () => {
 					if (container.connectionState !== ConnectionState.Connected) {
-						return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-							durationMs: 60000,
-							errorMsg: "container connect() timeout",
-						});
+						return timeoutPromise(
+							(resolve) => container.once("connected", () => resolve()),
+							{
+								durationMs: 60000,
+								errorMsg: "container connect() timeout",
+							},
+						);
 					}
 				},
 				{ start: true, end: true, cancel: "generic" },

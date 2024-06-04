@@ -14,8 +14,8 @@ import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -38,14 +38,9 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import type { Client } from "@fluid-private/test-dds-utils";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
-	type Anchor,
-	type AnchorNode,
-	type AnchorSetRootEvents,
 	AnnouncedVisitor,
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -71,7 +66,6 @@ import {
 	TaggedChange,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeStoredSchemaSubscription,
 	UpPath,
 	announceDelta,
 	applyDelta,
@@ -83,6 +77,10 @@ import {
 	moveToDetachedField,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type Anchor,
+	type AnchorNode,
+	type AnchorSetRootEvents,
+	type TreeStoredSchemaSubscription,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
@@ -98,7 +96,6 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	FlexTreeTypedField,
-	MockNodeKeyManager,
 	NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
@@ -110,6 +107,7 @@ import {
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
+	MockNodeKeyManager,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -118,10 +116,7 @@ import {
 	CheckoutEvents,
 	CheckoutFlexTreeView,
 	ISharedTree,
-	type ISharedTreeEditor,
-	type ITransaction,
 	ITreeCheckout,
-	type ITreeCheckoutFork,
 	InitializeAndSchematizeConfiguration,
 	RevertibleFactory,
 	SharedTree,
@@ -130,18 +125,20 @@ import {
 	TreeCheckout,
 	TreeContent,
 	createTreeCheckout,
+	type ISharedTreeEditor,
+	type ITransaction,
+	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	SchematizingSimpleTreeView,
-	requireSchema,
-} from "../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
 import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
 
 // Testing utilities
 
@@ -233,7 +230,9 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
+							summarizeType === SummarizeType.disabled
+								? { state: "disabled" }
+								: undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -842,10 +841,7 @@ export function expectJsonTree(
 	}
 }
 
-export function expectEqualPaths(
-	path: UpPath | undefined,
-	expectedPath: UpPath | undefined,
-): void {
+export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
 	if (!compareUpPaths(path, expectedPath)) {
 		// This is slower than above compare, so only do it in the error case.
 		// Make a nice error message:

@@ -3,22 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { IsoBuffer } from '@fluid-internal/client-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 
-import { ChangeCompressor, compressEdit, decompressEdit } from "./ChangeCompression.js";
-import { assertWithMessage, fail } from "./Common.js";
-import { EditLog } from "./EditLog.js";
-import { convertTreeNodes, newEdit } from "./EditUtilities.js";
-import { convertEditIds, convertNodeDataIds } from "./IdConversion.js";
-import {
-	AttributionId,
-	DetachedSequenceId,
-	FinalNodeId,
-	OpSpaceNodeId,
-	TraitLabel,
-} from "./Identifiers.js";
-import { initialTree } from "./InitialTree.js";
+import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
+import { assertWithMessage, fail } from './Common.js';
+import { EditLog } from './EditLog.js';
+import { convertTreeNodes, newEdit } from './EditUtilities.js';
+import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
+import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import { initialTree } from './InitialTree.js';
 import {
 	ContextualizedNodeIdNormalizer,
 	NodeIdContext,
@@ -28,22 +22,19 @@ import {
 	getNodeIdContext,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
-} from "./NodeIdUtilities.js";
-import { RevisionView } from "./RevisionView.js";
-import {
-	getChangeNodeFromView,
-	getChangeNode_0_0_2FromView,
-} from "./SerializationUtilities.js";
-import { MutableStringInterner, StringInterner } from "./StringInterner.js";
-import { SummaryContents } from "./Summary.js";
-import { InterningTreeCompressor } from "./TreeCompressor.js";
+} from './NodeIdUtilities.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { MutableStringInterner, StringInterner } from './StringInterner.js';
+import { SummaryContents } from './Summary.js';
+import { InterningTreeCompressor } from './TreeCompressor.js';
 import {
 	IdCompressor,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	createSessionId,
 	hasOngoingSession,
-} from "./id-compressor/index.js";
+} from './id-compressor/index.js';
 import {
 	ChangeInternal,
 	ChangeInternal_0_0_2,
@@ -66,7 +57,7 @@ import {
 	StablePlaceInternal,
 	WriteFormat,
 	reservedIdCount,
-} from "./persisted-types/index.js";
+} from './persisted-types/index.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.
@@ -88,22 +79,17 @@ export class SharedTreeEncoder_0_1_1 {
 	public encodeEditOp(
 		edit: Edit<ChangeInternal>,
 		fluidSerialize: (
-			edit: Edit<CompressedChangeInternal<OpSpaceNodeId>>,
+			edit: Edit<CompressedChangeInternal<OpSpaceNodeId>>
 		) => Edit<CompressedChangeInternal<OpSpaceNodeId>>,
 		idRange: IdCreationRange,
 		idNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
-		interner: StringInterner,
+		interner: StringInterner
 	): SharedTreeEditOp {
 		// IFluidHandles are not allowed in Ops.
 		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
 		// So replace the handles by encoding before sending:
 		const semiSerialized = fluidSerialize(
-			compressEdit(
-				this.changeCompressor,
-				interner,
-				scopeIdNormalizer(idNormalizer, idRange.sessionId),
-				edit,
-			),
+			compressEdit(this.changeCompressor, interner, scopeIdNormalizer(idNormalizer, idRange.sessionId), edit)
 		);
 
 		return {
@@ -124,10 +110,10 @@ export class SharedTreeEncoder_0_1_1 {
 	public decodeEditOp(
 		op: SharedTreeEditOp,
 		fluidDeserialize: (
-			semiSerializedEdit: Edit<CompressedChangeInternal<OpSpaceNodeId>>,
+			semiSerializedEdit: Edit<CompressedChangeInternal<OpSpaceNodeId>>
 		) => Edit<CompressedChangeInternal<OpSpaceNodeId>>,
 		idNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
-		interner: StringInterner,
+		interner: StringInterner
 	): Edit<ChangeInternal> {
 		const { edit: semiSerializedEdit } = op;
 		const parsedEdit = fluidDeserialize(semiSerializedEdit);
@@ -135,7 +121,7 @@ export class SharedTreeEncoder_0_1_1 {
 			this.changeCompressor,
 			interner,
 			scopeIdNormalizer(idNormalizer, op.idRange.sessionId),
-			parsedEdit,
+			parsedEdit
 		);
 	}
 
@@ -148,24 +134,11 @@ export class SharedTreeEncoder_0_1_1 {
 		idContext: NodeIdContext,
 		idNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
 		interner: StringInterner,
-		serializedIdCompressor: SerializedIdCompressorWithNoSession,
+		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		return this.summarizeHistory
-			? this.fullHistorySummarizer(
-					edits,
-					currentView,
-					idNormalizer,
-					interner,
-					serializedIdCompressor,
-				)
-			: this.noHistorySummarizer(
-					edits,
-					currentView,
-					idContext,
-					idNormalizer,
-					interner,
-					serializedIdCompressor,
-				);
+			? this.fullHistorySummarizer(edits, currentView, idNormalizer, interner, serializedIdCompressor)
+			: this.noHistorySummarizer(edits, currentView, idContext, idNormalizer, interner, serializedIdCompressor);
 	}
 
 	/**
@@ -179,16 +152,13 @@ export class SharedTreeEncoder_0_1_1 {
 			idCompressor: serializedIdCompressor,
 			version,
 		}: SharedTreeSummary,
-		attributionId: AttributionId,
+		attributionId: AttributionId
 	): SummaryContents {
 		assertWithMessage(
 			version === WriteFormat.v0_1_1,
-			`Invalid summary version to decode: ${version}, expected: 0.1.1`,
+			`Invalid summary version to decode: ${version}, expected: 0.1.1`
 		);
-		assert(
-			typeof editHistory === "object",
-			0x633 /* 0.1.1 summary encountered with non-object edit history. */,
-		);
+		assert(typeof editHistory === 'object', 0x633 /* 0.1.1 summary encountered with non-object edit history. */);
 
 		const idCompressor = hasOngoingSession(serializedIdCompressor)
 			? IdCompressor.deserialize(serializedIdCompressor)
@@ -201,7 +171,7 @@ export class SharedTreeEncoder_0_1_1 {
 				? this.treeCompressor.decompress(compressedTree, interner, sequencedNormalizer)
 				: undefined;
 		const { editChunks, editIds } = editHistory;
-		assertWithMessage(editChunks !== undefined, "Missing editChunks on 0.1.1 summary.");
+		assertWithMessage(editChunks !== undefined, 'Missing editChunks on 0.1.1 summary.');
 		assert(editIds !== undefined, 0x634 /* Missing editIds on 0.1.1 summary. */);
 
 		const uncompressedChunks = editChunks.map(({ startRevision, chunk }) => ({
@@ -211,17 +181,15 @@ export class SharedTreeEncoder_0_1_1 {
 						get: async () => {
 							const baseHandle = chunk;
 							const contents: EditChunkContents = JSON.parse(
-								IsoBuffer.from(await baseHandle.get()).toString(),
+								IsoBuffer.from(await baseHandle.get()).toString()
 							);
 							// Note: any interned IDs referenced in chunks taken at the time of summarization must be included
 							// in the summary. So this interner is sufficient.
 							return this.decodeEditChunk(contents, sequencedNormalizer, interner);
 						},
 						baseHandle: chunk,
-					}
-				: chunk.map((edit) =>
-						decompressEdit(this.changeCompressor, interner, sequencedNormalizer, edit),
-					),
+				  }
+				: chunk.map((edit) => decompressEdit(this.changeCompressor, interner, sequencedNormalizer, edit)),
 		}));
 		return {
 			currentTree: decompressedTree,
@@ -242,7 +210,7 @@ export class SharedTreeEncoder_0_1_1 {
 		idContext: NodeIdContext,
 		idNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
 		interner: StringInterner,
-		serializedIdCompressor: SerializedIdCompressorWithNoSession,
+		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		const currentTree = getChangeNodeFromView(currentView);
 		const initialTreeId = idContext.convertToNodeId(initialTree.identifier);
@@ -254,8 +222,8 @@ export class SharedTreeEncoder_0_1_1 {
 				ChangeInternal.build(children, id),
 				ChangeInternal.insert(
 					id,
-					StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel }),
-				),
+					StablePlaceInternal.atStartOf({ parent: initialTreeId, label: label as TraitLabel })
+				)
 			);
 		});
 
@@ -264,13 +232,12 @@ export class SharedTreeEncoder_0_1_1 {
 		}
 
 		assert(
-			currentTree.identifier === initialTreeId &&
-				currentTree.definition === initialTree.definition,
-			0x635 /* root definition and identifier should be immutable. */,
+			currentTree.identifier === initialTreeId && currentTree.definition === initialTree.definition,
+			0x635 /* root definition and identifier should be immutable. */
 		);
 		const edit = newEdit(changes);
 		const compressedChanges = edit.changes.map((change) =>
-			this.changeCompressor.compress(change, interner, sequencedIdNormalizer(idNormalizer)),
+			this.changeCompressor.compress(change, interner, sequencedIdNormalizer(idNormalizer))
 		);
 		return {
 			editHistory: {
@@ -292,19 +259,19 @@ export class SharedTreeEncoder_0_1_1 {
 		currentView: RevisionView,
 		idNormalizer: NodeIdNormalizer<OpSpaceNodeId>,
 		interner: StringInterner,
-		serializedIdCompressor: SerializedIdCompressorWithNoSession,
+		serializedIdCompressor: SerializedIdCompressorWithNoSession
 	): SharedTreeSummary {
 		const sequencedNormalizer = sequencedIdNormalizer(idNormalizer);
 		const currentTree = this.treeCompressor.compress(
 			getChangeNodeFromView(currentView),
 			interner,
-			sequencedNormalizer,
+			sequencedNormalizer
 		);
 
 		return {
 			currentTree,
 			editHistory: edits.getEditLogSummary((edit) =>
-				compressEdit(this.changeCompressor, interner, sequencedNormalizer, edit),
+				compressEdit(this.changeCompressor, interner, sequencedNormalizer, edit)
 			),
 			version: WriteFormat.v0_1_1,
 			internedStrings: interner.getSerializable(),
@@ -315,11 +282,9 @@ export class SharedTreeEncoder_0_1_1 {
 	public encodeEditChunk(
 		edits: readonly EditWithoutId<ChangeInternal>[],
 		idNormalizer: ContextualizedNodeIdNormalizer<FinalNodeId>,
-		interner: StringInterner,
+		interner: StringInterner
 	): EditChunkContents_0_1_1 {
-		const compressedEdits = edits.map((edit) =>
-			compressEdit(this.changeCompressor, interner, idNormalizer, edit),
-		);
+		const compressedEdits = edits.map((edit) => compressEdit(this.changeCompressor, interner, idNormalizer, edit));
 		return {
 			version: WriteFormat.v0_1_1,
 			edits: compressedEdits,
@@ -329,15 +294,13 @@ export class SharedTreeEncoder_0_1_1 {
 	public decodeEditChunk(
 		contents: EditChunkContents,
 		idNormalizer: ContextualizedNodeIdNormalizer<FinalNodeId>,
-		interner: StringInterner,
+		interner: StringInterner
 	): EditWithoutId<ChangeInternal>[] {
 		assertWithMessage(
 			contents.version === WriteFormat.v0_1_1,
-			`Invalid editChunk to decode: ${contents.version}. Expected 0.1.1.`,
+			`Invalid editChunk to decode: ${contents.version}. Expected 0.1.1.`
 		);
-		return contents.edits.map((edit) =>
-			decompressEdit(this.changeCompressor, interner, idNormalizer, edit),
-		);
+		return contents.edits.map((edit) => decompressEdit(this.changeCompressor, interner, idNormalizer, edit));
 	}
 }
 
@@ -358,14 +321,12 @@ export class SharedTreeEncoder_0_0_2 {
 	public encodeEditOp(
 		edit: Edit<ChangeInternal>,
 		fluidSerialize: (edit: Edit<ChangeInternal_0_0_2>) => Edit<ChangeInternal_0_0_2>,
-		idConverter: NodeIdConverter,
+		idConverter: NodeIdConverter
 	): SharedTreeEditOp_0_0_2 {
 		// IFluidHandles are not allowed in Ops.
 		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
 		// So replace the handles by encoding before sending:
-		const semiSerialized = fluidSerialize(
-			convertEditIds(edit, (id) => idConverter.convertToStableNodeId(id)),
-		);
+		const semiSerialized = fluidSerialize(convertEditIds(edit, (id) => idConverter.convertToStableNodeId(id)));
 
 		return {
 			type: SharedTreeOpType.Edit,
@@ -383,10 +344,8 @@ export class SharedTreeEncoder_0_0_2 {
 	 */
 	public decodeEditOp(
 		op: SharedTreeEditOp_0_0_2,
-		fluidDeserialize: (
-			semiSerializedEdit: Edit<ChangeInternal_0_0_2>,
-		) => Edit<ChangeInternal_0_0_2>,
-		idGenerator: NodeIdGenerator,
+		fluidDeserialize: (semiSerializedEdit: Edit<ChangeInternal_0_0_2>) => Edit<ChangeInternal_0_0_2>,
+		idGenerator: NodeIdGenerator
 	): Edit<ChangeInternal> {
 		const { edit: semiSerializedEdit } = op;
 		const parsedEdit = fluidDeserialize(semiSerializedEdit);
@@ -399,7 +358,7 @@ export class SharedTreeEncoder_0_0_2 {
 	public encodeSummary(
 		edits: EditLog<ChangeInternal>,
 		currentView: RevisionView,
-		idConverter: NodeIdConverter,
+		idConverter: NodeIdConverter
 	): SharedTreeSummary_0_0_2 {
 		return this.summarizeHistory
 			? this.fullHistorySummarizer(edits, currentView, idConverter)
@@ -411,12 +370,9 @@ export class SharedTreeEncoder_0_0_2 {
 	 */
 	public decodeSummary(
 		{ currentTree, sequencedEdits }: SharedTreeSummary_0_0_2,
-		attributionId?: AttributionId,
+		attributionId?: AttributionId
 	): SummaryContents {
-		assert(
-			sequencedEdits !== undefined,
-			0x636 /* 0.0.2 summary encountered with missing sequencedEdits field. */,
-		);
+		assert(sequencedEdits !== undefined, 0x636 /* 0.0.2 summary encountered with missing sequencedEdits field. */);
 		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
 		const idGenerator = getNodeIdContext(idCompressor);
 		const generateId = (id) => idGenerator.generateNodeId(id);
@@ -427,12 +383,12 @@ export class SharedTreeEncoder_0_0_2 {
 			temporaryLog.addSequencedEdit(convertEditIds(edit, generateId), {
 				sequenceNumber: 1,
 				referenceSequenceNumber: 0,
-			}),
+			})
 		);
 
 		return {
 			currentTree: convertTreeNodes<ChangeNode_0_0_2, ChangeNode>(currentTree, (node) =>
-				convertNodeDataIds(node, generateId),
+				convertNodeDataIds(node, generateId)
 			),
 			idCompressor,
 			interner: new MutableStringInterner(),
@@ -449,7 +405,7 @@ export class SharedTreeEncoder_0_0_2 {
 	private noHistorySummarizer<TChange>(
 		_edits: EditLog<TChange>,
 		currentView: RevisionView,
-		idConverter: NodeIdConverter,
+		idConverter: NodeIdConverter
 	): SharedTreeSummary_0_0_2 {
 		const currentTree = getChangeNode_0_0_2FromView(currentView, idConverter);
 		const changes: ChangeInternal_0_0_2[] = [];
@@ -465,7 +421,7 @@ export class SharedTreeEncoder_0_0_2 {
 						side: Side.After,
 						referenceTrait: { label: label as TraitLabel, parent: initialTree.identifier },
 					},
-				},
+				}
 			);
 		});
 
@@ -478,9 +434,8 @@ export class SharedTreeEncoder_0_0_2 {
 		}
 
 		assert(
-			currentTree.identifier === initialTree.identifier &&
-				currentTree.definition === initialTree.definition,
-			0x637 /* root definition and identifier should be immutable. */,
+			currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
+			0x637 /* root definition and identifier should be immutable. */
 		);
 		const edit = newEdit(changes);
 
@@ -501,7 +456,7 @@ export class SharedTreeEncoder_0_0_2 {
 	private fullHistorySummarizer(
 		edits: EditLog<ChangeInternal>,
 		currentView: RevisionView,
-		idConverter: NodeIdConverter,
+		idConverter: NodeIdConverter
 	): SharedTreeSummary_0_0_2 {
 		const { editChunks, editIds } = edits.getEditLogSummary();
 
@@ -509,19 +464,17 @@ export class SharedTreeEncoder_0_0_2 {
 		let idIndex = 0;
 		editChunks.forEach(({ chunk }) => {
 			if (isEditHandle(chunk)) {
-				fail("Cannot write handles to summary version 0.0.2");
+				fail('Cannot write handles to summary version 0.0.2');
 			} else {
 				chunk.forEach(({ changes }) => {
 					sequencedEdits.push(
 						convertEditIds(
 							{
 								changes,
-								id:
-									editIds[idIndex++] ??
-									fail("Number of edits should match number of edit IDs."),
+								id: editIds[idIndex++] ?? fail('Number of edits should match number of edit IDs.'),
 							},
-							(id) => idConverter.convertToStableNodeId(id),
-						),
+							(id) => idConverter.convertToStableNodeId(id)
+						)
 					);
 				});
 			}
@@ -535,8 +488,6 @@ export class SharedTreeEncoder_0_0_2 {
 	}
 }
 
-function isEditHandle(
-	chunk: FluidEditHandle | readonly EditWithoutId<unknown>[],
-): chunk is FluidEditHandle {
+function isEditHandle(chunk: FluidEditHandle | readonly EditWithoutId<unknown>[]): chunk is FluidEditHandle {
 	return !Array.isArray(chunk);
 }

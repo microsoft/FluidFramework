@@ -88,9 +88,7 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 /**
  * @internal
  */
-export function createEndpointIndex(
-	sharedString: ISharedString,
-): IEndpointIndex<SequenceInterval> {
+export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new EndpointIndex<SequenceInterval>(client, sequenceIntervalHelpers);
 }

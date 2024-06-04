@@ -5,22 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import {
-	type FieldKey,
-	type FieldKindData,
-	type FieldKindIdentifier,
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	type MapTree,
-	Multiplicity,
-	ObjectNodeStoredSchema,
-	type SchemaAndPolicy,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	type Value,
-	ValueSchema,
-} from "../../../core/index.js";
 // Reaching into internal module just to test it
 import {
 	SchemaValidationErrors,
@@ -30,6 +14,22 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	Multiplicity,
+	ObjectNodeStoredSchema,
+	ValueSchema,
+	type FieldKey,
+	type FieldKindData,
+	type FieldKindIdentifier,
+	type MapTree,
+	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type Value,
+} from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
 /**

@@ -13,9 +13,21 @@ import {
 	isLazy,
 	isTreeValue,
 } from "../feature-libraries/index.js";
-import { extractFromOpaque, fail, isReadonlyArray } from "../util/index.js";
+import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
+import { getFlexNode } from "./proxyBinding.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
+import {
+	NodeKind,
+	type TreeLeafValue,
+	TreeNodeSchema,
+	type ImplicitFieldSchema,
+	FieldSchema,
+	ImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
+import { TreeNode } from "./types.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -23,19 +35,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "./leafNodeSchema.js";
-import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
-import { getFlexNode } from "./proxyBinding.js";
-import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import {
-	FieldSchema,
-	ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-	NodeKind,
-	type TreeLeafValue,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
-} from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -207,7 +207,9 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifierValue = identifier.value as string;
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
+				return localNodeKey !== undefined
+					? extractFromOpaque(localNodeKey)
+					: identifierValue;
 			}
 		}
 	},

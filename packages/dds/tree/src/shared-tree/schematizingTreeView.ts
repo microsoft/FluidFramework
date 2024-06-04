@@ -9,16 +9,15 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { AllowedUpdateType, Compatibility } from "../core/index.js";
 import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
-	ContextSlot,
 	FlexFieldSchema,
 	NodeKeyManager,
 	ViewSchema,
 	defaultSchemaPolicy,
+	ContextSlot,
 } from "../feature-libraries/index.js";
 import {
 	FieldSchema,
 	ImplicitFieldSchema,
-	InsertableContent,
 	InsertableTreeFieldFromImplicitField,
 	SchemaIncompatible,
 	TreeConfiguration,
@@ -26,9 +25,10 @@ import {
 	TreeView,
 	TreeViewEvents,
 	getProxyForField,
-	normalizeFieldSchema,
-	setField,
 	toFlexConfig,
+	setField,
+	normalizeFieldSchema,
+	InsertableContent,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -277,12 +277,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		onDispose,
-	);
+	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {

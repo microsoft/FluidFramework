@@ -17,8 +17,8 @@ import {
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
-	type TreeNodeSchema,
 	normalizeAllowedTypes,
+	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";

@@ -8,18 +8,18 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
-	IDocumentMessage,
 	IDocumentService,
 	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	INack,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
+	DriverErrorTypes,
+	IDocumentMessage,
+	INack,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
@@ -299,9 +299,7 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 }
 
-export class FaultInjectionDocumentDeltaStorageService
-	implements IDocumentDeltaStorageService
-{
+export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(
 		private readonly internal: IDocumentDeltaStorageService,
 		private online: boolean,
@@ -388,11 +386,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 }
 
 function throwOfflineError(): never {
-	throw new FaultInjectionError(
-		"simulated offline error",
-		false,
-		DriverErrorTypes.offlineError,
-	);
+	throw new FaultInjectionError("simulated offline error", false, DriverErrorTypes.offlineError);
 }
 
 export class FaultInjectionError extends LoggingError {

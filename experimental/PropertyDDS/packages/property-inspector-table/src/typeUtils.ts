@@ -46,9 +46,7 @@ export class Utils {
 		return PropertyFactory.instanceOf(property, "Reference", "array");
 	}
 
-	public static isReferenceMapProperty(
-		property: BaseProperty,
-	): property is ReferenceMapProperty {
+	public static isReferenceMapProperty(property: BaseProperty): property is ReferenceMapProperty {
 		return PropertyFactory.instanceOf(property, "Reference", "map");
 	}
 

@@ -6,15 +6,15 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
-	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
 	IGarbageCollectionData,
+	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
-	ITelemetryContext,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
@@ -82,9 +82,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	private baseGCDetailsLoaded: boolean = false;
 
 	// The base GC details for the child nodes. This is passed to child nodes when creating them.
-	private readonly childNodesBaseGCDetailsP: Promise<
-		Map<string, IGarbageCollectionDetailsBase>
-	>;
+	private readonly childNodesBaseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
 
 	private gcData: IGarbageCollectionData | undefined;
 
@@ -226,12 +224,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// GC data may not be available if loaded from a snapshot with either GC disabled or before GC was added.
 		// Note - canReuseHandle is checked to be consistent with summarize - generate GC data for nodes for which
 		// summary must be generated.
-		if (
-			this.canReuseHandle &&
-			!fullGC &&
-			!this.hasDataChanged() &&
-			this.gcData !== undefined
-		) {
+		if (this.canReuseHandle && !fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
 			return cloneGCData(this.gcData);
 		}
 
@@ -327,7 +320,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		if (!this.gcDisabled) {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
-				const summaryNodeWithGC = new SummaryNodeWithGC(wipSerializedUsedRoutes, summaryNode);
+				const summaryNodeWithGC = new SummaryNodeWithGC(
+					wipSerializedUsedRoutes,
+					summaryNode,
+				);
 				this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
 			}
 		}

@@ -4,15 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, RevisionTag, makeAnonChange } from "../../../core/index.js";
+import { mintRevisionTag } from "../../utils.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { ChangeAtomId, RevisionTag, makeAnonChange } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { mintRevisionTag } from "../../utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import {
 	RebaseConfig,
 	assertChangesetsEqual,
@@ -25,6 +22,9 @@ import {
 	tagChangeInline,
 	withoutTombstones,
 } from "./utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -1022,10 +1022,11 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					insert,
 					removes,
-					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
-						tag1,
-						tag2,
-					]),
+					rebaseRevisionMetadataFromInfo(
+						[{ revision: tag1 }, { revision: tag2 }],
+						undefined,
+						[tag1, tag2],
+					),
 				);
 
 				const expected = [
@@ -1048,10 +1049,11 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					modify,
 					removes,
-					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
-						tag1,
-						tag2,
-					]),
+					rebaseRevisionMetadataFromInfo(
+						[{ revision: tag1 }, { revision: tag2 }],
+						undefined,
+						[tag1, tag2],
+					),
 				);
 
 				const expected = [

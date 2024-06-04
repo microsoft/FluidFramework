@@ -9,8 +9,8 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	TestObjectProvider,
 	getUnexpectedLogErrorException,
+	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
@@ -25,10 +25,7 @@ export type ExpectedEvents =
 /**
  * @internal
  */
-export function createExpectsTest(
-	orderedExpectedEvents: ExpectedEvents,
-	test: Mocha.AsyncFunc,
-) {
+export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
 		if (provider === undefined) {
@@ -81,14 +78,8 @@ export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> = (
 	test: Mocha.AsyncFunc,
 ): Mocha.Test => it(name, createExpectsTest(orderedExpectedEvents, test));
 
-itExpects.only = (
-	name: string,
-	orderedExpectedEvents: ExpectedEvents,
-	test: Mocha.AsyncFunc,
-) => it.only(name, createExpectsTest(orderedExpectedEvents, test));
+itExpects.only = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) =>
+	it.only(name, createExpectsTest(orderedExpectedEvents, test));
 
-itExpects.skip = (
-	name: string,
-	orderedExpectedEvents: ExpectedEvents,
-	test: Mocha.AsyncFunc,
-) => it.skip(name, createExpectsTest(orderedExpectedEvents, test));
+itExpects.skip = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) =>
+	it.skip(name, createExpectsTest(orderedExpectedEvents, test));

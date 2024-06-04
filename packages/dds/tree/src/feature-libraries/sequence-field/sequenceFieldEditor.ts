@@ -9,16 +9,7 @@ import { ChangesetLocalId } from "../../core/index.js";
 import { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
-import {
-	CellId,
-	CellMark,
-	Changeset,
-	Insert,
-	Mark,
-	MarkList,
-	MoveIn,
-	MoveOut,
-} from "./types.js";
+import { CellId, CellMark, Changeset, Insert, Mark, MarkList, MoveIn, MoveOut } from "./types.js";
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {

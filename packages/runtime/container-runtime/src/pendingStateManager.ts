@@ -8,8 +8,8 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
-	DataProcessingError,
 	ITelemetryLoggerExt,
+	DataProcessingError,
 	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
@@ -241,9 +241,7 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(
-		message: InboundSequencedContainerRuntimeMessage,
-	): unknown {
+	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 		// Get the next message from the pending queue. Verify a message exists.

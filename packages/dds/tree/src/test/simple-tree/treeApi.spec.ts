@@ -7,11 +7,10 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { UpPath, rootFieldKey } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 import {
+	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
@@ -20,9 +19,10 @@ import {
 	TreeChangeEvents,
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
+import { brand } from "../../util/index.js";
+import { leaf } from "../../domains/index.js";
 
 import {
 	booleanSchema,

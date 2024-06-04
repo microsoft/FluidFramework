@@ -18,10 +18,10 @@ import {
 	compatKind,
 	compatVersions,
 	driver,
-	odspEndpointName,
 	r11sEndpointName,
-	reinstall,
 	tenantIndex,
+	reinstall,
+	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
@@ -205,11 +205,7 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 };
 
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
-	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(
-		codeVersion,
-		true,
-		true,
-	);
+	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 
 	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
@@ -359,7 +355,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					break;
 				}
 				case "V2_INT_3": {
-					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
+					_configList.push(
+						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
+					);
 					break;
 				}
 				case "CROSS_VERSION": {

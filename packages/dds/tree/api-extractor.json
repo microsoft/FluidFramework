@@ -7,8 +7,8 @@
 			"$schema": "http://json.schemastore.org/tsconfig",
 			"extends": "./tsconfig.json",
 			"compilerOptions": {
-				"moduleResolution": "Bundler",
-			},
-		},
-	},
+				"moduleResolution": "Bundler"
+			}
+		}
+	}
 }

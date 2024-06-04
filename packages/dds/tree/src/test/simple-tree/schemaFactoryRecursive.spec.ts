@@ -15,12 +15,12 @@ import {
 	ApplyKind,
 	FieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	InternalTreeNode,
 	NodeFromSchema,
-	SchemaFactory,
 	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
+	SchemaFactory,
+	InternalTreeNode,
 } from "../../simple-tree/index.js";
 import {
 	ValidateRecursiveSchema,

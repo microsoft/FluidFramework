@@ -7,13 +7,13 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISnapshotTree,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -74,7 +74,12 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
 			async () =>
-				this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
+				this.internalStorageService.getVersions(
+					versionId,
+					count,
+					scenarioName,
+					fetchSource,
+				),
 			"storage_getVersions",
 		);
 	}

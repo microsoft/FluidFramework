@@ -168,11 +168,7 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
 
-		assert.equal(
-			trackingGroup.unlink(segment),
-			false,
-			"repeat unlink segment should be false",
-		);
+		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,
@@ -196,11 +192,7 @@ describe("MergeTree.tracking", () => {
 		);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
-		assert.equal(
-			trackingGroup.unlink(segment),
-			false,
-			"repeat unlink segment should be false",
-		);
+		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,

@@ -15,9 +15,9 @@ import type {
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentMessage,
 	IDocumentStorageService,
 	ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
@@ -149,12 +149,7 @@ export interface IContainerContext {
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitFn: (
-		type: MessageType,
-		contents: any,
-		batch: boolean,
-		appData?: any,
-	) => number;
+	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
 	/**
 	 * @returns clientSequenceNumber of last message in a batch
 	 */

@@ -7,12 +7,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base/internal";
+import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
-import {
-	IntervalCollectionTypeLocalValue,
-	makeSerializable,
-} from "./IntervalCollectionValues.js";
+import { IntervalCollectionTypeLocalValue, makeSerializable } from "./IntervalCollectionValues.js";
 import {
 	type IntervalCollection,
 	reservedIntervalIdKey,

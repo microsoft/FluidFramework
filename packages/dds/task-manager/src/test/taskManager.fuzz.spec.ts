@@ -14,11 +14,7 @@ import {
 	makeRandom,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { ITaskManager } from "../interfaces.js";
@@ -126,8 +122,7 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ client }: OpSelectionState): boolean =>
-		client.channel.canVolunteer();
+	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
 	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
 		client.channel.queued(taskId);
 	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>

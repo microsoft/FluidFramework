@@ -12,7 +12,6 @@ import {
 import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { TestNodeId } from "../../testNodeId.js";
 import {
 	EncodingTestData,
 	makeEncodingTestSuite,
@@ -20,6 +19,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
 import { inlineRevision } from "./utils.js";

@@ -15,10 +15,10 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	IDocumentAttributes,
 	IResolvedUrl,
 	ISnapshot,
 	ISnapshotFetchOptions,
+	IDocumentAttributes,
 	ISnapshotTree,
 	IVersion,
 	MessageType,
@@ -28,8 +28,8 @@ import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-ut
 
 import {
 	type IPendingContainerState,
-	type ISerializedStateManagerDocumentStorageService,
 	SerializedStateManager,
+	type ISerializedStateManagerDocumentStorageService,
 } from "../serializedStateManager.js";
 
 import { failSometimeProxy } from "./failProxy.js";
@@ -843,7 +843,10 @@ describe("serializedStateManager", () => {
 				// Since there is no saved event, it should only update the expiry timer
 				// when we're not dirty at fetching time.
 				if (isDirty) {
-					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
+					assert.strictEqual(
+						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
+						undefined,
+					);
 				} else {
 					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
 				}

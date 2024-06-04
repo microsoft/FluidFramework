@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
-import { TestObjectProvider } from "@fluidframework/test-utils/internal";
-import { expect } from "chai";
+import { IsoBuffer } from '@fluid-internal/client-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
+import { expect } from 'chai';
 
-import { Change, StablePlace, StableRange } from "../../ChangeTypes.js";
-import { fail } from "../../Common.js";
-import { revert } from "../../HistoryEditFactory.js";
-import { Definition, EditId, SessionId, TraitLabel } from "../../Identifiers.js";
-import { SharedTree } from "../../SharedTree.js";
-import { IdCompressor } from "../../id-compressor/index.js";
-import { ChangeInternal, ChangeNode, Edit, TraitMap } from "../../persisted-types/index.js";
+import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { fail } from '../../Common.js';
+import { revert } from '../../HistoryEditFactory.js';
+import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { IdCompressor } from '../../id-compressor/index.js';
+import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
 
-import { TestTree } from "./TestNode.js";
+import { TestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
-} from "./TestUtilities.js";
+} from './TestUtilities.js';
 
 /**
  * An entry into the summarySizeTests list.
@@ -42,43 +42,32 @@ interface SummarySizeTestEntry {
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
 		edits: (testTree) => [
-			Change.insertTree(
-				testTree.buildLeaf(),
-				StablePlace.atEndOf(testTree.right.traitLocation),
-			),
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
 		],
 		expectedSize: 1163,
-		description: "when inserting a node",
+		description: 'when inserting a node',
 	},
 	{
 		edits: (testTree) => {
 			const edits: Change[][] = [];
 			for (let i = 0; i < 50; i++) {
-				edits.push(
-					Change.insertTree(
-						testTree.buildLeaf(),
-						StablePlace.atEndOf(testTree.right.traitLocation),
-					),
-				);
+				edits.push(Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)));
 			}
 			return edits;
 		},
 		expectedSize: 12924,
-		description: "with 50 inserts",
+		description: 'with 50 inserts',
 	},
 	{
 		edits: (testTree) => {
 			const node = testTree.buildLeaf(testTree.generateNodeId());
 			return [
-				Change.insertTree(
-					testTree.buildLeaf(),
-					StablePlace.atEndOf(testTree.right.traitLocation),
-				),
+				Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
 				[Change.setPayload(node.identifier, 10)],
 			];
 		},
 		expectedSize: 1302,
-		description: "when inserting and setting a node",
+		description: 'when inserting and setting a node',
 	},
 	{
 		edits: (testTree) => {
@@ -89,42 +78,33 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 			];
 		},
 		expectedSize: 1355,
-		description: "when inserting and deleting a node",
+		description: 'when inserting and deleting a node',
 	},
 	{
 		edits: (testTree) => [
-			Change.insertTree(
-				testTree.buildLeaf(),
-				StablePlace.atEndOf(testTree.right.traitLocation),
-			),
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
 		],
 		expectedSize: 1355,
-		description: "when inserting and reverting a node",
+		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
 	{
 		edits: (testTree) => [
-			Change.insertTree(
-				makeLargeTestTree(testTree),
-				StablePlace.atStartOf(testTree.right.traitLocation),
-			),
+			Change.insertTree(makeLargeTestTree(testTree), StablePlace.atStartOf(testTree.right.traitLocation)),
 		],
 		expectedSize: 77067,
-		description: "when inserting a large tree",
+		description: 'when inserting a large tree',
 	},
 	{
 		edits: (testTree) => {
 			const largeTree = makeLargeTestTree(testTree);
 			return [
 				Change.insertTree(largeTree, StablePlace.atStartOf(testTree.right.traitLocation)),
-				Change.move(
-					StableRange.only(largeTree),
-					StablePlace.atEndOf(testTree.left.traitLocation),
-				),
+				Change.move(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
 			];
 		},
 		expectedSize: 77375,
-		description: "when inserting and moving a large tree",
+		description: 'when inserting and moving a large tree',
 	},
 ];
 
@@ -135,11 +115,11 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 export function runSummarySizeTests(
 	title: string,
 	setUpLocalServerTestSharedTree: (
-		options: LocalServerSharedTreeTestingOptions,
-	) => Promise<LocalServerSharedTreeTestingComponents>,
+		options: LocalServerSharedTreeTestingOptions
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	describe(title, () => {
-		const setupEditId = "9406d301-7449-48a5-b2ea-9be637b0c6e4" as EditId;
+		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 		let tree: SharedTree;
 		let testTree: TestTree;
@@ -158,7 +138,7 @@ export function runSummarySizeTests(
 		async function checkSummarySize(
 			changes: Change[][],
 			expectedSummarySize: number,
-			revertEdits = false,
+			revertEdits = false
 		): Promise<void> {
 			const edits = changes.map((e) => tree.applyEdit(...e));
 
@@ -167,11 +147,8 @@ export function runSummarySizeTests(
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
 					const edit =
 						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ??
-						fail("edit not found");
-					const reverted = revert(
-						edit.changes,
-						tree.logViewer.getRevisionViewInMemory(editIndex),
-					);
+						fail('edit not found');
+					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInMemory(editIndex));
 					if (reverted !== undefined) {
 						tree.applyEditInternal(reverted);
 					}
@@ -196,13 +173,8 @@ export function runSummarySizeTests(
 	});
 }
 
-function makeLargeTestTree(
-	testTree: TestTree,
-	nodesPerTrait = 10,
-	traitsPerLevel = 2,
-	levels = 2,
-): ChangeNode {
-	const specialSession = "9f858704-89f6-4923-abf3-14fc986e717f" as SessionId;
+function makeLargeTestTree(testTree: TestTree, nodesPerTrait = 10, traitsPerLevel = 2, levels = 2): ChangeNode {
+	const specialSession = '9f858704-89f6-4923-abf3-14fc986e717f' as SessionId;
 	// ensure uuids for traits and definitions are stable
 	const compressor = new IdCompressor(specialSession, 0);
 	const uuidv4 = (): string => compressor.decompress(compressor.generateCompressedId());
@@ -226,7 +198,7 @@ function generateTraits(
 	traitLabels: TraitLabel[],
 	nodesPerTrait: number,
 	totalLevels: number,
-	level = 0,
+	level = 0
 ): TraitMap<ChangeNode> {
 	const traits = {};
 
@@ -237,14 +209,7 @@ function generateTraits(
 				identifier: testTree.generateNodeId(),
 				traits:
 					level < totalLevels
-						? generateTraits(
-								testTree,
-								definition,
-								traitLabels,
-								nodesPerTrait,
-								totalLevels,
-								level + 1,
-							)
+						? generateTraits(testTree, definition, traitLabels, nodesPerTrait, totalLevels, level + 1)
 						: {},
 			};
 		});

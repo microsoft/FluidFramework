@@ -25,12 +25,7 @@ import {
 } from "../util/index.js";
 
 import { SummaryData } from "./editManager.js";
-import {
-	Commit,
-	EncodedCommit,
-	EncodedEditManager,
-	SequencedCommit,
-} from "./editManagerFormat.js";
+import { Commit, EncodedCommit, EncodedEditManager, SequencedCommit } from "./editManagerFormat.js";
 
 export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
@@ -145,22 +140,25 @@ function makeV1CodecWithVersion<TChangeset>(
 							revision: undefined,
 						}),
 					),
-					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-						sessionId,
-						{
-							base: revisionTagCodec.encode(branch.base, {
-								originatorId: sessionId,
-								revision: undefined,
-							}),
-							commits: branch.commits.map((commit) =>
-								encodeCommit(commit, {
-									originatorId: commit.sessionId,
-									schema: context.schema,
+					branches: Array.from(
+						data.peerLocalBranches.entries(),
+						([sessionId, branch]) => [
+							sessionId,
+							{
+								base: revisionTagCodec.encode(branch.base, {
+									originatorId: sessionId,
 									revision: undefined,
 								}),
-							),
-						},
-					]),
+								commits: branch.commits.map((commit) =>
+									encodeCommit(commit, {
+										originatorId: commit.sessionId,
+										schema: context.schema,
+										revision: undefined,
+									}),
+								),
+							},
+						],
+					),
 					version,
 				};
 				return json;

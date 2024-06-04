@@ -9,8 +9,8 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
 import { deflate, inflate } from "pako";
@@ -51,7 +51,9 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 				decode: (transferChange: IPropertyTreeMessage) => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					if (transferChange["isZipped"]) {
-						const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
+						const zipped = new Uint8Array(
+							stringToBuffer(transferChange.changeSet, "base64"),
+						);
 						const unzipped = decodeFn(zipped);
 						const changeSetStr = new TextDecoder().decode(unzipped);
 						transferChange.changeSet = JSON.parse(changeSetStr);

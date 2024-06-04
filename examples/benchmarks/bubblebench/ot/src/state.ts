@@ -6,9 +6,9 @@
 import {
 	IAppState,
 	IClient,
-	type SimpleClient,
 	makeBubble,
 	randomColor,
+	type SimpleClient,
 } from "@fluid-example/bubblebench-common";
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 

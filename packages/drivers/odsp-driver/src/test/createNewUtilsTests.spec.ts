@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { IDocumentAttributes, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,

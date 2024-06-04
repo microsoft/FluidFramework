@@ -13,8 +13,8 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
-	isFluidHandle,
 	isSerializedHandle,
+	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 

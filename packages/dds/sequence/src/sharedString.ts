@@ -20,7 +20,7 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { type ISharedSegmentSequence, SharedSegmentSequence } from "./sequence.js";
+import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
@@ -96,11 +96,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 	 * @param markerLabel - Label of the marker to search for
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`. Default true.
 	 */
-	searchForMarker(
-		startPos: number,
-		markerLabel: string,
-		forwards?: boolean,
-	): Marker | undefined;
+	searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 
 	/**
 	 * Retrieve text from the SharedString in string format.

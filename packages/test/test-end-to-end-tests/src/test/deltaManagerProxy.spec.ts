@@ -10,10 +10,10 @@ import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { SharedString, Side } from "@fluidframework/sequence/internal";
 import {
-	type ITestFluidObject,
-	type ITestObjectProvider,
 	TestFluidObjectFactory,
 	createTestConfigProvider,
+	type ITestFluidObject,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = createTestConfigProvider();
@@ -114,10 +114,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// We don't want to sequence any of A's changes yet
 		const collection = sharedStringA.getIntervalCollection("comments");
-		collection.add({
-			start: { pos: 1, side: Side.After },
-			end: { pos: 0, side: Side.Before },
-		});
+		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
 		containerA.disconnect();
 		await provider.ensureSynchronized(containerB);
 		// No matter how I arrange a connect or disconnect here, it seems to change the internal state such

@@ -26,20 +26,14 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		private readonly scopes?: ScopeType[],
 	) {}
 
-	public async fetchOrdererToken(
-		tenantId: string,
-		documentId?: string,
-	): Promise<ITokenResponse> {
+	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
 		return {
 			fromCache: true,
 			jwt: this.getSignedToken(tenantId, documentId),
 		};
 	}
 
-	public async fetchStorageToken(
-		tenantId: string,
-		documentId: string,
-	): Promise<ITokenResponse> {
+	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
 		return {
 			fromCache: true,
 			jwt: this.getSignedToken(tenantId, documentId),

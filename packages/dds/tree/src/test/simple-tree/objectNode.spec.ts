@@ -9,8 +9,8 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { SchemaFactory } from "../../simple-tree/index.js";
 
-import { requireAssignableTo } from "../../util/index.js";
 import { hydrate } from "./utils.js";
+import { requireAssignableTo } from "../../util/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

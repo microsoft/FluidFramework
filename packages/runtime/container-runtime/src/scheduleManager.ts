@@ -11,9 +11,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
-	ITelemetryLoggerExt,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";

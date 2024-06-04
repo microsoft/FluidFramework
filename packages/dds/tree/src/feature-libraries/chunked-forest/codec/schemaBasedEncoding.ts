@@ -8,12 +8,12 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
-	Multiplicity,
 	ObjectNodeStoredSchema,
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
+	Multiplicity,
 } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
@@ -46,10 +46,7 @@ export function schemaCompressedEncode(
 	return compressedEncode(fieldBatch, buildCache(schema, policy));
 }
 
-export function buildCache(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),

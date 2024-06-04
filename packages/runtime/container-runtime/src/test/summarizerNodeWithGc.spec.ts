@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizerNodeConfig,
@@ -57,8 +57,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 	const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
 		rootBaseGCDetails;
-	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> =>
-		childInternalGCData;
+	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> => childInternalGCData;
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 
-import { copyPropertyIfDefined, fail } from "./Common.js";
-import { Delta, Forest, isParentedForestNode } from "./Forest.js";
-import { NodeId, TraitLabel } from "./Identifiers.js";
-import { NodeData, Side } from "./persisted-types/index.js";
+import { copyPropertyIfDefined, fail } from './Common.js';
+import { Delta, Forest, isParentedForestNode } from './Forest.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeData, Side } from './persisted-types/index.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
@@ -123,7 +123,7 @@ export abstract class TreeView {
 
 	/** @returns the node associated with the given id in this view. Fails if the node does not exist in this view. */
 	public getViewNode(id: NodeId): TreeViewNode {
-		return this.tryGetViewNode(id) ?? fail("NodeId not found");
+		return this.tryGetViewNode(id) ?? fail('NodeId not found');
 	}
 
 	/** @returns the node associated with the given id in this view, or undefined if the node does not exist in this view */
@@ -139,7 +139,7 @@ export abstract class TreeView {
 					parent: forestNode.parentId,
 				},
 			};
-			copyPropertyIfDefined(forestNode, viewNode, "payload");
+			copyPropertyIfDefined(forestNode, viewNode, 'payload');
 			return viewNode;
 		}
 
@@ -216,7 +216,7 @@ export abstract class TreeView {
 	 */
 	public getIndexInTrait(id: NodeId): TraitNodeIndex {
 		const index = this.tryGetIndexInTrait(id);
-		return index ?? fail("ID does not exist in the forest.");
+		return index ?? fail('ID does not exist in the forest.');
 	}
 
 	/**
@@ -240,9 +240,7 @@ export abstract class TreeView {
 			return undefined;
 		}
 
-		const trait =
-			parent.traits.get(parentData.traitParent) ??
-			fail("inconsistent forest: trait parent not found");
+		const trait = parent.traits.get(parentData.traitParent) ?? fail('inconsistent forest: trait parent not found');
 		let foundIndex: TraitNodeIndex | undefined;
 		if (trait.length === 0) {
 			return foundIndex;
@@ -297,7 +295,7 @@ export abstract class TreeView {
 		yield node;
 		for (const label of [...node.traits.keys()].sort()) {
 			const trait = node.traits.get(label);
-			for (const childId of trait ?? fail("Expected trait with label")) {
+			for (const childId of trait ?? fail('Expected trait with label')) {
 				const child = this.getViewNode(childId);
 				yield* this.iterateNodeDescendants(child);
 			}
@@ -305,9 +303,7 @@ export abstract class TreeView {
 	}
 
 	private getIndexOfSide(side: Side, traitLocation: TraitLocation): PlaceIndex {
-		return side === Side.After
-			? (0 as PlaceIndex)
-			: (this.getTrait(traitLocation).length as PlaceIndex);
+		return side === Side.After ? (0 as PlaceIndex) : (this.getTrait(traitLocation).length as PlaceIndex);
 	}
 
 	/**
@@ -317,10 +313,7 @@ export abstract class TreeView {
 	 * The views must share a root.
 	 */
 	public delta(view: TreeView): Delta<NodeId> {
-		assert(
-			this.root === view.root,
-			0x63d /* Delta can only be calculated between views that share a root */,
-		);
+		assert(this.root === view.root, 0x63d /* Delta can only be calculated between views that share a root */);
 		return this.forest.delta(view.forest);
 	}
 }

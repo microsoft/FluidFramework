@@ -7,11 +7,7 @@ import { strict as assert } from "assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import {
-	EmptyKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
+import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
 	ChunkShape,

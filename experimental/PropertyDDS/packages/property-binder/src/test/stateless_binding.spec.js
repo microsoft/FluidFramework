@@ -5,10 +5,7 @@
 
 /* globals sinon, expect, should */
 import { DataBinder } from "../data_binder/dataBinder";
-import {
-	SingletonDataBinding,
-	StatelessDataBinding,
-} from "../data_binder/statelessDataBinding";
+import { SingletonDataBinding, StatelessDataBinding } from "../data_binder/statelessDataBinding";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
@@ -150,16 +147,8 @@ describe("Stateless Binder", function () {
 		dogSingleton = new TestStatelessBinding();
 		chinchillaSingleton = new TestStatelessBinding();
 
-		catHandle = dataBinder.registerStateless(
-			"DataBindingTest",
-			CatSchema.typeid,
-			catSingleton,
-		);
-		dogHandle = dataBinder.registerStateless(
-			"DataBindingTest",
-			DogSchema.typeid,
-			dogSingleton,
-		);
+		catHandle = dataBinder.registerStateless("DataBindingTest", CatSchema.typeid, catSingleton);
+		dogHandle = dataBinder.registerStateless("DataBindingTest", DogSchema.typeid, dogSingleton);
 		chinchillaHandle = dataBinder.registerStateless(
 			"DataBindingTest",
 			ChinchillaSchema.typeid,

@@ -11,7 +11,7 @@ import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, Marker, MergeBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -28,11 +28,7 @@ export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimi
 	return loadText(content, mergeTree, segLimit);
 }
 
-export function loadTextFromFileWithMarkers(
-	filename: string,
-	mergeTree: MergeTree,
-	segLimit = 0,
-) {
+export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");
 	return loadText(content, mergeTree, segLimit, true);
 }
@@ -58,14 +54,7 @@ export function insertMarker({
 	props,
 	opArgs,
 }: InsertMarkerArgs) {
-	mergeTree.insertSegments(
-		pos,
-		[Marker.make(behaviors, props)],
-		refSeq,
-		clientId,
-		seq,
-		opArgs,
-	);
+	mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
 
 interface InsertTextArgs {
@@ -89,14 +78,7 @@ export function insertText({
 	props,
 	opArgs,
 }: InsertTextArgs) {
-	mergeTree.insertSegments(
-		pos,
-		[TextSegment.make(text, props)],
-		refSeq,
-		clientId,
-		seq,
-		opArgs,
-	);
+	mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
 }
 
 interface InsertSegmentsArgs {
@@ -249,11 +231,7 @@ export function validatePartialLengths(
 	mergeBlock: MergeBlock = mergeTree.root,
 ): void {
 	mergeTree.computeLocalPartials(0);
-	for (
-		let i = mergeTree.collabWindow.minSeq + 1;
-		i <= mergeTree.collabWindow.currentSeq;
-		i++
-	) {
+	for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {
 		const { partialLen, actualLen } = getPartialLengths(
 			clientId,
 			i,

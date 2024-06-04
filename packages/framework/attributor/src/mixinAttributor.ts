@@ -5,17 +5,13 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
-	type IContainerContext,
 	type IDeltaManager,
+	type IContainerContext,
 } from "@fluidframework/container-definitions/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import {
-	type FluidObject,
-	type IRequest,
-	type IResponse,
-} from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IQuorumClients,
@@ -26,10 +22,10 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type AttributionInfo,
-	type AttributionKey,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
+	type AttributionInfo,
+	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {

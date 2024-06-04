@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IChannelAttributes,
-	type IDeltaHandler,
-} from "@fluidframework/datastore-definitions/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { assert } from '@fluidframework/core-utils/internal';
+import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
+import { type ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { MessageType } from '@fluidframework/driver-definitions/internal';
 
-import { type IOpContents, type IShimDeltaHandler } from "./types.js";
-import { attributesMatch, isStampedOp } from "./utils.js";
+import { type IOpContents, type IShimDeltaHandler } from './types.js';
+import { attributesMatch, isStampedOp } from './utils.js';
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -51,17 +48,10 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		return this._handler !== undefined;
 	}
 
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
-		assert(
-			this.hasTreeDeltaHandler(),
-			0x831 /* Can't process ops before attaching tree handler */,
-		);
+		assert(this.hasTreeDeltaHandler(), 0x831 /* Can't process ops before attaching tree handler */);
 
 		if (message.type !== MessageType.Operation) {
 			return;
@@ -82,7 +72,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public reSubmit(contents: unknown, localOpMetadata: unknown): void {
 		assert(
 			!this.shouldDropOp(contents as IOpContents),
-			0x832 /* Should not be able to rollback v1 ops as they shouldn't have been created locally. */,
+			0x832 /* Should not be able to rollback v1 ops as they shouldn't have been created locally. */
 		);
 		return this.handler.reSubmit(contents, localOpMetadata);
 	}
@@ -91,7 +81,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public applyStashedOp(contents: unknown): void {
 		assert(
 			!this.shouldDropOp(contents as IOpContents),
-			0x8ab /* SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally. */,
+			0x8ab /* SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally. */
 		);
 		this.handler.applyStashedOp(contents);
 	}
@@ -103,7 +93,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {
 		assert(
 			!this.shouldDropOp(contents as IOpContents),
-			0x833 /* Should not be able to rollback v1 ops as they shouldn't have been created locally. */,
+			0x833 /* Should not be able to rollback v1 ops as they shouldn't have been created locally. */
 		);
 		return this.handler.rollback?.(contents, localOpMetadata);
 	}
@@ -121,7 +111,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		// Don't drop v2 ops in v2 state
 		assert(
 			attributesMatch(contents.fluidMigrationStamp, this.attributes),
-			0x834 /* Unexpected v2 op with mismatched attributes */,
+			0x834 /* Unexpected v2 op with mismatched attributes */
 		);
 		return false;
 	}

@@ -81,30 +81,28 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * @alpha
  */
 export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never
-		? true
-		: false
+	T extends never ? true : false
 )
 	? /* 'any' => */ JsonableTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
-		? /* 'unknown' => */ JsonableTypeWith<TReplaced>
-		: /* test for Jsonable primitive types */ T extends
-					| undefined /* is not serialized */
-					| null
-					| boolean
-					| number
-					| string
-					| TReplaced
-			? /* primitive types => */ T
-			: // eslint-disable-next-line @typescript-eslint/ban-types
-				/* test for not a function */ Extract<T, Function> extends never
-				? /* not a function =>  => test for object */ T extends object
-					? /* object => test for array */ T extends (infer U)[] // prefer ArrayLike test to catch non-array array-like types
-						? /* array => */ Jsonable<U, TReplaced>[]
-						: /* property bag => */ {
-								[K in keyof T]: Extract<K, symbol> extends never
-									? Jsonable<T[K], TReplaced>
-									: never;
-							}
-					: /* not an object => */ never
-				: /* function => */ never;
+	? /* 'unknown' => */ JsonableTypeWith<TReplaced>
+	: /* test for Jsonable primitive types */ T extends
+			| undefined /* is not serialized */
+			| null
+			| boolean
+			| number
+			| string
+			| TReplaced
+	? /* primitive types => */ T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	/* test for not a function */ Extract<T, Function> extends never
+	? /* not a function =>  => test for object */ T extends object
+		? /* object => test for array */ T extends (infer U)[] // prefer ArrayLike test to catch non-array array-like types
+			? /* array => */ Jsonable<U, TReplaced>[]
+			: /* property bag => */ {
+					[K in keyof T]: Extract<K, symbol> extends never
+						? Jsonable<T[K], TReplaced>
+						: never;
+			  }
+		: /* not an object => */ never
+	: /* function => */ never;

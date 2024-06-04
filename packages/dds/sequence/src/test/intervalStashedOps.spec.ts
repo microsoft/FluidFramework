@@ -18,7 +18,7 @@ import {
 import { IIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
 import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
-import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 const assertIntervals = (

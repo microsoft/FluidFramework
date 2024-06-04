@@ -9,9 +9,9 @@ import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark
 
 import {
 	ChangeFamily,
-	type ChangeFamilyEditor,
 	RevisionTag,
 	rootFieldKey,
+	type ChangeFamilyEditor,
 } from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";

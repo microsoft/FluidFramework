@@ -43,10 +43,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 	/**
 	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchOrdererToken}
 	 */
-	public async fetchOrdererToken(
-		tenantId: string,
-		documentId?: string,
-	): Promise<ITokenResponse> {
+	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
 		return {
 			fromCache: true,
 			jwt: generateToken(
@@ -62,10 +59,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 	/**
 	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchStorageToken}
 	 */
-	public async fetchStorageToken(
-		tenantId: string,
-		documentId: string,
-	): Promise<ITokenResponse> {
+	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
 		return {
 			fromCache: true,
 			jwt: generateToken(

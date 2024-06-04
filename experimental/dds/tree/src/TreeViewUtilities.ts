@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { StablePlace, StableRange } from "./ChangeTypes.js";
-import { assertWithMessage, fail } from "./Common.js";
-import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from "./TreeView.js";
+import { StablePlace, StableRange } from './ChangeTypes.js';
+import { assertWithMessage, fail } from './Common.js';
+import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView.js';
 
 /**
  * Express the given {@link (StableRange:interface)} as a {@link TreeViewRange}
@@ -52,17 +52,11 @@ export function getTraitLocationOfRange(view: TreeView, range: StableRange): Tra
 		return referenceTrait;
 	}
 	const sibling =
-		range.start.referenceSibling ??
-		range.end.referenceSibling ??
-		fail("malformed range does not indicate trait");
+		range.start.referenceSibling ?? range.end.referenceSibling ?? fail('malformed range does not indicate trait');
 	return view.getTraitLocation(sibling);
 }
 
-function sideOfRange(
-	range: StableRange,
-	sideOfRange: SideOfRange,
-	trait: TraitLocation,
-): TreeViewPlace {
+function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitLocation): TreeViewPlace {
 	const siblingRelative = sideOfRange === SideOfRange.Start ? range.start : range.end;
 	return {
 		trait,

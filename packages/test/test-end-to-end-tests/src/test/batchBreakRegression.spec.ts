@@ -17,8 +17,8 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnectionEvents,
-	IDocumentMessage,
 	IDocumentServiceFactory,
+	IDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
@@ -203,7 +203,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchStartIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === true,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === true,
 									);
 									if (batchStartIndex >= 0) {
 										newMessages[batchStartIndex] = {
@@ -245,7 +247,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 0) {
 									newMessages[batchEndIndex] = {
@@ -284,7 +288,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 1) {
 									ds.submit(newMessages.slice(0, batchEndIndex - 1));
@@ -320,7 +326,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchEndIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)
+												?.batch === false,
 									);
 									if (batchEndIndex >= 1) {
 										// set reference seq number to below min seq so the server nacks the batch
@@ -383,7 +391,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: unknown } | undefined)
+													?.batch === false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages
@@ -399,10 +409,12 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 													data: '{"clientId":"fake_client","detail":{"user":{"id":"fake_user"},"scopes":["doc:read","doc:write"],"permission":[],"details":{"capabilities":{"interactive":true}},"mode":"write"}}',
 												})
 												.concat(
-													...newMessages.slice(batchEndIndex).map((m) => ({
-														...m,
-														sequenceNumber: m.sequenceNumber + 1,
-													})),
+													...newMessages
+														.slice(batchEndIndex)
+														.map((m) => ({
+															...m,
+															sequenceNumber: m.sequenceNumber + 1,
+														})),
 												);
 										}
 									}

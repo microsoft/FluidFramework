@@ -26,8 +26,7 @@ function isMemoryDetachedBlobStorage(
 	return (
 		isObject(detachedStorage) &&
 		MemoryDetachedBlobStorageIdentifier in detachedStorage &&
-		detachedStorage[MemoryDetachedBlobStorageIdentifier] ===
-			MemoryDetachedBlobStorageIdentifier
+		detachedStorage[MemoryDetachedBlobStorageIdentifier] === MemoryDetachedBlobStorageIdentifier
 	);
 }
 

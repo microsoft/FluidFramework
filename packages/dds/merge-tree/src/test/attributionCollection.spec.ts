@@ -581,7 +581,11 @@ describe("AttributionCollection", () => {
 			const segmentCount = 100;
 			it(`with randomly generated segments, seed ${seed}`, () => {
 				const generateAttributionKey = (random: IRandom): AttributionKey | null =>
-					random.bool(0.8) ? opKey(random.integer(0, 10)) : random.bool() ? detachedKey : null;
+					random.bool(0.8)
+						? opKey(random.integer(0, 10))
+						: random.bool()
+						? detachedKey
+						: null;
 
 				const channelNamePool = ["ch1", "ch2", "ch3"];
 				const insertGenerator: Generator<InsertAction, State> = take(
@@ -597,7 +601,10 @@ describe("AttributionCollection", () => {
 								if (random.bool()) {
 									collection.update(
 										channel,
-										new AttributionCollection(length, generateAttributionKey(random)),
+										new AttributionCollection(
+											length,
+											generateAttributionKey(random),
+										),
 									);
 								}
 							}

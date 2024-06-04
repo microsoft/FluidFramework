@@ -6,11 +6,11 @@
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISnapshotTreeEx,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTreeEx,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
@@ -223,7 +223,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-				})
+			  })
 			: undefined;
 	}
 

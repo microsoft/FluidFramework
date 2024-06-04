@@ -131,10 +131,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 	return supportedFeatures === undefined ? (
 		<Waiting />
 	) : (
-		<_ContainerDevtoolsView
-			containerKey={containerKey}
-			supportedFeatures={supportedFeatures}
-		/>
+		<_ContainerDevtoolsView containerKey={containerKey} supportedFeatures={supportedFeatures} />
 	);
 }
 

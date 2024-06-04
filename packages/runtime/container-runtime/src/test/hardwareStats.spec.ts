@@ -9,9 +9,9 @@ import { IContainerContext } from "@fluidframework/container-definitions/interna
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockAudience,
 	MockDeltaManager,
 	MockQuorumClients,
+	MockAudience,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";

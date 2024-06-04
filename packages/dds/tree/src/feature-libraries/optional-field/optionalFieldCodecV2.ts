@@ -15,8 +15,8 @@ import {
 import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
-	type EncodedChangeAtomId,
 	EncodedNodeChangeset,
+	type EncodedChangeAtomId,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 
@@ -81,7 +81,10 @@ export function makeOptionalFieldCodec(
 					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
+					encoded.r.s = registerIdCodec.encode(
+						change.valueReplace.src,
+						context.baseContext,
+					);
 				}
 			}
 

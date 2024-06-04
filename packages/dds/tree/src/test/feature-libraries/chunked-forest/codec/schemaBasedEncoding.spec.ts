@@ -53,8 +53,8 @@ import {
 } from "../../../testTrees.js";
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);

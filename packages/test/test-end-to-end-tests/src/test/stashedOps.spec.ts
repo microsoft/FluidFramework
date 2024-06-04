@@ -34,11 +34,7 @@ import {
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ISharedDirectory,
-	ISharedMap,
-	SharedDirectory,
-} from "@fluidframework/map/internal";
+import type { ISharedDirectory, SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
 	reservedMarkerIdKey,
@@ -438,11 +434,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const cell = await d.getSharedObject<ISharedCell>(cellId);
 				assert((cell as any).runtime.idCompressor !== undefined);
 				cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
-				cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
+				cellDecompressedId = (cell as any).runtime.idCompressor.decompress(
+					cellCompressedId,
+				);
 				cell.set(cellDecompressedId);
 				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 				assert((directory as any).runtime.idCompressor !== undefined);
-				directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
+				directoryCompressedId = (
+					directory as any
+				).runtime.idCompressor.generateCompressedId();
 				directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
 					directoryCompressedId,
 				);
@@ -663,7 +663,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const map2 = await getMap(dataStore2);
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
-			[...Array(lots).keys()].map((i) => assert.strictEqual(map.get(i.toString()), testValue));
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(map.get(i.toString()), testValue),
+			);
 			[...Array(lots).keys()].map((i) =>
 				assert.strictEqual(map2.get(i.toString()), testValue),
 			);
@@ -1784,9 +1786,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
-		await detachedContainer.attach(
-			provider.driver.createCreateNewRequest(provider.documentId),
-		);
+		await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
 		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");

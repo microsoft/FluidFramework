@@ -10,22 +10,21 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type MapTree,
-	type SchemaAndPolicy,
 	type TreeValue,
 	ValueSchema,
+	type SchemaAndPolicy,
 } from "../core/index.js";
 import {
 	type CursorWithNode,
-	NodeKeyManager,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
+	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
-import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
 import {
@@ -35,11 +34,12 @@ import {
 	type ImplicitFieldSchema,
 	NodeKind,
 	type TreeNodeSchema,
-	extractFieldProvider,
-	getStoredKey,
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
+	getStoredKey,
+	extractFieldProvider,
 } from "./schemaTypes.js";
+import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 
 /**
  * Module notes:

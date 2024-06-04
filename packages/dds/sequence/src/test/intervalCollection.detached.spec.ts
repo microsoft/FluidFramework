@@ -43,8 +43,7 @@ describe("IntervalCollection detached", () => {
 		});
 
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 =
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const sharedString2 = await factory.load(
 			dataStoreRuntime2,
 			"B",
@@ -137,7 +136,10 @@ describe("IntervalCollection detached", () => {
 
 			containerRuntimeFactory.processAllMessages();
 			await assertEquivalentSharedStrings(sharedString, sharedString2);
-			assert.equal(collection.getIntervalById(interval.getIntervalId())?.properties.foo, "a2");
+			assert.equal(
+				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
+				"a2",
+			);
 		});
 
 		it("can be changed by another client after attaching", async () => {
@@ -152,7 +154,10 @@ describe("IntervalCollection detached", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			await assertEquivalentSharedStrings(sharedString, sharedString2);
-			assert.equal(collection.getIntervalById(interval.getIntervalId())?.properties.foo, "b1");
+			assert.equal(
+				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
+				"b1",
+			);
 		});
 	});
 

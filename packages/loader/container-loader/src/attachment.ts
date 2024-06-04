@@ -112,10 +112,7 @@ export interface AttachProcessProps {
 	 * The detached blob storage if it exists.
 	 */
 	// eslint-disable-next-line import/no-deprecated
-	readonly detachedBlobStorage?: Pick<
-		IDetachedBlobStorage,
-		"getBlobIds" | "readBlob" | "size"
-	>;
+	readonly detachedBlobStorage?: Pick<IDetachedBlobStorage, "getBlobIds" | "readBlob" | "size">;
 
 	/**
 	 * The caller should create the attachment summary for the container.
@@ -162,12 +159,12 @@ export const runRetriableAttachProcess = async ({
 					state: AttachState.Detached,
 					blobs: "outstanding",
 					redirectTable: new Map<string, string>(),
-				}
+			  }
 			: {
 					state: AttachState.Attaching,
 					summary: createAttachmentSummary(),
 					blobs: "none",
-				};
+			  };
 		setAttachmentData(currentData);
 	}
 

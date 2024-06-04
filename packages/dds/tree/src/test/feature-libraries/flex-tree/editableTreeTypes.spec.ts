@@ -310,7 +310,10 @@ describe("flexTreeTypes", () => {
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<
+					FlexTreeTypedNodeUnion<[() => typeof recursiveStruct]>,
+					Recursive
+				>
 			>;
 		}
 		// Type-Erased
@@ -319,7 +322,10 @@ describe("flexTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexTreeNodeSchema]>, FlexTreeNode>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexObjectNodeSchema]>, FlexTreeObjectNode>
+				areSafelyAssignable<
+					FlexTreeTypedNodeUnion<[FlexObjectNodeSchema]>,
+					FlexTreeObjectNode
+				>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -383,7 +389,10 @@ describe("flexTreeTypes", () => {
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[() => typeof recursiveStruct]>,
+					Recursive
+				>
 			>;
 		}
 		// Type-Erased
@@ -395,7 +404,10 @@ describe("flexTreeTypes", () => {
 				>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<[FlexObjectNodeSchema]>, FlexTreeObjectNode>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[FlexObjectNodeSchema]>,
+					FlexTreeObjectNode
+				>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -411,7 +423,10 @@ describe("flexTreeTypes", () => {
 				>
 			>;
 			type _6 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<FlexAllowedTypes>, FlexTreeUnknownUnboxed>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<FlexAllowedTypes>,
+					FlexTreeUnknownUnboxed
+				>
 			>;
 		}
 
