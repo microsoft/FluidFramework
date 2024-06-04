@@ -52,7 +52,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		anchor: TAnchor,
 	) {
 		this[anchorSymbol] = anchor;
-		this.#lazyCursor = cursor.fork();
+		this.#lazyCursor = cursor.fork("LazyEntity Fork");
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
 	}

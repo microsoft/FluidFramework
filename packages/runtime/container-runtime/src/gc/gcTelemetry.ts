@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import type { Tagged } from "@fluidframework/core-interfaces";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -12,7 +13,6 @@ import {
 	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { Tagged } from "@fluidframework/core-interfaces";
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 

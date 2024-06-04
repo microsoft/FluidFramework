@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";

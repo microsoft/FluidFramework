@@ -148,12 +148,8 @@ export type Value = undefined | TreeValue;
 export interface NodeData {
 	/**
 	 * A payload of arbitrary serializable data.
-	 *
-	 * TODO: clarify rules for mutating this value.
-	 * For now, avoid mutating the TreeValue itself.
-	 * For example, if its an object, make a modified copy of the object instead of mutating it.
 	 */
-	value?: TreeValue;
+	readonly value?: TreeValue;
 
 	/**
 	 * The meaning of this node.

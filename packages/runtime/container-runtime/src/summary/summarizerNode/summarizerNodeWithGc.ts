@@ -7,10 +7,8 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
@@ -78,15 +76,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	private referenceUsedRoutes: string[] | undefined;
 
 	// The base GC details of this node used to initialize the GC state.
-	private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
+	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
 	private baseGCDetailsLoaded: boolean = false;
 
 	// The base GC details for the child nodes. This is passed to child nodes when creating them.
-	private readonly childNodesBaseGCDetailsP: LazyPromise<
-		Map<string, IGarbageCollectionDetailsBase>
-	>;
+	private readonly childNodesBaseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
 
 	private gcData: IGarbageCollectionData | undefined;
 
@@ -306,28 +302,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentPath - The path of the parent node which is used to build the path of this node.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
-	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
-		validate: boolean,
 	) {
-		if (validate && this.wasGCMissed()) {
-			this.throwUnexpectedError({
-				eventName: "NodeDidNotRunGC",
-				proposalHandle,
-			});
-		}
-
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
 		}
 
-		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion, validate);
+		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
 
 		// If GC is disabled, skip setting pending summary with GC state.
 		if (!this.gcDisabled) {
@@ -526,7 +513,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * was previously used and became unused (or vice versa), its used state has changed.
 	 */
 	private hasUsedStateChanged(): boolean {
-		// If GC is disabled, we are not tracking used state, return false.
+		// If GC is disabled, it should not affect summary state, return false.
 		if (this.gcDisabled) {
 			return false;
 		}

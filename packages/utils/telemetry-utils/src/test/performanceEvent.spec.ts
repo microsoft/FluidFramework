@@ -57,13 +57,11 @@ describe("PerformanceEvent", () => {
 	});
 
 	it("Cancel then End", async () => {
-		await PerformanceEvent.timedExecAsync(
-			logger,
-			{ eventName: "Testing" },
-			asyncCallback,
-			{ start: true, end: true, cancel: "generic" },
-			true,
-		);
+		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, asyncCallback, {
+			start: true,
+			end: true,
+			cancel: "generic",
+		});
 		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 
@@ -74,7 +72,6 @@ describe("PerformanceEvent", () => {
 				{ eventName: "TestingAsyncOnce" },
 				asyncCallback,
 				{ start: true, end: true, cancel: "generic" },
-				true,
 				100, // sampleThreshold
 			);
 
@@ -98,7 +95,6 @@ describe("PerformanceEvent", () => {
 						{ eventName: "TestingAsync" },
 						asyncCallback,
 						{ start: true, end: true, cancel: "generic" },
-						true,
 					),
 				),
 			);
@@ -123,7 +119,6 @@ describe("PerformanceEvent", () => {
 						{ eventName: "TestingAsync" },
 						asyncCallback,
 						{ start: true, end: true, cancel: "generic" },
-						true,
 						20, // sampleThreshold
 					),
 				),
@@ -142,7 +137,6 @@ describe("PerformanceEvent", () => {
 				{ eventName: "TestingAsync", category: "error" },
 				asyncCallback,
 				{ start: true, end: true, cancel: "generic" },
-				true,
 				20, // sampleThreshold
 			);
 

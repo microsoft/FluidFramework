@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IQuorumClients } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/driver-definitions";
 
 import {
 	IOldestClientObservable,

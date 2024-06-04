@@ -9,7 +9,7 @@ import {
 	AllowedUpdateType,
 	FlexTreeView,
 	ISharedTree,
-	SharedTreeFactory,
+	SharedTree,
 	fail,
 } from "@fluidframework/tree/internal";
 
@@ -31,7 +31,7 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = this.runtime.createChannel(
 			/* id: */ undefined,
-			new SharedTreeFactory().type,
+			SharedTree.getFactory().type,
 		) as ISharedTree;
 
 		this.initializeTree(tree);
@@ -114,6 +114,6 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,
 	Bubblebench,
-	[new SharedTreeFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
+	[SharedTree.getFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
 	{},
 );

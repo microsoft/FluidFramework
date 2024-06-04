@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
@@ -26,6 +26,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -454,7 +455,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			testChannelId,
 			SharedMap.getFactory().type,
 		);
-		testChannel.handle.attachGraph();
+		toFluidHandleInternal(testChannel.handle).attachGraph();
 		await containerP;
 		await defPromise.promise;
 	});
@@ -643,7 +644,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {

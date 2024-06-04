@@ -151,13 +151,6 @@ export default class VersionCommand extends Command {
 			bumped,
 		};
 
-		const tablify = (scheme: VersionScheme) => {
-			return table(Object.entries(scheme), {
-				columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "left" }],
-				singleLine: true,
-			});
-		};
-
 		this.log(`Input string: ${data.input}`);
 		this.log(`Bump type: ${data.bumpType}`);
 
@@ -202,6 +195,13 @@ export default class VersionCommand extends Command {
 			isFluidInternalFormat: isInternalVersionScheme(parsedVersion) === true,
 		};
 	}
+}
+
+function tablify(scheme: VersionScheme): string {
+	return table(Object.entries(scheme), {
+		columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "left" }],
+		singleLine: true,
+	});
 }
 
 interface ParsedVersion {

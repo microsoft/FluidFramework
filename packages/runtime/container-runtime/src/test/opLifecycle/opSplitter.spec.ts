@@ -9,8 +9,8 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { CompressionAlgorithms } from "../../containerRuntime.js";

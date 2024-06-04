@@ -12,6 +12,15 @@
 			"type": "node",
 		},
 		{
+			"name": "flub generate entrypoints",
+			"program": "${workspaceFolder}/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "entrypoints", "--outDir", "lib"],
+		},
+		{
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",

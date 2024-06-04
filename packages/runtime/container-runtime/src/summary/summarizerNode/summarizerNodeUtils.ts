@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
+import { SummaryObject } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 
@@ -52,7 +53,7 @@ export interface ISummarizerNodeRootContract {
 		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
-	completeSummary(proposalHandle: string, validate: boolean): void;
+	completeSummary(proposalHandle: string): void;
 	clearSummary(): void;
 	refreshLatestSummary(
 		proposalHandle: string,

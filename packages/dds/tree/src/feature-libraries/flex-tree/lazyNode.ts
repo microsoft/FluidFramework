@@ -23,7 +23,6 @@ import {
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { LocalNodeKey } from "../node-key/index.js";
 import {
 	Any,
 	FlexAllowedTypes,
@@ -47,7 +46,6 @@ import {
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
-	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
@@ -71,7 +69,7 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
-import { LazyNodeKeyField, makeField } from "./lazyField.js";
+import { makeField } from "./lazyField.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
@@ -82,20 +80,17 @@ import { treeStatusFromAnchorCache } from "./utilities.js";
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
-		context.forest.anchors.locate(anchor) ??
+		context.checkout.forest.anchors.locate(anchor) ??
 		fail("cursor should point to a node that is not the root of the AnchorSet");
 	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
-		context.forest.anchors.forget(anchor);
+		context.checkout.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
 		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
-	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
-	anchorNode.slots.set(flexTreeSlot, output);
-	anchorNode.on("afterDestroy", cleanupTree);
-	return output;
+	return buildSubclass(context, schema, cursor, anchorNode, anchor);
 }
 
 function cleanupTree(anchor: AnchorNode): void {
@@ -178,7 +173,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
@@ -187,7 +182,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(this[anchorSymbol]);
+		this.context.checkout.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {
@@ -266,7 +261,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
+		return treeStatusFromAnchorCache(this.anchorNode);
 	}
 
 	public on<K extends keyof FlexTreeNodeEvents>(
@@ -350,7 +345,7 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 			key: FieldKey,
 			map: FlexTreeMapNode<TSchema>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		const fn = thisArg !== undefined ? callbackFn.bind(thisArg) : callbackFn;
 		for (const [key, value] of this.entries()) {
@@ -463,48 +458,17 @@ export function propertyNameFromFieldKey<T extends string>(key: T): PropertyName
 	return key as PropertyNameFromFieldKey<T>;
 }
 
-export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
-	extends LazyTreeNode<TSchema>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
-		// TODO: Optimize this to avoid allocating the field object.
-
-		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.objectNodeFields.get(key);
-
-		if (fieldSchema === undefined) {
-			return undefined;
-		}
-
-		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
-		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
-		// assert(
-		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
-		// 	"invalid node key field",
-		// );
-
-		if (this.context.nodeKeyFieldKey === undefined) {
-			return undefined;
-		}
-
-		return field.localNodeKey;
-	}
-}
-
 export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyObjectNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
+): LazyTreeNode<TSchema> & FlexTreeObjectNodeTyped<TSchema> {
 	const objectNodeClass = getOrCreate(cachedStructClasses, schema, () =>
 		buildStructClass(schema),
 	);
-	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyObjectNode<TSchema> &
+	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyTreeNode<TSchema> &
 		FlexTreeObjectNodeTyped<TSchema>;
 }
 
@@ -515,7 +479,7 @@ const cachedStructClasses = new WeakMap<
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyObjectNode<FlexObjectNodeSchema>
+	) => LazyTreeNode<FlexObjectNodeSchema>
 >();
 
 function getBoxedField(
@@ -535,7 +499,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-) => LazyObjectNode<TSchema> {
+) => LazyTreeNode<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
@@ -605,7 +569,7 @@ function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyObjectNode<TSchema> {
+	class CustomStruct extends LazyTreeNode<TSchema> {
 		public constructor(
 			context: Context,
 			cursor: ITreeSubscriptionCursor,

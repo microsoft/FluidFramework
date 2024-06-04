@@ -13,6 +13,7 @@ import {
 	IZookeeperClient,
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
@@ -39,7 +40,6 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	 * See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
 	 */
 	additionalOptions?: kafkaTypes.ConsumerGlobalConfig;
-	eventHubConnString?: string;
 }
 
 /**
@@ -101,7 +101,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return this.latestOffsets.get(partitionId);
 	}
 
-	protected connect() {
+	protected async connect() {
 		if (this.closed) {
 			return;
 		}
@@ -169,7 +169,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 			this.error(error, { restart: false, errorLabel: "rdkafkaConsumer:connection.failure" });
 
-			this.connect();
+			await this.connect();
 		});
 
 		consumer.on("data", this.processMessage.bind(this));
@@ -315,8 +315,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		consumer.on("event.log", (event) => {
 			this.emit("log", event);
+			Lumberjack.info(`RdKafka consumer: ${event.message}`);
 		});
 
+		await this.setOauthBearerTokenIfNeeded(consumer);
 		consumer.connect();
 	}
 

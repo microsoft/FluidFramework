@@ -5,7 +5,7 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { ISubscribable, createEmitter } from "../../events/index.js";
+import { Listenable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
 
 import { TreeNodeSchemaIdentifier } from "./format.js";
@@ -39,9 +39,7 @@ export interface SchemaEvents {
  * A collection of stored schema that fires events in response to changes.
  * @internal
  */
-export interface TreeStoredSchemaSubscription
-	extends ISubscribable<SchemaEvents>,
-		TreeStoredSchema {}
+export interface TreeStoredSchemaSubscription extends Listenable<SchemaEvents>, TreeStoredSchema {}
 
 /**
  * Mutable collection of stored schema.

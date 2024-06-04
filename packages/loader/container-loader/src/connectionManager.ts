@@ -4,18 +4,32 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	ICriticalContainerError,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import {
+	ConnectionMode,
+	IClient,
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
+	DriverErrorTypes,
+	IAnyDriverError,
+	IClientConfiguration,
+	IDocumentMessage,
+	INack,
+	INackContent,
+	ISequencedDocumentSystemMessage,
+	ISignalClient,
+	ITokenClaims,
+	MessageType,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -26,22 +40,6 @@ import {
 	isRuntimeMessage,
 	logNetworkFailure,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	IClientDetails,
-	IDocumentMessage,
-	INack,
-	INackContent,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ISignalClient,
-	ISignalMessage,
-	ITokenClaims,
-	MessageType,
-	ScopeType,
-} from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,
@@ -204,6 +202,9 @@ export class ConnectionManager implements IConnectionManager {
 	private pendingConnection: IPendingConnection | undefined;
 	private connection: IDocumentDeltaConnection | undefined;
 
+	/** Details about connection. undefined if there is no active connection. */
+	private _connectionDetails?: IConnectionDetailsInternal;
+
 	/** file ACL - whether user has only read-only access to a file */
 	private _readonlyPermissions: boolean | undefined;
 
@@ -256,6 +257,12 @@ export class ConnectionManager implements IConnectionManager {
 	public get clientId() {
 		return this.connection?.clientId;
 	}
+
+	/** Details about connection. undefined if there is no active connection. */
+	public get connectionDetails() {
+		return this._connectionDetails;
+	}
+
 	/**
 	 * Automatic reconnecting enabled or disabled.
 	 * If set to Never, then reconnecting will never be allowed.
@@ -767,6 +774,7 @@ export class ConnectionManager implements IConnectionManager {
 		const connection = this.connection;
 		// Avoid any re-entrancy - clear object reference
 		this.connection = undefined;
+		this._connectionDetails = undefined;
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
@@ -922,9 +930,9 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		const details = ConnectionManager.detailsFromConnection(connection, reason);
-		details.checkpointSequenceNumber = checkpointSequenceNumber;
-		this.props.connectHandler(details);
+		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
+		this._connectionDetails.checkpointSequenceNumber = checkpointSequenceNumber;
+		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;
 

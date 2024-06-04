@@ -28,9 +28,10 @@ import {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
@@ -583,7 +584,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
 				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
-				const ddsHandle = dataObject._root.get<IFluidHandle<ISharedMap>>("dds1");
+				const ddsHandle = dataObject._root.get<IFluidHandleInternal<ISharedMap>>("dds1");
 				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
 				await assert.doesNotReject(
 					async () => ddsHandle.get(),

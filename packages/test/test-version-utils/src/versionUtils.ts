@@ -114,7 +114,8 @@ async function removeInstalled(version: string) {
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
-const npmCmd = process.platform.includes("win") ? "npm.cmd" : "npm";
+const npmCmd =
+	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
 
 /**
  * @internal
@@ -248,9 +249,13 @@ export async function ensureInstalled(
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
 							reject(
 								new Error(
-									`Failed to initialize install directory ${modulePath}\n${stderr}`,
+									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
 								),
 							);
 						}
@@ -272,7 +277,15 @@ export async function ensureInstalled(
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
-							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
+							reject(
+								new Error(
+									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
+								),
+							);
 						}
 						resolve();
 					},

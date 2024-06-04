@@ -252,3 +252,68 @@ Accomplishing this goal requires specialized tree data formats or APIs at a few 
     Specialized chunked implementations can declare support for fast path APIs via symbols to allow their user to query for and use them.
 
 To enable efficient encoding and decoding between these formats, both are owned by chunked forest (allowing zero copy optimizations for data arrays between the two), and ref-counting is used on chunks so trees can be lazily cloned, and modified in place when only referenced once.
+
+# Runtime Performance
+
+Where performance costs are incurred is important.
+
+## Application of remote edits vs creation of local edits
+
+SharedTree is designed minimize the cost of applying edits from remote clients since any client which can't keep up with the remote edit rate is unable to collaborate.
+
+This is most important when a client is falling behind. Thus it's very useful for clients which are behind to be able to improve their remote edit application rate via batching.
+SharedTree is designed to enable this optimization in the future, but currently can not perform it as the runtime does not yet provide access to the backlog of edits which need to be processed.
+
+Another way SharedTree is optimized for performant application of remote edits is to push as much of the cost as possible onto the creation of edits,
+so it is paid by the client producing the edits, slowing down their edit stream (which reduces the burden on remote clients) as well as lowering the cost of applying those edits for the remote clients.
+One way SharedTree does this is by leveraging Fluid's collaboration window limits: if applying an op would require processing too much history, the client sending the op is required to perform that work themselves to produce a more self-contained op.
+The best example of this is the resubmit op flow, which has the client sending the op rebase it if it gets too old.
+
+## Eager vs Lazy
+
+Generally, eagerly computing things is simpler, and if they end up being required, faster.
+Eager computation also often saves on memory footprint.
+SharedTree assumes that the app using the tree will frequently read data, however it is designed to support use cases with large amounts of data, and applications that only read a small part of it.
+
+Thus SharedTree aims to eagerly compute things that will be needed regardless of which data is read,
+as well as eagerly compute things that are cheap enough that it is not a performance issue.
+
+Lazily computing values can save work if they end up not being needed, but can also increase latency when first accessing them.
+If this latency becomes problematic (which has not yet occurred for anything in SharedTree), pre-caching these computations can be performed when idle (for example after the JavaScript task that invalided a previously cached value).
+Assuming the laziness has negligible overhead, this avoids delaying responsiveness of the app to wait for the computation when the invalidation occurs (it remains no worse than an eager implementation would be even if the value is requested) while also avoiding harming the responsiveness of an operation that might asynchronously request the value in the future.
+
+An example of where SharedTree acts eagerly is resolving edits in the `editManager`: this optimizes for maximal remote edit throughput.
+An example of where SharedTree is lazy is creating the application facing simple-tree nodes: this allows applications which only read part of the tree to avoid a lot of costs that come with large trees.
+Forest is currently eager, but when support for forests which do not hold all the tree in memory is added, applying edits to non-downloaded parts will have to become lazy.
+
+## Asymptotics
+
+There are several different sizes which SharedTree performance scales with:
+
+-   The depth of the tree.
+    Many costs scale linearly with the depth. This includes the size of ops, the time to apply ops, stack space used in many cases etc.
+    Overall extreme tree depth is not an optimization priority for SharedTree,
+    however it is designed to enable amortization of depth related costs when many operations are applied within the same subtree.
+    If depth related costs become problematic, increasing the ability to amortize/deduplicate depth related costs,
+    as well as optimizing constant factors should be the preferred approaches.
+
+-   The total number of nodes. SharedTree is designed to be able to eventually support trees are not fully loaded into memory any point.
+    This means that functionality which all trees while require (for example merge resolution, edit application, summarization
+    and reading subsets of the tree data) must be possible incurring only `O(log N)` overhead where N is the total number of nodes in the tree.
+    While current forest implementations and view APIs and summary formats do not support this scalability,
+    the design must ensure that it is possible to add alternative implementations with that scalability in the future.
+
+-   Length of sequence fields.
+    Optimized handling of long sequences is not currently a priority. It is however important to ensuring that it is possible to eventually support long sequences editing and indexing with at most `O(log N)` costs.
+    This means that the format for edits ensures this is possible, but the actual implementation of things like AnchorSet and simple-tree may incur `O(N)` costs for now.
+
+-   Number of fields.
+    Performance related to number of fields has the same requirements as lengths of fields, at least when it come to map nodes.
+
+-   Amount of Schema.
+    Scaling to very large schema is not a priority.
+    The cost/size of the schema should be amortized over the session:
+    no schema proportional costs should be incurred during normal usage as part of any operation a client may do many times in a session.
+    This means that in typical use, ops and summaries should not have to copy the schema.
+    SharedTree assumes that the schema will always be practical to download and keep in memory.
+    Schema derived data should be eagerly evaluated and cached to optimize runtime performance of content using the schema.

@@ -19,12 +19,12 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
 
@@ -223,7 +223,7 @@ describe("Matrix fuzz tests", function () {
 		factory: SharedMatrix.getFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: assertMatricesAreEquivalent,
+		validateConsistency: async (a, b) => assertMatricesAreEquivalent(a.channel, b.channel),
 		minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
 			if (p in op && typeof op[p] === "number" && op[p] > 0) {
 				op[p]--;

@@ -12,7 +12,7 @@ export {
 	getOdspScope,
 	getPushRefreshTokenFn,
 	getRefreshTokenFn,
-	IClientConfig,
+	IPublicClientConfig,
 	IOdspAuthRequestInfo,
 	IOdspTokens,
 	pushScope,
