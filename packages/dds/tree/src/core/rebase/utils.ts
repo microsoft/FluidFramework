@@ -80,7 +80,7 @@ export interface BranchRebaseResult<TChange> {
 	readonly sourceBranchLength?: number;
 
 	/**
-	 * Number of commits rebased over to the target branch.
+	 * Number of commits rebased over on the target branch.
 	 */
 	readonly rebaseDistance?: number;
 }
