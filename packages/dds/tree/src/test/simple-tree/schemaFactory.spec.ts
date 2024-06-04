@@ -137,7 +137,7 @@ describe("schemaFactory", () => {
 		// Structurally typed and/or POJO mode types:
 		const s = hydrate(StructuralArray, []);
 		// This works correctly, but is currently rejected by the type system. This is fine as Tree.is can be used instead.
-		assert(s instanceof (StructuralArray as any));
+		assert(s instanceof (StructuralArray as never));
 		// This case is expressible without type errors, so it is important that it works.
 		assert(s instanceof TreeNode);
 		assert(!(s instanceof B));

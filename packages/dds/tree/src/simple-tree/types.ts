@@ -126,6 +126,7 @@ export abstract class TreeNode implements WithType {
  * @param base - prototype to search for
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
+// eslint-disable-next-line @rushstack/no-new-null
 function inPrototypeChain(derived: object | null, base: object): boolean {
 	let checking = derived;
 	while (checking !== null) {
