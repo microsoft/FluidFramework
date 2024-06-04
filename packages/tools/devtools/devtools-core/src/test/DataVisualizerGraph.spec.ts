@@ -222,7 +222,11 @@ describe("DataVisualizerGraph unit tests", () => {
 		// Pass in the empty containerData to the visualizer.
 		const emptyRecord: Record<string, IFluidLoadable> = {};
 
-		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
+		const visualizer = new DataVisualizerGraph(
+			emptyRecord,
+			defaultVisualizers,
+			defaultEditors,
+		);
 
 		const childEmptyRecord = await visualizer.renderRootHandles();
 		const expectedChildEmptyRecord = {};

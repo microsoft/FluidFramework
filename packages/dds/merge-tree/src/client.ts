@@ -190,9 +190,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public peekPendingSegmentGroups(): SegmentGroup | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(
 		count: number = 1,
+		// eslint-disable-next-line import/no-deprecated
 	): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;

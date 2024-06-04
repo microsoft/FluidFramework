@@ -117,8 +117,9 @@ export interface IFluidErrorAnnotations {
 function patchLegacyError(
 	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } =
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		legacyError as any;
 	if (patchMe.errorInstanceId === undefined) {
 		patchMe.errorInstanceId = uuid();

@@ -225,9 +225,7 @@ export class DataVisualizerGraph
 				} else {
 					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
 					result[key] =
-						fluidObjectId === undefined
-							? unknownObjectNode
-							: createHandleNode(fluidObjectId);
+						fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
 				}
 			}),
 		);
@@ -337,7 +335,10 @@ export class DataVisualizerGraph
  * Additionally, whenever the associated `ISharedObject` is updated (i.e. whenever its "op" event is emitted),
  * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
  */
-export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> implements IDisposable {
+export class VisualizerNode
+	extends TypedEventEmitter<DataVisualizerEvents>
+	implements IDisposable
+{
 	/**
 	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
@@ -533,5 +534,7 @@ export async function visualizeChildData(
  * @remarks Implemented by checking for the particular properties / methods we use in this module.
  */
 function isSharedObject(value: Partial<ISharedObject>): value is ISharedObject {
-	return value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined;
+	return (
+		value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined
+	);
 }

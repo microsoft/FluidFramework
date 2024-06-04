@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-// eslint-disable-next-line import/no-internal-modules
 import {
 	dataStoreNodePathOnly,
 	shouldAllowGcSweep,
 	urlToGCNodePath,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../gc/gcHelpers.js";
 import { GCFeatureMatrix } from "../../gc/index.js";
 

@@ -4,7 +4,12 @@
  */
 
 export { type Buffer } from "./bufferNode.js";
-export { bufferToString, IsoBuffer, stringToBuffer, Uint8ArrayToString } from "./bufferNode.js";
+export {
+	bufferToString,
+	IsoBuffer,
+	stringToBuffer,
+	Uint8ArrayToString,
+} from "./bufferNode.js";
 export { gitHashFile, hashFile } from "./hashFileNode.js";
 export { performance } from "./performanceIsomorphic.js";
 

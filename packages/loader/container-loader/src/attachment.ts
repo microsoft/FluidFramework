@@ -111,8 +111,8 @@ export interface AttachProcessProps {
 	/**
 	 * The detached blob storage if it exists.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly detachedBlobStorage?: Pick<
+		// eslint-disable-next-line import/no-deprecated
 		IDetachedBlobStorage,
 		"getBlobIds" | "readBlob" | "size"
 	>;
