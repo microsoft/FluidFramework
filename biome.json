@@ -18,7 +18,12 @@
 			"**/_package.json",
 			"**/biome.jsonc",
 			"**/oclif.manifest.json",
-			"packages/test/snapshots/content/**"
+			"packages/test/snapshots/content/**",
+			"build-tools/**",
+			"common/**",
+			"docs/**",
+			"server/**",
+			"tools/**"
 		],
 		"maxSize": 2097152
 	},
@@ -57,7 +62,12 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/*.jsonc", "**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
+			"include": [
+				"**/*.jsonc",
+				"**/.vscode/*.json",
+				"**/tsconfig*.json",
+				"**/api-extractor*.json"
+			],
 			"json": {
 				"parser": {
 					"allowComments": true,

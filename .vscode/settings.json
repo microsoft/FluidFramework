@@ -6,8 +6,8 @@
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
-  // We prefer to use type-only imports, so we want the autoimporter to do that by default.
-  "typescript.preferences.preferTypeOnlyAutoImports": true,
+	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
 
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
@@ -81,7 +81,7 @@
 	"biome.searchInPath": false,
 
 	// Use the biome executable from the node_modules folder.
-  "biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
+	"biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
 
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.

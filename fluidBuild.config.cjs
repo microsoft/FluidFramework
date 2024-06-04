@@ -45,11 +45,11 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: ["check:format"],
+			dependsOn: [],
 			script: false,
 		},
 		"checks:fix": {
-			dependsOn: ["^checks:fix"],
+			dependsOn: [],
 			script: false,
 		},
 		"build:copy": [],
