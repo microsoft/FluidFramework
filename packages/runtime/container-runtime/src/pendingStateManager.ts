@@ -75,6 +75,13 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
+function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+	return {
+		...message,
+		localOpMetadata: undefined,
+	};
+}
+
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
@@ -154,9 +161,10 @@ export class PendingStateManager implements IDisposable {
 			}
 		});
 		return {
-			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
-				return { ...message, localOpMetadata: undefined };
-			}),
+			pendingStates: [
+				...newSavedOps,
+				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+			],
 		};
 	}
 
@@ -251,7 +259,7 @@ export class PendingStateManager implements IDisposable {
 			0x169 /* "No pending message found for this remote message" */,
 		);
 		pendingMessage.sequenceNumber = message.sequenceNumber;
-		this.savedOps.push(pendingMessage);
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
 
