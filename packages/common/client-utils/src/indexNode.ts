@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Entrypoint for Node.js-specific code in the package.
+// (See 'Isomorphic Code' section in the package README.md.)
+
 export { type Buffer } from "./bufferNode.js";
 export {
 	bufferToString,
@@ -13,7 +16,7 @@ export {
 export { gitHashFile, hashFile } from "./hashFileNode.js";
 export { performance } from "./performanceIsomorphic.js";
 
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingNode.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { IsomorphicPerformance } from "./performanceIsomorphic.js";
