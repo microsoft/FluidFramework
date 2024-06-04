@@ -79,7 +79,7 @@ describe("SchematizingSimpleTreeView", () => {
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
-		assert.equal(view.compatibility.isExactMatch, true);
+		assert.equal(view.compatibility.isEquivalent, true);
 		const root = view.root;
 		assert.equal(root, 5);
 		const log: [string, unknown][] = [];
@@ -138,7 +138,7 @@ describe("SchematizingSimpleTreeView", () => {
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
 		]);
 		log.length = 0;
-		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.canView, false);
 
@@ -149,7 +149,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
-		assert.equal(view.compatibility.isExactMatch, true);
+		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
 
@@ -170,7 +170,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
-		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
@@ -180,7 +180,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
-		assert.equal(view.compatibility.isExactMatch, true);
+		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.root, 5);
 	});
 
@@ -190,7 +190,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
@@ -212,7 +212,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
-		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,

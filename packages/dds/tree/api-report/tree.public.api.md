@@ -258,7 +258,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
-    readonly isExactMatch: boolean;
+    readonly isEquivalent: boolean;
 }
 
 // @public @sealed

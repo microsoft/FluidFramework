@@ -138,7 +138,7 @@ Before reading through the next section, the reader should familiarize themselve
 This section outlines some compatibility policies applications can implement, including code samples on how to do so.
 Choices here are non-committal in the sense that an application won't incur indefinite backward-compatibility promises in their ecosystem for making some particular choice.
 
-> **_WARNING_** Currently, `SharedTree` only supports the 'enforce exact schema match' policy. There are near-term plans (with the same API) to allow opening a document which has additional optional fields in its stored schema that are not present in the view schema, and longer-term plans to allow opening documents using older view schemas when a document's stored schema has been upgraded with other types of backward-compatible changes.
+> **_WARNING_** Currently, `SharedTree` only supports the 'enforce equivalent schema' policy. There are near-term plans (with the same API) to allow opening a document which has additional optional fields in its stored schema that are not present in the view schema, and longer-term plans to allow opening documents using older view schemas when a document's stored schema has been upgraded with other types of backward-compatible changes.
 
 The main consequences for particular policies are the constraints around how application logic modifications can be made over time.
 Policies which are stricter about schemas aligning cross-client will require applications to wait longer for code saturation before leveraging new features.
@@ -154,13 +154,13 @@ Policies implemented here also upgrade a document's schema on open, which doesn'
 
 #### Enforce Exact Schema Match
 
-The simplest approach from a compatibility standpoint is to only open documents which exactly match the application's current view schema:
+The simplest approach from a compatibility standpoint is to only open documents which have schema equivalent to the application's current view schema:
 
 ```typescript
 async function render(tree: ITree) {
 	const view = await tree.viewWith(configuration);
 	const { compatibility } = view;
-	if (!compatibility.isExactMatch) {
+	if (!compatibility.isEquivalent) {
 		if (compatibility.canUpgrade) {
 			view.upgradeSchema();
 		} else {
@@ -170,7 +170,7 @@ async function render(tree: ITree) {
 	}
 
 	view.events.on("schemaChanged", () => {
-		if (!view.compatibility.isExactMatch) {
+		if (!view.compatibility.isEquivalent) {
 			renderError(
 				"Document has been upgraded. This version of the application is unable to open the document.",
 			);

@@ -13,7 +13,7 @@ Application authors are encouraged to develop a compatibility policy which they 
 
 To make the details of schema compatibilities that SharedTree supports more clear,
 `TreeView.error` has been functionally replaced with the `compatibility` property.
-Users desiring the previous strict behavior should use `view.compatibility.isExactMatch` at appropriate places in application logic.
+Users desiring the previous strict behavior should use `view.compatibility.isEquivalent` at appropriate places in application logic.
 
 # `ITree.schematize` deprecation
 

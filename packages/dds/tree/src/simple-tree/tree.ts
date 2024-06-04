@@ -273,7 +273,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 * Equivalence here is defined in terms of allowed documents because there are some degenerate cases where schemas are not
-	 * equal in a strict sense but still allow the same documents, and the document notion is more useful to applications.
+	 * exact matches in a strict (schema-based) sense but still allow the same documents, and the document notion is more useful to applications.
 	 *
 	 * Examples which are expressible where this may occur include:
 	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
@@ -281,13 +281,13 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * These cases are typically not interesting to applications.
 	 */
-	readonly isExactMatch: boolean;
+	readonly isEquivalent: boolean;
 
 	/**
 	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
 	 * If false, {@link TreeView.root} will throw upon access.
 	 *
-	 * Currently, this field is true iff `isExactMatch` is true.
+	 * Currently, this field is true iff `isEquivalent` is true.
 	 * Do not rely on this:
 	 * there are near-term plans to extend support for viewing documents when the stored schema contains additional optional fields not present in the view schema.
 	 * The other two types of backward-compatible changes (field relaxations and addition of allowed field types) will eventually be supported as well,

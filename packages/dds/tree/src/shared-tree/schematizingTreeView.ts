@@ -96,7 +96,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.currentCompatibility = {
 			canView: false,
 			canUpgrade: true,
-			isExactMatch: false,
+			isEquivalent: false,
 			canInitialize: true,
 		};
 		this.update();
@@ -135,7 +135,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
-		if (compatibility.isExactMatch) {
+		if (compatibility.isEquivalent) {
 			// No-op
 			return;
 		}
@@ -200,11 +200,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		const canView =
 			result.write === Compatibility.Compatible && result.read === Compatibility.Compatible;
 		const canUpgrade = result.read === Compatibility.Compatible;
-		const isExactMatch = canView && canUpgrade;
+		const isEquivalent = canView && canUpgrade;
 		const compatibility: SchemaCompatibilityStatus = {
 			canView,
 			canUpgrade,
-			isExactMatch,
+			isEquivalent,
 			canInitialize: canInitialize(this.checkout),
 		};
 		let lastRoot =
