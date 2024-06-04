@@ -56,7 +56,7 @@ Our general strategy for this is as follows:
 
 One thing it is important to be aware of is that our CJS support relies on copying a stub package.json
 file to dist/package.json to set the module type to commonjs. When resolving internal imports for CJS
-packages, module resolution will wall up from the \*.js file and discover this stub package.json. Because
+packages, module resolution will walk up from the \*.js file and discover this stub package.json. Because
 the stub package.json lacks an export map, internal imports will not be remapped.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
