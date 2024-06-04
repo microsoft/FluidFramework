@@ -456,7 +456,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 }
 
 // @public
-export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
     readonly enableSchemaValidation: boolean;
     readonly schema: TSchema;

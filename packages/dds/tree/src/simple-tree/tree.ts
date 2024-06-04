@@ -132,12 +132,12 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 	implements Required<ITreeViewConfiguration<TSchema>>
 {
 	/**
-	 * {@inheritDoc TreeViewConfiguration.schema}
+	 * {@inheritDoc ITreeViewConfiguration.schema}
 	 */
 	public readonly schema: TSchema;
 
 	/**
-	 * {@inheritDoc TreeViewConfiguration.enableSchemaValidation}
+	 * {@inheritDoc ITreeViewConfiguration.enableSchemaValidation}
 	 */
 	public readonly enableSchemaValidation: boolean;
 
