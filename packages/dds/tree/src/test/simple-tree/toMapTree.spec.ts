@@ -32,13 +32,14 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
+	addDefaultsToMapTree,
 	cursorFromFieldData,
 	cursorFromNodeData,
 	nodeDataToMapTree as nodeDataToMapTreeBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createNodeKeyManager, MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;
@@ -55,12 +56,10 @@ describe("toMapTree", () => {
 		allowedTypes: ImplicitAllowedTypes,
 		schemaValidationPolicy?: SchemaAndPolicy,
 	): MapTree {
-		return nodeDataToMapTreeBase(
-			tree,
-			normalizeAllowedTypes(allowedTypes),
-			nodeKeyManager,
-			schemaValidationPolicy,
-		);
+		const normalizedTypes = normalizeAllowedTypes(allowedTypes);
+		const mapTree = nodeDataToMapTreeBase(tree, normalizedTypes, schemaValidationPolicy);
+		addDefaultsToMapTree(mapTree, normalizedTypes);
+		return mapTree;
 	}
 
 	it("string", () => {
@@ -742,6 +741,7 @@ describe("toMapTree", () => {
 			const tree = {};
 
 			const actual = nodeDataToMapTree(tree, schema);
+			addDefaultsToMapTree(actual, [schema], nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -771,6 +771,7 @@ describe("toMapTree", () => {
 			const tree = {};
 
 			const actual = nodeDataToMapTree(tree, schema);
+			addDefaultsToMapTree(actual, [schema], nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -1165,7 +1166,7 @@ describe("toMapTree", () => {
 				cursorFromNodeData(
 					nodeData,
 					[schemaFactory.string],
-					createNodeKeyManager(),
+					undefined,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1177,7 +1178,7 @@ describe("toMapTree", () => {
 						cursorFromNodeData(
 							content,
 							[schemaFactory.string],
-							createNodeKeyManager(),
+							undefined,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
@@ -1192,7 +1193,7 @@ describe("toMapTree", () => {
 				cursorFromFieldData(
 					content,
 					fieldSchema,
-					createNodeKeyManager(),
+					undefined,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1205,7 +1206,7 @@ describe("toMapTree", () => {
 						cursorFromFieldData(
 							content,
 							fieldSchema,
-							createNodeKeyManager(),
+							undefined,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
