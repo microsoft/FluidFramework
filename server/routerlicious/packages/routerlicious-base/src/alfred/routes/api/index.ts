@@ -14,6 +14,7 @@ import {
 	ITenantManager,
 	IThrottler,
 	ITokenRevocationManager,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import cors from "cors";
@@ -40,6 +41,7 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: IClusterDrainingChecker,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -64,6 +66,7 @@ export function create(
 		documentDeleteService,
 		tokenRevocationManager,
 		revokedTokenChecker,
+		clusterDrainingChecker,
 	);
 	const apiRoute = api.create(
 		config,

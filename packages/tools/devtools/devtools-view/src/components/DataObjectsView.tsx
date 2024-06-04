@@ -2,22 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
-import { Tree as FluentTree } from "@fluentui/react-components/unstable";
 
+import { Tree as FluentTree } from "@fluentui/react-components";
 import {
-	RootDataVisualizations,
 	GetRootDataVisualizations,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
+	RootDataVisualizations,
 	type RootHandleNode,
-} from "@fluidframework/devtools-core";
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
+import React from "react";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { TreeDataView } from "./data-visualization";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+
+import { Waiting } from "./Waiting.js";
+import { TreeDataView } from "./data-visualization/index.js";
 
 const loggingContext = "INLINE(VIEW)";
 

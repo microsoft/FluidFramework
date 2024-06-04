@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { IsoBuffer } from "@fluid-internal/client-utils";
-import { MockRuntime, validateSummary } from "./blobManager.spec";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { MockRuntime, validateSummary } from "./blobManager.spec.js";
 
 describe("getPendingLocalState", () => {
 	let runtime: MockRuntime;
@@ -33,7 +35,6 @@ describe("getPendingLocalState", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);
@@ -63,7 +64,6 @@ describe("getPendingLocalState", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
 		assert.ok(Object.values<any>(pendingBlobs)[0].uploadTime);
 
 		const summaryData = validateSummary(runtime);
@@ -156,7 +156,6 @@ describe("getPendingLocalState", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);

@@ -4,10 +4,10 @@
  */
 
 import {
-	type IDeltaConnection,
 	type IChannelServices,
 	type IChannelStorageService,
-} from '@fluidframework/datastore-definitions';
+	type IDeltaConnection,
+} from '@fluidframework/datastore-definitions/internal';
 
 /**
  * ShimChannelServices wraps an existing IChannelServices object and provides a new ShimDeltaConnection

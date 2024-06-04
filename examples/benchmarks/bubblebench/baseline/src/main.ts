@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 
-import { AppState } from "./state";
+import { AppState } from "./state.js";
 
 /**
  * @internal

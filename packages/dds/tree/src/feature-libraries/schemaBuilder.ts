@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema } from "../core";
-import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase";
-import { FieldKinds } from "./default-schema";
-import { LeafNodeSchema } from "./typed-schema";
+import { ValueSchema } from "../core/index.js";
+
+import { FieldKinds } from "./default-schema/index.js";
+import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase.js";
+import { LeafNodeSchema } from "./typed-schema/index.js";
 
 /**
  * Extends {@link SchemaBuilderBase} with functionality only used to create built in special libraries.

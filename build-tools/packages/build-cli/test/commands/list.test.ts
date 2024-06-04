@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { expect } from "chai";
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { FeedsForPackages } from "../../src/commands/list";
+
+import { FeedsForPackages } from "../../src/commands/list.js";
+import { Context } from "../../src/library/index.js";
 
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();

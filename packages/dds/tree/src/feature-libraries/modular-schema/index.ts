@@ -4,13 +4,12 @@
  */
 
 export {
-	isNeverField,
-	isNeverTree,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-} from "./comparison";
+} from "./comparison.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -18,14 +17,16 @@ export {
 	CrossFieldQuerySet,
 	CrossFieldTarget,
 	setInCrossFieldMap,
-} from "./crossFieldQueries";
+} from "./crossFieldQueries.js";
 export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
-} from "./modularChangeFormat";
-export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind";
+	EncodedNodeChangeset,
+} from "./modularChangeFormat.js";
+export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -40,18 +41,23 @@ export {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
-} from "./fieldChangeHandler";
+	FieldChangeEncodingContext,
+} from "./fieldChangeHandler.js";
 export {
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
-	NodeChangeset,
 	NodeExistsConstraint,
-} from "./modularChangeTypes";
-export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
-export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+	NodeId,
+} from "./modularChangeTypes.js";
+export {
+	convertGenericChange,
+	genericChangeHandler,
+	genericFieldKind,
+} from "./genericFieldKind.js";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -61,5 +67,7 @@ export {
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
-} from "./modularChangeFamily";
-export { makeV0Codec } from "./modularChangeCodecs";
+	updateRefreshers,
+} from "./modularChangeFamily.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";

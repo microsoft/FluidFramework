@@ -2,17 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+
+import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
-} from "@fluidframework/odsp-doclib-utils";
-import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
-import { IOdspCredentials } from "./OdspClientFactory";
+} from "@fluidframework/odsp-doclib-utils/internal";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+
+import { IOdspCredentials } from "./OdspClientFactory.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
@@ -50,9 +53,8 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		refreshToken: string;
 	}> {
 		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
+		const clientConfig: IPublicClientConfig = {
 			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
@@ -62,7 +64,6 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const body = {
 			scope,
 			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
 			...credentials,
 		};
 		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));

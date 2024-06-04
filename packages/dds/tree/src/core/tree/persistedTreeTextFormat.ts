@@ -4,7 +4,8 @@
  */
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
-import { schemaFormat } from "../schema-stored";
+
+import { schemaFormat } from "../schema-stored/index.js";
 
 /**
  * This module contains persisted types for a simple, human-readable tree format.
@@ -27,6 +28,9 @@ import { schemaFormat } from "../schema-stored";
  * Longer-term, usages of these types should likely be replaced with a more optimized format.
  * If that switch happens before SharedTree commits to back-compat, this persisted format file can be deleted.
  */
+
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 /**
  * Json compatible map as object.
@@ -91,3 +95,5 @@ const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
  */
 export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
 export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

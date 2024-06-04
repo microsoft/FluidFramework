@@ -6,17 +6,23 @@
 /* eslint-disable jsdoc/check-indentation */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { SequenceInterval } from "../intervals";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import {
+	LocalReferencePosition,
+	compareReferencePositions,
+} from "@fluidframework/merge-tree/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
-} from "../intervalIndex";
-import { RandomIntervalOptions } from "./intervalIndexTestUtils";
+} from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
+
+import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
 
 function assertSequenceIntervalsEqual(
 	string: SharedString,
@@ -79,7 +85,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 		dataStoreRuntime.options = { intervalStickinessEnabled: true };
-		testSharedString = new SharedString(
+		testSharedString = new SharedStringClass(
 			dataStoreRuntime,
 			"test-shared-string",
 			SharedStringFactory.Attributes,
@@ -138,7 +144,6 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	describe("find correct results", () => {
 		let interval1;
 		let interval2;
-		let interval3;
 
 		beforeEach(() => {
 			testSharedString.insertText(0, "ab");
@@ -146,7 +151,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			testSharedString.insertText(5, "fg");
 			interval1 = collection.add({ start: 1, end: 1 }).getIntervalId();
 			interval2 = collection.add({ start: 2, end: 3 }).getIntervalId();
-			interval3 = collection.add({ start: 5, end: 6 }).getIntervalId();
+			collection.add({ start: 5, end: 6 });
 		});
 
 		it("when each interval is within a single segment", () => {

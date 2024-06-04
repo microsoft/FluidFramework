@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ReplayController } from "./replayController";
-import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
-import { ReplayDocumentService } from "./replayDocumentService";
+} from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { ReplayController } from "./replayController.js";
+import { ReplayControllerStatic } from "./replayDocumentDeltaConnection.js";
+import { ReplayDocumentService } from "./replayDocumentService.js";
 
 /**
  * @internal

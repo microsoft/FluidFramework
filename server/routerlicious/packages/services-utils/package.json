@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-utils",
-	"version": "3.0.0",
+	"version": "5.0.0",
 	"description": "Fluid server services shared utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,8 +25,9 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive \"dist/test/*.spec.*js\"",
+		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:debug": "mocha inspect --recursive \"dist/test/*.spec.*js\"",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -52,12 +53,12 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"debug": "^4.3.4",
-		"express": "^4.17.3",
+		"express": "^4.19.2",
 		"ioredis": "^5.2.3",
 		"json-stringify-safe": "^5.0.1",
 		"jsonwebtoken": "^9.0.0",
@@ -71,14 +72,14 @@
 		"winston-transport": "^4.5.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-services-utils-previous": "npm:@fluidframework/server-services-utils@2.0.0",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/server-services-utils-previous": "npm:@fluidframework/server-services-utils@4.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/debug": "^4.1.5",
-		"@types/express": "^4.11.0",
+		"@types/express": "^4.17.21",
 		"@types/express-serve-static-core": "^4.17.32",
 		"@types/json-stringify-safe": "^5.0.0",
 		"@types/jsonwebtoken": "^9.0.0",
@@ -90,12 +91,12 @@
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.27.0",
+		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"supertest": "^3.1.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -106,6 +107,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_getRedisClient": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

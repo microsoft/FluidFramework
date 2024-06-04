@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Direction, getDeltaX, getDeltaY } from "../util/index.js";
 
 const cases = [

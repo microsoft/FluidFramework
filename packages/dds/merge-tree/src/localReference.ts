@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList, ListNode, walkList } from "./collections";
-import { ISegment } from "./mergeTreeNodes";
-import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
-import { ReferenceType } from "./ops";
+import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { ReferenceType } from "./ops.js";
 // eslint-disable-next-line import/no-deprecated
-import { addProperties, PropertySet } from "./properties";
-import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import { PropertySet, addProperties } from "./properties.js";
+import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
@@ -152,9 +153,10 @@ class LocalReference implements LocalReferencePosition {
  * @internal
  */
 export function createDetachedLocalReferencePosition(
+	slidingPreference: SlidingPreference | undefined,
 	refType?: ReferenceType,
 ): LocalReferencePosition {
-	return new LocalReference(refType, undefined);
+	return new LocalReference(refType, undefined, slidingPreference);
 }
 
 interface IRefsAtOffset {
@@ -212,6 +214,8 @@ export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection)
  * Represents a collection of {@link LocalReferencePosition}s associated with
  * one segment in a merge-tree.
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * @sealed
+ *
  * @alpha
  */
 export class LocalReferenceCollection {
@@ -234,11 +238,15 @@ export class LocalReferenceCollection {
 		validateRefCount?.(seg2.localRefs);
 	}
 
+	public static setOrGet(segment: ISegment) {
+		return (segment.localRefs ??= new LocalReferenceCollection(segment));
+	}
+
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
 	/***/
-	constructor(
+	private constructor(
 		/** Segment this `LocalReferenceCollection` is associated to. */
 		private readonly segment: ISegment,
 		initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength),

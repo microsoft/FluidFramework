@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { requireAssignableTo } from "../../util/index.js";
 import {
 	AllowOptional,
 	AllowOptionalNotFlattened,
@@ -10,8 +11,7 @@ import {
 	RequiredFields,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../util/typeUtils";
-import { requireAssignableTo } from "../../util";
+} from "../../util/typeUtils.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 

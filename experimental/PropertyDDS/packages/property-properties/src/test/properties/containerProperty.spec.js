@@ -9,6 +9,7 @@
  */
 
 const MSG = require("@fluid-experimental/property-common").constants.MSG;
+
 const PropertyFactory = require("../..").PropertyFactory;
 
 describe("ContainerProperty", function () {

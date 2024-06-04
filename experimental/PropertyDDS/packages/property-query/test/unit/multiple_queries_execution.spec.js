@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint no-unused-expressions: 0 */
 const generateGUID = require("@fluid-experimental/property-common").GuidUtils.generateGUID;
 const MultipleQueriesExecution = require("../../src/materialized_history_service/query_pipeline/multiple_queries_execution");

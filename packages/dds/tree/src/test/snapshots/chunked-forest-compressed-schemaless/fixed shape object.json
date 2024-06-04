@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "extraFields": 1
+      }
+    },
+    {
+      "d": 0
+    }
+  ],
+  "data": [
+    [
+      0,
+      "Cursor Test Suite.object",
+      false,
+      [
+        "child",
+        0,
+        "com.fluidframework.leaf.number",
+        true,
+        1,
+        []
+      ]
+    ]
+  ]
+}

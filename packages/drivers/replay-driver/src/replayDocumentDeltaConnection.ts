@@ -3,28 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentDeltaConnectionEvents,
-	IDocumentService,
-} from "@fluidframework/driver-definitions";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+	IDocumentDeltaStorageService,
+	IDocumentService,
 	IClientConfiguration,
 	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	IVersion,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { ReplayController } from "./replayController";
+} from "@fluidframework/driver-definitions/internal";
+
+import { ReplayController } from "./replayController.js";
 
 const ReplayDocumentId = "documentId";
 

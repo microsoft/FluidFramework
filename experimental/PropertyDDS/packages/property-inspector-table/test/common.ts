@@ -24,7 +24,7 @@ import {
 	sampleConstSchema,
 	typedReferencesSchema,
 	uint64CasesSchema,
-} from "./schemas";
+} from "./schemas.js";
 
 export const uniqueIdentifier = "uniqueIdentifier";
 

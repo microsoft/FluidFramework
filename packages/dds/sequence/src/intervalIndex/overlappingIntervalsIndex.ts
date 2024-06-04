@@ -2,23 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
-import { Client } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree/internal";
+
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	IntervalType,
 	IIntervalHelpers,
 	ISerializableInterval,
-	sequenceIntervalHelpers,
+	IntervalType,
 	SequenceInterval,
-} from "../intervals";
-import { IntervalNode, IntervalTree } from "../intervalTree";
-import { SharedString } from "../sharedString";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+	sequenceIntervalHelpers,
+} from "../intervals/index.js";
+import { ISharedString } from "../sharedString.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -39,9 +42,6 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	): void;
 }
 
-/**
- * @public
- */
 export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IOverlappingIntervalsIndex<TInterval>
 {
@@ -150,7 +150,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			endPos < startPos ||
+			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(startPos === "end" && endPos !== "end") ||
+			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()
 		) {
 			return [];
@@ -177,10 +179,10 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function createOverlappingIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IOverlappingIntervalsIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);

@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamilyEditor, TreeStoredSchema } from "../core";
-import { DefaultEditBuilder, IDefaultEditBuilder, ModularChangeFamily } from "../feature-libraries";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
+import {
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ModularChangeFamily,
+} from "../feature-libraries/index.js";
+
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 /**
  * Editor for schema changes.
@@ -17,7 +22,6 @@ export interface ISchemaEditor {
 	 * Updates the stored schema.
 	 * @param oldSchema - The schema being overwritten.
 	 * @param newSchema - The new schema to apply.
-	 * @internal
 	 */
 	setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
 }
@@ -29,7 +33,6 @@ export interface ISchemaEditor {
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
 	/**
 	 * Editor for schema changes.
-	 * @internal
 	 */
 	schema: ISchemaEditor;
 }
@@ -60,7 +63,10 @@ export class SharedTreeEditBuilder
 					changes: [
 						{
 							type: "schema",
-							innerChange: { schema: { new: newSchema, old: oldSchema } },
+							innerChange: {
+								schema: { new: newSchema, old: oldSchema },
+								isInverse: false,
+							},
 						},
 					],
 				});

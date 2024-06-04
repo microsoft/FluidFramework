@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import { InventoryListContainerRuntimeFactory } from "./model";
-import type { IInventoryListAppModel } from "./modelInterfaces";
-import { DebugView, InventoryListAppView } from "./view";
+import { InventoryListContainerRuntimeFactory } from "./model/index.js";
+import type { IInventoryListAppModel } from "./modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

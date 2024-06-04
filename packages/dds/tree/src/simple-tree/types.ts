@@ -3,27 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../core";
-import { RestrictiveReadonlyRecord } from "../util";
+import { ErasedType } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { TreeNodeSchema, WithType, type } from "./schemaTypes.js";
 import {
-	FieldKind,
-	FieldKinds,
-	AllowedTypes,
-	Any,
-	FieldNodeSchema,
-	TreeFieldSchema,
-	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	TreeNodeSchema,
-	AssignableFieldKinds,
-	LazyItem,
-} from "../feature-libraries";
-import { type NodeFromSchema, type TreeNodeSchema as TreeNodeSchemaClass } from "../class-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { type, WithType } from "../class-tree/schemaTypes";
-import { IterableTreeListContent, TreeListNodeOld } from "./treeListNode";
-import { tryGetFlexNode } from "./flexNode";
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	isFlexTreeNode,
+	markEager,
+} from "../feature-libraries/index.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
+import { RawTreeNode } from "./rawNode.js";
+import { isTreeNode } from "./proxies.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { getFlexSchema } from "./toFlexSchema.js";
+import { fail } from "../util/index.js";
+import { setFlexNode } from "./proxyBinding.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -37,19 +33,7 @@ import { tryGetFlexNode } from "./flexNode";
 export type Unhydrated<T> = T;
 
 /**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export function getClassSchema(schema: TreeNodeSchema): TreeNodeSchemaClass | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
-	}
-	return undefined;
-}
-
-/**
- * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
+ * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, arrays, and maps.
  * A non-leaf SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
@@ -151,304 +135,147 @@ export abstract class TreeNode implements WithType {
 		}
 		return false;
 	}
+
+	protected constructor() {
+		if (!(this instanceof TreeNodeValid)) {
+			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
+		}
+	}
 }
 
 /**
- * A generic List type, used to defined types like {@link (TreeArrayNode:interface)}.
- * @public
- */
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
-	extends ReadonlyArray<T>,
-		TreeNode {
-	/**
-	 * Inserts new item(s) at a specified location.
-	 * @param index - The index at which to insert `value`.
-	 * @param value - The content to insert.
-	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 */
-	insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-
-	/**
-	 * Inserts new item(s) at the start of the list.
-	 * @param value - The content to insert.
-	 */
-	insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-
-	/**
-	 * Inserts new item(s) at the end of the list.
-	 * @param value - The content to insert.
-	 */
-	insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-
-	/**
-	 * Removes the item at the specified location.
-	 * @param index - The index at which to remove the item.
-	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 */
-	removeAt(index: number): void;
-
-	/**
-	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the list.
-	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if `start` is not in the range [0, `list.length`).
-	 * @throws Throws if `end` is less than `start`.
-	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are deleted.
-	 */
-	removeRange(start?: number, end?: number): void;
-
-	/**
-	 * Moves the specified item to the start of the list.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 */
-	moveToStart(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the start of the list.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source list to move the item out of.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 */
-	moveToStart(sourceIndex: number, source: TMoveFrom): void;
-
-	/**
-	 * Moves the specified item to the end of the list.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 */
-	moveToEnd(sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the end of the list.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source list to move the item out of.
-	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
-	 */
-	moveToEnd(sourceIndex: number, source: TMoveFrom): void;
-
-	/**
-	 * Moves the specified item to the desired location in the list.
-	 * @param index - The index to move the item to.
-	 * This is based on the state of the list before moving the source item.
-	 * @param sourceIndex - The index of the item to move.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
-	 */
-	moveToIndex(index: number, sourceIndex: number): void;
-
-	/**
-	 * Moves the specified item to the desired location in the list.
-	 * @param index - The index to move the item to.
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The source list to move the item out of.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
-	 */
-	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
-
-	/**
-	 * Moves the specified items to the start of the list.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the start of the list.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
-	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
-
-	/**
-	 * Moves the specified items to the end of the list.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the end of the list.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
-	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
-
-	/**
-	 * Moves the specified items to the desired location within the list.
-	 * @param index - The index to move the items to.
-	 * This is based on the state of the list before moving the source items.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-
-	/**
-	 * Moves the specified items to the desired location within the list.
-	 * @param index - The index to move the items to.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
-	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
-	 */
-	moveRangeToIndex(
-		index: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source: TMoveFrom,
-	): void;
-}
-
-/**
- * An object which supports property-based access to fields.
- */
-export type TreeObjectNode<TSchema extends ObjectNodeSchema> = TreeNode &
-	TreeObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
-
-/**
- * Helper for generating the properties of a {@link TreeObjectNode}.
- * @privateRemarks
- * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
- * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
- * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
- */
-export type TreeObjectNodeFields<
-	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
-> = {
-	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? key
-			: never
-		: never]?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are assignable but are not optional; mark them `-readonly` and `-?`.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? TFields[key]["kind"] extends typeof FieldKinds.optional
-			? never
-			: key
-		: never]-?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
-		? key
-		: never]?: TreeField<TFields[key]>;
-} & {
-	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: TFields[key]["kind"] extends typeof FieldKinds.optional
-		? never
-		: key]-?: TreeField<TFields[key]>;
-};
-
-/**
- * A map of string keys to tree objects.
+ * Class which all {@link TreeNode}s must extend.
+ * Since this is not exported, it allows robust detection of attempts to create TreeNodes which do not go through SchemaFactory which is the only place which exposes classes that extend this.
  *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
+ * This has static members which schema classes can override to provide schema specific functionality.
+ * These static members are only intended to be used / overridden by code within this package, and are used by the various node kinds.
+ * Access to these static members has to be done via `this.constructor.staticMember` to support the overrides, and thus can only be used in the constructor, after the base constructor has been invoked.
  */
-export interface TreeMapNode<TSchema extends MapNodeSchema = MapNodeSchema>
-	extends TreeMapNodeBase<TreeField<TSchema["info"], "notEmpty">> {}
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
- * @public
- */
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
+export abstract class TreeNodeValid<TInput> extends TreeNode {
 	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
+	 * Schema classes can override this to control what happens at the end of the constructor.
+	 * The return value from this is returned from the constructor, allowing substituting a proxy if desired.
 	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
+	 * This is not simply done in the derived constructor to enable:
+	 * - this class to access the value which is being returned before it's returned from the constructor.
+	 * - the derived class to be provided the input `FlexTreeNode` without relying on a field on the node to hold it.
+	 */
+	protected static prepareInstance<T>(
+		this: typeof TreeNodeValid<T>,
+		instance: TreeNodeValid<T>,
+		input: FlexTreeNode,
+	): TreeNodeValid<T> {
+		return instance;
+	}
+
+	/**
+	 * Schema classes must override to provide an implementation of RawTreeNode construction.
+	 */
+	protected static buildRawNode<T>(
+		this: typeof TreeNodeValid<T>,
+		instance: TreeNodeValid<T>,
+		input: T,
+	): RawTreeNode<FlexTreeNodeSchema, unknown> {
+		return fail("Schema must override buildRawNode");
+	}
+
+	/**
+	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
+	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
+	 */
+	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): void {}
+
+	/**
+	 * The most derived constructor (the one invoked with the `new` operator, not a parent class constructor invoked with as `super`) used to construct an instance of this type.
 	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeBase.delete} with that key.
-	 */
-	set(key: string, value: TIn | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
+	 * Captured when an instance is constructed.
 	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
+	 * Used to ensure that some derived class (which must override this member, defaulting it to `undefined`) is only instantiated with a single "most derived" class (the constructor actually invoked the the user with `new`).
+	 *
+	 * Typically this is override in the class that statically implements {@link TreeNodeSchema} to enforce that all nodes using that schema use the same class and not different subclasses of it.
+	 *
+	 * Also used to detect if oneTimeSetup has run.
 	 *
 	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
+	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
 	 *
-	 * @param key - The key of the element to remove from the map.
+	 * The value of this on TreeNodeValid must only be overridden by base classes and never modified.
+	 * Ways to enforce this immutability prevent it from being overridden,
+	 * so code modifying constructorCached should be extra careful to avoid accidentally modifying the base/inherited value.
 	 */
-	delete(key: string): void;
+	protected static constructorCached: typeof TreeNodeValid | undefined = TreeNodeValid;
+
+	public constructor(input: TInput | InternalTreeNode) {
+		super();
+		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
+		assert("constructorCached" in schema, 0x95f /* invalid schema class */);
+		if (schema.constructorCached !== schema) {
+			if (schema.constructorCached !== undefined) {
+				assert(
+					schema.constructorCached !== TreeNodeValid,
+					0x960 /* Schema class schema must override static constructorCached member */,
+				);
+				throw new UsageError(
+					`Two schema classes were instantiated (${schema.name} and ${schema.constructorCached.name}) which derived from the same SchemaFactory generated class. This is invalid`,
+				);
+			}
+
+			const flexSchema = getFlexSchema(schema);
+			assert(
+				tryGetSimpleNodeSchema(flexSchema) === schema,
+				0x961 /* Schema class not properly configured */,
+			);
+			schema.oneTimeSetup();
+			// Set the constructorCached on the layer of the prototype chain that declared it.
+			// This is necessary to ensure there is only one subclass of that type used:
+			// if constructorCached was simply set on `schema`,
+			// then a base classes between `schema` (exclusive) and where `constructorCached` is set (inclusive) and other subclasses of them
+			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
+			{
+				let schemaBase: typeof TreeNodeValid = schema;
+				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
+					schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
+				}
+				assert(
+					schemaBase.constructorCached === undefined,
+					0x962 /* overwriting wrong cache */,
+				);
+				schemaBase.constructorCached = schema;
+			}
+		}
+
+		if (isTreeNode(input)) {
+			// TODO: update this once we have better support for deep-copying and move operations.
+			throw new UsageError(
+				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+			);
+		}
+
+		const node: FlexTreeNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
+		assert(
+			tryGetSimpleNodeSchema(node.schema) === schema,
+			0x83b /* building node with wrong schema */,
+		);
+
+		const result = schema.prepareInstance(this, node);
+		setFlexNode(result, node);
+		return result;
+	}
 }
+// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
+markEager(TreeNodeValid);
 
 /**
- * Given a field's schema, return the corresponding object in the proxy-based API.
+ * A node type internal to `@fluidframework/tree`.
+ * @remarks
+ * This type is used in the construction of {@link TreeNode} as an implementation detail, but leaks into the public API due to how schema are implemented.
+ * @privateRemarks
+ * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
+ * @public
  */
-export type TreeField<
-	TSchema extends TreeFieldSchema = TreeFieldSchema,
-	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
-	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
-> = TreeFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
 
-/**
- * Helper for implementing {@link TreeField}.
- */
-export type TreeFieldInner<
-	Kind extends FieldKind,
-	TTypes extends AllowedTypes,
-	Emptiness extends "maybeEmpty" | "notEmpty",
-> = Kind extends typeof FieldKinds.sequence
-	? never // Sequences are only supported underneath FieldNodes. See FieldNode case in `ProxyNode`.
-	: Kind extends typeof FieldKinds.required
-	? TreeNodeUnion<TTypes>
-	: Kind extends typeof FieldKinds.optional
-	? TreeNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: unknown;
-
-/**
- * Given multiple node schema types, return the corresponding object type union in the proxy-based API.
- */
-export type TreeNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [Any]
-	? unknown
-	: {
-			// TODO: Is the the best way to write this type function? Can it be simplified?
-			// This first maps the tuple of AllowedTypes to a tuple of node API types.
-			// Then, it uses [number] to index arbitrarily into that tuple, effectively converting the type tuple into a type union.
-			[Index in keyof TTypes]: TTypes[Index] extends LazyItem<infer InnerType>
-				? InnerType extends TreeNodeSchema
-					? TypedNode<InnerType>
-					: never
-				: never;
-	  }[number];
-
-/**
- * Given a node's schema, return the corresponding object in the proxy-based API.
- */
-export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
-	? TreeValue<TSchema["info"]>
-	: TSchema extends MapNodeSchema
-	? TreeMapNode<TSchema>
-	: TSchema extends FieldNodeSchema
-	? TreeListNodeOld<TSchema["info"]["allowedTypes"]>
-	: TSchema extends ObjectNodeSchema
-	? TreeObjectNode<TSchema>
-	: TreeNode;
+export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
+	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);
+	return node;
+}

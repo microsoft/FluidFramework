@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const BranchWriteQueue = require("../../src/materialized_history_service/branch_write_queue");
 const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
 const InMemoryBackend = require("../../src/materialized_history_service/storage_backends/in_memory");

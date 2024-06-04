@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from './Common';
-import type { InternedStringId } from './Identifiers';
+import { fail } from './Common.js';
+import type { InternedStringId } from './Identifiers.js';
 
 /**
  * Interns strings as integers.

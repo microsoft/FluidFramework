@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { test } from "@oclif/test";
 
-import { FluidReleaseMachine } from "../../src/machines";
+import { FluidReleaseMachine } from "../../src/machines/index.js";
+import { initializeCommandTestFunction } from "../init.js";
 
+const test = initializeCommandTestFunction(import.meta.url);
 const knownUnhandledStates: string[] = [
 	// Known unhandled states can be added here temporarily during development.
 ];
@@ -16,7 +17,8 @@ const machineStates = FluidReleaseMachine.states()
 
 describe("release command handles all states", () => {
 	for (const state of machineStates) {
-		test.stdout()
+		test
+			.stdout()
 			.command([
 				"release",
 				"--releaseGroup",

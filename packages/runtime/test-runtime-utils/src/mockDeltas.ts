@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import {
-	IClientConfiguration,
-	IClientDetails,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IClientConfiguration,
+	IDocumentMessage,
+	MessageType,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
@@ -162,13 +163,40 @@ export class MockDeltaManager
 		return 0;
 	}
 
-	public dispose() {}
+	public dispose() {
+		this.removeAllListeners();
+	}
 
-	constructor() {
+	public clientSequenceNumber = 0;
+
+	public process(message: ISequencedDocumentMessage): void {
+		assert(message.sequenceNumber !== undefined, "message missing sequenceNumber");
+		assert(
+			message.minimumSequenceNumber !== undefined,
+			"message missing minimumSequenceNumber",
+		);
+		this.lastSequenceNumber = message.sequenceNumber;
+		this.lastMessage = message;
+		this.minimumSequenceNumber = message.minimumSequenceNumber;
+		this.emit("op", message);
+	}
+
+	constructor(private readonly getClientId?: () => string) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
+
 		this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
+		this._outbound.on("push", (messages: IDocumentMessage[]) => {
+			messages.forEach((message: IDocumentMessage) => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				this._inbound.push({
+					...message,
+					clientId: this.getClientId?.() ?? null,
+					// ! sequenceNumber and minimumSequenceNumber should be added by MockContainerRuntimeFactory
+				} as ISequencedDocumentMessage);
+			});
+		});
 		this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
 	}
 }

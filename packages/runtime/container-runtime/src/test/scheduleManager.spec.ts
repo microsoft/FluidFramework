@@ -4,11 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ScheduleManager } from "../scheduleManager";
+
+import { EventEmitter } from "@fluid-internal/client-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+
+import { ScheduleManager } from "../scheduleManager.js";
 
 describe("ScheduleManager", () => {
 	describe("Batch processing events", () => {

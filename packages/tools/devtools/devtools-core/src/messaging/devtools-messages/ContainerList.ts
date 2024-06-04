@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ContainerKey } from "../../CommonInterfaces";
-import { type IDevtoolsMessage } from "../Messages";
+import { type ContainerKey } from "../../CommonInterfaces.js";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link ContainerList.Message}.

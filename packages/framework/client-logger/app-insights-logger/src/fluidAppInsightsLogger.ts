@@ -3,12 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
+import structuredClone from "@ungap/structured-clone";
+
+/**
+ * The categories FF uses when instrumenting the code.
+ *
+ * generic - Informational log event
+ *
+ * error - Error log event, ideally 0 of these are logged during a session
+ *
+ * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ * @beta
+ */
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * The configuration object for creating the logger via {@link createLogger}.
@@ -117,7 +129,7 @@ export interface NamespaceFilter {
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
 /**
- * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights()
  * or else logging will not occur.
@@ -304,7 +316,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 }
 
 /**
- * Creates an {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * Creates an {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  *
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights(),

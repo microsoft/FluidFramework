@@ -1,12 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"experimentalDecorators": true,
 		"allowJs": true,
-		"outDir": "./dist",
+		"outDir": "./lib",
 		"rootDir": "./src",
-		"composite": true,
 	},
 	"include": ["src/**/*"],
 }

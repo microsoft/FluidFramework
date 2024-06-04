@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
+	HostStoragePolicy,
+	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	IPersistedCache,
-	HostStoragePolicy,
-} from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
+} from "@fluidframework/odsp-driver-definitions/internal";
+
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
 /**
  * @deprecated This is deprecated in favour of OdspDocumentServiceFactory as the socket io is now loaded inside the

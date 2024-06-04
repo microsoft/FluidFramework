@@ -2,11 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
-import { test } from "@oclif/test";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
+import { initializeCommandTestFunction } from "../init.js";
+
+const test = initializeCommandTestFunction(import.meta.url);
 chai.use(assertArrays);
 
 interface jsonOutput {
@@ -15,7 +18,8 @@ interface jsonOutput {
 }
 
 describe("flub test-only-filter", () => {
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all"])
 		.it(`--all selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -23,7 +27,8 @@ describe("flub test-only-filter", () => {
 			expect(selected.length).to.equal(filtered.length);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--dir", "."])
 		.it(`--dir selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -37,7 +42,8 @@ describe("flub test-only-filter", () => {
 			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
 		.it(`--releaseGroup selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -46,7 +52,8 @@ describe("flub test-only-filter", () => {
 			expect(filtered).to.be.ofSize(5);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
 		.it(`--private filter`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -59,7 +66,8 @@ describe("flub test-only-filter", () => {
 			]);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--no-private"])
 		.it(`--no-private filter`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -69,7 +77,8 @@ describe("flub test-only-filter", () => {
 			expect(names).to.not.be.containingAnyOf(["@fluid-private/readme-command"]);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"test-only-filter",
 			"--quiet",

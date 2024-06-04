@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { objectToMap } from "../../util";
+import { objectToMap } from "../../util/index.js";
 
 /**
  * Utilities for manipulating types.
@@ -27,13 +27,3 @@ export function objectToMapTyped<
 >(objectMap: ObjectMap): ObjectToMap<ObjectMap, MapKey, MapValue> {
 	return objectToMap(objectMap) as unknown as ObjectToMap<ObjectMap, MapKey, MapValue>;
 }
-
-/**
- * Convert a Array type into the type of ReadonlySet.
- *
- * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
- * @public
- */
-export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[]
-	? TValue
-	: never;

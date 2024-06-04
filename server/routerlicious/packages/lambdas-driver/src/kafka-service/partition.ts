@@ -43,6 +43,7 @@ export class Partition extends EventEmitter {
 		this.checkpointManager = new CheckpointManager(id, consumer);
 		this.context = new Context(this.checkpointManager, this.logger);
 		this.context.on("error", (error: any, errorData: IContextErrorData) => {
+			Lumberjack.verbose("Emitting error from partition, context error event");
 			this.emit("error", error, errorData);
 		});
 

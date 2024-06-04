@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IConfigRange,
 	doOverRange,
 	doOverRanges,
 	resolveRange,
 	resolveRanges,
-} from "./mergeTreeOperationRunner";
+} from "./mergeTreeOperationRunner.js";
 
 describe("MergeTreeOperationRunner combinatorial utils", () => {
 	const constant = (i: number) => i;

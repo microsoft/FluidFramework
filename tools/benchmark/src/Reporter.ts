@@ -30,14 +30,18 @@ SOFTWARE.
 // This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import/no-nodejs-modules */
 
+/* eslint-disable unicorn/prefer-module */
+
 /* eslint no-console: ["error", { allow: ["log"] }] */
-import * as path from "path";
-import * as fs from "fs";
-import Table from "easy-table";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import chalk from "chalk";
+import Table from "easy-table";
+
 import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
-import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
+import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
 
 interface BenchmarkResults {
 	table: Table;
@@ -48,7 +52,8 @@ const expectedKeys: ExpectedCell[] = [
 	stringCell("error", "error", (message) => chalk.red(message || "Error")),
 	{
 		key: "stats",
-		cell: (table, data) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		cell: (table, data): any => {
 			const stats = data.stats as Stats;
 			table.cell(
 				"period (ns/op)",
@@ -183,7 +188,8 @@ export class BenchmarkReporter {
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
-		benchmarksMap.forEach((value: BenchmarkResult, key: string) => {
+
+		for (const [, value] of benchmarksMap) {
 			if (isResultError(value)) {
 				countFailure++;
 			} else {
@@ -191,19 +197,22 @@ export class BenchmarkReporter {
 				sumRuntime += value.elapsedSeconds;
 				countSuccessful++;
 			}
-		});
+		}
 
 		// Add row to overallSummaryTable
 		let statusSymbol: string;
 		switch (benchmarksMap.size) {
-			case countSuccessful:
+			case countSuccessful: {
 				statusSymbol = chalk.green("✔");
 				break;
-			case countFailure:
+			}
+			case countFailure: {
 				statusSymbol = chalk.red("×");
 				break;
-			default:
+			}
+			default: {
 				statusSymbol = chalk.yellow("!");
+			}
 		}
 		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));

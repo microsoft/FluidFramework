@@ -3,9 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { SaveInfo, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+
+import type {
+	BaseOperation,
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+} from "./ddsFuzzHarness.js";
+import { ReducerPreconditionError, replayTest } from "./ddsFuzzHarness.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more
@@ -40,7 +49,7 @@ export class FuzzTestMinimizer<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 > {
-	private initialErrorMessage: string | undefined;
+	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
 
@@ -93,7 +102,8 @@ export class FuzzTestMinimizer<
 		while (idx > 0) {
 			const deletedOp = this.operations.splice(idx, 1)[0];
 
-			if (!(await this.assertFails())) {
+			// don't remove attach ops, as it creates invalid scenarios
+			if (deletedOp.type === "attach" || !(await this.assertFails())) {
 				this.operations.splice(idx, 0, deletedOp);
 			}
 
@@ -185,35 +195,54 @@ export class FuzzTestMinimizer<
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
+		const emitter = (this.providedOptions.emitter ??=
+			new TypedEventEmitter<DDSFuzzHarnessEvents>());
+
+		let lastOp: BaseOperation = { type: "___none___" };
+		const lastOpTracker = (op: BaseOperation): void => {
+			lastOp = op;
+		};
+		emitter.on("operationStart", lastOpTracker);
 		try {
 			await replayTest(
 				this.ddsModel,
 				this.seed,
 				this.operations,
-				{
-					saveOnFailure: false,
-					filepath: this.saveInfo?.filepath,
-				},
+				undefined,
 				this.providedOptions,
 			);
 			return false;
 		} catch (error: unknown) {
-			if (!error || !(error instanceof Error)) {
+			if (
+				!error ||
+				!(error instanceof Error) ||
+				error instanceof ReducerPreconditionError ||
+				error.stack === undefined
+			) {
 				return false;
 			}
 
-			// reproduce based on the final line+col of the error
-			const message = error.stack
-				?.split("\n")
-				.map((s) => s.trim())
-				.find((s) => s.startsWith("at"));
+			const stackLines = error.stack.split("\n").map((s) => s.trim());
 
-			if (this.initialErrorMessage === undefined) {
-				this.initialErrorMessage = message;
+			const stackTop = stackLines.findIndex((s) => s.startsWith("at"));
+
+			const message = stackLines[stackTop].startsWith("at assert ")
+				? // Reproduce based on the final two lines+col of the error if it is an assert error
+				  // This ensures the same assert is triggered by the minified test
+				  stackLines.slice(stackTop, stackTop + 2).join("\n")
+				: // Otherwise the final line is sufficient
+				  stackLines[stackTop];
+
+			if (this.initialError === undefined) {
+				this.initialError = { message, op: lastOp };
 				return true;
 			}
 
-			return message === this.initialErrorMessage;
+			return (
+				message === this.initialError.message && this.initialError.op.type === lastOp.type
+			);
+		} finally {
+			emitter.off("operation", lastOpTracker);
 		}
 	}
 }

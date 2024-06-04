@@ -4,15 +4,16 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type {
 	DataTransformationCallback,
 	IMigratableModel,
 	IMigrator,
 	IMigratorEvents,
 	MigrationState,
-} from "../migrationInterfaces";
-import type { IModelLoader, IDetachedModel } from "../modelLoader";
+} from "../migrationInterfaces/index.js";
+import type { IDetachedModel, IModelLoader } from "../modelLoader/index.js";
 
 /**
  * @internal

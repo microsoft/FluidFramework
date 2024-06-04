@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	EmptyKey,
 	FieldKey,
@@ -15,24 +16,24 @@ import {
 	TreeNodeStoredSchema,
 	ValueSchema,
 	storedEmptyFieldSchema,
-} from "../../core";
+} from "../../core/index.js";
 import {
 	Any,
 	FieldKinds,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	TreeFieldSchema,
-	TreeNodeSchema,
 	TreeNodeSchemaBase,
-} from "../../feature-libraries";
+} from "../../feature-libraries/index.js";
 import {
 	fieldSchemaFromStoredSchema,
 	treeSchemaFromStoredSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../feature-libraries/storedToViewSchema";
-import { brand } from "../../util";
+} from "../../feature-libraries/storedToViewSchema.js";
+import { brand } from "../../util/index.js";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
@@ -46,21 +47,21 @@ describe("storedToViewSchema", () => {
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
 		);
-		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
 		]);
 		const roundTrip = [
-			["any", TreeFieldSchema.create(FieldKinds.optional, [Any])],
-			["forbidden", TreeFieldSchema.create(FieldKinds.forbidden, [Any])],
-			["no types", TreeFieldSchema.create(FieldKinds.optional, [])],
-			["one type", TreeFieldSchema.create(FieldKinds.optional, [schemaX])],
-			["lazy", TreeFieldSchema.create(FieldKinds.optional, [() => schemaX])],
-			["multiple types", TreeFieldSchema.create(FieldKinds.optional, [schemaX, schemaY])],
+			["any", FlexFieldSchema.create(FieldKinds.optional, [Any])],
+			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [Any])],
+			["no types", FlexFieldSchema.create(FieldKinds.optional, [])],
+			["one type", FlexFieldSchema.create(FieldKinds.optional, [schemaX])],
+			["lazy", FlexFieldSchema.create(FieldKinds.optional, [() => schemaX])],
+			["multiple types", FlexFieldSchema.create(FieldKinds.optional, [schemaX, schemaY])],
 		] as const;
 		for (const [name, field] of roundTrip) {
 			it(name, () => {
-				const converted = fieldSchemaFromStoredSchema(field, schemaMap);
+				const converted = fieldSchemaFromStoredSchema(field.stored, schemaMap);
 				assert(converted.equals(field));
 			});
 		}
@@ -72,7 +73,7 @@ describe("storedToViewSchema", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 				nodeSchema: new Map(),
 			});
-			assert(empty.rootFieldSchema.equals(TreeFieldSchema.empty));
+			assert(empty.rootFieldSchema.equals(FlexFieldSchema.empty));
 			assert.deepEqual(empty.nodeSchema, new Map());
 		});
 
@@ -84,7 +85,7 @@ describe("storedToViewSchema", () => {
 					[
 						brand<FieldKey>("foo"),
 						{
-							kind: { identifier: FieldKinds.required.identifier },
+							kind: FieldKinds.required.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 						} satisfies TreeFieldStoredSchema,
 					],
@@ -96,7 +97,7 @@ describe("storedToViewSchema", () => {
 					[
 						brand<FieldKey>("foo"),
 						{
-							kind: { identifier: FieldKinds.optional.identifier },
+							kind: FieldKinds.optional.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("Recursive")]),
 						} satisfies TreeFieldStoredSchema,
 					],
@@ -109,19 +110,19 @@ describe("storedToViewSchema", () => {
 					[
 						EmptyKey,
 						{
-							kind: { identifier: FieldKinds.required.identifier },
+							kind: FieldKinds.required.identifier,
 							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 						} satisfies TreeFieldStoredSchema,
 					],
 				] satisfies [FieldKey, TreeFieldStoredSchema][]),
 			);
 			const schemaMap = new MapNodeStoredSchema({
-				kind: { identifier: FieldKinds.optional.identifier },
+				kind: FieldKinds.optional.identifier,
 				types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 			});
 			const stored = {
 				rootFieldSchema: {
-					kind: { identifier: FieldKinds.optional.identifier },
+					kind: FieldKinds.optional.identifier,
 					types: new Set<TreeNodeSchemaIdentifier>([brand("map"), brand("object")]),
 				},
 				nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
@@ -141,9 +142,9 @@ describe("storedToViewSchema", () => {
 				assert.equal(nodeSchema.name, key);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					// Since its tested separately, assume fields are converted correctly.
-					assert(nodeSchema instanceof MapNodeSchema);
+					assert(nodeSchema instanceof FlexMapNodeSchema);
 				} else {
-					assert(!(nodeSchema instanceof MapNodeSchema));
+					assert(!(nodeSchema instanceof FlexMapNodeSchema));
 				}
 
 				assert.equal(
@@ -151,7 +152,7 @@ describe("storedToViewSchema", () => {
 					(storedNodeSchema as Partial<LeafNodeStoredSchema>).leafValue,
 				);
 
-				if (nodeSchema instanceof ObjectNodeSchema) {
+				if (nodeSchema instanceof FlexObjectNodeSchema) {
 					assert(storedNodeSchema instanceof ObjectNodeStoredSchema);
 					assert.equal(
 						storedNodeSchema.objectNodeFields.size,

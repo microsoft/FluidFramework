@@ -5,14 +5,16 @@
 
 /* eslint-disable no-bitwise */
 
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
-} from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SequencePlace, Side } from "../intervalCollection";
+} from "@fluidframework/merge-tree/internal";
+
+import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
@@ -81,7 +83,7 @@ export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof Inte
 
 /**
  * Values are used in revertibles.
- * @internal
+ * @alpha
  */
 export const IntervalOpType = {
 	...IntervalDeltaOpType,
@@ -89,7 +91,7 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
@@ -231,7 +233,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-
+		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

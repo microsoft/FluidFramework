@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionId } from "../identifiers";
+import type { SessionId } from "../identifiers.js";
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
@@ -54,5 +54,10 @@ export interface IdCreationRange {
 		 * will be equal to overflow + `requestedClusterSize`.
 		 */
 		readonly requestedClusterSize: number;
+
+		/**
+		 * The ranges of IDs that were allocated as local IDs in the range created by `sessionId.`
+		 */
+		readonly localIdRanges: [genCount: number, count: number][];
 	};
 }

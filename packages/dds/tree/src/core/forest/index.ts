@@ -10,7 +10,7 @@ export {
 	isFieldLocation,
 	ForestLocation,
 	initializeForest,
-} from "./editableForest";
+} from "./editableForest.js";
 export {
 	IForestSubscription,
 	ITreeSubscriptionCursor,
@@ -19,4 +19,4 @@ export {
 	FieldAnchor,
 	moveToDetachedField,
 	ForestEvents,
-} from "./forest";
+} from "./forest.js";

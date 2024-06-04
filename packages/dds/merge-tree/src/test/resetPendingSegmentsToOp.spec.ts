@@ -2,14 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes";
-import { IMergeTreeOp, ReferenceType } from "../ops";
-import { clone } from "../properties";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+
+import { Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, ReferenceType } from "../ops.js";
+import { clone } from "../properties.js";
+import { TextSegment } from "../textSegment.js";
+
+import { TestClient } from "./testClient.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 describe("resetPendingSegmentsToOp", () => {
 	let client: TestClient;
@@ -262,5 +268,37 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
+	});
+});
+
+describe("resetPendingSegmentsToOp.rebase", () => {
+	it("rebase with oustanding ops", () => {
+		const clients = createClientsAtInitialState({ initialState: "0123456789" }, "A", "B");
+
+		const logger = new TestClientLogger(clients.all);
+		const ops: [ISequencedDocumentMessage, SegmentGroup][] = Array.from({ length: 10 }).map(
+			(_, i) => [
+				clients.A.makeOpMessage(
+					clients.A.annotateRangeLocal(0, clients.A.getLength(), { prop: i }),
+					i + 1,
+				),
+				clients.A.peekPendingSegmentGroups()!,
+			],
+		);
+
+		ops.push(
+			...ops
+				.splice(Math.floor(ops.length / 2))
+				.map<[ISequencedDocumentMessage, SegmentGroup]>(([op, sg]) => [
+					clients.A.makeOpMessage(
+						clients.A.regeneratePendingOp(op.contents as IMergeTreeOp, sg),
+						op.sequenceNumber,
+					),
+					clients.A.peekPendingSegmentGroups()!,
+				]),
+		);
+
+		ops.forEach(([op]) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate();
 	});
 });

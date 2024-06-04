@@ -3,28 +3,31 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
+import { FluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { assert } from '@fluidframework/core-utils';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
-import { FluidSerializer } from '@fluidframework/shared-object-base';
-import { Definition, NodeId } from '../Identifiers';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { noop } from '../Common';
+
+import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
+import { noop } from '../Common.js';
 import {
+	PlaceValidationResult,
+	RangeValidationResultKind,
 	convertTreeNodes,
 	deepCompareNodes,
 	internalizeBuildNode,
-	PlaceValidationResult,
-	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
 	walkTree,
-} from '../EditUtilities';
-import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types';
-import { BuildNode, BuildTreeNode } from '../ChangeTypes';
-import { comparePayloads } from '../PayloadUtilities';
-import { refreshTestTree } from './utilities/TestUtilities';
+} from '../EditUtilities.js';
+import { Definition, NodeId } from '../Identifiers.js';
+import { comparePayloads } from '../PayloadUtilities.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
+import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('EditUtilities', () => {
 	const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);
@@ -452,7 +455,12 @@ describe('EditUtilities', () => {
 			new MockFluidDataStoreRuntime().IFluidHandleContext,
 			() => {}
 		);
-		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
+		const binder: IFluidHandle = {
+			bind: noop,
+			get [fluidHandleSymbol]() {
+				return binder;
+			},
+		} as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,
@@ -612,9 +620,14 @@ describe('EditUtilities', () => {
 			// This is used instead of MockHandle so equal handles compare deeply equal.
 			function makeMockHandle(data: string): IFluidHandle {
 				// `/` prefix is needed to prevent serializing from modifying handle.
-				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
+				const handleObject = {
+					absolutePath: `/${data}`,
+					IFluidHandle: undefined as unknown,
+					[fluidHandleSymbol]: undefined as any,
+				};
 				handleObject.IFluidHandle = handleObject;
-				return handleObject as IFluidHandle;
+				handleObject[fluidHandleSymbol] = handleObject;
+				return handleObject as unknown as IFluidHandleInternal;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.

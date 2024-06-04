@@ -7,6 +7,11 @@ nyc
 *.log
 .DS_Store
 
+# Generated Node10 module resolution compatibility files
+beta.d.ts
+internal.d.ts
+legacy.d.ts
+
 # TypeScript incremental build cache
 *.tsbuildinfo
 
@@ -14,7 +19,7 @@ nyc
 /coverage/tmp/
 
 # Temporary api-extractor build artifacts
-**/_api-extractor-temp**/**
+**/_api-extractor-temp/**
 
 # Bundle analysis artifacts
 bundleAnalysis

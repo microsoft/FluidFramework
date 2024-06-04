@@ -2,35 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
-import { IAudience, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	AttributionInfo,
-	AttributionKey,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	createChildLogger,
-	loggerToMonitoringContext,
+	type IDeltaManager,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	type IQuorumClients,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	type IDocumentMessage,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type AttributionInfo,
+	type AttributionKey,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	SummaryTreeBuilder,
+	addSummarizeResultToSummary,
+} from "@fluidframework/runtime-utils/internal";
+import {
 	PerformanceEvent,
 	UsageError,
-} from "@fluidframework/telemetry-utils";
-import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
-import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
-import { makeLZ4Encoder } from "./lz4Encoder";
+	createChildLogger,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
+import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
+import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 // Summary tree keys
 const attributorTreeName = ".attributor";
@@ -56,7 +67,8 @@ export interface IProvideRuntimeAttributor {
 /**
  * Provides access to attribution information stored on the container runtime.
  *
- * Attributors are only populated after the container runtime they are injected into has initialized.
+ * @remarks Attributors are only populated after the container runtime into which they are being injected has initialized.
+ *
  * @sealed
  * @internal
  */
@@ -73,14 +85,17 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 
 	/**
 	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
+	 * If enabled, the runtime attributor can be asked for the attribution info for different keys.
 	 * See {@link mixinAttributor} for more details on when this happens.
 	 */
 	readonly isEnabled: boolean;
 }
 
 /**
- * @returns an IRuntimeAttributor for usage with `mixinAttributor`. The attributor will only be populated with data
- * once it's passed via scope to a container runtime load flow. See {@link mixinAttributor}.
+ * Creates an `IRuntimeAttributor` for usage with {@link mixinAttributor}.
+ *
+ * @remarks The attributor will only be populated with data once it's passed via scope to a container runtime load flow.
+ *
  * @internal
  */
 export function createRuntimeAttributor(): IRuntimeAttributor {
@@ -98,7 +113,9 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  * @param Base - base class, inherits from FluidAttributorRuntime
  * @internal
  */
-export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
+export const mixinAttributor = (
+	Base: typeof ContainerRuntime = ContainerRuntime,
+): typeof ContainerRuntime =>
 	class ContainerRuntimeWithAttributor extends Base {
 		public static async loadRuntime(params: {
 			context: IContainerContext;
@@ -107,7 +124,9 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+			/**
+			 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+			 */
 			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
@@ -137,19 +156,22 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			const baseSnapshot: ISnapshotTree | undefined =
 				pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-			const { audience, deltaManager } = context;
+			const { quorum, deltaManager, taggedLogger } = context;
 			assert(
-				audience !== undefined,
-				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
+				quorum !== undefined,
+				0x968 /* quorum must exist when instantiating attribution-providing runtime */,
 			);
 
-			const mc = loggerToMonitoringContext(context.taggedLogger);
+			const mc = loggerToMonitoringContext(taggedLogger);
 
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
-				(context.options.attribution ??= {}).track = true;
+				const { options } = context;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				(options.attribution ??= {}).track = true;
 			}
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			const runtime = (await Base.loadRuntime({
 				context,
 				registryEntries,
@@ -161,10 +183,14 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				containerScope,
 				existing,
 				containerRuntimeCtor,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
+			const logger = createChildLogger({
+				logger: runtime.baseLogger,
+				namespace: "Attributor",
+			});
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
@@ -178,7 +204,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				async (event) => {
 					await runtime.runtimeAttributor?.initialize(
 						deltaManager,
-						audience,
+						quorum,
 						baseSnapshot,
 						async (id) => runtime.storage.readBlob(id),
 						shouldTrackAttribution,
@@ -202,7 +228,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-		) {
+		): void {
 			super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
 			const attributorSummary = this.runtimeAttributor?.summarize();
 			if (attributorSummary) {
@@ -260,7 +286,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
 	public async initialize(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
+		quorum: IQuorumClients,
 		baseSnapshot: ISnapshotTree | undefined,
 		readBlob: (id: string) => Promise<ArrayBufferLike>,
 		shouldAddAttributorOnNewFile: boolean,
@@ -280,13 +306,15 @@ class RuntimeAttributor implements IRuntimeAttributor {
 		this.isEnabled = true;
 		this.encoder = chain(
 			new AttributorSerializer(
-				(entries) => new OpStreamAttributor(deltaManager, audience, entries),
+				(entries) => new OpStreamAttributor(deltaManager, quorum, entries),
 				deltaEncoder,
 			),
 			makeLZ4Encoder(),
 		);
 
-		if (attributorTree !== undefined) {
+		if (attributorTree === undefined) {
+			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
+		} else {
 			const id = attributorTree.blobs[opBlobName];
 			assert(
 				id !== undefined,
@@ -295,8 +323,6 @@ class RuntimeAttributor implements IRuntimeAttributor {
 			const blobContents = await readBlob(id);
 			const attributorSnapshot = bufferToString(blobContents, "utf8");
 			this.opAttributor = this.encoder.decode(attributorSnapshot);
-		} else {
-			this.opAttributor = new OpStreamAttributor(deltaManager, audience);
 		}
 	}
 

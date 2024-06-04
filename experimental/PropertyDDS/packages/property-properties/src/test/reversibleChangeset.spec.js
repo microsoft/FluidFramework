@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals expect */
 /**
  * @fileoverview In this file, we will test the functions of the property factory.
  */
-const _ = require("lodash");
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { Int64, Uint64 } = require("@fluid-experimental/property-common");
+const _ = require("lodash");
+
 const { PropertyFactory } = require("..");
 const deepCopy = _.cloneDeep;
 

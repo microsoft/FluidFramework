@@ -16,6 +16,7 @@ const {
 	DeterministicRandomGenerator,
 	HashCalculator,
 } = require("@fluid-experimental/property-common");
+
 _ = require("lodash");
 const { PropertyFactory } = require("../..");
 const { BaseProperty } = require("../..");

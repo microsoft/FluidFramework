@@ -4,98 +4,98 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-	IDataObjectProps,
-} from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import {
-	createAndAttachContainer,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-	createLoader,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { SharedCounter } from "@fluidframework/counter/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
+	createAndAttachContainer,
+	createDocumentId,
+	createLoader,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 const counterKey = "count";
 
-/**
- * Implementation of counter dataObject for testing.
- */
-export class TestDataObject extends DataObject {
-	public static readonly type = "@fluid-example/test-dataObject";
+// REVIEW: enable compat testing?
+describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCounter, SharedString } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-	public static getFactory() {
-		return TestDataObject.factory;
+	/**
+	 * Implementation of counter dataObject for testing.
+	 */
+	class TestDataObject extends DataObject {
+		public static readonly type = "@fluid-example/test-dataObject";
+
+		public static getFactory() {
+			return TestDataObject.factory;
+		}
+
+		private static readonly factory = new DataObjectFactory(
+			TestDataObject.type,
+			TestDataObject,
+			[],
+			{},
+		);
+
+		private counter!: SharedCounter;
+
+		/**
+		 * Expose the runtime for testing purposes.
+		 */
+
+		public runtime: IFluidDataStoreRuntime;
+
+		public constructor(props: IDataObjectProps) {
+			super(props);
+			this.runtime = props.runtime;
+		}
+
+		/**
+		 * Gets the current counter value.
+		 */
+		public get value(): number {
+			return this.counter.value;
+		}
+
+		/**
+		 * Increments the counter value by 1.
+		 */
+		public increment() {
+			this.counter.increment(1);
+		}
+
+		protected async initializingFirstTime() {
+			const counter = SharedCounter.create(this.runtime);
+			this.root.set(counterKey, counter.handle);
+		}
+
+		protected async hasInitialized() {
+			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+			assert(counterHandle);
+			this.counter = await counterHandle.get();
+		}
 	}
 
-	private static readonly factory = new DataObjectFactory(
+	const testDataObjectFactory = new DataObjectFactory(
 		TestDataObject.type,
 		TestDataObject,
-		[],
+		[SharedCounter.getFactory(), SharedString.getFactory()],
 		{},
 	);
 
-	private counter!: SharedCounter;
-
-	/**
-	 * Expose the runtime for testing purposes.
-	 */
-
-	public runtime: IFluidDataStoreRuntime;
-
-	public constructor(props: IDataObjectProps) {
-		super(props);
-		this.runtime = props.runtime;
-	}
-
-	/**
-	 * Gets the current counter value.
-	 */
-	public get value(): number {
-		return this.counter.value;
-	}
-
-	/**
-	 * Increments the counter value by 1.
-	 */
-	public increment() {
-		this.counter.increment(1);
-	}
-
-	protected async initializingFirstTime() {
-		const counter = SharedCounter.create(this.runtime);
-		this.root.set(counterKey, counter.handle);
-	}
-
-	protected async hasInitialized() {
-		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
-		assert(counterHandle);
-		this.counter = await counterHandle.get();
-	}
-}
-
-const testDataObjectFactory = new DataObjectFactory(
-	TestDataObject.type,
-	TestDataObject,
-	[SharedCounter.getFactory(), SharedString.getFactory()],
-	{},
-);
-
-// REVIEW: enable compat testing?
-describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -158,7 +158,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 	describe("1 dataObject", () => {
 		let dataObject: TestDataObject;
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const documentId = createDocumentId();
 			const container = await createContainer(documentId, testDataObjectFactory);
 			dataObject = (await container.getEntryPoint()) as TestDataObject;
@@ -272,7 +272,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 		describe("1 data type", () => {
 			let text: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 				const container = await createContainer(documentId, factory);
@@ -282,7 +282,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 
 			it("opened", async () => {
 				assert(
-					text instanceof SharedString,
+					text instanceof SharedStringClass,
 					"createType() must return the expected dataObject type.",
 				);
 			});
@@ -294,7 +294,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 			let text1: SharedString;
 			let text2: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -342,7 +342,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 			let dataObject1: TestDataObject;
 			let dataObject2: TestDataObject;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 
 				container1 = await createContainer(documentId, testDataObjectFactory);

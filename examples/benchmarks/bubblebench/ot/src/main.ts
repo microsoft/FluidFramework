@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
-
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./state";
+
+import { AppState } from "./state.js";
 
 /**
  * @internal

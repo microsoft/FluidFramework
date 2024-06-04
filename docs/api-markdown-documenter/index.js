@@ -3,64 +3,60 @@
  * Licensed under the MIT License.
  */
 
-/**
- * This index script runs the renderApiDocumentation script using the version configurations described
- * in data/versions.json. This script allows for an optional boolean parameter which determines whether
- * renderApiDocumentation will be ran for all versions or only previous versions. (pass in true for all versions)
- * e.g. "node ./api-markdown-documenter/index.js true"
+/*
+ * This index script runs `render-api-documentation.js` using the version configurations described
+ * in data/versions.json.
  */
 
-const chalk = require("chalk");
-const versions = require("../data/versions.json");
-const { renderApiDocumentation } = require("./render-api-documentation");
-const path = require("path");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const renderMultiVersion = process.argv[2];
+import chalk from "chalk";
+import fs from "fs-extra";
+import { renderApiDocumentation } from "./render-api-documentation.js";
 
-docVersions = renderMultiVersion
-	? versions.params.previousVersions.concat(versions.params.currentVersion)
-	: [versions.params.currentVersion];
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const apiDocRenders = [];
+const {
+	params: { currentVersion, previousVersions },
+} = await fs.readJSON(path.resolve(dirname, "..", "data", "versions.json"));
 
-docVersions.forEach((version) => {
-	const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_api-extractor-temp", version);
+const docVersions = previousVersions.concat(currentVersion);
 
-	// TODO: remove check for 2.0 and just set apiDocsDirectoryPath to include version.
-	// currently publishing to base apis directory until 2.0 release
-	const apiDocsDirectoryPath = renderMultiVersion
-		? path.resolve(__dirname, "..", "content", "docs", "apis", version)
-		: path.resolve(__dirname, "..", "content", "docs", "apis");
+try {
+	await Promise.all(
+		docVersions.map(async (version) => {
+			const apiReportsDirectoryPath = path.resolve(dirname, "..", "_doc-models", version);
+			const apiDocsDirectoryPath = path.resolve(
+				dirname,
+				"..",
+				"content",
+				"docs",
+				"api",
+				version,
+			);
 
-	// TODO: remove check for 2.0 and just set uriDirectoryPath to include version.
-	// currently publishing to base apis directory until 2.0 release
-	const uriRootDirectoryPath = renderMultiVersion ? `/docs/apis/${version}` : `/docs/apis`;
+			// Note: the leading slash in the URI root is important.
+			// It tells Hugo to interpret the links as relative to the site root, rather than
+			// relative to the document containing the link.
+			// See documentation here: https://gohugo.io/content-management/urls/#relative-urls
+			const uriRootDirectoryPath = `/docs/api/${version}`;
 
-	apiDocRenders.push(
-		renderApiDocumentation(
-			apiReportsDirectoryPath,
-			apiDocsDirectoryPath,
-			uriRootDirectoryPath,
-		).then(
-			() => {
-				console.log(chalk.green(`${version} API docs written!`));
-			},
-			(error) => {
-				throw new Error(
-					`${version} API docs could not be written due to an error: ${error}`,
-				);
-			},
-		),
+			await renderApiDocumentation(
+				apiReportsDirectoryPath,
+				apiDocsDirectoryPath,
+				uriRootDirectoryPath,
+				version,
+			);
+
+			console.log(chalk.green(`(${version}) API docs written!`));
+		}),
 	);
-});
+} catch (error) {
+	console.error(chalk.red("API docs generation failed due to one or more errors:"));
+	console.error(error);
+	process.exit(1);
+}
 
-Promise.all(apiDocRenders).then(
-	() => {
-		console.log(chalk.green("All API docs written!"));
-		process.exit(0);
-	},
-	(error) => {
-		console.error(error);
-		process.exit(1);
-	},
-);
+console.log(chalk.green("All API docs written!"));
+process.exit(0);

@@ -1,6 +1,6 @@
 .home {
 	/*----- Hero Section -----*/
-
+	overflow: hidden;
 	#main-content {
 		flex-grow: 1;
 		display: flex;
@@ -29,7 +29,7 @@
 			}
 			.copy {
 				@include vertical-center(0, -50%);
-				top: 45%; //approximately puts download button in middle of hero image
+				top: 75%; //approximately puts download button in middle of hero image
 			}
 		}
 
@@ -133,7 +133,7 @@
 					color: white;
 					margin: 2.5rem 0 0 0;
 					background-color: $accent-primary;
-					height: 6.5rem;
+					height: 7.5rem;
 					img {
 						top: 0;
 					}
@@ -353,23 +353,24 @@
 		font-family: $black;
 		text-align: center;
 		.value-prop-icon {
-			//   background-image: url('/assets/icons/valueprops-top-sprite.svg');
+			//FF Value prop svg image url
+			background-image: url('/images/valueprops-top-sprite.svg');
 			background-repeat: no-repeat;
 			width: 5rem;
 			height: 5rem;
 			background-size: 20.6rem 10.4rem;
 			margin: auto;
 			margin-bottom: 1rem;
-			&.intellisense {
+			&.better-perf {
 				background-position: 0 0;
 			}
-			&.debugging {
+			&.easy-to-use {
 				background-position: -5.2rem 0;
 			}
-			&.git {
+			&.client-code {
 				background-position: -10.4rem 0;
 			}
-			&.extensions-icon {
+			&.open-source {
 				background-position: -15.6rem 0;
 			}
 		}
@@ -384,16 +385,16 @@
 				background: $lightgray;
 				text-decoration: none;
 				.value-prop-icon {
-					&.intellisense {
+					&.better-perf {
 						background-position: 0 -5.3rem;
 					}
-					&.debugging {
+					&.easy-to-use {
 						background-position: -5.2rem -5.3rem;
 					}
-					&.git {
+					&.client-code {
 						background-position: -10.4rem -5.3rem;
 					}
-					&.extensions-icon {
+					&.open-source {
 						background-position: -15.6rem -5.3rem;
 					}
 				}
@@ -505,14 +506,15 @@
 		}
 	}
 
-	/*----- Getting Started -----*/
-	.getting-started {
+	/*----- Customers -----*/
+	.customers {
 		padding: 50px 0;
+		overflow: hidden;
 
-		.vscode-for {
+		.title {
 			height: 20.5rem; //5 times the height of the list
 			h2 {
-				text-align: right;
+				text-align: center;
 				margin-top: -1.6rem; //aligns it vertically centered to the list of langugages
 				position: relative;
 				top: 50%;
@@ -537,10 +539,10 @@
 			}
 		}
 
-		.home-languages-list-parent {
+		.customers-list-parent {
 			height: 20.5rem; //5 times the height of the list
 		}
-		.supported-languages-list {
+		.customers-list {
 			height: 100%;
 			overflow: hidden;
 			position: relative;
@@ -572,8 +574,15 @@
 				}
 			}
 		}
-	}
 
+		.customer-stories-link {
+			text-align: center;
+		}
+	}
+	.samplecode {
+		overflow: hidden;
+		// position: absolute;
+	}
 	.terms p {
 		font-size: 1.4rem;
 	}

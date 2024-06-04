@@ -7,27 +7,26 @@ import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	makeAnonChange,
 	RevisionMetadataSource,
-	tagChange,
-	TaggedChange,
-} from "../../core";
-import { fail, IdAllocator } from "../../util";
-import { Multiplicity } from "../multiplicity";
-import { CrossFieldManager } from "./crossFieldQueries";
+	Multiplicity,
+	RevisionTag,
+	replaceAtomRevisions,
+} from "../../core/index.js";
+import { IdAllocator, fail } from "../../util/index.js";
+
+import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
-	ToDelta,
 	NodeChangeComposer,
-	NodeChangeInverter,
+	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
-	NodeChangePruner,
-} from "./fieldChangeHandler";
-import { FieldKindWithEditor } from "./fieldKind";
-import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
-import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
-import { NodeChangeset } from "./modularChangeTypes";
+	ToDelta,
+} from "./fieldChangeHandler.js";
+import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
+import { GenericChangeset } from "./genericFieldKindTypes.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -35,58 +34,50 @@ import { NodeChangeset } from "./modularChangeTypes";
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	rebaser: {
 		compose: (
-			changes: TaggedChange<GenericChangeset>[],
+			change1: GenericChangeset,
+			change2: GenericChangeset,
 			composeChildren: NodeChangeComposer,
 		): GenericChangeset => {
-			if (changes.length === 0) {
-				return [];
-			}
 			const composed: GenericChangeset = [];
-			for (const change of changes) {
-				let listIndex = 0;
-				for (const { index, nodeChange } of change.change) {
-					const taggedChange = tagChange(nodeChange, change.revision);
-					while (listIndex < composed.length && composed[listIndex].index < index) {
-						listIndex += 1;
-					}
-					const match: GenericChange | undefined = composed[listIndex];
-					if (match === undefined) {
-						composed.push({ index, nodeChange: composeChildren([taggedChange]) });
-					} else if (match.index > index) {
-						composed.splice(listIndex, 0, {
-							index,
-							nodeChange: composeChildren([taggedChange]),
-						});
-					} else {
-						composed.splice(listIndex, 1, {
-							index,
-							nodeChange: composeChildren([
-								// `match.nodeChange` was the result of a call to `composeChildren`,
-								// so it does not need a revision tag.
-								// See the contract of `FieldChangeHandler.compose`.
-								makeAnonChange(match.nodeChange),
-								taggedChange,
-							]),
-						});
-					}
+
+			let listIndex1 = 0;
+			let listIndex2 = 0;
+
+			while (listIndex1 < change1.length || listIndex2 < change2.length) {
+				const next1 = change1[listIndex1];
+				const next2 = change2[listIndex2];
+				const nodeIndex1 = next1?.index ?? Infinity;
+				const nodeIndex2 = next2?.index ?? Infinity;
+				if (nodeIndex1 < nodeIndex2) {
+					composed.push({
+						index: nodeIndex1,
+						nodeChange: composeChildren(next1.nodeChange, undefined),
+					});
+					listIndex1 += 1;
+				} else if (nodeIndex2 < nodeIndex1) {
+					composed.push({
+						index: nodeIndex2,
+						nodeChange: composeChildren(undefined, next2.nodeChange),
+					});
+					listIndex2 += 1;
+				} else {
+					// Both nodes are at the same position.
+					composed.push({
+						index: nodeIndex1,
+						nodeChange: composeChildren(next1.nodeChange, next2.nodeChange),
+					});
+					listIndex1 += 1;
+					listIndex2 += 1;
 				}
 			}
 			return composed;
 		},
-		amendCompose: () => fail("Not implemented"),
-		invert: (
-			{ change }: TaggedChange<GenericChangeset>,
-			invertChild: NodeChangeInverter,
-		): GenericChangeset => {
-			return change.map(
-				({ index, nodeChange }: GenericChange): GenericChange => ({
-					index,
-					nodeChange: invertChild(nodeChange),
-				}),
-			);
+		invert: (change: GenericChangeset): GenericChangeset => {
+			return change;
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
+		replaceRevisions,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -94,10 +85,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return [{ index, nodeChange: change }];
 		},
 	},
-	intoDelta: (
-		{ change }: TaggedChange<GenericChangeset>,
-		deltaFromChild: ToDelta,
-	): DeltaFieldChanges => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
@@ -113,11 +101,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
+	createEmpty: (): GenericChangeset => [],
 };
 
 function rebaseGenericChange(
 	change: GenericChangeset,
-	{ change: over }: TaggedChange<GenericChangeset>,
+	over: GenericChangeset,
 	rebaseChild: NodeChangeRebaser,
 ): GenericChangeset {
 	const rebased: GenericChangeset = [];
@@ -128,8 +117,8 @@ function rebaseGenericChange(
 		const b = over[iOver];
 		const aIndex = a?.index ?? Infinity;
 		const bIndex = b?.index ?? Infinity;
-		let nodeChangeA: NodeChangeset | undefined;
-		let nodeChangeB: NodeChangeset | undefined;
+		let nodeChangeA: NodeId | undefined;
+		let nodeChangeB: NodeId | undefined;
 		let index: number;
 		if (aIndex === bIndex) {
 			index = a.index;
@@ -173,6 +162,17 @@ function pruneGenericChange(
 	return pruned;
 }
 
+function replaceRevisions(
+	changeset: GenericChangeset,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): GenericChangeset {
+	return changeset.map((change) => ({
+		...change,
+		nodeChange: replaceAtomRevisions(change.nodeChange, oldRevisions, newRevision),
+	}));
+}
+
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
@@ -198,20 +198,27 @@ export function convertGenericChange<TChange>(
 	genId: IdAllocator,
 	revisionMetadata: RevisionMetadataSource,
 ): TChange {
-	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
-		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
+	const perIndex: TChange[] = changeset.map(({ index, nodeChange }) =>
+		target.editor.buildChildChange(index, nodeChange),
 	);
 
-	return target.rebaser.compose(
-		perIndex,
-		composeChild,
-		genId,
-		invalidCrossFieldManager,
-		revisionMetadata,
+	if (perIndex.length === 0) {
+		return target.createEmpty();
+	}
+
+	return perIndex.reduce((a, b) =>
+		target.rebaser.compose(
+			a,
+			b,
+			composeChild,
+			genId,
+			invalidCrossFieldManager,
+			revisionMetadata,
+		),
 	);
 }
 
-const invalidFunc = () => fail("Should not be called when converting generic changes");
+const invalidFunc = (): never => fail("Should not be called when converting generic changes");
 const invalidCrossFieldManager: CrossFieldManager = {
 	set: invalidFunc,
 	get: invalidFunc,
@@ -222,7 +229,7 @@ export function newGenericChangeset(): GenericChangeset {
 }
 
 function* relevantRemovedRoots(
-	{ change }: TaggedChange<GenericChangeset>,
+	change: GenericChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {

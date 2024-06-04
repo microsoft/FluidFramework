@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { retryWithEventualValue } from "@fluidframework/test-utils";
-import { globals } from "../../jest.config";
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
+
+import { globals } from "../../jest.config.cjs";
 
 describe("End to end tests", () => {
 	/**
@@ -15,7 +16,6 @@ describe("End to end tests", () => {
 	 * @param expectedValue - The value we expect the value of the text area to be.
 	 */
 	async function getTextFormValue(expectedValue: string): Promise<string> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return retryWithEventualValue(
 			/* callback: */ async () =>
 				page.evaluate(() => {
@@ -33,6 +33,8 @@ describe("End to end tests", () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		await page.waitForFunction(() => globalThis.fluidStarted);
 	}, 45_000);
 
 	beforeEach(async () => {

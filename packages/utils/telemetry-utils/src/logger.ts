@@ -3,43 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
-	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
 	Tagged,
-	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
-import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
+
 import {
-	isILoggingError,
+	CachedConfigProvider,
+	loggerIsMonitoringContext,
+	mixinMonitoringContext,
+} from "./config.js";
+import {
 	extractLogSafeErrorProperties,
 	generateStack,
+	isILoggingError,
 	isTaggedTelemetryPropertyValue,
-} from "./errorLogging";
+} from "./errorLogging.js";
 import {
+	type ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	TelemetryEventPropertyTypeExt,
-	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
-} from "./telemetryTypes";
-
-export interface Memory {
-	usedJSHeapSize: number;
-}
-
-export interface PerformanceWithMemory extends IsomorphicPerformance {
-	readonly memory: Memory;
-}
+	TelemetryEventCategory,
+	TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes.js";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -62,7 +55,7 @@ export enum TelemetryDataTag {
 /**
  * @alpha
  */
-export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
+export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
  * @alpha
@@ -230,7 +223,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param event - the event to send
 	 * @param error - optional error object to log
 	 */
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		this.sendTelemetryEventCore(
 			{
 				// ensure the error field has some value,
@@ -644,10 +637,9 @@ export class PerformanceEvent {
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize: boolean = false,
 		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
+		return new PerformanceEvent(logger, event, markers, emitLogs);
 	}
 
 	/**
@@ -676,7 +668,6 @@ export class PerformanceEvent {
 			logger,
 			event,
 			markers,
-			undefined, // recordHeapSize
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -710,14 +701,12 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize?: boolean,
 		sampleThreshold: number = 1,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
-			recordHeapSize,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -737,13 +726,11 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performance.now();
 	private startMark?: string;
-	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
-		private readonly recordHeapSize: boolean = false,
 		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
@@ -818,19 +805,6 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
-			if (this.startMemoryCollection) {
-				const currentMemory = (performance as PerformanceWithMemory)?.memory
-					?.usedJSHeapSize;
-				const differenceInKBytes = Math.floor(
-					(currentMemory - this.startMemoryCollection) / 1024,
-				);
-				if (differenceInKBytes > 0) {
-					event.usedJSHeapSize = differenceInKBytes;
-				}
-			}
-		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
-				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
@@ -846,23 +820,6 @@ export class PerformanceEvent {
 		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
 		return hitCount % sampleThreshold === 0;
 	}
-}
-
-/**
- * Null logger that no-ops for all telemetry events passed to it.
- *
- * @deprecated This will be removed in a future release.
- * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
- * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
- * where the send() method does nothing and using that.
- *
- * @internal
- */
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {}
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {}
 }
 
 /**
@@ -886,14 +843,14 @@ function convertToBaseEvent({
  * Takes in value, and does one of 4 things.
  * if value is of primitive type - returns the original value.
  * If the value is a flat array or object - returns a stringified version of the array/object.
- * If the value is an object of type Tagged<TelemetryEventPropertyType> - returns the object
+ * If the value is an object of type Tagged<TelemetryBaseEventPropertyType> - returns the object
  * with its values recursively converted to base property Type.
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
 export function convertToBasePropertyType(
 	x: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>,
-): TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType> {
+): TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType> {
 	return isTaggedTelemetryPropertyValue(x)
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
@@ -904,7 +861,7 @@ export function convertToBasePropertyType(
 
 function convertToBasePropertyTypeUntagged(
 	x: TelemetryEventPropertyTypeExt,
-): TelemetryEventPropertyType {
+): TelemetryBaseEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":
@@ -973,7 +930,7 @@ export const tagData = <
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)
 		.filter((e) => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
 			// The ternary form is less legible in this case.

@@ -43,7 +43,6 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	iterateCursorField,
-	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
@@ -67,7 +66,6 @@ export {
 	forEachField,
 	PathRootPrefix,
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
@@ -98,7 +96,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
-} from "./tree";
+} from "./tree/index.js";
 
 export {
 	TreeNavigationResult,
@@ -113,7 +111,7 @@ export {
 	FieldAnchor,
 	moveToDetachedField,
 	ForestEvents,
-} from "./forest";
+} from "./forest/index.js";
 
 export {
 	FieldKey,
@@ -124,7 +122,7 @@ export {
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeTypeSet,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -137,25 +135,37 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
-} from "./schema-stored";
+	SchemaAndPolicy,
+	Multiplicity,
+	SchemaPolicy,
+} from "./schema-stored/index.js";
 
-export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
+export {
+	ChangeFamily,
+	ChangeFamilyCodec,
+	ChangeEncodingContext,
+	ChangeFamilyEditor,
+	EditBuilder,
+} from "./change-family/index.js";
 
 export {
 	areEqualChangeAtomIds,
-	assertIsRevisionTag,
+	makeChangeAtomId,
+	asChangeAtomId,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
-	isRevisionTag,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
+	RevisionTagCodec,
 	ChangesetLocalId,
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -167,10 +177,8 @@ export {
 	OutputType,
 	verifyChangeRebaser,
 	tagRollbackInverse,
-	SessionId,
 	SessionIdSchema,
 	mintCommit,
-	mintRevisionTag,
 	rebaseBranch,
 	BranchRebaseResult,
 	rebaseChange,
@@ -180,7 +188,12 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
-} from "./rebase";
+	taggedAtomId,
+	taggedOptAtomId,
+	offsetChangeAtomId,
+	replaceAtomRevisions,
+	replaceChange,
+} from "./rebase/index.js";
 
 export {
 	Adapters,
@@ -188,6 +201,6 @@ export {
 	Compatibility,
 	TreeAdapter,
 	AllowedUpdateType,
-} from "./schema-view";
+} from "./schema-view/index.js";
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";
+export { Revertible, RevertibleStatus } from "./revertible/index.js";

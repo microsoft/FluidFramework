@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import * as MergeTree from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import * as MergeTree from "@fluidframework/merge-tree/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * - Create a new object from the passed SharedString.

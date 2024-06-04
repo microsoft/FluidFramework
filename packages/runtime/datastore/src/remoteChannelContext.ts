@@ -3,35 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
-	IGarbageCollectionData,
-	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
-	createChildLogger,
 	ITelemetryLoggerExt,
 	ThresholdCounter,
-} from "@fluidframework/telemetry-utils";
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
 	ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
-} from "./channelContext";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+} from "./channelContext.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
@@ -70,6 +75,7 @@ export class RemoteChannelContext implements IChannelContext {
 			submitFn,
 			() => dirtyFn(this.id),
 			addedGCOutboundReferenceFn,
+			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,
 			baseSnapshot,

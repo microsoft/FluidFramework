@@ -75,6 +75,15 @@
 			"args": ["generate", "bundleStats", "-v"],
 		},
 		{
+			"name": "flub generate packlist",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "packlist", "-g", "build-tools", "-v"],
+		},
+		{
 			// Runs the `flub release report --all` command with a debugger attached.
 			"name": "flub release report",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
@@ -103,6 +112,16 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["list", "--private", "-g", "build-tools", "-v"],
+		},
+		{
+			// Runs the `flub modify fluid-imports` command with a debugger attached.
+			"name": "flub modify fluid-imports",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}/packages/framework/aqueduct",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["modify", "fluid-imports", "-v"],
 		},
 		{
 			// Runs the `flub generate upcoming` command with a debugger attached.
@@ -160,6 +179,28 @@
 				"--no-commit",
 				"--no-install",
 			],
+		},
+		{
+			"name": "flub generate typetests",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "typetests", "--dir", "."],
+		},
+		{
+			"name": "fluid-type-test-generator",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-type-test-generator",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [],
 		},
 		{
 			"type": "node",
@@ -304,11 +345,12 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Debug Current Mocha Test",
+			"name": "Debug Current Mocha Test (auto build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -326,14 +368,25 @@
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
 			"outFiles": [
 				// This config avoids loading dependent packages' test files, while using the same technique
-				// as the "Debug Current Test (JS)" config to load source maps for test files in the current
+				// as the "Debug Current Mocha Test (*)" config to load source maps for test files in the current
 				// package.
 				// This reduces the number of source files VSCode needs to load to debug the e2e tests
 				// considerably, which decreases the time it takes to start debugging.
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).js",
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
 				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
+				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
+				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
+				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).mjs",
+				"${fileDirname}/../../lib/**/*.mjs",
+				"${fileDirname}/../../../lib/**/*.mjs",
+				"${fileDirname}/../../../../lib/**/*.mjs",
 			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart",
@@ -341,11 +394,39 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Debug Current Test (JS)",
+			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
+			},
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"args": [
+				"--no-timeouts",
+				"--exit",
+				"../../lib/test/${fileBasenameNoExtension}.js",
+				"../../../lib/test/**/${fileBasenameNoExtension}.js",
+				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
+			],
+			"cwd": "${fileDirname}",
+			"outFiles": [
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
+			],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current Mocha Test (CommonJS-dist;no build)",
+			"env": {
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,

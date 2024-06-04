@@ -10,6 +10,7 @@
  */
 
 import { expect } from "chai";
+
 import { OperationError } from "../../index";
 
 describe("property-common.OperationError", function () {

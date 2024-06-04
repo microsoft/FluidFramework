@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ForestSummarizer } from "./forestSummarizer";
+export { ForestSummarizer } from "./forestSummarizer.js";

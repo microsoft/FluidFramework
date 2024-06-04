@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { buildForest } from "./objectForest";
+export { buildForest } from "./objectForest.js";

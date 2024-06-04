@@ -4,9 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverErrorType, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities";
+import {
+	IResolvedUrl,
+	IUrlResolver,
+	DriverErrorTypes,
+} from "@fluidframework/driver-definitions/internal";
+
+import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities/index.js";
 
 describe("Location Redirection Handling Tests", () => {
 	it("Should handle/retry location redirection error", async () => {
@@ -31,7 +37,7 @@ describe("Location Redirection Handling Tests", () => {
 			if (turn === 0) {
 				turn += 1;
 				const error = new Error("Location Redirection");
-				(error as any).errorType = DriverErrorType.locationRedirection;
+				(error as any).errorType = DriverErrorTypes.locationRedirection;
 				resolved.url = "RedirectedUrl";
 				(error as any).redirectUrl = resolved;
 				throw error;

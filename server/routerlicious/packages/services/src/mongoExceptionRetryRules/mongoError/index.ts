@@ -40,6 +40,22 @@ class InternalBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class DuplicateKeyErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorMsg = "E11000 duplicate key";
+	protected defaultRetryDecision: boolean = false;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("DuplicateKeyErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.code === 11000 ||
+			error.message?.toString()?.indexOf(DuplicateKeyErrorRule.errorMsg) >= 0
+		);
+	}
+}
+
 // This handles the requested queued on client side buffer overflow. Should relies on reconnect instead of retry?
 class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 	private static readonly messagePrefix =
@@ -383,6 +399,7 @@ export function createMongoErrorRetryRuleset(
 
 		// The rules are using multiple compare
 		new PoolDestroyedRule(retryRuleOverride),
+		new DuplicateKeyErrorRule(retryRuleOverride),
 
 		// The rules are using string startWith
 		new NoConnectionAvailableRule(retryRuleOverride, connectionNotAvailableMode),

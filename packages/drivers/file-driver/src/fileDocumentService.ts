@@ -3,30 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluidframework/driver-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IDocumentServiceEvents,
+	IDocumentService,
+	IResolvedUrl,
+	IDocumentStorageService,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+} from "@fluidframework/driver-definitions/internal";
+
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 /**
  * The DocumentService manages the different endpoints for connecting to
  * underlying storage for file document service.
  */
-// eslint-disable-next-line import/namespace
-export class FileDocumentService implements api.IDocumentService {
+export class FileDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
+	implements IDocumentService
+{
 	constructor(
-		public readonly resolvedUrl: api.IResolvedUrl,
-		private readonly storage: api.IDocumentStorageService,
+		public readonly resolvedUrl: IResolvedUrl,
+		private readonly storage: IDocumentStorageService,
 		private readonly deltaStorage: FileDeltaStorageService,
-		private readonly deltaConnection: api.IDocumentDeltaConnection,
-	) {}
+		private readonly deltaConnection: IDocumentDeltaConnection,
+	) {
+		super();
+	}
 
 	public dispose() {}
 
-	public async connectToStorage(): Promise<api.IDocumentStorageService> {
+	public async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
 	}
 
-	public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		return this.deltaStorage;
 	}
 
@@ -37,7 +51,7 @@ export class FileDocumentService implements api.IDocumentService {
 	 * @param client - Client that connects to socket.
 	 * @returns returns the delta stream service.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		return this.deltaConnection;
 	}
 }

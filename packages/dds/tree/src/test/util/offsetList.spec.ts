@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { OffsetListFactory } from "../../util";
+
+import { OffsetListFactory } from "../../util/index.js";
 
 describe("OffsetListFactory", () => {
 	it("Inserts an offset when there is content after the offset", () => {

@@ -4,33 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
+	CommitKind,
 	GraphCommit,
 	RevisionTag,
-	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
-} from "../../core";
+} from "../../core/index.js";
 import {
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	DefaultChangeFamily,
 	cursorForJsonableTreeNode,
-} from "../../feature-libraries";
-import { brand, fail } from "../../util";
-import { noopValidator } from "../../codec";
-import { createTestUndoRedoStacks } from "../utils";
+} from "../../feature-libraries/index.js";
+import {
+	SharedTreeBranch,
+	SharedTreeBranchChange,
+	onForkTransitive,
+} from "../../shared-tree-core/index.js";
+import { brand, fail } from "../../util/index.js";
+import { failCodecFamily, mintRevisionTag } from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
-	const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+	const nullRevisionTag = mintRevisionTag();
 
 	it("have a consistent history as they apply changes", () => {
 		// Create a new branch
@@ -158,7 +163,6 @@ describe("Branches", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
 		const child = parent.fork();
-		const stacks = createTestUndoRedoStacks(child);
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -172,15 +176,6 @@ describe("Branches", () => {
 		child.rebaseOnto(parent);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
-
-		// It should still be possible to revert the the child branch's revertibles
-		assert.equal(stacks.undoStack.length, 2);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
-
-		stacks.unsubscribe();
 	});
 
 	it("emit a change event after each change", () => {
@@ -338,6 +333,32 @@ describe("Branches", () => {
 		branch.startTransaction();
 		branch.abortTransaction();
 		assert.equal(changeEventCount, 0);
+	});
+
+	it("do not emit a commitApplied event for commits within transactions", () => {
+		// Create a branch and count the change events emitted
+		let commitEventCount = 0;
+		const branch = create();
+		const unsubscribe = branch.on("commitApplied", () => {
+			commitEventCount += 1;
+		});
+		// Start and immediately abort a transaction
+		branch.startTransaction();
+		change(branch);
+		branch.abortTransaction();
+		assert.equal(commitEventCount, 0);
+		unsubscribe();
+	});
+
+	it("commitApplied event includes metadata about the commit", () => {
+		// Create a branch and count the change events emitted
+		const branch = create();
+		const unsubscribe = branch.on("commitApplied", ({ isLocal, kind }) => {
+			assert.equal(isLocal, true);
+			assert.equal(kind, CommitKind.Default);
+		});
+		change(branch);
+		unsubscribe();
 	});
 
 	it("emit a fork event after forking", () => {
@@ -594,7 +615,7 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
 		branch.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.

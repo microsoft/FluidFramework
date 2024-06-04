@@ -1,4 +1,4 @@
-# @fluidframework/ink
+# @fluid-experimental/ink
 
 Contains a [Distributed Data Structure](https://fluidframework.com/docs/build/dds/) (DDS) for representing digital ink strokes.
 
@@ -18,23 +18,17 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 ## Installation
 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/ink
+npm i @fluid-experimental/ink
 ```
 
 ## API Documentation
 
-API documentation for **@fluidframework/ink** is available at <https://fluidframework.com/docs/apis/ink>.
+API documentation for **@fluid-experimental/ink** is available at <https://fluidframework.com/docs/apis/ink>.
 
 ## Contribution Guidelines
 

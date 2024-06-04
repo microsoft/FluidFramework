@@ -6,10 +6,12 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from 'assert';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { assertNotUndefined, compareFiniteNumbers } from '../Common';
-import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
+
+import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';
+import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	it('detects out-of-order keys', () => {

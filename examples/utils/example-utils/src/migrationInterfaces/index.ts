@@ -8,16 +8,16 @@ export {
 	IMigratableModel,
 	IMigratableModelEvents,
 	IVersionedModel,
-} from "./migratableModel";
-export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool";
-export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator";
+} from "./migratableModel.js";
+export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool.js";
+export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator.js";
 export {
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
-} from "./sameContainerMigratableModel";
+} from "./sameContainerMigratableModel.js";
 export {
 	ISameContainerMigrationTool,
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,
-} from "./sameContainerMigrationTool";
-export { ISameContainerMigrator, ISameContainerMigratorEvents } from "./sameContainerMigrator";
+} from "./sameContainerMigrationTool.js";
+export { ISameContainerMigrator, ISameContainerMigratorEvents } from "./sameContainerMigrator.js";

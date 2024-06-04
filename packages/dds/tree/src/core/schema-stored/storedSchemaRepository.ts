@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
-import { createEmitter, ISubscribable } from "../../events";
-import { compareStrings } from "../../util";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
+import { Listenable, createEmitter } from "../../events/index.js";
+import { compareStrings } from "../../util/index.js";
+
+import { TreeNodeSchemaIdentifier } from "./format.js";
 import {
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
-} from "./schema";
-import { TreeNodeSchemaIdentifier } from "./format";
+} from "./schema.js";
 
 /**
  * Events for {@link TreeStoredSchemaSubscription}.
@@ -37,9 +39,7 @@ export interface SchemaEvents {
  * A collection of stored schema that fires events in response to changes.
  * @internal
  */
-export interface TreeStoredSchemaSubscription
-	extends ISubscribable<SchemaEvents>,
-		TreeStoredSchema {}
+export interface TreeStoredSchemaSubscription extends Listenable<SchemaEvents>, TreeStoredSchema {}
 
 /**
  * Mutable collection of stored schema.

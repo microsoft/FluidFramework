@@ -10,16 +10,20 @@ export {
 	SharedTree,
 	ForestType,
 	SharedTreeContentSnapshot,
-} from "./sharedTree";
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
+} from "./sharedTree.js";
 
 export {
 	createTreeCheckout,
+	TreeCheckout,
 	ITreeCheckout,
 	runSynchronous,
 	CheckoutEvents,
 	ITransaction,
 	ITreeCheckoutFork,
-} from "./treeCheckout";
+	RevertibleFactory,
+} from "./treeCheckout.js";
 
 export {
 	SchematizeConfiguration,
@@ -27,8 +31,17 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	buildTreeConfiguration,
-} from "./schematizedTree";
+} from "./schematizeTree.js";
 
-export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";
+export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView.js";
 
-export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder";
+export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
+
+export {
+	treeApi as Tree,
+	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
+} from "./treeApi.js";

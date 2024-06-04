@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth";
+import { strict as assert } from "node:assert";
+
+import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 
 describe("getUrlAndHeadersWithAuth", () => {
 	const baseUrl = "https://contoso.sharepoint.com/_api/v2.1/drives/driveId/items/itemId/opstream";
@@ -15,27 +16,15 @@ describe("getUrlAndHeadersWithAuth", () => {
 	const maxTokenLength = 2048 - "access_token=".length - 1;
 	const shortToken = generateToken(10);
 
-	function generateToken(length: number) {
+	function generateToken(length: number): string {
 		return "a".repeat(length);
 	}
-
-	it("returns original url if token is null", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, null, false);
-		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
-		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
-	});
-
-	it("returns original url if token is empty", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, "", false);
-		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
-		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
-	});
 
 	const validateTokenEmbeddedIntoQueryString = (
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),
@@ -55,7 +44,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),

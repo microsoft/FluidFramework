@@ -24,18 +24,22 @@ import {
 	IDefineRepresentationOptions,
 	IRegisterOnPathOptions,
 	representationGenerator,
-} from "..";
-import { ActivationQueryCacheHelper, ActivationType } from "../internal/activationQueryCacheHelper";
-import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants";
-import { DataBinderHandle } from "../internal/dataBinderHandle";
-import { PropertyElement } from "../internal/propertyElement";
-import { SemverMap, UpgradeType } from "../internal/semvermap";
-import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWrapper";
-import { CallbackOptions, DataBinding } from "./dataBinding";
-import { DataBindingRegistry } from "./dataBindingRegistry";
-import { ArrayNode, concatTokenizedPath, DataBindingTree, NodeType } from "./dataBindingTree";
-import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions";
+} from "../index.js";
 import {
+	ActivationQueryCacheHelper,
+	ActivationType,
+} from "../internal/activationQueryCacheHelper.js";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants.js";
+import { DataBinderHandle } from "../internal/dataBinderHandle.js";
+import { PropertyElement } from "../internal/propertyElement.js";
+import { SemverMap, UpgradeType } from "../internal/semvermap.js";
+import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWrapper.js";
+import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions.js";
+import { CallbackOptions, DataBinding } from "./dataBinding.js";
+import { DataBindingRegistry } from "./dataBindingRegistry.js";
+import { ArrayNode, DataBindingTree, NodeType, concatTokenizedPath } from "./dataBindingTree.js";
+import {
+	RecursiveCallback,
 	assertOperation,
 	deferCallback,
 	forEachProperty,
@@ -43,12 +47,11 @@ import {
 	isPrimitiveCollection,
 	makeCallbackOncePerChangeSet,
 	minimalRootPaths,
-	RecursiveCallback,
 	recursivelyVisitHierarchy,
 	visitTypeHierarchy,
-} from "./internalUtils";
-import { ModificationContext } from "./modificationContext";
-import { RemovalContext } from "./removalContext";
+} from "./internalUtils.js";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 
 export interface DataBindingDefinition {
 	bindingType: string;
@@ -453,7 +456,7 @@ export class DataBinder {
 		in_definition: DataBindingDefinition,
 	) {
 		const byBindingType = this._definitionsByBindingType.get(in_definition.bindingType);
-		console.assert(byBindingType);
+		console.assert(byBindingType !== undefined);
 		if (byBindingType) {
 			const index = byBindingType.indexOf(in_handle);
 			if (index !== -1) {
@@ -560,7 +563,7 @@ export class DataBinder {
 
 			// Not there - should be activated, or else it was already deactivated
 			const handles = this._activationHandlesByBindingType.get(in_activationRule.bindingType);
-			console.assert(handles);
+			console.assert(handles !== undefined);
 			if (handles) {
 				const index = handles.indexOf(in_handle);
 				console.assert(index >= 0);

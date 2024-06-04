@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { Deferred, assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISummaryAck,
 	ISummaryContent,
 	ISummaryNack,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.

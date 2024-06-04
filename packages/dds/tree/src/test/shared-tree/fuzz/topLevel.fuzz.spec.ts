@@ -2,19 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
-	createDDSFuzzSuite,
-	DDSFuzzTestState,
 	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
-import { failureDirectory, onCreate } from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
+
+import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -40,16 +43,18 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		set: 3,
+		clear: 1,
 		insert: 5,
-		delete: 5,
-		move: 5,
+		remove: 5,
+		intraFieldMove: 5,
+		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
-		// repair data content in places it already exists. This should be fixed by pending work to generate forest deltas
-		// which destroy trees for rollbacks. See AB#6456 for more information.
+		// TODO: AB#7780 investigate failures when abort is enabled
 		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+		schema: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -66,23 +71,27 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
+
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0.2,
-			},
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
-			reconnectProbability: 0,
+			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
+			// and using the default number of ops before attach.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
+			reconnectProbability: 0.1,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -97,7 +106,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
@@ -108,10 +117,16 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			// AB#7162: see comment above.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+			},
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
+
 		createDDSFuzzSuite(model, options);
 	});
 });

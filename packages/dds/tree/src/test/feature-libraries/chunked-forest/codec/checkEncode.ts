@@ -4,31 +4,32 @@
  */
 
 import { strict as assert, fail } from "assert";
+
+import { JsonableTree } from "../../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	BufferFormat,
 	EncoderCache,
 	FieldEncoder,
 	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
-// eslint-disable-next-line import/no-internal-modules
-import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
-// eslint-disable-next-line import/no-internal-modules
-import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
+} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	EncodedFieldBatch,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format";
-import { JsonableTree } from "../../../../core";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities";
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-	isFluidHandle,
-} from "../../../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
+	cursorForJsonableTreeNode,
+} from "../../../../feature-libraries/index.js";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,

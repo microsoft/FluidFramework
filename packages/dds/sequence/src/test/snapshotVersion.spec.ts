@@ -6,15 +6,19 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { generateStrings, LocationBase } from "./generateSharedStrings";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
+
+import { _dirname } from "./dirname.cjs";
+import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
 function assertIntervalCollectionsAreEquivalent(
 	actual: SharedString,
@@ -70,20 +74,23 @@ describe("SharedString Snapshot Version", () => {
 		"and then run npm test:newsnapfiles to create new snapshot test files.";
 
 	before(() => {
-		fileBase = path.join(__dirname, `../../${LocationBase}`);
+		fileBase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 		};
-		const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+		const sharedString = new SharedStringClass(
+			dataStoreRuntime,
+			id,
+			SharedStringFactory.Attributes,
+		);
 		await sharedString.load(services);
-		await sharedString.loaded;
 		return sharedString;
 	}
 
@@ -163,7 +170,7 @@ describe("SharedString Snapshot Version", () => {
 	it("normalizes prefixed interval collection keys", async () => {
 		// This test verifies some back-compat for the fix related to
 		// https://github.com/microsoft/FluidFramework/issues/10557.
-		const originalString = new SharedString(
+		const originalString = new SharedStringClass(
 			new MockFluidDataStoreRuntime(),
 			"original",
 			SharedStringFactory.Attributes,

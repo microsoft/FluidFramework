@@ -37,6 +37,8 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - fluidBuild.config.cjs
+    - common/build/build-common
     - common/lib/protocol-definitions
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -49,6 +51,7 @@ trigger:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -61,6 +64,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - common/lib/protocol-definitions
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -69,11 +73,20 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -81,4 +94,5 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     tagName: protocol-definitions
+    testCoverage: false
     taskTest: [] # no tests

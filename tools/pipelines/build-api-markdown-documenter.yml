@@ -32,6 +32,8 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common # Required due to references from config files
+    - common/build/eslint-config-fluid # Required since the package takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -43,6 +45,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
 pr:
@@ -55,6 +58,8 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common # Required due to references from config files
+    - common/build/eslint-config-fluid # Required since the package takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -63,16 +68,26 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/api-markdown-documenter
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true

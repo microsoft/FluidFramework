@@ -4,49 +4,26 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
+
+import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
-	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-} from "../../util";
-import { EncodedFieldBatch } from "../chunked-forest";
+	brandedNumberType,
+} from "../../util/index.js";
+import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
+	multipleOf: 1,
+});
 
-export const EncodedChangeAtomId = Type.Object(
-	{
-		/**
-		 * Uniquely identifies the changeset within which the change was made.
-		 */
-		revision: Type.Optional(RevisionTagSchema),
-		/**
-		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-		 */
-		localId: ChangesetLocalIdSchema,
-	},
-	noAdditionalProps,
-);
-
-const EncodedValueChange = Type.Object(
-	{
-		revision: Type.Optional(RevisionTagSchema),
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-	},
-	noAdditionalProps,
-);
-type EncodedValueChange = Static<typeof EncodedValueChange>;
-
-const EncodedValueConstraint = Type.Object(
-	{
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-		violated: Type.Boolean(),
-	},
-	noAdditionalProps,
-);
-type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	ChangesetLocalIdSchema,
+]);
+export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 const EncodedFieldChange = Type.Object(
 	{
@@ -78,16 +55,17 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-const EncodedNodeExistsConstraint = Type.Object({
-	violated: Type.Boolean(),
-});
+const EncodedNodeExistsConstraint = Type.Object(
+	{
+		violated: Type.Boolean(),
+	},
+	noAdditionalProps,
+);
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
 	{
-		valueChange: Type.Optional(EncodedValueChange),
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
-		valueConstraint: Type.Optional(EncodedValueConstraint),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,
@@ -133,14 +111,17 @@ export const EncodedBuildsArray = Type.Array(
 
 export type EncodedBuildsArray = Static<typeof EncodedBuildsArray>;
 
-export const EncodedBuilds = Type.Object({
-	builds: EncodedBuildsArray,
-	/**
-	 * Fields indexed by the EncodedTreeIndexes above.
-	 * TODO: Strongly typing this here may result in redundant schema validation of this data.
-	 */
-	trees: EncodedFieldBatch,
-});
+export const EncodedBuilds = Type.Object(
+	{
+		builds: EncodedBuildsArray,
+		/**
+		 * Fields indexed by the EncodedTreeIndexes above.
+		 * TODO: Strongly typing this here may result in redundant schema validation of this data.
+		 */
+		trees: EncodedFieldBatch,
+	},
+	noAdditionalProps,
+);
 
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
@@ -150,6 +131,7 @@ export const EncodedModularChangeset = Type.Object(
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 		builds: Type.Optional(EncodedBuilds),
+		refreshers: Type.Optional(EncodedBuilds),
 	},
 	noAdditionalProps,
 );

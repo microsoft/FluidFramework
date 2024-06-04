@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { runWithRetry } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	GenericError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
@@ -44,13 +47,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		this._disposed = true;
 	}
 
-	public get repositoryUrl(): string {
-		if (this.internalStorageService) {
-			return this.internalStorageService.repositoryUrl;
-		}
-		throw new Error("storage service not yet instantiated");
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
@@ -61,6 +57,21 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 					s.getSnapshotTree(version, scenarioName),
 				),
 			"storage_getSnapshotTree",
+		);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		return this.runWithRetry(
+			async () =>
+				this.internalStorageServiceP.then(async (s) => {
+					if (s.getSnapshot !== undefined) {
+						return s.getSnapshot(snapshotFetchOptions);
+					}
+					throw new UsageError(
+						"getSnapshot api should exist on internal storage in RetriableDocStorageService class",
+					);
+				}),
+			"storage_getSnapshot",
 		);
 	}
 

@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList } from "./collections";
-import { EndOfTreeSegment } from "./endOfTreeSegment";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
-import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
-import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
-import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { matchProperties, PropertySet } from "./properties";
-import { DetachedReferencePosition } from "./referencePositions";
-import { MergeTree, findRootMergeBlock } from "./mergeTree";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { DoublyLinkedList } from "./collections/index.js";
+import { EndOfTreeSegment } from "./endOfTreeSegment.js";
+import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
+import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
+import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { ISegment, ISegmentLeaf, toRemovalInfo } from "./mergeTreeNodes.js";
+import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
+import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { PropertySet, matchProperties } from "./properties.js";
+import { DetachedReferencePosition } from "./referencePositions.js";
 
 /**
  * @alpha
@@ -94,9 +95,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
 			afterSlide: (r: LocalReferencePosition) => {
 				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
-					const refs = (detachedReferences.localRefs ??= new LocalReferenceCollection(
-						detachedReferences,
-					));
+					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
 					refs.addAfterTombstones([r]);
 				}
 			},
@@ -284,7 +283,7 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment: IMergeLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
+		const insertSegment: ISegmentLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.collabWindow.currentSeq,
 			mergeTreeWithRevert.collabWindow.clientId,
@@ -339,9 +338,7 @@ function revertLocalRemove(
 		}
 
 		if (insertRef !== undefined) {
-			const localRefs = (insertSegment.localRefs ??= new LocalReferenceCollection(
-				insertSegment,
-			));
+			const localRefs = LocalReferenceCollection.setOrGet(insertSegment);
 			if (insertRef.before?.empty === false) {
 				localRefs.addBeforeTombstones(insertRef.before.map((n) => n.data));
 			}

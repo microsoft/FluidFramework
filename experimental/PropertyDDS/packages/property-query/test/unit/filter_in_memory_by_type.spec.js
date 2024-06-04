@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const InMemoryByType = require("../../src/materialized_history_service/query_pipeline/filtering/in_memory_by_type");
 
 describe("In-Memory filtering by type", () => {

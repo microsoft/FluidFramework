@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDiceRollerAppModel } from "./interfaces";
+import { IDiceRollerAppModel } from "./interfaces.js";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.

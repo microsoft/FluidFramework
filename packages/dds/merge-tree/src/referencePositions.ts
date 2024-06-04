@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SlidingPreference } from "./localReference";
-import { ISegment } from "./mergeTreeNodes";
-import { ReferenceType } from "./ops";
-import { PropertySet } from "./properties";
+import { SlidingPreference } from "./localReference.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { ReferenceType } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * @internal
@@ -30,7 +30,7 @@ export function refTypeIncludesFlag(
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
@@ -38,7 +38,7 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
- * @internal
+ * @alpha
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);

@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protocol-definitions";
+
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { takeJsonSnapshot } from "./snapshotTools";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
+
+import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 	const type =
@@ -75,7 +77,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				break;
 			}
 			default: {
-				throw new Error(`Unknown type: ${(summaryObject as any).type}`);
+				throw new Error(`Unknown type: ${(summaryObject as SummaryObject).type}`);
 			}
 		}
 

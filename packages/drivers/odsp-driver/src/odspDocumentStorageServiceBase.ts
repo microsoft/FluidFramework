@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ISequencedDocumentMessage,
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import {
+	FetchSource,
+	FiveDaysMs,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 	LoaderCachingPolicy,
-	FiveDaysMs,
-	FetchSource,
-} from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
-import { IConfigProvider } from "@fluidframework/telemetry-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
-
-const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
+	ISnapshotTree,
+	ICreateBlobResponse,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
+import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
 	// Save the timeout so we can cancel and reschedule it as needed
@@ -42,14 +49,14 @@ class BlobCache {
 	// So for now, purging is disabled.
 	private readonly purgeEnabled = false;
 
-	public get value() {
+	public get value(): Map<string, ArrayBuffer> {
 		return this._blobCache;
 	}
 
-	public addBlobs(blobs: Map<string, ArrayBuffer>) {
-		blobs.forEach((value, blobId) => {
+	public addBlobs(blobs: Map<string, ArrayBuffer>): void {
+		for (const [blobId, value] of blobs.entries()) {
 			this._blobCache.set(blobId, value);
-		});
+		}
 		// Reset the timer on cache set
 		this.scheduleClearBlobsCache();
 	}
@@ -57,14 +64,14 @@ class BlobCache {
 	/**
 	 * Schedule a timer for clearing the blob cache or defer the current one.
 	 */
-	private scheduleClearBlobsCache() {
+	private scheduleClearBlobsCache(): void {
 		if (this.blobCacheTimeout !== undefined) {
 			// If we already have an outstanding timer, just signal that we should defer the clear
 			this.deferBlobCacheClear = true;
 		} else if (this.purgeEnabled) {
 			// If we don't have an outstanding timer, set a timer
 			// When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
-			const clearCacheOrDefer = () => {
+			const clearCacheOrDefer = (): void => {
 				this.blobCacheTimeout = undefined;
 				if (this.deferBlobCacheClear) {
 					this.deferBlobCacheClear = false;
@@ -76,7 +83,9 @@ class BlobCache {
 					// We want to optimize both - memory footprint and number of future requests to storage.
 					// Note that Container can realize data store or DDS on-demand at any point in time, so we do not
 					// control when blobs will be used.
-					this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+					for (const blobId of this._blobCache.keys()) {
+						this.blobsEvicted.add(blobId);
+					}
 					this._blobCache.clear();
 				}
 			};
@@ -87,7 +96,10 @@ class BlobCache {
 		}
 	}
 
-	public getBlob(blobId: string) {
+	public getBlob(blobId: string): {
+		blobContent: ArrayBuffer | undefined;
+		evicted: boolean;
+	} {
 		// Reset the timer on attempted cache read
 		this.scheduleClearBlobsCache();
 		const blobContent = this._blobCache.get(blobId);
@@ -95,7 +107,7 @@ class BlobCache {
 		return { blobContent, evicted };
 	}
 
-	public setBlob(blobId: string, blob: ArrayBuffer) {
+	public setBlob(blobId: string, blob: ArrayBuffer): Map<string, ArrayBuffer> | undefined {
 		// This API is called as result of cache miss and reading blob from storage.
 		// Runtime never reads same blob twice.
 		// The only reason we may get read request for same blob is blob de-duping in summaries.
@@ -134,32 +146,28 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			maximumCacheDurationMs: maximumCacheDurationMsInEffect,
 		};
 	}
-	protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
+	protected readonly commitCache: Map<string, ISnapshotTree> = new Map();
 
-	private readonly attributesBlobHandles: Set<string> = new Set();
-
-	private _ops: api.ISequencedDocumentMessage[] | undefined;
+	private _ops: ISequencedDocumentMessage[] | undefined;
 
 	private _snapshotSequenceNumber: number | undefined;
 
 	protected readonly blobCache = new BlobCache();
 
-	public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
+	public set ops(ops: ISequencedDocumentMessage[] | undefined) {
 		assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
 		this._ops = ops;
 	}
 
-	public get ops(): api.ISequencedDocumentMessage[] | undefined {
+	public get ops(): ISequencedDocumentMessage[] | undefined {
 		return this._ops;
 	}
 
-	public get snapshotSequenceNumber() {
+	public get snapshotSequenceNumber(): number | undefined {
 		return this._snapshotSequenceNumber;
 	}
 
-	public readonly repositoryUrl = "";
-
-	public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+	public abstract createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
 
 	private async readBlobCore(blobId: string): Promise<ArrayBuffer> {
 		const { blobContent, evicted } = this.blobCache.getBlob(blobId);
@@ -173,40 +181,33 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 
 	public async getSnapshotTree(
-		version?: api.IVersion,
+		version?: IVersion,
 		scenarioName?: string,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<api.ISnapshotTree | null> {
+	): Promise<ISnapshotTree | null> {
 		let id: string;
-		if (!version?.id) {
+		if (version?.id) {
+			id = version.id;
+		} else {
+			// eslint-disable-next-line unicorn/no-null
 			const versions = await this.getVersions(null, 1, scenarioName);
 			if (!versions || versions.length === 0) {
+				// eslint-disable-next-line unicorn/no-null
 				return null;
 			}
 			id = versions[0].id;
-		} else {
-			id = version.id;
 		}
 
 		const snapshotTree = await this.readTree(id, scenarioName);
 		if (!snapshotTree) {
+			// eslint-disable-next-line unicorn/no-null
 			return null;
 		}
 
-		if (snapshotTree.blobs) {
-			const attributesBlob = snapshotTree.blobs.attributes;
-			if (attributesBlob) {
-				this.attributesBlobHandles.add(attributesBlob);
-			}
-		}
-
-		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-		const appTree = snapshotTree.trees[".app"];
-		const protocolTree = snapshotTree.trees[".protocol"];
-
-		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+		return this.combineProtocolAndAppSnapshotTree(snapshotTree);
 	}
+
+	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	public abstract getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -214,75 +215,85 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		count: number,
 		scenarioName?: string,
 		fetchSource?: FetchSource,
-	): Promise<api.IVersion[]>;
+	): Promise<IVersion[]>;
 
 	public abstract uploadSummaryWithContext(
-		summary: api.ISummaryTree,
+		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string>;
 
-	public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
+	public async downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
 		throw new Error("Not implemented yet");
 	}
 
-	protected setRootTree(id: string, tree: api.ISnapshotTree) {
+	protected setRootTree(id: string, tree: ISnapshotTree): void {
 		this.commitCache.set(id, tree);
 	}
 
-	protected initBlobsCache(blobs: Map<string, ArrayBuffer>) {
+	protected initBlobsCache(blobs: Map<string, ArrayBuffer>): void {
 		this.blobCache.addBlobs(blobs);
 	}
 
-	private async readTree(id: string, scenarioName?: string): Promise<api.ISnapshotTree | null> {
+	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}
 
+		// eslint-disable-next-line unicorn/no-null
 		return tree ?? null;
 	}
 
 	protected abstract fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | undefined>;
+	): Promise<ISnapshotTree | undefined>;
 
-	private combineProtocolAndAppSnapshotTree(
-		hierarchicalAppTree: api.ISnapshotTree,
-		hierarchicalProtocolTree: api.ISnapshotTree,
-	) {
-		const summarySnapshotTree: api.ISnapshotTree = {
+	protected combineProtocolAndAppSnapshotTree(snapshotTree: ISnapshotTree): ISnapshotTree {
+		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+		const hierarchicalAppTree = snapshotTree.trees[".app"];
+		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
+		const summarySnapshotTree: ISnapshotTree = {
 			blobs: {
 				...hierarchicalAppTree.blobs,
 			},
 			trees: {
 				...hierarchicalAppTree.trees,
-				// the app tree could have a .protocol
-				// in that case we want to server protocol to override it
-				".protocol": hierarchicalProtocolTree,
 			},
+			id: snapshotTree.id,
 		};
+
+		// The app tree could have a .protocol in that case we want to server protocol to override it.
+		// Snapshot which are for a loading GroupId, will not have a protocol tree.
+		if (hierarchicalProtocolTree !== undefined) {
+			summarySnapshotTree.trees[".protocol"] = hierarchicalProtocolTree;
+		}
 
 		return summarySnapshotTree;
 	}
 
 	protected initializeFromSnapshot(
-		odspSnapshotCacheValue: ISnapshotContents,
+		odspSnapshotCacheValue: ISnapshot,
 		cacheOps: boolean = true,
+		cacheSnapshot: boolean = true,
 	): string | undefined {
 		this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
-		const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
+		const { snapshotTree, blobContents, ops } = odspSnapshotCacheValue;
 
 		// id should be undefined in case of just ops in snapshot.
 		let id: string | undefined;
 		if (snapshotTree) {
 			id = snapshotTree.id;
 			assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
-			this.setRootTree(id, snapshotTree);
+			if (cacheSnapshot) {
+				this.setRootTree(id, snapshotTree);
+			}
 		}
 
-		if (blobs) {
-			this.initBlobsCache(blobs);
+		// Currently always cache blobs as container runtime is not caching them.
+		if (blobContents !== undefined) {
+			this.initBlobsCache(blobContents);
 		}
 
 		if (cacheOps) {

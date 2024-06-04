@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { FieldUpPath, UpPath } from "../../../core/index.js";
 import {
 	Skip,
 	visitBipartiteIterableTreeWithState,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/flex-tree/navigation";
-
-import { FlexTreeField, FlexTreeNode, boxedIterator } from "../../../feature-libraries";
-import { FieldUpPath, UpPath } from "../../../core";
+} from "../../../feature-libraries/flex-tree/navigation.js";
+import { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
 /**
  * Simpler version of visitIterableTree, but uses more memory.
@@ -51,8 +50,8 @@ function test(root: FlexTreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		0,
-		(field) => field[boxedIterator](),
-		(node) => node[boxedIterator](),
+		(field) => field.boxedIterator(),
+		(node) => node.boxedIterator(),
 		(field: FlexTreeField, n) => n,
 		(node: FlexTreeNode, n) => {
 			depth = Math.max(n, depth);
@@ -64,8 +63,8 @@ function test(root: FlexTreeField): void {
 	visitBipartiteIterableTreeWithState(
 		root,
 		undefined,
-		(field) => field[boxedIterator](),
-		(node) => node[boxedIterator](),
+		(field) => field.boxedIterator(),
+		(node) => node.boxedIterator(),
 		(field: FlexTreeField, parent: UpPath | undefined): FieldUpPath => ({
 			parent,
 			field: field.key,

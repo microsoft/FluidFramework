@@ -4,7 +4,8 @@
  */
 
 /**
- * @alpha
+ * The state of the Container's connection to the service.
+ * @public
  */
 export enum ConnectionState {
 	/**

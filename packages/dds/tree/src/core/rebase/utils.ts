@@ -3,16 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Mutable } from "../../util";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { Mutable } from "../../util/index.js";
+
 import {
 	ChangeRebaser,
 	RevisionInfo,
 	RevisionMetadataSource,
 	TaggedChange,
+	makeAnonChange,
+	mapTaggedChange,
+	tagChange,
 	tagRollbackInverse,
-} from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
+} from "./changeRebaser.js";
+import { GraphCommit, RevisionTag, mintCommit } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -98,6 +103,7 @@ export interface BranchRebaseResult<TChange> {
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -138,12 +144,14 @@ export function rebaseBranch<TChange>(
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
@@ -230,32 +238,36 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const inverses: TaggedChange<TChange>[] = [];
+	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
+	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
+	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
+		const inverseTag = mintRevisionTag();
+		const inverse = tagRollbackInverse(changeRebaser.invert(c, true), inverseTag, c.revision);
 		if (sourceSet.has(c.revision)) {
-			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-				...inverses,
-				...targetRebasePath,
-			]);
+			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+			editsToCompose = [currentComposedEdit];
+			const change = changeRebaser.rebase(c, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
 				parent: newHead,
 			};
 			sourceCommits.push(newHead);
-			targetRebasePath.push({ ...c, change });
+			editsToCompose.push(tagChange(change, c.revision));
 		}
-		inverses.unshift(
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-		);
+		revInfos.push({ revision: c.revision });
+		editsToCompose.unshift(inverse);
+		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
 	}
 
 	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		get sourceChange() {
+		get sourceChange(): TChange | undefined {
 			if (netChange === undefined) {
-				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
+				netChange = changeRebaser.compose(editsToCompose);
 			}
 			return netChange;
 		},
@@ -279,9 +291,10 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	change: TChange,
+	change: TaggedChange<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -290,7 +303,9 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	const inverses = sourcePath.map((commit) =>
+		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+	);
 	inverses.reverse();
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
@@ -322,17 +337,17 @@ export function revisionMetadataSourceFromInfo(
 
 export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	changeToRebase: TChange,
+	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
-) {
+): TChange {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
-		getRevInfoFromTaggedChanges(changesToRebaseOver),
+		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
 	return changesToRebaseOver.reduce(
-		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		(a, b) => mapTaggedChange(changeToRebase, changeRebaser.rebase(a, b, revisionMetadata)),
 		changeToRebase,
-	);
+	).change;
 }
 
 // TODO: Deduplicate
@@ -361,6 +376,7 @@ function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): Revi
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange> {
 	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
@@ -422,7 +438,7 @@ export function findAncestor<T extends { parent?: T }>(
 ): T | undefined;
 export function findAncestor<T extends { parent?: T }>(
 	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
-	predicate: (t: T) => boolean = (t) => t.parent === undefined,
+	predicate: (t: T) => boolean = (t): boolean => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;
@@ -494,7 +510,7 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
-	const reversePaths = () => {
+	const reversePaths = (): void => {
 		pathA?.reverse();
 		pathB?.reverse();
 	};

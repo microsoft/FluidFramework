@@ -2,19 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import chai, { assert, expect } from "chai";
-
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import assertArrays from "chai-arrays";
-
 import {
 	AllPackagesSelectionCriteria,
-	filterPackages,
 	PackageFilterOptions,
 	PackageSelectionCriteria,
+	filterPackages,
 	selectAndFilterPackages,
-} from "../src/filter";
-import path from "path";
+} from "../src/filter.js";
+import { Context } from "../src/library/index.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 chai.use(assertArrays);
 
@@ -170,8 +173,7 @@ describe("selectAndFilterPackages", async () => {
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
 			"@fluidframework/eslint-config-fluid",
-			"@fluidframework/common-definitions",
-			"@fluidframework/common-utils",
+			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",

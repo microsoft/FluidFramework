@@ -2,22 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import type { EventEmitter } from "@fluid-internal/client-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	createChildLogger,
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	createChildLogger,
 	extractSafePropertiesFromMessage,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { DeltaScheduler } from "./deltaScheduler";
-import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { DeltaScheduler } from "./deltaScheduler.js";
+import { IBatchMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 
 type IRuntimeMessageMetadata =
 	| undefined

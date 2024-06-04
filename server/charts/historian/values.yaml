@@ -18,6 +18,7 @@ historian:
   ingressClass: ingress_class
   riddler: riddler_url
   ignoreEphemeralFlag: true
+  enableResponseCloseLatencyMetric: true
   storageUrl: historian_storage_url
   error:
     track: true
@@ -58,9 +59,12 @@ gitrest:
       name: isomorphic-git
     filesystem:
       name: nodeFs
+      maxFileSizeBytes: 0
     ephemeralfilesystem:
       name: redisFs
+      maxFileSizeBytes: 0
     persistLatestFullSummary: false
+    persistLatestFullEphemeralSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
     apiMetricsSamplingPeriod: 100
@@ -68,14 +72,18 @@ gitrest:
     enableOptimizedInitialSummary: false
     enableSlimGitInit: false
     enableRedisFsMetrics: false
+    enableHashmapRedisFs: false
+    enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
+    enforceStrictPersistedFullSummaryReads: false
   redis:
-    host: redis
+    url: redis_url
     port: 6379
     connectTimeout: 10000
     maxRetriesPerRequest: 20
     enableAutoPipelining: false
     enableOfflineQueue: true
+  enableResponseCloseLatencyMetric: true
   system:
     httpServer:
       connectionTimeoutMs: 0
@@ -95,4 +103,5 @@ gitssh:
 
 lumberjack:
   options:
+    enableGlobalTelemetryContext: true
     enableSanitization: false

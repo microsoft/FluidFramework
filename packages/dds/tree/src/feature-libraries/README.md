@@ -37,12 +37,12 @@ Longer term there are many options (these are not all planned, and is not an exh
     -   graphQL
 
 -   Schematize configurations:
-    Likely the only schematize configuration we will want is one for use with `Schema` and `EditableTree`, but other options are possible.
-    Likely will want optional fast path for when the `EditableTree` is backed by a `Forest` using shape based compression: may be able to skip some or all validation for whole subtrees this way.
+    Likely the only schematize configuration we will want is one for use with `Schema` and `FlexTree`, but other options are possible.
+    Likely will want optional fast path for when the `FlexTree` is backed by a `Forest` using shape based compression: may be able to skip some or all validation for whole subtrees this way.
 
--   Schematize Types: A typescript type-meta-function that subsets the `EditableTree` API to be schema aware (for both reading and editing)
+-   Schematize Types: A typescript type-meta-function that subsets the `FlexTree` API to be schema aware (for both reading and editing)
 
--   Normalizers: Libraries to convert EditableTrees into representations ideal for use in specific frameworks/platforms/tool-kits. Like schematize, may have a fast-path for specific compressed data representations.
+-   Normalizers: Libraries to convert FlexTrees into representations ideal for use in specific frameworks/platforms/tool-kits. Like schematize, may have a fast-path for specific compressed data representations.
 
     -   react
     -   custom?

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-objects",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "A collection of ready to use Fluid Data Objects",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,24 +11,37 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc"
+		"format": "fluid-build --task format .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -38,20 +51,23 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"events": "^3.1.0"
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@biomejs/biome": "^1.7.3",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/node": "^18.19.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

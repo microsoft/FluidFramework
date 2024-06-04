@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import {
-	TreeStoredSchema,
-	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	schemaFormat,
-	BrandedTreeNodeSchemaDataFormat,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
+	schemaFormat,
 	storedSchemaDecodeDispatcher,
-} from "../../core";
-import { brand, fail, fromErased } from "../../util";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { makeVersionedValidatedCodec } from "../versioned";
-import { Format } from "./format";
+	toTreeNodeSchemaDataFormat,
+} from "../../core/index.js";
+import { brand, fail } from "../../util/index.js";
+
+import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> = Object.create(null);
@@ -27,7 +27,7 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: fromErased<BrandedTreeNodeSchemaDataFormat>(schema.encode()),
+			value: toTreeNodeSchemaDataFormat(schema.encode()),
 		});
 	}
 	return {

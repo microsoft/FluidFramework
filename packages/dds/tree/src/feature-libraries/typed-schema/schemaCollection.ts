@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
-import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
-import { Multiplicity } from "../multiplicity";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier, Multiplicity } from "../../core/index.js";
+import { fail, requireAssignableTo } from "../../util/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
+
+import { normalizeFlexListEager } from "./flexList.js";
 import {
-	TreeFieldSchema,
-	TreeNodeSchema,
-	allowedTypesIsAny,
-	SchemaCollection,
-	MapNodeSchema,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 	LeafNodeSchema,
-	FieldNodeSchema,
-	ObjectNodeSchema,
-} from "./typedTreeSchema";
-import { normalizeFlexListEager } from "./flexList";
-import { Sourced } from "./view";
+	SchemaCollection,
+	allowedTypesIsAny,
+} from "./typedTreeSchema.js";
+import { Sourced } from "./view.js";
 
 // TODO: tests for this file
 
@@ -78,9 +79,9 @@ export function aggregateSchemaLibraries(
 	name: string,
 	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-	rootFieldSchema?: TreeFieldSchema,
+	rootFieldSchema?: FlexFieldSchema,
 ): SchemaLibraryData {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
@@ -145,7 +146,7 @@ export function aggregateSchemaLibraries(
 export function validateSchemaCollection(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	rootFieldSchema?: TreeFieldSchema,
+	rootFieldSchema?: FlexFieldSchema,
 ): string[] {
 	const errors: string[] = [];
 
@@ -159,7 +160,7 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.nodeSchema) {
-		if (tree instanceof MapNodeSchema) {
+		if (tree instanceof FlexMapNodeSchema) {
 			validateField(
 				lintConfiguration,
 				collection,
@@ -174,16 +175,15 @@ export function validateSchemaCollection(
 			}
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
-		} else if (tree instanceof FieldNodeSchema) {
-			const description = () =>
+		} else if (tree instanceof FlexFieldNodeSchema) {
+			const description = (): string =>
 				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, tree.info, description, errors);
-		} else if (tree instanceof ObjectNodeSchema) {
+		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
-				const description = () =>
+				const description = (): string =>
 					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 				validateField(lintConfiguration, collection, field, description, errors);
-				validateObjectNodeFieldName(key, description, errors);
 			}
 		} else {
 			// TODO: there should be a common fallback that works for cases without a specialized implementation.
@@ -198,17 +198,17 @@ export function validateSchemaCollection(
 export function validateRootField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	errors: string[],
 ): void {
-	const describeField = () => `Root field schema`;
+	const describeField = (): string => `Root field schema`;
 	validateField(lintConfiguration, collection, field, describeField, errors);
 }
 
 export function validateField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	describeField: () => string,
 	errors: string[],
 ): void {
@@ -253,57 +253,4 @@ export function validateField(
 	// 		`${describeField()} explicitly uses "counter" kind, which is finished.`,
 	// 	);
 	// }
-}
-
-/**
- * Reserved field names to avoid collisions with the API.
- */
-export const bannedFieldNames = new Set([
-	"constructor",
-	"context",
-	"is",
-	"on",
-	"parentField",
-	"schema",
-	"treeStatus",
-	"tryGetField",
-	"type",
-	"value",
-	"localNodeKey",
-]);
-
-/**
- * Field names starting with these must not be followed by an upper case letter
- */
-export const fieldApiPrefixes = new Set(["set", "boxed"]);
-
-export function validateObjectNodeFieldName(
-	name: string,
-	describeField: () => string,
-	errors: string[],
-): void {
-	// TODO: Remove conflicts between possible field keys and editable-tree API members.
-	const suggestion =
-		"Pick a different field name to avoid property name collisions in the implementation. In the future this list of reserved names will be removed.";
-
-	if (bannedFieldNames.has(name)) {
-		errors.push(
-			`${describeField()} uses "${name}" one of the banned field names (${[
-				...bannedFieldNames,
-			]}). ${suggestion}`,
-		);
-	}
-
-	for (const prefix of fieldApiPrefixes) {
-		if (name.startsWith(prefix)) {
-			const afterPrefix = name.slice(prefix.length);
-			if (afterPrefix === capitalize(afterPrefix)) {
-				errors.push(
-					`${describeField()} has name that starts with one of the banned prefixes (${[
-						...fieldApiPrefixes,
-					]}) followed by something other than a lowercase letter. ${suggestion}`,
-				);
-			}
-		}
-	}
 }

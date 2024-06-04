@@ -4,16 +4,17 @@
  */
 
 import {
-	FieldKey,
 	CursorLocationType,
-	FieldUpPath,
-	UpPath,
-	PathRootPrefix,
 	CursorMarker,
-} from "../../core";
-import { fail } from "../../util";
-import { prefixFieldPath } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
+	FieldKey,
+	FieldUpPath,
+	PathRootPrefix,
+	UpPath,
+} from "../../core/index.js";
+import { fail } from "../../util/index.js";
+import { prefixFieldPath } from "../treeCursorUtils.js";
+
+import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * Chunk that is empty.

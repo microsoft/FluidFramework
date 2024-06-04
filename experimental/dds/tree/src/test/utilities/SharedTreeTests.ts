@@ -4,26 +4,37 @@
  */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
+
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/driver-definitions';
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
-} from '@fluidframework/test-runtime-utils';
-import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { CachingLogViewer } from '../../LogViewer';
-import { EditLog, OrderedEditSet } from '../../EditLog';
-import { initialTree } from '../../InitialTree';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { deserialize } from '../../SummaryBackCompatibility';
-import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
-import { MutableStringInterner } from '../../StringInterner';
-import { getChangeNodeFromView } from '../../SerializationUtilities';
-import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
+} from '@fluidframework/test-runtime-utils/internal';
+import { expect } from 'chai';
+
+import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common.js';
+import { EditLog, OrderedEditSet } from '../../EditLog.js';
+import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities.js';
+import { SharedTreeEvent } from '../../EventTypes.js';
+import { convertNodeDataIds } from '../../IdConversion.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { initialTree } from '../../InitialTree.js';
+import { CachingLogViewer } from '../../LogViewer.js';
+import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
+import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
+import { getChangeNodeFromView } from '../../SerializationUtilities.js';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
+import { MutableStringInterner } from '../../StringInterner.js';
+import { SummaryContents, serialize } from '../../Summary.js';
+import { deserialize } from '../../SummaryBackCompatibility.js';
+import { InterningTreeCompressor } from '../../TreeCompressor.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { generateStableId, nilUuid } from '../../UuidUtilities.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -35,35 +46,27 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
-} from '../../persisted-types';
-import { SharedTreeEvent } from '../../EventTypes';
-import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
-import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
-import { serialize, SummaryContents } from '../../Summary';
-import { InterningTreeCompressor } from '../../TreeCompressor';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
-import { sequencedIdNormalizer } from '../../NodeIdUtilities';
-import { convertNodeDataIds } from '../../IdConversion';
-import { generateStableId, nilUuid } from '../../UuidUtilities';
-import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
-import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
-import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
+} from '../../persisted-types/index.js';
+
+import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {
-	areNodesEquivalent,
-	assertNoDelta,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	areNodesEquivalent,
+	assertNoDelta,
+	getEditLogInternal,
+	getIdNormalizerFromSharedTree,
+	normalizeEdit,
+	normalizeId,
+	normalizeIds,
 	setUpTestTree,
+	spyOnSubmittedOps,
 	testTrait,
 	testTraitLabel,
 	translateId,
-	spyOnSubmittedOps,
-	normalizeIds,
-	normalizeId,
-	normalizeEdit,
-	getIdNormalizerFromSharedTree,
-	getEditLogInternal,
-} from './TestUtilities';
+} from './TestUtilities.js';
+import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests.js';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);
@@ -830,11 +833,17 @@ export function runSharedTreeOperationsTests(
 
 					const newNode = testTree.buildLeaf();
 					sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.before(testTree.left)));
-					if (!hasLocalEdits) {
+					let serialized: string;
+					if (hasLocalEdits) {
+						const { summary } = sharedTree.getAttachSummary();
+						assert.equal(summary.type, SummaryType.Tree, 'Summary type should be Tree');
+						assert.equal(summary.tree.header.type, SummaryType.Blob, 'Summary should contain header blob');
+						serialized = summary.tree.header.content as string;
+					} else {
 						containerRuntimeFactory.processAllMessages();
+						serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					}
 
-					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
 					const parsedTree: SummaryContents =
 						writeFormat === WriteFormat.v0_1_1
@@ -941,11 +950,14 @@ export function runSharedTreeOperationsTests(
 					getChangeNodeFromView(sharedTree.currentView),
 					(node) => convertNodeDataIds(node, (id) => sharedTree.convertToStableNodeId(id))
 				);
-				const summary = sharedTree.saveSummary();
+				const { summary } = sharedTree.getAttachSummary();
+				assert.equal(summary.type, SummaryType.Tree, 'Summary type should be Tree');
+				assert.equal(summary.tree.header.type, SummaryType.Blob, 'Summary should contain header blob');
+				const treeContent: SharedTreeSummaryBase = JSON.parse(summary.tree.header.content as string);
 
 				const { tree: sharedTree2 } = setUpTestSharedTree();
 
-				sharedTree2.loadSummary(summary);
+				sharedTree2.loadSummary(treeContent);
 				const treeAfter = convertTreeNodes<ChangeNode, ChangeNode_0_0_2>(
 					getChangeNodeFromView(sharedTree2.currentView),
 					(node) => convertNodeDataIds(node, (id) => sharedTree2.convertToStableNodeId(id))

@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { EventEmitter } from "@fluid-internal/client-utils";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManagerFactory } from "./taskManagerFactory";
-import { ITaskManager, ITaskManagerEvents } from "./interfaces";
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+
+import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
 
 /**
  * Description of a task manager operation
@@ -63,29 +62,9 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @internal
+ * @alpha
  */
-export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
-	/**
-	 * Create a new TaskManager
-	 *
-	 * @param runtime - data store runtime the new task queue belongs to
-	 * @param id - optional name of the task queue
-	 * @returns newly create task queue (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, TaskManagerFactory.Type) as TaskManager;
-	}
-
-	/**
-	 * Get a factory for TaskManager to register with the data store.
-	 *
-	 * @returns a factory that creates and load TaskManager
-	 */
-	public static getFactory(): IChannelFactory {
-		return new TaskManagerFactory();
-	}
-
+export class TaskManagerClass extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**
 	 * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
 	 * queue, even if we know we've submitted an op that should eventually modify the queue.
@@ -130,7 +109,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	 * Returns a ReadOnlyInfo object to determine current read/write permissions.
 	 */
 	private get readOnlyInfo(): ReadOnlyInfo {
-		return this.runtime.deltaManager.readOnlyInfo;
+		return this.deltaManager.readOnlyInfo;
 	}
 
 	/**
@@ -770,7 +749,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 		}
 	}
 
-	public applyStashedOp() {
-		// do nothing...
+	protected applyStashedOp(content: any): void {
+		const taskOp: ITaskManagerOperation = content;
+		switch (taskOp.type) {
+			case "abandon": {
+				this.abandon(taskOp.taskId);
+				break;
+			}
+			case "complete": {
+				this.complete(taskOp.taskId);
+				break;
+			}
+			case "volunteer": {
+				this.subscribeToTask(taskOp.taskId);
+				break;
+			}
+			default:
+				unreachableCase(taskOp);
+		}
 	}
 }

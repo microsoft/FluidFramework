@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
+	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
-	OptionsMatrix,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
+import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { ILoaderOptions } from "@fluidframework/container-loader";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+} from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
+import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
+	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
@@ -64,8 +66,6 @@ export const generateLoaderOptions = (
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGC: booleanCases,
-	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
 	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
 	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately
@@ -100,11 +100,11 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
-		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
-		enableRuntimeIdCompressor: [undefined, true],
+		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
+		explicitSchemaControl: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

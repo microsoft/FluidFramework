@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ReferenceCountedBase } from "../../util";
-import { BasicChunkCursor } from "./basicChunk";
-import { ChunkedCursor, dummyRoot, TreeChunk } from "./chunk";
+import { ReferenceCountedBase } from "../../util/index.js";
+
+import { BasicChunkCursor } from "./basicChunk.js";
+import { ChunkedCursor, TreeChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose multi-node sequence chunk.
@@ -54,7 +55,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 		);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const child of this.subChunks) {
 			child.referenceRemoved();
 		}

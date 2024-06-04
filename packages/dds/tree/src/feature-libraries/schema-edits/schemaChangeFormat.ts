@@ -4,7 +4,8 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { Format } from "../schema-index";
+
+import { Format } from "../schema-index/index.js";
 
 export const EncodedSchemaChange = Type.Object({
 	new: Format,

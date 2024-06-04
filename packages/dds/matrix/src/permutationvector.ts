@@ -3,33 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
-	BaseSegment,
-	ISegment,
-	// eslint-disable-next-line import/no-deprecated
+	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeDeltaCallbackArgs,
-	MergeTreeDeltaType,
-	IMergeTreeMaintenanceCallbackArgs,
-	MergeTreeMaintenanceType,
 	IJSONSegment,
-} from "@fluidframework/merge-tree";
-import { ITelemetryBaseLogger, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { HandleTable, Handle, isHandleValid } from "./handletable";
-import { deserializeBlob } from "./serialization";
-import { HandleCache } from "./handlecache";
-import { VectorUndoProvider } from "./undoprovider";
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+	ISegment,
+	MergeTreeDeltaType,
+	MergeTreeMaintenanceType,
+} from "@fluidframework/merge-tree/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { HandleCache } from "./handlecache.js";
+import { Handle, HandleTable, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
+import { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",
@@ -135,15 +135,17 @@ export class PermutationVector extends Client {
 			numInserted: number,
 		) => void,
 		private readonly handlesRecycledCallback: (handles: Handle[]) => void,
+		getMinInFlightRefSeq: () => number | undefined,
 	) {
 		super(
 			PermutationSegment.fromJSONObject,
 			createChildLogger({ logger, namespace: `Matrix.${path}.MergeTreeClient` }),
 			{
 				...runtime.options,
-				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
+				newMergeTreeSnapshotFormat: true, // Force new snapshot format as it's generally more efficient for matrices.
 			},
-		); // (See https://github.com/microsoft/FluidFramework/issues/84)
+			getMinInFlightRefSeq,
+		);
 
 		this.on("delta", this.onDelta);
 		this.on("maintenance", this.onMaintenance);
@@ -189,7 +191,10 @@ export class PermutationVector extends Client {
 		return handle;
 	}
 
-	public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+	public adjustPosition(
+		pos: number,
+		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+	) {
 		const { segment, offset } = this.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,

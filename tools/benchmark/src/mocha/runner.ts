@@ -5,6 +5,7 @@
 
 import { assert } from "chai";
 import { Test } from "mocha";
+
 import {
 	BenchmarkArguments,
 	isParentProcess,
@@ -104,7 +105,7 @@ export function supportParentProcess<
 			}
 
 			// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-			const childProcess = await import("child_process");
+			const childProcess = await import("node:child_process");
 			const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
 
 			if (result.error) {

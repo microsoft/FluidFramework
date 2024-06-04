@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred, Lazy } from "@fluidframework/core-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
+import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
+import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
+
+/** @internal */
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
 	private readonly notBoundContexts = new Set<string>();
 
@@ -80,7 +82,19 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	public delete(id: string): boolean {
 		this.deferredContexts.delete(id);
 		this.notBoundContexts.delete(id);
+
+		// Stash the context here in case it's requested in this session, we can log some details about it
+		const context = this._contexts.get(id);
+		this._recentlyDeletedContexts.set(id, context);
+
 		return this._contexts.delete(id);
+	}
+
+	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
+		new Map();
+
+	public getRecentlyDeletedContext(id: string) {
+		return this._recentlyDeletedContexts.get(id);
 	}
 
 	/**

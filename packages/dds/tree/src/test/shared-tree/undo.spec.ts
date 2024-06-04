@@ -2,12 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
-import { leaf, singleJsonCursor } from "../../domains";
-import { rootFieldKey, UpPath } from "../../core";
-import { ITreeCheckout } from "../../shared-tree";
-import { brand, JsonCompatible } from "../../util";
-import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils";
+
+import { UpPath, rootFieldKey } from "../../core/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
+import { ITreeCheckout } from "../../shared-tree/index.js";
+import { JsonCompatible, brand } from "../../util/index.js";
+import {
+	createTestUndoRedoStacks,
+	expectJsonTree,
+	insert,
+	makeTreeFromJson,
+	remove,
+} from "../utils.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -52,7 +58,7 @@ const testCases: {
 		undoState: ["A", "y", "B"],
 	},
 	{
-		name: "the delete of a node",
+		name: "the remove of a node",
 		edit: (actedOn) => {
 			remove(actedOn, 0, 2);
 		},
@@ -60,7 +66,7 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
-		name: "nested deletes",
+		name: "nested removes",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
 				parent: rootPath,
@@ -73,7 +79,7 @@ const testCases: {
 				parent: listNode,
 				field: brand(""),
 			});
-			listField.delete(0, 1);
+			listField.remove(0, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
 		},
@@ -81,7 +87,7 @@ const testCases: {
 		editedState: [],
 	},
 	{
-		name: "move out under delete",
+		name: "move out under remove",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
 				parent: rootPath,
@@ -121,10 +127,10 @@ const testCases: {
 		undoState: ["A", "x", "B", "C", "D"],
 	},
 	{
-		name: "a delete of content that is concurrently edited",
+		name: "a remove of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).delete(0, 1);
-			actedOn.editor.sequenceField(rootField).delete(0, 1);
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).remove(0, 1);
+			actedOn.editor.sequenceField(rootField).remove(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
@@ -243,6 +249,34 @@ describe("Undo and redo", () => {
 			expectJsonTree(view, editedState);
 			unsubscribe();
 		});
+
+		it(`${name} multiple times`, () => {
+			const tree = makeTreeFromJson(initialState);
+			const fork = tree.fork();
+
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
+			edit(tree, fork);
+
+			tree.merge(fork, false);
+			expectJsonTree(tree, editedState);
+			while (undoStack.length > 0) {
+				undoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, undoState ?? initialState);
+			while (redoStack.length > 0) {
+				redoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, editedState);
+			while (undoStack.length > 0) {
+				undoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, undoState ?? initialState);
+			while (redoStack.length > 0) {
+				redoStack.pop()?.revert();
+			}
+			expectJsonTree(tree, editedState);
+			unsubscribe();
+		});
 	}
 
 	it("can undo before and after rebasing a branch", () => {
@@ -269,8 +303,8 @@ describe("Undo and redo", () => {
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
 			tree1.events,
 		);
-		tree1.editor.sequenceField(rootField).delete(0, 1);
-		tree1.editor.sequenceField(rootField).delete(1, 1);
+		tree1.editor.sequenceField(rootField).remove(0, 1);
+		tree1.editor.sequenceField(rootField).remove(1, 1);
 
 		const tree2 = tree1.fork();
 		const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
@@ -316,7 +350,7 @@ describe("Undo and redo", () => {
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 		tree.transaction.start();
 		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-		tree.editor.sequenceField(rootField).delete(0, 1);
+		tree.editor.sequenceField(rootField).remove(0, 1);
 		tree.transaction.commit();
 
 		expectJsonTree(tree, ["B", "C"]);
@@ -326,62 +360,4 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["B", "C"]);
 		unsubscribe();
 	});
-
-	it("can undo and redo an insert multiple times", () => {
-		const tree = makeTreeFromJson(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
-
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B", "C"]);
-		unsubscribe();
-	});
-
-	it("can undo and redo a move multiple times", () => {
-		const tree = makeTreeFromJson(["A", "B"]);
-
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-		tree.editor.sequenceField(rootField).move(1, 1, 0);
-
-		expectJsonTree(tree, ["B", "A"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "A"]);
-		undoStack.pop()?.revert();
-		expectJsonTree(tree, ["A", "B"]);
-		redoStack.pop()?.revert();
-		expectJsonTree(tree, ["B", "A"]);
-		unsubscribe();
-	});
 });
-
-// TODO: Dedupe with the helpers in editing.spec.ts
-
-/**
- * Helper function to insert node at a given index.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField(rootField);
-	const nodes = values.map((value) =>
-		cursorForJsonableTreeNode({ type: leaf.string.name, value }),
-	);
-	field.insert(index, nodes);
-}
-
-function remove(tree: ITreeCheckout, index: number, count: number): void {
-	const field = tree.editor.sequenceField(rootField);
-	field.delete(index, count);
-}

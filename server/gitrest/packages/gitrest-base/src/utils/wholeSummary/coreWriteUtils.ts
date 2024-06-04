@@ -33,6 +33,11 @@ export interface IWriteSummaryTreeOptions {
 	 */
 	repoManager: IRepositoryManager;
 	/**
+	 * The Git repository manager to use for retrieving Git objects from storage.
+	 * This will often be the same as `repoManager`, but may be different when writing a low-io summary.
+	 */
+	sourceOfTruthRepoManager: IRepositoryManager;
+	/**
 	 * Whether or not to precompute the full git tree for the written summary tree.
 	 * This will cause the returned {@link IFullGitTree} to contain the entire newly written Git tree.
 	 * When false, the returned {@link IFullGitTree} will only contain the shas of the newly written Git tree and whatever ended up in the blob cache.
@@ -144,16 +149,16 @@ async function getShaFromTreeHandleEntry(
 
 	// The entry is in the format { id: `<parent commit sha>/<tree path>`, path: `<tree path>` }
 	const parentHandle = entry.id.split("/")[0];
-	// Must use `this.repoManager` to ensure that we retrieve the shas from storage, not memory
-	const parentCommit = await options.repoManager.getCommit(parentHandle);
-	const parentTree = await options.repoManager.getTree(
+	// Must use `options.sourceOfTruthRepoManager` to ensure that we retrieve the shas from storage, not memory, in low-io mode.
+	const parentCommit = await options.sourceOfTruthRepoManager.getCommit(parentHandle);
+	const parentTree = await options.sourceOfTruthRepoManager.getTree(
 		parentCommit.tree.sha,
 		true /* recursive */,
 	);
 	const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
 		parentTree,
-		options.repoManager,
-		options.blobCache /* blobCache */,
+		options.sourceOfTruthRepoManager,
+		{} /* blobCache */,
 		// Parse inner git tree blobs so that we can properly reference blob shas in new summary.
 		true /* parseInnerFullGitTrees */,
 		// We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.

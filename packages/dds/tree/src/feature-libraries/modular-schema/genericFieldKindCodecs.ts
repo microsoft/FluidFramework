@@ -3,37 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec";
-import type { NodeChangeset } from "../modular-schema";
-import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat";
-import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
+import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
-export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-): ICodecFamily<GenericChangeset<TChildChange>> {
-	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
+export function makeGenericChangeCodec(): ICodecFamily<
+	GenericChangeset,
+	FieldChangeEncodingContext
+> {
+	return makeCodecFamily([[1, makeV1Codec()]]);
 }
 
-function makeV0Codec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<TChildChange>,
-): IJsonCodec<GenericChangeset<TChildChange>, EncodedGenericChangeset> {
+function makeV1Codec(): IJsonCodec<
+	GenericChangeset,
+	EncodedGenericChangeset,
+	EncodedGenericChangeset,
+	FieldChangeEncodingContext
+> {
 	return {
-		encode: (change: GenericChangeset<TChildChange>): EncodedGenericChangeset => {
+		encode: (
+			change: GenericChangeset,
+			context: FieldChangeEncodingContext,
+		): EncodedGenericChangeset => {
 			const encoded: EncodedGenericChangeset = change.map(({ index, nodeChange }) => [
 				index,
-				childCodec.encode(nodeChange),
+				context.encodeNode(nodeChange),
 			]);
 			return encoded;
 		},
-		decode: (encoded: EncodedGenericChangeset): GenericChangeset<TChildChange> => {
+		decode: (
+			encoded: EncodedGenericChangeset,
+			context: FieldChangeEncodingContext,
+		): GenericChangeset => {
 			return encoded.map(
-				([index, nodeChange]: EncodedGenericChange): GenericChange<TChildChange> => ({
+				([index, nodeChange]: EncodedGenericChange): GenericChange => ({
 					index,
-					nodeChange: childCodec.decode(nodeChange),
+					nodeChange: context.decodeNode(nodeChange),
 				}),
 			);
 		},
-		encodedSchema: EncodedGenericChangeset(childCodec.encodedSchema ?? Type.Any()),
+		encodedSchema: EncodedGenericChangeset(EncodedNodeChangeset),
 	};
 }

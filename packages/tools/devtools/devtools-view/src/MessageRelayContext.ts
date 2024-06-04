@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { type IMessageRelay } from "@fluidframework/devtools-core/internal";
 import React from "react";
-import { type IMessageRelay } from "@fluidframework/devtools-core";
 
 /**
  * Context for accessing a shared {@link @fluidframework/devtools-core#IMessageRelay} for communicating with the webpage.

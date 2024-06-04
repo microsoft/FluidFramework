@@ -4,9 +4,17 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { benchmark } from "..";
 import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
 import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
+
+function doLoop(upperLimit: number): void {
+	let i = 0;
+	while (i < upperLimit) {
+		i += 1;
+	}
+}
 
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
@@ -92,13 +100,6 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	function doLoop(upperLimit: number): void {
-		let i = 0;
-		while (i < upperLimit) {
-			i += 1;
-		}
-	}
-
 	benchmark({
 		title: `minimal`,
 		benchmarkFn: () => 0,
@@ -107,6 +108,7 @@ describe("`benchmark` function", () => {
 
 	benchmark({
 		title: `async`,
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		benchmarkFn: async () => nextTick(() => 0),
 		type: BenchmarkType.OwnCorrectness,
 	});

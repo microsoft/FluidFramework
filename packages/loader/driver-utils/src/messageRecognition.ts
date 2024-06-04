@@ -2,11 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Tells if message was sent by container runtime

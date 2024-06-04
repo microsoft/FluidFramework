@@ -2,31 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export {
 	onForkTransitive,
 	SharedTreeBranch,
 	SharedTreeBranchChange,
 	SharedTreeBranchEvents,
 	getChangeReplaceType,
-} from "./branch";
+} from "./branch.js";
 
 export {
+	ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "./sharedTreeCore";
+} from "./sharedTreeCore.js";
 
-export { TransactionStack } from "./transactionStack";
+export { ResubmitMachine } from "./resubmitMachine.js";
+export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs";
-export { EditManagerSummarizer } from "./editManagerSummarizer";
-export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
+export {
+	ChangeEnricherReadonlyCheckout,
+	ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
+} from "./changeEnricher.js";
+
+export { TransactionStack } from "./transactionStack.js";
+
+export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export { EditManagerSummarizer } from "./editManagerSummarizer.js";
+export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager.js";
 export {
 	Commit,
 	SeqNumber,
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat";
-export { RevisionTagCodec } from "./revisionTagCodecs";
+} from "./editManagerFormat.js";

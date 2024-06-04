@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, NodeChangeset, cursorForJsonableTreeNode } from "../../feature-libraries";
-import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../core";
-import { brand } from "../../util";
-import { leaf } from "../../domains";
+import { FieldKey, ITreeCursorSynchronous, JsonableTree } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 
 // TODO: Users of this are mainly working with in memory representations.
 // Therefore it should not be using JsonableTrees.
@@ -28,20 +28,3 @@ export function testTreeCursor(s: string): ITreeCursorSynchronous {
 }
 
 export const fooKey: FieldKey = brand("foo");
-
-/**
- * Create a NodeChangeset with a child change to the foo field.
- */
-export function changesetForChild(change: unknown): NodeChangeset {
-	return {
-		fieldChanges: new Map([
-			[
-				fooKey,
-				{
-					fieldKind: FieldKinds.optional.identifier,
-					change: brand(change),
-				},
-			],
-		]),
-	};
-}

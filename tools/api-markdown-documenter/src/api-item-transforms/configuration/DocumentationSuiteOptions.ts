@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
+
 import {
 	type ApiDeclaredItem,
 	type ApiItem,
@@ -18,7 +18,9 @@ import {
 	getReleaseTag,
 	getUnscopedPackageName,
 	releaseTagToString,
-} from "../../utilities";
+	getSafeFilenameForName,
+	getConciseSignature,
+} from "../../utilities/index.js";
 
 /**
  * List of item kinds for which separate documents should be generated.
@@ -200,17 +202,6 @@ export interface DocumentationSuiteOptions {
 	skipPackage?: (apiPackage: ApiPackage) => boolean;
 
 	/**
-	 * Optionally generates front-matter contents for an `ApiItem` serving as the root of a document
-	 * (see {@link DocumentBoundaries}).
-	 * Any generated contents will be included at the top of a generated document.
-	 *
-	 * @remarks Note: this is arbitrary text, and will not be escaped.
-	 *
-	 * @defaultValue No front matter is generated.
-	 */
-	frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
-
-	/**
 	 * Minimal release scope to include in generated documentation suite.
 	 * API members with matching or higher scope will be included, while lower scoped items will be omitted.
 	 *
@@ -282,9 +273,7 @@ export namespace DefaultDocumentationSuiteOptions {
 				return "index";
 			}
 			case ApiItemKind.Package: {
-				return Utilities.getSafeFilenameForName(
-					getUnscopedPackageName(apiItem as ApiPackage),
-				);
+				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
 				return getQualifiedApiItemName(apiItem);
@@ -352,7 +341,7 @@ export namespace DefaultDocumentationSuiteOptions {
 				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 			}
 			default: {
-				return Utilities.getConciseSignature(apiItem);
+				return getConciseSignature(apiItem);
 			}
 		}
 	}
@@ -364,15 +353,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	 */
 	export function defaultSkipPackage(): boolean {
 		return false;
-	}
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.frontMatter}.
-	 *
-	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
-	 */
-	export function defaultFrontMatter(): undefined {
-		return undefined;
 	}
 }
 
@@ -389,7 +369,6 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
-	frontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatter,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
 

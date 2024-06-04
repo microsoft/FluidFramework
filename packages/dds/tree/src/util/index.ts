@@ -3,23 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export {
-	brand,
-	Brand,
-	BrandedType,
-	brandOpaque,
-	brandedNumberType,
-	brandedStringType,
-	extractFromOpaque,
-	ExtractFromOpaque,
-	fromErased,
-	Erased,
-	ErasedType,
-	NameFromBranded,
-	Opaque,
-	ValueFromBranded,
-	brandErased,
-} from "./brand";
+export { brand, Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
+export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { brandOpaque, extractFromOpaque, ExtractFromOpaque, Opaque } from "./opaque.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
@@ -34,10 +20,10 @@ export {
 	tryGetFromNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
-} from "./nestedMap";
-export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
-export { OffsetList, OffsetListFactory } from "./offsetList";
-export { TransactionResult } from "./transactionResult";
+} from "./nestedMap.js";
+export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet.js";
+export { OffsetList, OffsetListFactory } from "./offsetList.js";
+export { TransactionResult } from "./transactionResult.js";
 export {
 	areSafelyAssignable,
 	Contravariant,
@@ -52,8 +38,8 @@ export {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
-} from "./typeCheck";
-export { StackyIterator } from "./stackyIterator";
+} from "./typeCheck.js";
+export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	clone,
@@ -66,20 +52,16 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
 	Mutable,
 	Populated,
 	RecursiveReadonly,
-	zipIterables,
-	Assume,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
-	generateStableId,
-	useDeterministicStableId,
-	useAsyncDeterministicStableId,
 	objectToMap,
 	invertMap,
 	oneFromSet,
@@ -91,8 +73,8 @@ export {
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
-} from "./utils";
-export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
+} from "./utils.js";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
 
 export {
 	AllowOptional,
@@ -103,7 +85,8 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
-} from "./typeUtils";
+	Assume,
+} from "./typeUtils.js";
 
 export {
 	BrandedKey,
@@ -111,7 +94,7 @@ export {
 	BrandedMapSubset,
 	getOrCreateSlotContent,
 	brandedSlot,
-} from "./brandedMap";
+} from "./brandedMap.js";
 
 export {
 	getFirstEntryFromRangeMap,
@@ -120,7 +103,8 @@ export {
 	RangeMap,
 	RangeQueryResult,
 	setInRangeMap,
-} from "./rangeMap";
+	deleteFromRangeMap,
+} from "./rangeMap.js";
 
 export {
 	IdAllocator,
@@ -128,4 +112,4 @@ export {
 	idAllocatorFromState,
 	IdAllocationState,
 	fakeIdAllocator,
-} from "./idAllocator";
+} from "./idAllocator.js";

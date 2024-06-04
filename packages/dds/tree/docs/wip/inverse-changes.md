@@ -197,7 +197,7 @@ we could potentially consider whether the interim changes could successfully be 
 If not, we could prune the inverse change to make it so.
 This would have the effect of only undoing changes that no interim change depends on.
 For example, if the original change to be undone inserted a subtree,
-then the final inverse would only delete that subtree if no interim changes had performed operations within this subtree.
+then the final inverse would only remove that subtree if no interim changes had performed operations within this subtree.
 
 ### Which Semantics to Support
 
@@ -250,15 +250,15 @@ Some DDSes address the need for repair data by including the matching repair dat
 In practice, this means:
 
 -   Each set-value operation carries with it the value being overwritten.
--   Each delete operation carries with it the contents of the subtrees being deleted.
+-   Each remove operation carries with it the contents of the subtrees being removed.
 
 A client that needs to produce an inverse change
 would therefore use that additional information in the changeset in order to produce its inverse.
 
 This scheme is unfortunately not directly applicable to SharedTree.
-A move operation that is concurrent with (and sequenced prior to) a delete operation
-may move a subtree under the deleted subtree.
-The repair data included in the delete operation would not contain that subtree.
+A move operation that is concurrent with (and sequenced prior to) a remove operation
+may move a subtree under the removed subtree.
+The repair data included in the remove operation would not contain that subtree.
 In order for a client to produce a concrete inverse change,
 it would need to know the contents of the subtree that was moved.
 This could be resolved by including the contents of moved subtrees in all move operations,
@@ -277,12 +277,12 @@ Clients could maintain a cache of repair data for the extent of the window for w
 This would include:
 
 -   The value being overwritten by each set-value operation.
--   The subtree being deleted by each delete operation.
+-   The subtree being removed by each remove operation.
 -   The subtree being moved by each move operation.
 
 Note that this data must be maintained for the most rebased version of each edit.
 This ensures that each change's complete impact is being taken into account,
-as in the concurrent move into a deleted subtree scenario.
+as in the concurrent move into a removed subtree scenario.
 
 Depending on the architecture of client applications,
 it may be more efficient to retain old versions of the document in a persistent data structure
@@ -343,9 +343,9 @@ For now, we consider the approach of creating an inverse that is as concrete as 
 TODO: Expand on...
 
 -   Set Value -> Set Value
--   Insert -> Delete
--   Delete -> Revive
--   Revive -> Delete
+-   Insert -> Remove
+-   Remove -> Revive
+-   Revive -> Remove
 -   MoveOut + MoveIn -> Return + MoveOut
 -   Return + MoveOut -> MoveOut + Return
 -   MoveOut + Return -> Return + MoveOut
@@ -515,8 +515,8 @@ This is something peers should be equipped to perform without need for additiona
 It does mean however that we must design inverse changes and the output of rebase to ensure that
 a change being rebased over an inverse change
 after having been rebased over the original would undo the effects of rebasing over the original.
-For example, if the original change was a slice-delete and the rebased change was an insert that would commute with the slice,
-then the final rebased change should not be affected by the slice delete.
+For example, if the original change was a slice-remove and the rebased change was an insert that would commute with the slice,
+then the final rebased change should not be affected by the slice remove.
 This requires that inverse changes are able to counter the effects of
 the change they seek to counteract in changes that are sequenced after that inverse.
 See [Deriving an Inverse Changeset](#deriving-an-inverse-changeset) for more details.
@@ -809,8 +809,8 @@ is that we may fetch such data only to later determine that it is not needed.
 This can happen in two ways:
 
 -   The reconciliation process can lead to some repair data being irrelevant.
-    For example, we may fetch a deleted subtree to produce a revive mark,
-    only to rebase this revive over a delete of an ancestor.
+    For example, we may fetch a removed subtree to produce a revive mark,
+    only to rebase this revive over a remove of an ancestor.
 -   The client may receive other edits along with the undo,
     and will not need to derive the Delta for the undo alone
     (only for the composition of the undo these other changes).
@@ -870,7 +870,7 @@ Such a policy should be managed by the application and exist entirely outside
 It's interesting to note that
 the relevant repair data is available to all clients
 when all the changes that last contributed state
-to the portions of the document being deleted or overwritten by a change that is being undone
+to the portions of the document being removed or overwritten by a change that is being undone
 are still within the collaboration window.
 This is likely to be rare in practice because collaboration windows tend to be much shorter
 than the lifetime of document contents.

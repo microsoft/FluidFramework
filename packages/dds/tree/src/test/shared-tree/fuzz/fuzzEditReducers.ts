@@ -4,53 +4,77 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { DDSFuzzTestState, type Client } from "@fluid-private/test-dds-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
 	DownPath,
 	FlexTreeField,
 	FlexTreeNode,
-	cursorForJsonableTreeNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	SchemaBuilderInternal,
 	cursorForJsonableTreeField,
-} from "../../../feature-libraries";
-import { fail } from "../../../util";
-import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { Revertible } from "../../../core";
+	cursorForJsonableTreeNode,
+	intoStoredSchema,
+	type FlexAllowedTypes,
+	type FlexibleNodeContent,
+} from "../../../feature-libraries/index.js";
+import { SharedTreeFactory } from "../../../shared-tree/index.js";
+import { brand, fail } from "../../../util/index.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
+
 import {
+	FuzzTestState,
+	FuzzTransactionView,
+	FuzzView,
+	getAllowableNodeTypes,
+	viewFromState,
+} from "./fuzzEditGenerators.js";
+import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import {
+	FieldDownPath,
 	FieldEdit,
-	FuzzDelete,
-	FuzzFieldChange,
-	FuzzSet,
-	FuzzTransactionType,
-	FuzzUndoRedoType,
+	ClearField,
+	Insert,
+	Remove,
+	SetField,
+	IntraFieldMove,
 	Operation,
-} from "./operationTypes";
-import { fuzzNode, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { FuzzTestState, viewFromState } from "./fuzzEditGenerators";
+	SchemaChange,
+	TransactionBoundary,
+	UndoRedo,
+	CrossFieldMove,
+} from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	edit: (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+	treeEdit: (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state), contents);
+				applyFieldEdit(viewFromState(state), edit);
 				break;
 			}
 			default:
 				break;
 		}
 	},
-	transaction: (state, operation) => {
-		applyTransactionEdit(state, operation.contents);
+	transactionBoundary: (state, { boundary }) => {
+		applyTransactionBoundary(state, boundary);
 	},
-	undoRedo: (state, operation) => {
+	undoRedo: (state, { operation }) => {
 		const view = viewFromState(state).checkout;
 		assert(isRevertibleSharedTreeView(view));
-		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
+	},
+	schemaChange: (state, operation) => {
+		applySchemaOp(state, operation);
 	},
 });
 export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
@@ -58,9 +82,9 @@ export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFac
 	operation,
 ) => syncFuzzReducer(state, operation);
 
-export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
+export function checkTreesAreSynchronized(trees: readonly Client<SharedTreeFactory>[]) {
 	for (const tree of trees) {
-		validateTreeConsistency(trees[0], tree);
+		validateFuzzTreeConsistency(trees[0], tree);
 	}
 }
 
@@ -68,30 +92,58 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 	state.containerRuntimeFactory.processAllMessages();
 	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length > 0) {
-		const readonlyChannel = state.summarizerClient.channel;
-		for (const { channel } of connectedClients) {
-			validateTreeConsistency(channel, readonlyChannel);
+		const readonlyClient = state.summarizerClient;
+		for (const client of connectedClients) {
+			validateFuzzTreeConsistency(client, readonlyClient);
 		}
 	}
+}
+
+// TODO: Update this function to be done in a more ergonomic way using libraries
+function generateLeafNodeSchemas(nodeTypes: string[]) {
+	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
+	const leafNodeSchemas = [];
+	for (const nodeType of nodeTypes) {
+		if (
+			nodeType !== "treefuzz.node" &&
+			nodeType !== "com.fluidframework.leaf.number" &&
+			nodeType !== "com.fluidframework.leaf.string"
+		) {
+			if (!nodeType.startsWith("com.fluidframework.leaf")) {
+				leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
+			}
+		}
+	}
+	const library = builder.intoLibrary();
+	return { leafNodeSchemas, library };
+}
+export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
+	const nodeTypes = getAllowableNodeTypes(state);
+	nodeTypes.push(brand(operation.operation.type));
+	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+	const newSchema = createTreeViewSchema(leafNodeSchemas, library);
+	const view = viewFromState(state, state.client);
+	view.checkout.updateSchema(intoStoredSchema(newSchema));
 }
 
 /**
  * Assumes tree is using the fuzzSchema.
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
-export function applyFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	fieldEdit: FieldEdit,
-): void {
+export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
+	const field = navigateToField(tree, fieldEdit.field);
 	switch (fieldEdit.change.type) {
 		case "sequence":
-			applySequenceFieldEdit(tree, fieldEdit.change.edit);
+			assert(field.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			applySequenceFieldEdit(tree, field, fieldEdit.change.edit);
 			break;
 		case "required":
-			applyValueFieldEdit(tree, fieldEdit.change.edit);
+			assert(field.is(tree.currentSchema.objectNodeFieldsObject.requiredChild));
+			applyRequiredFieldEdit(tree, field, fieldEdit.change.edit);
 			break;
 		case "optional":
-			applyOptionalFieldEdit(tree, fieldEdit.change.edit);
+			assert(field.is(tree.currentSchema.objectNodeFieldsObject.optionalChild));
+			applyOptionalFieldEdit(tree, field, fieldEdit.change.edit);
 			break;
 		default:
 			break;
@@ -99,39 +151,36 @@ export function applyFieldEdit(
 }
 
 function applySequenceFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzFieldChange,
+	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	field: FlexTreeSequenceField<any>,
+	change: Insert | Remove | IntraFieldMove | CrossFieldMove,
 ): void {
 	switch (change.type) {
 		case "insert": {
-			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
-
-			const parent = navigateToNode(tree, change.parent);
-			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-			const field = parent.boxedSequenceChildren;
-			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
+			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
-		case "delete": {
-			const firstNode = navigateToNode(tree, change.firstNode);
-			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
-			const { parent: field, index } = firstNode.parentField;
-			assert(
-				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
-				"Defined down-path should point to a valid parent",
-			);
-			field.removeRange(index, index + change.count);
+		case "remove": {
+			field
+				.sequenceEditor()
+				.remove(change.range.first, change.range.last + 1 - change.range.first);
 			break;
 		}
-		case "move": {
-			const firstNode = navigateToNode(tree, change.firstNode);
-			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
-			const { parent: field, index } = firstNode.parentField;
-			assert(
-				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
-				"Defined down-path should point to a valid parent",
+		case "intraFieldMove": {
+			field.moveRangeToIndex(change.dstIndex, change.range.first, change.range.last + 1);
+			break;
+		}
+		case "crossFieldMove": {
+			const dstField = navigateToField(tree, change.dstField);
+			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			dstField.moveRangeToIndex(
+				change.dstIndex,
+				change.range.first,
+				change.range.last + 1,
+				field,
 			);
-			field.moveRangeToIndex(change.dstIndex, index, index + change.count);
 			break;
 		}
 		default:
@@ -139,81 +188,38 @@ function applySequenceFieldEdit(
 	}
 }
 
-function applyValueFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet,
-): void {
-	assert(change.parent !== undefined, "Value change should not occur at the root.");
-	const parent = navigateToNode(tree, change.parent);
-	assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-	const field = parent.tryGetField(change.key);
-	assert(
-		field?.is(fuzzNode.objectNodeFieldsObject.requiredChild),
-		"Parent of Value change should have an optional field to modify",
-	);
-	field.content = cursorForJsonableTreeNode(change.value) as any;
-}
-
-function navigateToNode(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	path: DownPath | undefined,
-): FlexTreeNode | undefined {
-	const rootField = tree.editableTree;
-	if (path === undefined) {
-		return undefined;
-	}
-
-	const finalLocation = path.reduce<{
-		field: FlexTreeField;
-		containedNode: FlexTreeNode | undefined;
-	}>(
-		({ containedNode }, nextStep) => {
-			const childField = containedNode?.tryGetField(nextStep.field);
-			// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
-			// to the .is typeguard.
-			/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-			if (childField?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren)) {
-				assert(nextStep.index !== undefined);
-				return {
-					field: childField,
-					containedNode: childField.at(nextStep.index),
-				};
-			} else if (
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-				childField?.is(fuzzNode.objectNodeFieldsObject.optionalChild) ||
-				childField?.is(fuzzNode.objectNodeFieldsObject.requiredChild)
-			) {
-				return { field: childField, containedNode: childField.content };
-			}
-			/* eslint-enable @typescript-eslint/strict-boolean-expressions */
-
-			fail(`Unexpected field type: ${childField?.key}`);
-		},
-		{ field: rootField, containedNode: rootField.content },
-	);
-
-	return finalLocation.containedNode;
-}
-
-function applyOptionalFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet | FuzzDelete,
+function applyRequiredFieldEdit(
+	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	field: FlexTreeRequiredField<any>,
+	change: SetField,
 ): void {
 	switch (change.type) {
 		case "set": {
-			const rootField = tree.editableTree;
-			if (change.parent === undefined) {
-				rootField.content = cursorForJsonableTreeNode(change.value) as any;
-			} else {
-				const parent = navigateToNode(tree, change.parent);
-				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
-			}
+			field.content = cursorForJsonableTreeNode(
+				change.value,
+			) as FlexibleNodeContent<FlexAllowedTypes>;
 			break;
 		}
-		case "delete": {
-			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
-			assert(field?.is(fuzzNode.objectNodeFieldsObject.optionalChild));
+		default:
+			fail("Invalid edit.");
+	}
+}
+
+function applyOptionalFieldEdit(
+	tree: FuzzView,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	field: FlexTreeOptionalField<any>,
+	change: SetField | ClearField,
+): void {
+	switch (change.type) {
+		case "set": {
+			field.content = cursorForJsonableTreeNode(change.value);
+			break;
+		}
+		case "clear": {
 			field.content = undefined;
 			break;
 		}
@@ -222,34 +228,39 @@ function applyOptionalFieldEdit(
 	}
 }
 
-export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransactionType): void {
+export function applyTransactionBoundary(
+	state: FuzzTestState,
+	boundary: TransactionBoundary["boundary"],
+): void {
 	state.transactionViews ??= new Map();
 	let view = state.transactionViews.get(state.client.channel);
 	if (view === undefined) {
 		assert(
-			contents.fuzzType === "transactionStart",
+			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		view = viewFromState(state).fork();
+		const treeView = viewFromState(state);
+		view = treeView.fork() as FuzzTransactionView;
+		view.currentSchema = treeView.currentSchema;
 		state.transactionViews.set(state.client.channel, view);
 	}
 
 	const { checkout } = view;
-	switch (contents.fuzzType) {
-		case "transactionStart": {
+	switch (boundary) {
+		case "start": {
 			checkout.transaction.start();
 			break;
 		}
-		case "transactionCommit": {
+		case "commit": {
 			checkout.transaction.commit();
 			break;
 		}
-		case "transactionAbort": {
+		case "abort": {
 			checkout.transaction.abort();
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			unreachableCase(boundary);
 	}
 
 	if (!checkout.transaction.inProgress()) {
@@ -263,9 +274,9 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 export function applyUndoRedoEdit(
 	undoStack: Revertible[],
 	redoStack: Revertible[],
-	contents: FuzzUndoRedoType,
+	operation: UndoRedo["operation"],
 ): void {
-	switch (contents.type) {
+	switch (operation) {
 		case "undo": {
 			undoStack.pop()?.revert();
 			break;
@@ -275,6 +286,64 @@ export function applyUndoRedoEdit(
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			unreachableCase(operation);
 	}
+}
+
+function navigateToField(tree: FuzzView, path: FieldDownPath): FlexTreeField {
+	const nodeSchema = tree.currentSchema;
+	if (path.parent === undefined) {
+		return tree.flexTree;
+	} else {
+		const parent = navigateToNode(tree, path.parent);
+		assert(parent.is(nodeSchema), "Defined down-path should point to a valid parent");
+		switch (path.key) {
+			case "sequenceChildren":
+				return parent.boxedSequenceChildren;
+			case "optionalChild":
+				return parent.boxedOptionalChild;
+			case "requiredChild":
+				return parent.boxedRequiredChild;
+			default:
+				fail("Unknown field key");
+		}
+	}
+}
+
+function navigateToNode(tree: FuzzView, path: DownPath): FlexTreeNode {
+	const nodeSchema = tree.currentSchema;
+	const rootField = tree.flexTree;
+	const finalLocation = path.reduce<{
+		field: FlexTreeField;
+		containedNode: FlexTreeNode;
+	}>(
+		({ containedNode }, nextStep) => {
+			const childField = containedNode?.tryGetField(nextStep.field);
+			// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
+			// to the .is typeguard.
+			/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+			if (childField?.is(nodeSchema.objectNodeFieldsObject.sequenceChildren)) {
+				assert(nextStep.index !== undefined);
+				return {
+					field: childField,
+					containedNode: childField.at(nextStep.index) ?? fail("Index out of bounds."),
+				};
+			} else if (
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+				childField?.is(nodeSchema.objectNodeFieldsObject.optionalChild) ||
+				childField?.is(nodeSchema.objectNodeFieldsObject.requiredChild)
+			) {
+				return {
+					field: childField,
+					containedNode: childField.content ?? fail("Missing child"),
+				};
+			}
+			/* eslint-enable @typescript-eslint/strict-boolean-expressions */
+
+			fail(`Unexpected field type: ${childField?.key}`);
+		},
+		{ field: rootField, containedNode: rootField.content ?? fail("Missing root") },
+	);
+
+	return finalLocation.containedNode;
 }

@@ -5,22 +5,23 @@
     Output: The modified string with zero-width spaces inserted before capital letters, or the original input if it's not a string.
 */}}
 
-{{ $input := . }}
-{{ if eq (printf "%T" $input) "string" }}
-	{{ $chars := split $input "" }}
-	{{ $current := "" }}
-	{{ range $char := $chars }}
-		{{ if and (ge $char "A") (le $char "Z") }}
-			{{ if gt (len $current) 0 }}
-				&#8203;{{ $current | safeHTML }}
-				{{ $current = "" }}
-			{{ end }}
-		{{ end }}
-		{{ $current = print $current $char }}
-	{{ end }}
-	{{ if gt (len $current) 0 }}
-		&#8203;{{ $current | safeHTML }}
-	{{ end }}
+{{- $input := . -}}
+{{ if eq (printf "%T" $input) "string" -}}
+  {{ $chars := split $input "" }}
+  {{ $result := "" }}
+  {{ $firstCapital := true }}
+  {{ range $index, $char := $chars }}
+    {{ if and (ge $char "A") (le $char "Z") }}
+      {{ if and (gt $index 0) (not $firstCapital) }}
+        {{ $result = print $result "&#8203;" }}
+      {{ end }}
+      {{ $firstCapital = false }}
+    {{ end }}
+    {{ $result = print $result $char }}
+  {{ end }}
+  {{ if gt (len $result) 0 }}
+    {{ $result | safeHTML }}
+  {{ end }}
 {{ else }}
-	{{ $input }}
+  {{ $input }}
 {{ end }}

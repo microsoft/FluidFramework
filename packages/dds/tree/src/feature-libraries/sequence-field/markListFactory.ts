@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { sequenceConfig } from "./config";
-import { isVestigialEndpoint } from "./helperTypes";
-import { Mark, MarkList } from "./types";
-import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils";
+import { Mark, MarkList } from "./types.js";
+import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -15,13 +13,13 @@ import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils
  * - Merges runs of offsets together
  * - Merges marks together
  */
-export class MarkListFactory<TNodeChange> {
+export class MarkListFactory {
 	private offset = 0;
-	public readonly list: MarkList<TNodeChange> = [];
+	public readonly list: MarkList = [];
 
 	public constructor() {}
 
-	public push(...marks: Mark<TNodeChange>[]): void {
+	public push(...marks: Mark[]): void {
 		for (const item of marks) {
 			this.pushContent(item);
 		}
@@ -31,16 +29,8 @@ export class MarkListFactory<TNodeChange> {
 		this.offset += offset;
 	}
 
-	public pushContent(mark: Mark<TNodeChange>): void {
-		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
-			return;
-		}
-		if (
-			isNoopMark(mark) &&
-			mark.changes === undefined &&
-			!isVestigialEndpoint(mark) &&
-			!isTombstone(mark)
-		) {
+	public pushContent(mark: Mark): void {
+		if (isNoopMark(mark) && mark.changes === undefined && !isTombstone(mark)) {
 			this.pushOffset(mark.count);
 			return;
 		}

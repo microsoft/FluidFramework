@@ -1,11 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "./lib",
 		"noImplicitAny": true,
-		"composite": true,
 		"preserveConstEnums": true,
 		// Allow unused locals.
 		// This is needed for type assertions using the TypeCheck library.
@@ -13,5 +13,4 @@
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
 	},
-	"include": ["src/**/*"],
 }

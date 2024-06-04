@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+
+import { Client } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -10,15 +13,15 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { Client } from "@fluidframework/merge-tree";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection } from "../intervalCollection.js";
+import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { Interval, intervalHelpers } from "../intervals/index.js";
 import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
-} from "../sharedIntervalCollection";
-import { IIntervalCollection } from "../intervalCollection";
-import { Interval, intervalHelpers } from "../intervals";
-import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex";
+} from "../sharedIntervalCollection.js";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
@@ -172,7 +175,7 @@ describe("SharedIntervalCollection", () => {
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection1.change(id, 10, 20);
+			collection1.change(id, { start: 10, end: 20 });
 			assertIntervals(
 				collection1,
 				[

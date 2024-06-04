@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TUnsafe, Type } from "@sinclair/typebox";
-import { Covariant, isAny } from "./typeCheck";
-import { Assume } from "./utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { Covariant } from "./typeCheck.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -20,63 +20,12 @@ import { Assume } from "./utils";
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  * @internal
  */
-export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType &
-	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
-
-/**
- * "opaque" handle which can be used to expose a branded type without referencing its value type.
- *
- * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
- * uses the type name instead of expanding it:
- * ```typescript
- * export interface MyType extends Erased<"myPackage.MyType">{}
- * ```
- * @internal
- */
-export type Erased<Name extends string> = ErasedType<Name>;
-
-/**
- * Helper for {@link Erased}.
- * This is split out into its own as that's the only way to:
- * - have doc comments for the member.
- * - make the member protected (so you don't accidentally try and read it).
- * - get nominal typing (so types produced without using this class can never be assignable to it).
- *
- * See `InternalTypes.MakeNominal` for some more details.
- *
- * Do not use this class with `instanceof`: this will always be false at runtime,
- * but the compiler may think it's true in some cases.
- *
- * @sealed
- * @internal
- */
-export abstract class ErasedType<out Name extends string> {
-	/**
-	 * Compile time only marker to make type checking more strict.
-	 * This method will not exist at runtime and accessing it is invalid.
-	 * See {@link Brand} for details.
-	 *
-	 * @privateRemarks
-	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
-	 * The method takes in never to help emphasize that its not callable.
-	 */
-	protected abstract brand(dummy: never): Name;
-
-	/**
-	 * This class should never exist at runtime, so make it un-constructable.
-	 */
-	private constructor() {}
-}
+export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 /**
  * Helper for {@link Brand}.
- * This is split out into its own as that's the only way to:
- * - have doc comments for the member.
- * - make the member protected (so you don't accidentally try and read it).
- * - get nominal typing (so types produced without using this class can never be assignable to it).
- * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
- * See `InternalTypes.MakeNominal` for some more details.
+ * See `MakeNominal` for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
@@ -86,10 +35,16 @@ export abstract class ErasedType<out Name extends string> {
  * This is suitable for when ValueType is immutable (like string or number),
  * which is the common use-case for branding.
  *
+ * @privateRemarks
+ * This is split out into its own type as that's the only way to:
+ *
+ * - make the member protected (so you can't accidentally try and access it).
+ * - get nominal typing (so types produced without using this class can never be assignable to it).
+ *
  * @sealed
  * @internal
  */
-export abstract class BrandedType<out ValueType, Name extends string> {
+export abstract class BrandedType<out ValueType, Name> {
 	protected _typeCheck?: Covariant<ValueType>;
 	/**
 	 * Compile time only marker to make type checking more strict.
@@ -106,49 +61,27 @@ export abstract class BrandedType<out ValueType, Name extends string> {
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
 	private constructor() {}
+
+	/**
+	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
+	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
+	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 */
+	public static [Symbol.hasInstance](value: never): value is never {
+		throw new UsageError(
+			"BrandedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+		);
+	}
 }
-
-/**
- * Converts a Branded type into an "opaque" handle.
- * This prevents the value from being used directly, but does not fully type erase it
- * (and this its not really fully opaque):
- * The type can be recovered using {@link extractFromOpaque},
- * however if we assume only code that produces these "opaque" handles does that conversion,
- * they can function like opaque handles.
- *
- * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
- * uses the type name instead of expanding it:
- * ```typescript
- * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
- * ```
- * @internal
- */
-export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
-	infer ValueType,
-	infer Name
->
-	? BrandedType<ValueType, Name>
-	: never;
-
-/**
- * See {@link extractFromOpaque}.
- * @internal
- */
-export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
-	TOpaque extends BrandedType<infer ValueType, infer Name>
-		? isAny<ValueType> extends true
-			? unknown
-			: Brand<ValueType, Name>
-		: never;
 
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	infer ValueType,
-	string
+	unknown
 >
 	? ValueType
 	: never;
@@ -158,91 +91,28 @@ export type ValueFromBranded<T extends BrandedType<any, string>> = T extends Bra
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
-	any,
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
+	unknown,
 	infer Name
 >
 	? Name
 	: never;
 
 /**
- * Converts a {@link Opaque} handle to the underlying branded type.
- *
- * It is assumed that only code that produces these "opaque" handles does this conversion,
- * allowing these handles to be considered opaque.
- * @internal
- */
-export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
-	value: TOpaque,
-): ExtractFromOpaque<TOpaque> {
-	return value as ExtractFromOpaque<TOpaque>;
-}
-
-/**
- * Converts a {@link Erased} handle to the underlying branded type.
- *
- * It is assumed that only code that produces these "opaque" handles does this conversion,
- * allowing these handles to be considered opaque.
- * @internal
- */
-export function fromErased<
-	TBranded extends BrandedType<unknown, string>,
-	TName extends string = NameFromBranded<TBranded>,
->(value: ErasedType<TName>): TBranded {
-	return value as unknown as TBranded;
-}
-
-/**
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
+ * @privateRemarks
+ * Leaving `T` unconstrained here allows for better type inference when branding unions.
+ * For example when assigning `brand(number)` a number to an optional branded number field,
+ * constraining T to `BrandedType<unknown, string>` causes the inference to fail and requires explicitly providing the type parameter.
+ * For example leaving T unconstrained instead allows the union of `BrandedType | undefined` to distribute over the conditional allowing the branding only the the union members which should be branded.
+ * This does not permit branding an optional value into an optional field since non branded union members are still excluded from input to this function:
+ * this is an intended restriction as it causes compile errors for misuse of this function (like using brand when the relevant type is not a branded type).
  * @internal
  */
-export function brand<T extends Brand<any, string>>(
-	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
+export function brand<T>(
+	value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never,
 ): T {
 	return value as T;
-}
-
-/**
- * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
- *
- * Only do this when specifically allowed by the requirements of the type being converted to.
- * @internal
- */
-export function brandOpaque<T extends BrandedType<any, string>>(
-	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
-): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
-	return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
-}
-
-/**
- * Adds a type {@link Brand} to a value, returning it as a {@link Erased} handle.
- *
- * Only do this when specifically allowed by the requirements of the type being converted to.
- * @internal
- */
-export function brandErased<T extends BrandedType<any, string>>(
-	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
-): ErasedType<NameFromBranded<T>> {
-	return value as ErasedType<NameFromBranded<T>>;
-}
-
-/**
- * Create a TypeBox string schema for a branded string type.
- * This only validates that the value is a string,
- * and not that it came from the correct branded type (that information is lost when serialized).
- */
-export function brandedStringType<T extends string>(): TUnsafe<T> {
-	// This could use:
-	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
-	// Since there isn't any useful custom validation to do and
-	// TUnsafe is documented as unsupported in `typebox/compiler`,
-	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
-	return Type.String() as unknown as TUnsafe<T>;
-}
-
-export function brandedNumberType<T extends number>(): TUnsafe<T> {
-	// See comments on `brandedStringType`.
-	return Type.Number() as unknown as TUnsafe<T>;
 }

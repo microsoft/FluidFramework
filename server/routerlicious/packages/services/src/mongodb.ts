@@ -74,6 +74,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
 		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
+		private readonly isGlobalDb = false,
 	) {
 		setInterval(() => {
 			if (!this.apiCounter.countersAreActive) {
@@ -395,12 +396,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				MaxRetryAttempts, // maxRetries
 				InitialRetryIntervalInMs, // retryAfterMs
 				telemetryProperties,
-				(e) =>
-					e.code === 11000 || e.message?.toString()?.indexOf("E11000 duplicate key") >= 0, // shouldIgnoreError
+				undefined, // shouldIgnoreError
 				(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 				(error: any, numRetries: number, retryAfterInterval: number) =>
 					numRetries * retryAfterInterval, // calculateIntervalMs
 				(error) => {
+					error.isGlobalDb = this.isGlobalDb;
 					const facadeError = this.cloneError(error);
 					this.sanitizeError(facadeError);
 				} /* onErrorFn */,
@@ -551,6 +552,7 @@ export class MongoDb implements core.IDb {
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
 		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
+		private readonly isGlobalDb = false,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -574,6 +576,7 @@ export class MongoDb implements core.IDb {
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
 			this.consecutiveFailedThresholdForLowerTotalRequests,
+			this.isGlobalDb,
 		);
 	}
 
@@ -780,6 +783,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
 			this.consecutiveFailedThresholdForLowerTotalRequests,
+			global,
 		);
 	}
 }

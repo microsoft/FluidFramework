@@ -7,7 +7,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys } from "../../";
+import type { FluidObject, FluidObjectKeys, IProvideFluidLoadable } from "../../index.js";
+import { IFluidLoadable } from "../../index.js";
 
 declare function getFluidObject(): FluidObject;
 

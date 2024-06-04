@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	ITreeCursor,
 	EmptyKey,
 	FieldKey,
+	ITreeCursor,
+	ITreeCursorSynchronous,
 	mapCursorField,
 	mapCursorFields,
-	ITreeCursorSynchronous,
-} from "../../core";
-import { JsonCompatible } from "../../util";
-import { CursorAdapter, isFluidHandle, stackTreeNodeCursor } from "../../feature-libraries";
-import { leaf } from "../leafDomain";
-import { jsonArray, jsonObject } from "./jsonDomainSchema";
+} from "../../core/index.js";
+import { CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/index.js";
+import { JsonCompatible } from "../../util/index.js";
+import { leaf } from "../leafDomain.js";
+
+import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

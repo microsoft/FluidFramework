@@ -9,12 +9,90 @@ import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/serv
  * @internal
  */
 export class NoOpLambda implements IPartitionLambda {
-	constructor(private readonly context: IContext) {}
+	private opsCount = 0;
+	private lastCheckpointOffset = 0;
+	private idleTimer: NodeJS.Timer | undefined = undefined;
+	private maxTimer: NodeJS.Timer | undefined = undefined;
+	private currentMessage;
 
-	public handler(message: IQueuedMessage) {
-		this.context.checkpoint(message);
+	constructor(
+		private readonly context: IContext,
+		private readonly checkpointConfiguration?: NoOpLambdaCheckpointConfiguration,
+	) {}
+
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
+		// default
+		if (!this.checkpointConfiguration?.enabled) {
+			this.context.checkpoint(message);
+			return undefined;
+		}
+
+		this.currentMessage = message;
+
+		this.opsCount++;
+		if (this.opsCount >= this.checkpointConfiguration.maxMessages) {
+			this.configurableCheckpoint(this.currentMessage);
+		}
+
+		if (!this.maxTimer) {
+			this.resetMaxTimer();
+		}
+
+		if (this.checkpointConfiguration?.enabled) {
+			this.resetIdleTimer();
+		}
+
 		return undefined;
 	}
 
 	public close(): void {}
+
+	private configurableCheckpoint(message: IQueuedMessage): void {
+		if (message?.offset > this.lastCheckpointOffset) {
+			this.context.checkpoint(message);
+			if (this.idleTimer) {
+				clearTimeout(this.idleTimer);
+				this.idleTimer = undefined;
+			}
+			if (this.maxTimer) {
+				clearTimeout(this.maxTimer);
+				this.maxTimer = undefined;
+			}
+			this.opsCount = 0;
+			this.lastCheckpointOffset = message.offset;
+		}
+	}
+
+	private resetMaxTimer(): void {
+		console.log(`Resetting max timer`);
+		this.maxTimer = setInterval(
+			() => {
+				console.log(`MaxTime checkpoint`);
+				this.configurableCheckpoint(this.currentMessage);
+			},
+			this.checkpointConfiguration?.maxTime,
+		);
+	}
+
+	private resetIdleTimer(): void {
+		if (this.idleTimer) {
+			clearTimeout(this.idleTimer);
+		}
+		this.idleTimer = setInterval(
+			() => {
+				this.configurableCheckpoint(this.currentMessage);
+			},
+			this.checkpointConfiguration?.idleTime,
+		);
+	}
+}
+
+export interface NoOpLambdaCheckpointConfiguration {
+	enabled: boolean;
+	maxMessages: number;
+	maxTime: number;
+	idleTime: number;
 }

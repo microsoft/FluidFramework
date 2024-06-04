@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../util";
+import { fail } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Merged {}

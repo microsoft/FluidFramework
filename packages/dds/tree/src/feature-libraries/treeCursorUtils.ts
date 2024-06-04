@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeType,
-	UpPath,
 	CursorLocationType,
-	ITreeCursorSynchronous,
-	Value,
-	FieldUpPath,
-	PathRootPrefix,
 	CursorMarker,
 	DetachedField,
-	rootField,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursorSynchronous,
+	PathRootPrefix,
+	TreeType,
+	UpPath,
+	Value,
 	detachedFieldAsKey,
-} from "../core";
-import { fail } from "../util";
+	rootField,
+} from "../core/index.js";
+import { fail } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.

@@ -13,7 +13,7 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
-} from "./api-item-transforms";
+} from "./api-item-transforms/index.js";
 export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
@@ -29,4 +29,4 @@ export {
 	isOptional,
 	isReadonly,
 	isStatic,
-} from "./utilities";
+} from "./utilities/index.js";

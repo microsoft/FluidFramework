@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	FieldUpPath,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	rootFieldKey,
-} from "../../../core";
-import { leaf } from "../../../domains";
-import { jsonableTreeFromCursor, TreeChunk } from "../../../feature-libraries";
-import { checkFieldTraversal } from "../../cursorTestSuite";
+} from "../../../core/index.js";
+import { leaf } from "../../../domains/index.js";
+import { TreeChunk, jsonableTreeFromCursor } from "../../../feature-libraries/index.js";
+import { checkFieldTraversal } from "../../cursorTestSuite.js";
 
 export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
 	return mapCursorField(cursor, jsonableTreeFromCursor);

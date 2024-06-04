@@ -8,94 +8,28 @@ import { strict as assert } from "assert";
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	SharedTree,
-	disposeSymbol,
-	type TreeView,
-	TreeConfiguration,
-	SchemaFactory,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
-
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
-
-	public get _root() {
-		return this.root;
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const legacyTree = this.runtime.createChannel(
-			"tree",
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
-
-		const inventoryNode: BuildNode = {
-			definition: legacyNodeId,
-			traits: {
-				quantity: {
-					definition: "quantity",
-					payload: 0,
-				},
-			},
-		};
-		legacyTree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: legacyTree.currentView.root,
-					label: "inventory" as TraitLabel,
-				}),
-			),
-		);
-
-		this.root.set("tree", legacyTree.handle);
-		this.channel = legacyTree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>("tree");
-		const tree = await handle?.get();
-		assert(tree !== undefined, "Tree channel should be defined");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
 
 const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
@@ -103,7 +37,7 @@ class InventorySchema extends builder.object("abcInventory", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
+function getNewTreeView(tree: ITree): TreeView<typeof InventorySchema> {
 	return tree.schematize(
 		new TreeConfiguration(InventorySchema, () => ({
 			quantity: 0,
@@ -111,7 +45,10 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -119,7 +56,63 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: "on",
 	};
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const legacyTree = this.runtime.createChannel(
+				"tree",
+				LegacySharedTree.getFactory().type,
+			) as LegacySharedTree;
+
+			const inventoryNode: BuildNode = {
+				definition: legacyNodeId,
+				traits: {
+					quantity: {
+						definition: "quantity",
+						payload: 0,
+					},
+				},
+			};
+			legacyTree.applyEdit(
+				Change.insertTree(
+					inventoryNode,
+					StablePlace.atStartOf({
+						parent: legacyTree.currentView.root,
+						label: "inventory" as TraitLabel,
+					}),
+				),
+			);
+
+			this.root.set("tree", legacyTree.handle);
+			this.channel = legacyTree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			const handle: IFluidHandle<IChannel> | undefined =
+				this.root.get<IFluidHandle<IChannel>>("tree");
+			const tree = await handle?.get();
+			assert(tree !== undefined, "Tree channel should be defined");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
+	}
 
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
@@ -135,6 +128,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------
@@ -158,7 +152,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 						quantity,
 					})),
 				)
-				[disposeSymbol]();
+				.dispose();
 		},
 	);
 
@@ -182,7 +176,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 
 	const originalValue = 3;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

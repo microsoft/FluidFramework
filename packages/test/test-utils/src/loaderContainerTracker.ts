@@ -2,24 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+
 import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+	IDeltaQueue,
+	IContainer,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/dist/container";
-import { waitForContainerConnection } from "./containerUtils";
-import { debug } from "./debug";
-import { IOpProcessingController } from "./testObjectProvider";
-import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
+} from "@fluidframework/container-loader/internal/test/container";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
+
+import { waitForContainerConnection } from "./containerUtils.js";
+import { debug } from "./debug.js";
+import { IOpProcessingController } from "./testObjectProvider.js";
+import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");

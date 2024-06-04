@@ -4,30 +4,32 @@
  */
 
 import assert from "assert";
-import { SharedMap } from "@fluidframework/map";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	createAndAttachContainer,
-	ITestFluidObject,
-	ITestContainerConfig,
 	DataObjectFactoryType,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+	ITestContainerConfig,
+	ITestFluidObject,
+	createAndAttachContainer,
+} from "@fluidframework/test-utils/internal";
 
 const mapId = "map";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: { state: "disabled" },
-		},
-	},
-};
 
 // This is a regression test for https://github.com/microsoft/FluidFramework/issues/9163
-describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider) => {
+describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, apis) => {
+	const registry: ChannelFactoryRegistry = [[mapId, apis.dds.SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
+			},
+		},
+	};
 	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);
@@ -41,18 +43,19 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider) 
 		assert(typeof url === "string");
 		console.log(url);
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		if (!(container2 as any).connected) {
 			await new Promise((resolve) => container2.on("connected", resolve));
 		}
 		[...Array(60).keys()].map((i) => map2.set(`test op ${i}`, i));
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container2);
-		assert(dataStore2.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
+
 		map2.set("a key", "a value");
 		await provider.ensureSynchronized();
 		container2.close();

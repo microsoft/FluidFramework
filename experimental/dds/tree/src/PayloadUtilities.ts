@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { compareArrays } from '@fluidframework/core-utils';
-import { Payload } from './persisted-types';
+import { compareArrays } from '@fluidframework/core-utils/internal';
+import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
+
+import { Payload } from './persisted-types/index.js';
 
 /**
  * @returns true if two `Payloads` are identical.
@@ -64,16 +65,14 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	}
 
 	// Special case IFluidHandles, comparing them only by their absolutePath
-	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle` field that is set to the parent object.
-	{
-		const aHandle = a as IFluidHandle;
-		const bHandle = b as IFluidHandle;
-		if (aHandle.IFluidHandle === a) {
-			if (bHandle.IFluidHandle !== b) {
-				return false;
-			}
-			return a.absolutePath === b.absolutePath;
+	if (isFluidHandle(a)) {
+		if (isFluidHandle(b)) {
+			return toFluidHandleInternal(a).absolutePath === toFluidHandleInternal(b).absolutePath;
 		}
+		return false;
+	}
+	if (isFluidHandle(b)) {
+		return false;
 	}
 
 	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
@@ -106,17 +105,8 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 		const aItem: Payload = a[aKeys[i]];
 		const bItem: Payload = b[bKeys[i]];
 
-		// The JavaScript feature detection pattern, used for IFluidHandle, uses a field that is set to the parent object.
-		// Detect this pattern and special case it to avoid infinite recursion.
-		const aSelf = Object.is(aItem, a);
-		const bSelf = Object.is(bItem, b);
-		if (aSelf !== bSelf) {
+		if (!comparePayloads(aItem, bItem)) {
 			return false;
-		}
-		if (!aSelf) {
-			if (!comparePayloads(aItem, bItem)) {
-				return false;
-			}
 		}
 	}
 

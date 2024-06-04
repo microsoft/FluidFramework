@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
+import { EventEmitter } from "@fluid-example/example-utils";
 import {
 	ITree,
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
 	TreeConfiguration,
-	disposeSymbol,
 } from "@fluidframework/tree";
-
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -85,7 +82,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterChange", () => {
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "nodeChanged", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -105,7 +102,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 		// This is required because schematizing the tree twice will result in an error
 		if (initialTree !== undefined) {
-			view[disposeSymbol]();
+			view.dispose();
 		}
 	}
 
@@ -123,13 +120,13 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
 		// reach in and grab the inventoryItems list.
 		this._inventoryItemList = this._tree.schematize(treeConfiguration).root.inventoryItemList;
-		// afterChange will fire for any change of any type anywhere in the subtree.  In this application we expect
+		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
-		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
-		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
+		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// to find what changed. We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
-		Tree.on(this._inventoryItemList, "afterChange", () => {
+		Tree.on(this._inventoryItemList, "treeChanged", () => {
 			for (const inventoryItemNode of this._inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.

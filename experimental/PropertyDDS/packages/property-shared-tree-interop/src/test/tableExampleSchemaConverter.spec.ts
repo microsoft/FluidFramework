@@ -4,19 +4,21 @@
  */
 
 import { strict as assert } from "assert";
+
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
-	brand,
 	FieldKinds,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	TreeNodeSchemaIdentifier,
-	schemaIsFieldNode,
-	TreeFieldSchema,
+	brand,
 	leaf,
-	ObjectNodeSchema,
-	MapNodeSchema,
-	FieldNodeSchema,
-} from "@fluidframework/tree";
-import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
+	schemaIsFieldNode,
+} from "@fluidframework/tree/internal";
+
+import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter.js";
 
 const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
 
@@ -107,7 +109,7 @@ describe("LlsSchemaConverter", () => {
 	it("Enum", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
-		assert(table instanceof ObjectNodeSchema);
+		assert(table instanceof FlexObjectNodeSchema);
 		const encoding = table.objectNodeFields.get(brand("encoding"));
 		assert(encoding !== undefined);
 		assert(encoding.types !== undefined);
@@ -120,7 +122,7 @@ describe("LlsSchemaConverter", () => {
 		for (const typeName of typeNames) {
 			const nodeSchema = fullSchemaData.nodeSchema.get(typeName);
 			assert(nodeSchema !== undefined);
-			if (nodeSchema instanceof ObjectNodeSchema) {
+			if (nodeSchema instanceof FlexObjectNodeSchema) {
 				nodeSchema.objectNodeFields.forEach((field, fieldKey) => {
 					if (field.types) {
 						field.types.forEach((type) => {
@@ -131,14 +133,14 @@ describe("LlsSchemaConverter", () => {
 						});
 					}
 				});
-			} else if (nodeSchema instanceof MapNodeSchema && nodeSchema.mapFields.types) {
+			} else if (nodeSchema instanceof FlexMapNodeSchema && nodeSchema.mapFields.types) {
 				nodeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
 						`Missing type "${type}" in tree schema "${typeName}" for map fields`,
 					);
 				});
-			} else if (nodeSchema instanceof FieldNodeSchema && nodeSchema.info.types) {
+			} else if (nodeSchema instanceof FlexFieldNodeSchema && nodeSchema.info.types) {
 				nodeSchema.info.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
@@ -152,7 +154,7 @@ describe("LlsSchemaConverter", () => {
 	it("Check Structure", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
-		assert(table instanceof ObjectNodeSchema);
+		assert(table instanceof FlexObjectNodeSchema);
 
 		const extendedRows = table.objectNodeFields.get(brand("extendedRows"));
 		assert(extendedRows !== undefined);
@@ -162,13 +164,13 @@ describe("LlsSchemaConverter", () => {
 		const extendedRowsSchema = fullSchemaData.nodeSchema.get(
 			brand("converted.Test:ExtendedRow-1.0.0"),
 		);
-		assert(extendedRowsSchema instanceof ObjectNodeSchema);
+		assert(extendedRowsSchema instanceof FlexObjectNodeSchema);
 		const info = extendedRowsSchema.objectNodeFields.get(brand("info"));
 		assert(info !== undefined);
 		assert(info.types !== undefined);
 		assert(info.types.has(brand("converted.map<Test:RowInfo-1.0.0>")));
 		const infoType = fullSchemaData.nodeSchema.get(brand("converted.Test:RowInfo-1.0.0"));
-		assert(infoType instanceof ObjectNodeSchema);
+		assert(infoType instanceof FlexObjectNodeSchema);
 
 		const uint64 = infoType.objectNodeFields.get(brand("data"));
 		assert(uint64 !== undefined);
@@ -181,14 +183,14 @@ describe("LlsSchemaConverter", () => {
 		assert(
 			uint64Type
 				.getFieldSchema()
-				.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
+				.equals(FlexFieldSchema.create(FieldKinds.required, [leaf.number])),
 		);
 	});
 
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const row = fullSchemaData.nodeSchema.get(brand("converted.array<Test:Row-1.0.0>"));
-		assert(row instanceof FieldNodeSchema);
+		assert(row instanceof FlexFieldNodeSchema);
 		const field = row.getFieldSchema();
 		assert(field !== undefined);
 		assert(field.types !== undefined);

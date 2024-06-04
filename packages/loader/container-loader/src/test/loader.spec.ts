@@ -4,35 +4,34 @@
  */
 
 import assert from "assert";
-import { v4 as uuid } from "uuid";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
-import { IRuntime } from "@fluidframework/container-definitions";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IDetachedBlobStorage, Loader } from "../loader";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IRuntime } from "@fluidframework/container-definitions/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type IUrlResolver,
+	ICreateBlobResponse,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	isFluidError,
+	MockLogger,
+	wrapConfigProviderWithDefaults,
+	mixinMonitoringContext,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
-const failProxy = <T extends object>() => {
-	const proxy = new Proxy<T>({} as any as T, {
-		get: (_, p) => {
-			throw Error(`${p.toString()} not implemented`);
-		},
-	});
-	return proxy;
-};
+import { Container } from "../container.js";
+import { IDetachedBlobStorage, Loader } from "../loader.js";
+import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-const failSometimeProxy = <T extends object>(handler: Partial<T>) => {
-	const proxy = new Proxy<T>(handler as T, {
-		get: (t, p, r) => {
-			if (p in handler) {
-				return Reflect.get(t, p, r);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return failProxy();
-		},
-	});
-	return proxy;
-};
+import { failProxy, failSometimeProxy } from "./failProxy.js";
 
 const codeLoader = {
 	load: async () => {
@@ -51,6 +50,10 @@ const codeLoader = {
 								createSummary: () => ({
 									tree: {},
 									type: SummaryType.Tree,
+								}),
+								setAttachState: () => {},
+								getPendingLocalState: () => ({
+									pending: [],
 								}),
 							});
 						},
@@ -85,13 +88,13 @@ describe("loader unit test", () => {
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
-		const summary = detached.serialize();
-		assert.strictEqual(
-			summary,
-			'{"type":1,"tree":{".protocol":{"tree":{"attributes":{"content":"{\\"minimumSequenceNumber\\":0,\\"sequenceNumber\\":0}","type":2},"quorumMembers":{"content":"[]","type":2},"quorumProposals":{"content":"[]","type":2},"quorumValues":{"content":"[[\\"code\\",{\\"key\\":\\"code\\",\\"value\\":{\\"package\\":\\"none\\"},\\"approvalSequenceNumber\\":0,\\"commitSequenceNumber\\":0,\\"sequenceNumber\\":0}]]","type":2}},"type":1},".app":{"tree":{},"type":1}}}',
-			"summary does not match expected format",
-		);
-		await loader.rehydrateDetachedContainerFromSnapshot(summary);
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
@@ -119,12 +122,140 @@ describe("loader unit test", () => {
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
 		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
-		const summary = detached.serialize();
-		assert.strictEqual(
-			summary,
-			'{"type":1,"tree":{".protocol":{"tree":{"attributes":{"content":"{\\"minimumSequenceNumber\\":0,\\"sequenceNumber\\":0}","type":2},"quorumMembers":{"content":"[]","type":2},"quorumProposals":{"content":"[]","type":2},"quorumValues":{"content":"[[\\"code\\",{\\"key\\":\\"code\\",\\"value\\":{\\"package\\":\\"none\\"},\\"approvalSequenceNumber\\":0,\\"commitSequenceNumber\\":0,\\"sequenceNumber\\":0}]]","type":2}},"type":1},".app":{"tree":{},"type":1},".hasAttachmentBlobs":{"type":2,"content":"true"}}}',
-			"summary does not match expected format",
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
+		const loader = new Loader({
+			codeLoader,
+			documentServiceFactory: failProxy(),
+			urlResolver: failProxy(),
+			configProvider: {
+				getRawConfig: (name) =>
+					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+			},
+		});
+		const detached = await loader.createDetachedContainer({ package: "none" });
+		await detached.attach({ url: "none" }).then(
+			() => assert.fail("attach should fail"),
+			() => {},
 		);
-		await loader.rehydrateDetachedContainerFromSnapshot(summary);
+
+		assert.strictEqual(detached.closed, false);
+		assert.strictEqual(detached.attachState, AttachState.Attaching);
+
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching with valid format and attachment blobs", async () => {
+		const blobs = new Map<string, ArrayBufferLike>();
+		const detachedBlobStorage: IDetachedBlobStorage = {
+			createBlob: async (file) => {
+				const response: ICreateBlobResponse = {
+					id: uuid(),
+				};
+				blobs.set(response.id, file);
+				return response;
+			},
+			getBlobIds: () => [...blobs.keys()],
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			readBlob: async (id) => blobs.get(id)!,
+			get size() {
+				return blobs.size;
+			},
+		};
+		const resolvedUrl: IResolvedUrl = {
+			id: uuid(),
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
+		const loader = new Loader({
+			codeLoader,
+			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
+				createContainer: async () =>
+					failSometimeProxy<IDocumentService>({
+						policies: {},
+						resolvedUrl,
+						connectToStorage: async () =>
+							failSometimeProxy<IDocumentStorageService>({
+								createBlob: async () => ({ id: uuid() }),
+							}),
+					}),
+			}),
+			urlResolver: failSometimeProxy<IUrlResolver>({
+				resolve: async () => resolvedUrl,
+			}),
+			detachedBlobStorage,
+			configProvider: {
+				getRawConfig: (name) =>
+					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+			},
+		});
+		const detached = await loader.createDetachedContainer({ package: "none" });
+		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
+
+		await detached.attach({ url: "none" }).then(
+			() => assert.fail("attach should fail"),
+			() => {},
+		);
+
+		assert.strictEqual(detached.closed, false);
+		assert.strictEqual(detached.attachState, AttachState.Attaching);
+
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("ConnectionStateHandler feature gate overrides", () => {
+		const configProvider = wrapConfigProviderWithDefaults(
+			undefined, // original provider
+			{
+				"Fluid.Container.DisableCatchUpBeforeDeclaringConnected": true,
+				"Fluid.Container.DisableJoinSignalWait": true,
+			},
+		);
+
+		const logger = mixinMonitoringContext(
+			createChildLogger({ logger: new MockLogger() }),
+			configProvider,
+		);
+
+		// Ensure that this call does not crash due to potential reentrnacy:
+		// - Container.constructor
+		// - ConnectionStateHandler.constructor
+		// - fetching overwrites from config
+		// - logs event about fetching config
+		// - calls property getters on logger setup by Container.constructor
+		// - containerConnectionState getter
+		// - Container.connectionState getter
+		// - Container.connectionStateHandler.connectionState - crash, as Container.connectionStateHandler is undefined (not setup yet).
+		new Container({
+			urlResolver: failProxy(),
+			documentServiceFactory: failProxy(),
+			codeLoader,
+			options: {},
+			scope: {},
+			subLogger: logger.logger,
+		});
 	});
 });

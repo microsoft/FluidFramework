@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { BaseDocumentContainerRuntimeFactory } from "./containerCode";
+export { BaseDocumentContainerRuntimeFactory } from "./containerCode.js";

@@ -5,32 +5,32 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
-	isMergeTreeDeltaRevertible,
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
+	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SortedSet,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	getSlideToSegoff,
+	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
-	// eslint-disable-next-line import/no-deprecated
-	SortedSet,
-	getSlideToSegoff,
-	SlidingPreference,
-} from "@fluidframework/merge-tree";
-import { InteriorSequencePlace, Side } from "./intervalCollection";
-import { IntervalOpType, SequenceInterval } from "./intervals";
-import { SharedString, SharedStringSegment } from "./sharedString";
-import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
+} from "@fluidframework/merge-tree/internal";
+
+import { InteriorSequencePlace, Side } from "./intervalCollection.js";
+import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
+import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
+import { ISharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
- * @internal
+ * @alpha
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
@@ -38,7 +38,7 @@ const idMap = new Map<string, string>();
 
 /**
  * Data for undoing edits affecting Intervals.
- * @internal
+ * @alpha
  */
 export type IntervalRevertible =
 	| {
@@ -92,7 +92,7 @@ function getUpdatedId(intervalId: string): string {
 
 /**
  * Create revertibles for adding an interval
- * @internal
+ * @alpha
  */
 export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
@@ -108,10 +108,10 @@ export function appendAddIntervalToRevertibles(
 
 /**
  * Create revertibles for deleting an interval
- * @internal
+ * @alpha
  */
 export function appendDeleteIntervalToRevertibles(
-	string: SharedString,
+	string: ISharedString,
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ): SharedStringRevertible[] {
@@ -160,10 +160,10 @@ export function appendDeleteIntervalToRevertibles(
 
 /**
  * Create revertibles for moving endpoints of an interval
- * @internal
+ * @alpha
  */
 export function appendChangeIntervalToRevertibles(
-	string: SharedString,
+	string: ISharedString,
 	newInterval: SequenceInterval,
 	previousInterval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
@@ -210,7 +210,7 @@ export function appendChangeIntervalToRevertibles(
 
 /**
  * Create revertibles for changing properties of an interval
- * @internal
+ * @alpha
  */
 export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
@@ -270,10 +270,10 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
- * @internal
+ * @alpha
  */
 export function appendSharedStringDeltaToRevertibles(
-	string: SharedString,
+	string: ISharedString,
 	delta: SequenceDeltaEvent,
 	revertibles: SharedStringRevertible[],
 ) {
@@ -363,10 +363,10 @@ export function appendSharedStringDeltaToRevertibles(
 
 /**
  * Clean up resources held by revertibles that are no longer needed.
- * @internal
+ * @alpha
  */
 export function discardSharedStringRevertibles(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 	revertibles: SharedStringRevertible[],
 ) {
 	revertibles.forEach((r) => {
@@ -379,7 +379,11 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-function getSlidePosition(string: SharedString, lref: LocalReferencePosition, pos: number): number {
+function getSlidePosition(
+	string: ISharedString,
+	lref: LocalReferencePosition,
+	pos: number,
+): number {
 	const slide = getSlideToSegoff(
 		{ segment: lref.getSegment(), offset: undefined },
 		lref.slidingPreference,
@@ -397,7 +401,7 @@ function isValidRange(
 	startSlide: SlidingPreference | undefined,
 	end: number,
 	endSlide: SlidingPreference | undefined,
-	string: SharedString,
+	string: ISharedString,
 ) {
 	return (
 		start >= 0 &&
@@ -412,7 +416,7 @@ function isValidRange(
 }
 
 function revertLocalAdd(
-	string: SharedString,
+	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
 ) {
 	const id = getUpdatedIdFromInterval(revertible.interval);
@@ -441,7 +445,7 @@ function createSequencePlace(
 }
 
 function revertLocalDelete(
-	string: SharedString,
+	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.DELETE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
@@ -480,7 +484,7 @@ function revertLocalDelete(
 }
 
 function revertLocalChange(
-	string: SharedString,
+	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
@@ -501,19 +505,18 @@ function revertLocalChange(
 			string,
 		)
 	) {
-		collection.change(
-			id,
-			createSequencePlace(
+		collection.change(id, {
+			start: createSequencePlace(
 				startSlidePos,
 				revertible.start.slidingPreference,
 				interval.start.slidingPreference,
 			),
-			createSequencePlace(
+			end: createSequencePlace(
 				endSlidePos,
 				revertible.end.slidingPreference,
 				interval.end.slidingPreference,
 			),
-		);
+		});
 	}
 
 	string.removeLocalReferencePosition(revertible.start);
@@ -521,13 +524,13 @@ function revertLocalChange(
 }
 
 function revertLocalPropertyChanged(
-	string: SharedString,
+	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
-	string.getIntervalCollection(label).changeProperties(id, newProps);
+	string.getIntervalCollection(label).change(id, { props: newProps });
 }
 
 function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet) {
@@ -555,7 +558,7 @@ function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet)
 function newEndpointPosition(
 	offset: number | undefined,
 	restoredRanges: SortedRangeSet,
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ) {
 	const pos = newPosition(offset, restoredRanges);
 	return pos === undefined ? undefined : sharedString.getPosition(pos.segment) + pos.offset;
@@ -574,7 +577,7 @@ class SortedRangeSet extends SortedSet<RangeInfo, string> {
 }
 
 function revertLocalSequenceRemove(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE>,
 ) {
 	const restoredRanges = new SortedRangeSet();
@@ -611,11 +614,10 @@ function revertLocalSequenceRemove(
 					sharedString,
 				)
 			) {
-				intervalCollection.change(
-					intervalId,
-					createSequencePlace(start, interval.start.slidingPreference),
-					createSequencePlace(end, interval.end.slidingPreference),
-				);
+				intervalCollection.change(intervalId, {
+					start: createSequencePlace(start, interval.start.slidingPreference),
+					end: createSequencePlace(end, interval.end.slidingPreference),
+				});
 			}
 		}
 	});
@@ -656,10 +658,10 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
- * @internal
+ * @alpha
  */
 export function revertSharedStringRevertibles(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 	revertibles: SharedStringRevertible[],
 ) {
 	while (revertibles.length > 0) {

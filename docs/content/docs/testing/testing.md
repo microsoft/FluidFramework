@@ -1,6 +1,6 @@
 ---
 title: Testing and automation
-menuPosition: 3
+menuPosition: 4
 ---
 
 ## Overview
@@ -103,7 +103,7 @@ import { v4 as uuid } from "uuid";
 describe("ClientTest", () => {
     const client = createAzureClient();
     let documentId: string;
-    beforeEach(() => {
+    beforeEach("initializeDocumentId", () => {
         documentId = uuid();
     });
 

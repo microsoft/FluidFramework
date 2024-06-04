@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import {
+import type { AttachState } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	FluidObject,
 	IEventProvider,
+	IFluidHandle,
 	IRequest,
 	IResponse,
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
-	IClientDetails,
+	type IClientDetails,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
-	FlushMode,
-	IContainerRuntimeBase,
-	IContainerRuntimeBaseEvents,
-	IFluidDataStoreContextDetached,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
+	type FlushMode,
+	type IContainerRuntimeBase,
+	type IContainerRuntimeBaseEvents,
+	type IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -40,7 +42,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
+	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
 }
 
@@ -57,7 +59,8 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly connected: boolean;
@@ -77,17 +80,6 @@ export interface IContainerRuntime
 	 * Returns undefined if no data store has been assigned the given alias.
 	 */
 	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
-
-	/**
-	 * Creates detached data store context. Data store initialization is considered complete
-	 * only after context.attachRuntime() is called.
-	 * @param pkg - package path
-	 * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
-	 */
-	createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that

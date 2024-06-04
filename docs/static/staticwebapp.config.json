@@ -1,27 +1,11 @@
 {
-	"routes": [
-		{
-			"route": "/docs/fcdocstest",
-			"redirect": "/docs/apis",
-			"statusCode": 301
-		},
-		{
-			"route": "/docs/apis/azure-client/*",
-			"redirect": "/docs/apis",
-			"statusCode": 301
-		},
-		{
-			"route": "/docs/fcdocstest/*",
-			"redirect": "/docs/apis/*",
-			"statusCode": 301
-		},
-		{
-			"route": "/docs/apis/azure-client",
-			"redirect": "/docs/apis",
-			"statusCode": 301
-		}
-	],
-	"globalHeaders": {
-		"cache-control": "must-revalidate, max-age=3600"
-	}
+  "globalHeaders": {
+    "cache-control": "must-revalidate, max-age=3600"
+  },
+  "navigationFallback": {
+    "rewrite": "/api/fallback"
+  },
+  "platform": {
+    "apiRuntime": "node:18"
+  }
 }

@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-import { NumericUuid } from "./identifiers";
+import { NumericUuid } from "./identifiers.js";
 
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
 const sixtyFour = BigInt(64);

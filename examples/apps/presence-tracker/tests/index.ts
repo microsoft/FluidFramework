@@ -4,8 +4,8 @@
  */
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "../src/containerCode";
-import { renderFocusPresence, renderMousePresence } from "../src/view";
+import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "../src/containerCode.js";
+import { renderFocusPresence, renderMousePresence } from "../src/view.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TaskManager } from "@fluidframework/task-manager";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/core-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { TaskManager } from "@fluidframework/task-manager/internal";
 
-import { IDiceRoller } from "./interface";
+import { IDiceRoller } from "./interface.js";
 
 const taskManagerKey = "taskManager";
 // The root is map-like, so we'll use this key for storing the value.

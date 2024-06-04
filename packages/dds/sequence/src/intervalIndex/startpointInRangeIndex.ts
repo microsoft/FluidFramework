@@ -2,19 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
+import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
 	IntervalType,
 	SequenceInterval,
 	sequenceIntervalHelpers,
-} from "../intervals";
-import { SharedString } from "../sharedString";
-import { IntervalIndex } from "./intervalIndex";
-import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
+} from "../intervals/index.js";
+import { ISharedString } from "../sharedString.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
+import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils.js";
 
 /**
  * Collection of intervals.
@@ -107,7 +110,7 @@ export class StartpointInRangeIndex<TInterval extends ISerializableInterval>
  * @internal
  */
 export function createStartpointInRangeIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IStartpointInRangeIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new StartpointInRangeIndex<SequenceInterval>(client, sequenceIntervalHelpers);

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
-import { pkgVersion } from "./packageVersion";
+import { delay } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils/internal";
+
+import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Interface describing an object passed to various network APIs.
@@ -156,7 +157,7 @@ export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
 	const retryDelayFromError = getRetryDelayFromError(error);
 	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
 	newDelayMs = Math.min(
-		delayMs,
+		newDelayMs,
 		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 			? MaxReconnectDelayInMsWhenEndpointIsReachable
 			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,

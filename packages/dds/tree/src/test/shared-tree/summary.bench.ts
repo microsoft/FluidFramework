@@ -4,21 +4,23 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import { ITree } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { SharedTreeFactory, TreeContent } from "../../shared-tree";
-import { TestTreeProviderLite } from "../utils";
-import { AllowedUpdateType } from "../../core";
-import { typeboxValidator } from "../../external-utilities";
-import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { AllowedUpdateType } from "../../core/index.js";
+import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
+import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
+import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -70,11 +72,11 @@ describe("Summary benchmarks", () => {
 	describe("load speed of", () => {
 		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+			const factory = new SharedTreeFactory();
 			benchmark({
 				title,
 				type,
-				before: async () => {
+				before: () => {
 					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 				},
 				benchmarkFnAsync: async () => {
@@ -85,7 +87,9 @@ describe("Summary benchmarks", () => {
 						),
 						objectStorage: new MockStorage(summaryTree),
 					};
-					const datastoreRuntime = new MockFluidDataStoreRuntime();
+					const datastoreRuntime = new MockFluidDataStoreRuntime({
+						idCompressor: testIdCompressor,
+					});
 					await factory.load(datastoreRuntime, "test", services, factory.attributes);
 				},
 			});
@@ -123,7 +127,10 @@ describe("Summary benchmarks", () => {
 function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.schematizeInternal({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
+	schematizeFlexTree(tree, {
+		...content,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
+	});
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

@@ -4,30 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConfigTypes, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	TelemetryDataTag,
-	mixinMonitoringContext,
 	MonitoringContext,
+	TelemetryDataTag,
 	createChildLogger,
+	mixinMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
+
+import { BlobManager } from "../../blobManager.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
-	defaultSessionExpiryDurationMs,
-	oneDayMs,
+	IGarbageCollectorConfigs,
 	UnreferencedStateTracker,
 	cloneGCData,
-	IGarbageCollectorConfigs,
+	defaultSessionExpiryDurationMs,
+	oneDayMs,
 	stableGCVersion,
-} from "../../gc";
-import { pkgVersion } from "../../packageVersion";
-import { BlobManager } from "../../blobManager";
-import { configProvider } from "./gcUnitTestHelpers";
+} from "../../gc/index.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
@@ -42,7 +43,6 @@ describe("GC Telemetry Tracker", () => {
 	// The package data is tagged in the telemetry event.
 	const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
-	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
@@ -74,8 +74,7 @@ describe("GC Telemetry Tracker", () => {
 		const configs: IGarbageCollectorConfigs = {
 			gcEnabled: true,
 			sweepEnabled: false,
-			shouldRunGC: true,
-			shouldRunSweep: false,
+			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,
@@ -124,7 +123,7 @@ describe("GC Telemetry Tracker", () => {
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
 		nodeIds.forEach((id) => {
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
@@ -132,7 +131,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
@@ -145,7 +144,7 @@ describe("GC Telemetry Tracker", () => {
 
 	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
-		telemetryTracker.nodeUsed({
+		telemetryTracker.nodeUsed(toId, {
 			id: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
@@ -176,7 +175,6 @@ describe("GC Telemetry Tracker", () => {
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(
 			createChildLogger({ logger: mockLogger, namespace: "GarbageCollector" }),
-			configProvider(injectedSettings),
 		);
 		unreferencedNodesState = new Map();
 	});
@@ -184,7 +182,6 @@ describe("GC Telemetry Tracker", () => {
 	afterEach(() => {
 		clock.reset();
 		mockLogger.clear();
-		injectedSettings = {};
 		sweepGracePeriodMs = 1000; // Default case for these tests
 	});
 
@@ -448,6 +445,37 @@ describe("GC Telemetry Tracker", () => {
 					],
 					"revived event not as expected",
 				);
+			});
+
+			it("generates events properly for untracked subDataStore paths", async () => {
+				// Mark node 1 as unreferenced.
+				markNodesUnreferenced([nodes[1]]);
+
+				// We'll mock a Loaded event for this path, passing the DataStore path as trackedId to ensure coverage
+				const subDataStorePath = `${nodes[1]}/something`;
+
+				// Expire the timeout, update nodes and validate that all events for node 1 are logged.
+				clock.tick(timeout);
+				telemetryTracker.nodeUsed(nodes[1], {
+					id: subDataStorePath,
+					usageType: "Loaded",
+					currentReferenceTimestampMs: Date.now(),
+					packagePath: testPkgPath,
+					completedGCRuns: 0,
+					isTombstoned: false,
+				});
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+				expectedEvents.push({
+					eventName: loadedEventName,
+					timeout,
+					...tagCodeArtifacts({ id: subDataStorePath, pkg: testPkgPath.join("/") }),
+					createContainerRuntimeVersion: pkgVersion,
+					isTombstoned: false,
+					trackedId: nodes[1],
+					type: "SubDataStore",
+				});
+				assertMatchEvents(expectedEvents, "all events not as expected");
 			});
 
 			it("generates events once per node", async () => {

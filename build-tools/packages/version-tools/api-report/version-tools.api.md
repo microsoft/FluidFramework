@@ -19,20 +19,27 @@ export function changePreReleaseIdentifier(version: semver.SemVer | string, newI
 export const DEFAULT_INTERDEPENDENCY_RANGE: InterdependencyRange;
 
 // @public
+export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
+
+// @public
 export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
 
 // @public
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme;
 
 // @public
-export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string];
+export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [
+publicVersion: semver.SemVer,
+internalVersion: semver.SemVer,
+prereleaseIndentifier: string
+];
 
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
 // Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
+// @public
 export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions?: boolean, log?: boolean): boolean;
 
 // @public
@@ -51,7 +58,7 @@ export function getVersionRange(version: semver.SemVer | string, maxAutomaticBum
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
 
 // @public
-export function isInterdependencyRange(r: any): r is InterdependencyRange;
+export function isInterdependencyRange(r: unknown): r is InterdependencyRange;
 
 // @public
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId?: boolean): boolean;
@@ -63,7 +70,7 @@ export function isInternalVersionScheme(version: semver.SemVer | string | undefi
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;
 
 // @public
-export function isRangeOperator(r: any): r is RangeOperator;
+export function isRangeOperator(r: unknown): r is RangeOperator;
 
 // @public
 export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType;
@@ -75,7 +82,7 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
 
 // @public
-export function isWorkspaceRange(r: any): r is WorkspaceRange;
+export function isWorkspaceRange(r: unknown): r is WorkspaceRange;
 
 // @public
 export type RangeOperator = (typeof RangeOperators)[number];

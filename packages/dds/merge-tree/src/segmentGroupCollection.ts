@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections/index.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISegment, SegmentGroup } from "./mergeTreeNodes";
+import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
  * @alpha
@@ -36,6 +36,16 @@ export class SegmentGroupCollection {
 	// eslint-disable-next-line import/no-deprecated
 	public dequeue(): SegmentGroup | undefined {
 		return this.segmentGroups.shift()?.data;
+	}
+
+	// eslint-disable-next-line import/no-deprecated
+	public remove?(segmentGroup: SegmentGroup): boolean {
+		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
+		if (found === undefined) {
+			return false;
+		}
+		this.segmentGroups.remove(found);
+		return true;
 	}
 
 	// eslint-disable-next-line import/no-deprecated

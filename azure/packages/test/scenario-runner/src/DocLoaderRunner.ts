@@ -2,19 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { ScenarioRunner } from "./ScenarioRunner.js";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("DocLoader");
 
@@ -34,7 +35,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 	void,
 	IFluidContainer
 > {
-	protected runnerClientFilePath: string = "./dist/docLoaderRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docLoaderRunnerClient.js";
 
 	constructor(scenarioConfig: DocLoaderRunnerConfig) {
 		super({
@@ -61,8 +62,8 @@ export class DocLoaderRunner extends ScenarioRunner<
 		const ac =
 			runConfig.client ??
 			(await createAzureClient({
-				userId: `testUserId_${runConfig.childId}`,
-				userName: `testUserName_${runConfig.childId}`,
+				id: `testUserId_${runConfig.childId}`,
+				name: `testUserName_${runConfig.childId}`,
 				logger,
 			}));
 
@@ -78,7 +79,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 				logger,
 				{ eventName: "load" },
 				async () => {
-					return ac.getContainer(runConfig.docId, schema);
+					return ac.getContainer(runConfig.docId, schema, "2");
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));

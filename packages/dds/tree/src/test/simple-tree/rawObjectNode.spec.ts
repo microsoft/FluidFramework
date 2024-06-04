@@ -7,22 +7,32 @@
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains";
-import { boxedIterator } from "../../feature-libraries/flex-tree";
-import { brand } from "../../util";
-import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils";
-import { createRawNode, extractRawNodeContent } from "../../simple-tree/rawNode";
-import { ObjectNodeSchema } from "../../feature-libraries";
+
+import { leaf } from "../../domains/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	FlexObjectNodeSchema,
+	SchemaBuilderBase,
+	TreeStatus,
+} from "../../feature-libraries/index.js";
+import { extractRawNodeContent } from "../../simple-tree/rawNode.js";
+import { brand } from "../../util/index.js";
+import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
+import { RawObjectNode } from "../../simple-tree/objectNode.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
-		const builder = new SchemaBuilder({ scope: "raw object test" });
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "raw object test",
+			libraries: [leaf.library],
+		});
 		const objectSchema = builder.object("object", {
 			foo: leaf.number,
-			bar: builder.optional(leaf.string),
-			baz: builder.sequence(leaf.boolean),
+			bar: FlexFieldSchema.create(FieldKinds.optional, [leaf.string]),
+			baz: FlexFieldSchema.create(FieldKinds.sequence, [leaf.boolean]),
 		});
-		const rootFieldSchema = SchemaBuilder.required(objectSchema);
+		const rootFieldSchema = FlexFieldSchema.create(FieldKinds.required, [objectSchema]);
 		const schema = builder.intoSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,
@@ -30,7 +40,7 @@ describe("raw object nodes", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-		const rawObjectNode = createRawNode(objectSchema as ObjectNodeSchema, {
+		const rawObjectNode = new RawObjectNode(objectSchema as FlexObjectNodeSchema, {
 			foo: 42,
 			bar: undefined,
 			baz: [],
@@ -49,15 +59,18 @@ describe("raw object nodes", () => {
 		assert.equal(rawObjectNode.value, undefined);
 	});
 
+	it("allow reading tree status", () => {
+		const { rawObjectNode } = getRawObjectNode();
+		assert.equal(rawObjectNode.treeStatus(), TreeStatus.New);
+	});
+
 	it("disallow reading most node properties", () => {
-		const { rawObjectNode, objectSchema } = getRawObjectNode();
+		const { rawObjectNode } = getRawObjectNode();
 		assert.throws(() => rawObjectNode.context);
 		assert.throws(() => rawObjectNode.parentField);
 		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
-		assert.throws(() => rawObjectNode[boxedIterator]());
+		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
-		assert.throws(() => rawObjectNode.treeStatus());
-		assert.throws(() => rawObjectNode.localNodeKey);
 	});
 
 	it("disallow reading fields", () => {
@@ -69,7 +82,7 @@ describe("raw object nodes", () => {
 
 	it("expose their contents", () => {
 		const { rawObjectNode } = getRawObjectNode();
-		assert.equal(extractRawNodeContent(rawObjectNode)?.foo, 42);
+		assert.equal((extractRawNodeContent(rawObjectNode) as Record<string, unknown>)?.foo, 42);
 	});
 
 	it("can only have their contents read once", () => {

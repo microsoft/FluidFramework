@@ -21,16 +21,21 @@ export {
 	AssignableFieldKinds,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	onNextChange,
 	FlexTreeUnknownUnboxed,
 	FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
-} from "./flexTreeTypes";
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
+	flexTreeSlot,
+} from "./flexTreeTypes.js";
 
 export {
 	visitBipartiteIterableTree,
@@ -38,11 +43,11 @@ export {
 	visitBipartiteIterableTreeWithState,
 	visitIterableTree,
 	visitIterableTreeWithState,
-} from "./navigation";
+} from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context } from "./context";
+export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { TreeEvent, EditableTreeEvents } from "./treeEvents";
+export { FlexTreeNodeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {
@@ -54,6 +59,8 @@ export {
 	FlexTreeNodeKeyField,
 	IsArrayOfOne,
 	FlexibleNodeSubSequence,
-} from "./flexTreeTypes";
+} from "./flexTreeTypes.js";
 
-export { NodeKeys } from "./nodeKeys";
+export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
+
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";

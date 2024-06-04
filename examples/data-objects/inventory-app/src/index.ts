@@ -4,17 +4,15 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import type { IReactTreeDataObject } from "@fluid-experimental/tree-react-api";
 import React from "react";
 
-import { InventoryList, InventoryListFactory } from "./inventoryList";
-export { InventoryList, InventoryListFactory } from "./inventoryList";
+import { InventoryListFactory } from "./inventoryList.js";
+import type { Inventory } from "./schema.js";
+import { MainView } from "./view/inventoryList.js";
 
-import { MainView } from "./view/inventoryList";
-
-/**
- * @internal
- */
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
-	(model: InventoryList) => React.createElement(MainView, { inventory: model.inventory }),
+	(tree: IReactTreeDataObject<typeof Inventory>) =>
+		React.createElement(tree.TreeViewComponent, { viewComponent: MainView }),
 );

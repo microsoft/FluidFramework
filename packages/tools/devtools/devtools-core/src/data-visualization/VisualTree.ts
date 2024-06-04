@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type FluidObjectId, type EditType } from "../CommonInterfaces";
+import { type EditType, type FluidObjectId } from "../CommonInterfaces.js";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
@@ -74,6 +74,11 @@ export interface VisualNodeBase {
 	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
 	 */
 	editProps?: { editTypes?: EditType[] };
+
+	/**
+	 * Data to be rendered in a tooltip associated with this level in the tree.
+	 */
+	tooltipContents?: string | Record<string, VisualChildNode>;
 }
 
 /**

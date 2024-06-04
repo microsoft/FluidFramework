@@ -4,17 +4,18 @@
  */
 
 import assert from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { RateLimiter } from "@fluidframework/driver-utils";
+
+import { RateLimiter } from "@fluidframework/driver-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import nock from "nock";
+
+import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
-} from "../restWrapper";
-import { RouterliciousErrorType } from "../errorUtils";
-import { DefaultTokenProvider } from "../defaultTokenProvider";
-import { ITokenResponse } from "../tokens";
+} from "../restWrapper.js";
+import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
@@ -45,7 +46,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	let restWrapper: RouterliciousOrdererRestWrapper;
 	const logger = new MockLogger();
-	beforeEach(async () => {
+	beforeEach(() => {
 		// reset auth mocking
 		tokenQueue = [token1, token2, token3];
 		// reset throttling mocking
@@ -59,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			};
 			return newToken;
 		};
-		restWrapper = await RouterliciousOrdererRestWrapper.load(
+		restWrapper = RouterliciousOrdererRestWrapper.load(
 			toInstrumentedR11sOrdererTokenFetcher(
 				"dummytenantid",
 				"dummydocumentid",
@@ -103,14 +104,14 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
-				errorType: DriverErrorType.authorizationError,
+				errorType: RouterliciousErrorTypes.authorizationError,
 			});
 		});
 		it("throws a retriable error on 500", async () => {
 			nock(testHost).get(testPath).reply(500);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
@@ -122,21 +123,21 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).get(testPath).reply(429, { retryAfter: undefined });
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
 			nock(testHost).get(testPath).reply(404);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
-				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
 			nock(testHost).get(testPath).replyWithError({ code: "ECONNRESET" });
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 	});
@@ -166,14 +167,14 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: DriverErrorType.authorizationError,
+				errorType: RouterliciousErrorTypes.authorizationError,
 			});
 		});
 		it("throws a retriable error on 500", async () => {
 			nock(testHost).post(testPath).reply(500);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
@@ -185,21 +186,21 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).post(testPath).reply(429, { retryAfter: undefined });
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
 			nock(testHost).post(testPath).reply(404);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
 			nock(testHost).post(testPath).replyWithError({ code: "ECONNRESET" });
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 	});
@@ -229,14 +230,14 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: DriverErrorType.authorizationError,
+				errorType: RouterliciousErrorTypes.authorizationError,
 			});
 		});
 		it("throws a retriable error on 500", async () => {
 			nock(testHost).patch(testPath).reply(500);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
@@ -248,21 +249,21 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).patch(testPath).reply(429, { retryAfter: undefined });
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
 			nock(testHost).patch(testPath).reply(404);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
-				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
 			nock(testHost).patch(testPath).replyWithError({ code: "ECONNRESET" });
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 	});
@@ -292,14 +293,14 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,
-				errorType: DriverErrorType.authorizationError,
+				errorType: RouterliciousErrorTypes.authorizationError,
 			});
 		});
 		it("throws a retriable error on 500", async () => {
 			nock(testHost).delete(testPath).reply(500);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
@@ -311,21 +312,21 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost).delete(testPath).reply(429, { retryAfter: undefined });
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
 			nock(testHost).delete(testPath).reply(404);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,
-				errorType: RouterliciousErrorType.fileNotFoundOrAccessDeniedError,
+				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
 			nock(testHost).delete(testPath).replyWithError({ code: "ECONNRESET" });
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
-				errorType: DriverErrorType.genericNetworkError,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
 	});

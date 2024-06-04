@@ -4,7 +4,8 @@
  */
 
 import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}
@@ -30,13 +31,9 @@ export class TestFluidSerializer implements IFluidSerializer {
 	}
 }
 
-export class TestFluidHandle implements IFluidHandle {
+export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public absolutePath;
 	public isAttached;
-
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
 
 	public async get(): Promise<any> {
 		throw new Error('Method not implemented.');

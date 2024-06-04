@@ -2,20 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedObjectSequence } from "../sharedObjectSequence";
-import { SharedObjectSequenceFactory } from "../sequenceFactory";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedObjectSequenceFactory, type SharedObjectSequence } from "../sequenceFactory.js";
+import { SharedObjectSequenceClass } from "../sharedObjectSequence.js";
 
 function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const sequence = new SharedObjectSequence(
+	const sequence = new SharedObjectSequenceClass(
 		dataStoreRuntime,
 		id,
 		SharedObjectSequenceFactory.Attributes,
@@ -32,7 +35,7 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 
 function createLocalSequence(id: string) {
 	const factory = new SharedObjectSequenceFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedObjectSequence<unknown>;
 }
 
 describe("SharedObjectSequence", () => {
@@ -77,7 +80,9 @@ describe("SharedObjectSequence", () => {
 				assert(this.sequence1.getLength() > 0, "Route must be added before deleting");
 				const lastElementIndex = this.sequence1.getLength() - 1;
 				// Get the handles that were last added.
-				const deletedHandles = this.sequence1.getRange(lastElementIndex) as IFluidHandle[];
+				const deletedHandles = this.sequence1.getRange(
+					lastElementIndex,
+				) as IFluidHandleInternal[];
 				// Get the routes of the handles.
 				const deletedHandleRoutes = Array.from(
 					deletedHandles,
