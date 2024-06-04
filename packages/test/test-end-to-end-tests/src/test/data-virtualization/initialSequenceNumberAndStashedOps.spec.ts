@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	type ITestObjectProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

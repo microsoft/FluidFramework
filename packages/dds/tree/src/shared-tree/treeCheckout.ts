@@ -491,7 +491,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									onRevertibleDisposed?.(revertible);
 								}
 							},
-							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
 								if (revertible.status === RevertibleStatus.Disposed) {
 									throw new UsageError(
@@ -618,7 +617,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
-		const cursor = this.forest.allocateCursor();
+		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
 			this.forest.moveCursorToPath(

@@ -19,7 +19,8 @@ import {
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+// eslint-disable-next-line import/no-deprecated
+import { type IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
@@ -140,6 +141,7 @@ const codeDetails: IFluidCodeDetails = {
 export const createCodeLoader = (options: IContainerRuntimeOptions) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
+// eslint-disable-next-line import/no-deprecated
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
 

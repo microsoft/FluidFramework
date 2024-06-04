@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/order */
 // Driver API
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
@@ -58,6 +59,8 @@ import {
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
+
+/* eslint-enable import/order */
 
 // List of package that needs to be install for legacy versions
 const packageList = [

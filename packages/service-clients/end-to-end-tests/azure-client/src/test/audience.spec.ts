@@ -4,23 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AxiosResponse } from "axios";
 
 import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
+import { ScopeType } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { ScopeType } from "@fluidframework/azure-client/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
-import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {

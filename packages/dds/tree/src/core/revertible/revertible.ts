@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { disposeSymbol } from "../../util/index.js";
-
 /**
  * Allows reversion of a change made to SharedTree.
  *
@@ -35,7 +33,7 @@ export interface Revertible {
 	/**
 	 * Disposes this revertible, allowing associated resources to be released.
 	 */
-	[disposeSymbol](): void;
+	dispose(): void;
 }
 
 /**

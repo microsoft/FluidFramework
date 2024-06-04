@@ -139,7 +139,6 @@ import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-
 import {
 	JsonCompatible,
 	Mutable,
-	disposeSymbol,
 	forEachInNestedMap,
 	nestedMapFromFlatList,
 	tryGetFromNestedMap,
@@ -1111,10 +1110,10 @@ export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	const unsubscribe = (): void => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 		for (const revertible of redoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
