@@ -27,7 +27,7 @@ interface SignalClient {
 	dataStoreRuntime: IFluidDataStoreRuntime;
 	containerRuntime: IContainerRuntimeBaseWithClientId;
 	signalReceivedCount: number;
-	clientId: string | undefined;
+	clientId: string;
 }
 
 const testContainerConfig: ITestContainerConfig = {
@@ -242,12 +242,17 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				? provider.makeTestContainer(testContainerConfig)
 				: provider.loadTestContainer(testContainerConfig));
 			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-			clients.push({
-				dataStoreRuntime: dataObject.runtime,
-				containerRuntime: dataObject.context.containerRuntime,
-				signalReceivedCount: 0,
-				clientId: container.clientId,
-			});
+
+			// When using tinylicious test driver, clientID's are nto assigned when making a test container
+			// clientID's are assigned when loading a test container however, so we'll only test clients with assigned clientID's
+			if (container.clientId !== undefined) {
+				clients.push({
+					dataStoreRuntime: dataObject.runtime,
+					containerRuntime: dataObject.context.containerRuntime,
+					signalReceivedCount: 0,
+					clientId: container.clientId,
+				});
+			}
 			if (container.connectionState !== ConnectionState.Connected) {
 				await new Promise((resolve) => container.once("connected", resolve));
 			}
@@ -263,8 +268,8 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			});
 		});
 
-		for (let i = 0; i < numberOfClients; i++) {
-			const targetClient = clients[(i + 1) % numberOfClients];
+		for (let i = 0; i < clients.length; i++) {
+			const targetClient = clients[(i + 1) % clients.length];
 			clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
 			await waitForTargetedSignal(
 				targetClient[runtime],
@@ -290,11 +295,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			});
 		});
 
-		for (let i = 0; i < numberOfClients; i++) {
-			clients[i][runtime].submitSignal("TestSignal", true, clients[i].clientId);
+		for (const client of clients) {
+			client[runtime].submitSignal("TestSignal", true, client.clientId);
 			await waitForTargetedSignal(
-				clients[i][runtime],
-				clients.filter((c) => c !== clients[i]).map((c) => c[runtime]),
+				client[runtime],
+				clients.filter((c) => c !== client).map((c) => c[runtime]),
 			);
 		}
 
