@@ -67,7 +67,7 @@ interface TelemetryProperties {
 	 */
 	readonly sourceBranchLength: number;
 	/**
-	 * Number of commits rebased over on the target branch. This should always be `targetCommitIndex` + 1.
+	 * Number of commits rebased over on the target branch.
 	 */
 	readonly rebaseDistance: number;
 	/**
