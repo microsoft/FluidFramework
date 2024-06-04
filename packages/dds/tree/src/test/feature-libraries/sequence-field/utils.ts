@@ -295,13 +295,13 @@ export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 	return ChangesetWrapper.invert(change, (c) => invert(c));
 }
 
-export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
+export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
 	deepFreeze(change.change);
 	const table = SF.newCrossFieldTable();
 	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change.change,
-		true,
+		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
@@ -314,7 +314,7 @@ export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
 		table.dstQueries.clear();
 		inverted = SF.invert(
 			change.change,
-			true,
+			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
