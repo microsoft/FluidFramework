@@ -61,6 +61,21 @@ export interface RebasedCommits<TChange> {
 	sourceCommits: GraphCommit<TChange>[];
 }
 
+interface TelemetryProperties {
+	/**
+	 * The length of the source branch before the rebase.
+	 */
+	readonly sourceBranchLength: number;
+	/**
+	 * Number of commits rebased over on the target branch. This should always be `targetCommitIndex` + 1.
+	 */
+	readonly rebaseDistance: number;
+	/**
+	 * The number of commits that were in common between the source and target branches before the rebase.
+	 */
+	readonly countInCommon: number;
+}
+
 export interface BranchRebaseResult<TChange> {
 	/**
 	 * The head of a rebased source branch.
@@ -75,17 +90,17 @@ export interface BranchRebaseResult<TChange> {
 	 */
 	readonly commits: RebasedCommits<TChange>;
 	/**
-	 * The length of the source branch before the rebase.
+	 * TODO
 	 */
-	readonly sourceBranchLength?: number;
+	readonly telemetryProperties?: TelemetryProperties;
+}
+
+interface RebaseChangeResult<TChange> {
+	readonly change: TaggedChange<TChange>;
 	/**
-	 * Number of commits rebased over on the target branch. This should always be `targetCommitIndex` + 1.
+	 * Telemetry properties for the rebase operation.
 	 */
-	readonly rebaseDistance?: number;
-	/**
-	 * The number of commits that were in common between the source and target branches before the rebase.
-	 */
-	readonly countInCommon?: number;
+	readonly telemetryProperties?: TelemetryProperties;
 }
 
 /**
@@ -189,9 +204,11 @@ export function rebaseBranch<TChange>(
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
-			sourceBranchLength: sourcePath.length,
-			rebaseDistance: targetCommitIndex + 1,
-			countInCommon: 0,
+			telemetryProperties: {
+				sourceBranchLength: sourcePath.length,
+				rebaseDistance: targetCommitIndex + 1,
+				countInCommon: 0,
+			},
 		};
 	}
 
@@ -247,9 +264,11 @@ export function rebaseBranch<TChange>(
 				targetCommits,
 				sourceCommits,
 			},
-			sourceBranchLength: sourcePath.length,
-			rebaseDistance: targetCommitIndex + 1,
-			countInCommon: sourcePath.length - sourceSet.size,
+			telemetryProperties: {
+				sourceBranchLength: sourcePath.length,
+				rebaseDistance: targetCommitIndex + 1,
+				countInCommon: sourcePath.length - sourceSet.size,
+			},
 		};
 	}
 
@@ -294,9 +313,11 @@ export function rebaseBranch<TChange>(
 			targetCommits,
 			sourceCommits,
 		},
-		sourceBranchLength: sourcePath.length,
-		rebaseDistance: targetCommitIndex + 1,
-		countInCommon: sourcePath.length - sourceSet.size,
+		telemetryProperties: {
+			sourceBranchLength: sourcePath.length,
+			rebaseDistance: targetCommitIndex + 1,
+			countInCommon: sourcePath.length - sourceSet.size,
+		},
 	};
 }
 
@@ -316,7 +337,7 @@ export function rebaseChange<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
-): TChange {
+): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	assert(
@@ -329,22 +350,16 @@ export function rebaseChange<TChange>(
 	);
 	inverses.reverse();
 
-	const telemetryProperties = {
+	const telemetryProps = {
 		sourceBranchLength: sourcePath.length,
-		rebaseDistance: targetPath.length, // TODO: Change the value.
-		...(change.telemetryProperties ?? {}),
+		rebaseDistance: targetPath.length,
+		countInCommon: 0, // TODO: Change the value.
 	};
 
-	const rebasedChange = rebaseChangeOverChanges(
-		changeRebaser,
-		{
-			...change,
-			telemetryProperties,
-		},
-		[...inverses, ...targetPath],
-	);
-
-	return rebasedChange;
+	return {
+		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]), // TODO: How to apply TaggedChange<TChange>.
+		...telemetryProps,
+	};
 }
 
 /**
