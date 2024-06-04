@@ -300,12 +300,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Processes the op.
 	 */
-	process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
-	): void;
+	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
 	/**
 	 * Processes the signal.

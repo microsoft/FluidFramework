@@ -2685,12 +2685,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(
-					messageWithContext.message,
-					local,
-					localOpMetadata,
-					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
-				);
+				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);

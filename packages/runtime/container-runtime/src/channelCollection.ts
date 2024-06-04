@@ -811,7 +811,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
-		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -835,7 +834,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				detectOutboundReferences(
 					envelope.address,
 					transformed.contents,
-					addedOutboundReference,
+					(fromPath: string, toPath: string) =>
+						this.parentContext.addedGCOutboundRoute(fromPath, toPath),
 				);
 				break;
 			}
