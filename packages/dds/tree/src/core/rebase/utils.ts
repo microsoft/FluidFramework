@@ -90,7 +90,7 @@ export interface BranchRebaseResult<TChange> {
 	 */
 	readonly commits: RebasedCommits<TChange>;
 	/**
-	 * TODO
+	 * Telemetry properties for the rebase operation.
 	 */
 	readonly telemetryProperties?: TelemetryProperties;
 }
