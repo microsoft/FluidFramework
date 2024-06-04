@@ -72,9 +72,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
-		private readonly interactive: boolean = true,
+		interactive: boolean = true,
 	) {
-		this.clientDetails = { capabilities: { interactive: this.interactive } };
+		this.clientDetails = { capabilities: { interactive } };
 	}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {

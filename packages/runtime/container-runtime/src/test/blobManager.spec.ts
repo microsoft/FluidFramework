@@ -84,7 +84,7 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
-		this.baseLogger = this.mc.logger;
+		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as any,
 			snapshot,

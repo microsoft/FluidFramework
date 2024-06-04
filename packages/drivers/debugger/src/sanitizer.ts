@@ -256,7 +256,7 @@ export class Sanitizer {
 		this.defaultExcludedKeys.add("snapshotFormatVersion");
 		this.defaultExcludedKeys.add("packageVersion");
 		this.mergeTreeExcludedKeys.add("nodeType");
-		this.chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, this.debug);
+		this.chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, debug);
 	}
 
 	debugMsg(msg: any) {

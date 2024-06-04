@@ -19,21 +19,13 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 	) {
-		this.getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(
-			this.internalStorageService,
-		);
-		this.getSnapshot = this.internalStorageService.getSnapshot?.bind(
-			this.internalStorageService,
-		);
-		this.getVersions = this.internalStorageService.getVersions.bind(
-			this.internalStorageService,
-		);
-		this.createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
-		this.readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
-		this.downloadSummary = this.internalStorageService.downloadSummary.bind(
-			this.internalStorageService,
-		);
-		this.dispose = this.internalStorageService.dispose.bind(this.internalStorageService);
+		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
+		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
+		this.getVersions = internalStorageService.getVersions.bind(internalStorageService);
+		this.createBlob = internalStorageService.createBlob.bind(internalStorageService);
+		this.readBlob = internalStorageService.readBlob.bind(internalStorageService);
+		this.downloadSummary = internalStorageService.downloadSummary.bind(internalStorageService);
+		this.dispose = internalStorageService.dispose.bind(internalStorageService);
 	}
 	public get policies() {
 		return this.internalStorageService.policies;

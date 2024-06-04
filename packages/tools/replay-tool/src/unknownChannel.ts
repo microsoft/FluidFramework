@@ -90,7 +90,7 @@ export class UnknownChannelFactory implements IChannelFactory {
 
 	constructor(public readonly type: string) {
 		this.attributes = {
-			type: this.type,
+			type,
 			snapshotFormatVersion: "1.0",
 			packageVersion: "1.0",
 		};

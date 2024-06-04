@@ -51,13 +51,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	}
 	private _externalDataSnapshot: ExternalSnapshotTask;
 	public constructor(
-		private readonly _id: string,
+		public readonly _id: string,
 		private readonly _draftName: SharedString,
 		private readonly _draftPriority: ISharedCell<number>,
 	) {
 		super();
 		this._externalDataSnapshot = {
-			id: this._id,
+			id: _id,
 			name: undefined,
 			priority: undefined,
 			changeType: undefined,

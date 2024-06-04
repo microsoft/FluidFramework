@@ -43,7 +43,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly documentStorageService: DocumentStorageService,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
-		this.logtailSha = this.documentStorageService.logTailSha;
+		this.logtailSha = documentStorageService.logTailSha;
 	}
 
 	private logtailSha: string | undefined;
