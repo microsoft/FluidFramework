@@ -277,7 +277,7 @@ class FluidImportManager {
 			return b.order - a.order;
 		});
 		for (const addition of reverseSortedAdditions) {
-			const {sourceFile} = this;
+			const { sourceFile } = this;
 			assert(
 				sourceFile !== undefined,
 				"sourceFile is undefined in FluidImportManager.process()",

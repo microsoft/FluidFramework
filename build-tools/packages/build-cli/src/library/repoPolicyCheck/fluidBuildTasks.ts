@@ -358,9 +358,9 @@ function hasTaskDependency(
 	]);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (taskDefinitions[taskName]) {
-		pending.push(...taskDefinitions[taskName].dependsOn);
+	const task = taskDefinitions[taskName];
+	if (task) {
+		pending.push(...task.dependsOn);
 	}
 
 	while (pending.length > 0) {
@@ -382,9 +382,13 @@ function hasTaskDependency(
 				regexSearchMatches.test(searchDep),
 			);
 			if (
-				possibleSearchMatches.some((searchDep) =>
-					packageDependencies.has(searchDep.split("#")[0]),
-				)
+				possibleSearchMatches.some((searchDep) => {
+					const dep0 = searchDep.split("#")[0];
+					if (dep0 !== undefined) {
+						return packageDependencies.has(dep);
+					}
+					return false;
+				})
 			) {
 				return true;
 			}
@@ -397,9 +401,9 @@ function hasTaskDependency(
 			continue;
 		}
 		// Do expand transitive dependencies from local tasks.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (taskDefinitions[dep]) {
-			pending.push(...taskDefinitions[dep].dependsOn);
+		const taskDep = taskDefinitions[dep];
+		if (taskDep) {
+			pending.push(...taskDep.dependsOn);
 		}
 	}
 	return false;

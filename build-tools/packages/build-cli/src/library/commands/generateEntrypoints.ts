@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -247,7 +248,10 @@ function readArgValues<TQuery extends Readonly<Record<string, string>>>(
 	const args = commandLine.split(" ");
 	for (const [argName, defaultValue] of Object.entries(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		values[argName] =
+		// TODO - check if this is correct
+		let value = values[argName];
+		assert(value !== undefined, "value is undefined in readArgValues");
+		value =
 			0 < indexOfArgValue && indexOfArgValue < args.length
 				? args[indexOfArgValue]
 				: defaultValue;
@@ -347,8 +351,17 @@ async function generateEntrypoints(
 		for (const name of [...exports.unknown.keys()].sort()) {
 			namedExports.push({ name, leadingTrivia: "\n\t" });
 		}
-		namedExports[0].leadingTrivia = `\n\t// Unrestricted APIs\n\t`;
-		namedExports[namedExports.length - 1].trailingTrivia = "\n";
+
+		// TODO - check if this is correct
+		const namedExports0 = namedExports[0];
+		assert(namedExports0 !== undefined, "namedExports0 is undefined in generateEntrypoints");
+		namedExports0.leadingTrivia = `\n\t// Unrestricted APIs\n\t`;
+		const namedExportsLast = namedExports[namedExports.length - 1];
+		assert(
+			namedExportsLast !== undefined,
+			"namedExportsLast is undefined in generateEntrypoints",
+		);
+		namedExportsLast.trailingTrivia = "\n";
 	}
 
 	for (const apiTagLevel of apiTagLevels) {
@@ -359,8 +372,18 @@ async function generateEntrypoints(
 			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// @${apiTagLevel} APIs\n\t`;
-			namedExports[namedExports.length - 1].trailingTrivia = "\n";
+			const namedExportsOrgLength = namedExports[orgLength];
+			assert(
+				namedExportsOrgLength !== undefined,
+				"namedExportsOrgLength is undefined in generateEntrypoints",
+			);
+			namedExportsOrgLength.leadingTrivia = `\n\t// @${apiTagLevel} APIs\n\t`;
+			const namedExportsOrgLengthMinusOne = namedExports[namedExports.length - 1];
+			assert(
+				namedExportsOrgLengthMinusOne !== undefined,
+				"namedExportsOrgLengthMinusOne is undefined in generateEntrypoints",
+			);
+			namedExportsOrgLengthMinusOne.trailingTrivia = "\n";
 		}
 
 		const output = mapApiTagLevelToOutput.get(apiTagLevel);

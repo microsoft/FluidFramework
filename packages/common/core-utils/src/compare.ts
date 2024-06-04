@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "./assert.js";
-
 /**
  * Compare two arrays.  Returns true if their elements are equivalent and in the same order.
  *
@@ -38,10 +36,8 @@ export const compareArrays = <T>(
 	}
 
 	for (let index = 0; index < left.length; index++) {
-		const leftItem = left[index];
-		const rightItem = right[index];
-		assert(rightItem !== undefined, "rightItem is undefined in compareArrays");
-		assert(leftItem !== undefined, "leftItem is undefined in compareArrays");
+		const leftItem = left[index] as T;
+		const rightItem = right[index] as T;
 		if (!comparator(leftItem, rightItem, index)) {
 			return false;
 		}

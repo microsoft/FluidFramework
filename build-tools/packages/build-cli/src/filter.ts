@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
@@ -216,11 +217,13 @@ const selectPackagesFromContext = (
 			continue;
 		}
 
-		if (packages[0].monoRepo === undefined) {
-			throw new Error(`No release group found for package: ${packages[0].name}`);
+		const package0 = packages[0];
+		assert(package0 !== undefined, "package0 is undefined in validate");
+		if (package0.monoRepo === undefined) {
+			throw new Error(`No release group found for package: ${package0.name}`);
 		}
 
-		const dir = packages[0].monoRepo.directory;
+		const dir = package0.monoRepo.directory;
 		const pkg = Package.loadDir(dir, rg);
 		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
 	}
