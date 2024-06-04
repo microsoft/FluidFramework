@@ -27,7 +27,7 @@ interface SignalClient {
 	dataStoreRuntime: IFluidDataStoreRuntime;
 	containerRuntime: IContainerRuntimeBaseWithClientId;
 	signalReceivedCount: number;
-	clientId: string;
+	clientId: string | undefined;
 }
 
 const testContainerConfig: ITestContainerConfig = {
@@ -243,19 +243,16 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				: provider.loadTestContainer(testContainerConfig));
 			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
-			// When using tinylicious test driver, clientID's are nto assigned when making a test container
-			// clientID's are assigned when loading a test container however, so we'll only test clients with assigned clientID's
-			if (container.clientId !== undefined) {
-				clients.push({
-					dataStoreRuntime: dataObject.runtime,
-					containerRuntime: dataObject.context.containerRuntime,
-					signalReceivedCount: 0,
-					clientId: container.clientId,
-				});
-			}
 			if (container.connectionState !== ConnectionState.Connected) {
 				await new Promise((resolve) => container.once("connected", resolve));
 			}
+
+			clients.push({
+				dataStoreRuntime: dataObject.runtime,
+				containerRuntime: dataObject.context.containerRuntime,
+				signalReceivedCount: 0,
+				clientId: container.clientId,
+			});
 		}
 	});
 	async function sendAndVerifyRemoteSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
