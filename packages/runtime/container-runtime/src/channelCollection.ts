@@ -88,12 +88,7 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import {
-	GCNodeType,
-	detectOutboundRoutesViaDDSKey,
-	IGCNodeUpdatedProps,
-	urlToGCNodePath,
-} from "./gc/index.js";
+import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
@@ -836,16 +831,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 				this.processChannelOp(envelope.address, transformed, local, localMessageMetadata);
 
-				// By default, we use the new behavior of detecting outbound routes here.
-				// If this setting is true, then DataStoreContext would be notifying GC instead.
-				if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
-					// Notify GC of any outbound references that were added by this op.
-					detectOutboundReferences(
-						envelope.address,
-						transformed.contents,
-						addedOutboundReference,
-					);
-				}
+				// Notify GC of any outbound references that were added by this op.
+				detectOutboundReferences(
+					envelope.address,
+					transformed.contents,
+					addedOutboundReference,
+				);
 				break;
 			}
 			default:
