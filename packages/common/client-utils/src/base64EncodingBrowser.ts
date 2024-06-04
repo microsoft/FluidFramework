@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// Note: The exports map in package.json will correct this import to "./bufferNode.js" in node environments
+// This file is a Node.js-specific implementation of the base64 encoding functions.
+// Aside from the below import statement, this file should be identical to the
+// base64EncodingNode.ts.
+//
+// (See 'Isomorphic Code' section in the package README.md.)
 import { IsoBuffer } from "./bufferBrowser.js";
 
 /**
