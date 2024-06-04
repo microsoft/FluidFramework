@@ -194,11 +194,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			packageOrReleaseGroup = releasePackage;
 		}
 
-		assert(bumpType !== undefined, "bumpType is undefined in BumpCommand.run()");
-
 		const newVersion =
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			exactVersion ?? bumpVersionScheme(repoVersion, bumpType, scheme);
+			exactVersion ?? bumpVersionScheme(repoVersion, bumpType!, scheme);
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {

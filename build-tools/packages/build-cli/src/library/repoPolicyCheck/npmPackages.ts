@@ -750,7 +750,11 @@ async function getApiLintElementsMissing(
 	const regexPath = /^(?:\.\/)?(?:lib\/|dist\/)?(?<path>[^/]+(?:\/[^/]+)*)\.d\.ts$/;
 	for (const [relPath, skew] of needsLinted) {
 		const pathMatch = regexPath.exec(relPath);
-		const scriptEntry = pathMatch?.groups?.path.replace(/\//g, ":") ?? "";
+		assert(
+			pathMatch?.groups?.path !== undefined,
+			"path is undefined in getApiLintElementsMissing",
+		);
+		const scriptEntry = pathMatch.groups?.path.replace(/\//g, ":") ?? "";
 		const apiExtractorFile = `api-extractor/api-extractor-lint-${scriptEntry.replaceAll(
 			":",
 			"_",
