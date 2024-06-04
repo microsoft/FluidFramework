@@ -5,6 +5,7 @@
 
 /* eslint-disable unicorn/no-array-callback-reference */
 
+import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
@@ -243,6 +244,10 @@ class FluidImportManager {
 					.sort((a, b) => b.order - a.order);
 				if (takeOverProspects.length > 0) {
 					const replacement = takeOverProspects[0];
+					assert(
+						replacement !== undefined,
+						"replacement is undefined in FluidImportManager.process()",
+					);
 					this.log.verbose(
 						`\tReplacing ${fluidImport.declaration.moduleSpecifier} with ${replacement.declaration.moduleSpecifier}`,
 					);
@@ -272,6 +277,17 @@ class FluidImportManager {
 			return b.order - a.order;
 		});
 		for (const addition of reverseSortedAdditions) {
+			const {sourceFile} = this;
+			assert(
+				sourceFile !== undefined,
+				"sourceFile is undefined in FluidImportManager.process()",
+			);
+			const sourceFileImportDecleration = sourceFile.getImportDeclarations()[addition.index];
+			assert(
+				sourceFileImportDecleration !== undefined,
+				"sourceFileImportDecleration is undefined in FluidImportManager.process()",
+			);
+
 			// Note that ts-morph will not preserve blank lines that may have existed
 			// near the insertion point.
 			// When inserting before it is likely desirable to capture any for the
@@ -283,9 +299,7 @@ class FluidImportManager {
 			this.log.verbose(
 				`\tInjecting ${addition.declaration.moduleSpecifier} ${
 					addition.insertAfterIndex ? "after" : "before"
-				} ${this.sourceFile
-					.getImportDeclarations()
-					[addition.index].getModuleSpecifierValue()}`,
+				} ${sourceFileImportDecleration.getModuleSpecifierValue()}`,
 			);
 			this.sourceFile.insertImportDeclaration(
 				addition.index + (addition.insertAfterIndex ? 1 : 0),
@@ -367,6 +381,7 @@ class FluidImportManager {
 		const references = this.fluidImports.filter((v) => v.packageName === packageName);
 		if (references.length === 1) {
 			const ref = references[0];
+			assert(ref !== undefined, "ref is undefined in FluidImportManager.findInsertionPoint()");
 			return {
 				index: ref.index,
 				after: order > ref.order,
@@ -378,7 +393,12 @@ class FluidImportManager {
 				return { index: ref.index, after: true };
 			}
 		}
-		return { index: references[0].index, after: false };
+		const references0 = references[0];
+		assert(
+			references0 !== undefined,
+			"references0 is undefined in FluidImportManager.findInsertionPoint()",
+		);
+		return { index: references0.index, after: false };
 	}
 }
 
@@ -486,6 +506,7 @@ function parseImport(
 	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
 	const packageName = modulePieces.slice(0, levelIndex).join("/");
 	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
+	assert(level !== undefined, "level is undefined in FluidImportManager.parseImport()");
 	if (!isKnownApiLevel(level)) {
 		return undefined;
 	}

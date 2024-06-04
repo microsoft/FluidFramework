@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { Flags } from "@oclif/core";
 import { type ColumnUserConfig, table } from "table";
 
@@ -128,8 +129,11 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			const jsonRow: Record<string, unknown> = {};
 
 			// Copy the corresponding column data into the row.
-			for (const [index, { getValue, formatValue }] of columnInfos.entries()) {
+			for (const [index, columnInfo] of columnInfos.entries()) {
+				assert(columnInfo !== undefined, "columnInfo is undefined in InfoCommand");
+				const { getValue, formatValue } = columnInfo;
 				const columnName = columnNames[index];
+				assert(columnName !== undefined, "columnName is undefined in InfoCommand");
 				const value = getValue(pkg);
 
 				// Save the column name/value as a key/value pair in the JSON row.
@@ -146,7 +150,10 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		}
 
 		const output = table(tableData, {
-			columns: columnInfos.map((column) => column.style),
+			columns: columnInfos.map((column) => {
+				assert(column !== undefined, "column is undefined in InfoCommand.run()");
+				return column.style;
+			}),
 			singleLine: true,
 		});
 

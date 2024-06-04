@@ -1066,13 +1066,15 @@ import {
 					function (result) {
 						expect(result.isValid).to.equal(false);
 						// console.log(result.errors);
-						expect(result.errors.length).to.equal(5);
-						const error3 = result.errors[3];
+						const { errors } = result;
+						expect(errors.length).to.equal(5);
+						assert(errors.length === 5, "error count should be 5");
+						const error3 = errors[3];
 						assert(error3 !== undefined, "error3 is undefined in validate");
-						expect(error3?.message).to.include("must have required property 'inherits'");
+						expect(error3.message).to.include("must have required property 'inherits'");
 						const error4 = result.errors[4];
 						assert(error4 !== undefined, "error4 is undefined in validate");
-						expect(error4?.message).to.include(
+						expect(error4.message).to.include(
 							"/constants/0 must have required property 'typeid'",
 						);
 						return result;

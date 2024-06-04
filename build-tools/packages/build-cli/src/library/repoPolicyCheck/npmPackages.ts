@@ -5,6 +5,7 @@
 
 /* eslint-disable prefer-object-has-own */
 
+import assert from "node:assert/strict";
 import * as child_process from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
@@ -337,8 +338,9 @@ function getReadmeInfo(dir: string): IReadmeInfo {
 	}
 
 	const readme = readFile(filePath);
-	const lines = readme.split(/\r?\n/);
-	const titleMatches = /^# (.+)$/.exec(lines[0]); // e.g. # @fluidframework/build-tools
+	const lines0 = readme.split(/\r?\n/)[0];
+	assert(lines0 !== undefined, "lines0 is undefined in getReadmeInfo");
+	const titleMatches = /^# (.+)$/.exec(lines0); // e.g. # @fluidframework/build-tools
 	const title = titleMatches?.[1] ?? "";
 	return {
 		exists: true,
@@ -464,11 +466,21 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
 		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
 		if (specialStart) {
 			// Separate the `&&` or `|` from remainder that will be its own arg.
+			const specialStart1 = specialStart[1];
+			assert(
+				specialStart1 !== undefined,
+				"specialStart1 is undefined in quoteAndEscapeArgsForUniversalScriptLine",
+			);
+			const specialStart2 = specialStart[2];
+			assert(
+				specialStart2 !== undefined,
+				"specialStart2 is undefined in quoteAndEscapeArgsForUniversalScriptLine",
+			);
 			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
-				arg: specialStart[2],
-				original: original.slice(specialStart[1].length),
+				arg: specialStart2,
+				original: original.slice(specialStart1.length),
 			});
-			return `${specialStart[1]} ${remainder}`;
+			return `${specialStart1} ${remainder}`;
 		}
 	}
 
@@ -477,8 +489,13 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
 		const specialEnd = /^(.+)\|$/.exec(arg);
 		if (specialEnd) {
 			// Separate the `|` from prior that will be its own arg.
+			const specialEnd1 = specialEnd[1];
+			assert(
+				specialEnd1 !== undefined,
+				"specialEnd1 is undefined in quoteAndEscapeArgsForUniversalScriptLine",
+			);
 			const prior = quoteAndEscapeArgsForUniversalScriptLine({
-				arg: specialEnd[1],
+				arg: specialEnd1,
 				original: original.slice(0, Math.max(0, original.length - 1)),
 			});
 			return `${prior} |`;
@@ -950,6 +967,7 @@ export const handlers: Handler[] = [
 						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
+					assert(command !== undefined, "command is undefined in handler");
 					const dep = commandDep.get(command);
 					if (
 						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
