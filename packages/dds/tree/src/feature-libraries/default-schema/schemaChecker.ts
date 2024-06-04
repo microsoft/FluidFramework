@@ -33,6 +33,11 @@ export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
+	// If the stored schema is completely empty it means the tree is brand new and we shouldn't validate the data.
+	if (schemaAndPolicy.schema.nodeSchema.size === 0) {
+		return SchemaValidationErrors.NoError;
+	}
+
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
