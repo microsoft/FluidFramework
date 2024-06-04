@@ -126,7 +126,10 @@ export interface NamespaceFilter {
  * ```
  * @beta
  */
-export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
+export type TelemetryFilter =
+	| CategoryFilter
+	| NamespaceFilter
+	| (CategoryFilter & NamespaceFilter);
 
 /**
  * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
@@ -154,7 +157,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 						mode: "exclusive",
 						filters: [],
 					},
-			  };
+				};
 
 		if (this.config.filtering.filters) {
 			this.validateFilters(this.config.filtering.filters);

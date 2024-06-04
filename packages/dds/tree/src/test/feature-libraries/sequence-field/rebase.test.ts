@@ -1022,11 +1022,10 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					insert,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [
@@ -1049,11 +1048,10 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					modify,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [

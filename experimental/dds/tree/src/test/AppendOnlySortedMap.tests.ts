@@ -5,27 +5,30 @@
 
 /* eslint-disable no-bitwise */
 
-import { strict as assert } from 'assert';
+import { strict as assert } from "assert";
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
-import { expect } from 'chai';
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { expect } from "chai";
 
-import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';
-import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
+import { assertNotUndefined, compareFiniteNumbers } from "../Common.js";
+import {
+	AppendOnlyDoublySortedMap,
+	AppendOnlySortedMap,
+} from "../id-compressor/AppendOnlySortedMap.js";
 
 function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
-	it('detects out-of-order keys', () => {
+	it("detects out-of-order keys", () => {
 		const map = mapBuilder();
 		map.append(0, 0);
-		const exception = 'Inserted key must be > all others in the map.';
+		const exception = "Inserted key must be > all others in the map.";
 		assert.throws(
 			() => map.append(-1, 1),
-			(e: Error) => validateAssertionError(e, exception)
+			(e: Error) => validateAssertionError(e, exception),
 		);
 		map.append(1, 2);
 	});
 
-	it('can get the min and max keys', () => {
+	it("can get the min and max keys", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		expect(map.maxKey()).to.be.undefined;
@@ -36,7 +39,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		}
 	});
 
-	it('can get the first and last pairs', () => {
+	it("can get the first and last pairs", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		expect(map.first()).to.be.undefined;
@@ -48,7 +51,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		}
 	});
 
-	it('can get values', () => {
+	it("can get values", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		for (let i = 0; i < elementCount; i++) {
@@ -61,7 +64,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		}
 	});
 
-	it('can get pairs by index', () => {
+	it("can get pairs by index", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		for (let i = 0; i < elementCount; i++) {
@@ -74,7 +77,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		}
 	});
 
-	it('can get an entry or next lower by key', () => {
+	it("can get an entry or next lower by key", () => {
 		[99, 100].forEach((elementCount) => {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
@@ -90,7 +93,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		});
 	});
 
-	it('can get an entry or next higher by key', () => {
+	it("can get an entry or next higher by key", () => {
 		[99, 100].forEach((elementCount) => {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
@@ -106,7 +109,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		});
 	});
 
-	it('knows how big it is', () => {
+	it("knows how big it is", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		for (let i = 0; i < elementCount; i++) {
@@ -116,7 +119,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect(map.size).to.equal(elementCount);
 	});
 
-	it('can enumerate its keys and values', () => {
+	it("can enumerate its keys and values", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		const keys: number[] = [];
@@ -132,7 +135,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect([...map.values()]).to.deep.equal(values);
 	});
 
-	it('can calculate the indexOf a search element', () => {
+	it("can calculate the indexOf a search element", () => {
 		const elements: number[] = [0, 0, 2, 0, 3, 0];
 		const comparator = (search: number, key: number, value: number): number => {
 			return compareFiniteNumbers(search, key);
@@ -140,12 +143,18 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		expect(AppendOnlySortedMap.keyIndexOf(elements, 0, comparator)).to.equal(0);
 		expect(AppendOnlySortedMap.keyIndexOf(elements, 2, comparator)).to.equal(2);
 		expect(AppendOnlySortedMap.keyIndexOf(elements, 3, comparator)).to.equal(4);
-		expect(AppendOnlySortedMap.keyIndexOf(elements, -1, comparator)).to.equal(0 ^ AppendOnlySortedMap.failureXor);
-		expect(AppendOnlySortedMap.keyIndexOf(elements, 1, comparator)).to.equal(2 ^ AppendOnlySortedMap.failureXor);
-		expect(AppendOnlySortedMap.keyIndexOf(elements, 10, comparator)).to.equal(6 ^ AppendOnlySortedMap.failureXor);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, -1, comparator)).to.equal(
+			0 ^ AppendOnlySortedMap.failureXor,
+		);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 1, comparator)).to.equal(
+			2 ^ AppendOnlySortedMap.failureXor,
+		);
+		expect(AppendOnlySortedMap.keyIndexOf(elements, 10, comparator)).to.equal(
+			6 ^ AppendOnlySortedMap.failureXor,
+		);
 	});
 
-	describe('can perform range queries', () => {
+	describe("can perform range queries", () => {
 		const map = mapBuilder();
 		const elementCount = 10;
 		for (let i = 0; i < elementCount; i++) {
@@ -153,18 +162,18 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		}
 		const maxKey = assertNotUndefined(map.maxKey());
 
-		it('on empty ranges', () => {
+		it("on empty ranges", () => {
 			expect([...map.getRange(1, -1)]).to.deep.equal([]);
 			expect([...map.getRange(maxKey + 1, maxKey + 1)]).to.deep.equal([]);
 		});
 
-		it('on ranges of size 1', () => {
+		it("on ranges of size 1", () => {
 			expect([...map.getRange(0, 0)]).to.deep.equal([[0, 0]]);
 			expect([...map.getRange(1, 1)]).to.deep.equal([]);
 			expect([...map.getRange(-1, -1)]).to.deep.equal([]);
 		});
 
-		it('on non-empty ranges', () => {
+		it("on non-empty ranges", () => {
 			expect([...map.getRange(0, 1)]).to.deep.equal([[0, 0]]);
 			expect([...map.getRange(0, 2)]).to.deep.equal([
 				[0, 0],
@@ -183,31 +192,31 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 	});
 }
 
-describe('AppendOnlySortedMap', () => {
+describe("AppendOnlySortedMap", () => {
 	runAppendOnlyMapTests(() => new AppendOnlySortedMap(compareFiniteNumbers));
 });
 
-describe('AppendOnlyDoublySortedMap', () => {
+describe("AppendOnlyDoublySortedMap", () => {
 	const mapBuilder = () =>
 		new AppendOnlyDoublySortedMap<number, number, number>(
 			compareFiniteNumbers,
 			(value) => value,
-			compareFiniteNumbers
+			compareFiniteNumbers,
 		);
 	runAppendOnlyMapTests(mapBuilder);
 
-	it('detects out-of-order values', () => {
+	it("detects out-of-order values", () => {
 		const map = mapBuilder();
 		map.append(0, 0);
-		const exception = 'Inserted value must be > all others in the map.';
+		const exception = "Inserted value must be > all others in the map.";
 		assert.throws(
 			() => map.append(1, -1),
-			(e: Error) => validateAssertionError(e, exception)
+			(e: Error) => validateAssertionError(e, exception),
 		);
 		map.append(2, 1);
 	});
 
-	it('can get an entry or next lower by value', () => {
+	it("can get an entry or next lower by value", () => {
 		[99, 100].forEach((elementCount) => {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
@@ -216,12 +225,15 @@ describe('AppendOnlyDoublySortedMap', () => {
 			expect(map.getPairOrNextLowerByValue(-1)).to.be.undefined;
 			for (let i = 1; i < elementCount; i++) {
 				expect(map.getPairOrNextLowerByValue(i * 2)).to.deep.equal([i - elementCount, i * 2]);
-				expect(map.getPairOrNextLowerByValue(i * 2 + 1)).to.deep.equal([i - elementCount, i * 2]);
+				expect(map.getPairOrNextLowerByValue(i * 2 + 1)).to.deep.equal([
+					i - elementCount,
+					i * 2,
+				]);
 			}
 		});
 	});
 
-	it('can get an entry or next higher by value', () => {
+	it("can get an entry or next higher by value", () => {
 		[99, 100].forEach((elementCount) => {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
@@ -229,7 +241,10 @@ describe('AppendOnlyDoublySortedMap', () => {
 			}
 			for (let i = 0; i < elementCount - 1; i++) {
 				expect(map.getPairOrNextHigherByValue(i * 2)).to.deep.equal([i - elementCount, i * 2]);
-				expect(map.getPairOrNextHigherByValue(i * 2 + 1)).to.deep.equal([i - elementCount + 1, i * 2 + 2]);
+				expect(map.getPairOrNextHigherByValue(i * 2 + 1)).to.deep.equal([
+					i - elementCount + 1,
+					i * 2 + 2,
+				]);
 			}
 			const maxValue = (elementCount - 1) * 2;
 			expect(map.getPairOrNextHigherByValue(maxValue)).to.deep.equal([-1, maxValue]);
@@ -237,18 +252,18 @@ describe('AppendOnlyDoublySortedMap', () => {
 		});
 	});
 
-	it('validity assertion detects out-of-order keys', () => {
+	it("validity assertion detects out-of-order keys", () => {
 		const map = new AppendOnlyDoublySortedMap<[number], [number], number>(
 			(a, b) => compareFiniteNumbers(a[0], b[0]),
 			(value) => value[0],
-			compareFiniteNumbers
+			compareFiniteNumbers,
 		);
 		map.append([0], [0]);
 		map.append([1], [1]);
 		assertNotUndefined(map.get([1]))[0] = -1; // mutate value
 		assert.throws(
 			() => map.assertValid(),
-			(e: Error) => validateAssertionError(e, 'Values in map must be sorted.')
+			(e: Error) => validateAssertionError(e, "Values in map must be sorted."),
 		);
 	});
 });

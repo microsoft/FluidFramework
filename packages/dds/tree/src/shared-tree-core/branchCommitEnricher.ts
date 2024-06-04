@@ -22,7 +22,8 @@ export class BranchCommitEnricher<TChange> {
 	 * It's possible an entry will linger in the map indefinitely if it is never retrieved for submission.
 	 * This would happen if applying a commit were to fail and the commit were not retrieved/purged after the failure.
 	 */
-	private readonly preparedCommits: Map<GraphCommit<TChange>, GraphCommit<TChange>> = new Map();
+	private readonly preparedCommits: Map<GraphCommit<TChange>, GraphCommit<TChange>> =
+		new Map();
 
 	public constructor(
 		rebaser: ChangeRebaser<TChange>,
@@ -58,7 +59,10 @@ export class BranchCommitEnricher<TChange> {
 	 * Each call to this method must be followed by a call to {@link BranchCommitEnricher.getPreparedCommit} or
 	 * {@link BranchCommitEnricher.purgePreparedCommits}. Failing to do so will result in a memory leak.
 	 */
-	public prepareCommit(commit: GraphCommit<TChange>, concludesOuterTransaction: boolean): void {
+	public prepareCommit(
+		commit: GraphCommit<TChange>,
+		concludesOuterTransaction: boolean,
+	): void {
 		let enrichedChange: TChange;
 		if (concludesOuterTransaction) {
 			assert(

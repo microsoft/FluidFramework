@@ -214,12 +214,8 @@ export function runUnitTestScenario(
 					.map(
 						(peer) =>
 							steps
-								.filter(
-									(s): s is UnitTestPullStep =>
-										s.type === "Pull" && s.from === peer,
-								)
-								.find((s) => s.seq > sequenceNumber)?.ref ??
-							Number.POSITIVE_INFINITY,
+								.filter((s): s is UnitTestPullStep => s.type === "Pull" && s.from === peer)
+								.find((s) => s.seq > sequenceNumber)?.ref ?? Number.POSITIVE_INFINITY,
 					)
 					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
 
@@ -254,7 +250,7 @@ export function runUnitTestScenario(
 							iNextAck < acks.length
 								? acks[iNextAck].seq
 								: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-								  finalSequencedEdit + 1 + iNextAck - acks.length;
+									finalSequencedEdit + 1 + iNextAck - acks.length;
 					}
 					iNextAck += 1;
 					const changeset = TestChange.mint(knownToLocal, seq);
@@ -311,10 +307,7 @@ export function runUnitTestScenario(
 					 * Filter that includes changes that were local to the issuer of this commit.
 					 */
 					const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-						s.type === "Pull" &&
-						s.seq > step.ref &&
-						s.seq < step.seq &&
-						s.from === step.from;
+						s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
 					/**
 					 * Changes that were known to the peer at the time it authored this commit.
 					 */

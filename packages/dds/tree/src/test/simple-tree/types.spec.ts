@@ -152,9 +152,10 @@ describe("simple-tree types", () => {
 					instance: TreeNodeValid<T2>,
 					input: T2,
 				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+					return new MockFlexNode(this as unknown as TreeNodeSchema) as unknown as RawTreeNode<
+						FlexTreeNodeSchema,
+						unknown
+					>;
 				}
 
 				public override get [type](): string {
@@ -203,9 +204,10 @@ describe("simple-tree types", () => {
 					instance: TreeNodeValid<T2>,
 					input: T2,
 				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+					return new MockFlexNode(this as unknown as TreeNodeSchema) as unknown as RawTreeNode<
+						FlexTreeNodeSchema,
+						unknown
+					>;
 				}
 
 				public override get [type](): string {

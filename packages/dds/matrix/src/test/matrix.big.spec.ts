@@ -29,7 +29,9 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
+	});
 
 	const matrix2 = await matrixFactory.load(
 		dataStoreRuntime,

@@ -195,10 +195,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -210,10 +207,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -267,10 +261,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -282,10 +273,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}

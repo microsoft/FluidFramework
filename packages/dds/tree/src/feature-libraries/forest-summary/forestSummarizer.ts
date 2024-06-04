@@ -75,16 +75,15 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
-		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> = new Map();
+		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
+			new Map();
 		// TODO: Encode all detached fields in one operation for better performance and compression
 		forEachField(rootCursor, (cursor) => {
 			const key = cursor.getFieldKey();
 			const innerCursor = this.forest.allocateCursor("getTreeString");
 			assert(
-				this.forest.tryMoveCursorToField(
-					{ fieldKey: key, parent: undefined },
-					innerCursor,
-				) === TreeNavigationResult.Ok,
+				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
+					TreeNavigationResult.Ok,
 				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
@@ -132,10 +131,7 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = this.codec.decode(
-				parse(treeBufferString) as Format,
-				this.encoderContext,
-			);
+			const fields = this.codec.decode(parse(treeBufferString) as Format, this.encoderContext);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];

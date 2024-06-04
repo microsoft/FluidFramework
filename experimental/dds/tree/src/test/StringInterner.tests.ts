@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
+import { strict as assert } from "assert";
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
-import { expect } from 'chai';
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { expect } from "chai";
 
-import { MutableStringInterner } from '../StringInterner.js';
+import { MutableStringInterner } from "../StringInterner.js";
 
-describe('MutableStringInterner', () => {
-	const inputStrings = ['test', 'test2', 'test3', 'test4'];
+describe("MutableStringInterner", () => {
+	const inputStrings = ["test", "test2", "test3", "test4"];
 
-	it('can associate a string with an intern ID', () => {
+	it("can associate a string with an intern ID", () => {
 		const interner = new MutableStringInterner();
 
 		expect(interner.getOrCreateInternedId(inputStrings[0])).to.equal(0);
@@ -21,13 +21,13 @@ describe('MutableStringInterner', () => {
 		expect(interner.getOrCreateInternedId(inputStrings[0])).to.equal(0);
 	});
 
-	it('can handle empty strings', () => {
+	it("can handle empty strings", () => {
 		const interner = new MutableStringInterner();
 
-		expect(interner.getOrCreateInternedId('')).to.equal(0);
+		expect(interner.getOrCreateInternedId("")).to.equal(0);
 	});
 
-	it('getInternedId returns undefined for un-created ids', () => {
+	it("getInternedId returns undefined for un-created ids", () => {
 		const interner = new MutableStringInterner();
 
 		expect(interner.getInternedId(inputStrings[0])).to.equal(undefined);
@@ -36,7 +36,7 @@ describe('MutableStringInterner', () => {
 		expect(interner.getInternedId(inputStrings[1])).to.equal(undefined);
 	});
 
-	it('can retrieve the intern ID associated with a string', () => {
+	it("can retrieve the intern ID associated with a string", () => {
 		const interner = new MutableStringInterner();
 
 		expect(interner.getOrCreateInternedId(inputStrings[0])).to.equal(0);
@@ -53,11 +53,11 @@ describe('MutableStringInterner', () => {
 
 		assert.throws(
 			() => interner.getString(0),
-			(e: Error) => validateAssertionError(e, 'No string associated with 0.')
+			(e: Error) => validateAssertionError(e, "No string associated with 0."),
 		);
 	});
 
-	it('can return a serializable representation of its state', () => {
+	it("can return a serializable representation of its state", () => {
 		const interner = new MutableStringInterner();
 
 		for (const value of inputStrings) {
@@ -67,7 +67,7 @@ describe('MutableStringInterner', () => {
 		expect(interner.getSerializable()).to.deep.equal(inputStrings);
 	});
 
-	it('can be initialized with a list of input strings', () => {
+	it("can be initialized with a list of input strings", () => {
 		const interner = new MutableStringInterner(inputStrings);
 
 		expect(interner.getOrCreateInternedId(inputStrings[3])).to.equal(3);
@@ -76,7 +76,7 @@ describe('MutableStringInterner', () => {
 		expect(interner.getOrCreateInternedId(inputStrings[0])).to.equal(0);
 	});
 
-	it('can be initialized with a list of input strings that include duplicate IDs', () => {
+	it("can be initialized with a list of input strings that include duplicate IDs", () => {
 		const interner = new MutableStringInterner([...inputStrings, ...inputStrings]);
 
 		expect(interner.getOrCreateInternedId(inputStrings[3])).to.equal(3);

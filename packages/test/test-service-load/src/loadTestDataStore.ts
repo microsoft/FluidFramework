@@ -22,7 +22,12 @@ import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
+	IDirectory,
+	ISharedDirectory,
+	ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
@@ -63,7 +68,9 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 export class LoadTestDataStoreModel {
-	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
+	private static async waitForCatchupOrDispose(
+		runtime: IFluidDataStoreRuntime,
+	): Promise<void> {
 		await new Promise<void>((resolve) => {
 			const resolveIfConnectedOrDisposed = () => {
 				if (runtime.connected || runtime.disposed) {
@@ -274,10 +281,7 @@ export class LoadTestDataStoreModel {
 						const value = this.counter.value;
 						if (!local) {
 							// this is an old op, we should have already uploaded this blob
-							this.blobCount = Math.max(
-								this.blobCount,
-								Math.trunc(value * blobsPerOp),
-							);
+							this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
 							return;
 						}
 						const newBlobs =
@@ -287,9 +291,7 @@ export class LoadTestDataStoreModel {
 
 						if (newBlobs > 0) {
 							this.blobUploads.push(
-								...[...Array(newBlobs)].map(async () =>
-									this.writeBlob(this.blobCount++),
-								),
+								...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)),
 							);
 						}
 					},
@@ -482,9 +484,7 @@ export class LoadTestDataStoreModel {
 			const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
 			console.log(
 				`${this.config.runId.toString().padStart(3)}>` +
-					` seen: ${opCount.toString().padStart(8)} (${opRate
-						.toString()
-						.padStart(4)}/min),` +
+					` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
 					` sent: ${this.counter.value.toString().padStart(8)} (${sendRate
 						.toString()
 						.padStart(2)}/min),` +
@@ -595,9 +595,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
 		const largeOpRate = Math.max(
-			Math.floor(
-				(config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients,
-			),
+			Math.floor((config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients),
 			1,
 		);
 		// To avoid having all clients send their large payloads at roughly the same time
@@ -689,11 +687,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						} else {
 							await dataModel.volunteerForTask();
 						}
-				  }
+					}
 				: async () => {
 						sendSingleOp();
 						await delay(opsGapMs * config.random.real(1, 1.5));
-				  };
+					};
 
 		try {
 			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
@@ -702,8 +700,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				// and it's partner is done, return true to complete the runner.
 				if (enableQuickRampDown()) {
 					if (
-						this.runtime.getAudience().getMembers().size <
-							config.testConfig.numClients / 2 &&
+						this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2 &&
 						((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount
 					) {
 						return true;

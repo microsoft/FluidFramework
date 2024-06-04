@@ -482,8 +482,8 @@ describe("ArrayNode Proxy", () => {
 						index <= start
 							? index // If the index is <= start, it is unmodified
 							: index >= end
-							? index - moved.length // If the index is >= end, subtract the number of moved items.
-							: start, // If the index is inside the moved window, slide it left to the starting position.
+								? index - moved.length // If the index is >= end, subtract the number of moved items.
+								: start, // If the index is inside the moved window, slide it left to the starting position.
 						/* deleteCount: */ 0,
 						...moved,
 					);

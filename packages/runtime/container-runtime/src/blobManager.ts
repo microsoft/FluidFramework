@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -100,7 +104,8 @@ export type IBlobManagerRuntime = Pick<
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
-type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
+type ICreateBlobResponseWithTTL = ICreateBlobResponse &
+	Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
 	blob: ArrayBufferLike;
@@ -289,15 +294,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (expired) {
 					// we want to avoid submitting ops with broken handles
 					this.closeContainer(
-						new GenericError(
-							"Trying to submit a BlobAttach for expired blob",
-							undefined,
-							{
-								localId,
-								blobId,
-								secondsSinceUpload,
-							},
-						),
+						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
+							localId,
+							blobId,
+							secondsSinceUpload,
+						}),
 					);
 				}
 			}
@@ -422,7 +423,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					pending.attached = true;
 					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
-			  }
+				}
 			: undefined;
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
@@ -892,10 +893,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		for (const [localId, storageId] of table) {
-			assert(
-				this.redirectTable.has(localId),
-				0x254 /* "unrecognized id in redirect table" */,
-			);
+			assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
 			this.setRedirection(localId, storageId);
 			// set identity (id -> id) entry
 			this.setRedirection(storageId, storageId);

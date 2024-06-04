@@ -26,7 +26,11 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
+import {
+	AttributableMapKernel,
+	IMapDataObjectSerializable,
+	IMapOperation,
+} from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
@@ -105,7 +109,10 @@ export const AttributableMap = createSharedObjectKind(MapFactory);
 /**
  * {@inheritDoc ISharedMap}
  */
-export class AttributableMapClass extends SharedObject<ISharedMapEvents> implements ISharedMap {
+export class AttributableMapClass
+	extends SharedObject<ISharedMapEvents>
+	implements ISharedMap
+{
 	/**
 	 * String representation for the class.
 	 */
@@ -310,9 +317,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 						type: value.type,
 						value: JSON.parse(value.value) as unknown,
 						attribution:
-							value.attribution === undefined
-								? undefined
-								: JSON.parse(value.attribution),
+							value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
@@ -335,10 +340,7 @@ export class AttributableMapClass extends SharedObject<ISharedMapEvents> impleme
 				}
 				headerBlob[key] = {
 					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
 					attribution:
 						value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 				};

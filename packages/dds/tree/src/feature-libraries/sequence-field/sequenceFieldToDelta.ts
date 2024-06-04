@@ -27,7 +27,10 @@ import {
 } from "./utils.js";
 import { ToDelta } from "../modular-schema/index.js";
 
-export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta): DeltaFieldChanges {
+export function sequenceFieldToDelta(
+	change: MarkList,
+	deltaFromChild: ToDelta,
+): DeltaFieldChanges {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];

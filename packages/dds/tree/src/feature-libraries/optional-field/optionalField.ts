@@ -107,9 +107,7 @@ export class RegisterMap<T> implements IRegisterMap<T> {
 			} else {
 				for (const [revisionTag, _] of nestedMap) {
 					changeIds.push(
-						revisionTag === undefined
-							? { localId }
-							: { localId, revision: revisionTag },
+						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
 					);
 				}
 			}
@@ -169,11 +167,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedFieldSrc = "self";
 			} else {
 				composedFieldSrc =
-					tryGetFromNestedMap(
-						dstToSrc,
-						change2FieldSrc.revision,
-						change2FieldSrc.localId,
-					) ?? change2FieldSrc;
+					tryGetFromNestedMap(dstToSrc, change2FieldSrc.revision, change2FieldSrc.localId) ??
+					change2FieldSrc;
 			}
 		} else if (change1FieldSrc !== undefined && change2.valueReplace === undefined) {
 			composedFieldSrc = change1FieldSrc;
@@ -304,13 +299,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						? {
 								isEmpty: true,
 								dst: makeChangeAtomId(genId.allocate()),
-						  }
+							}
 						: {
 								isEmpty: false,
-								dst: isRollback
-									? change.valueReplace.src
-									: makeChangeAtomId(genId.allocate()),
-						  };
+								dst: isRollback ? change.valueReplace.src : makeChangeAtomId(genId.allocate()),
+							};
 				if (change.valueReplace.isEmpty === false) {
 					replace.src = change.valueReplace.dst;
 				}
@@ -686,7 +679,10 @@ export function optionalFieldIntoDelta(
 	return delta;
 }
 
-export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
+export const optionalChangeHandler: FieldChangeHandler<
+	OptionalChangeset,
+	OptionalFieldEditor
+> = {
 	rebaser: optionalChangeRebaser,
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,

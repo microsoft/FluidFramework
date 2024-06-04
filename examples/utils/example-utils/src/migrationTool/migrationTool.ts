@@ -124,7 +124,8 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
 
-		const crcHandle = this.root.get<IFluidHandle<IConsensusRegisterCollection<string>>>(crcKey);
+		const crcHandle =
+			this.root.get<IFluidHandle<IConsensusRegisterCollection<string>>>(crcKey);
 		this._crc = await crcHandle?.get();
 
 		this.pactMap.on("pending", (key: string) => {

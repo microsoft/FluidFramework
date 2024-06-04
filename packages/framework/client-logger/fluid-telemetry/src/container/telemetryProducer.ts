@@ -41,9 +41,7 @@ export class ContainerEventTelemetryProducer {
 				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.CONNECTED);
 			}
 			case IFluidContainerSystemEventNames.DISCONNECTED: {
-				return this.produceBaseContainerTelemetry(
-					ContainerTelemetryEventNames.DISCONNECTED,
-				);
+				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.DISCONNECTED);
 			}
 			case IFluidContainerSystemEventNames.DISPOSED: {
 				const typedPayload = payload as { error?: ICriticalContainerError };

@@ -109,14 +109,8 @@ export function makeV2Codec(
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(
-								effect.attach,
-								context,
-							) as Encoded.Attach,
-							detach: markEffectCodec.encode(
-								effect.detach,
-								context,
-							) as Encoded.Detach,
+							attach: markEffectCodec.encode(effect.attach, context) as Encoded.Attach,
+							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -252,10 +246,7 @@ export function makeV2Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						markEffectCodec.decode(mark.effect, context.baseContext),
-					);
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);

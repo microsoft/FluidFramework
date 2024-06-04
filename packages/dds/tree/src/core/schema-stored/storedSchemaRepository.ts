@@ -39,7 +39,9 @@ export interface SchemaEvents {
  * A collection of stored schema that fires events in response to changes.
  * @internal
  */
-export interface TreeStoredSchemaSubscription extends Listenable<SchemaEvents>, TreeStoredSchema {}
+export interface TreeStoredSchemaSubscription
+	extends Listenable<SchemaEvents>,
+		TreeStoredSchema {}
 
 /**
  * Mutable collection of stored schema.
@@ -93,7 +95,10 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		}
 	}
 
-	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+	public on<K extends keyof SchemaEvents>(
+		eventName: K,
+		listener: SchemaEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -131,6 +136,8 @@ function cloneNodeSchemaData(
 	nodeSchema: StoredSchemaCollection["nodeSchema"],
 ): BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 	// Schema objects are immutable (unlike stored schema repositories), so this shallow copy is fine.
-	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [...nodeSchema.entries()];
+	const entries: [TreeNodeSchemaIdentifier, TreeNodeStoredSchema][] = [
+		...nodeSchema.entries(),
+	];
 	return new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(entries, compareStrings);
 }

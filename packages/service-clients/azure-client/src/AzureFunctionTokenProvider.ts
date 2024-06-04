@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
+import {
+	type ITokenProvider,
+	type ITokenResponse,
+} from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
 import { type AzureMember } from "./interfaces.js";
@@ -28,13 +31,19 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 		private readonly user?: Pick<AzureMember, "id" | "name" | "additionalDetails">,
 	) {}
 
-	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+	public async fetchOrdererToken(
+		tenantId: string,
+		documentId?: string,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
 		};
 	}
 
-	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+	public async fetchStorageToken(
+		tenantId: string,
+		documentId: string,
+	): Promise<ITokenResponse> {
 		return {
 			jwt: await this.getToken(tenantId, documentId),
 		};

@@ -223,7 +223,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-			  })
+				})
 			: undefined;
 	}
 

@@ -30,4 +30,7 @@ export type { IUser } from "@fluidframework/driver-definitions";
 export { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 
 // Re-export so developers can build loggers without pulling in core-interfaces
-export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";

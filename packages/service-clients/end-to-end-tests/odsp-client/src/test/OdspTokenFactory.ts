@@ -66,7 +66,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 			client_id: clientConfig.clientId,
 			...credentials,
 		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
+		const response = await unauthPostAsync(
+			getFetchTokenUrl(server),
+			new URLSearchParams(body),
+		);
 
 		const parsedResponse = await response.json();
 		const accessToken = parsedResponse.access_token;

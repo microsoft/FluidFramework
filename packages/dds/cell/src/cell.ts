@@ -18,7 +18,10 @@ import {
 	type AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import {
 	type ICellLocalOpMetadata,
@@ -173,8 +176,8 @@ export class SharedCell<T = any>
 			this.attribution = message
 				? { type: "op", seq: message.sequenceNumber }
 				: this.isAttached()
-				? { type: "local" }
-				: { type: "detached", id: 0 };
+					? { type: "local" }
+					: { type: "detached", id: 0 };
 		}
 	}
 

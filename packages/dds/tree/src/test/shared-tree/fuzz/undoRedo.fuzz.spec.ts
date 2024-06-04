@@ -22,7 +22,11 @@ import {
 	UpPath,
 	Value,
 } from "../../../core/index.js";
-import { SharedTreeTestFactory, toJsonableTree, validateFuzzTreeConsistency } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateFuzzTreeConsistency,
+} from "../../utils.js";
 
 import {
 	EditGeneratorOpWeights,

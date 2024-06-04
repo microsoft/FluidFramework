@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { fail, memoizeGetter } from './Common.js';
-import { Definition, NodeId } from './Identifiers.js';
-import { TreeView, TreeViewNode } from './TreeView.js';
-import { Payload, TraitMap, TreeNode } from './persisted-types/index.js';
+import { fail, memoizeGetter } from "./Common.js";
+import { Definition, NodeId } from "./Identifiers.js";
+import { TreeView, TreeViewNode } from "./TreeView.js";
+import { Payload, TraitMap, TreeNode } from "./persisted-types/index.js";
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient
@@ -21,7 +21,9 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
 	/** Construct a handle which references the node with the given id in the given `TreeView` */
 	public constructor(view: TreeView, nodeId: NodeId) {
 		this.view = view;
-		this.viewNode = view.tryGetViewNode(nodeId) ?? fail('Failed to create handle: node is not present in view');
+		this.viewNode =
+			view.tryGetViewNode(nodeId) ??
+			fail("Failed to create handle: node is not present in view");
 	}
 
 	public get payload(): Payload | undefined {
@@ -51,13 +53,13 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
 			});
 		}
 
-		return memoizeGetter(this, 'traits', traitMap);
+		return memoizeGetter(this, "traits", traitMap);
 	}
 
 	/**
 	 * Get a `TreeViewNode` for the tree view node that this handle references
 	 */
 	public get node(): TreeViewNode {
-		return memoizeGetter(this, 'node', this.viewNode);
+		return memoizeGetter(this, "node", this.viewNode);
 	}
 }

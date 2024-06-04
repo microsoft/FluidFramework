@@ -15,7 +15,10 @@ import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
 
@@ -93,7 +96,10 @@ const snapshotFileName = "header";
 /**
  * {@inheritDoc PactMap}
  */
-export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
+export class PactMapClass<T = unknown>
+	extends SharedObject<IPactMapEvents>
+	implements IPactMap<T>
+{
 	private readonly values = new Map<string, Pact<T>>();
 
 	private readonly incomingOp: EventEmitter = new EventEmitter();
@@ -400,23 +406,12 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 
 			switch (op.type) {
 				case "set": {
-					this.incomingOp.emit(
-						"set",
-						op.key,
-						op.value,
-						op.refSeq,
-						message.sequenceNumber,
-					);
+					this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
 					break;
 				}
 
 				case "accept": {
-					this.incomingOp.emit(
-						"accept",
-						op.key,
-						message.clientId,
-						message.sequenceNumber,
-					);
+					this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
 					break;
 				}
 

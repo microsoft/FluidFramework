@@ -3,18 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { compareArrays } from '@fluidframework/core-utils/internal';
-import { v4 as uuidv4 } from 'uuid';
+import { compareArrays } from "@fluidframework/core-utils/internal";
+import { v4 as uuidv4 } from "uuid";
 
-import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
-import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
-import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
-import { comparePayloads } from './PayloadUtilities.js';
-import { TransactionView, iterateChildren } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
-import { TraitLocation, TreeView } from './TreeView.js';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
+import {
+	BuildNode,
+	BuildTreeNode,
+	Change,
+	HasVariadicTraits,
+	StablePlace,
+	StableRange,
+} from "./ChangeTypes.js";
+import { Mutable, copyPropertyIfDefined, fail } from "./Common.js";
+import {
+	Definition,
+	DetachedSequenceId,
+	EditId,
+	NodeId,
+	StableNodeId,
+	TraitLabel,
+} from "./Identifiers.js";
+import { NodeIdContext, NodeIdConverter } from "./NodeIdUtilities.js";
+import { comparePayloads } from "./PayloadUtilities.js";
+import { TransactionView, iterateChildren } from "./RevisionView.js";
+import { getChangeNode_0_0_2FromView } from "./SerializationUtilities.js";
+import { TraitLocation, TreeView } from "./TreeView.js";
+import { placeFromStablePlace, rangeFromStableRange } from "./TreeViewUtilities.js";
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -30,7 +44,7 @@ import {
 	TraitMap,
 	TreeNode,
 	TreeNodeSequence,
-} from './persisted-types/index.js';
+} from "./persisted-types/index.js";
 
 /**
  * Functions for constructing and comparing Edits.
@@ -62,17 +76,20 @@ export function newEditId(): EditId {
 /**
  * A node type that does not require its children to be specified
  */
-export type NoTraits<TChild extends HasVariadicTraits<unknown>> = Omit<TChild, keyof HasVariadicTraits<TChild>>;
+export type NoTraits<TChild extends HasVariadicTraits<unknown>> = Omit<
+	TChild,
+	keyof HasVariadicTraits<TChild>
+>;
 
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
  * @param convert - a conversion function that will run on each node in the input tree to produce the output tree.
  */
-export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extends HasTraits<TOut>>(
-	root: TIn,
-	convert: (node: TIn) => NoTraits<TOut>
-): TOut;
+export function convertTreeNodes<
+	TIn extends HasVariadicTraits<TIn>,
+	TOut extends HasTraits<TOut>,
+>(root: TIn, convert: (node: TIn) => NoTraits<TOut>): TOut;
 
 /**
  * Transform an input tree into an isomorphic output tree
@@ -87,7 +104,7 @@ export function convertTreeNodes<
 >(
 	root: TIn | TPlaceholder,
 	convert: (node: TIn) => NoTraits<TOut>,
-	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
+	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder,
 ): TOut | TPlaceholder;
 
 /**
@@ -105,7 +122,7 @@ export function convertTreeNodes<
 >(
 	root: TIn | TPlaceholder,
 	convert: (node: TIn) => NoTraits<TOut>,
-	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
+	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder,
 ): TOut | TPlaceholder {
 	if (isKnownType(root, isPlaceholder)) {
 		return root;
@@ -113,15 +130,19 @@ export function convertTreeNodes<
 
 	const convertedRoot = convert(root) as TOut;
 	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
-	const rootTraits = (root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
+	const rootTraits =
+		(root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
 	(convertedRoot as Mutable<TOut>).traits = {};
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn | TPlaceholder]>;
 		newNode: Mutable<TOut>;
-	}[] = [{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot }];
+	}[] = [
+		{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot },
+	];
 
 	while (pendingNodes.length > 0) {
-		const { childIterator, newNode } = pendingNodes[pendingNodes.length - 1] ?? fail('Undefined node');
+		const { childIterator, newNode } =
+			pendingNodes[pendingNodes.length - 1] ?? fail("Undefined node");
 		const { value, done } = childIterator.next();
 		if (done === true) {
 			pendingNodes.pop();
@@ -160,40 +181,58 @@ export function convertTreeNodes<
  * @param tree - the input tree
  * @param visitor - callback invoked for each node in the tree.
  */
-export function walkTree<TIn extends HasVariadicTraits<TIn>>(tree: TIn, visitor: (node: TIn) => void): void;
+export function walkTree<TIn extends HasVariadicTraits<TIn>>(
+	tree: TIn,
+	visitor: (node: TIn) => void,
+): void;
 
 /**
  * Visits an input tree containing placeholders in a depth-first pre-order traversal.
  * @param tree - the input tree
  * @param visitor - callback invoked for each node in the tree. Must return true if the given node is a TPlaceholder.
  */
-export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+export function walkTree<
+	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
+	TPlaceholder = never,
+>(
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
-	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
+	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder,
 ): void;
 
-export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+export function walkTree<
+	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
+	TPlaceholder = never,
+>(
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
-		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
-	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
+		| {
+				nodeVisitor?: (node: TIn) => void;
+				placeholderVisitor?: (placeholder: TPlaceholder) => void;
+		  },
+	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder,
 ): void {
-	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
-	const placeholderVisitor = typeof visitors === 'object' ? visitors.placeholderVisitor : undefined;
+	const nodeVisitor = typeof visitors === "function" ? visitors : visitors.nodeVisitor;
+	const placeholderVisitor =
+		typeof visitors === "object" ? visitors.placeholderVisitor : undefined;
 	if (isKnownType(tree, isPlaceholder)) {
 		placeholderVisitor?.(tree);
 		return;
 	}
 	nodeVisitor?.(tree);
 
-	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [iterateChildren(tree)[Symbol.iterator]()];
+	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [
+		iterateChildren(tree)[Symbol.iterator](),
+	];
 
 	while (childIterators.length > 0) {
-		const childIterator = childIterators[childIterators.length - 1] ?? fail('Undefined node');
+		const childIterator = childIterators[childIterators.length - 1] ?? fail("Undefined node");
 		const { value, done } = childIterator.next();
 		if (done === true) {
 			childIterators.pop();
@@ -210,7 +249,10 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 }
 
 // Useful for collapsing type checks in `convertTreeNodes` into a single line
-function isKnownType<T, Type extends T>(value: T, isType?: (value: T) => value is Type): value is Type {
+function isKnownType<T, Type extends T>(
+	value: T,
+	isType?: (value: T) => value is Type,
+): value is Type {
 	return isType?.(value) ?? false;
 }
 
@@ -224,8 +266,8 @@ export function deepCompareNodes(
 	b: ChangeNode | ChangeNode_0_0_2,
 	comparator: (
 		a: NodeData<NodeId> | NodeData<StableNodeId>,
-		b: NodeData<NodeId> | NodeData<StableNodeId>
-	) => boolean = compareNodes
+		b: NodeData<NodeId> | NodeData<StableNodeId>,
+	) => boolean = compareNodes,
 ): boolean {
 	if (a === b) {
 		return true;
@@ -249,14 +291,18 @@ export function deepCompareNodes(
 			return false;
 		}
 
-		const traitsEqual = compareArrays<ChangeNode | ChangeNode_0_0_2>(childrenA, childrenB, (childA, childB) => {
-			if (typeof childA === 'number' || typeof childB === 'number') {
-				// Check if children are DetachedSequenceIds
-				return childA === childB;
-			}
+		const traitsEqual = compareArrays<ChangeNode | ChangeNode_0_0_2>(
+			childrenA,
+			childrenB,
+			(childA, childB) => {
+				if (typeof childA === "number" || typeof childB === "number") {
+					// Check if children are DetachedSequenceIds
+					return childA === childB;
+				}
 
-			return deepCompareNodes(childA, childB);
-		});
+				return deepCompareNodes(childA, childB);
+			},
+		);
 
 		if (!traitsEqual) {
 			return false;
@@ -273,7 +319,7 @@ export function deepCompareNodes(
  */
 export function compareNodes(
 	a: NodeData<NodeId> | NodeData<StableNodeId>,
-	b: NodeData<NodeId> | NodeData<StableNodeId>
+	b: NodeData<NodeId> | NodeData<StableNodeId>,
 ): boolean {
 	if (a === b) {
 		return true;
@@ -302,7 +348,7 @@ export function areRevisionViewsSemanticallyEqual(
 	treeViewA: TreeView,
 	idConverterA: NodeIdConverter,
 	treeViewB: TreeView,
-	idConverterB: NodeIdConverter
+	idConverterB: NodeIdConverter,
 ): boolean {
 	const treeA = getChangeNode_0_0_2FromView(treeViewA, idConverterA);
 	const treeB = getChangeNode_0_0_2FromView(treeViewB, idConverterB);
@@ -317,10 +363,17 @@ export function areRevisionViewsSemanticallyEqual(
  * Create a sequence of changes that resets the contents of `trait`.
  * @internal
  */
-export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequence<BuildNode>): Change[] {
+export function setTrait(
+	trait: TraitLocation,
+	nodes: BuildNode | TreeNodeSequence<BuildNode>,
+): Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
-	return [Change.detach(traitContents), Change.build(nodes, id), Change.insert(id, traitContents.start)];
+	return [
+		Change.detach(traitContents),
+		Change.build(nodes, id),
+		Change.insert(id, traitContents.start),
+	];
 }
 
 /**
@@ -329,7 +382,7 @@ export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequen
  */
 export function setTraitInternal(
 	trait: TraitLocationInternal,
-	nodes: TreeNodeSequence<BuildNodeInternal>
+	nodes: TreeNodeSequence<BuildNodeInternal>,
 ): ChangeInternal[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRangeInternal.all(trait);
@@ -347,7 +400,7 @@ export function setTraitInternal(
  */
 export function validateStablePlace(
 	view: TreeView,
-	place: StablePlaceInternal
+	place: StablePlaceInternal,
 ):
 	| {
 			result: PlaceValidationResult.Valid;
@@ -407,18 +460,21 @@ export function validateStablePlace(
  * @alpha
  */
 export enum PlaceValidationResult {
-	Valid = 'Valid',
-	Malformed = 'Malformed',
-	SiblingIsRootOrDetached = 'SiblingIsRootOrDetached',
-	MissingSibling = 'MissingSibling',
-	MissingParent = 'MissingParent',
+	Valid = "Valid",
+	Malformed = "Malformed",
+	SiblingIsRootOrDetached = "SiblingIsRootOrDetached",
+	MissingSibling = "MissingSibling",
+	MissingParent = "MissingParent",
 }
 
 /**
  * The result of validating a bad place.
  * @alpha
  */
-export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
+export type BadPlaceValidationResult = Exclude<
+	PlaceValidationResult,
+	PlaceValidationResult.Valid
+>;
 
 /**
  * Check the validity of the given `StableRange`
@@ -427,9 +483,13 @@ export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValid
  */
 export function validateStableRange(
 	view: TreeView,
-	range: StableRangeInternal
+	range: StableRangeInternal,
 ):
-	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal }
+	| {
+			result: RangeValidationResultKind.Valid;
+			start: StablePlaceInternal;
+			end: StablePlaceInternal;
+	  }
 	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
@@ -441,17 +501,29 @@ export function validateStableRange(
 	const validatedStart = validateStablePlace(view, start);
 	if (validatedStart.result !== PlaceValidationResult.Valid) {
 		return {
-			result: { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: validatedStart.result },
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: start,
+				placeFailure: validatedStart.result,
+			},
 		};
 	}
 
 	const validatedEnd = validateStablePlace(view, end);
 	if (validatedEnd.result !== PlaceValidationResult.Valid) {
-		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
+		return {
+			result: {
+				kind: RangeValidationResultKind.BadPlace,
+				place: end,
+				placeFailure: validatedEnd.result,
+			},
+		};
 	}
 
-	const startTraitLocation = validatedStart.referenceTrait ?? view.getTraitLocation(validatedStart.referenceSibling);
-	const endTraitLocation = validatedEnd.referenceTrait ?? view.getTraitLocation(validatedEnd.referenceSibling);
+	const startTraitLocation =
+		validatedStart.referenceTrait ?? view.getTraitLocation(validatedStart.referenceSibling);
+	const endTraitLocation =
+		validatedEnd.referenceTrait ?? view.getTraitLocation(validatedEnd.referenceSibling);
 	if (!compareTraits(startTraitLocation, endTraitLocation)) {
 		return { result: RangeValidationResultKind.PlacesInDifferentTraits };
 	}
@@ -475,10 +547,10 @@ export function validateStableRange(
  * @alpha
  */
 export enum RangeValidationResultKind {
-	Valid = 'Valid',
-	BadPlace = 'BadPlace',
-	PlacesInDifferentTraits = 'PlacesInDifferentTraits',
-	Inverted = 'Inverted',
+	Valid = "Valid",
+	BadPlace = "BadPlace",
+	PlacesInDifferentTraits = "PlacesInDifferentTraits",
+	Inverted = "Inverted",
 }
 
 /**
@@ -499,7 +571,10 @@ export type RangeValidationResult =
  * The result of validating a bad range.
  * @alpha
  */
-export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
+export type BadRangeValidationResult = Exclude<
+	RangeValidationResult,
+	RangeValidationResultKind.Valid
+>;
 
 /**
  * Check if two TraitLocations are equal.
@@ -520,7 +595,7 @@ function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boolean {
 export function insertIntoTrait(
 	view: TransactionView,
 	nodesToInsert: readonly NodeId[],
-	placeToInsert: StablePlace
+	placeToInsert: StablePlace,
 ): TransactionView {
 	return view.attachRange(nodesToInsert, placeFromStablePlace(view, placeToInsert));
 }
@@ -531,7 +606,7 @@ export function insertIntoTrait(
  */
 export function detachRange(
 	view: TransactionView,
-	rangeToDetach: StableRange
+	rangeToDetach: StableRange,
 ): { view: TransactionView; detached: readonly NodeId[] } {
 	return view.detachRange(rangeFromStableRange(view, rangeToDetach));
 }
@@ -541,8 +616,8 @@ export function detachRange(
  */
 export function deepCloneStablePlace(place: StablePlace): StablePlace {
 	const clone: StablePlace = { side: place.side };
-	copyPropertyIfDefined(place, clone, 'referenceSibling');
-	copyPropertyIfDefined(place, clone, 'referenceTrait');
+	copyPropertyIfDefined(place, clone, "referenceSibling");
+	copyPropertyIfDefined(place, clone, "referenceTrait");
 	return clone;
 }
 
@@ -556,12 +631,12 @@ export function deepCloneStableRange(range: StableRange): StableRange {
 /** Convert a node used in a Build change into its internal representation */
 export function internalizeBuildNode(
 	nodeData: BuildTreeNode,
-	nodeIdContext: NodeIdContext
-): Omit<TreeNode<BuildNodeInternal, NodeId>, 'traits'> {
+	nodeIdContext: NodeIdContext,
+): Omit<TreeNode<BuildNodeInternal, NodeId>, "traits"> {
 	const output = {
 		definition: nodeData.definition as Definition,
 		identifier: nodeData.identifier ?? nodeIdContext.generateNodeId(),
 	};
-	copyPropertyIfDefined(nodeData, output, 'payload');
+	copyPropertyIfDefined(nodeData, output, "payload");
 	return output;
 }

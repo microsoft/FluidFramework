@@ -170,7 +170,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			negResult = undefined;
 			negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
 		} catch (reason) {}
-		assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
+		assert(
+			negResult === undefined,
+			"Should not have attempted to summarize while summarizing",
+		);
 
 		submitResult = await result.summarySubmitted;
 		assert(submitResult.success, "Result should be complete on success");
@@ -280,7 +283,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		const channelsTree = summary.tree[channelsTreeName];
-		assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
+		assert(
+			channelsTree?.type === SummaryType.Tree,
+			"Expected .channels tree in summary root.",
+		);
 
 		const defaultDataStoreNode = channelsTree.tree[defaultDataStore._context.id];
 		assert(
@@ -361,8 +367,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		// In summarizer, load the data store should fail.
 		await assert.rejects(
 			async () => {
-				const runtime = (createSummarizerResult.summarizer as any)
-					.runtime as ContainerRuntime;
+				const runtime = (createSummarizerResult.summarizer as any).runtime as ContainerRuntime;
 				const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 				await dsEntryPoint?.get();
 			},
@@ -711,9 +716,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-					containerRuntime.storage,
-				);
+				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 				const response = await uploadSummaryUploaderFunc(summary, context);
 				// Close summarizer so that it does not submit SummaryOp
 				summarizer2.close();

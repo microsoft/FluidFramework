@@ -49,7 +49,10 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -59,7 +62,10 @@ import {
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
+import {
+	IIntervalCollection,
+	SequenceIntervalCollectionValueType,
+} from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
@@ -145,7 +151,9 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	/**
 	 * Removes a `LocalReferencePosition` from this SharedString.
 	 */
-	removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+	removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined;
 
 	/**
 	 * Returns the length of the current sequence for the client
@@ -369,11 +377,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						lastAnnotate.pos2 += r.segment.cachedLength;
 					} else {
 						ops.push(
-							createAnnotateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-								props,
-							),
+							createAnnotateRangeOp(r.position, r.position + r.segment.cachedLength, props),
 						);
 					}
 					break;
@@ -386,15 +390,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x3ff /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createRemoveRangeOp(r.position, r.position + r.segment.cachedLength),
-						);
+						ops.push(createRemoveRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -403,18 +402,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(
-							lastRem.pos2 !== undefined,
-							0x874 /* pos2 should not be undefined here */,
-						);
+						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(
-							createObliterateRangeOp(
-								r.position,
-								r.position + r.segment.cachedLength,
-							),
-						);
+						ops.push(createObliterateRangeOp(r.position, r.position + r.segment.cachedLength));
 					}
 					break;
 				}
@@ -483,7 +474,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								new LoggingError(reentrancyErrorMessage),
 							);
 						}
-				  });
+					});
 
 		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(

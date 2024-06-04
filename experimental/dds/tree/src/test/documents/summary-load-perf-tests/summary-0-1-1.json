@@ -77,10 +77,7 @@
 										]
 									],
 									14,
-									[
-										[39, 33833],
-										[5, 28183]
-									],
+									[[39, 33833], [5, 28183]],
 									27,
 									[[19, 34828, [28, [[18, 34827, [28, [[25, 34826]]]]]]], [13, 34829], [18]],
 									3,
@@ -177,11 +174,7 @@
 																		28,
 																		[
 																			[19, 29210],
-																			[
-																				5,
-																				32315,
-																				[37, [[36, 32314, [22, [[11, 32313]]]]]]
-																			]
+																			[5, 32315, [37, [[36, 32314, [22, [[11, 32313]]]]]]]
 																		],
 																		2,
 																		[[25, 29211]]
@@ -203,21 +196,9 @@
 																	[
 																		20,
 																		[
-																			[
-																				26,
-																				32268,
-																				[21, [[19, 32266]], 27, [[26]]]
-																			],
-																			[
-																				1,
-																				32271,
-																				[22, [[36, 32270, [10, [[6, 32269]]]]]]
-																			],
-																			[
-																				24,
-																				32274,
-																				[22, [[11, 32273, [22, [[5, 32272]]]]]]
-																			]
+																			[26, 32268, [21, [[19, 32266]], 27, [[26]]]],
+																			[1, 32271, [22, [[36, 32270, [10, [[6, 32269]]]]]]],
+																			[24, 32274, [22, [[11, 32273, [22, [[5, 32272]]]]]]]
 																		],
 																		40,
 																		[[9, 27146, [21, [[30, 27690]]]]]
@@ -238,16 +219,7 @@
 																[
 																	13,
 																	27159,
-																	[
-																		10,
-																		[
-																			[
-																				1,
-																				27158,
-																				[14, [[36, 31243]], 3, [[39, 31757]]]
-																			]
-																		]
-																	]
+																	[10, [[1, 27158, [14, [[36, 31243]], 3, [[39, 31757]]]]]]
 																]
 															]
 														]
@@ -310,15 +282,7 @@
 																			[
 																				15,
 																				27162,
-																				[
-																					35,
-																					[
-																						[30, 32275],
-																						[12, 27161]
-																					],
-																					10,
-																					[[5, 27160]]
-																				]
+																				[35, [[30, 32275], [12, 27161]], 10, [[5, 27160]]]
 																			],
 																			[11, 27163]
 																		]
@@ -405,13 +369,7 @@
 										[
 											5,
 											14917,
-											[
-												31,
-												[
-													[6, 29711, [16, [[17, 29710, [38, [[6, 29709]]]]]]],
-													[15, 29712]
-												]
-											]
+											[31, [[6, 29711, [16, [[17, 29710, [38, [[6, 29709]]]]]]], [15, 29712]]]
 										]
 									]
 								]
@@ -440,28 +398,7 @@
 									21,
 									[[30, 9785]],
 									14,
-									[
-										[
-											23,
-											29202,
-											[
-												8,
-												[
-													[
-														9,
-														29201,
-														[
-															31,
-															[
-																[6, 27673],
-																[26, 29200]
-															]
-														]
-													]
-												]
-											]
-										]
-									]
+									[[23, 29202, [8, [[9, 29201, [31, [[6, 27673], [26, 29200]]]]]]]]
 								]
 							]
 						]
@@ -507,17 +444,7 @@
 														[
 															16,
 															[
-																[
-																	12,
-																	29205,
-																	[
-																		21,
-																		[
-																			[23, 27157],
-																			[19, 29204]
-																		]
-																	]
-																],
+																[12, 29205, [21, [[23, 27157], [19, 29204]]]],
 																[5, 34326],
 																[5, 34329, [3, [[12, 34328, [16, [[11, 34327]]]]]]],
 																[9, 33826],
@@ -613,7 +540,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 0 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -639,7 +569,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 0 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -647,12 +580,19 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[6, 15, [3, [[7, 14, [8, [[9, 13]]]]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[6, 15, [3, [[7, 14, [8, [[9, 13]]]]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3", "parent": 11 }
+									"referenceTrait": {
+										"label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3",
+										"parent": 11
+									}
 								},
 								"type": 0
 							}
@@ -673,7 +613,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 0 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -696,7 +639,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "5c471825-84d5-5e0f-8995-c8b7c705b049", "parent": 11 }
+									"referenceTrait": {
+										"label": "5c471825-84d5-5e0f-8995-c8b7c705b049",
+										"parent": 11
+									}
 								},
 								"type": 0
 							}
@@ -717,7 +663,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 0 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -755,7 +704,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740", "parent": 18 }
+									"referenceTrait": {
+										"label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740",
+										"parent": 18
+									}
 								},
 								"type": 0
 							}
@@ -776,7 +728,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090", "parent": 0 }
+									"referenceTrait": {
+										"label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -814,7 +769,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f8f2e4b0-d11e-5599-9ac2-328c280e997d", "parent": 24 }
+									"referenceTrait": {
+										"label": "f8f2e4b0-d11e-5599-9ac2-328c280e997d",
+										"parent": 24
+									}
 								},
 								"type": 0
 							}
@@ -835,7 +793,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b", "parent": 12 }
+									"referenceTrait": {
+										"label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b",
+										"parent": 12
+									}
 								},
 								"type": 0
 							}
@@ -855,7 +816,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740", "parent": 12 }
+									"referenceTrait": {
+										"label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740",
+										"parent": 12
+									}
 								},
 								"type": 0
 							}
@@ -876,7 +840,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740", "parent": 533 }
+									"referenceTrait": {
+										"label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740",
+										"parent": 533
+									}
 								},
 								"type": 0
 							}
@@ -943,7 +910,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[15, 551, [37, [[6, 549]], 29, [[23]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[15, 551, [37, [[6, 549]], 29, [[23]]]]],
+								"type": 5
+							},
 							{ "source": 1, "destination": { "side": 1, "referenceSibling": 524 }, "type": 0 }
 						]
 					},
@@ -962,7 +933,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3", "parent": 543 }
+									"referenceTrait": {
+										"label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3",
+										"parent": 543
+									}
 								},
 								"type": 0
 							}
@@ -984,7 +958,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "e80c15b8-059b-56a5-9a3f-5638e1a56316", "parent": 554 }
+									"referenceTrait": {
+										"label": "e80c15b8-059b-56a5-9a3f-5638e1a56316",
+										"parent": 554
+									}
 								},
 								"type": 0
 							}
@@ -997,7 +974,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f774becb-124d-57e0-8cf2-823e5b34ad68", "parent": 16 }
+									"referenceTrait": {
+										"label": "f774becb-124d-57e0-8cf2-823e5b34ad68",
+										"parent": 16
+									}
 								},
 								"type": 0
 							}
@@ -1016,12 +996,19 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[12, 44, [37, [[25, 43, [38, [[19, 42]]]]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[12, 44, [37, [[25, 43, [38, [[19, 42]]]]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 24 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 24
+									}
 								},
 								"type": 0
 							}
@@ -1031,18 +1018,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[9, 1034],
-									[23, 1035],
-									[11, 1038, [21, [[24, 1036]], 37, [[5]]]]
-								],
+								"source": [[9, 1034], [23, 1035], [11, 1038, [21, [[24, 1036]], 37, [[5]]]]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "511d0edf-f95a-58a8-89a7-aeff9bfd1bbd", "parent": 556 }
+									"referenceTrait": {
+										"label": "511d0edf-f95a-58a8-89a7-aeff9bfd1bbd",
+										"parent": 556
+									}
 								},
 								"type": 0
 							}
@@ -1050,12 +1036,19 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[12, 47, [3, [[9, 46, [35, [[1, 45]]]]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[12, 47, [3, [[9, 46, [35, [[1, 45]]]]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "8c0ed880-10c6-55c0-8405-98d844c14f7d", "parent": 11 }
+									"referenceTrait": {
+										"label": "8c0ed880-10c6-55c0-8405-98d844c14f7d",
+										"parent": 11
+									}
 								},
 								"type": 0
 							}
@@ -1105,7 +1098,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 1038 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 1038 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -1115,7 +1112,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "9fb233f7-1df3-5149-b525-45294bbd2910", "parent": 550 }
+									"referenceTrait": {
+										"label": "9fb233f7-1df3-5149-b525-45294bbd2910",
+										"parent": 550
+									}
 								},
 								"type": 0
 							}
@@ -1135,7 +1135,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3", "parent": 543 }
+									"referenceTrait": {
+										"label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3",
+										"parent": 543
+									}
 								},
 								"type": 0
 							}
@@ -1143,12 +1146,19 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[9, 1041, [22, [[25, 1040]], 2, [[19, 1039]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[9, 1041, [22, [[25, 1040]], 2, [[19, 1039]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f774becb-124d-57e0-8cf2-823e5b34ad68", "parent": 15 }
+									"referenceTrait": {
+										"label": "f774becb-124d-57e0-8cf2-823e5b34ad68",
+										"parent": 15
+									}
 								},
 								"type": 0
 							}
@@ -1169,7 +1179,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "59da732c-99b8-5ec2-a079-61c6e5c7e12c", "parent": 45 }
+									"referenceTrait": {
+										"label": "59da732c-99b8-5ec2-a079-61c6e5c7e12c",
+										"parent": 45
+									}
 								},
 								"type": 0
 							}
@@ -1208,7 +1221,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "f774becb-124d-57e0-8cf2-823e5b34ad68", "parent": 551 }
+									"referenceTrait": {
+										"label": "f774becb-124d-57e0-8cf2-823e5b34ad68",
+										"parent": 551
+									}
 								},
 								"type": 0
 							}
@@ -1243,7 +1259,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "8c0ed880-10c6-55c0-8405-98d844c14f7d", "parent": 0 }
+									"referenceTrait": {
+										"label": "8c0ed880-10c6-55c0-8405-98d844c14f7d",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -1287,7 +1306,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52", "parent": 552 }
+									"referenceTrait": {
+										"label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52",
+										"parent": 552
+									}
 								},
 								"type": 0
 							}
@@ -1304,17 +1326,18 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1036 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1036 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[12, 1063, [28, [[4, 1062, [20, [[23, 1061]]]]]]],
-									[6, 1064]
-								],
+								"source": [[12, 1063, [28, [[4, 1062, [20, [[23, 1061]]]]]]], [6, 1064]],
 								"type": 5
 							},
 							{
@@ -1337,7 +1360,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740", "parent": 18 }
+									"referenceTrait": {
+										"label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740",
+										"parent": 18
+									}
 								},
 								"type": 0
 							}
@@ -1347,18 +1373,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[36, 1546],
-									[36, 1547],
-									[39, 1548]
-								],
+								"source": [[36, 1546], [36, 1547], [39, 1548]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b", "parent": 33 }
+									"referenceTrait": {
+										"label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b",
+										"parent": 33
+									}
 								},
 								"type": 0
 							}
@@ -1369,18 +1394,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[6, 2058],
-									[36, 2059],
-									[12, 2062, [21, [[39, 2061]]]]
-								],
+								"source": [[6, 2058], [36, 2059], [12, 2062, [21, [[39, 2061]]]]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "f774becb-124d-57e0-8cf2-823e5b34ad68", "parent": 554 }
+									"referenceTrait": {
+										"label": "f774becb-124d-57e0-8cf2-823e5b34ad68",
+										"parent": 554
+									}
 								},
 								"type": 0
 							}
@@ -1423,7 +1447,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "e80c15b8-059b-56a5-9a3f-5638e1a56316", "parent": 557 }
+									"referenceTrait": {
+										"label": "e80c15b8-059b-56a5-9a3f-5638e1a56316",
+										"parent": 557
+									}
 								},
 								"type": 0
 							}
@@ -1456,17 +1483,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[30, 1557, [20, [[12, 1556, [29, [[19, 1555]]]]]]],
-									[5, 1558]
-								],
+								"source": [[30, 1557, [20, [[12, 1556, [29, [[19, 1555]]]]]]], [5, 1558]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740", "parent": 18 }
+									"referenceTrait": {
+										"label": "2b9af9a5-0e6b-50f9-960a-42bfc6838740",
+										"parent": 18
+									}
 								},
 								"type": 0
 							}
@@ -1526,7 +1553,11 @@
 								"source": [[5, 1567, [31, [[17, 1566, [32, [[11, 1565]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1056 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1056 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -1555,7 +1586,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3", "parent": 543 }
+									"referenceTrait": {
+										"label": "2d33035c-45d4-5179-83e6-8b0cb3d83ad3",
+										"parent": 543
+									}
 								},
 								"type": 0
 							}
@@ -1573,7 +1607,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b", "parent": 544 }
+									"referenceTrait": {
+										"label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b",
+										"parent": 544
+									}
 								},
 								"type": 0
 							}
@@ -1617,7 +1654,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "d422fd0f-2604-5fed-beb5-e43b1ceaaa4b", "parent": 42 }
+									"referenceTrait": {
+										"label": "d422fd0f-2604-5fed-beb5-e43b1ceaaa4b",
+										"parent": 42
+									}
 								},
 								"type": 0
 							}
@@ -1678,17 +1718,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[17, 1584],
-									[15, 1587, [33, [[19, 1586, [32, [[13, 1585]]]]]]]
-								],
+								"source": [[17, 1584], [15, 1587, [33, [[19, 1586, [32, [[13, 1585]]]]]]]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 544 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 544
+									}
 								},
 								"type": 0
 							}
@@ -1807,7 +1847,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "9328e266-edfc-57b4-99b3-56b9343145ad", "parent": 30 }
+									"referenceTrait": {
+										"label": "9328e266-edfc-57b4-99b3-56b9343145ad",
+										"parent": 30
+									}
 								},
 								"type": 0
 							}
@@ -1815,7 +1858,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[13, 1604, [28, [[19, 1602]], 33, [[24]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[13, 1604, [28, [[19, 1602]], 33, [[24]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -1863,17 +1910,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[13, 1607, [33, [[9, 1606, [21, [[26, 1605]]]]]]],
-									[13, 1608]
-								],
+								"source": [[13, 1607, [33, [[9, 1606, [21, [[26, 1605]]]]]]], [13, 1608]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "d422fd0f-2604-5fed-beb5-e43b1ceaaa4b", "parent": 42 }
+									"referenceTrait": {
+										"label": "d422fd0f-2604-5fed-beb5-e43b1ceaaa4b",
+										"parent": 42
+									}
 								},
 								"type": 0
 							}
@@ -1935,7 +1982,11 @@
 					{
 						"changes": [
 							{ "destination": 1, "source": [[25, 1616]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1572 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1572 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -1949,13 +2000,21 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1560 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1560 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{ "destination": 1, "source": [[7, 3087]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1550 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1550 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2011,7 +2070,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 1553 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 1553 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2057,8 +2120,16 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[5, 3603, [14, [[9, 3602]], 33, [[18, 3601]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 3087 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[5, 3603, [14, [[9, 3602]], 33, [[18, 3601]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 3087 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2156,7 +2227,11 @@
 								"source": [[26, 4620, [37, [[13, 4619]], 27, [[12, 4618]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 3086 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 3086 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 1598, "type": 3 }] },
@@ -2176,7 +2251,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 1036 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 1036 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2223,10 +2302,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[11, 4627],
-									[24, 4630, [28, [[18, 4628]], 22, [[5]]]]
-								],
+								"source": [[11, 4627], [24, 4630, [28, [[18, 4628]], 22, [[5]]]]],
 								"type": 5
 							},
 							{ "source": 1, "destination": { "side": 0, "referenceSibling": 13 }, "type": 0 }
@@ -2276,7 +2352,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f23a1761-2709-5768-8536-c91afda752f2", "parent": 13 }
+									"referenceTrait": {
+										"label": "f23a1761-2709-5768-8536-c91afda752f2",
+										"parent": 13
+									}
 								},
 								"type": 0
 							}
@@ -2339,7 +2418,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1591 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1591 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2417,7 +2500,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52", "parent": 559 }
+									"referenceTrait": {
+										"label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52",
+										"parent": 559
+									}
 								},
 								"type": 0
 							}
@@ -2520,7 +2606,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52", "parent": 552 }
+									"referenceTrait": {
+										"label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52",
+										"parent": 552
+									}
 								},
 								"type": 0
 							}
@@ -2530,13 +2619,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[24, 5159],
-									[13, 5160]
-								],
+								"source": [[24, 5159], [13, 5160]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 4109 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 4109 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2619,7 +2709,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 1549 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 1549 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2687,7 +2781,11 @@
 								"source": [[19, 5185, [3, [[7, 5184, [20, [[36, 5183]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 4627 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 4627 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2707,7 +2805,11 @@
 					{
 						"changes": [
 							{ "destination": 1, "source": [[11, 5191]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 2058 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 2058 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 4115, "type": 3 }] },
@@ -2741,7 +2843,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "6ce0dce0-6747-5bfe-9a57-91c416313023", "parent": 545 }
+									"referenceTrait": {
+										"label": "6ce0dce0-6747-5bfe-9a57-91c416313023",
+										"parent": 545
+									}
 								},
 								"type": 0
 							}
@@ -2768,7 +2873,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 4107 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 4107 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -2839,10 +2948,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[18, 5213],
-									[30, 5216, [21, [[36, 5215]], 2, [[17, 5214]]]]
-								],
+								"source": [[18, 5213], [30, 5216, [21, [[36, 5215]], 2, [[17, 5214]]]]],
 								"type": 5
 							},
 							{
@@ -2860,7 +2966,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[6, 5219, [16, [[19, 5217]], 34, [[26]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[6, 5219, [16, [[19, 5217]], 34, [[26]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -2878,11 +2988,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[15, 6154],
-									[9, 6155],
-									[7, 6156]
-								],
+								"source": [[15, 6154], [9, 6155], [7, 6156]],
 								"type": 5
 							},
 							{
@@ -2966,7 +3072,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "9fb233f7-1df3-5149-b525-45294bbd2910", "parent": 543 }
+									"referenceTrait": {
+										"label": "9fb233f7-1df3-5149-b525-45294bbd2910",
+										"parent": 543
+									}
 								},
 								"type": 0
 							}
@@ -2976,17 +3085,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[24, 6677, [35, [[4, 6675]], 2, [[18]]]],
-									[26, 6678]
-								],
+								"source": [[24, 6677, [35, [[4, 6675]], 2, [[18]]]], [26, 6678]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "f774becb-124d-57e0-8cf2-823e5b34ad68", "parent": 546 }
+									"referenceTrait": {
+										"label": "f774becb-124d-57e0-8cf2-823e5b34ad68",
+										"parent": 546
+									}
 								},
 								"type": 0
 							}
@@ -3006,7 +3115,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "23ade7fd-eab6-5fa3-baa8-b1bef4386879", "parent": 33 }
+									"referenceTrait": {
+										"label": "23ade7fd-eab6-5fa3-baa8-b1bef4386879",
+										"parent": 33
+									}
 								},
 								"type": 0
 							}
@@ -3076,7 +3188,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "9328e266-edfc-57b4-99b3-56b9343145ad", "parent": 544 }
+									"referenceTrait": {
+										"label": "9328e266-edfc-57b4-99b3-56b9343145ad",
+										"parent": 544
+									}
 								},
 								"type": 0
 							}
@@ -3093,24 +3208,28 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 1584 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 1584 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[39, 6686, [10, [[15, 6685]], 29, [[26, 6684]]]],
-									[1, 6687]
-								],
+								"source": [[39, 6686, [10, [[15, 6685]], 29, [[26, 6684]]]], [1, 6687]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090", "parent": 22 }
+									"referenceTrait": {
+										"label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090",
+										"parent": 22
+									}
 								},
 								"type": 0
 							}
@@ -3127,7 +3246,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "e80c15b8-059b-56a5-9a3f-5638e1a56316", "parent": 543 }
+									"referenceTrait": {
+										"label": "e80c15b8-059b-56a5-9a3f-5638e1a56316",
+										"parent": 543
+									}
 								},
 								"type": 0
 							}
@@ -3149,18 +3271,18 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 6668 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 6668 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[7, 6691],
-									[7, 6692],
-									[11, 6695, [10, [[12, 6693]], 14, [[5]]]]
-								],
+								"source": [[7, 6691], [7, 6692], [11, 6695, [10, [[12, 6693]], 14, [[5]]]]],
 								"type": 5
 							},
 							{
@@ -3201,10 +3323,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[7, 7690],
-									[9, 7693, [16, [[19, 7692, [35, [[18, 7691]]]]]]]
-								],
+								"source": [[7, 7690], [9, 7693, [16, [[19, 7692, [35, [[18, 7691]]]]]]]],
 								"type": 5
 							},
 							{
@@ -3264,7 +3383,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 6692 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 6692 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -3504,7 +3627,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 1573 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 1573 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -3548,7 +3675,10 @@
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090", "parent": 0 }
+									"referenceTrait": {
+										"label": "2545d0cf-3bf3-5fe9-984d-e9dda629a090",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -3576,7 +3706,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 6687 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 6687 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -3594,7 +3728,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "86d03f40-5e9d-5aab-ba81-814631652b24", "parent": 22 }
+									"referenceTrait": {
+										"label": "86d03f40-5e9d-5aab-ba81-814631652b24",
+										"parent": 22
+									}
 								},
 								"type": 0
 							}
@@ -3665,7 +3802,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[12, 8717, [20, [[9, 8716]], 40, [[4, 8715]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[12, 8717, [20, [[9, 8716]], 40, [[4, 8715]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -3682,21 +3823,30 @@
 					{ "changes": [{ "nodeToModify": 8206, "type": 3 }] },
 					{
 						"changes": [
-							{ "destination": 1, "source": [[6, 8720, [38, [[11, 8718]], 37, [[12]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8208 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[6, 8720, [38, [[11, 8718]], 37, [[12]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8208 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[12, 8723, [16, [[26, 8721]], 3, [[6]]]],
-									[11, 8724]
-								],
+								"source": [[12, 8723, [16, [[26, 8721]], 3, [[6]]]], [11, 8724]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8205 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8205 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 8721, "type": 3 }] },
@@ -3751,7 +3901,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8202 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8202 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -3839,18 +3993,30 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8727 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8727 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{ "destination": 1, "source": [[19, 8746]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8745 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8745 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[24, 8749, [37, [[1, 8748]], 31, [[6, 8747]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[24, 8749, [37, [[1, 8748]], 31, [[6, 8747]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -3885,13 +4051,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[13, 8750],
-									[19, 8753, [21, [[4, 8751]], 8, [[17]]]]
-								],
+								"source": [[13, 8750], [19, 8753, [21, [[4, 8751]], 8, [[17]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8736 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8736 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4019,7 +4186,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8733 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8733 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4149,10 +4320,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[17, 9247, [38, [[9, 9245]], 14, [[25]]]],
-									[36, 9248]
-								],
+								"source": [[17, 9247, [38, [[9, 9245]], 14, [[25]]]], [36, 9248]],
 								"type": 5
 							},
 							{
@@ -4281,31 +4449,32 @@
 								"source": [[7, 9740, [10, [[17, 9739, [37, [[11, 9738]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8733 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8733 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[5, 9256],
-									[13, 9259, [8, [[19, 9258]], 33, [[6, 9257]]]]
-								],
+								"source": [[5, 9256], [13, 9259, [8, [[19, 9258]], 33, [[6, 9257]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8735 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8735 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[15, 9741],
-									[26, 9742],
-									[12, 9743]
-								],
+								"source": [[15, 9741], [26, 9742], [12, 9743]],
 								"type": 5
 							},
 							{
@@ -4404,7 +4573,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[18, 9755, [10, [[19, 9753]], 37, [[23]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[18, 9755, [10, [[19, 9753]], 37, [[23]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -4520,18 +4693,18 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8752 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8752 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[25, 9766],
-									[36, 9767],
-									[24, 9770, [33, [[25, 9768]], 2, [[9]]]]
-								],
+								"source": [[25, 9766], [36, 9767], [24, 9770, [33, [[25, 9768]], 2, [[9]]]]],
 								"type": 5
 							},
 							{
@@ -4591,17 +4764,17 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[5, 9267],
-									[17, 9268]
-								],
+								"source": [[5, 9267], [17, 9268]],
 								"type": 5
 							},
 							{
 								"source": 1,
 								"destination": {
 									"side": 0,
-									"referenceTrait": { "label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b", "parent": 0 }
+									"referenceTrait": {
+										"label": "bd561f8a-32a8-5adb-8b0f-cf82a82e0b1b",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -4619,7 +4792,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8202 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8202 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4715,7 +4892,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9267 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9267 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4746,7 +4927,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9256 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9256 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4850,7 +5035,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9738 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9738 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 9776, "type": 3 }] },
@@ -4858,10 +5047,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[13, 10279],
-									[24, 10280]
-								],
+								"source": [[13, 10279], [24, 10280]],
 								"type": 5
 							},
 							{
@@ -4933,7 +5119,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8202 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8202 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -4959,7 +5149,11 @@
 								"source": [[26, 10284, [37, [[19, 10283, [10, [[18, 10282]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 10269 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 10269 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5061,7 +5255,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9756 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9756 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5156,7 +5354,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 10288 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 10288 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5185,7 +5387,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[15, 10780, [20, [[26, 10778]], 32, [[6]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[15, 10780, [20, [[26, 10778]], 32, [[6]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -5230,7 +5436,11 @@
 								"source": [[7, 10783, [34, [[9, 10782]], 3, [[26, 10781]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9260 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9260 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5275,7 +5485,11 @@
 								"source": [[11, 10795, [22, [[36, 10794]], 27, [[18, 10793]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 10770 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 10770 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5293,10 +5507,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[9, 10796],
-									[30, 10799, [14, [[39, 10798]], 31, [[25, 10797]]]]
-								],
+								"source": [[9, 10796], [30, 10799, [14, [[39, 10798]], 31, [[25, 10797]]]]],
 								"type": 5
 							},
 							{
@@ -5323,7 +5534,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8730 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8730 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5359,13 +5574,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[36, 11276, [21, [[5, 11275]], 8, [[19, 11274]]]],
-									[24, 11277]
-								],
+								"source": [[36, 11276, [21, [[5, 11275]], 8, [[19, 11274]]]], [24, 11277]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 10279 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 10279 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5493,7 +5709,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 10251 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 10251 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5524,7 +5744,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 10251 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 10251 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 9761, "type": 3 }] },
@@ -5753,10 +5977,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[9, 12831],
-									[9, 12834, [28, [[9, 12832]], 20, [[6]]]]
-								],
+								"source": [[9, 12831], [9, 12834, [28, [[9, 12832]], 20, [[6]]]]],
 								"type": 5
 							},
 							{
@@ -5812,10 +6033,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[6, 13322],
-									[26, 13325, [38, [[19, 13323]], 31, [[11]]]]
-								],
+								"source": [[6, 13322], [26, 13325, [38, [[19, 13323]], 31, [[11]]]]],
 								"type": 5
 							},
 							{
@@ -5841,7 +6059,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9757 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9757 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5854,7 +6076,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 12843 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 12843 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5868,7 +6094,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12840 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12840 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5899,7 +6129,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9762 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9762 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 10311, "type": 3 }] },
@@ -5965,7 +6199,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 10309 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 10309 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -5995,10 +6233,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[6, 12852, [3, [[36, 12851, [28, [[13, 12850]]]]]]],
-									[17, 12853]
-								],
+								"source": [[6, 12852, [3, [[36, 12851, [28, [[13, 12850]]]]]]], [17, 12853]],
 								"type": 5
 							},
 							{
@@ -6038,13 +6273,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[24, 13345],
-									[7, 13346]
-								],
+								"source": [[24, 13345], [7, 13346]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12819 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12819 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6058,7 +6294,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 10295 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 10295 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 9757, "type": 3 }] },
@@ -6260,10 +6500,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[12, 13365],
-									[25, 13368, [29, [[13, 13367, [31, [[6, 13366]]]]]]]
-								],
+								"source": [[12, 13365], [25, 13368, [29, [[13, 13367, [31, [[6, 13366]]]]]]]],
 								"type": 5
 							},
 							{
@@ -6323,7 +6560,11 @@
 					{
 						"changes": [
 							{ "destination": 1, "source": [[11, 13376]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12861 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12861 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 12813, "type": 3 }] },
@@ -6331,10 +6572,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[9, 13377],
-									[12, 13380, [8, [[15, 13378]], 31, [[5]]]]
-								],
+								"source": [[9, 13377], [12, 13380, [8, [[15, 13378]], 31, [[5]]]]],
 								"type": 5
 							},
 							{
@@ -6357,7 +6595,11 @@
 								"source": [[36, 13383, [31, [[13, 13382, [16, [[30, 13381]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13376 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13376 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6367,20 +6609,25 @@
 								"source": [[36, 13386, [21, [[13, 13385, [21, [[17, 13384]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13355 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13355 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[19, 13389, [27, [[36, 13388, [31, [[1, 13387]]]]]]],
-									[1, 13390]
-								],
+								"source": [[19, 13389, [27, [[36, 13388, [31, [[1, 13387]]]]]]], [1, 13390]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12815 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12815 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6401,7 +6648,11 @@
 								"source": [[30, 13393, [22, [[39, 13392]], 16, [[11, 13391]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 13385 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 13385 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6459,7 +6710,11 @@
 								"source": [[39, 13408, [14, [[1, 13407]], 34, [[30, 13406]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13352 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13352 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6559,13 +6814,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[25, 13835],
-									[23, 13838, [8, [[23, 13836]], 3, [[1]]]]
-								],
+								"source": [[25, 13835], [23, 13838, [8, [[23, 13836]], 3, [[1]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9265 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9265 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6664,10 +6920,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[23, 13423],
-									[15, 13424]
-								],
+								"source": [[23, 13423], [15, 13424]],
 								"type": 5
 							},
 							{
@@ -6722,13 +6975,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[15, 13851],
-									[7, 13854, [10, [[1, 13853]], 33, [[23, 13852]]]]
-								],
+								"source": [[15, 13851], [7, 13854, [10, [[1, 13853]], 33, [[23, 13852]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13332 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13332 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 13367, "type": 3 }] },
@@ -6780,10 +7034,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[4, 13431],
-									[6, 13434, [28, [[9, 13433, [10, [[24, 13432]]]]]]]
-								],
+								"source": [[4, 13431], [6, 13434, [28, [[9, 13433, [10, [[24, 13432]]]]]]]],
 								"type": 5
 							},
 							{
@@ -6830,17 +7081,18 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 13374 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 13374 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[15, 13437, [28, [[18, 13436]], 3, [[6, 13435]]]],
-									[25, 13438]
-								],
+								"source": [[15, 13437, [28, [[18, 13436]], 3, [[6, 13435]]]], [25, 13438]],
 								"type": 5
 							},
 							{
@@ -6881,8 +7133,16 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[12, 14358, [33, [[7, 14356]], 40, [[7]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12833 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[12, 14358, [33, [[7, 14356]], 40, [[7]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12833 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6896,7 +7156,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13430 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13430 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -6989,7 +7253,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 11791 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 11791 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7026,7 +7294,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 14350 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 14350 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7173,7 +7445,11 @@
 								"source": [[26, 14864, [35, [[25, 14863, [16, [[6, 14862]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 13436 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 13436 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7198,17 +7474,18 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13369 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13369 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[18, 15370],
-									[7, 15371]
-								],
+								"source": [[18, 15370], [7, 15371]],
 								"type": 5
 							},
 							{
@@ -7235,7 +7512,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 13430 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 13430 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7324,7 +7605,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "511d0edf-f95a-58a8-89a7-aeff9bfd1bbd", "parent": 0 }
+									"referenceTrait": {
+										"label": "511d0edf-f95a-58a8-89a7-aeff9bfd1bbd",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -7346,7 +7630,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9786 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9786 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7356,7 +7644,11 @@
 								"source": [[4, 14883, [21, [[7, 14882]], 40, [[24, 14881]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9740 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9740 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7460,10 +7752,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[26, 14892, [38, [[24, 14891, [32, [[36, 14890]]]]]]],
-									[39, 14893]
-								],
+								"source": [[26, 14892, [38, [[24, 14891, [32, [[36, 14890]]]]]]], [39, 14893]],
 								"type": 5
 							},
 							{
@@ -7540,13 +7829,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[11, 14894],
-									[30, 14897, [8, [[26, 14896, [20, [[1, 14895]]]]]]]
-								],
+								"source": [[11, 14894], [30, 14897, [8, [[26, 14896, [20, [[1, 14895]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8764 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8764 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 12299, "type": 3 }] },
@@ -7555,20 +7845,24 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[4, 15882],
-									[13, 15883],
-									[5, 15884]
-								],
+								"source": [[4, 15882], [13, 15883], [5, 15884]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 14368 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 14368 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{ "destination": 1, "source": [[24, 14898]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 12299 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 12299 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7630,17 +7924,18 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9268 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9268 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[19, 14911],
-									[9, 14912]
-								],
+								"source": [[19, 14911], [9, 14912]],
 								"type": 5
 							},
 							{
@@ -7660,10 +7955,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[17, 14915, [16, [[25, 14914]]]],
-									[36, 14916]
-								],
+								"source": [[17, 14915, [16, [[25, 14914]]]], [36, 14916]],
 								"type": 5
 							},
 							{
@@ -7722,7 +8014,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "59da732c-99b8-5ec2-a079-61c6e5c7e12c", "parent": 0 }
+									"referenceTrait": {
+										"label": "59da732c-99b8-5ec2-a079-61c6e5c7e12c",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -7830,7 +8125,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 8765 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 8765 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7851,18 +8150,23 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[18, 16908, [38, [[9, 16906]], 27, [[36]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 14928 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[18, 16908, [38, [[9, 16906]], 27, [[36]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 14928 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[18, 16397, [34, [[23, 16395]], 29, [[12]]]],
-									[18, 16398]
-								],
+								"source": [[18, 16397, [34, [[23, 16395]], 29, [[12]]]], [18, 16398]],
 								"type": 5
 							},
 							{
@@ -7900,7 +8204,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 9267 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 9267 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -7964,10 +8272,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[4, 16399],
-									[17, 16402, [40, [[11, 16401, [31, [[11, 16400]]]]]]]
-								],
+								"source": [[4, 16399], [17, 16402, [40, [[11, 16401, [31, [[11, 16400]]]]]]]],
 								"type": 5
 							},
 							{
@@ -7993,7 +8298,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9786 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9786 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8033,13 +8342,25 @@
 					{
 						"changes": [
 							{ "destination": 1, "source": [[30, 17425]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 16398 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 16398 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[18, 16405, [34, [[13, 16403]], 29, [[24]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 9268 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[18, 16405, [34, [[13, 16403]], 29, [[24]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 9268 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8106,7 +8427,11 @@
 					{ "changes": [{ "nodeToModify": 14898, "type": 3 }] },
 					{
 						"changes": [
-							{ "destination": 1, "source": [[15, 17433, [40, [[36, 17431]], 32, [[7]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[15, 17433, [40, [[36, 17431]], 32, [[7]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -8154,18 +8479,18 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 17428 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 17428 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[5, 17443],
-									[19, 17444],
-									[36, 17445]
-								],
+								"source": [[5, 17443], [19, 17444], [36, 17445]],
 								"type": 5
 							},
 							{
@@ -8236,10 +8561,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[36, 17936],
-									[25, 17939, [21, [[30, 17937]], 10, [[4]]]]
-								],
+								"source": [[36, 17936], [25, 17939, [21, [[30, 17937]], 10, [[4]]]]],
 								"type": 5
 							},
 							{
@@ -8266,7 +8588,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 17426 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 17426 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8332,7 +8658,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 17442 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 17442 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8345,7 +8675,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 14879 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 14879 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8355,13 +8689,21 @@
 								"source": [[9, 18472, [34, [[15, 18471, [27, [[24, 18470]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 17445 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 17445 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 9268, "type": 3 }] },
 					{
 						"changes": [
-							{ "destination": 1, "source": [[25, 18956, [21, [[26, 18954]], 31, [[25]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[25, 18956, [21, [[26, 18954]], 31, [[25]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -8386,7 +8728,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 18451 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 18451 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 17434, "type": 3 }] },
@@ -8394,10 +8740,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[36, 19468, [22, [[12, 19467, [3, [[24, 19466]]]]]]],
-									[7, 19469]
-								],
+								"source": [[36, 19468, [22, [[12, 19467, [3, [[24, 19466]]]]]]], [7, 19469]],
 								"type": 5
 							},
 							{
@@ -8481,14 +8824,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[30, 18974],
-									[4, 18975],
-									[15, 18978, [29, [[7, 18977]]]]
-								],
+								"source": [[30, 18974], [4, 18975], [15, 18978, [29, [[7, 18977]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 18968 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 18968 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8522,7 +8865,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 17935 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 17935 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8536,13 +8883,21 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 8733 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 8733 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{ "destination": 1, "source": [[6, 19978]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 14918 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 14918 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8656,11 +9011,17 @@
 			},
 			{
 				"startRevision": 500,
-				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/114fe094bb6c18629ef54c3a861828ad80c99028" }
+				"chunk": {
+					"type": "__fluid_handle__",
+					"url": "/_blobs/114fe094bb6c18629ef54c3a861828ad80c99028"
+				}
 			},
 			{
 				"startRevision": 600,
-				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/1d5b88bce89313b582f70cc109be33f02eaf7f1b" }
+				"chunk": {
+					"type": "__fluid_handle__",
+					"url": "/_blobs/1d5b88bce89313b582f70cc109be33f02eaf7f1b"
+				}
 			},
 			{
 				"startRevision": 700,
@@ -8669,10 +9030,7 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[6, 29711, [16, [[17, 29710, [38, [[6, 29709]]]]]]],
-									[15, 29712]
-								],
+								"source": [[6, 29711, [16, [[17, 29710, [38, [[6, 29709]]]]]]], [15, 29712]],
 								"type": 5
 							},
 							{
@@ -8744,7 +9102,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 19007 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 19007 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8768,7 +9130,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 14928 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 14928 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8787,7 +9153,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 27687 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 27687 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8817,13 +9187,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[11, 30218],
-									[1, 30221, [14, [[9, 30220, [35, [[15, 30219]]]]]]]
-								],
+								"source": [[11, 30218], [1, 30221, [14, [[9, 30220, [35, [[15, 30219]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 20506 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 20506 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -8892,7 +9263,11 @@
 					},
 					{
 						"changes": [
-							{ "destination": 1, "source": [[5, 31244, [16, [[26, 31242]], 8, [[36]]]]], "type": 5 },
+							{
+								"destination": 1,
+								"source": [[5, 31244, [16, [[26, 31242]], 8, [[36]]]]],
+								"type": 5
+							},
 							{
 								"source": 1,
 								"destination": {
@@ -8995,8 +9370,16 @@
 					{ "changes": [{ "nodeToModify": 27686, "type": 3 }] },
 					{
 						"changes": [
-							{ "destination": 1, "source": [[7, 31756, [22, [[4, 31754]], 27, [[17]]]]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 16406 }, "type": 0 }
+							{
+								"destination": 1,
+								"source": [[7, 31756, [22, [[4, 31754]], 27, [[17]]]]],
+								"type": 5
+							},
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 16406 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9063,13 +9446,21 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 27671 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 27671 },
+								"type": 0
+							}
 						]
 					},
 					{
 						"changes": [
 							{ "destination": 1, "source": [[30, 32275]], "type": 5 },
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 27161 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 27161 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 14928, "type": 3 }] },
@@ -9088,7 +9479,10 @@
 								"source": 1,
 								"destination": {
 									"side": 1,
-									"referenceTrait": { "label": "23ade7fd-eab6-5fa3-baa8-b1bef4386879", "parent": 0 }
+									"referenceTrait": {
+										"label": "23ade7fd-eab6-5fa3-baa8-b1bef4386879",
+										"parent": 0
+									}
 								},
 								"type": 0
 							}
@@ -9145,13 +9539,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[15, 32302, [28, [[4, 32301, [33, [[6, 32300]]]]]]],
-									[23, 32303]
-								],
+								"source": [[15, 32302, [28, [[4, 32301, [33, [[6, 32300]]]]]]], [23, 32303]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 26646 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 26646 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 13838, "type": 3 }] },
@@ -9185,7 +9580,11 @@
 								"source": [[7, 32306, [28, [[24, 32305]], 21, [[24, 32304]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 26643 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 26643 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9218,7 +9617,11 @@
 								"source": [[5, 32315, [37, [[36, 32314, [22, [[11, 32313]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 29210 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 29210 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9281,13 +9684,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[26, 32779],
-									[6, 32782, [28, [[12, 32781, [10, [[13, 32780]]]]]]]
-								],
+								"source": [[26, 32779], [6, 32782, [28, [[12, 32781, [10, [[13, 32780]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 14928 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 14928 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 27679, "type": 3 }] },
@@ -9339,7 +9743,11 @@
 								"source": [[7, 33298, [34, [[17, 33297]], 3, [[39, 33296]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 32290 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 32290 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9441,7 +9849,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 26155 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 26155 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9501,7 +9913,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 0, "referenceSibling": 18994 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 0, "referenceSibling": 18994 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9520,7 +9936,11 @@
 								"type": 1,
 								"destination": 1
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 33817 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 33817 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9582,7 +10002,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 16404 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 16404 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9596,7 +10020,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 29205 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 29205 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9626,7 +10054,11 @@
 								],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 33294 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 33294 },
+								"type": 0
+							}
 						]
 					},
 					{
@@ -9678,13 +10110,14 @@
 						"changes": [
 							{
 								"destination": 1,
-								"source": [
-									[5, 34326],
-									[5, 34329, [3, [[12, 34328, [16, [[11, 34327]]]]]]]
-								],
+								"source": [[5, 34326], [5, 34329, [3, [[12, 34328, [16, [[11, 34327]]]]]]]],
 								"type": 5
 							},
-							{ "source": 1, "destination": { "side": 1, "referenceSibling": 29205 }, "type": 0 }
+							{
+								"source": 1,
+								"destination": { "side": 1, "referenceSibling": 29205 },
+								"type": 0
+							}
 						]
 					},
 					{ "changes": [{ "nodeToModify": 26637, "type": 3 }] },

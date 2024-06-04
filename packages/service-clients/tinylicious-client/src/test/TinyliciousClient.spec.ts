@@ -157,10 +157,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container with detached state", async function () {
-			const { container } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -169,10 +166,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		});
 
 		it("creates a container that can only be attached once", async function () {
-			const { container } = await tinyliciousClient.createContainer(
-				schema,
-				compatibilityMode,
-			);
+			const { container } = await tinyliciousClient.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
 			assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");

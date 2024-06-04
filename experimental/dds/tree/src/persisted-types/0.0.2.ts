@@ -11,7 +11,7 @@ import type {
 	StableNodeId,
 	TraitLabel,
 	UuidString,
-} from '../Identifiers.js';
+} from "../Identifiers.js";
 
 /**
  * Defines a place relative to sibling.
@@ -151,7 +151,9 @@ export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> 
  * A tree whose nodes are either TreeNodes or a placeholder
  * @internal
  */
-export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
+export type PlaceholderTree<TPlaceholder = never> =
+	| TreeNode<PlaceholderTree<TPlaceholder>, NodeId>
+	| TPlaceholder;
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
@@ -249,9 +251,9 @@ export interface SharedTreeEditOp_0_0_2 extends VersionedOp<WriteFormat.v0_0_2> 
  */
 export enum WriteFormat {
 	/** Stores all edits in their raw format. */
-	v0_0_2 = '0.0.2',
+	v0_0_2 = "0.0.2",
 	/** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
-	v0_1_1 = '0.1.1',
+	v0_1_1 = "0.1.1",
 }
 
 /**
@@ -308,7 +310,9 @@ export type ChangeInternal_0_0_2 =
  * {@inheritdoc BuildNode}
  * @alpha
  */
-export type BuildNodeInternal_0_0_2 = TreeNode<BuildNodeInternal_0_0_2, StableNodeId> | DetachedSequenceId;
+export type BuildNodeInternal_0_0_2 =
+	| TreeNode<BuildNodeInternal_0_0_2, StableNodeId>
+	| DetachedSequenceId;
 
 /**
  * {@inheritdoc Build}

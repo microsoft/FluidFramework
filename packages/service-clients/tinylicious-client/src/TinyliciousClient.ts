@@ -34,7 +34,10 @@ import {
 } from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import {
+	type TinyliciousClientProps,
+	type TinyliciousContainerServices,
+} from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

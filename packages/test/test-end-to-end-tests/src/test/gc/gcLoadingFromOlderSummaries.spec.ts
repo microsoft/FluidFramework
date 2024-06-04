@@ -40,7 +40,10 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
-	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
+	configProvider.set(
+		"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+		false,
+	);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },

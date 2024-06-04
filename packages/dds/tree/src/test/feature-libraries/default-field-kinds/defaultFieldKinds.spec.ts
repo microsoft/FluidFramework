@@ -45,7 +45,10 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-const childComposer1_2 = (change1: NodeId | undefined, change2: NodeId | undefined): NodeId => {
+const childComposer1_2 = (
+	change1: NodeId | undefined,
+	change2: NodeId | undefined,
+): NodeId => {
 	assert(change1 !== undefined && change2 !== undefined);
 	assert.deepEqual(change1, nodeChange1);
 	assert.deepEqual(change2, nodeChange2);

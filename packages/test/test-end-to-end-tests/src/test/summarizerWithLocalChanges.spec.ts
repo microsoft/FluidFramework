@@ -640,11 +640,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			await provider.ensureSynchronized();
 
 			const props = await summarizePromiseP;
-			assert.strictEqual(
-				props.result,
-				"success",
-				"Summarization did not succeed as expected",
-			);
+			assert.strictEqual(props.result, "success", "Summarization did not succeed as expected");
 			assert.strictEqual(
 				props.maxAttempts,
 				defaultMaxAttemptsForSubmitFailures,

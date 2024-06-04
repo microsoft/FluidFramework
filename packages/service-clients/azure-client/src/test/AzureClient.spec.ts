@@ -302,8 +302,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 
 			const client_gcEnabled = createAzureClient({
 				configProvider: {
-					getRawConfig: (name: string) =>
-						({ "Fluid.GarbageCollection.RunSweep": true })[name],
+					getRawConfig: (name: string) => ({ "Fluid.GarbageCollection.RunSweep": true })[name],
 				},
 			});
 			const { container: container_gcEnabled } = await client_gcEnabled.createContainer(

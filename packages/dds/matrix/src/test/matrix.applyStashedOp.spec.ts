@@ -39,7 +39,12 @@ async function createMatrixForReconnection(
 
 	let matrix: SharedMatrix;
 	if (summary !== undefined) {
-		matrix = await matrixFactory.load(dataStoreRuntime, id, services, matrixFactory.attributes);
+		matrix = await matrixFactory.load(
+			dataStoreRuntime,
+			id,
+			services,
+			matrixFactory.attributes,
+		);
 	} else {
 		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);
