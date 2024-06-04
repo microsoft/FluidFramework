@@ -54,3 +54,19 @@ export async function getRecursiveFiles(pathName: string) {
 	}
 	return result;
 }
+
+/**
+ * Extracts the api-extractor config file path from the api-extractor command line.
+ *
+ * @param commandLine - api-extractor command line
+ */
+export function getApiExtractorConfigFilePath(commandLine: string): string {
+	const commandArgs = commandLine.split(/\s+/);
+	const configFileArg = commandArgs.findIndex((arg) => arg === "--config" || arg === "-c") + 1;
+	if (configFileArg > 0 && commandArgs.length > configFileArg) {
+		return commandArgs[configFileArg];
+	}
+
+	// Default api-extractor config file name
+	return "api-extractor.json";
+}

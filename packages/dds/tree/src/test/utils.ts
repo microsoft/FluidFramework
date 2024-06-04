@@ -89,7 +89,7 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	ContextuallyTypedNodeData,
@@ -136,7 +136,7 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -672,7 +672,7 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -688,7 +688,7 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
@@ -722,7 +722,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -1063,7 +1063,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>): {
+export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1098,10 +1098,10 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	const unsubscribe = (): void => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 		for (const revertible of redoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1220,10 +1220,10 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public get transaction(): ITransaction {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
-	public get events(): ISubscribable<CheckoutEvents> {
+	public get events(): Listenable<CheckoutEvents> {
 		throw new Error("'events' property not implemented in MockTreeCheckout.");
 	}
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+	public get rootEvents(): Listenable<AnchorSetRootEvents> {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 

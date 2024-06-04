@@ -4,12 +4,27 @@
  */
 
 import assert from "assert";
+
 import {
 	describeCompat,
 	type CompatApis,
 	type ITestObjectProviderOptions,
 } from "@fluid-private/test-version-utils";
+import { ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
+import type {
+	IChannel,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix/internal";
+import {
+	ConsensusRegisterCollectionFactory,
+	type IConsensusRegisterCollection,
+} from "@fluidframework/register-collection/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -18,7 +33,6 @@ import {
 	ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	SharedTree,
 	SchemaFactory,
@@ -26,19 +40,6 @@ import {
 	type TreeView,
 	type ISharedTree,
 } from "@fluidframework/tree/internal";
-import { isObject } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import type {
-	IChannel,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
-import { ISharedCell } from "@fluidframework/cell/internal";
-import type { SharedString } from "@fluidframework/sequence/internal";
-import {
-	ConsensusRegisterCollectionFactory,
-	type IConsensusRegisterCollection,
-} from "@fluidframework/register-collection/internal";
 
 const mapId = "map";
 const stringId = "sharedString";

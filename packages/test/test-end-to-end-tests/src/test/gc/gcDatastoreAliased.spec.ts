@@ -40,6 +40,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
+			fullTree: true,
 		});
 	}
 

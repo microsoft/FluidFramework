@@ -27,7 +27,6 @@ import {
 	type IFluidDataStoreRuntime,
 	type IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,
 	type ISummaryTree,
@@ -35,6 +34,8 @@ import {
 	type IQuorumClients,
 	type ISequencedClient,
 } from "@fluidframework/driver-definitions";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -43,7 +44,6 @@ import {
 	MockStorage,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {

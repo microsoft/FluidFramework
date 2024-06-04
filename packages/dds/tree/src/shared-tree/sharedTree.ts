@@ -23,7 +23,7 @@ import {
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
 	FlexFieldSchema,
@@ -147,7 +147,7 @@ export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
-	private readonly _events: ISubscribable<CheckoutEvents> &
+	private readonly _events: Listenable<CheckoutEvents> &
 		IEmitter<CheckoutEvents> &
 		HasListeners<CheckoutEvents>;
 	public readonly checkout: TreeCheckout;
@@ -261,7 +261,7 @@ export class SharedTree
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
-		const cursor = this.checkout.forest.allocateCursor();
+		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
 			moveToDetachedField(this.checkout.forest, cursor);
 			return {

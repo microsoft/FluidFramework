@@ -5,6 +5,7 @@
 
 import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IDocumentAttributes,
@@ -20,7 +21,6 @@ import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

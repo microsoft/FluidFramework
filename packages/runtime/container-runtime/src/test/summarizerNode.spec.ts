@@ -373,14 +373,25 @@ describe("Runtime", () => {
 			});
 
 			describe("Summarize", () => {
-				it("Should fail summarize if startSummary is not called", async () => {
+				it("Should fail completeSummary if startSummary is not called", async () => {
 					createRoot();
 					await expectReject(
-						async () => rootNode.summarize(false),
+						async () => rootNode.completeSummary("handle"),
 						"summarize",
 						"no wip referenceSequenceNumber or logger",
-						"0x1a1",
-						"0x1a2",
+						"0x1a4",
+					);
+					assertSummarizeCalls(0, 0, 0);
+				});
+
+				it("Should fail validateSummary if startSummary is not called", async () => {
+					createRoot();
+					await expectReject(
+						async () => rootNode.validateSummary(),
+						"summarize",
+						"no wip referenceSequenceNumber or logger",
+						"0x6fc",
+						"0x6fd",
 					);
 					assertSummarizeCalls(0, 0, 0);
 				});

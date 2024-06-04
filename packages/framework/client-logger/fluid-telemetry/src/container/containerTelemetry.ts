@@ -4,6 +4,7 @@
  */
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
+
 import { type IFluidTelemetry } from "../common/index.js";
 
 /**

@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -17,11 +18,12 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -33,8 +35,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
