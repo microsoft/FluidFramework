@@ -214,7 +214,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * In order to share the data object or DDS with other collaborators and retrieve it later,
 	 * store its handle in a collection like a SharedDirectory from your initialObjects.
 	 * It's typically a good idea to set any initial state on the object before doing so,
-	 * which is both more efficient and helpful to maintain domain model invariants
+	 * as it is both more efficient and helpful to maintain domain model invariants
 	 * (e.g. this approach easily allows state to only be set once).
 	 *
 	 * @example
