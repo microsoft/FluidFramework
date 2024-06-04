@@ -30,12 +30,7 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import {
-	IFluidErrorBase,
-	hasErrorInstanceId,
-	isFluidError,
-	isValidLegacyError,
-} from "../fluidErrorBase.js";
+import { IFluidErrorBase, hasErrorInstanceId, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
@@ -1127,28 +1122,6 @@ describe("Error Discovery", () => {
 		assert(!isExternalError(wrappedError));
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
 		assert(!isExternalError(new LoggingError("testLoggingError")));
-	});
-	it("isValidLegacyError", () => {
-		const validLegacyError = {
-			message: "testMessage",
-			errorType: "someErrorType",
-			getTelemetryProperties: (): void => {},
-			addTelemetryProperties: (): void => {},
-		};
-		assert.strictEqual(isValidLegacyError(validLegacyError), true);
-		assert.strictEqual(isValidLegacyError({ ...validLegacyError, message: undefined }), false);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, errorType: undefined }),
-			false,
-		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, getTelemetryProperties: undefined }),
-			false,
-		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, addTelemetryProperties: undefined }),
-			false,
-		);
 	});
 
 	// I copied the old version of isFluidError here, it depends on fluidErrorCode.
