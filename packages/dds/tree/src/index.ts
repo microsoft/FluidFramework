@@ -103,7 +103,6 @@ export {
 	brand,
 	ValueFromBranded,
 	NameFromBranded,
-	JsonCompatibleReadOnly,
 	JsonCompatible,
 	JsonCompatibleObject,
 	NestedMap,
@@ -120,9 +119,10 @@ export {
 } from "./util/index.js";
 
 export {
-	Events,
-	IsEvent,
-	ISubscribable,
+	Listeners,
+	IsListener,
+	Listenable,
+	Off,
 	createEmitter,
 	IEmitter,
 	NoListenersCallback,

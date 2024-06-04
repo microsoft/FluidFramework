@@ -4,13 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IAudienceEvents,
-	IAudienceOwner,
-	ISelf,
-} from "@fluidframework/container-definitions/internal";
+import { IAudienceEvents, ISelf } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.

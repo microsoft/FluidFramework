@@ -51,7 +51,10 @@ export class DocumentLambda implements IPartitionLambda {
 		);
 	}
 
-	public handler(message: IQueuedMessage) {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
 		if (!this.contextManager.setHead(message)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +

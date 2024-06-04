@@ -5,21 +5,23 @@
 
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,

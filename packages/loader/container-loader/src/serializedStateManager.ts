@@ -3,32 +3,31 @@
  * Licensed under the MIT License.
  */
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import type { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import {
 	type IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
+
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
@@ -93,6 +92,8 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
 	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/** Used by the memory blob storage to persisted attachment blobs */
+	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)

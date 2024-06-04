@@ -14,20 +14,18 @@ import {
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	getSnapshotTree,
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
@@ -42,6 +40,7 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

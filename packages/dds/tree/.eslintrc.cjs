@@ -30,6 +30,12 @@ module.exports = {
 		"import/order": "off",
 
 		// TODO: Remove these overrides once this config has been updated to extend at least the "recommended" base config.
+		"@typescript-eslint/no-explicit-any": [
+			"error",
+			{
+				ignoreRestArgs: true,
+			},
+		],
 		"@typescript-eslint/explicit-function-return-type": [
 			"error",
 			{

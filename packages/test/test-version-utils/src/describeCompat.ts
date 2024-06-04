@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -109,6 +111,11 @@ function createCompatSuite(
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
+					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
+						(provider.driver as OdspTestDriver).setPersistedCache(
+							options.persistedCache,
+						);
+					}
 					return provider;
 				}, apis);
 
@@ -184,6 +191,8 @@ export interface ITestObjectProviderOptions {
 	resetAfterEach?: boolean;
 	/** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
 	syncSummarizer?: boolean;
+	/** Persisted Cache provided by ODSP */
+	persistedCache?: IPersistedCache;
 }
 
 /**

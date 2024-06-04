@@ -5,9 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+
 import { treeDataObject } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {
@@ -34,7 +35,7 @@ describe("reactSharedTreeView", () => {
 		// TODO: Ideally we would use a local-server service-client, but one does not appear to exist.
 		const tinyliciousClient = new TinyliciousClient();
 
-		const { container } = await tinyliciousClient.createContainer(containerSchema);
+		const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
 		const tree = container.initialObjects.tree;
 		assert.equal(tree.tree.root.nuts, 5);
 		tree.tree.root.nuts += 1;

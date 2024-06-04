@@ -7,12 +7,13 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils/internal";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache } from "./cache.js";

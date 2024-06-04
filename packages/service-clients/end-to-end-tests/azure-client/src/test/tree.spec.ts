@@ -8,15 +8,9 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import {
-	SharedTree,
-	TreeConfiguration,
-	SchemaFactory,
-	type TreeView,
-	type ITree,
-} from "@fluidframework/tree";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-
+import { TreeConfiguration, SchemaFactory, type TreeView, type ITree } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
 import {
@@ -94,13 +88,13 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container: container1 } = await client.getContainer(containerId, schema));
+				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
 				treeData = (container1.initialObjects.tree1 as ITree).schematize(
 					treeConfiguration, // This is defined in schema.ts
 				);
 			} else {
-				({ container: container1 } = await client.createContainer(schema));
+				({ container: container1 } = await client.createContainer(schema, "2"));
 
 				treeData = (container1.initialObjects.tree1 as ITree).schematize(
 					treeConfiguration, // This is defined in schema.ts
@@ -149,13 +143,13 @@ for (const testOpts of testMatrix) {
 						"test-user-name-1",
 					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container: container1 } = await client.getContainer(containerId, schema));
+				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
 				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
 					treeConfiguration,
 				);
 			} else {
-				({ container: container1 } = await client.createContainer(schema));
+				({ container: container1 } = await client.createContainer(schema, "2"));
 
 				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
 					treeConfiguration,
@@ -173,7 +167,7 @@ for (const testOpts of testMatrix) {
 
 			treeData1.root.insertNew("test string 1");
 
-			const resources = client.getContainer(containerId, schema);
+			const resources = client.getContainer(containerId, schema, "2");
 			await assert.doesNotReject(
 				resources,
 				() => true,

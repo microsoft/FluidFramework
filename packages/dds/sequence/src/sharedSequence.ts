@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	Serializable,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment,
 	IJSONSegment,

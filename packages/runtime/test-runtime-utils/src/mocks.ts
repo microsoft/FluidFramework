@@ -15,37 +15,39 @@ import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-
 import {
 	FluidObject,
 	IFluidHandle,
-	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
+	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 	type IDeltaManagerErased,
-} from "@fluidframework/datastore-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+} from "@fluidframework/datastore-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	ITreeEntry,
-	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,
@@ -59,9 +61,9 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { deepFreeze } from "./deepFreeze.js";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
-import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing

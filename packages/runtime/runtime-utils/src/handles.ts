@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidHandleErased,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 /**
  * JSON serialized form of an IFluidHandle

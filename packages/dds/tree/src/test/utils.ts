@@ -14,10 +14,11 @@ import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -88,7 +89,7 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	ContextuallyTypedNodeData,
@@ -99,7 +100,6 @@ import {
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
-	createMockNodeKeyManager,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -107,6 +107,7 @@ import {
 	jsonableTreeFromForest,
 	mapRootChanges,
 	mapTreeFromCursor,
+	MockNodeKeyManager,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -135,7 +136,7 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, disposeSymbol, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -146,6 +147,7 @@ import type { Client } from "@fluid-private/test-dds-utils";
  *
  * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodec: IJsonCodec<any, any, any, any> = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
@@ -154,6 +156,7 @@ export const failCodec: IJsonCodec<any, any, any, any> = {
 /**
  * A {@link ICodecFamily} implementation which fails to resolve any codec.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodecFamily: ICodecFamily<any, any> = {
 	resolve: () => assert.fail("Unexpected resolve"),
 	getSupportedFormats: () => [],
@@ -656,11 +659,11 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 			? { Handle: toFluidHandleInternal(inputValue).absolutePath }
 			: inputValue;
 
-		const output: Record<string, any> = { ...node, value, fields };
+		const output: Record<string, unknown> = { ...node, value, fields };
 
 		// Normalize optional values to be omitted for cleaner diffs:
 		if (output.value === undefined) delete output.value;
-		if (Reflect.ownKeys(output.fields).length === 0) delete output.fields;
+		if (Reflect.ownKeys(output.fields as object).length === 0) delete output.fields;
 
 		return output as object;
 	});
@@ -669,7 +672,7 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -685,7 +688,7 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
@@ -695,7 +698,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
-		args?.nodeKeyManager ?? createMockNodeKeyManager(),
+		args?.nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -719,7 +722,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	args?: {
 		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
@@ -730,7 +733,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
 	});
-	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
+	const manager = args?.nodeKeyManager ?? new MockNodeKeyManager();
 	const view = new CheckoutFlexTreeView(branch, content.schema, manager);
 	return view.flexTree;
 }
@@ -871,7 +874,7 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	};
 }
 
-const assertDeepEqual = (a: any, b: any): void => assert.deepEqual(a, b);
+const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
@@ -1060,7 +1063,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>): {
+export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1095,10 +1098,10 @@ export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>):
 	const unsubscribe = (): void => {
 		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 		for (const revertible of redoStack) {
-			revertible[disposeSymbol]();
+			revertible.dispose();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1131,7 +1134,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		tree.checkout,
 		viewSchema,
 		onDispose ?? (() => {}),
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -1184,12 +1187,12 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyManager ?? new MockNodeKeyManager(),
 	);
 }
 
@@ -1217,10 +1220,10 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public get transaction(): ITransaction {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
-	public get events(): ISubscribable<CheckoutEvents> {
+	public get events(): Listenable<CheckoutEvents> {
 		throw new Error("'events' property not implemented in MockTreeCheckout.");
 	}
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+	public get rootEvents(): Listenable<AnchorSetRootEvents> {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 

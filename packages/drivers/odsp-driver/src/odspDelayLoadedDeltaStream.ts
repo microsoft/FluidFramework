@@ -7,6 +7,11 @@ import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	IClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
@@ -26,11 +31,6 @@ import {
 	OdspErrorTypes,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
 import {
 	IFluidErrorBase,
 	MonitoringContext,
@@ -148,7 +148,7 @@ export class OdspDelayLoadedDeltaStream {
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
 				? // eslint-disable-next-line unicorn/no-null
 				  Promise.resolve(null)
-				: this.getWebsocketToken!(options);
+				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
 				throw this.annotateConnectionError(

@@ -53,6 +53,7 @@ declare function get_old_ClassDeclaration_BaseSegment():
 declare function use_current_ClassDeclaration_BaseSegment(
     use: TypeOnly<current.BaseSegment>): void;
 use_current_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BaseSegment());
 
 /*
@@ -389,6 +390,7 @@ declare function get_old_InterfaceDeclaration_ISegment():
 declare function use_current_InterfaceDeclaration_ISegment(
     use: TypeOnly<current.ISegment>): void;
 use_current_InterfaceDeclaration_ISegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISegment());
 
 /*
@@ -417,6 +419,7 @@ declare function get_old_InterfaceDeclaration_ISequenceDeltaRange():
 declare function use_current_InterfaceDeclaration_ISequenceDeltaRange(
     use: TypeOnly<current.ISequenceDeltaRange>): void;
 use_current_InterfaceDeclaration_ISequenceDeltaRange(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISequenceDeltaRange());
 
 /*
@@ -571,6 +574,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>): void;
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -809,6 +813,7 @@ declare function get_old_TypeAliasDeclaration_IntervalRevertible():
 declare function use_current_TypeAliasDeclaration_IntervalRevertible(
     use: TypeOnly<current.IntervalRevertible>): void;
 use_current_TypeAliasDeclaration_IntervalRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IntervalRevertible());
 
 /*
@@ -977,6 +982,7 @@ declare function get_old_ClassDeclaration_Marker():
 declare function use_current_ClassDeclaration_Marker(
     use: TypeOnly<current.Marker>): void;
 use_current_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Marker());
 
 /*
@@ -1145,6 +1151,7 @@ declare function get_old_ClassDeclaration_SequenceDeltaEvent():
 declare function use_current_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<current.SequenceDeltaEvent>): void;
 use_current_ClassDeclaration_SequenceDeltaEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -1173,6 +1180,7 @@ declare function get_old_ClassDeclaration_SequenceEvent():
 declare function use_current_ClassDeclaration_SequenceEvent(
     use: TypeOnly<current.SequenceEvent>): void;
 use_current_ClassDeclaration_SequenceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceEvent());
 
 /*
@@ -1229,6 +1237,7 @@ declare function get_old_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_current_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<current.SequenceMaintenanceEvent>): void;
 use_current_ClassDeclaration_SequenceMaintenanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
@@ -1495,6 +1504,7 @@ declare function get_current_TypeAliasDeclaration_SharedString():
 declare function use_old_TypeAliasDeclaration_SharedString(
     use: TypeOnly<old.SharedString>): void;
 use_old_TypeAliasDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedString());
 
 /*
@@ -1523,6 +1533,7 @@ declare function get_current_ClassDeclaration_SharedStringClass():
 declare function use_old_ClassDeclaration_SharedStringClass(
     use: TypeOnly<old.SharedStringClass>): void;
 use_old_ClassDeclaration_SharedStringClass(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedStringClass());
 
 /*
@@ -1537,6 +1548,7 @@ declare function get_old_TypeAliasDeclaration_SharedStringRevertible():
 declare function use_current_TypeAliasDeclaration_SharedStringRevertible(
     use: TypeOnly<current.SharedStringRevertible>): void;
 use_current_TypeAliasDeclaration_SharedStringRevertible(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedStringRevertible());
 
 /*
@@ -1565,6 +1577,7 @@ declare function get_old_TypeAliasDeclaration_SharedStringSegment():
 declare function use_current_TypeAliasDeclaration_SharedStringSegment(
     use: TypeOnly<current.SharedStringSegment>): void;
 use_current_TypeAliasDeclaration_SharedStringSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedStringSegment());
 
 /*
@@ -1621,6 +1634,7 @@ declare function get_old_ClassDeclaration_SubSequence():
 declare function use_current_ClassDeclaration_SubSequence(
     use: TypeOnly<current.SubSequence<any>>): void;
 use_current_ClassDeclaration_SubSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SubSequence());
 
 /*
@@ -1649,6 +1663,7 @@ declare function get_old_ClassDeclaration_TextSegment():
 declare function use_current_ClassDeclaration_TextSegment(
     use: TypeOnly<current.TextSegment>): void;
 use_current_ClassDeclaration_TextSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TextSegment());
 
 /*
@@ -1677,6 +1692,7 @@ declare function get_old_ClassDeclaration_TrackingGroup():
 declare function use_current_ClassDeclaration_TrackingGroup(
     use: TypeOnly<current.TrackingGroup>): void;
 use_current_ClassDeclaration_TrackingGroup(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TrackingGroup());
 
 /*

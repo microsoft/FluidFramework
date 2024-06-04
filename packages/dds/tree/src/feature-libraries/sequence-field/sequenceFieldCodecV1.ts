@@ -11,7 +11,7 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
-import { Changeset as ChangesetSchema, Encoded } from "./formatV1.js";
+import { Changeset as ChangesetSchema, DetachIdOverrideType, Encoded } from "./formatV1.js";
 import {
 	Attach,
 	AttachAndDetach,
@@ -89,8 +89,9 @@ export function makeV1Codec(
 								effect.idOverride === undefined
 									? undefined
 									: {
-											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, context),
+											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
+											type: DetachIdOverrideType.Unattach,
+											id: cellIdCodec.encode(effect.idOverride, context),
 									  },
 							id: effect.id,
 						},
@@ -107,8 +108,9 @@ export function makeV1Codec(
 								effect.idOverride === undefined
 									? undefined
 									: {
-											type: effect.idOverride.type,
-											id: cellIdCodec.encode(effect.idOverride.id, context),
+											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
+											type: DetachIdOverrideType.Unattach,
+											id: cellIdCodec.encode(effect.idOverride, context),
 									  },
 							id: effect.id,
 						},
@@ -189,10 +191,7 @@ export function makeV1Codec(
 
 			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
-				mark.idOverride = {
-					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id, context),
-				};
+				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
 			}
 			return mark;
 		},
@@ -208,10 +207,7 @@ export function makeV1Codec(
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
 			if (idOverride !== undefined) {
-				mark.idOverride = {
-					type: idOverride.type,
-					id: cellIdCodec.decode(idOverride.id, context),
-				};
+				mark.idOverride = cellIdCodec.decode(idOverride.id, context);
 			}
 
 			return mark;
@@ -229,50 +225,14 @@ export function makeV1Codec(
 	});
 
 	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
-		encode: (
-			{ localId, adjacentCells, lineage, revision }: CellId,
-			context: ChangeEncodingContext,
-		): Encoded.CellId => {
+		encode: (cellId: CellId, context: ChangeEncodingContext): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
-				atom: changeAtomIdCodec.encode({ localId, revision }, context),
-				adjacentCells: adjacentCells?.map(({ id, count }) => [id, count]),
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				lineage: lineage?.map(({ revision, id, count, offset }) => [
-					revisionTagCodec.encode(revision, context),
-					id,
-					count,
-					offset,
-				]),
+				atom: changeAtomIdCodec.encode(cellId, context),
 			};
 			return encoded;
 		},
-		decode: (
-			{ atom, adjacentCells, lineage }: Encoded.CellId,
-			context: ChangeEncodingContext,
-		): CellId => {
-			const { localId, revision } = changeAtomIdCodec.decode(atom, context);
-			// Note: this isn't inlined on decode so that round-tripping changes compare as deep-equal works,
-			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
-			// explicit undefined properties.
-			const decoded: Mutable<CellId> = { localId };
-			decoded.revision = revision;
-
-			if (adjacentCells !== undefined) {
-				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
-					id,
-					count,
-				}));
-			}
-			if (lineage !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-shadow
-				decoded.lineage = lineage.map(([revision, id, count, offset]) => ({
-					revision: revisionTagCodec.decode(revision, context),
-					id,
-					count,
-					offset,
-				}));
-			}
-			return decoded;
+		decode: ({ atom }: Encoded.CellId, context: ChangeEncodingContext): CellId => {
+			return changeAtomIdCodec.decode(atom, context);
 		},
 	};
 

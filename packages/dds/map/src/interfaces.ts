@@ -9,7 +9,10 @@ import type {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import type { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -331,11 +334,15 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
  * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
  * {@link @fluidframework/datastore#FluidObjectHandle}.
+ *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed

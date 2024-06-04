@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
@@ -77,7 +77,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				break;
 			}
 			default: {
-				throw new Error(`Unknown type: ${(summaryObject as any).type}`);
+				throw new Error(`Unknown type: ${(summaryObject as SummaryObject).type}`);
 			}
 		}
 

@@ -14,10 +14,10 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
