@@ -14,7 +14,7 @@ import {
 
 import { SharedMatrix } from "../index.js";
 
-import { checkCorners, expectSize, setCorners, matrixFactory } from "./utils.js";
+import { checkCorners, expectSize, matrixFactory, setCorners } from "./utils.js";
 
 const enum Const {
 	// https://support.office.com/en-us/article/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
@@ -29,7 +29,9 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
+	});
 
 	const matrix2 = await matrixFactory.load(
 		dataStoreRuntime,

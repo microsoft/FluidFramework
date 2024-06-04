@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import { strict as assert } from "assert";
 import { ICodecOptions } from "../../codec/index.js";
 import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -30,7 +31,6 @@ import {
 	Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
-import { strict as assert } from "assert";
 
 /**
  * A `SharedTreeCore` with

@@ -6,13 +6,13 @@
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -55,7 +55,12 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		scenarioName?: string,
 		fetchSource?: FetchSource,
 	): Promise<IVersion[]> {
-		return this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource);
+		return this.internalStorageService.getVersions(
+			versionId,
+			count,
+			scenarioName,
+			fetchSource,
+		);
 	}
 
 	public async uploadSummaryWithContext(

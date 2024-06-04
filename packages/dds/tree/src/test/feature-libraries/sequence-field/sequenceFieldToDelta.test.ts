@@ -5,6 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
@@ -19,11 +20,10 @@ import {
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { inlineRevision, toDelta } from "./utils.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);

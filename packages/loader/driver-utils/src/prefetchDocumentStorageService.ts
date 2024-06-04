@@ -4,9 +4,9 @@
  */
 
 import {
-	LoaderCachingPolicy,
 	ISnapshotTree,
 	IVersion,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";

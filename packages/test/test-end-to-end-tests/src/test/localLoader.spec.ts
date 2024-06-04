@@ -13,7 +13,7 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
+import { type SharedString, SharedStringClass } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

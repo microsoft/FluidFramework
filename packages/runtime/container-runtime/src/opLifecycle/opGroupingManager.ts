@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatch, type BatchMessage } from "./definitions.js";
+import { type BatchMessage, IBatch } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -73,10 +73,7 @@ export class OpGroupingManager {
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(
-					keys.length === 0 || keys[0] === "batch",
-					0x5de /* unexpected op metadata */,
-				);
+				assert(keys.length === 0 || keys[0] === "batch", 0x5de /* unexpected op metadata */);
 			}
 		}
 

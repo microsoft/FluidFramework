@@ -12,12 +12,12 @@ import {
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "./utils.js";
+import { mintRevisionTag } from "../../utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import { assertChangesetsEqual, invert as invertChange, tagChangeInline } from "./utils.js";
 
 function invert(change: SF.Changeset, tag: RevisionTag = tag1): SF.Changeset {
 	return invertChange(tagChangeInline(change, tag));
@@ -378,11 +378,7 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag1 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 
@@ -393,11 +389,7 @@ export function testInvert() {
 				];
 
 				const actual = invertChange(tagChangeInline(input, tag2, tag1));
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag2 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 

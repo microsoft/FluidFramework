@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";
+import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
 
 describe("Utils", () => {
 	it("capitalize", () => {

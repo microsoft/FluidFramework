@@ -6,11 +6,11 @@
 import type { Tagged } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
+	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
-	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
@@ -390,8 +390,7 @@ export class GCTelemetryTracker {
 			 */
 			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
 			const active =
-				nodeStateTracker === undefined ||
-				nodeStateTracker.state === UnreferencedState.Active;
+				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(eventProps.id.value);
 				const fromPkg = eventProps.fromId

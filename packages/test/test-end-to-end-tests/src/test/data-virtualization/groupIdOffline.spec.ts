@@ -16,8 +16,8 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizerFromFactory,
+	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

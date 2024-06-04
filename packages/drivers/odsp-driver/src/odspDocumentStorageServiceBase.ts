@@ -12,15 +12,15 @@ import {
 import {
 	FetchSource,
 	FiveDaysMs,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	LoaderCachingPolicy,
 	ISnapshotTree,
-	ICreateBlobResponse,
+	ISummaryContext,
 	IVersion,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
@@ -155,7 +155,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected readonly blobCache = new BlobCache();
 
 	public set ops(ops: ISequencedDocumentMessage[] | undefined) {
-		assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
+		assert(
+			this._ops === undefined,
+			0x0a5 /* "Trying to set ops when they are already set!" */,
+		);
 		this._ops = ops;
 	}
 
@@ -174,7 +177,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return blobContent ?? this.fetchBlobFromStorage(blobId, evicted);
 	}
 
-	protected abstract fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer>;
+	protected abstract fetchBlobFromStorage(
+		blobId: string,
+		evicted: boolean,
+	): Promise<ArrayBuffer>;
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		return this.readBlobCore(blobId);
@@ -207,7 +213,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this.combineProtocolAndAppSnapshotTree(snapshotTree);
 	}
 
-	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+	public abstract getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot>;
 
 	public abstract getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null

@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, MaxNodesInBlock, MergeBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertText } from "./testUtils.js";

@@ -5,17 +5,17 @@
 
 import {
 	Button,
+	Tooltip,
 	makeStyles,
 	mergeClasses,
 	shorthands,
 	tokens,
-	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
-	type HasContainerKey,
-	type DevtoolsFeatureFlags,
 	type ContainerKey,
+	type DevtoolsFeatureFlags,
+	type HasContainerKey,
 } from "@fluidframework/devtools-core/internal";
 import { GetContainerList } from "@fluidframework/devtools-core/internal";
 import React from "react";

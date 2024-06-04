@@ -21,10 +21,10 @@ import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
 	ModularChangeset,
+	type SchemaChange,
 	TreeChunk,
 	cursorForJsonableTreeNode,
 	fieldKinds,
-	type SchemaChange,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -47,7 +47,9 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
+const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
+	dataChanges.push(change),
+);
 
 const nodeX = { type: leaf.string.name, value: "X" };
 const nodeY = { type: leaf.string.name, value: "Y" };
@@ -226,20 +228,14 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback),
-					{
-						changes: [
-							{
-								type: "data",
-								innerChange: modularFamily.invert(
-									makeAnonChange(dataChange1),
-									isRollback,
-								),
-							},
-						],
-					},
-				);
+				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
+					changes: [
+						{
+							type: "data",
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
+						},
+					],
+				});
 			});
 		}
 	});

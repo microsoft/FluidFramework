@@ -18,8 +18,8 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
+	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type FlushMode,

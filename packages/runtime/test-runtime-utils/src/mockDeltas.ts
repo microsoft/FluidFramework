@@ -159,7 +159,12 @@ export class MockDeltaManager
 
 	public flush() {}
 
-	public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
+	public submit(
+		type: MessageType,
+		contents: any,
+		batch = false,
+		localOpMetadata: any,
+	): number {
 		return 0;
 	}
 

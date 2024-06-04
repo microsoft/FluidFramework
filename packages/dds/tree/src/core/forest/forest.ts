@@ -267,4 +267,6 @@ export const enum TreeNavigationResult {
  * TreeNavigationResult, but never "Pending".
  * Can be used when data is never pending.
  */
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+export type SynchronousNavigationResult =
+	| TreeNavigationResult.Ok
+	| TreeNavigationResult.NotFound;

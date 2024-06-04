@@ -142,7 +142,8 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
  * @internal
  */
-export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {}
+export interface ErasedTreeNodeSchemaDataFormat
+	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
 
 function toErasedTreeNodeSchemaDataFormat(
 	data: TreeNodeSchemaDataFormat,
@@ -263,7 +264,9 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>): TreeNodeStoredSchema => {
+	object: (
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
+	): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));

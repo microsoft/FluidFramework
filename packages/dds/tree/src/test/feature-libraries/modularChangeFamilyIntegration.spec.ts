@@ -26,11 +26,11 @@ import { leaf } from "../../domains/index.js";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	EditDescription,
 	FieldKindWithEditor,
 	ModularChangeset,
-	cursorForJsonableTreeNode,
 	SequenceField as SF,
-	EditDescription,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -324,11 +324,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -476,9 +472,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 2 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
 											},
 										],
 									]),

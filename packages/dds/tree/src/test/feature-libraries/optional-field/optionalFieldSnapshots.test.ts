@@ -17,9 +17,9 @@ import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
-import { TestChange } from "../../testChange.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

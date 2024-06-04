@@ -6,9 +6,9 @@
 import {
 	IAppState,
 	IClient,
+	SimpleClient,
 	makeBubble,
 	makeClient,
-	SimpleClient,
 } from "@fluid-example/bubblebench-common";
 import { Change, SharedTree } from "@fluid-experimental/tree";
 
@@ -42,7 +42,7 @@ export class AppState implements IAppState {
 			? () => {
 					this.tree.applyEdit(...this.deferredChanges);
 					this.deferredChanges.length = 0;
-			  }
+				}
 			: () => {};
 
 		this.root = TreeObjectProxy<IApp>(this.tree, this.tree.currentView.root, this.update);

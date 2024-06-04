@@ -18,10 +18,10 @@ import { FieldGenerator } from "../fieldGenerator.js";
 import { NodeKeyManager } from "../node-key/index.js";
 import { FlexTreeSchema } from "../typed-schema/index.js";
 
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { FlexTreeField } from "./flexTreeTypes.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import type { ITreeCheckout } from "../../shared-tree/index.js";
 
 /**
  * A common context of a "forest" of FlexTrees.
@@ -144,7 +144,10 @@ export class Context implements FlexTreeContext, IDisposable {
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.checkout.forest.on(eventName, listener);
 	}
 
@@ -152,7 +155,10 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
+	public fieldSource?(
+		key: FieldKey,
+		schema: TreeFieldStoredSchema,
+	): undefined | FieldGenerator;
 }
 
 /**

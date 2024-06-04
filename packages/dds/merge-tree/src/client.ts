@@ -9,8 +9,8 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -191,7 +191,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
 	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+	public peekPendingSegmentGroups(
+		count: number = 1,
+	): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
@@ -212,7 +214,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+	public annotateMarker(
+		marker: Marker,
+		props: PropertySet,
+	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateMarkerOp(marker, props)!;
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;

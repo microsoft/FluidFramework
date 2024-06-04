@@ -9,10 +9,14 @@ import { ChangeAtomId } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellMark } from "../../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Attach, Detach, MarkEffect } from "../../../feature-libraries/sequence-field/types.js";
-import { TestNodeId } from "../../testNodeId.js";
+import {
+	Attach,
+	Detach,
+	MarkEffect,
+} from "../../../feature-libraries/sequence-field/types.js";
 import { Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 

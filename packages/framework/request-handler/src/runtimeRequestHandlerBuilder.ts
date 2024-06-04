@@ -25,7 +25,10 @@ class RuntimeRequestHandlerBuilder {
 		}
 	}
 
-	public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
+	public async handleRequest(
+		request: IRequest,
+		runtime: IContainerRuntime,
+	): Promise<IResponse> {
 		const parser = RequestParser.create(request);
 		for (const handler of this.handlers) {
 			const response = await handler(parser, runtime);

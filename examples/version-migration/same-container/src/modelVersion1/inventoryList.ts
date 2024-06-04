@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { v4 as uuid } from "uuid";
 
@@ -121,10 +121,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 				itemData.name.get(),
 				itemData.quantity.get(),
 			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedCell),
-			);
+			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
 		}
 	}
 }

@@ -6,10 +6,10 @@
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
+	IDocumentAttributes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-	IDocumentAttributes,
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";

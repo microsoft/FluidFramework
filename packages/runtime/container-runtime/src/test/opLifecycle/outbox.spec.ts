@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
 	IBatchMessage,
 	IContainerContext,
+	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
@@ -115,7 +115,10 @@ describe("Outbox", () => {
 		},
 	});
 
-	const getMockSplitter = (enabled: boolean, chunkSizeInBytes: number): Partial<OpSplitter> => ({
+	const getMockSplitter = (
+		enabled: boolean,
+		chunkSizeInBytes: number,
+	): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
 		splitFirstBatchMessage: (batch: IBatch): IBatch => {

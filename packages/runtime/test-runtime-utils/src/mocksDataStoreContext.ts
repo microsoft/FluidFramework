@@ -16,8 +16,8 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	IDocumentMessage,
+	IDocumentStorageService,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -30,7 +30,10 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -137,7 +140,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
 

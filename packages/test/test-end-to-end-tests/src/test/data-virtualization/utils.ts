@@ -12,7 +12,10 @@ export function supportsDataVirtualization(provider: ITestObjectProvider) {
 }
 
 // TODO: enable for Odsp Prod endpoint
-export function clearCacheIfOdsp(provider: ITestObjectProvider, persistedCache: TestSnapshotCache) {
+export function clearCacheIfOdsp(
+	provider: ITestObjectProvider,
+	persistedCache: TestSnapshotCache,
+) {
 	if (provider.driver.endpointName === "odsp-df") {
 		persistedCache.clearCache();
 	}

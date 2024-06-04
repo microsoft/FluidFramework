@@ -10,12 +10,12 @@ import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
+	ICreateBlobResponse,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
-	IVersion,
 	ISnapshotTree,
+	ISummaryContext,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
@@ -47,9 +47,9 @@ import {
 	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
 	downloadSnapshot,
-	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
+	getTreeStats,
 } from "./fetchSnapshot.js";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
@@ -163,7 +163,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return response.content;
 	}
 
-	protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
+	protected async fetchBlobFromStorage(
+		blobId: string,
+		evicted: boolean,
+	): Promise<ArrayBuffer> {
 		this.checkAttachmentGETUrl();
 
 		const blob = await getWithRetryForTokenRefresh(async (options) => {
@@ -309,8 +312,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 											snapshotTree: snapshotCachedEntry.snapshotTree,
 											blobContents: snapshotCachedEntry.blobs,
 											ops: snapshotCachedEntry.ops,
-											latestSequenceNumber:
-												snapshotCachedEntry.latestSequenceNumber,
+											latestSequenceNumber: snapshotCachedEntry.latestSequenceNumber,
 											sequenceNumber: snapshotCachedEntry.sequenceNumber,
 											snapshotFormatV: 1,
 										};

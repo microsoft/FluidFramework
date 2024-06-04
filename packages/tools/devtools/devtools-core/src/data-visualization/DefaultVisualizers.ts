@@ -8,15 +8,15 @@
  * implementations for our DDSs.
  */
 
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type IDirectory,
-	type ISharedMap,
-	SharedMap,
 	type ISharedDirectory,
+	type ISharedMap,
 	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
+	SharedMap,
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";

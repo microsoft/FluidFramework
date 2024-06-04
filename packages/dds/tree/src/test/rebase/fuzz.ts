@@ -6,7 +6,11 @@
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ChangeRebaser, makeAnonChange, revisionMetadataSourceFromInfo } from "../../core/index.js";
+import {
+	ChangeRebaser,
+	makeAnonChange,
+	revisionMetadataSourceFromInfo,
+} from "../../core/index.js";
 
 enum Operation {
 	Rebase = 0,

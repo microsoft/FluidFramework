@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
+import { type ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 
-import { Changeset, type MarkList } from "./types.js";
 import { FieldChangeEncodingContext } from "../index.js";
 import { makeV1Codec } from "./sequenceFieldCodecV1.js";
 import { makeV2Codec } from "./sequenceFieldCodecV2.js";
+import { Changeset, type MarkList } from "./types.js";
 
 export const sequenceFieldChangeCodecFactory = (
 	revisionTagCodec: IJsonCodec<

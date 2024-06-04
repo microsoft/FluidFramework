@@ -16,8 +16,8 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ISummaryContext,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -265,10 +265,7 @@ describeCompat(
 
 		it("Second summarizer from latest should not fetch", async function () {
 			// TODO: This test is consistently failing when ran against FRS. See ADO:7894
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 				this.skip();
 			}
 			const summarizer1 = await createSummarizer(provider, mainContainer);
@@ -317,10 +314,7 @@ describeCompat(
 
 		it("Loading Summary from older version should fetch", async function () {
 			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
-			if (
-				provider.driver.type === "routerlicious" &&
-				provider.driver.endpointName === "frs"
-			) {
+			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 				this.skip();
 			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
@@ -391,9 +385,7 @@ describeCompat(
 				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 				let lastSummaryVersion: string | undefined;
 				const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-						containerRuntime.storage,
-					);
+					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 					const response = await uploadSummaryUploaderFunc(summary, context);
 					// Close summarizer so that it does not submit SummaryOp
 					summarizer.close();

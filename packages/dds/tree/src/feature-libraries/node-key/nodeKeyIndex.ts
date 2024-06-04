@@ -104,7 +104,9 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findKeys(node: FlexTreeNode): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
+	private *findKeys(
+		node: FlexTreeNode,
+	): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
 		if (schemaIsObjectNode(node.schema)) {
 			const key = (node as FlexTreeObjectNode).localNodeKey;
 			if (key !== undefined) {

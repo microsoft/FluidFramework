@@ -120,10 +120,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new TreeStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = FlexFieldSchema.create(
-						FieldKinds.optional,
-						jsonRoot,
-					).stored;
+					const rootFieldSchema = FlexFieldSchema.create(FieldKinds.optional, jsonRoot).stored;
 					schema.apply({
 						nodeSchema: new Map(
 							mapIterable(jsonSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -1016,9 +1013,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					x: leaf.number,
 					y: leaf.number,
 				});
-				const schema = builder.intoSchema(
-					FlexFieldSchema.create(FieldKinds.optional, [root]),
-				);
+				const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [root]));
 
 				const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(schema)));
 				initializeForest(
@@ -1066,9 +1061,7 @@ export function testForest(config: ForestTestConfiguration): void {
 	testGeneralPurposeTreeCursor(
 		"forest cursor",
 		(data): ITreeCursor => {
-			const forest = factory(
-				new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)),
-			);
+			const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)));
 			initializeForest(forest, [cursorForJsonableTreeNode(data)], testRevisionTagCodec);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);

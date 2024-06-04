@@ -31,7 +31,9 @@ describeCompat(
 			loaderProps: { configProvider },
 			registry: [[SharedCounter.getFactory().type, SharedCounter.getFactory()]],
 		};
-		const summarizerContainerConfig: ITestContainerConfig = { loaderProps: { configProvider } };
+		const summarizerContainerConfig: ITestContainerConfig = {
+			loaderProps: { configProvider },
+		};
 
 		let provider: ITestObjectProvider;
 

@@ -7,9 +7,9 @@ import child_process from "child_process";
 
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	IPublicClientConfig,
 	IOdspAuthRequestInfo,
 	IOdspDriveItem,
+	IPublicClientConfig,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,

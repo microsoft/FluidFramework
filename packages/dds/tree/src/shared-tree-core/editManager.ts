@@ -19,9 +19,10 @@ import {
 } from "../core/index.js";
 import { Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
+import { createEmitter } from "../events/index.js";
 import {
-	SharedTreeBranch,
 	BranchTrimmingEvents,
+	SharedTreeBranch,
 	getChangeReplaceType,
 	onForkTransitive,
 } from "./branch.js";
@@ -39,7 +40,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "../events/index.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -409,20 +409,22 @@ export class EditManager<
 		oldestCommitInCollabWindow =
 			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
 
-		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map((c) => {
-			const metadata =
-				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
-			const commit: SequencedCommit<TChangeset> = {
-				change: c.change,
-				revision: c.revision,
-				sequenceNumber: metadata.sequenceId.sequenceNumber,
-				sessionId: metadata.sessionId,
-			};
-			if (metadata.sequenceId.indexInBatch !== undefined) {
-				commit.indexInBatch = metadata.sequenceId.indexInBatch;
-			}
-			return commit;
-		});
+		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
+			(c) => {
+				const metadata =
+					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
+				const commit: SequencedCommit<TChangeset> = {
+					change: c.change,
+					revision: c.revision,
+					sequenceNumber: metadata.sequenceId.sequenceNumber,
+					sessionId: metadata.sessionId,
+				};
+				if (metadata.sequenceId.indexInBatch !== undefined) {
+					commit.indexInBatch = metadata.sequenceId.indexInBatch;
+				}
+				return commit;
+			},
+		);
 
 		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
@@ -466,11 +468,11 @@ export class EditManager<
 					c.indexInBatch === undefined
 						? {
 								sequenceNumber: c.sequenceNumber,
-						  }
+							}
 						: {
 								sequenceNumber: c.sequenceNumber,
 								indexInBatch: c.indexInBatch,
-						  };
+							};
 				const commit = mintCommit(base, c);
 				this.sequenceMap.set(sequenceId, commit);
 				this.trunkMetadata.set(c.revision, {
@@ -558,11 +560,11 @@ export class EditManager<
 			commitsSequenceNumber.length === 0
 				? {
 						sequenceNumber,
-				  }
+					}
 				: {
 						sequenceNumber,
 						indexInBatch: commitsSequenceNumber.length,
-				  };
+					};
 
 		if (newCommit.sessionId === this.localSessionId) {
 			const headTrunkCommit = this.trunk.getHead();
@@ -585,8 +587,7 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() =>
-				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -665,7 +666,7 @@ export class EditManager<
 						// 2) There are more than one commit for the same sequence number, in this case we need to select the last one.
 						sequenceNumber: searchBy,
 						indexInBatch: Number.POSITIVE_INFINITY,
-				  }
+					}
 				: searchBy;
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);

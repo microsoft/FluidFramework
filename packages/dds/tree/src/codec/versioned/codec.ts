@@ -8,11 +8,11 @@ import { TSchema } from "@sinclair/typebox";
 
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
+	type FormatVersion,
 	type ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
 	withSchemaValidation,
-	type FormatVersion,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";

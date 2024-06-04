@@ -7,8 +7,8 @@ import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 

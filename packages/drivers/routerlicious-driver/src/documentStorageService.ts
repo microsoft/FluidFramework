@@ -6,9 +6,9 @@
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	LoaderCachingPolicy,
 	ISnapshotTree,
 	IVersion,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
@@ -54,7 +54,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 					snapshotTreeCache,
 					noCacheGitManager,
 					getStorageManager,
-			  )
+				)
 			: new ShreddedSummaryDocumentStorageService(
 					id,
 					manager,
@@ -64,7 +64,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 					blobCache,
 					shreddedSummaryTreeCache,
 					getStorageManager,
-			  );
+				);
 		// TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
 		if (
 			!driverPolicies?.enableWholeSummaryUpload &&

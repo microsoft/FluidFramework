@@ -267,7 +267,10 @@ async function* saveOps(
 	}
 }
 
-export async function fluidFetchMessages(documentService?: IDocumentService, saveDir?: string) {
+export async function fluidFetchMessages(
+	documentService?: IDocumentService,
+	saveDir?: string,
+) {
 	const messageStats = dumpMessageStats || dumpMessages;
 	if (!messageStats && (saveDir === undefined || documentService === undefined)) {
 		return;

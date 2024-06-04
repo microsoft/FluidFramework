@@ -23,9 +23,9 @@ import {
 	FieldKinds,
 	type FlexAllowedTypes,
 	FlexFieldSchema,
+	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
-	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { flexTreeViewWithContent, forestWithContent } from "../../utils.js";
@@ -79,26 +79,17 @@ describe("LazyField", () => {
 		assert.throws(
 			() => sequenceField.insertAt(0, [1]),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => (optionalField.content = undefined),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => (valueField.content = {}),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 

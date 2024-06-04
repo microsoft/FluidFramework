@@ -90,14 +90,14 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 			)}
 			{foundDevtools === true && (
 				<div>
-					Fluid Devtools found! Open the browser`s devtools panel to view the Fluid
-					Devtools extension.
+					Fluid Devtools found! Open the browser`s devtools panel to view the Fluid Devtools
+					extension.
 				</div>
 			)}
 			{foundDevtools === false && (
 				<div>
-					Fluid Devtools library not found running in the current tab. For details on how
-					to enable it, please refer to our documentation{" "}
+					Fluid Devtools library not found running in the current tab. For details on how to
+					enable it, please refer to our documentation{" "}
 					<a
 						href="https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools/README.md"
 						target="_blank"

@@ -394,8 +394,7 @@ describe("Pending State Manager", () => {
 					undefined,
 				);
 				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage &
-						UnknownContainerRuntimeMessage,
+					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
 				);
 			});
 		});
@@ -534,7 +533,9 @@ describe("Pending State Manager", () => {
 			},
 		];
 
-		function createPendingStateManager(pendingStates?: IPendingMessage[]): PendingStateManager {
+		function createPendingStateManager(
+			pendingStates?: IPendingMessage[],
+		): PendingStateManager {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{

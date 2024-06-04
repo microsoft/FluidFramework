@@ -20,17 +20,17 @@ import {
 import type { VisualizeChildData } from "./DataVisualization.js";
 import type {
 	SharedTreeLeafNode,
-	VisualSharedTreeNode,
 	SharedTreeSchemaNode,
+	VisualSharedTreeNode,
 } from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
-	type VisualChildNode,
-	VisualNodeKind,
-	type VisualValueNode,
-	type VisualTreeNode,
 	type FluidHandleNode,
 	type UnknownObjectNode,
+	type VisualChildNode,
+	VisualNodeKind,
+	type VisualTreeNode,
+	type VisualValueNode,
 } from "./VisualTree.js";
 
 /**

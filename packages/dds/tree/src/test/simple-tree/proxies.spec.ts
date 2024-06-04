@@ -17,10 +17,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 
-import { hydrate, pretty } from "./utils.js";
-import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../util/index.js";
+import { getView } from "../utils.js";
+import { hydrate, pretty } from "./utils.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -482,8 +482,8 @@ describe("ArrayNode Proxy", () => {
 						index <= start
 							? index // If the index is <= start, it is unmodified
 							: index >= end
-							? index - moved.length // If the index is >= end, subtract the number of moved items.
-							: start, // If the index is inside the moved window, slide it left to the starting position.
+								? index - moved.length // If the index is >= end, subtract the number of moved items.
+								: start, // If the index is inside the moved window, slide it left to the starting position.
 						/* deleteCount: */ 0,
 						...moved,
 					);

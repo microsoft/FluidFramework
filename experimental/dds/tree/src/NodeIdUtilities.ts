@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assertWithMessage } from './Common.js';
-import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from './Identifiers.js';
-import { IdCompressor, isFinalId } from './id-compressor/index.js';
-import { NodeData } from './persisted-types/index.js';
+import { assertWithMessage } from "./Common.js";
+import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from "./Identifiers.js";
+import { IdCompressor, isFinalId } from "./id-compressor/index.js";
+import { NodeData } from "./persisted-types/index.js";
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants
@@ -92,7 +92,7 @@ export interface NodeIdNormalizer<TId extends OpSpaceNodeId> {
  * can normalize IDs into session space without requiring any additional information.
  */
 export interface ContextualizedNodeIdNormalizer<TId extends OpSpaceNodeId>
-	extends Omit<NodeIdNormalizer<TId>, 'localSessionId' | 'normalizeToSessionSpace'> {
+	extends Omit<NodeIdNormalizer<TId>, "localSessionId" | "normalizeToSessionSpace"> {
 	/**
 	 * Normalizes the given ID to session space
 	 */
@@ -105,7 +105,7 @@ export interface ContextualizedNodeIdNormalizer<TId extends OpSpaceNodeId>
  */
 export function scopeIdNormalizer<TId extends OpSpaceNodeId>(
 	idNormalizer: NodeIdNormalizer<TId>,
-	sessionId?: SessionId
+	sessionId?: SessionId,
 ): ContextualizedNodeIdNormalizer<TId> {
 	return {
 		normalizeToOpSpace: (id) => idNormalizer.normalizeToOpSpace(id),
@@ -120,7 +120,7 @@ export function scopeIdNormalizer<TId extends OpSpaceNodeId>(
  * they are not.
  */
 export function sequencedIdNormalizer<TId extends OpSpaceNodeId>(
-	idNormalizer: NodeIdNormalizer<TId>
+	idNormalizer: NodeIdNormalizer<TId>,
 ): ContextualizedNodeIdNormalizer<FinalNodeId & TId> {
 	return {
 		normalizeToOpSpace: (id) => {
@@ -136,11 +136,14 @@ export function sequencedIdNormalizer<TId extends OpSpaceNodeId>(
 	};
 }
 
-export function getNodeIdContext(compressor: IdCompressor): NodeIdContext & NodeIdNormalizer<OpSpaceNodeId> {
+export function getNodeIdContext(
+	compressor: IdCompressor,
+): NodeIdContext & NodeIdNormalizer<OpSpaceNodeId> {
 	return {
 		generateNodeId: (override?: string) => compressor.generateCompressedId(override) as NodeId,
 		convertToNodeId: (id: StableNodeId) => compressor.recompress(id) as NodeId,
-		tryConvertToNodeId: (id: StableNodeId) => compressor.tryRecompress(id) as NodeId | undefined,
+		tryConvertToNodeId: (id: StableNodeId) =>
+			compressor.tryRecompress(id) as NodeId | undefined,
 		convertToStableNodeId: (id: NodeId) => compressor.decompress(id) as StableNodeId,
 		tryConvertToStableNodeId: (id: NodeId) => compressor.tryDecompress(id) as StableNodeId,
 		normalizeToOpSpace: (id: NodeId) => compressor.normalizeToOpSpace(id) as OpSpaceNodeId,

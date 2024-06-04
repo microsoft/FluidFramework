@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -222,7 +222,11 @@ describe("DataVisualizerGraph unit tests", () => {
 		// Pass in the empty containerData to the visualizer.
 		const emptyRecord: Record<string, IFluidLoadable> = {};
 
-		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
+		const visualizer = new DataVisualizerGraph(
+			emptyRecord,
+			defaultVisualizers,
+			defaultEditors,
+		);
 
 		const childEmptyRecord = await visualizer.renderRootHandles();
 		const expectedChildEmptyRecord = {};

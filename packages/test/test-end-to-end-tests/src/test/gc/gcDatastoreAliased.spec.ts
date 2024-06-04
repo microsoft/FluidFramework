@@ -11,8 +11,8 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
@@ -78,7 +78,10 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		// Alias a datastore
 		const alias = "alias";
 		const aliasResult1 = await dataStore2.trySetAlias(alias);
-		assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
+		assert(
+			aliasResult1 === "Success",
+			`Expected an successful aliasing. Got: ${aliasResult1}`,
+		);
 		await provider.ensureSynchronized();
 
 		// Should be able to retrieve root datastore from remote

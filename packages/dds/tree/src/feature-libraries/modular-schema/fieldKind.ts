@@ -4,8 +4,8 @@
  */
 
 import {
-	FieldKindIdentifier,
 	FieldKindData,
+	FieldKindIdentifier,
 	Multiplicity,
 	SchemaPolicy,
 } from "../../core/index.js";

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { ChangeAtomId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
@@ -16,7 +17,6 @@ import {
 import { brand } from "../../../util/index.js";
 import { testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const vestigialEndpoint: ChangeAtomId = {
 	revision: testIdCompressor.generateCompressedId(),

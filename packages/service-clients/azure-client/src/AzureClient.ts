@@ -20,11 +20,11 @@ import {
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
+	type CompatibilityMode,
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
@@ -167,7 +167,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -203,7 +206,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -233,7 +239,10 @@ export class AzureClient {
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),

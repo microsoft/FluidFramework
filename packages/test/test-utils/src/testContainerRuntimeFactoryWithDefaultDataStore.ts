@@ -4,8 +4,8 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";

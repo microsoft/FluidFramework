@@ -28,7 +28,10 @@ export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
 } from "./sequenceFieldChangeHandler.js";
-export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
+export {
+	SequenceChangeRebaser,
+	sequenceFieldChangeRebaser,
+} from "./sequenceFieldChangeRebaser.js";
 export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 export { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";

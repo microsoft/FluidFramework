@@ -4,12 +4,12 @@
  */
 
 import {
-	IFluidCodeResolver,
-	IResolvedFluidCodeDetails,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
+	IFluidCodeResolver,
 	IFluidModule,
 	IFluidModuleWithDetails,
+	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions/internal";
 

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { HasVariadicTraits } from './ChangeTypes.js';
-import { Mutable, MutableMap, copyPropertyIfDefined, fail } from './Common.js';
-import { Forest } from './Forest.js';
-import { NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
-import { NodeIdConverter } from './NodeIdUtilities.js';
-import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView.js';
-import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
+import { HasVariadicTraits } from "./ChangeTypes.js";
+import { Mutable, MutableMap, copyPropertyIfDefined, fail } from "./Common.js";
+import { Forest } from "./Forest.js";
+import { NodeId, StableNodeId, TraitLabel } from "./Identifiers.js";
+import { NodeIdConverter } from "./NodeIdUtilities.js";
+import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from "./TreeView.js";
+import { Payload, TreeNode, TreeNodeSequence } from "./persisted-types/index.js";
 
 /**
  * An immutable view of a distributed tree.
@@ -21,7 +21,10 @@ export class RevisionView extends TreeView {
 	 * @param root - the root of the tree to use as the contents of the {@link RevisionView}
 	 * @param expensiveValidation - whether or not to perform additional validation, e.g. to catch errors when testing
 	 */
-	public static fromTree<T extends TreeNode<T, NodeId>>(root: T, expensiveValidation?: boolean): RevisionView;
+	public static fromTree<T extends TreeNode<T, NodeId>>(
+		root: T,
+		expensiveValidation?: boolean,
+	): RevisionView;
 	/**
 	 * Constructs a {@link RevisionView} using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `RevisionView`
@@ -31,24 +34,28 @@ export class RevisionView extends TreeView {
 	public static fromTree<T extends TreeNode<T, StableNodeId>>(
 		root: T,
 		idConverter: NodeIdConverter,
-		expensiveValidation?: boolean
+		expensiveValidation?: boolean,
 	): RevisionView;
 
 	public static fromTree<T extends TreeNode<T, NodeId> | TreeNode<T, StableNodeId>>(
 		root: T,
 		idConverterOrExpensiveValidation?: NodeIdConverter | boolean,
-		expensiveValidation = false
+		expensiveValidation = false,
 	): RevisionView {
-		if (typeof idConverterOrExpensiveValidation === 'object') {
-			const rootId = idConverterOrExpensiveValidation.convertToNodeId(root.identifier as StableNodeId);
+		if (typeof idConverterOrExpensiveValidation === "object") {
+			const rootId = idConverterOrExpensiveValidation.convertToNodeId(
+				root.identifier as StableNodeId,
+			);
 
 			const treeViewNodes = convertTreeNodesToViewNodes(root, (node) => {
-				const identifier = idConverterOrExpensiveValidation.convertToNodeId(node.identifier as StableNodeId);
+				const identifier = idConverterOrExpensiveValidation.convertToNodeId(
+					node.identifier as StableNodeId,
+				);
 				const viewNode = {
 					definition: node.definition,
 					identifier,
 				};
-				copyPropertyIfDefined(node, viewNode, 'payload');
+				copyPropertyIfDefined(node, viewNode, "payload");
 				return viewNode;
 			});
 
@@ -62,10 +69,10 @@ export class RevisionView extends TreeView {
 							definition: node.definition,
 							identifier: node.identifier as NodeId,
 						};
-						copyPropertyIfDefined(node, viewNode, 'payload');
+						copyPropertyIfDefined(node, viewNode, "payload");
 						return viewNode;
-					})
-				)
+					}),
+				),
 			);
 		}
 	}
@@ -112,20 +119,31 @@ export class TransactionView extends TreeView {
 	public attachRange(nodesToAttach: readonly NodeId[], place: TreeViewPlace): TransactionView {
 		const { parent, label } = place.trait;
 		const index = this.findIndexWithinTrait(place);
-		return new TransactionView(this.root, this.forest.attachRangeOfChildren(parent, label, index, nodesToAttach));
+		return new TransactionView(
+			this.root,
+			this.forest.attachRangeOfChildren(parent, label, index, nodesToAttach),
+		);
 	}
 
 	/**
 	 * Detaches a range of nodes from their parent. The detached nodes remain in the view.
 	 * @param rangeToDetach - the range of nodes to detach
 	 */
-	public detachRange(rangeToDetach: TreeViewRange): { view: TransactionView; detached: readonly NodeId[] } {
+	public detachRange(rangeToDetach: TreeViewRange): {
+		view: TransactionView;
+		detached: readonly NodeId[];
+	} {
 		const { start, end } = rangeToDetach;
 		const { trait: traitLocation } = start;
 		const { parent, label } = traitLocation;
 		const startIndex = this.findIndexWithinTrait(start);
 		const endIndex = this.findIndexWithinTrait(end);
-		const { forest, detached } = this.forest.detachRangeOfChildren(parent, label, startIndex, endIndex);
+		const { forest, detached } = this.forest.detachRangeOfChildren(
+			parent,
+			label,
+			startIndex,
+			endIndex,
+		);
 		return { view: new TransactionView(this.root, forest), detached };
 	}
 
@@ -157,7 +175,7 @@ export class TransactionView extends TreeView {
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
 	TOut extends TreeViewNode = TreeViewNode,
->(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'>): TOut[];
+>(root: TIn, convert: (node: TIn) => Omit<TOut, "traits">): TOut[];
 
 /**
  * Transform an input tree into a list of {@link TreeViewNode}s.
@@ -167,7 +185,7 @@ export function convertTreeNodesToViewNodes<
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
 	TOut extends TreeViewNode = TreeViewNode,
->(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined;
+>(root: TIn, convert: (node: TIn) => Omit<TOut, "traits"> | undefined): TOut[] | undefined;
 
 /**
  * Transform an input tree into a list of {@link TreeViewNode}s.
@@ -179,26 +197,31 @@ export function convertTreeNodesToViewNodes<
 export function convertTreeNodesToViewNodes<
 	TIn extends HasVariadicTraits<TIn>,
 	TOut extends TreeViewNode = TreeViewNode,
->(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined {
+>(root: TIn, convert: (node: TIn) => Omit<TOut, "traits"> | undefined): TOut[] | undefined {
 	const convertedRoot = convert(root) as Mutable<TOut>;
 	if (convertedRoot === undefined || root.traits === undefined) {
 		return undefined;
 	}
 	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
-	const rootTraits = (root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
+	const rootTraits =
+		(root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
 	convertedRoot.traits = new Map();
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn]>;
 		newNode: Mutable<TOut>;
-	}[] = [{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot }];
+	}[] = [
+		{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot },
+	];
 	const resultNodes: TOut[] = [];
 
 	while (pendingNodes.length > 0) {
-		const { childIterator, newNode } = pendingNodes[pendingNodes.length - 1] ?? fail('Undefined node');
+		const { childIterator, newNode } =
+			pendingNodes[pendingNodes.length - 1] ?? fail("Undefined node");
 		const { value, done } = childIterator.next();
 		if (done === true) {
 			resultNodes.push(
-				pendingNodes.pop()?.newNode ?? fail('covertTreeNodesToViewNodes incorrectly coordinated parentage')
+				pendingNodes.pop()?.newNode ??
+					fail("covertTreeNodesToViewNodes incorrectly coordinated parentage"),
 			);
 		} else {
 			const [traitLabel, child] = value as [TraitLabel, TIn];
@@ -207,7 +230,8 @@ export function convertTreeNodesToViewNodes<
 				return undefined;
 			}
 			if (child.traits !== undefined) {
-				const childTraits = (child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
+				const childTraits =
+					(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
 				(convertedChild as Mutable<TOut>).traits = new Map();
 				pendingNodes.push({
 					childIterator: iterateChildren(childTraits)[Symbol.iterator](),
@@ -215,7 +239,7 @@ export function convertTreeNodesToViewNodes<
 				});
 			}
 
-			const newTraits = newNode.traits as MutableMap<TOut['traits']>;
+			const newTraits = newNode.traits as MutableMap<TOut["traits"]>;
 			let newTrait = newTraits.get(traitLabel);
 			if (newTrait === undefined) {
 				newTrait = [];
@@ -231,7 +255,9 @@ export function convertTreeNodesToViewNodes<
 /**
  * Returns an iterable of the supplied node's traits in a stable order.
  */
-export function* iterateChildren<T>(hasTraits: HasVariadicTraits<T>): Iterable<[TraitLabel, T]> {
+export function* iterateChildren<T>(
+	hasTraits: HasVariadicTraits<T>,
+): Iterable<[TraitLabel, T]> {
 	if (hasTraits.traits !== undefined) {
 		for (const [label, trait] of Object.entries(hasTraits.traits).sort()) {
 			if (trait !== undefined) {
@@ -247,6 +273,8 @@ export function* iterateChildren<T>(hasTraits: HasVariadicTraits<T>): Iterable<[
 	}
 }
 
-function isTreeNodeSequence<TChild>(sequence: TreeNodeSequence<TChild> | TChild): sequence is TreeNodeSequence<TChild> {
+function isTreeNodeSequence<TChild>(
+	sequence: TreeNodeSequence<TChild> | TChild,
+): sequence is TreeNodeSequence<TChild> {
 	return Array.isArray(sequence);
 }

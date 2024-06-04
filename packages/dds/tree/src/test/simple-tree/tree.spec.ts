@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView } from "../utils.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 
 const schema = new SchemaFactory("com.example");
 

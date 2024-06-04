@@ -181,11 +181,7 @@ describe("Cell", () => {
 
 				let key = cell.getAttribution();
 
-				assert.equal(
-					key?.type,
-					"detached",
-					"the first cell should have detached attribution",
-				);
+				assert.equal(key?.type, "detached", "the first cell should have detached attribution");
 
 				// load a cell from the snapshot
 				const services = MockSharedObjectServices.createFromSummary(
@@ -253,11 +249,7 @@ describe("Cell", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				assert.equal(cell1.get(), undefined, "Could not delete cell value");
-				assert.equal(
-					cell2.get(),
-					undefined,
-					"Could not delete cell value from remote client",
-				);
+				assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
 			});
 
 			it("Shouldn't overwrite value if there is pending set", () => {
@@ -276,11 +268,7 @@ describe("Cell", () => {
 
 				// Verify the SharedCell with 2 pending messages
 				assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
-				assert.equal(
-					cell2.get(),
-					pending2,
-					"could not get the set value from pending cell",
-				);
+				assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
 
 				containerRuntimeFactory.processSomeMessages(1);
 
@@ -290,11 +278,7 @@ describe("Cell", () => {
 
 				// Verify the SharedCell with 1 pending message
 				assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
-				assert.equal(
-					cell2.get(),
-					pending2,
-					"could not get the set value from pending cell",
-				);
+				assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
 			});
 		});
 

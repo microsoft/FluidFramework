@@ -24,11 +24,11 @@ import {
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
 import {
+	IGarbageCollectionData,
+	ISummarizeResult,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IGarbageCollectionData,
-	ISummarizeResult,
 	ITelemetryContextExt,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
@@ -228,9 +228,7 @@ export function convertToSummaryTreeWithStats(
 			case TreeEntry.Blob: {
 				const blob = entry.value;
 				const content =
-					blob.encoding === "base64"
-						? IsoBuffer.from(blob.contents, "base64")
-						: blob.contents;
+					blob.encoding === "base64" ? IsoBuffer.from(blob.contents, "base64") : blob.contents;
 				builder.addBlob(entry.path, content);
 				break;
 			}
@@ -266,7 +264,10 @@ export function convertToSummaryTreeWithStats(
  * @param fullTree - true to never use handles, even if id is specified
  * @internal
  */
-export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
+export function convertToSummaryTree(
+	snapshot: ITree,
+	fullTree: boolean = false,
+): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (snapshot.id && !fullTree) {
 		const stats = mergeStats();

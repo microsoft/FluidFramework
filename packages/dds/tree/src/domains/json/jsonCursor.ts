@@ -17,8 +17,8 @@ import { CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/inde
 import { JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
-import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

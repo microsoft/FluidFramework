@@ -203,6 +203,8 @@ export function allowsRepoSuperset(
 	return true;
 }
 
-export function normalizeField(schema: TreeFieldStoredSchema | undefined): TreeFieldStoredSchema {
+export function normalizeField(
+	schema: TreeFieldStoredSchema | undefined,
+): TreeFieldStoredSchema {
 	return schema ?? storedEmptyFieldSchema;
 }

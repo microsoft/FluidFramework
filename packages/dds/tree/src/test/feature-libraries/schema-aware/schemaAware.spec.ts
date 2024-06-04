@@ -13,11 +13,11 @@ import {
 	ContextuallyTypedNodeDataObject,
 	FieldKinds,
 	FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldSchema,
 	FlexTreeNodeSchema,
 	typeNameSymbol,
 	valueSymbol,
-	type FlexFieldKind,
 } from "../../../feature-libraries/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,

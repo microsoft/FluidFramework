@@ -4,8 +4,8 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -55,9 +55,7 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
+			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -65,9 +63,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
+			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -335,7 +331,7 @@ function extractContentArray(
 							parentIndex: i,
 						},
 						onVisitProxy: visitProxies?.onVisitProxy,
-				  }
+					}
 				: undefined,
 		);
 		output.push(childContent);
@@ -367,7 +363,7 @@ function extractContentMap(
 							parentIndex: 0,
 						},
 						onVisitProxy: visitProxies?.onVisitProxy,
-				  }
+					}
 				: undefined,
 		);
 		output.set(key, childContent);
@@ -404,7 +400,7 @@ function extractContentObject(
 								parentIndex: 0,
 							},
 							onVisitProxy: visitProxies?.onVisitProxy,
-					  }
+						}
 					: undefined,
 			);
 			output[key] = childContent;

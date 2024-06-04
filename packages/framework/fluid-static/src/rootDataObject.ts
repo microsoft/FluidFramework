@@ -9,8 +9,8 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	type FluidObject,
 	type IFluidLoadable,
@@ -208,8 +208,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			containerRuntime: IContainerRuntime,
 			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): Promise<FluidObject> => {
-			const entryPoint =
-				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
 				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 			}

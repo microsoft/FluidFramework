@@ -24,13 +24,17 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeShape,
+	UniformChunk,
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	Context,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
 	FlexTreeSchema,
 	ForestSummarizer,
+	MockNodeKeyManager,
 	ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -40,7 +44,6 @@ import {
 	intoStoredSchema,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
 import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
 import {

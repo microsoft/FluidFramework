@@ -15,6 +15,8 @@ import {
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -22,8 +24,17 @@ import {
 	numberSchema,
 	stringSchema,
 } from "./leafNodeSchema.js";
+import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	InsertableObjectFromSchemaRecord,
+	TreeObjectNode,
+	objectSchema,
+} from "./objectNode.js";
+import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
+import {
+	DefaultProvider,
 	FieldKind,
+	type FieldProps,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
@@ -32,15 +43,9 @@ import {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
-	type FieldProps,
 	createFieldSchema,
-	DefaultProvider,
 	getDefaultProvider,
 } from "./schemaTypes.js";
-import { TreeArrayNode, arraySchema } from "./arrayNode.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
-import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
 	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
@@ -49,7 +54,6 @@ import {
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
-import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -158,10 +162,9 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
-			TScope,
-			Name
-		>;
+		return (
+			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
+		) as ScopedSchemaName<TScope, Name>;
 	}
 
 	/**
@@ -671,12 +674,7 @@ export class SchemaFactory<
 			public constructor(
 				data:
 					| Iterable<
-							[
-								string,
-								InsertableTreeNodeFromImplicitAllowedTypes<
-									T & ImplicitAllowedTypes
-								>,
-							]
+							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
 					  >
 					| FlexTreeNode,
 			) {

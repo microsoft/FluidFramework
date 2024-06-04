@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 // eslint-disable-next-line import/no-internal-modules
-import { dataStoreNodePathOnly, shouldAllowGcSweep, urlToGCNodePath } from "../../gc/gcHelpers.js";
+import {
+	dataStoreNodePathOnly,
+	shouldAllowGcSweep,
+	urlToGCNodePath,
+} from "../../gc/gcHelpers.js";
 import { GCFeatureMatrix } from "../../gc/index.js";
 
 describe("Garbage Collection Helpers Tests", () => {

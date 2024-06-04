@@ -4,10 +4,10 @@
  */
 
 import {
-	Jsonable,
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
+	Jsonable,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";

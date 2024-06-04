@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
+import { strict as assert } from "assert";
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
-import { expect } from 'chai';
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { expect } from "chai";
 
-import { Definition, TraitLabel } from '../Identifiers.js';
-import { RevisionView } from '../RevisionView.js';
-import { ChangeNode } from '../persisted-types/index.js';
+import { Definition, TraitLabel } from "../Identifiers.js";
+import { RevisionView } from "../RevisionView.js";
+import { ChangeNode } from "../persisted-types/index.js";
 
-import { expectDefined } from './utilities/TestCommon.js';
-import { TestNode } from './utilities/TestNode.js';
-import { refreshTestTree } from './utilities/TestUtilities.js';
+import { expectDefined } from "./utilities/TestCommon.js";
+import { TestNode } from "./utilities/TestNode.js";
+import { refreshTestTree } from "./utilities/TestUtilities.js";
 
-describe('TreeView', () => {
+describe("TreeView", () => {
 	const testTree = refreshTestTree();
 
-	describe('can compute deltas', () => {
-		it('that are the same object', () => {
+	describe("can compute deltas", () => {
+		it("that are the same object", () => {
 			const view = testTree.view;
 			expect(view.delta(view)).deep.equals({
 				changed: [],
@@ -29,7 +29,7 @@ describe('TreeView', () => {
 			});
 		});
 
-		it('that have the same tree', () => {
+		it("that have the same tree", () => {
 			const viewA = RevisionView.fromTree<TestNode>(testTree);
 			const viewB = RevisionView.fromTree<TestNode>(testTree);
 			expect(viewA.delta(viewB)).deep.equals({
@@ -39,16 +39,20 @@ describe('TreeView', () => {
 			});
 		});
 
-		it('with different root ids', () => {
+		it("with different root ids", () => {
 			const viewA = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
 			const viewB = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
 			assert.throws(
 				() => viewA.delta(viewB),
-				(e: Error) => validateAssertionError(e, 'Delta can only be calculated between views that share a root')
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"Delta can only be calculated between views that share a root",
+					),
 			);
 		});
 
-		it('with different subtrees', () => {
+		it("with different subtrees", () => {
 			const rootId = testTree.generateNodeId();
 
 			const leafA = testTree.buildLeaf(testTree.generateNodeId());
@@ -56,25 +60,25 @@ describe('TreeView', () => {
 
 			const subtreeA = {
 				identifier: testTree.generateNodeId(),
-				definition: 'node' as Definition,
+				definition: "node" as Definition,
 				traits: { children: [leafA] },
 			};
 			const subtreeB = {
 				identifier: testTree.generateNodeId(),
-				definition: 'node' as Definition,
+				definition: "node" as Definition,
 				traits: { children: [leafB] },
 			};
 
 			const rootA: ChangeNode = {
 				identifier: rootId,
-				definition: 'node' as Definition,
+				definition: "node" as Definition,
 				traits: {
 					children: [subtreeA],
 				},
 			};
 			const rootB: ChangeNode = {
 				identifier: rootId,
-				definition: 'node' as Definition,
+				definition: "node" as Definition,
 				traits: {
 					children: [subtreeB],
 				},
@@ -92,18 +96,18 @@ describe('TreeView', () => {
 			expect(delta.added).contains(leafB.identifier);
 		});
 
-		it('with different payloads', () => {
+		it("with different payloads", () => {
 			const rootId = testTree.generateNodeId();
 			const nodeA: ChangeNode = {
 				identifier: rootId,
-				definition: 'node' as Definition,
-				payload: 'test1',
+				definition: "node" as Definition,
+				payload: "test1",
 				traits: {},
 			};
 			const nodeB: ChangeNode = {
 				identifier: rootId,
-				definition: 'node' as Definition,
-				payload: 'test2',
+				definition: "node" as Definition,
+				payload: "test2",
 				traits: {},
 			};
 
@@ -115,7 +119,7 @@ describe('TreeView', () => {
 			expect(delta.added).deep.equals([]);
 		});
 
-		it('after an insert', () => {
+		it("after an insert", () => {
 			const viewA = testTree.view;
 			const insertedNode = testTree.buildLeaf(testTree.generateNodeId());
 			const treeB: ChangeNode = {
@@ -130,7 +134,7 @@ describe('TreeView', () => {
 			expect(delta.added).deep.equals([insertedNode.identifier]);
 		});
 
-		it('after a delete', () => {
+		it("after a delete", () => {
 			const viewA = testTree.view;
 			const treeB: ChangeNode = {
 				identifier: testTree.identifier,
@@ -144,7 +148,7 @@ describe('TreeView', () => {
 			expect(delta.added).deep.equals([]);
 		});
 
-		it('after a move', () => {
+		it("after a move", () => {
 			const viewA = testTree.view;
 			const treeB: ChangeNode = {
 				identifier: testTree.identifier,
@@ -159,7 +163,7 @@ describe('TreeView', () => {
 		});
 	});
 
-	it('correctly returns node parentage', () => {
+	it("correctly returns node parentage", () => {
 		const view = testTree.view;
 		for (const node of view) {
 			const parentNode = view.tryGetParentViewNode(node.identifier);
@@ -172,10 +176,10 @@ describe('TreeView', () => {
 	});
 
 	// Regression test for the issue fixed in #9824
-	it('can be iterated in a consistent order', () => {
+	it("can be iterated in a consistent order", () => {
 		const [id1, id2, id3] = Array.from({ length: 3 }).map(() => testTree.generateNodeId());
-		const label1 = 'traitLabelA' as TraitLabel;
-		const label2 = 'traitLabelB' as TraitLabel;
+		const label1 = "traitLabelA" as TraitLabel;
+		const label2 = "traitLabelB" as TraitLabel;
 		const { definition } = testTree;
 		const tree1: ChangeNode = {
 			identifier: id1,

@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
-import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
-import { isStableNodeKey, NodeKeyManager } from "./nodeKeyManager.js";
 import { brand, extractFromOpaque, fail } from "../../util/index.js";
+import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
+import { NodeKeyManager, isStableNodeKey } from "./nodeKeyManager.js";
 
 /**
  * Mock {@link NodeKeyManager} that generates deterministic {@link StableNodeKey}s and {@link LocalNodeKey}s.

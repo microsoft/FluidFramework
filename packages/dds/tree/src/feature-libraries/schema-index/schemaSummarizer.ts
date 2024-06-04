@@ -6,8 +6,8 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -19,7 +19,11 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
+import {
+	MutableTreeStoredSchema,
+	TreeStoredSchema,
+	schemaDataIsEmpty,
+} from "../../core/index.js";
 import {
 	Summarizable,
 	SummaryElementParser,

@@ -7,8 +7,8 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";

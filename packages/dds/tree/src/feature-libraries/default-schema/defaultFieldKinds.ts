@@ -8,8 +8,8 @@ import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	FieldKindIdentifier,
-	forbiddenFieldKindIdentifier,
 	Multiplicity,
+	forbiddenFieldKindIdentifier,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
@@ -112,7 +112,8 @@ export const sequence = new FieldKindWithEditor(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequenceIdentifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
+		other.kind === sequenceIdentifier &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
 );

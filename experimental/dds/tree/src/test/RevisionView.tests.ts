@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
-import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { detachRange, insertIntoTrait } from '../EditUtilities.js';
-import { TraitLabel } from '../Identifiers.js';
-import { RevisionView, convertTreeNodesToViewNodes } from '../RevisionView.js';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
-import { ChangeNode } from '../persisted-types/index.js';
+import { StablePlace, StableRange } from "../ChangeTypes.js";
+import { detachRange, insertIntoTrait } from "../EditUtilities.js";
+import { TraitLabel } from "../Identifiers.js";
+import { RevisionView, convertTreeNodesToViewNodes } from "../RevisionView.js";
+import { getChangeNodeFromViewNode } from "../SerializationUtilities.js";
+import { ChangeNode } from "../persisted-types/index.js";
 
-import { expectDefined } from './utilities/TestCommon.js';
-import { LeafNode, TestNode } from './utilities/TestNode.js';
-import { refreshTestTree } from './utilities/TestUtilities.js';
+import { expectDefined } from "./utilities/TestCommon.js";
+import { LeafNode, TestNode } from "./utilities/TestNode.js";
+import { refreshTestTree } from "./utilities/TestUtilities.js";
 
-describe('RevisionView', () => {
+describe("RevisionView", () => {
 	const testTree = refreshTestTree();
 
-	describe('creation from a ChangeNode', () => {
-		it('ignores empty traits', () => {
+	describe("creation from a ChangeNode", () => {
+		it("ignores empty traits", () => {
 			const leaf = testTree.buildLeaf(testTree.generateNodeId());
 			const node: ChangeNode = {
 				traits: {
@@ -38,12 +38,12 @@ describe('RevisionView', () => {
 		});
 	});
 
-	it('correctly converts tree nodes', () => {
+	it("correctly converts tree nodes", () => {
 		const viewNodes = expectDefined(
 			convertTreeNodesToViewNodes<TestNode>(testTree, (node) => ({
 				definition: node.definition,
 				identifier: node.identifier,
-			}))
+			})),
 		);
 		let createdRoot = false;
 		let createdLeft = false;
@@ -54,8 +54,12 @@ describe('RevisionView', () => {
 					expect(createdRoot).to.be.false;
 					expect(viewNode.definition).to.equal(testTree.definition);
 					expect(viewNode.traits.size).to.equal(2);
-					expect(viewNode.traits.get(testTree.left.traitLabel)).to.deep.equal([testTree.left.identifier]);
-					expect(viewNode.traits.get(testTree.right.traitLabel)).to.deep.equal([testTree.right.identifier]);
+					expect(viewNode.traits.get(testTree.left.traitLabel)).to.deep.equal([
+						testTree.left.identifier,
+					]);
+					expect(viewNode.traits.get(testTree.right.traitLabel)).to.deep.equal([
+						testTree.right.identifier,
+					]);
 					createdRoot = true;
 					break;
 				case testTree.left.identifier:
@@ -71,12 +75,12 @@ describe('RevisionView', () => {
 					createdRight = true;
 					break;
 				default:
-					expect.fail('Unexpected view node ID');
+					expect.fail("Unexpected view node ID");
 			}
 		}
 	});
 
-	it('correctly handles tree node conversion failure', () => {
+	it("correctly handles tree node conversion failure", () => {
 		let nodesConverted = 0;
 		const viewNodes = convertTreeNodesToViewNodes<TestNode>(testTree, (node) => {
 			if (nodesConverted++ >= 2) {
@@ -92,9 +96,9 @@ describe('RevisionView', () => {
 	});
 });
 
-describe('TransactionView', () => {
+describe("TransactionView", () => {
 	const testTree = refreshTestTree();
-	const traitLabel = 'trait' as TraitLabel;
+	const traitLabel = "trait" as TraitLabel;
 
 	function getTree(): {
 		parent: ChangeNode;
@@ -113,23 +117,25 @@ describe('TransactionView', () => {
 		return { parent, childA, childB };
 	}
 
-	it('can detach a single node in a trait', () => {
+	it("can detach a single node in a trait", () => {
 		const { parent, childA, childB } = getTree();
 		const startingView = RevisionView.fromTree(parent).openForTransaction();
 		const { view } = detachRange(startingView, StableRange.only(childA));
 		expect(view.size).to.equal(3);
 		expect(view.hasNode(childA.identifier)).to.be.true;
 		expect(view.tryGetParentViewNode(childA.identifier)).to.be.undefined;
-		expect(view.tryGetParentViewNode(childB.identifier)?.identifier).to.equal(parent.identifier);
+		expect(view.tryGetParentViewNode(childB.identifier)?.identifier).to.equal(
+			parent.identifier,
+		);
 		expect(view.getIndexInTrait(childB.identifier)).to.equal(0);
 	});
 
-	it('can detach an entire trait', () => {
+	it("can detach an entire trait", () => {
 		const { parent, childA, childB } = getTree();
 		const startingView = RevisionView.fromTree(parent).openForTransaction();
 		const { view, detached } = detachRange(
 			startingView,
-			StableRange.all({ parent: parent.identifier, label: traitLabel })
+			StableRange.all({ parent: parent.identifier, label: traitLabel }),
 		);
 		expect(detached).deep.equals([childA.identifier, childB.identifier]);
 		expect(view.size).to.equal(3);
@@ -139,7 +145,7 @@ describe('TransactionView', () => {
 		expect(view.tryGetParentViewNode(childB.identifier)).to.be.undefined;
 	});
 
-	it('can insert a node', () => {
+	it("can insert a node", () => {
 		const { parent, childA, childB } = getTree();
 		const startingView = RevisionView.fromTree(parent).openForTransaction();
 		const newNode = testTree.buildLeaf(testTree.generateNodeId());
@@ -150,9 +156,11 @@ describe('TransactionView', () => {
 		view = insertIntoTrait(
 			view,
 			[newNode.identifier],
-			StablePlace.atStartOf({ parent: parent.identifier, label: traitLabel })
+			StablePlace.atStartOf({ parent: parent.identifier, label: traitLabel }),
 		);
-		expect(view.tryGetParentViewNode(newNode.identifier)?.identifier).to.equal(parent.identifier);
+		expect(view.tryGetParentViewNode(newNode.identifier)?.identifier).to.equal(
+			parent.identifier,
+		);
 		expect(view.getIndexInTrait(newNode.identifier)).to.equal(0);
 		expect(view.getIndexInTrait(childA.identifier)).to.equal(1);
 		expect(view.getIndexInTrait(childB.identifier)).to.equal(2);

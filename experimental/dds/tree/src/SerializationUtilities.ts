@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, memoizeGetter } from './Common.js';
-import { NodeId, TraitLabel } from './Identifiers.js';
-import { NodeIdConverter } from './NodeIdUtilities.js';
-import { TreeView } from './TreeView.js';
-import { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types/index.js';
+import { copyPropertyIfDefined, memoizeGetter } from "./Common.js";
+import { NodeId, TraitLabel } from "./Identifiers.js";
+import { NodeIdConverter } from "./NodeIdUtilities.js";
+import { TreeView } from "./TreeView.js";
+import { ChangeNode, ChangeNode_0_0_2, TraitMap } from "./persisted-types/index.js";
 
 /**
  * Converts this tree view to an equivalent `ChangeNode`.
@@ -24,19 +24,23 @@ export function getChangeNodeFromView(view: TreeView): ChangeNode {
  * @param lazyTraits - whether or not traits should be populated lazily. If true, the subtrees under each trait will not be read until
  * the trait is first accessed.
  */
-export function getChangeNodeFromViewNode(view: TreeView, id: NodeId, lazyTraits = false): ChangeNode {
+export function getChangeNodeFromViewNode(
+	view: TreeView,
+	id: NodeId,
+	lazyTraits = false,
+): ChangeNode {
 	const node = view.getViewNode(id);
 	const nodeData = {
 		definition: node.definition,
 		identifier: node.identifier,
 	};
-	copyPropertyIfDefined(node, nodeData, 'payload');
+	copyPropertyIfDefined(node, nodeData, "payload");
 
 	if (lazyTraits) {
 		return {
 			...nodeData,
 			get traits() {
-				return memoizeGetter(this, 'traits', makeTraits(view, node.traits, lazyTraits));
+				return memoizeGetter(this, "traits", makeTraits(view, node.traits, lazyTraits));
 			},
 		};
 	}
@@ -51,14 +55,16 @@ export function getChangeNodeFromViewNode(view: TreeView, id: NodeId, lazyTraits
 function makeTraits(
 	view: TreeView,
 	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
-	lazyTraits = false
+	lazyTraits = false,
 ): TraitMap<ChangeNode> {
 	const traitMap = {};
 	for (const [label, trait] of traits.entries()) {
 		if (lazyTraits) {
 			Object.defineProperty(traitMap, label, {
 				get() {
-					const treeNodeTrait = trait.map((id) => getChangeNodeFromViewNode(view, id, lazyTraits));
+					const treeNodeTrait = trait.map((id) =>
+						getChangeNodeFromViewNode(view, id, lazyTraits),
+					);
 					return memoizeGetter(this as TraitMap<ChangeNode>, label, treeNodeTrait);
 				},
 				configurable: true,
@@ -79,7 +85,10 @@ function makeTraits(
  * Converts this tree view to an equivalent `ChangeNode`.
  * @param view - the view to convert
  */
-export function getChangeNode_0_0_2FromView(view: TreeView, idConverter: NodeIdConverter): ChangeNode_0_0_2 {
+export function getChangeNode_0_0_2FromView(
+	view: TreeView,
+	idConverter: NodeIdConverter,
+): ChangeNode_0_0_2 {
 	return getChangeNode_0_0_2FromViewNode(view, view.root, idConverter);
 }
 
@@ -94,14 +103,14 @@ export function getChangeNode_0_0_2FromView(view: TreeView, idConverter: NodeIdC
 export function getChangeNode_0_0_2FromViewNode(
 	view: TreeView,
 	id: NodeId,
-	idConverter: NodeIdConverter
+	idConverter: NodeIdConverter,
 ): ChangeNode_0_0_2 {
 	const node = view.getViewNode(id);
 	const nodeData = {
 		definition: node.definition,
 		identifier: idConverter.convertToStableNodeId(node.identifier),
 	};
-	copyPropertyIfDefined(node, nodeData, 'payload');
+	copyPropertyIfDefined(node, nodeData, "payload");
 
 	return {
 		...nodeData,
@@ -116,7 +125,7 @@ export function getChangeNode_0_0_2FromViewNode(
 function makeTraits_0_0_2(
 	view: TreeView,
 	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>,
-	idConverter: NodeIdConverter
+	idConverter: NodeIdConverter,
 ): TraitMap<ChangeNode_0_0_2> {
 	const traitMap = {};
 	for (const [label, trait] of traits.entries()) {

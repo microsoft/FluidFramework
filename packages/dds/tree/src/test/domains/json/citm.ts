@@ -85,7 +85,12 @@ interface Event {
 	topicIds: number[]; // Get stats on the amount of numbers here
 }
 
-function increaseKeyspace(keySpace: string[], multiplier: number, keyLen: number, random: IRandom) {
+function increaseKeyspace(
+	keySpace: string[],
+	multiplier: number,
+	keyLen: number,
+	random: IRandom,
+) {
 	const newKeyspace = [...keySpace];
 	if (multiplier <= 0) {
 		throw Error("multiplier must be greater than 0");
@@ -114,7 +119,11 @@ function decreaseKeyspace(keySpace: string[], multiplier: number) {
 // areaNames: 16(16.326%), seatCategoryNames: 60(61.224%), subTopicNames: 18(18.367%), topicNames: 4(4.081%)
 // Note that maxSizeInKb does not account for the initial keyspace size so you can end up with json that
 // is larger than the defined size if you define a large enough keyspace
-export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes: number, seed = 1) {
+export function generateCitmJson(
+	keyspaceMultiplier: number = 1,
+	maxSizeInBytes: number,
+	seed = 1,
+) {
 	const random = makeRandom(seed);
 	const baseIdNumber = random.integer(100000000, 300000000);
 	let idNumberCounter = baseIdNumber;
@@ -555,7 +564,12 @@ const ORIGINAL_SUB_TOPIC_NAME_VALUES = [
 	"famille",
 ];
 
-const ORIGINAL_TOPIC_NAME_VALUES = ["Activité", "Type de public", "Genre", "Formations musicales"];
+const ORIGINAL_TOPIC_NAME_VALUES = [
+	"Activité",
+	"Type de public",
+	"Genre",
+	"Formations musicales",
+];
 
 const ORIGINAL_EVENT_NAMES = [
 	"30th Anniversary Tour",

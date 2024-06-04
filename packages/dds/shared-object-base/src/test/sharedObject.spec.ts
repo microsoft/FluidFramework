@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {

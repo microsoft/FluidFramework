@@ -9,7 +9,10 @@ import {
 	type IQuorumClients,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
-import { MessageType, type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type IDocumentMessage,
+	MessageType,
+} from "@fluidframework/driver-definitions/internal";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

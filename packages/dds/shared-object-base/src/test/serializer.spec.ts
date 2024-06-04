@@ -176,11 +176,7 @@ describe("FluidSerializer", () => {
 					decodedForm,
 					"encode() must shallow-clone rather than mutate original object.",
 				);
-				assert.deepStrictEqual(
-					replaced,
-					encodedForm,
-					"encode() must return expected output.",
-				);
+				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
 
 				const replacedTwice = serializer.encode(replaced, handle);
 				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
@@ -198,11 +194,7 @@ describe("FluidSerializer", () => {
 				);
 
 				const decodedTwice = serializer.decode(decodedRoundTrip);
-				assert.deepStrictEqual(
-					decodedTwice,
-					decodedRoundTrip,
-					"decode should be idempotent",
-				);
+				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
 
 				const stringified = serializer.stringify(decodedForm, handle);
 

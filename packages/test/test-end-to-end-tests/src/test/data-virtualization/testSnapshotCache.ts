@@ -5,10 +5,10 @@
 
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	getKeyForCacheEntry,
 	type ICacheEntry,
 	type IFileEntry,
 	type IPersistedCache,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
 export interface ValueWithSnapshot {

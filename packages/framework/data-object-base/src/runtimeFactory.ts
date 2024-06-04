@@ -4,8 +4,8 @@
  */
 
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import/no-deprecated

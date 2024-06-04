@@ -121,7 +121,10 @@ function rebaseMarkList(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId(mark: Mark, metadata: RevisionMetadataSource): CellMark<NoopMark> {
+function generateNoOpWithCellId(
+	mark: Mark,
+	metadata: RevisionMetadataSource,
+): CellMark<NoopMark> {
 	const length = mark.count;
 	const cellId = getInputCellId(mark, metadata);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
@@ -235,9 +238,7 @@ class RebaseQueue {
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
-				movedMark === undefined
-					? sizedNewMark
-					: addMovedMarkEffect(sizedNewMark, movedMark),
+				movedMark === undefined ? sizedNewMark : addMovedMarkEffect(sizedNewMark, movedMark),
 		};
 	}
 }
@@ -286,7 +287,13 @@ function rebaseMark(
 		rebasedMark.changes = movedNodeChanges;
 	}
 
-	return rebaseMarkIgnoreChild(rebasedMark, baseMark, metadata, moveEffects, nodeExistenceState);
+	return rebaseMarkIgnoreChild(
+		rebasedMark,
+		baseMark,
+		metadata,
+		moveEffects,
+		nodeExistenceState,
+	);
 }
 
 function rebaseMarkIgnoreChild(
@@ -360,7 +367,10 @@ function rebaseMarkIgnoreChild(
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follows?: MarkEffect } {
+function separateEffectsForMove(mark: MarkEffect): {
+	remains?: MarkEffect;
+	follows?: MarkEffect;
+} {
 	const type = mark.type;
 	switch (type) {
 		case "Remove":
@@ -458,7 +468,11 @@ function moveRebasedChanges(
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
 }
 
-function rebaseNodeChange(currMark: Mark, baseMark: Mark, nodeRebaser: NodeChangeRebaser): Mark {
+function rebaseNodeChange(
+	currMark: Mark,
+	baseMark: Mark,
+	nodeRebaser: NodeChangeRebaser,
+): Mark {
 	const baseChange = baseMark.changes;
 	const currChange = currMark.changes;
 

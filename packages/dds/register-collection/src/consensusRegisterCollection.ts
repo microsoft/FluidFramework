@@ -7,8 +7,8 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -96,7 +96,8 @@ interface IRegisterOperationPlain<T> {
 type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> => "value" in op;
+const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> =>
+	"value" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;

@@ -9,12 +9,12 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 // eslint-disable-next-line import/no-internal-modules
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
 
-import { NodeKind, TreeNodeSchema, type } from "../../simple-tree/index.js";
 import { FlexTreeNode, FlexTreeNodeSchema } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RawTreeNode } from "../../simple-tree/rawNode.js";
+import { NodeKind, TreeNodeSchema, type } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RawTreeNode } from "../../simple-tree/rawNode.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { validateUsageError } from "../utils.js";
@@ -152,9 +152,10 @@ describe("simple-tree types", () => {
 					instance: TreeNodeValid<T2>,
 					input: T2,
 				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+					return new MockFlexNode(this as unknown as TreeNodeSchema) as unknown as RawTreeNode<
+						FlexTreeNodeSchema,
+						unknown
+					>;
 				}
 
 				public override get [type](): string {
@@ -203,9 +204,10 @@ describe("simple-tree types", () => {
 					instance: TreeNodeValid<T2>,
 					input: T2,
 				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+					return new MockFlexNode(this as unknown as TreeNodeSchema) as unknown as RawTreeNode<
+						FlexTreeNodeSchema,
+						unknown
+					>;
 				}
 
 				public override get [type](): string {

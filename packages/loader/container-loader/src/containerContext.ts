@@ -11,9 +11,9 @@ import {
 import {
 	IBatchMessage,
 	IContainerContext,
+	IDeltaManager,
 	ILoader,
 	ILoaderOptions,
-	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
@@ -23,9 +23,9 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
 import {
+	IDocumentMessage,
 	IDocumentStorageService,
 	ISnapshot,
-	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,

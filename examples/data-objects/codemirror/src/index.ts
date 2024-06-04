@@ -9,8 +9,8 @@ import {
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";

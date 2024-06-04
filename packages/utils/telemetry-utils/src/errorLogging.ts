@@ -118,7 +118,8 @@ function patchLegacyError(
 	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
+	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } =
+		legacyError as any;
 	if (patchMe.errorInstanceId === undefined) {
 		patchMe.errorInstanceId = uuid();
 	}
@@ -244,7 +245,10 @@ export function wrapError<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
 ): T {
-	const { message, stack } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
+	const { message, stack } = extractLogSafeErrorProperties(
+		innerError,
+		false /* sanitizeStack */,
+	);
 
 	const newError = newErrorFn(message);
 

@@ -17,8 +17,8 @@ import { IdAllocator, Invariant } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import { CrossFieldManager } from "./crossFieldQueries.js";
-import { NodeId } from "./modularChangeTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to

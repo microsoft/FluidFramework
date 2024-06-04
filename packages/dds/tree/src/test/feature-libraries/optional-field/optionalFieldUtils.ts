@@ -16,6 +16,7 @@ import {
 	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
+import { NodeId } from "../../../feature-libraries/index.js";
 import {
 	Move,
 	OptionalChangeset,
@@ -30,7 +31,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { Mutable, brand } from "../../../util/index.js";
-import { NodeId } from "../../../feature-libraries/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -90,11 +90,11 @@ export const Change = {
 					moves: [],
 					childChanges: [],
 					valueReplace: { isEmpty: false, dst: asChangeAtomId(dst) },
-			  }
+				}
 			: {
 					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
 					childChanges: [],
-			  },
+				},
 	/**
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.

@@ -19,11 +19,11 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
+	type CompatibilityMode,
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
@@ -34,7 +34,10 @@ import {
 } from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import {
+	type TinyliciousClientProps,
+	type TinyliciousContainerServices,
+} from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

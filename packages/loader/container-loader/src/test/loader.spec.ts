@@ -11,19 +11,19 @@ import { IRuntime } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	ICreateBlobResponse,
 	IDocumentService,
 	IDocumentServiceFactory,
 	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
-	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	isFluidError,
 	MockLogger,
-	wrapConfigProviderWithDefaults,
-	mixinMonitoringContext,
 	createChildLogger,
+	isFluidError,
+	mixinMonitoringContext,
+	wrapConfigProviderWithDefaults,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

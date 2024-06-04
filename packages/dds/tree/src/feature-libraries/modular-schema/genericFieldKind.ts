@@ -7,8 +7,8 @@ import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	RevisionMetadataSource,
 	Multiplicity,
+	RevisionMetadataSource,
 	RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";

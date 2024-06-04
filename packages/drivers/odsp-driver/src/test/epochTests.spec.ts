@@ -13,14 +13,17 @@ import {
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IFluidErrorBase,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -66,7 +69,10 @@ describe("Tests for Epoch Tracker", () => {
 			undefined
 		> = 432000000;
 
-		assert(maximumCacheDurationMs <= expected, "Actual cache expiry used must meet the policy");
+		assert(
+			maximumCacheDurationMs <= expected,
+			"Actual cache expiry used must meet the policy",
+		);
 	});
 
 	it("Cache, old versions", async () => {

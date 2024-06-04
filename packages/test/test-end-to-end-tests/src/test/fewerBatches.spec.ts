@@ -12,7 +12,10 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

@@ -14,6 +14,7 @@ import {
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -27,7 +28,6 @@ import {
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {
 	const runsPerBatch = 50;

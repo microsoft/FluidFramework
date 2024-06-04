@@ -10,7 +10,10 @@ import {
 
 import { type TypedPortConnection } from "./TypedPortConnection.js";
 
-function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
+function formatMessageForLogging(
+	text: string,
+	loggingOptions?: MessageLoggingOptions,
+): string {
 	const loggingPreamble =
 		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 	return `${loggingPreamble}${text}`;

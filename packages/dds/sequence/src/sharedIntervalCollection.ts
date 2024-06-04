@@ -7,9 +7,9 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";

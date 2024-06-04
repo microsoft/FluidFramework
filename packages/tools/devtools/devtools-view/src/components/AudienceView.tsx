@@ -104,9 +104,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 			return {
 				clientId: entry.clientId,
-				time: wasChangeToday
-					? changeTimeStamp.toTimeString()
-					: changeTimeStamp.toDateString(),
+				time: wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString(),
 				changeKind: entry.changeKind,
 			};
 		})

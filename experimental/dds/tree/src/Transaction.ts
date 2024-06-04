@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IErrorEvent } from "@fluidframework/core-interfaces";
 
-import { Change } from './ChangeTypes.js';
-import { RestOrArray, unwrapRestOrArray } from './Common.js';
-import { newEditId } from './EditUtilities.js';
-import { CachingLogViewer } from './LogViewer.js';
-import { SharedTree } from './SharedTree.js';
-import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
-import { TreeView } from './TreeView.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import { Change } from "./ChangeTypes.js";
+import { RestOrArray, unwrapRestOrArray } from "./Common.js";
+import { newEditId } from "./EditUtilities.js";
+import { CachingLogViewer } from "./LogViewer.js";
+import { SharedTree } from "./SharedTree.js";
+import { GenericTransaction, TransactionInternal } from "./TransactionInternal.js";
+import { TreeView } from "./TreeView.js";
+import { ChangeInternal, Edit, EditStatus } from "./persisted-types/index.js";
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
@@ -23,7 +23,7 @@ export enum TransactionEvent {
 	/**
 	 * `currentView` has changed from `before` to `after`
 	 */
-	ViewChange = 'viewChange',
+	ViewChange = "viewChange",
 }
 
 /**

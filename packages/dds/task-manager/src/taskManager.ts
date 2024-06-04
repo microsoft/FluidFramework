@@ -8,8 +8,8 @@ import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -64,7 +64,10 @@ const placeholderClientId = "placeholder";
  * @sealed
  * @alpha
  */
-export class TaskManagerClass extends SharedObject<ITaskManagerEvents> implements ITaskManager {
+export class TaskManagerClass
+	extends SharedObject<ITaskManagerEvents>
+	implements ITaskManager
+{
 	/**
 	 * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
 	 * queue, even if we know we've submitted an op that should eventually modify the queue.
@@ -180,10 +183,7 @@ export class TaskManagerClass extends SharedObject<ITaskManagerEvents> implement
 						0x402 /* pendingIds is empty */,
 					);
 					const removed = pendingIds.shift();
-					assert(
-						removed === messageId,
-						0x403 /* Removed complete op id does not match */,
-					);
+					assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
 				}
 
 				// For clients in queue, we need to remove them from the queue and raise the proper events.

@@ -83,7 +83,9 @@ export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
  * @param summaryTree - The summary tree that contains the GC summary.
  * @returns The tombstone data if it exists, undefined otherwise.
  */
-export function getGCTombstoneStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
+export function getGCTombstoneStateFromSummary(
+	summaryTree: ISummaryTree,
+): string[] | undefined {
 	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;

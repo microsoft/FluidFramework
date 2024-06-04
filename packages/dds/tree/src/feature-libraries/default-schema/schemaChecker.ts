@@ -5,16 +5,16 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type MapTree,
-	type TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
+	type MapTree,
 	Multiplicity,
+	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
 } from "../../core/index.js";
-import { allowsValue } from "../valueUtilities.js";
 import { fail } from "../../util/index.js";
+import { allowsValue } from "../valueUtilities.js";
 
 export const enum SchemaValidationErrors {
 	NoError,

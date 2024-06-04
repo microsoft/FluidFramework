@@ -72,9 +72,9 @@ const testTrees = [
 		name: "child sequence",
 		dataFactory: () =>
 			new UniformChunk(
-				new TreeShape(jsonArray.name, false, [
-					[EmptyKey, numberShape, 3],
-				]).withTopLevelLength(1),
+				new TreeShape(jsonArray.name, false, [[EmptyKey, numberShape, 3]]).withTopLevelLength(
+					1,
+				),
 				[1, 2, 3],
 			),
 		reference: [

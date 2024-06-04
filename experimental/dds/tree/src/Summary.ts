@@ -3,14 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base/internal';
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IFluidSerializer,
+	serializeHandles,
+} from "@fluidframework/shared-object-base/internal";
 
-import { fail } from './Common.js';
-import type { EditHandle } from './EditLog.js';
-import type { MutableStringInterner } from './StringInterner.js';
-import type { IdCompressor } from './id-compressor/index.js';
-import type { ChangeInternal, ChangeNode, EditLogSummary, SharedTreeSummaryBase } from './persisted-types/index.js';
+import { fail } from "./Common.js";
+import type { EditHandle } from "./EditLog.js";
+import type { MutableStringInterner } from "./StringInterner.js";
+import type { IdCompressor } from "./id-compressor/index.js";
+import type {
+	ChangeInternal,
+	ChangeNode,
+	EditLogSummary,
+	SharedTreeSummaryBase,
+} from "./persisted-types/index.js";
 
 /**
  * The contents of a SharedTree summary, converted to a common internal format that can be
@@ -44,6 +52,10 @@ export interface SummaryContents {
  * @param serializer - The serializer required to serialize handles in the summary.
  * @param bind - The object handle required to serialize handles in the summary
  */
-export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSerializer, bind: IFluidHandle): string {
+export function serialize(
+	summary: SharedTreeSummaryBase,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): string {
 	return serializeHandles(summary, serializer, bind) ?? fail();
 }

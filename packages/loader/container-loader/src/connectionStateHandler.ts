@@ -9,10 +9,10 @@ import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -260,10 +260,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
-				assert(
-					this.catchUpMonitor === undefined,
-					0x3eb /* catchUpMonitor should be gone */,
-				);
+				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
 				this.catchUpMonitor = new CatchUpMonitor(
 					this.deltaManager,
 					this.transitionToConnectedState,

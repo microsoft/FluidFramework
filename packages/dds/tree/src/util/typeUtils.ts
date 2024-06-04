@@ -51,14 +51,18 @@ export type OptionalFields<T> = [
  * @internal
  */
 // export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
-export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
+export type AllowOptionalNotFlattened<T> = [
+	RequiredFields<T> & OptionalFields<T>,
+][_InlineTrick];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * Removes fields which only allow undefined.
  * @internal
  */
-export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_InlineTrick];
+export type AllowOptional<T> = [
+	FlattenKeys<RequiredFields<T> & OptionalFields<T>>,
+][_InlineTrick];
 
 /**
  * Use for trick to "inline" generic types.
@@ -179,4 +183,6 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
  *
  * @internal
  */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe]
+	? TInput
+	: TAssumeToBe;

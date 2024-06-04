@@ -170,5 +170,6 @@ export class SchemaBuilder<
 function fieldHelper<Kind extends FlexFieldKind>(kind: Kind) {
 	return <const T extends FlexImplicitAllowedTypes>(
 		allowedTypes: T,
-	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
+	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> =>
+		SchemaBuilder.field(kind, allowedTypes);
 }
