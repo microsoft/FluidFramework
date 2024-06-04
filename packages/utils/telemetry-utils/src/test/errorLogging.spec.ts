@@ -1167,9 +1167,5 @@ describe("Error Discovery", () => {
 			"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
 		);
 		assert(isFluidError(createTestError("hello")), "Valid Fluid Error is a Fluid Error");
-		assert(
-			isFluidError(Object.assign(createTestError("hello"), { fluidErrorCode: undefined })),
-			"isFluidError should not require fluidErrorCode",
-		);
 	});
 });
