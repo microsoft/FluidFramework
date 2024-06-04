@@ -33,16 +33,16 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 
 		// Find first
 		let message = this.messages[index];
-		assert(message !== undefined, "message is undefined in MockDocumentDeltaStorageService.getCore");
+		assert(
+			message !== undefined,
+			"message is undefined in MockDocumentDeltaStorageService.getCore",
+		);
 		while (index < this.messages.length && message.sequenceNumber < from) {
 			index++;
 		}
 
 		// start reading
-		while (
-			index < this.messages.length &&
-			(to === undefined || message.sequenceNumber < to)
-		) {
+		while (index < this.messages.length && (to === undefined || message.sequenceNumber < to)) {
 			messages.push(message);
 			index++;
 		}

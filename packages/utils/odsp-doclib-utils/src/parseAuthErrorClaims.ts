@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 
