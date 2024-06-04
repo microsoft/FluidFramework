@@ -19,10 +19,10 @@ npe devDependencies.@biomejs/biome "^1.7.3"
 # sd --fixed-strings '"format:prettier": "p' '"format:prettier:old": "p' package.json
 
 if [[ "$(uname)" == "Darwin" ]]; then
-	biomePath=$(grealpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.json)
+	biomePath=$(grealpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.jsonc)
 	prettierIgnore=$(grealpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/.prettierignore)
 else
-	biomePath=$(realpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.json)
+	biomePath=$(realpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.jsonc)
 	prettierIgnore=$(realpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/.prettierignore)
 fi
 
