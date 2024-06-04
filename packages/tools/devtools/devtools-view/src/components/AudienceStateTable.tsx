@@ -8,7 +8,6 @@ import {
 	TableBody,
 	TableCell,
 	TableHeader,
-	TableHeaderCell,
 	TableRow,
 	makeStyles,
 	tokens,
@@ -76,7 +75,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
-						<TableHeaderCell key={columnIndex}>
+						<TableCell key={columnIndex}>
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
@@ -109,7 +108,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 									{column.label}
 								</LabelCellLayout>
 							)}
-						</TableHeaderCell>
+						</TableCell>
 					))}
 				</TableRow>
 			</TableHeader>
