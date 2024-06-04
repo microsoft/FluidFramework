@@ -95,11 +95,7 @@ class DevtoolsLogger implements IDevtoolsLogger {
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDevtoolsMessage>>,
 	): void => {
-		handleIncomingWindowMessage(
-			event,
-			this.inboundMessageHandlers,
-			this.messageLoggingOptions,
-		);
+		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**

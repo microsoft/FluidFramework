@@ -68,10 +68,7 @@ export const isTelemetryOptInEnabled = (): boolean => getStorageValue(telemetryO
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.
  * @returns A tuple (React state) with the current value and a setter for the value.
  */
-export const useTelemetryOptIn = (): [
-	boolean,
-	React.Dispatch<React.SetStateAction<boolean>>,
-] => {
+export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
 	const [value, setValue] = React.useState(() => {
 		return getStorageValue(telemetryOptInKey);
 	});

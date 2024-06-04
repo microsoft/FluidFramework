@@ -94,11 +94,21 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -161,10 +171,20 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test:cjs": ["...", "@fluidframework/id-compressor#build:test:cjs"],
-			"build:test:esm": ["...", "@fluidframework/id-compressor#build:test:esm"],
-			"check:release-tags": ["build:esnext"],
-			"ci:build:docs": ["build:esnext"]
+			"build:test:cjs": [
+				"...",
+				"@fluidframework/id-compressor#build:test:cjs"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluidframework/id-compressor#build:test:esm"
+			],
+			"check:release-tags": [
+				"build:esnext"
+			],
+			"ci:build:docs": [
+				"build:esnext"
+			]
 		}
 	},
 	"typeValidation": {

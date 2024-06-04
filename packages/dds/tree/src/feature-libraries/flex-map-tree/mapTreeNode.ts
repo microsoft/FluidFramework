@@ -728,11 +728,7 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnboxNodeUnion<TTypes>;
 	}
 
-	return getOrCreateChild(
-		mapTree,
-		schema.allowedTypes,
-		parent,
-	) as FlexTreeUnboxNodeUnion<TTypes>;
+	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnboxNodeUnion<TTypes>;
 }
 
 /** Unboxes non-polymorphic required and optional fields holding leaf nodes to their values, if applicable */
@@ -743,8 +739,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	parentNode: FlexTreeNode,
 ): FlexTreeUnboxField<TFieldSchema> {
 	const fieldSchema = field.schema;
-	const mapTrees =
-		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
+	const mapTrees = mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
 		return unboxedUnion(fieldSchema, mapTrees[0], {

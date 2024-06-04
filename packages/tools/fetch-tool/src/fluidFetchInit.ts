@@ -71,8 +71,7 @@ async function initializeODSPCore(
 		);
 	};
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	const getWebsocketTokenStub = (_options: OdspResourceTokenFetchOptions) =>
-		Promise.resolve("");
+	const getWebsocketTokenStub = (_options: OdspResourceTokenFetchOptions) => Promise.resolve("");
 	const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
 		getStorageTokenStub,
 		getWebsocketTokenStub,
@@ -85,11 +84,7 @@ async function initializeODSPCore(
 	return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
-async function initializeR11s(
-	server: string,
-	pathname: string,
-	r11sResolvedUrl: IResolvedUrl,
-) {
+async function initializeR11s(server: string, pathname: string, r11sResolvedUrl: IResolvedUrl) {
 	const path = pathname.split("/");
 	let tenantId: string;
 	let documentId: string;
@@ -116,9 +111,7 @@ async function initializeR11s(
 
 	console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
 	const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
-	const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(
-		tokenProvider,
-	);
+	const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
 	return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
 }
 

@@ -83,11 +83,21 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "dist/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "dist/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -150,10 +160,18 @@
 				"build:test:jest",
 				"build:test:types"
 			],
-			"build:test:jest": ["tsc"],
-			"build:test:mocha:cjs": ["tsc"],
-			"build:test:mocha:esm": ["build:esnext"],
-			"build:test:types": ["build:esnext"]
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha:cjs": [
+				"tsc"
+			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
+			"build:test:types": [
+				"build:esnext"
+			]
 		}
 	},
 	"typeValidation": {

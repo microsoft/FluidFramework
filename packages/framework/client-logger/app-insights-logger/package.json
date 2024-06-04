@@ -114,14 +114,18 @@
 	"fluid": {
 		"browser": {
 			"umd": {
-				"files": ["dist/main.bundle.js"],
+				"files": [
+					"dist/main.bundle.js"
+				],
 				"library": "main"
 			}
 		}
 	},
 	"fluidBuild": {
 		"tasks": {
-			"tsc": ["typetests:gen"]
+			"tsc": [
+				"typetests:gen"
+			]
 		}
 	},
 	"typeValidation": {

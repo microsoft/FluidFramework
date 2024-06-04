@@ -21,11 +21,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
 import { useMessageRelay } from "./MessageRelayContext.js";
-import {
-	ConsoleVerboseLogger,
-	LoggerContext,
-	TelemetryOptInLogger,
-} from "./TelemetryUtils.js";
+import { ConsoleVerboseLogger, LoggerContext, TelemetryOptInLogger } from "./TelemetryUtils.js";
 import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
 import {
 	ContainerDevtoolsView,
@@ -273,14 +269,18 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 								/>
 							)}
 							{modalVisible && (
-								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
-								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={supportedFeatures} />
 						</>

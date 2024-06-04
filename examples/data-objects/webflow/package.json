@@ -51,12 +51,26 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["**/*.d.*ts", "src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"**/*.d.*ts",
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"extension": [".ts", ".tsx", ".js", ".jsx"],
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"extension": [
+			".ts",
+			".tsx",
+			".js",
+			".jsx"
+		],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"require": ["ts-node/register"],
+		"require": [
+			"ts-node/register"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -119,7 +133,9 @@
 	"fluid": {
 		"browser": {
 			"umd": {
-				"files": ["dist/main.bundle.js"],
+				"files": [
+					"dist/main.bundle.js"
+				],
 				"library": "main"
 			}
 		}

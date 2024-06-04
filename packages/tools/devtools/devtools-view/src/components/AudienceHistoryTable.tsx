@@ -96,7 +96,9 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}
@@ -112,14 +114,18 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							themeInfo.name === ThemeOption.HighContrast
 								? style.highContrast
 								: item.changeKind === "joined"
-									? style.joined
-									: style.left
+								? style.joined
+								: style.left
 						}
 					>
 						<TableCell>
 							<LabelCellLayout
 								icon={
-									item.changeKind === "joined" ? <ArrowJoinRegular /> : <ArrowExitRegular />
+									item.changeKind === "joined" ? (
+										<ArrowJoinRegular />
+									) : (
+										<ArrowExitRegular />
+									)
 								}
 							>
 								{item.changeKind}

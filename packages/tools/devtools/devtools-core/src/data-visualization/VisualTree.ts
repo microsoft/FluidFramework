@@ -242,10 +242,7 @@ export type VisualNode =
  *
  * @internal
  */
-export type FluidObjectNode =
-	| FluidObjectTreeNode
-	| FluidObjectValueNode
-	| FluidUnknownObjectNode;
+export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
 /**
  * A visual tree that can be the child of a {@link FluidObjectNodeBase}.

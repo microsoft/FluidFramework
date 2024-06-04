@@ -10,10 +10,7 @@
  */
 
 export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
-export type {
-	IFluidBrowserPackage,
-	IFluidBrowserPackageEnvironment,
-} from "./browserPackage.js";
+export type { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
 	IConnectionDetails,
@@ -51,11 +48,7 @@ export type {
 	IFluidCodeDetailsConfig,
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage.js";
-export {
-	IFluidCodeDetailsComparer,
-	isFluidPackage,
-	isFluidCodeDetails,
-} from "./fluidPackage.js";
+export { IFluidCodeDetailsComparer, isFluidPackage, isFluidCodeDetails } from "./fluidPackage.js";
 export type {
 	IBatchMessage,
 	IContainerContext,
