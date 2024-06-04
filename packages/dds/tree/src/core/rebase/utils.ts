@@ -75,14 +75,17 @@ export interface BranchRebaseResult<TChange> {
 	 */
 	readonly commits: RebasedCommits<TChange>;
 	/**
-	 * The length of the source branch after the rebase.
+	 * The length of the source branch before the rebase.
 	 */
 	readonly sourceBranchLength?: number;
-
 	/**
-	 * Number of commits rebased over on the target branch.
+	 * Number of commits rebased over on the target branch. This should always be `targetCommitIndex` + 1.
 	 */
 	readonly rebaseDistance?: number;
+	/**
+	 * The number of commits that were in common between the source and target branches before the rebase.
+	 */
+	readonly countInCommon?: number;
 }
 
 /**
@@ -187,7 +190,8 @@ export function rebaseBranch<TChange>(
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
 			sourceBranchLength: sourcePath.length,
-			rebaseDistance: 0,
+			rebaseDistance: targetCommitIndex + 1,
+			countInCommon: 0,
 		};
 	}
 
@@ -243,8 +247,9 @@ export function rebaseBranch<TChange>(
 				targetCommits,
 				sourceCommits,
 			},
-			sourceBranchLength: sourcePath.length, // The length of the sourcePath should be EQUAL to the length of the targetPath.
-			rebaseDistance: 0,
+			sourceBranchLength: sourcePath.length,
+			rebaseDistance: targetCommitIndex + 1,
+			countInCommon: sourcePath.length - sourceSet.size,
 		};
 	}
 
@@ -290,7 +295,8 @@ export function rebaseBranch<TChange>(
 			sourceCommits,
 		},
 		sourceBranchLength: sourcePath.length,
-		rebaseDistance: targetCommits.length - (sourcePath.length - sourceSet.size),
+		rebaseDistance: targetCommitIndex + 1,
+		countInCommon: sourcePath.length - sourceSet.size,
 	};
 }
 
