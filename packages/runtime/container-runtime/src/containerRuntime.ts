@@ -3415,10 +3415,10 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * Called when a new outbound route is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
 		this.garbageCollector.addedOutboundReference(fromPath, toPath);
