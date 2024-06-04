@@ -15,10 +15,10 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/public.d.ts"
+				"types": "./lib/index.d.ts"
 			},
 			"require": {
-				"types": "./dist/public.d.ts"
+				"types": "./dist/index.d.ts"
 			}
 		},
 		"./legacy": {
@@ -39,7 +39,7 @@
 		}
 	},
 	"main": "",
-	"types": "lib/public.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
