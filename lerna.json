@@ -1,5 +1,5 @@
 {
-	"version": "2.0.0-rc.5.0.0",
+	"version": "9.9.9",
 	"npmClient": "pnpm",
 	"useWorkspaces": true
 }
