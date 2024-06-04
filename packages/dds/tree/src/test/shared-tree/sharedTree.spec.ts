@@ -1285,7 +1285,7 @@ describe("SharedTree", () => {
 				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
 
 				// dispose the revertible
-				undoStack[0][disposeSymbol]();
+				undoStack[0].dispose();
 
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
@@ -1334,7 +1334,7 @@ describe("SharedTree", () => {
 				assert.equal(tree1.checkout.getRemovedRoots().length, 2);
 
 				// dispose the revertible
-				undoStack[0][disposeSymbol]();
+				undoStack[0].dispose();
 
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
