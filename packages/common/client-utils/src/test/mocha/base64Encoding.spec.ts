@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "../../index.js";
+import { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "../../indexNode.js";
 
 describe("base64Encoding", () => {
 	it("round-trips correctly", async () => {

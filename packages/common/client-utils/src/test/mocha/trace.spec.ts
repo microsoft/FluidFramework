@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Trace } from "../../index.js";
+import { Trace } from "../../indexNode.js";
 
 describe("Trace", () => {
 	it("measure 2ms timeout", async () => {
