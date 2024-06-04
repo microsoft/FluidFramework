@@ -12,7 +12,12 @@ export {
 export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
-export { Package, type PackageJson, updatePackageJsonFile } from "./common/npmPackage";
+export {
+	Package,
+	type PackageJson,
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "./common/npmPackage";
 export { Timer } from "./common/timer";
 export type {
 	IFluidBuildConfig,
@@ -27,7 +32,7 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./common/fluidTaskDefinitions";
-export { getEsLintConfigFilePath } from "./common/taskUtils";
+export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
 export { TypeOnly, MinimalType, FullType } from "./typeValidator/compatibility";

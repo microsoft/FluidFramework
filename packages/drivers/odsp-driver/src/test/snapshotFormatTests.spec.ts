@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";

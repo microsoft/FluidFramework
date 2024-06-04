@@ -4,6 +4,11 @@
  */
 
 import {
+	ISequencedDocumentMessage,
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import {
 	ICreateBlobResponse,
 	IDocumentService,
 	IDocumentStorageService,
@@ -11,11 +16,6 @@ import {
 	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService

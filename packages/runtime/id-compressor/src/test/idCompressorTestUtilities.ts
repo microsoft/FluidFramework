@@ -31,9 +31,9 @@ import {
 	StableId,
 	createIdCompressor,
 } from "../index.js";
+import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
-import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import {
 	FinalCompressedId,
 	ReadonlyIdCompressor,

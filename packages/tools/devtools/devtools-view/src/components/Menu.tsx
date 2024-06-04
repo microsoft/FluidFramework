@@ -11,16 +11,18 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	type HasContainerKey,
 	type DevtoolsFeatureFlags,
 	type ContainerKey,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
 import { GetContainerList } from "@fluidframework/devtools-core/internal";
+import React from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
+
 import { Waiting } from "./index.js";
 
 /**
