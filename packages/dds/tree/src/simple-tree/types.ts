@@ -6,7 +6,7 @@
 import { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { TreeNodeSchema, WithType, type } from "./schemaTypes.js";
+import { NodeKind, TreeNodeSchema, WithType, type } from "./schemaTypes.js";
 import {
 	FlexTreeNode,
 	FlexTreeNodeSchema,
@@ -20,6 +20,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { fail } from "../util/index.js";
 import { setFlexNode } from "./proxyBinding.js";
+import { tryGetSchema } from "./treeNodeApi.js";
 
 /**
  * Type alias to document which values are un-hydrated.
@@ -33,7 +34,7 @@ import { setFlexNode } from "./proxyBinding.js";
 export type Unhydrated<T> = T;
 
 /**
- * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, arrays, and maps.
+ * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
  * A non-leaf SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
@@ -86,61 +87,54 @@ export abstract class TreeNode implements WithType {
 	public abstract get [type](): string;
 
 	/**
-	 * Provides `instancof` support for all tree nodes.
+	 * Provides `instancof` support for testing if a value is a `TreeNode`.
 	 * @remarks
-	 * This requires that the subclasses of TreeNode are all actually node types:
-	 * to avoid breaking this, do not extend TreeNode other than via class based schema.
-	 * @privateRemarks
-	 * This overrides `instancof` for all subclasses of TreeNode to use a schema based approach.
-	 * TypeScript 5.3 will impact how this does type narrowing, but it should continue to work correctly with that.
-	 *
-	 * TODO: once class-tree and simple-tree are merged, consider refactoring this to share logic with `Tree.is`.
+	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
 	 */
-	public static [Symbol.hasInstance]<
-		TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode),
-	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
+	public static [Symbol.hasInstance](this: typeof TreeNode, value: unknown): value is TreeNode;
 
 	/**
-	 * Provides `instancof` support for all class based schema.
+	 * Provides `instancof` support for all schema classes with public constructors.
+	 * @remarks
+	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
 	 */
-	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
+	public static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(
 		this: TSchema,
 		value: unknown,
-	): value is NodeFromSchema<TSchema>;
+	): value is InstanceType<TSchema>;
 
-	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
-		this: TSchema,
-		value: unknown,
-	): value is NodeFromSchema<TSchema> {
-		const flexNode = tryGetFlexNode(value);
-		if (flexNode === undefined) {
+	public static [Symbol.hasInstance](this: typeof TreeNode, value: unknown): boolean {
+		const schema = tryGetSchema(value);
+
+		if (schema === undefined || schema.kind === NodeKind.Leaf) {
 			return false;
 		}
 
-		const flexSchema = flexNode.schema;
-		let schema: object | null | undefined = getClassSchema(flexSchema);
-
-		if (schema === undefined) {
-			// TODO: One legacy schema builder test ("objectRecursive") mixes simple tree APIs with objects with no class schema (made using flex schema only).
-			// For now we return false for this cases instead of failing to allow that test to function.
-			// fail("missing class schema for node");
-			return false;
-		}
-
-		while (schema !== null) {
-			if (this === schema) {
-				return true;
-			}
-			schema = Reflect.getPrototypeOf(schema);
-		}
-		return false;
+		return inPrototypeChain(schema, this);
 	}
 
 	protected constructor() {
-		if (!(this instanceof TreeNodeValid)) {
+		if (!inPrototypeChain(Reflect.getPrototypeOf(this), TreeNodeValid)) {
 			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
+}
+
+/**
+ * Check if the prototype derived's prototype chain contains `base`.
+ * @param derived - prototype to check
+ * @param base - prototype to search for
+ * @returns true iff `base` is in the prototype chain starting at `derived`.
+ */
+function inPrototypeChain(derived: object | null, base: object): boolean {
+	let checking = derived;
+	while (checking !== null) {
+		if (base === checking) {
+			return true;
+		}
+		checking = Reflect.getPrototypeOf(checking);
+	}
+	return false;
 }
 
 /**

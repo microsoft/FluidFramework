@@ -14,7 +14,12 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import {
+	treeNodeApi as Tree,
+	TreeConfiguration,
+	TreeNode,
+	TreeView,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
