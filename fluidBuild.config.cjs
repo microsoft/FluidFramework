@@ -53,6 +53,7 @@ module.exports = {
 				"eslint",
 				"good-fences",
 				"depcruise",
+				"check:exports",
 				"check:release-tags",
 			],
 			script: false,
@@ -101,6 +102,7 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:exports": ["api"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
@@ -301,6 +303,29 @@ module.exports = {
 				"packages/test/test-service-load/package.json",
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
+			],
+			"npm-package-exports-apis-linted": [
+				// Rollout suppressions - enable only after tools are updated to support policy
+				// as new build-tools will have the concurrently fluid-build support it uses.
+				"^azure/",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+
+				// Packages that violate the API linting rules
+				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
+				"^packages/service-clients/azure-client/",
+				// ae-missing-release-tags, ae-incompatible-release-tags
+				"^examples/data-objects/table-document/",
+				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
+				"^experimental/dds/tree/",
+
+				// Packages with APIs that don't need strict API linting
+				"^build-tools/",
+				"^common/build/",
+				"^experimental/PropertyDDS/",
+				"^tools/api-markdown-documenter/",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [

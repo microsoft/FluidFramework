@@ -159,7 +159,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^4.0.0",
+		"@fluidframework/protocol-base": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@ungap/structured-clone": "^1.2.0",
 		"debug": "^4.3.4",
@@ -168,7 +168,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",

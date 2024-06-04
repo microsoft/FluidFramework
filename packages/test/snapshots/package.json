@@ -79,12 +79,12 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^4.0.0",
+		"@fluidframework/server-local-server": "^5.0.0-265463",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",

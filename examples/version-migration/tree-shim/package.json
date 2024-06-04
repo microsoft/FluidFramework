@@ -57,7 +57,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0-264124",
@@ -83,7 +83,7 @@
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
 		"style-loader": "^1.0.0",
-		"tinylicious": "^4.0.1",
+		"tinylicious": "^5.0.0-265463",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",

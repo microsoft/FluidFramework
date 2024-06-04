@@ -84,7 +84,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
@@ -103,7 +103,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^4.0.1",
+		"tinylicious": "^5.0.0-265463",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

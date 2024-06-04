@@ -221,7 +221,7 @@ function getOutputConfiguration(
 		queryTypesResolutionPathsFromPackageExports(
 			packageJson,
 			mapQueryPathToApiTagLevel,
-			node10TypeCompat,
+			{ node10TypeCompat, onlyFirstMatches: true },
 			logger,
 		);
 

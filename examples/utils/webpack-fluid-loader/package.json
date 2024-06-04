@@ -93,7 +93,7 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^4.0.0",
+		"@fluidframework/server-local-server": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
@@ -108,7 +108,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",

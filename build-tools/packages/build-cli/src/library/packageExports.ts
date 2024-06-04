@@ -72,22 +72,25 @@ const typesExportCondition = "types";
 const defaultExportCondition = "default";
 
 /**
- * Performs a depth first search of exports conditions looking for a "types" constrained
- * resolution path (relative file path) matching keys in query map.
+ * Performs a depth first search of exports conditions looking for "types" constrained
+ * resolution paths (relative file path) matching keys in query map.
  *
  * @param mapQueryPathToOutKey - map with match keys
  * @param exports - export conditions
+ * @param onlyFirstMatch - when true, only the first match is returned
  * @param previous - accumulated conditions and sense of t
  * @returns matching export data and matching query entry value as outKey property
  */
-function findFirstTypesPathMatching<TOutKey>(
+function findTypesPathsMatching<TOutKey>(
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	exports: Readonly<ExportsRecordValue>,
+	onlyFirstMatch: boolean,
 	previous: Readonly<{
 		conditions: readonly string[];
 		isTypeOnly?: boolean;
 	}>,
-): (ExportData & { outKey: TOutKey | undefined }) | undefined {
+): (ExportData & { outKey: TOutKey | undefined })[] {
+	const results: (ExportData & { outKey: TOutKey | undefined })[] = [];
 	// All exports are type only if there was a previous condition where the only option
 	// was "types" constrained. Otherwise they may still become constrained or not.
 	const isTypeOnlySettled =
@@ -110,7 +113,7 @@ function findFirstTypesPathMatching<TOutKey>(
 			if (conditions.includes(typesExportCondition)) {
 				const queryResult = valueOfFirstKeyMatching(relPath, mapQueryPathToOutKey);
 				if (queryResult !== undefined) {
-					return { outKey: queryResult.value, relPath, conditions, isTypeOnly };
+					results.push({ outKey: queryResult.value, relPath, conditions, isTypeOnly });
 				}
 			}
 		} else if (value !== null) {
@@ -119,17 +122,21 @@ function findFirstTypesPathMatching<TOutKey>(
 			if (Array.isArray(value)) {
 				continue;
 			}
-			const deepFind = findFirstTypesPathMatching(mapQueryPathToOutKey, value, {
+			const deepFind = findTypesPathsMatching(mapQueryPathToOutKey, value, onlyFirstMatch, {
 				conditions,
 				isTypeOnly,
 			});
 			if (deepFind !== undefined) {
-				return deepFind;
+				results.push(...deepFind);
 			}
+		}
+
+		if (onlyFirstMatch && results.length > 0) {
+			return results;
 		}
 	}
 
-	return undefined;
+	return results;
 }
 
 /**
@@ -140,6 +147,7 @@ function findFirstTypesPathMatching<TOutKey>(
  * paths is found in the package.json's exports, the corresponding value (if defined) is
  * used to set entry key in output mapKeyToOutput.
  * @param node10TypeCompat - when true, populates output mapNode10CompatExportPathToData.
+ * @param onlyFirstMatches - when true, only the first matches are returned per exports path.
  * @param logger - optional Logger
  * @returns object with mapKeyToOutput, map of ApiTags to output paths, and
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
@@ -147,14 +155,25 @@ function findFirstTypesPathMatching<TOutKey>(
 export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: PackageJson,
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
-	node10TypeCompat: boolean,
+	{
+		node10TypeCompat,
+		onlyFirstMatches,
+	}: { node10TypeCompat: boolean; onlyFirstMatches: boolean },
 	logger?: Logger,
 ): {
 	mapKeyToOutput: Map<TOutKey, ExportData>;
 	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
+	mapTypesPathToExportPaths: Map<
+		string,
+		Readonly<{ exportPath: string; conditions: readonly string[] }>[]
+	>;
 } {
 	const mapKeyToOutput = new Map<TOutKey, ExportData>();
 	const mapNode10CompatExportPathToData = new Map<string, Node10CompatExportData>();
+	const mapTypesPathToExportPaths = new Map<
+		string,
+		Readonly<{ exportPath: string; conditions: readonly string[] }>[]
+	>();
 
 	const { exports } = packageJson;
 	if (typeof exports !== "object" || exports === null) {
@@ -181,11 +200,23 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 			continue;
 		}
 
-		const findResult = findFirstTypesPathMatching(mapQueryPathToOutKey, exportValue, {
-			conditions: [],
-		});
-		if (findResult !== undefined) {
+		const findResults = findTypesPathsMatching(
+			mapQueryPathToOutKey,
+			exportValue,
+			onlyFirstMatches,
+			{
+				conditions: [],
+			},
+		);
+		for (const findResult of findResults) {
 			const { outKey, relPath, conditions, isTypeOnly } = findResult;
+
+			const existingExportsPaths = mapTypesPathToExportPaths.get(relPath);
+			if (existingExportsPaths === undefined) {
+				mapTypesPathToExportPaths.set(relPath, [{ exportPath, conditions }]);
+			} else {
+				existingExportsPaths.push({ exportPath, conditions });
+			}
 
 			// Add mapping for using given key, if defined.
 			if (outKey !== undefined) {
@@ -211,5 +242,5 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 		}
 	}
 
-	return { mapKeyToOutput, mapNode10CompatExportPathToData };
+	return { mapKeyToOutput, mapNode10CompatExportPathToData, mapTypesPathToExportPaths };
 }
