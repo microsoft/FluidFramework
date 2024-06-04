@@ -8,6 +8,7 @@ import { SharedTree } from "@fluid-experimental/tree";
 import type Sinon from "sinon";
 import { spy } from "sinon";
 import { expect } from "chai";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { startTelemetry } from "../factory/index.js";
 import {
 	ContainerTelemetryEventNames,
@@ -28,9 +29,6 @@ describe("container telemetry E2E", () => {
 
 	// Simple test class that will be used as the telemetry consumer.
 	class TestTelemetryConsumer implements ITelemetryConsumer {
-		/**
-		 * Takes the incoming {@link IFluidTelemetry} and sends it to Azure App Insights
-		 */
 		public consume(event: IFluidTelemetry): void {
 			return;
 		}
@@ -54,7 +52,7 @@ describe("container telemetry E2E", () => {
 		telemetryConsumerConsumeSpy.resetHistory();
 	});
 
-	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using AppInsightsTelemetryConsumer", async () => {
+	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using ITelemetryConsumer", async () => {
 		const { container } = await tinyliciousClient.createContainer(schema);
 
 		const containerId = await container.attach();
@@ -64,55 +62,37 @@ describe("container telemetry E2E", () => {
 			consumers: [testTelemetryConsumer],
 		});
 
-		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
+		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const testCompletePromise = new Promise<void>((resolve, reject) => {
-			// We Capture and analyze telemetry after the container connected event
-			container.on("connected", () => {
-				// Obtain the calls made to the TestTelemetryConsumer consume() method
-				const actualConsumedConnectedTelemetry: ContainerConnectedTelemetry[] =
-					telemetryConsumerConsumeSpy
-						.getCalls()
-						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
-						.filter(
-							(telemetry) =>
-								telemetry.eventName === ContainerTelemetryEventNames.CONNECTED,
-						) as ContainerConnectedTelemetry[];
+		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
+			actualContainerTelemetry: ContainerConnectedTelemetry;
+			expectedContainerTelemetry: ContainerConnectedTelemetry;
+		}>(
+			(resolve) => {
+				container.on("connected", () => {
+					// We are making an assumption here that the 'connected' event is the first and only event sent to the ITelemetryConsumer.
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[0]
+						.args[0] as ContainerConnectedTelemetry;
 
-				if (actualConsumedConnectedTelemetry.length === 0) {
-					console.log("Failed to find expected telemetry");
-					reject(
-						new Error(
-							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
-						),
-					);
-				}
+					resolve({
+						actualContainerTelemetry: containerTelemetryFromSpy,
+						expectedContainerTelemetry: {
+							eventName: ContainerTelemetryEventNames.CONNECTED,
+							containerId,
+							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
+						},
+					});
+				});
+			},
+			{ durationMs: 5000, errorMsg: "timeout while waiting for container 'connected' event" },
+		);
 
-				const actualContainerTelemetry = actualConsumedConnectedTelemetry[0];
-				const expectedContainerTelemetry: ContainerConnectedTelemetry = {
-					eventName: ContainerTelemetryEventNames.CONNECTED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				};
-
-				try {
-					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
-					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-					expect(actualContainerTelemetry.containerInstanceId)
-						.to.be.a("string")
-						.with.length.above(0);
-					// This will enable the test to finally complete.
-					resolve();
-				} catch (error) {
-					reject(error); // Reject the promise with the assertion error
-				}
-			});
-		});
-
-		await testCompletePromise;
+		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
-	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using AppInsightsTelemetryConsumer", async () => {
+	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using ITelemetryConsumer", async () => {
 		const { container } = await tinyliciousClient.createContainer(schema);
 
 		const containerId = await container.attach();
@@ -122,58 +102,46 @@ describe("container telemetry E2E", () => {
 			consumers: [testTelemetryConsumer],
 		});
 
-		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
+		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const testCompletePromise = new Promise<void>((resolve, reject) => {
-			// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-			container.on("connected", () => {
-				container.disconnect();
-			});
+		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
+			actualContainerTelemetry: ContainerDisconnectedTelemetry;
+			expectedContainerTelemetry: ContainerDisconnectedTelemetry;
+		}>(
+			(resolve) => {
+				// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+				container.on("connected", () => {
+					container.disconnect();
+				});
 
-			container.on("disconnected", () => {
-				// Obtain the calls made to the TestTelemetryConsumer consume() method
-				const actualConsumedDisconnectedTelemetry: ContainerDisconnectedTelemetry[] =
-					telemetryConsumerConsumeSpy
-						.getCalls()
-						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
-						.filter(
-							(telemetry) =>
-								telemetry.eventName === ContainerTelemetryEventNames.DISCONNECTED,
-						) as ContainerDisconnectedTelemetry[];
+				container.on("disconnected", () => {
+					// We are making an assumption here that the 'disconnected' event is the second sent to the ITelemetryConsumer.
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[1]
+						.args[0] as ContainerDisconnectedTelemetry;
 
-				if (actualConsumedDisconnectedTelemetry.length === 0) {
-					reject(
-						new Error(
-							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
-						),
-					);
-				}
+					resolve({
+						actualContainerTelemetry: containerTelemetryFromSpy,
+						expectedContainerTelemetry: {
+							eventName: ContainerTelemetryEventNames.DISCONNECTED,
+							containerId,
+							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
+						},
+					});
+				});
+			},
+			{
+				durationMs: 5000,
+				errorMsg:
+					"timeout while waiting for container 'connected' and/or 'disconnected' event",
+			},
+		);
 
-				const actualContainerTelemetry = actualConsumedDisconnectedTelemetry[0];
-				const expectedContainerTelemetry: ContainerDisconnectedTelemetry = {
-					eventName: ContainerTelemetryEventNames.DISCONNECTED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				};
-				try {
-					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
-					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-					expect(actualContainerTelemetry.containerInstanceId)
-						.to.be.a("string")
-						.with.length.above(0);
-
-					// This will enable the test to finally complete.
-					resolve();
-				} catch (error) {
-					reject(error); // Reject the promise with the assertion error
-				}
-			});
-		});
-
-		await testCompletePromise;
+		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
-	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using AppInsightsTelemetryConsumer", async () => {
+	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using ITelemetryConsumer", async () => {
 		const { container } = await tinyliciousClient.createContainer(schema);
 
 		const containerId = await container.attach();
@@ -183,59 +151,65 @@ describe("container telemetry E2E", () => {
 			consumers: [testTelemetryConsumer],
 		});
 
-		// We don't know exactly when the given container events will fire and we can't await specific events so we have to
+		// We don't know exactly when the given container events that we're looking for will fire so we have to
 		// wrap the container.on(...) event handler within a promise that will be awaited at the end of the test.
-		const testCompletePromise = new Promise<void>((resolve, reject) => {
-			// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
-			container.on("connected", () => {
-				container.disconnect();
-			});
+		const { actualContainerTelemetry, expectedContainerTelemetry } = await timeoutPromise<{
+			actualContainerTelemetry: ContainerDisposedTelemetry;
+			expectedContainerTelemetry: ContainerDisposedTelemetry;
+		}>(
+			(resolve, reject) => {
+				// Event handler 1: As soon as the container connects, we're ready to initiate a disconnect.
+				container.on("connected", () => {
+					container.disconnect();
+				});
 
-			// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
-			container.on("disconnected", () => {
-				container.dispose();
-			});
+				// Event handler 2: As soon as the container disconnects, we're ready to initiate a dispose.
+				container.on("disconnected", () => {
+					container.dispose();
+				});
 
-			container.on("disposed", () => {
-				// Obtain the calls made to the TestTelemetryConsumer consume() method
-				const actualConsumedDisposedTelemetry: ContainerDisposedTelemetry[] =
-					telemetryConsumerConsumeSpy
-						.getCalls()
-						.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
-						.filter(
-							(telemetry) =>
-								telemetry.eventName === ContainerTelemetryEventNames.DISPOSED,
-						) as ContainerDisposedTelemetry[];
+				container.on("disposed", () => {
+					// Obtain the calls made to the TestTelemetryConsumer consume() method
+					const actualConsumedDisposedTelemetry: ContainerDisposedTelemetry[] =
+						telemetryConsumerConsumeSpy
+							.getCalls()
+							.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
+							.filter(
+								(telemetry) =>
+									telemetry.eventName === ContainerTelemetryEventNames.DISPOSED,
+							) as ContainerDisposedTelemetry[];
 
-				if (actualConsumedDisposedTelemetry.length === 0) {
-					reject(
-						new Error(
-							"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
-						),
-					);
-				}
-				const actualContainerTelemetry = actualConsumedDisposedTelemetry[0];
-				const expectedContainerTelemetry: ContainerDisposedTelemetry = {
-					eventName: ContainerTelemetryEventNames.DISPOSED,
-					containerId,
-					containerInstanceId: actualContainerTelemetry.containerInstanceId,
-				};
+					if (actualConsumedDisposedTelemetry.length === 0) {
+						reject(
+							new Error(
+								"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
+							),
+						);
+					}
 
-				try {
-					expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
-					// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-					expect(actualContainerTelemetry.containerInstanceId)
-						.to.be.a("string")
-						.with.length.above(0);
+					// We are making an assumption here that the 'disposed' event is the third sent to the ITelemetryConsumer.
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[2]
+						.args[0] as ContainerDisposedTelemetry;
 
-					// This will enable the test to finally complete.
-					resolve();
-				} catch (error) {
-					reject(error); // Reject the promise with the assertion error
-				}
-			});
-		});
+					resolve({
+						actualContainerTelemetry: containerTelemetryFromSpy,
+						expectedContainerTelemetry: {
+							eventName: ContainerTelemetryEventNames.DISPOSED,
+							containerId,
+							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
+						},
+					});
+				});
+			},
+			{
+				durationMs: 5000,
+				errorMsg:
+					"timeout while waiting for container 'connected' and/or 'disconnected' event",
+			},
+		);
 
-		await testCompletePromise;
+		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 });

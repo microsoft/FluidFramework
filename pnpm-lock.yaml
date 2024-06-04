@@ -7932,6 +7932,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
       '@microsoft/api-extractor': ^7.43.1
       '@microsoft/applicationinsights-web': ^2.8.11
@@ -7964,6 +7965,7 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.39.0-264124
       '@fluidframework/build-tools': 0.39.0-264124
+      '@fluidframework/test-utils': link:../../../test/test-utils
       '@fluidframework/tinylicious-client': link:../../../service-clients/tinylicious-client
       '@microsoft/api-extractor': 7.43.1_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
