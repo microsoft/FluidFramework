@@ -22,10 +22,10 @@ type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
 type SkipUniqueSymbols<Key> = symbol extends Key
 	? Key // Key is symbol or a generalization of symbol, so leave it as is.
 	: Key extends symbol
-	? Key extends WellKnownSymbols
-		? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-		: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-	: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
+		? Key extends WellKnownSymbols
+			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
+			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
+		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
 /**
  * Remove details of T which are incompatible with type testing while keeping as much as is practical.
  *
@@ -34,12 +34,12 @@ type SkipUniqueSymbols<Key> = symbol extends Key
 type TypeOnly<T> = T extends number
 	? number
 	: T extends boolean | bigint | string
-	? T
-	: T extends symbol
-	? SkipUniqueSymbols<T>
-	: {
-			[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-	  };
+		? T
+		: T extends symbol
+			? SkipUniqueSymbols<T>
+			: {
+					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
+				};
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -48,13 +48,12 @@ type TypeOnly<T> = T extends number
  * typeValidation.broken:
  * "InterfaceDeclaration_AudienceChangeLogEntry": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_AudienceChangeLogEntry(): TypeOnly<old.AudienceChangeLogEntry>;
+declare function get_old_InterfaceDeclaration_AudienceChangeLogEntry():
+    TypeOnly<old.AudienceChangeLogEntry>;
 declare function use_current_InterfaceDeclaration_AudienceChangeLogEntry(
-	use: TypeOnly<current.AudienceChangeLogEntry>,
-): void;
+    use: TypeOnly<current.AudienceChangeLogEntry>): void;
 use_current_InterfaceDeclaration_AudienceChangeLogEntry(
-	get_old_InterfaceDeclaration_AudienceChangeLogEntry(),
-);
+    get_old_InterfaceDeclaration_AudienceChangeLogEntry());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -63,13 +62,12 @@ use_current_InterfaceDeclaration_AudienceChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_AudienceChangeLogEntry": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_AudienceChangeLogEntry(): TypeOnly<current.AudienceChangeLogEntry>;
+declare function get_current_InterfaceDeclaration_AudienceChangeLogEntry():
+    TypeOnly<current.AudienceChangeLogEntry>;
 declare function use_old_InterfaceDeclaration_AudienceChangeLogEntry(
-	use: TypeOnly<old.AudienceChangeLogEntry>,
-): void;
+    use: TypeOnly<old.AudienceChangeLogEntry>): void;
 use_old_InterfaceDeclaration_AudienceChangeLogEntry(
-	get_current_InterfaceDeclaration_AudienceChangeLogEntry(),
-);
+    get_current_InterfaceDeclaration_AudienceChangeLogEntry());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -78,13 +76,12 @@ use_old_InterfaceDeclaration_AudienceChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_AudienceClientMetadata": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_AudienceClientMetadata(): TypeOnly<old.AudienceClientMetadata>;
+declare function get_old_InterfaceDeclaration_AudienceClientMetadata():
+    TypeOnly<old.AudienceClientMetadata>;
 declare function use_current_InterfaceDeclaration_AudienceClientMetadata(
-	use: TypeOnly<current.AudienceClientMetadata>,
-): void;
+    use: TypeOnly<current.AudienceClientMetadata>): void;
 use_current_InterfaceDeclaration_AudienceClientMetadata(
-	get_old_InterfaceDeclaration_AudienceClientMetadata(),
-);
+    get_old_InterfaceDeclaration_AudienceClientMetadata());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -93,13 +90,12 @@ use_current_InterfaceDeclaration_AudienceClientMetadata(
  * typeValidation.broken:
  * "InterfaceDeclaration_AudienceClientMetadata": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_AudienceClientMetadata(): TypeOnly<current.AudienceClientMetadata>;
+declare function get_current_InterfaceDeclaration_AudienceClientMetadata():
+    TypeOnly<current.AudienceClientMetadata>;
 declare function use_old_InterfaceDeclaration_AudienceClientMetadata(
-	use: TypeOnly<old.AudienceClientMetadata>,
-): void;
+    use: TypeOnly<old.AudienceClientMetadata>): void;
 use_old_InterfaceDeclaration_AudienceClientMetadata(
-	get_current_InterfaceDeclaration_AudienceClientMetadata(),
-);
+    get_current_InterfaceDeclaration_AudienceClientMetadata());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -108,13 +104,12 @@ use_old_InterfaceDeclaration_AudienceClientMetadata(
  * typeValidation.broken:
  * "InterfaceDeclaration_ConnectionStateChangeLogEntry": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(): TypeOnly<old.ConnectionStateChangeLogEntry>;
+declare function get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry():
+    TypeOnly<old.ConnectionStateChangeLogEntry>;
 declare function use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-	use: TypeOnly<current.ConnectionStateChangeLogEntry>,
-): void;
+    use: TypeOnly<current.ConnectionStateChangeLogEntry>): void;
 use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-	get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(),
-);
+    get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -123,13 +118,12 @@ use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_ConnectionStateChangeLogEntry": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(): TypeOnly<current.ConnectionStateChangeLogEntry>;
+declare function get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry():
+    TypeOnly<current.ConnectionStateChangeLogEntry>;
 declare function use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-	use: TypeOnly<old.ConnectionStateChangeLogEntry>,
-): void;
+    use: TypeOnly<old.ConnectionStateChangeLogEntry>): void;
 use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-	get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(),
-);
+    get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -138,13 +132,12 @@ use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsFeatureFlags": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(): TypeOnly<old.ContainerDevtoolsFeatureFlags>;
+declare function get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags():
+    TypeOnly<old.ContainerDevtoolsFeatureFlags>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-	use: TypeOnly<current.ContainerDevtoolsFeatureFlags>,
-): void;
+    use: TypeOnly<current.ContainerDevtoolsFeatureFlags>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-	get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(),
-);
+    get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -153,13 +146,12 @@ use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsFeatureFlags": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(): TypeOnly<current.ContainerDevtoolsFeatureFlags>;
+declare function get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags():
+    TypeOnly<current.ContainerDevtoolsFeatureFlags>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-	use: TypeOnly<old.ContainerDevtoolsFeatureFlags>,
-): void;
+    use: TypeOnly<old.ContainerDevtoolsFeatureFlags>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-	get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(),
-);
+    get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -168,13 +160,12 @@ use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps(): TypeOnly<old.ContainerDevtoolsProps>;
+declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
+    TypeOnly<old.ContainerDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-	use: TypeOnly<current.ContainerDevtoolsProps>,
-): void;
+    use: TypeOnly<current.ContainerDevtoolsProps>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-	get_old_InterfaceDeclaration_ContainerDevtoolsProps(),
-);
+    get_old_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -183,13 +174,12 @@ use_current_InterfaceDeclaration_ContainerDevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerDevtoolsProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps(): TypeOnly<current.ContainerDevtoolsProps>;
+declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
+    TypeOnly<current.ContainerDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-	use: TypeOnly<old.ContainerDevtoolsProps>,
-): void;
+    use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-	get_current_InterfaceDeclaration_ContainerDevtoolsProps(),
-);
+    get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -198,11 +188,12 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
  * typeValidation.broken:
  * "TypeAliasDeclaration_ContainerKey": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_ContainerKey(): TypeOnly<old.ContainerKey>;
+declare function get_old_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<old.ContainerKey>;
 declare function use_current_TypeAliasDeclaration_ContainerKey(
-	use: TypeOnly<current.ContainerKey>,
-): void;
-use_current_TypeAliasDeclaration_ContainerKey(get_old_TypeAliasDeclaration_ContainerKey());
+    use: TypeOnly<current.ContainerKey>): void;
+use_current_TypeAliasDeclaration_ContainerKey(
+    get_old_TypeAliasDeclaration_ContainerKey());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -211,9 +202,12 @@ use_current_TypeAliasDeclaration_ContainerKey(get_old_TypeAliasDeclaration_Conta
  * typeValidation.broken:
  * "TypeAliasDeclaration_ContainerKey": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_ContainerKey(): TypeOnly<current.ContainerKey>;
-declare function use_old_TypeAliasDeclaration_ContainerKey(use: TypeOnly<old.ContainerKey>): void;
-use_old_TypeAliasDeclaration_ContainerKey(get_current_TypeAliasDeclaration_ContainerKey());
+declare function get_current_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<current.ContainerKey>;
+declare function use_old_TypeAliasDeclaration_ContainerKey(
+    use: TypeOnly<old.ContainerKey>): void;
+use_old_TypeAliasDeclaration_ContainerKey(
+    get_current_TypeAliasDeclaration_ContainerKey());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -222,13 +216,12 @@ use_old_TypeAliasDeclaration_ContainerKey(get_current_TypeAliasDeclaration_Conta
  * typeValidation.broken:
  * "EnumDeclaration_ContainerStateChangeKind": {"forwardCompat": false}
  */
-declare function get_old_EnumDeclaration_ContainerStateChangeKind(): TypeOnly<old.ContainerStateChangeKind>;
+declare function get_old_EnumDeclaration_ContainerStateChangeKind():
+    TypeOnly<old.ContainerStateChangeKind>;
 declare function use_current_EnumDeclaration_ContainerStateChangeKind(
-	use: TypeOnly<current.ContainerStateChangeKind>,
-): void;
+    use: TypeOnly<current.ContainerStateChangeKind>): void;
 use_current_EnumDeclaration_ContainerStateChangeKind(
-	get_old_EnumDeclaration_ContainerStateChangeKind(),
-);
+    get_old_EnumDeclaration_ContainerStateChangeKind());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -237,13 +230,12 @@ use_current_EnumDeclaration_ContainerStateChangeKind(
  * typeValidation.broken:
  * "EnumDeclaration_ContainerStateChangeKind": {"backCompat": false}
  */
-declare function get_current_EnumDeclaration_ContainerStateChangeKind(): TypeOnly<current.ContainerStateChangeKind>;
+declare function get_current_EnumDeclaration_ContainerStateChangeKind():
+    TypeOnly<current.ContainerStateChangeKind>;
 declare function use_old_EnumDeclaration_ContainerStateChangeKind(
-	use: TypeOnly<old.ContainerStateChangeKind>,
-): void;
+    use: TypeOnly<old.ContainerStateChangeKind>): void;
 use_old_EnumDeclaration_ContainerStateChangeKind(
-	get_current_EnumDeclaration_ContainerStateChangeKind(),
-);
+    get_current_EnumDeclaration_ContainerStateChangeKind());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -252,13 +244,12 @@ use_old_EnumDeclaration_ContainerStateChangeKind(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerStateMetadata": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerStateMetadata(): TypeOnly<old.ContainerStateMetadata>;
+declare function get_old_InterfaceDeclaration_ContainerStateMetadata():
+    TypeOnly<old.ContainerStateMetadata>;
 declare function use_current_InterfaceDeclaration_ContainerStateMetadata(
-	use: TypeOnly<current.ContainerStateMetadata>,
-): void;
+    use: TypeOnly<current.ContainerStateMetadata>): void;
 use_current_InterfaceDeclaration_ContainerStateMetadata(
-	get_old_InterfaceDeclaration_ContainerStateMetadata(),
-);
+    get_old_InterfaceDeclaration_ContainerStateMetadata());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -267,13 +258,12 @@ use_current_InterfaceDeclaration_ContainerStateMetadata(
  * typeValidation.broken:
  * "InterfaceDeclaration_ContainerStateMetadata": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerStateMetadata(): TypeOnly<current.ContainerStateMetadata>;
+declare function get_current_InterfaceDeclaration_ContainerStateMetadata():
+    TypeOnly<current.ContainerStateMetadata>;
 declare function use_old_InterfaceDeclaration_ContainerStateMetadata(
-	use: TypeOnly<old.ContainerStateMetadata>,
-): void;
+    use: TypeOnly<old.ContainerStateMetadata>): void;
 use_old_InterfaceDeclaration_ContainerStateMetadata(
-	get_current_InterfaceDeclaration_ContainerStateMetadata(),
-);
+    get_current_InterfaceDeclaration_ContainerStateMetadata());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -282,13 +272,12 @@ use_old_InterfaceDeclaration_ContainerStateMetadata(
  * typeValidation.broken:
  * "InterfaceDeclaration_DevtoolsFeatureFlags": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_DevtoolsFeatureFlags(): TypeOnly<old.DevtoolsFeatureFlags>;
+declare function get_old_InterfaceDeclaration_DevtoolsFeatureFlags():
+    TypeOnly<old.DevtoolsFeatureFlags>;
 declare function use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
-	use: TypeOnly<current.DevtoolsFeatureFlags>,
-): void;
+    use: TypeOnly<current.DevtoolsFeatureFlags>): void;
 use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
-	get_old_InterfaceDeclaration_DevtoolsFeatureFlags(),
-);
+    get_old_InterfaceDeclaration_DevtoolsFeatureFlags());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -297,13 +286,12 @@ use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
  * typeValidation.broken:
  * "InterfaceDeclaration_DevtoolsFeatureFlags": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_DevtoolsFeatureFlags(): TypeOnly<current.DevtoolsFeatureFlags>;
+declare function get_current_InterfaceDeclaration_DevtoolsFeatureFlags():
+    TypeOnly<current.DevtoolsFeatureFlags>;
 declare function use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
-	use: TypeOnly<old.DevtoolsFeatureFlags>,
-): void;
+    use: TypeOnly<old.DevtoolsFeatureFlags>): void;
 use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
-	get_current_InterfaceDeclaration_DevtoolsFeatureFlags(),
-);
+    get_current_InterfaceDeclaration_DevtoolsFeatureFlags());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -312,9 +300,12 @@ use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
  * typeValidation.broken:
  * "InterfaceDeclaration_Edit": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_Edit(): TypeOnly<old.Edit>;
-declare function use_current_InterfaceDeclaration_Edit(use: TypeOnly<current.Edit>): void;
-use_current_InterfaceDeclaration_Edit(get_old_InterfaceDeclaration_Edit());
+declare function get_old_InterfaceDeclaration_Edit():
+    TypeOnly<old.Edit>;
+declare function use_current_InterfaceDeclaration_Edit(
+    use: TypeOnly<current.Edit>): void;
+use_current_InterfaceDeclaration_Edit(
+    get_old_InterfaceDeclaration_Edit());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -323,9 +314,12 @@ use_current_InterfaceDeclaration_Edit(get_old_InterfaceDeclaration_Edit());
  * typeValidation.broken:
  * "InterfaceDeclaration_Edit": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_Edit(): TypeOnly<current.Edit>;
-declare function use_old_InterfaceDeclaration_Edit(use: TypeOnly<old.Edit>): void;
-use_old_InterfaceDeclaration_Edit(get_current_InterfaceDeclaration_Edit());
+declare function get_current_InterfaceDeclaration_Edit():
+    TypeOnly<current.Edit>;
+declare function use_old_InterfaceDeclaration_Edit(
+    use: TypeOnly<old.Edit>): void;
+use_old_InterfaceDeclaration_Edit(
+    get_current_InterfaceDeclaration_Edit());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -334,9 +328,12 @@ use_old_InterfaceDeclaration_Edit(get_current_InterfaceDeclaration_Edit());
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditData": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_EditData(): TypeOnly<old.EditData>;
-declare function use_current_TypeAliasDeclaration_EditData(use: TypeOnly<current.EditData>): void;
-use_current_TypeAliasDeclaration_EditData(get_old_TypeAliasDeclaration_EditData());
+declare function get_old_TypeAliasDeclaration_EditData():
+    TypeOnly<old.EditData>;
+declare function use_current_TypeAliasDeclaration_EditData(
+    use: TypeOnly<current.EditData>): void;
+use_current_TypeAliasDeclaration_EditData(
+    get_old_TypeAliasDeclaration_EditData());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -345,9 +342,12 @@ use_current_TypeAliasDeclaration_EditData(get_old_TypeAliasDeclaration_EditData(
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditData": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_EditData(): TypeOnly<current.EditData>;
-declare function use_old_TypeAliasDeclaration_EditData(use: TypeOnly<old.EditData>): void;
-use_old_TypeAliasDeclaration_EditData(get_current_TypeAliasDeclaration_EditData());
+declare function get_current_TypeAliasDeclaration_EditData():
+    TypeOnly<current.EditData>;
+declare function use_old_TypeAliasDeclaration_EditData(
+    use: TypeOnly<old.EditData>): void;
+use_old_TypeAliasDeclaration_EditData(
+    get_current_TypeAliasDeclaration_EditData());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -356,11 +356,12 @@ use_old_TypeAliasDeclaration_EditData(get_current_TypeAliasDeclaration_EditData(
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditSharedObject": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_EditSharedObject(): TypeOnly<old.EditSharedObject>;
+declare function get_old_TypeAliasDeclaration_EditSharedObject():
+    TypeOnly<old.EditSharedObject>;
 declare function use_current_TypeAliasDeclaration_EditSharedObject(
-	use: TypeOnly<current.EditSharedObject>,
-): void;
-use_current_TypeAliasDeclaration_EditSharedObject(get_old_TypeAliasDeclaration_EditSharedObject());
+    use: TypeOnly<current.EditSharedObject>): void;
+use_current_TypeAliasDeclaration_EditSharedObject(
+    get_old_TypeAliasDeclaration_EditSharedObject());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -369,11 +370,12 @@ use_current_TypeAliasDeclaration_EditSharedObject(get_old_TypeAliasDeclaration_E
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditSharedObject": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_EditSharedObject(): TypeOnly<current.EditSharedObject>;
+declare function get_current_TypeAliasDeclaration_EditSharedObject():
+    TypeOnly<current.EditSharedObject>;
 declare function use_old_TypeAliasDeclaration_EditSharedObject(
-	use: TypeOnly<old.EditSharedObject>,
-): void;
-use_old_TypeAliasDeclaration_EditSharedObject(get_current_TypeAliasDeclaration_EditSharedObject());
+    use: TypeOnly<old.EditSharedObject>): void;
+use_old_TypeAliasDeclaration_EditSharedObject(
+    get_current_TypeAliasDeclaration_EditSharedObject());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -382,11 +384,12 @@ use_old_TypeAliasDeclaration_EditSharedObject(get_current_TypeAliasDeclaration_E
  * typeValidation.broken:
  * "VariableDeclaration_EditType": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_EditType(): TypeOnly<typeof old.EditType>;
+declare function get_old_VariableDeclaration_EditType():
+    TypeOnly<typeof old.EditType>;
 declare function use_current_VariableDeclaration_EditType(
-	use: TypeOnly<typeof current.EditType>,
-): void;
-use_current_VariableDeclaration_EditType(get_old_VariableDeclaration_EditType());
+    use: TypeOnly<typeof current.EditType>): void;
+use_current_VariableDeclaration_EditType(
+    get_old_VariableDeclaration_EditType());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -395,9 +398,12 @@ use_current_VariableDeclaration_EditType(get_old_VariableDeclaration_EditType())
  * typeValidation.broken:
  * "VariableDeclaration_EditType": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_EditType(): TypeOnly<typeof current.EditType>;
-declare function use_old_VariableDeclaration_EditType(use: TypeOnly<typeof old.EditType>): void;
-use_old_VariableDeclaration_EditType(get_current_VariableDeclaration_EditType());
+declare function get_current_VariableDeclaration_EditType():
+    TypeOnly<typeof current.EditType>;
+declare function use_old_VariableDeclaration_EditType(
+    use: TypeOnly<typeof old.EditType>): void;
+use_old_VariableDeclaration_EditType(
+    get_current_VariableDeclaration_EditType());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -406,9 +412,12 @@ use_old_VariableDeclaration_EditType(get_current_VariableDeclaration_EditType())
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditType": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_EditType(): TypeOnly<old.EditType>;
-declare function use_current_TypeAliasDeclaration_EditType(use: TypeOnly<current.EditType>): void;
-use_current_TypeAliasDeclaration_EditType(get_old_TypeAliasDeclaration_EditType());
+declare function get_old_TypeAliasDeclaration_EditType():
+    TypeOnly<old.EditType>;
+declare function use_current_TypeAliasDeclaration_EditType(
+    use: TypeOnly<current.EditType>): void;
+use_current_TypeAliasDeclaration_EditType(
+    get_old_TypeAliasDeclaration_EditType());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -417,9 +426,12 @@ use_current_TypeAliasDeclaration_EditType(get_old_TypeAliasDeclaration_EditType(
  * typeValidation.broken:
  * "TypeAliasDeclaration_EditType": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_EditType(): TypeOnly<current.EditType>;
-declare function use_old_TypeAliasDeclaration_EditType(use: TypeOnly<old.EditType>): void;
-use_old_TypeAliasDeclaration_EditType(get_current_TypeAliasDeclaration_EditType());
+declare function get_current_TypeAliasDeclaration_EditType():
+    TypeOnly<current.EditType>;
+declare function use_old_TypeAliasDeclaration_EditType(
+    use: TypeOnly<old.EditType>): void;
+use_old_TypeAliasDeclaration_EditType(
+    get_current_TypeAliasDeclaration_EditType());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -428,13 +440,12 @@ use_old_TypeAliasDeclaration_EditType(get_current_TypeAliasDeclaration_EditType(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidDevtoolsProps": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidDevtoolsProps(): TypeOnly<old.FluidDevtoolsProps>;
+declare function get_old_InterfaceDeclaration_FluidDevtoolsProps():
+    TypeOnly<old.FluidDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_FluidDevtoolsProps(
-	use: TypeOnly<current.FluidDevtoolsProps>,
-): void;
+    use: TypeOnly<current.FluidDevtoolsProps>): void;
 use_current_InterfaceDeclaration_FluidDevtoolsProps(
-	get_old_InterfaceDeclaration_FluidDevtoolsProps(),
-);
+    get_old_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -443,13 +454,12 @@ use_current_InterfaceDeclaration_FluidDevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidDevtoolsProps": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidDevtoolsProps(): TypeOnly<current.FluidDevtoolsProps>;
+declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
+    TypeOnly<current.FluidDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
-	use: TypeOnly<old.FluidDevtoolsProps>,
-): void;
+    use: TypeOnly<old.FluidDevtoolsProps>): void;
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
-	get_current_InterfaceDeclaration_FluidDevtoolsProps(),
-);
+    get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -458,11 +468,12 @@ use_old_InterfaceDeclaration_FluidDevtoolsProps(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidHandleNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidHandleNode(): TypeOnly<old.FluidHandleNode>;
+declare function get_old_InterfaceDeclaration_FluidHandleNode():
+    TypeOnly<old.FluidHandleNode>;
 declare function use_current_InterfaceDeclaration_FluidHandleNode(
-	use: TypeOnly<current.FluidHandleNode>,
-): void;
-use_current_InterfaceDeclaration_FluidHandleNode(get_old_InterfaceDeclaration_FluidHandleNode());
+    use: TypeOnly<current.FluidHandleNode>): void;
+use_current_InterfaceDeclaration_FluidHandleNode(
+    get_old_InterfaceDeclaration_FluidHandleNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -471,11 +482,12 @@ use_current_InterfaceDeclaration_FluidHandleNode(get_old_InterfaceDeclaration_Fl
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidHandleNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidHandleNode(): TypeOnly<current.FluidHandleNode>;
+declare function get_current_InterfaceDeclaration_FluidHandleNode():
+    TypeOnly<current.FluidHandleNode>;
 declare function use_old_InterfaceDeclaration_FluidHandleNode(
-	use: TypeOnly<old.FluidHandleNode>,
-): void;
-use_old_InterfaceDeclaration_FluidHandleNode(get_current_InterfaceDeclaration_FluidHandleNode());
+    use: TypeOnly<old.FluidHandleNode>): void;
+use_old_InterfaceDeclaration_FluidHandleNode(
+    get_current_InterfaceDeclaration_FluidHandleNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -484,11 +496,12 @@ use_old_InterfaceDeclaration_FluidHandleNode(get_current_InterfaceDeclaration_Fl
  * typeValidation.broken:
  * "TypeAliasDeclaration_FluidObjectId": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_FluidObjectId(): TypeOnly<old.FluidObjectId>;
+declare function get_old_TypeAliasDeclaration_FluidObjectId():
+    TypeOnly<old.FluidObjectId>;
 declare function use_current_TypeAliasDeclaration_FluidObjectId(
-	use: TypeOnly<current.FluidObjectId>,
-): void;
-use_current_TypeAliasDeclaration_FluidObjectId(get_old_TypeAliasDeclaration_FluidObjectId());
+    use: TypeOnly<current.FluidObjectId>): void;
+use_current_TypeAliasDeclaration_FluidObjectId(
+    get_old_TypeAliasDeclaration_FluidObjectId());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -497,9 +510,12 @@ use_current_TypeAliasDeclaration_FluidObjectId(get_old_TypeAliasDeclaration_Flui
  * typeValidation.broken:
  * "TypeAliasDeclaration_FluidObjectId": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_FluidObjectId(): TypeOnly<current.FluidObjectId>;
-declare function use_old_TypeAliasDeclaration_FluidObjectId(use: TypeOnly<old.FluidObjectId>): void;
-use_old_TypeAliasDeclaration_FluidObjectId(get_current_TypeAliasDeclaration_FluidObjectId());
+declare function get_current_TypeAliasDeclaration_FluidObjectId():
+    TypeOnly<current.FluidObjectId>;
+declare function use_old_TypeAliasDeclaration_FluidObjectId(
+    use: TypeOnly<old.FluidObjectId>): void;
+use_old_TypeAliasDeclaration_FluidObjectId(
+    get_current_TypeAliasDeclaration_FluidObjectId());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -508,11 +524,12 @@ use_old_TypeAliasDeclaration_FluidObjectId(get_current_TypeAliasDeclaration_Flui
  * typeValidation.broken:
  * "TypeAliasDeclaration_FluidObjectNode": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_FluidObjectNode(): TypeOnly<old.FluidObjectNode>;
+declare function get_old_TypeAliasDeclaration_FluidObjectNode():
+    TypeOnly<old.FluidObjectNode>;
 declare function use_current_TypeAliasDeclaration_FluidObjectNode(
-	use: TypeOnly<current.FluidObjectNode>,
-): void;
-use_current_TypeAliasDeclaration_FluidObjectNode(get_old_TypeAliasDeclaration_FluidObjectNode());
+    use: TypeOnly<current.FluidObjectNode>): void;
+use_current_TypeAliasDeclaration_FluidObjectNode(
+    get_old_TypeAliasDeclaration_FluidObjectNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -521,11 +538,12 @@ use_current_TypeAliasDeclaration_FluidObjectNode(get_old_TypeAliasDeclaration_Fl
  * typeValidation.broken:
  * "TypeAliasDeclaration_FluidObjectNode": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_FluidObjectNode(): TypeOnly<current.FluidObjectNode>;
+declare function get_current_TypeAliasDeclaration_FluidObjectNode():
+    TypeOnly<current.FluidObjectNode>;
 declare function use_old_TypeAliasDeclaration_FluidObjectNode(
-	use: TypeOnly<old.FluidObjectNode>,
-): void;
-use_old_TypeAliasDeclaration_FluidObjectNode(get_current_TypeAliasDeclaration_FluidObjectNode());
+    use: TypeOnly<old.FluidObjectNode>): void;
+use_old_TypeAliasDeclaration_FluidObjectNode(
+    get_current_TypeAliasDeclaration_FluidObjectNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -534,13 +552,12 @@ use_old_TypeAliasDeclaration_FluidObjectNode(get_current_TypeAliasDeclaration_Fl
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectNodeBase": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidObjectNodeBase(): TypeOnly<old.FluidObjectNodeBase>;
+declare function get_old_InterfaceDeclaration_FluidObjectNodeBase():
+    TypeOnly<old.FluidObjectNodeBase>;
 declare function use_current_InterfaceDeclaration_FluidObjectNodeBase(
-	use: TypeOnly<current.FluidObjectNodeBase>,
-): void;
+    use: TypeOnly<current.FluidObjectNodeBase>): void;
 use_current_InterfaceDeclaration_FluidObjectNodeBase(
-	get_old_InterfaceDeclaration_FluidObjectNodeBase(),
-);
+    get_old_InterfaceDeclaration_FluidObjectNodeBase());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -549,13 +566,12 @@ use_current_InterfaceDeclaration_FluidObjectNodeBase(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectNodeBase": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidObjectNodeBase(): TypeOnly<current.FluidObjectNodeBase>;
+declare function get_current_InterfaceDeclaration_FluidObjectNodeBase():
+    TypeOnly<current.FluidObjectNodeBase>;
 declare function use_old_InterfaceDeclaration_FluidObjectNodeBase(
-	use: TypeOnly<old.FluidObjectNodeBase>,
-): void;
+    use: TypeOnly<old.FluidObjectNodeBase>): void;
 use_old_InterfaceDeclaration_FluidObjectNodeBase(
-	get_current_InterfaceDeclaration_FluidObjectNodeBase(),
-);
+    get_current_InterfaceDeclaration_FluidObjectNodeBase());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -564,13 +580,12 @@ use_old_InterfaceDeclaration_FluidObjectNodeBase(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectTreeNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidObjectTreeNode(): TypeOnly<old.FluidObjectTreeNode>;
+declare function get_old_InterfaceDeclaration_FluidObjectTreeNode():
+    TypeOnly<old.FluidObjectTreeNode>;
 declare function use_current_InterfaceDeclaration_FluidObjectTreeNode(
-	use: TypeOnly<current.FluidObjectTreeNode>,
-): void;
+    use: TypeOnly<current.FluidObjectTreeNode>): void;
 use_current_InterfaceDeclaration_FluidObjectTreeNode(
-	get_old_InterfaceDeclaration_FluidObjectTreeNode(),
-);
+    get_old_InterfaceDeclaration_FluidObjectTreeNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -579,13 +594,12 @@ use_current_InterfaceDeclaration_FluidObjectTreeNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectTreeNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidObjectTreeNode(): TypeOnly<current.FluidObjectTreeNode>;
+declare function get_current_InterfaceDeclaration_FluidObjectTreeNode():
+    TypeOnly<current.FluidObjectTreeNode>;
 declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
-	use: TypeOnly<old.FluidObjectTreeNode>,
-): void;
+    use: TypeOnly<old.FluidObjectTreeNode>): void;
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
-	get_current_InterfaceDeclaration_FluidObjectTreeNode(),
-);
+    get_current_InterfaceDeclaration_FluidObjectTreeNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -594,13 +608,12 @@ use_old_InterfaceDeclaration_FluidObjectTreeNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectValueNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidObjectValueNode(): TypeOnly<old.FluidObjectValueNode>;
+declare function get_old_InterfaceDeclaration_FluidObjectValueNode():
+    TypeOnly<old.FluidObjectValueNode>;
 declare function use_current_InterfaceDeclaration_FluidObjectValueNode(
-	use: TypeOnly<current.FluidObjectValueNode>,
-): void;
+    use: TypeOnly<current.FluidObjectValueNode>): void;
 use_current_InterfaceDeclaration_FluidObjectValueNode(
-	get_old_InterfaceDeclaration_FluidObjectValueNode(),
-);
+    get_old_InterfaceDeclaration_FluidObjectValueNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -609,13 +622,12 @@ use_current_InterfaceDeclaration_FluidObjectValueNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidObjectValueNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidObjectValueNode(): TypeOnly<current.FluidObjectValueNode>;
+declare function get_current_InterfaceDeclaration_FluidObjectValueNode():
+    TypeOnly<current.FluidObjectValueNode>;
 declare function use_old_InterfaceDeclaration_FluidObjectValueNode(
-	use: TypeOnly<old.FluidObjectValueNode>,
-): void;
+    use: TypeOnly<old.FluidObjectValueNode>): void;
 use_old_InterfaceDeclaration_FluidObjectValueNode(
-	get_current_InterfaceDeclaration_FluidObjectValueNode(),
-);
+    get_current_InterfaceDeclaration_FluidObjectValueNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -624,13 +636,12 @@ use_old_InterfaceDeclaration_FluidObjectValueNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidUnknownObjectNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_FluidUnknownObjectNode(): TypeOnly<old.FluidUnknownObjectNode>;
+declare function get_old_InterfaceDeclaration_FluidUnknownObjectNode():
+    TypeOnly<old.FluidUnknownObjectNode>;
 declare function use_current_InterfaceDeclaration_FluidUnknownObjectNode(
-	use: TypeOnly<current.FluidUnknownObjectNode>,
-): void;
+    use: TypeOnly<current.FluidUnknownObjectNode>): void;
 use_current_InterfaceDeclaration_FluidUnknownObjectNode(
-	get_old_InterfaceDeclaration_FluidUnknownObjectNode(),
-);
+    get_old_InterfaceDeclaration_FluidUnknownObjectNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -639,13 +650,12 @@ use_current_InterfaceDeclaration_FluidUnknownObjectNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_FluidUnknownObjectNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_FluidUnknownObjectNode(): TypeOnly<current.FluidUnknownObjectNode>;
+declare function get_current_InterfaceDeclaration_FluidUnknownObjectNode():
+    TypeOnly<current.FluidUnknownObjectNode>;
 declare function use_old_InterfaceDeclaration_FluidUnknownObjectNode(
-	use: TypeOnly<old.FluidUnknownObjectNode>,
-): void;
+    use: TypeOnly<old.FluidUnknownObjectNode>): void;
 use_old_InterfaceDeclaration_FluidUnknownObjectNode(
-	get_current_InterfaceDeclaration_FluidUnknownObjectNode(),
-);
+    get_current_InterfaceDeclaration_FluidUnknownObjectNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -654,11 +664,12 @@ use_old_InterfaceDeclaration_FluidUnknownObjectNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_HasContainerKey": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_HasContainerKey(): TypeOnly<old.HasContainerKey>;
+declare function get_old_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<old.HasContainerKey>;
 declare function use_current_InterfaceDeclaration_HasContainerKey(
-	use: TypeOnly<current.HasContainerKey>,
-): void;
-use_current_InterfaceDeclaration_HasContainerKey(get_old_InterfaceDeclaration_HasContainerKey());
+    use: TypeOnly<current.HasContainerKey>): void;
+use_current_InterfaceDeclaration_HasContainerKey(
+    get_old_InterfaceDeclaration_HasContainerKey());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -667,11 +678,12 @@ use_current_InterfaceDeclaration_HasContainerKey(get_old_InterfaceDeclaration_Ha
  * typeValidation.broken:
  * "InterfaceDeclaration_HasContainerKey": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_HasContainerKey(): TypeOnly<current.HasContainerKey>;
+declare function get_current_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<current.HasContainerKey>;
 declare function use_old_InterfaceDeclaration_HasContainerKey(
-	use: TypeOnly<old.HasContainerKey>,
-): void;
-use_old_InterfaceDeclaration_HasContainerKey(get_current_InterfaceDeclaration_HasContainerKey());
+    use: TypeOnly<old.HasContainerKey>): void;
+use_old_InterfaceDeclaration_HasContainerKey(
+    get_current_InterfaceDeclaration_HasContainerKey());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -680,11 +692,12 @@ use_old_InterfaceDeclaration_HasContainerKey(get_current_InterfaceDeclaration_Ha
  * typeValidation.broken:
  * "InterfaceDeclaration_HasFluidObjectId": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_HasFluidObjectId(): TypeOnly<old.HasFluidObjectId>;
+declare function get_old_InterfaceDeclaration_HasFluidObjectId():
+    TypeOnly<old.HasFluidObjectId>;
 declare function use_current_InterfaceDeclaration_HasFluidObjectId(
-	use: TypeOnly<current.HasFluidObjectId>,
-): void;
-use_current_InterfaceDeclaration_HasFluidObjectId(get_old_InterfaceDeclaration_HasFluidObjectId());
+    use: TypeOnly<current.HasFluidObjectId>): void;
+use_current_InterfaceDeclaration_HasFluidObjectId(
+    get_old_InterfaceDeclaration_HasFluidObjectId());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -693,11 +706,12 @@ use_current_InterfaceDeclaration_HasFluidObjectId(get_old_InterfaceDeclaration_H
  * typeValidation.broken:
  * "InterfaceDeclaration_HasFluidObjectId": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_HasFluidObjectId(): TypeOnly<current.HasFluidObjectId>;
+declare function get_current_InterfaceDeclaration_HasFluidObjectId():
+    TypeOnly<current.HasFluidObjectId>;
 declare function use_old_InterfaceDeclaration_HasFluidObjectId(
-	use: TypeOnly<old.HasFluidObjectId>,
-): void;
-use_old_InterfaceDeclaration_HasFluidObjectId(get_current_InterfaceDeclaration_HasFluidObjectId());
+    use: TypeOnly<old.HasFluidObjectId>): void;
+use_old_InterfaceDeclaration_HasFluidObjectId(
+    get_current_InterfaceDeclaration_HasFluidObjectId());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -706,11 +720,12 @@ use_old_InterfaceDeclaration_HasFluidObjectId(get_current_InterfaceDeclaration_H
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsLogger": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IDevtoolsLogger(): TypeOnly<old.IDevtoolsLogger>;
+declare function get_old_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<old.IDevtoolsLogger>;
 declare function use_current_InterfaceDeclaration_IDevtoolsLogger(
-	use: TypeOnly<current.IDevtoolsLogger>,
-): void;
-use_current_InterfaceDeclaration_IDevtoolsLogger(get_old_InterfaceDeclaration_IDevtoolsLogger());
+    use: TypeOnly<current.IDevtoolsLogger>): void;
+use_current_InterfaceDeclaration_IDevtoolsLogger(
+    get_old_InterfaceDeclaration_IDevtoolsLogger());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -719,11 +734,12 @@ use_current_InterfaceDeclaration_IDevtoolsLogger(get_old_InterfaceDeclaration_ID
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsLogger": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IDevtoolsLogger(): TypeOnly<current.IDevtoolsLogger>;
+declare function get_current_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<current.IDevtoolsLogger>;
 declare function use_old_InterfaceDeclaration_IDevtoolsLogger(
-	use: TypeOnly<old.IDevtoolsLogger>,
-): void;
-use_old_InterfaceDeclaration_IDevtoolsLogger(get_current_InterfaceDeclaration_IDevtoolsLogger());
+    use: TypeOnly<old.IDevtoolsLogger>): void;
+use_old_InterfaceDeclaration_IDevtoolsLogger(
+    get_current_InterfaceDeclaration_IDevtoolsLogger());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -732,11 +748,12 @@ use_old_InterfaceDeclaration_IDevtoolsLogger(get_current_InterfaceDeclaration_ID
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsMessage": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IDevtoolsMessage(): TypeOnly<old.IDevtoolsMessage>;
+declare function get_old_InterfaceDeclaration_IDevtoolsMessage():
+    TypeOnly<old.IDevtoolsMessage>;
 declare function use_current_InterfaceDeclaration_IDevtoolsMessage(
-	use: TypeOnly<current.IDevtoolsMessage>,
-): void;
-use_current_InterfaceDeclaration_IDevtoolsMessage(get_old_InterfaceDeclaration_IDevtoolsMessage());
+    use: TypeOnly<current.IDevtoolsMessage>): void;
+use_current_InterfaceDeclaration_IDevtoolsMessage(
+    get_old_InterfaceDeclaration_IDevtoolsMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -745,11 +762,12 @@ use_current_InterfaceDeclaration_IDevtoolsMessage(get_old_InterfaceDeclaration_I
  * typeValidation.broken:
  * "InterfaceDeclaration_IDevtoolsMessage": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IDevtoolsMessage(): TypeOnly<current.IDevtoolsMessage>;
+declare function get_current_InterfaceDeclaration_IDevtoolsMessage():
+    TypeOnly<current.IDevtoolsMessage>;
 declare function use_old_InterfaceDeclaration_IDevtoolsMessage(
-	use: TypeOnly<old.IDevtoolsMessage>,
-): void;
-use_old_InterfaceDeclaration_IDevtoolsMessage(get_current_InterfaceDeclaration_IDevtoolsMessage());
+    use: TypeOnly<old.IDevtoolsMessage>): void;
+use_old_InterfaceDeclaration_IDevtoolsMessage(
+    get_current_InterfaceDeclaration_IDevtoolsMessage());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -758,11 +776,12 @@ use_old_InterfaceDeclaration_IDevtoolsMessage(get_current_InterfaceDeclaration_I
  * typeValidation.broken:
  * "InterfaceDeclaration_IFluidDevtools": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IFluidDevtools(): TypeOnly<old.IFluidDevtools>;
+declare function get_old_InterfaceDeclaration_IFluidDevtools():
+    TypeOnly<old.IFluidDevtools>;
 declare function use_current_InterfaceDeclaration_IFluidDevtools(
-	use: TypeOnly<current.IFluidDevtools>,
-): void;
-use_current_InterfaceDeclaration_IFluidDevtools(get_old_InterfaceDeclaration_IFluidDevtools());
+    use: TypeOnly<current.IFluidDevtools>): void;
+use_current_InterfaceDeclaration_IFluidDevtools(
+    get_old_InterfaceDeclaration_IFluidDevtools());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -771,11 +790,12 @@ use_current_InterfaceDeclaration_IFluidDevtools(get_old_InterfaceDeclaration_IFl
  * typeValidation.broken:
  * "InterfaceDeclaration_IFluidDevtools": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IFluidDevtools(): TypeOnly<current.IFluidDevtools>;
+declare function get_current_InterfaceDeclaration_IFluidDevtools():
+    TypeOnly<current.IFluidDevtools>;
 declare function use_old_InterfaceDeclaration_IFluidDevtools(
-	use: TypeOnly<old.IFluidDevtools>,
-): void;
-use_old_InterfaceDeclaration_IFluidDevtools(get_current_InterfaceDeclaration_IFluidDevtools());
+    use: TypeOnly<old.IFluidDevtools>): void;
+use_old_InterfaceDeclaration_IFluidDevtools(
+    get_current_InterfaceDeclaration_IFluidDevtools());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -784,11 +804,12 @@ use_old_InterfaceDeclaration_IFluidDevtools(get_current_InterfaceDeclaration_IFl
  * typeValidation.broken:
  * "InterfaceDeclaration_IMessageRelay": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IMessageRelay(): TypeOnly<old.IMessageRelay>;
+declare function get_old_InterfaceDeclaration_IMessageRelay():
+    TypeOnly<old.IMessageRelay>;
 declare function use_current_InterfaceDeclaration_IMessageRelay(
-	use: TypeOnly<current.IMessageRelay>,
-): void;
-use_current_InterfaceDeclaration_IMessageRelay(get_old_InterfaceDeclaration_IMessageRelay());
+    use: TypeOnly<current.IMessageRelay>): void;
+use_current_InterfaceDeclaration_IMessageRelay(
+    get_old_InterfaceDeclaration_IMessageRelay());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -797,9 +818,12 @@ use_current_InterfaceDeclaration_IMessageRelay(get_old_InterfaceDeclaration_IMes
  * typeValidation.broken:
  * "InterfaceDeclaration_IMessageRelay": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IMessageRelay(): TypeOnly<current.IMessageRelay>;
-declare function use_old_InterfaceDeclaration_IMessageRelay(use: TypeOnly<old.IMessageRelay>): void;
-use_old_InterfaceDeclaration_IMessageRelay(get_current_InterfaceDeclaration_IMessageRelay());
+declare function get_current_InterfaceDeclaration_IMessageRelay():
+    TypeOnly<current.IMessageRelay>;
+declare function use_old_InterfaceDeclaration_IMessageRelay(
+    use: TypeOnly<old.IMessageRelay>): void;
+use_old_InterfaceDeclaration_IMessageRelay(
+    get_current_InterfaceDeclaration_IMessageRelay());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -808,13 +832,12 @@ use_old_InterfaceDeclaration_IMessageRelay(get_current_InterfaceDeclaration_IMes
  * typeValidation.broken:
  * "InterfaceDeclaration_IMessageRelayEvents": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IMessageRelayEvents(): TypeOnly<old.IMessageRelayEvents>;
+declare function get_old_InterfaceDeclaration_IMessageRelayEvents():
+    TypeOnly<old.IMessageRelayEvents>;
 declare function use_current_InterfaceDeclaration_IMessageRelayEvents(
-	use: TypeOnly<current.IMessageRelayEvents>,
-): void;
+    use: TypeOnly<current.IMessageRelayEvents>): void;
 use_current_InterfaceDeclaration_IMessageRelayEvents(
-	get_old_InterfaceDeclaration_IMessageRelayEvents(),
-);
+    get_old_InterfaceDeclaration_IMessageRelayEvents());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -823,13 +846,12 @@ use_current_InterfaceDeclaration_IMessageRelayEvents(
  * typeValidation.broken:
  * "InterfaceDeclaration_IMessageRelayEvents": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IMessageRelayEvents(): TypeOnly<current.IMessageRelayEvents>;
+declare function get_current_InterfaceDeclaration_IMessageRelayEvents():
+    TypeOnly<current.IMessageRelayEvents>;
 declare function use_old_InterfaceDeclaration_IMessageRelayEvents(
-	use: TypeOnly<old.IMessageRelayEvents>,
-): void;
+    use: TypeOnly<old.IMessageRelayEvents>): void;
 use_old_InterfaceDeclaration_IMessageRelayEvents(
-	get_current_InterfaceDeclaration_IMessageRelayEvents(),
-);
+    get_current_InterfaceDeclaration_IMessageRelayEvents());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -838,13 +860,12 @@ use_old_InterfaceDeclaration_IMessageRelayEvents(
  * typeValidation.broken:
  * "InterfaceDeclaration_ISourcedDevtoolsMessage": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ISourcedDevtoolsMessage(): TypeOnly<old.ISourcedDevtoolsMessage>;
+declare function get_old_InterfaceDeclaration_ISourcedDevtoolsMessage():
+    TypeOnly<old.ISourcedDevtoolsMessage>;
 declare function use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
-	use: TypeOnly<current.ISourcedDevtoolsMessage>,
-): void;
+    use: TypeOnly<current.ISourcedDevtoolsMessage>): void;
 use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
-	get_old_InterfaceDeclaration_ISourcedDevtoolsMessage(),
-);
+    get_old_InterfaceDeclaration_ISourcedDevtoolsMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -853,13 +874,12 @@ use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
  * typeValidation.broken:
  * "InterfaceDeclaration_ISourcedDevtoolsMessage": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ISourcedDevtoolsMessage(): TypeOnly<current.ISourcedDevtoolsMessage>;
+declare function get_current_InterfaceDeclaration_ISourcedDevtoolsMessage():
+    TypeOnly<current.ISourcedDevtoolsMessage>;
 declare function use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
-	use: TypeOnly<old.ISourcedDevtoolsMessage>,
-): void;
+    use: TypeOnly<old.ISourcedDevtoolsMessage>): void;
 use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
-	get_current_InterfaceDeclaration_ISourcedDevtoolsMessage(),
-);
+    get_current_InterfaceDeclaration_ISourcedDevtoolsMessage());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -868,13 +888,12 @@ use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
  * typeValidation.broken:
  * "InterfaceDeclaration_ITimestampedTelemetryEvent": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITimestampedTelemetryEvent(): TypeOnly<old.ITimestampedTelemetryEvent>;
+declare function get_old_InterfaceDeclaration_ITimestampedTelemetryEvent():
+    TypeOnly<old.ITimestampedTelemetryEvent>;
 declare function use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
-	use: TypeOnly<current.ITimestampedTelemetryEvent>,
-): void;
+    use: TypeOnly<current.ITimestampedTelemetryEvent>): void;
 use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
-	get_old_InterfaceDeclaration_ITimestampedTelemetryEvent(),
-);
+    get_old_InterfaceDeclaration_ITimestampedTelemetryEvent());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -883,13 +902,12 @@ use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
  * typeValidation.broken:
  * "InterfaceDeclaration_ITimestampedTelemetryEvent": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITimestampedTelemetryEvent(): TypeOnly<current.ITimestampedTelemetryEvent>;
+declare function get_current_InterfaceDeclaration_ITimestampedTelemetryEvent():
+    TypeOnly<current.ITimestampedTelemetryEvent>;
 declare function use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
-	use: TypeOnly<old.ITimestampedTelemetryEvent>,
-): void;
+    use: TypeOnly<old.ITimestampedTelemetryEvent>): void;
 use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
-	get_current_InterfaceDeclaration_ITimestampedTelemetryEvent(),
-);
+    get_current_InterfaceDeclaration_ITimestampedTelemetryEvent());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -898,11 +916,12 @@ use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
  * typeValidation.broken:
  * "InterfaceDeclaration_InboundHandlers": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_InboundHandlers(): TypeOnly<old.InboundHandlers>;
+declare function get_old_InterfaceDeclaration_InboundHandlers():
+    TypeOnly<old.InboundHandlers>;
 declare function use_current_InterfaceDeclaration_InboundHandlers(
-	use: TypeOnly<current.InboundHandlers>,
-): void;
-use_current_InterfaceDeclaration_InboundHandlers(get_old_InterfaceDeclaration_InboundHandlers());
+    use: TypeOnly<current.InboundHandlers>): void;
+use_current_InterfaceDeclaration_InboundHandlers(
+    get_old_InterfaceDeclaration_InboundHandlers());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -911,11 +930,12 @@ use_current_InterfaceDeclaration_InboundHandlers(get_old_InterfaceDeclaration_In
  * typeValidation.broken:
  * "InterfaceDeclaration_InboundHandlers": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_InboundHandlers(): TypeOnly<current.InboundHandlers>;
+declare function get_current_InterfaceDeclaration_InboundHandlers():
+    TypeOnly<current.InboundHandlers>;
 declare function use_old_InterfaceDeclaration_InboundHandlers(
-	use: TypeOnly<old.InboundHandlers>,
-): void;
-use_old_InterfaceDeclaration_InboundHandlers(get_current_InterfaceDeclaration_InboundHandlers());
+    use: TypeOnly<old.InboundHandlers>): void;
+use_old_InterfaceDeclaration_InboundHandlers(
+    get_current_InterfaceDeclaration_InboundHandlers());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -924,9 +944,12 @@ use_old_InterfaceDeclaration_InboundHandlers(get_current_InterfaceDeclaration_In
  * typeValidation.broken:
  * "InterfaceDeclaration_LogEntry": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_LogEntry(): TypeOnly<old.LogEntry>;
-declare function use_current_InterfaceDeclaration_LogEntry(use: TypeOnly<current.LogEntry>): void;
-use_current_InterfaceDeclaration_LogEntry(get_old_InterfaceDeclaration_LogEntry());
+declare function get_old_InterfaceDeclaration_LogEntry():
+    TypeOnly<old.LogEntry>;
+declare function use_current_InterfaceDeclaration_LogEntry(
+    use: TypeOnly<current.LogEntry>): void;
+use_current_InterfaceDeclaration_LogEntry(
+    get_old_InterfaceDeclaration_LogEntry());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -935,9 +958,12 @@ use_current_InterfaceDeclaration_LogEntry(get_old_InterfaceDeclaration_LogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_LogEntry": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_LogEntry(): TypeOnly<current.LogEntry>;
-declare function use_old_InterfaceDeclaration_LogEntry(use: TypeOnly<old.LogEntry>): void;
-use_old_InterfaceDeclaration_LogEntry(get_current_InterfaceDeclaration_LogEntry());
+declare function get_current_InterfaceDeclaration_LogEntry():
+    TypeOnly<current.LogEntry>;
+declare function use_old_InterfaceDeclaration_LogEntry(
+    use: TypeOnly<old.LogEntry>): void;
+use_old_InterfaceDeclaration_LogEntry(
+    get_current_InterfaceDeclaration_LogEntry());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -946,11 +972,12 @@ use_old_InterfaceDeclaration_LogEntry(get_current_InterfaceDeclaration_LogEntry(
  * typeValidation.broken:
  * "EnumDeclaration_MemberChangeKind": {"forwardCompat": false}
  */
-declare function get_old_EnumDeclaration_MemberChangeKind(): TypeOnly<old.MemberChangeKind>;
+declare function get_old_EnumDeclaration_MemberChangeKind():
+    TypeOnly<old.MemberChangeKind>;
 declare function use_current_EnumDeclaration_MemberChangeKind(
-	use: TypeOnly<current.MemberChangeKind>,
-): void;
-use_current_EnumDeclaration_MemberChangeKind(get_old_EnumDeclaration_MemberChangeKind());
+    use: TypeOnly<current.MemberChangeKind>): void;
+use_current_EnumDeclaration_MemberChangeKind(
+    get_old_EnumDeclaration_MemberChangeKind());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -959,11 +986,12 @@ use_current_EnumDeclaration_MemberChangeKind(get_old_EnumDeclaration_MemberChang
  * typeValidation.broken:
  * "EnumDeclaration_MemberChangeKind": {"backCompat": false}
  */
-declare function get_current_EnumDeclaration_MemberChangeKind(): TypeOnly<current.MemberChangeKind>;
+declare function get_current_EnumDeclaration_MemberChangeKind():
+    TypeOnly<current.MemberChangeKind>;
 declare function use_old_EnumDeclaration_MemberChangeKind(
-	use: TypeOnly<old.MemberChangeKind>,
-): void;
-use_old_EnumDeclaration_MemberChangeKind(get_current_EnumDeclaration_MemberChangeKind());
+    use: TypeOnly<old.MemberChangeKind>): void;
+use_old_EnumDeclaration_MemberChangeKind(
+    get_current_EnumDeclaration_MemberChangeKind());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -972,13 +1000,12 @@ use_old_EnumDeclaration_MemberChangeKind(get_current_EnumDeclaration_MemberChang
  * typeValidation.broken:
  * "InterfaceDeclaration_MessageLoggingOptions": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_MessageLoggingOptions(): TypeOnly<old.MessageLoggingOptions>;
+declare function get_old_InterfaceDeclaration_MessageLoggingOptions():
+    TypeOnly<old.MessageLoggingOptions>;
 declare function use_current_InterfaceDeclaration_MessageLoggingOptions(
-	use: TypeOnly<current.MessageLoggingOptions>,
-): void;
+    use: TypeOnly<current.MessageLoggingOptions>): void;
 use_current_InterfaceDeclaration_MessageLoggingOptions(
-	get_old_InterfaceDeclaration_MessageLoggingOptions(),
-);
+    get_old_InterfaceDeclaration_MessageLoggingOptions());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -987,13 +1014,12 @@ use_current_InterfaceDeclaration_MessageLoggingOptions(
  * typeValidation.broken:
  * "InterfaceDeclaration_MessageLoggingOptions": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_MessageLoggingOptions(): TypeOnly<current.MessageLoggingOptions>;
+declare function get_current_InterfaceDeclaration_MessageLoggingOptions():
+    TypeOnly<current.MessageLoggingOptions>;
 declare function use_old_InterfaceDeclaration_MessageLoggingOptions(
-	use: TypeOnly<old.MessageLoggingOptions>,
-): void;
+    use: TypeOnly<old.MessageLoggingOptions>): void;
 use_old_InterfaceDeclaration_MessageLoggingOptions(
-	get_current_InterfaceDeclaration_MessageLoggingOptions(),
-);
+    get_current_InterfaceDeclaration_MessageLoggingOptions());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1002,9 +1028,12 @@ use_old_InterfaceDeclaration_MessageLoggingOptions(
  * typeValidation.broken:
  * "TypeAliasDeclaration_Primitive": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_Primitive(): TypeOnly<old.Primitive>;
-declare function use_current_TypeAliasDeclaration_Primitive(use: TypeOnly<current.Primitive>): void;
-use_current_TypeAliasDeclaration_Primitive(get_old_TypeAliasDeclaration_Primitive());
+declare function get_old_TypeAliasDeclaration_Primitive():
+    TypeOnly<old.Primitive>;
+declare function use_current_TypeAliasDeclaration_Primitive(
+    use: TypeOnly<current.Primitive>): void;
+use_current_TypeAliasDeclaration_Primitive(
+    get_old_TypeAliasDeclaration_Primitive());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1013,9 +1042,12 @@ use_current_TypeAliasDeclaration_Primitive(get_old_TypeAliasDeclaration_Primitiv
  * typeValidation.broken:
  * "TypeAliasDeclaration_Primitive": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_Primitive(): TypeOnly<current.Primitive>;
-declare function use_old_TypeAliasDeclaration_Primitive(use: TypeOnly<old.Primitive>): void;
-use_old_TypeAliasDeclaration_Primitive(get_current_TypeAliasDeclaration_Primitive());
+declare function get_current_TypeAliasDeclaration_Primitive():
+    TypeOnly<current.Primitive>;
+declare function use_old_TypeAliasDeclaration_Primitive(
+    use: TypeOnly<old.Primitive>): void;
+use_old_TypeAliasDeclaration_Primitive(
+    get_current_TypeAliasDeclaration_Primitive());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1024,11 +1056,12 @@ use_old_TypeAliasDeclaration_Primitive(get_current_TypeAliasDeclaration_Primitiv
  * typeValidation.broken:
  * "TypeAliasDeclaration_RootHandleNode": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_RootHandleNode(): TypeOnly<old.RootHandleNode>;
+declare function get_old_TypeAliasDeclaration_RootHandleNode():
+    TypeOnly<old.RootHandleNode>;
 declare function use_current_TypeAliasDeclaration_RootHandleNode(
-	use: TypeOnly<current.RootHandleNode>,
-): void;
-use_current_TypeAliasDeclaration_RootHandleNode(get_old_TypeAliasDeclaration_RootHandleNode());
+    use: TypeOnly<current.RootHandleNode>): void;
+use_current_TypeAliasDeclaration_RootHandleNode(
+    get_old_TypeAliasDeclaration_RootHandleNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1037,11 +1070,12 @@ use_current_TypeAliasDeclaration_RootHandleNode(get_old_TypeAliasDeclaration_Roo
  * typeValidation.broken:
  * "TypeAliasDeclaration_RootHandleNode": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_RootHandleNode(): TypeOnly<current.RootHandleNode>;
+declare function get_current_TypeAliasDeclaration_RootHandleNode():
+    TypeOnly<current.RootHandleNode>;
 declare function use_old_TypeAliasDeclaration_RootHandleNode(
-	use: TypeOnly<old.RootHandleNode>,
-): void;
-use_old_TypeAliasDeclaration_RootHandleNode(get_current_TypeAliasDeclaration_RootHandleNode());
+    use: TypeOnly<old.RootHandleNode>): void;
+use_old_TypeAliasDeclaration_RootHandleNode(
+    get_current_TypeAliasDeclaration_RootHandleNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1050,11 +1084,12 @@ use_old_TypeAliasDeclaration_RootHandleNode(get_current_TypeAliasDeclaration_Roo
  * typeValidation.broken:
  * "InterfaceDeclaration_SharedObjectEdit": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_SharedObjectEdit(): TypeOnly<old.SharedObjectEdit>;
+declare function get_old_InterfaceDeclaration_SharedObjectEdit():
+    TypeOnly<old.SharedObjectEdit>;
 declare function use_current_InterfaceDeclaration_SharedObjectEdit(
-	use: TypeOnly<current.SharedObjectEdit>,
-): void;
-use_current_InterfaceDeclaration_SharedObjectEdit(get_old_InterfaceDeclaration_SharedObjectEdit());
+    use: TypeOnly<current.SharedObjectEdit>): void;
+use_current_InterfaceDeclaration_SharedObjectEdit(
+    get_old_InterfaceDeclaration_SharedObjectEdit());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1063,11 +1098,12 @@ use_current_InterfaceDeclaration_SharedObjectEdit(get_old_InterfaceDeclaration_S
  * typeValidation.broken:
  * "InterfaceDeclaration_SharedObjectEdit": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_SharedObjectEdit(): TypeOnly<current.SharedObjectEdit>;
+declare function get_current_InterfaceDeclaration_SharedObjectEdit():
+    TypeOnly<current.SharedObjectEdit>;
 declare function use_old_InterfaceDeclaration_SharedObjectEdit(
-	use: TypeOnly<old.SharedObjectEdit>,
-): void;
-use_old_InterfaceDeclaration_SharedObjectEdit(get_current_InterfaceDeclaration_SharedObjectEdit());
+    use: TypeOnly<old.SharedObjectEdit>): void;
+use_old_InterfaceDeclaration_SharedObjectEdit(
+    get_current_InterfaceDeclaration_SharedObjectEdit());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1076,15 +1112,12 @@ use_old_InterfaceDeclaration_SharedObjectEdit(get_current_InterfaceDeclaration_S
  * typeValidation.broken:
  * "InterfaceDeclaration_StateChangeLogEntry": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_StateChangeLogEntry(): TypeOnly<
-	old.StateChangeLogEntry<any>
->;
+declare function get_old_InterfaceDeclaration_StateChangeLogEntry():
+    TypeOnly<old.StateChangeLogEntry<any>>;
 declare function use_current_InterfaceDeclaration_StateChangeLogEntry(
-	use: TypeOnly<current.StateChangeLogEntry<any>>,
-): void;
+    use: TypeOnly<current.StateChangeLogEntry<any>>): void;
 use_current_InterfaceDeclaration_StateChangeLogEntry(
-	get_old_InterfaceDeclaration_StateChangeLogEntry(),
-);
+    get_old_InterfaceDeclaration_StateChangeLogEntry());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1093,15 +1126,12 @@ use_current_InterfaceDeclaration_StateChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_StateChangeLogEntry": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_StateChangeLogEntry(): TypeOnly<
-	current.StateChangeLogEntry<any>
->;
+declare function get_current_InterfaceDeclaration_StateChangeLogEntry():
+    TypeOnly<current.StateChangeLogEntry<any>>;
 declare function use_old_InterfaceDeclaration_StateChangeLogEntry(
-	use: TypeOnly<old.StateChangeLogEntry<any>>,
-): void;
+    use: TypeOnly<old.StateChangeLogEntry<any>>): void;
 use_old_InterfaceDeclaration_StateChangeLogEntry(
-	get_current_InterfaceDeclaration_StateChangeLogEntry(),
-);
+    get_current_InterfaceDeclaration_StateChangeLogEntry());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1110,11 +1140,12 @@ use_old_InterfaceDeclaration_StateChangeLogEntry(
  * typeValidation.broken:
  * "InterfaceDeclaration_TreeNodeBase": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_TreeNodeBase(): TypeOnly<old.TreeNodeBase>;
+declare function get_old_InterfaceDeclaration_TreeNodeBase():
+    TypeOnly<old.TreeNodeBase>;
 declare function use_current_InterfaceDeclaration_TreeNodeBase(
-	use: TypeOnly<current.TreeNodeBase>,
-): void;
-use_current_InterfaceDeclaration_TreeNodeBase(get_old_InterfaceDeclaration_TreeNodeBase());
+    use: TypeOnly<current.TreeNodeBase>): void;
+use_current_InterfaceDeclaration_TreeNodeBase(
+    get_old_InterfaceDeclaration_TreeNodeBase());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1123,9 +1154,12 @@ use_current_InterfaceDeclaration_TreeNodeBase(get_old_InterfaceDeclaration_TreeN
  * typeValidation.broken:
  * "InterfaceDeclaration_TreeNodeBase": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_TreeNodeBase(): TypeOnly<current.TreeNodeBase>;
-declare function use_old_InterfaceDeclaration_TreeNodeBase(use: TypeOnly<old.TreeNodeBase>): void;
-use_old_InterfaceDeclaration_TreeNodeBase(get_current_InterfaceDeclaration_TreeNodeBase());
+declare function get_current_InterfaceDeclaration_TreeNodeBase():
+    TypeOnly<current.TreeNodeBase>;
+declare function use_old_InterfaceDeclaration_TreeNodeBase(
+    use: TypeOnly<old.TreeNodeBase>): void;
+use_old_InterfaceDeclaration_TreeNodeBase(
+    get_current_InterfaceDeclaration_TreeNodeBase());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1134,13 +1168,12 @@ use_old_InterfaceDeclaration_TreeNodeBase(get_current_InterfaceDeclaration_TreeN
  * typeValidation.broken:
  * "InterfaceDeclaration_UnknownObjectNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_UnknownObjectNode(): TypeOnly<old.UnknownObjectNode>;
+declare function get_old_InterfaceDeclaration_UnknownObjectNode():
+    TypeOnly<old.UnknownObjectNode>;
 declare function use_current_InterfaceDeclaration_UnknownObjectNode(
-	use: TypeOnly<current.UnknownObjectNode>,
-): void;
+    use: TypeOnly<current.UnknownObjectNode>): void;
 use_current_InterfaceDeclaration_UnknownObjectNode(
-	get_old_InterfaceDeclaration_UnknownObjectNode(),
-);
+    get_old_InterfaceDeclaration_UnknownObjectNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1149,13 +1182,12 @@ use_current_InterfaceDeclaration_UnknownObjectNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_UnknownObjectNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_UnknownObjectNode(): TypeOnly<current.UnknownObjectNode>;
+declare function get_current_InterfaceDeclaration_UnknownObjectNode():
+    TypeOnly<current.UnknownObjectNode>;
 declare function use_old_InterfaceDeclaration_UnknownObjectNode(
-	use: TypeOnly<old.UnknownObjectNode>,
-): void;
+    use: TypeOnly<old.UnknownObjectNode>): void;
 use_old_InterfaceDeclaration_UnknownObjectNode(
-	get_current_InterfaceDeclaration_UnknownObjectNode(),
-);
+    get_current_InterfaceDeclaration_UnknownObjectNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1164,11 +1196,12 @@ use_old_InterfaceDeclaration_UnknownObjectNode(
  * typeValidation.broken:
  * "InterfaceDeclaration_ValueNodeBase": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ValueNodeBase(): TypeOnly<old.ValueNodeBase>;
+declare function get_old_InterfaceDeclaration_ValueNodeBase():
+    TypeOnly<old.ValueNodeBase>;
 declare function use_current_InterfaceDeclaration_ValueNodeBase(
-	use: TypeOnly<current.ValueNodeBase>,
-): void;
-use_current_InterfaceDeclaration_ValueNodeBase(get_old_InterfaceDeclaration_ValueNodeBase());
+    use: TypeOnly<current.ValueNodeBase>): void;
+use_current_InterfaceDeclaration_ValueNodeBase(
+    get_old_InterfaceDeclaration_ValueNodeBase());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1177,9 +1210,12 @@ use_current_InterfaceDeclaration_ValueNodeBase(get_old_InterfaceDeclaration_Valu
  * typeValidation.broken:
  * "InterfaceDeclaration_ValueNodeBase": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ValueNodeBase(): TypeOnly<current.ValueNodeBase>;
-declare function use_old_InterfaceDeclaration_ValueNodeBase(use: TypeOnly<old.ValueNodeBase>): void;
-use_old_InterfaceDeclaration_ValueNodeBase(get_current_InterfaceDeclaration_ValueNodeBase());
+declare function get_current_InterfaceDeclaration_ValueNodeBase():
+    TypeOnly<current.ValueNodeBase>;
+declare function use_old_InterfaceDeclaration_ValueNodeBase(
+    use: TypeOnly<old.ValueNodeBase>): void;
+use_old_InterfaceDeclaration_ValueNodeBase(
+    get_current_InterfaceDeclaration_ValueNodeBase());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1188,11 +1224,12 @@ use_old_InterfaceDeclaration_ValueNodeBase(get_current_InterfaceDeclaration_Valu
  * typeValidation.broken:
  * "TypeAliasDeclaration_VisualChildNode": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_VisualChildNode(): TypeOnly<old.VisualChildNode>;
+declare function get_old_TypeAliasDeclaration_VisualChildNode():
+    TypeOnly<old.VisualChildNode>;
 declare function use_current_TypeAliasDeclaration_VisualChildNode(
-	use: TypeOnly<current.VisualChildNode>,
-): void;
-use_current_TypeAliasDeclaration_VisualChildNode(get_old_TypeAliasDeclaration_VisualChildNode());
+    use: TypeOnly<current.VisualChildNode>): void;
+use_current_TypeAliasDeclaration_VisualChildNode(
+    get_old_TypeAliasDeclaration_VisualChildNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1201,11 +1238,12 @@ use_current_TypeAliasDeclaration_VisualChildNode(get_old_TypeAliasDeclaration_Vi
  * typeValidation.broken:
  * "TypeAliasDeclaration_VisualChildNode": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_VisualChildNode(): TypeOnly<current.VisualChildNode>;
+declare function get_current_TypeAliasDeclaration_VisualChildNode():
+    TypeOnly<current.VisualChildNode>;
 declare function use_old_TypeAliasDeclaration_VisualChildNode(
-	use: TypeOnly<old.VisualChildNode>,
-): void;
-use_old_TypeAliasDeclaration_VisualChildNode(get_current_TypeAliasDeclaration_VisualChildNode());
+    use: TypeOnly<old.VisualChildNode>): void;
+use_old_TypeAliasDeclaration_VisualChildNode(
+    get_current_TypeAliasDeclaration_VisualChildNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1214,11 +1252,12 @@ use_old_TypeAliasDeclaration_VisualChildNode(get_current_TypeAliasDeclaration_Vi
  * typeValidation.broken:
  * "TypeAliasDeclaration_VisualNode": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_VisualNode(): TypeOnly<old.VisualNode>;
+declare function get_old_TypeAliasDeclaration_VisualNode():
+    TypeOnly<old.VisualNode>;
 declare function use_current_TypeAliasDeclaration_VisualNode(
-	use: TypeOnly<current.VisualNode>,
-): void;
-use_current_TypeAliasDeclaration_VisualNode(get_old_TypeAliasDeclaration_VisualNode());
+    use: TypeOnly<current.VisualNode>): void;
+use_current_TypeAliasDeclaration_VisualNode(
+    get_old_TypeAliasDeclaration_VisualNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1227,9 +1266,12 @@ use_current_TypeAliasDeclaration_VisualNode(get_old_TypeAliasDeclaration_VisualN
  * typeValidation.broken:
  * "TypeAliasDeclaration_VisualNode": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_VisualNode(): TypeOnly<current.VisualNode>;
-declare function use_old_TypeAliasDeclaration_VisualNode(use: TypeOnly<old.VisualNode>): void;
-use_old_TypeAliasDeclaration_VisualNode(get_current_TypeAliasDeclaration_VisualNode());
+declare function get_current_TypeAliasDeclaration_VisualNode():
+    TypeOnly<current.VisualNode>;
+declare function use_old_TypeAliasDeclaration_VisualNode(
+    use: TypeOnly<old.VisualNode>): void;
+use_old_TypeAliasDeclaration_VisualNode(
+    get_current_TypeAliasDeclaration_VisualNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1238,11 +1280,12 @@ use_old_TypeAliasDeclaration_VisualNode(get_current_TypeAliasDeclaration_VisualN
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualNodeBase": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_VisualNodeBase(): TypeOnly<old.VisualNodeBase>;
+declare function get_old_InterfaceDeclaration_VisualNodeBase():
+    TypeOnly<old.VisualNodeBase>;
 declare function use_current_InterfaceDeclaration_VisualNodeBase(
-	use: TypeOnly<current.VisualNodeBase>,
-): void;
-use_current_InterfaceDeclaration_VisualNodeBase(get_old_InterfaceDeclaration_VisualNodeBase());
+    use: TypeOnly<current.VisualNodeBase>): void;
+use_current_InterfaceDeclaration_VisualNodeBase(
+    get_old_InterfaceDeclaration_VisualNodeBase());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1251,11 +1294,12 @@ use_current_InterfaceDeclaration_VisualNodeBase(get_old_InterfaceDeclaration_Vis
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualNodeBase": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_VisualNodeBase(): TypeOnly<current.VisualNodeBase>;
+declare function get_current_InterfaceDeclaration_VisualNodeBase():
+    TypeOnly<current.VisualNodeBase>;
 declare function use_old_InterfaceDeclaration_VisualNodeBase(
-	use: TypeOnly<old.VisualNodeBase>,
-): void;
-use_old_InterfaceDeclaration_VisualNodeBase(get_current_InterfaceDeclaration_VisualNodeBase());
+    use: TypeOnly<old.VisualNodeBase>): void;
+use_old_InterfaceDeclaration_VisualNodeBase(
+    get_current_InterfaceDeclaration_VisualNodeBase());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1264,11 +1308,12 @@ use_old_InterfaceDeclaration_VisualNodeBase(get_current_InterfaceDeclaration_Vis
  * typeValidation.broken:
  * "EnumDeclaration_VisualNodeKind": {"forwardCompat": false}
  */
-declare function get_old_EnumDeclaration_VisualNodeKind(): TypeOnly<old.VisualNodeKind>;
+declare function get_old_EnumDeclaration_VisualNodeKind():
+    TypeOnly<old.VisualNodeKind>;
 declare function use_current_EnumDeclaration_VisualNodeKind(
-	use: TypeOnly<current.VisualNodeKind>,
-): void;
-use_current_EnumDeclaration_VisualNodeKind(get_old_EnumDeclaration_VisualNodeKind());
+    use: TypeOnly<current.VisualNodeKind>): void;
+use_current_EnumDeclaration_VisualNodeKind(
+    get_old_EnumDeclaration_VisualNodeKind());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1277,9 +1322,12 @@ use_current_EnumDeclaration_VisualNodeKind(get_old_EnumDeclaration_VisualNodeKin
  * typeValidation.broken:
  * "EnumDeclaration_VisualNodeKind": {"backCompat": false}
  */
-declare function get_current_EnumDeclaration_VisualNodeKind(): TypeOnly<current.VisualNodeKind>;
-declare function use_old_EnumDeclaration_VisualNodeKind(use: TypeOnly<old.VisualNodeKind>): void;
-use_old_EnumDeclaration_VisualNodeKind(get_current_EnumDeclaration_VisualNodeKind());
+declare function get_current_EnumDeclaration_VisualNodeKind():
+    TypeOnly<current.VisualNodeKind>;
+declare function use_old_EnumDeclaration_VisualNodeKind(
+    use: TypeOnly<old.VisualNodeKind>): void;
+use_old_EnumDeclaration_VisualNodeKind(
+    get_current_EnumDeclaration_VisualNodeKind());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1288,11 +1336,12 @@ use_old_EnumDeclaration_VisualNodeKind(get_current_EnumDeclaration_VisualNodeKin
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualTreeNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_VisualTreeNode(): TypeOnly<old.VisualTreeNode>;
+declare function get_old_InterfaceDeclaration_VisualTreeNode():
+    TypeOnly<old.VisualTreeNode>;
 declare function use_current_InterfaceDeclaration_VisualTreeNode(
-	use: TypeOnly<current.VisualTreeNode>,
-): void;
-use_current_InterfaceDeclaration_VisualTreeNode(get_old_InterfaceDeclaration_VisualTreeNode());
+    use: TypeOnly<current.VisualTreeNode>): void;
+use_current_InterfaceDeclaration_VisualTreeNode(
+    get_old_InterfaceDeclaration_VisualTreeNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1301,11 +1350,12 @@ use_current_InterfaceDeclaration_VisualTreeNode(get_old_InterfaceDeclaration_Vis
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualTreeNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_VisualTreeNode(): TypeOnly<current.VisualTreeNode>;
+declare function get_current_InterfaceDeclaration_VisualTreeNode():
+    TypeOnly<current.VisualTreeNode>;
 declare function use_old_InterfaceDeclaration_VisualTreeNode(
-	use: TypeOnly<old.VisualTreeNode>,
-): void;
-use_old_InterfaceDeclaration_VisualTreeNode(get_current_InterfaceDeclaration_VisualTreeNode());
+    use: TypeOnly<old.VisualTreeNode>): void;
+use_old_InterfaceDeclaration_VisualTreeNode(
+    get_current_InterfaceDeclaration_VisualTreeNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1314,11 +1364,12 @@ use_old_InterfaceDeclaration_VisualTreeNode(get_current_InterfaceDeclaration_Vis
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualValueNode": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_VisualValueNode(): TypeOnly<old.VisualValueNode>;
+declare function get_old_InterfaceDeclaration_VisualValueNode():
+    TypeOnly<old.VisualValueNode>;
 declare function use_current_InterfaceDeclaration_VisualValueNode(
-	use: TypeOnly<current.VisualValueNode>,
-): void;
-use_current_InterfaceDeclaration_VisualValueNode(get_old_InterfaceDeclaration_VisualValueNode());
+    use: TypeOnly<current.VisualValueNode>): void;
+use_current_InterfaceDeclaration_VisualValueNode(
+    get_old_InterfaceDeclaration_VisualValueNode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1327,11 +1378,12 @@ use_current_InterfaceDeclaration_VisualValueNode(get_old_InterfaceDeclaration_Vi
  * typeValidation.broken:
  * "InterfaceDeclaration_VisualValueNode": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_VisualValueNode(): TypeOnly<current.VisualValueNode>;
+declare function get_current_InterfaceDeclaration_VisualValueNode():
+    TypeOnly<current.VisualValueNode>;
 declare function use_old_InterfaceDeclaration_VisualValueNode(
-	use: TypeOnly<old.VisualValueNode>,
-): void;
-use_old_InterfaceDeclaration_VisualValueNode(get_current_InterfaceDeclaration_VisualValueNode());
+    use: TypeOnly<old.VisualValueNode>): void;
+use_old_InterfaceDeclaration_VisualValueNode(
+    get_current_InterfaceDeclaration_VisualValueNode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1340,15 +1392,12 @@ use_old_InterfaceDeclaration_VisualValueNode(get_current_InterfaceDeclaration_Vi
  * typeValidation.broken:
  * "FunctionDeclaration_createDevtoolsLogger": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_createDevtoolsLogger(): TypeOnly<
-	typeof old.createDevtoolsLogger
->;
+declare function get_old_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof old.createDevtoolsLogger>;
 declare function use_current_FunctionDeclaration_createDevtoolsLogger(
-	use: TypeOnly<typeof current.createDevtoolsLogger>,
-): void;
+    use: TypeOnly<typeof current.createDevtoolsLogger>): void;
 use_current_FunctionDeclaration_createDevtoolsLogger(
-	get_old_FunctionDeclaration_createDevtoolsLogger(),
-);
+    get_old_FunctionDeclaration_createDevtoolsLogger());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1357,15 +1406,12 @@ use_current_FunctionDeclaration_createDevtoolsLogger(
  * typeValidation.broken:
  * "FunctionDeclaration_createDevtoolsLogger": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_createDevtoolsLogger(): TypeOnly<
-	typeof current.createDevtoolsLogger
->;
+declare function get_current_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof current.createDevtoolsLogger>;
 declare function use_old_FunctionDeclaration_createDevtoolsLogger(
-	use: TypeOnly<typeof old.createDevtoolsLogger>,
-): void;
+    use: TypeOnly<typeof old.createDevtoolsLogger>): void;
 use_old_FunctionDeclaration_createDevtoolsLogger(
-	get_current_FunctionDeclaration_createDevtoolsLogger(),
-);
+    get_current_FunctionDeclaration_createDevtoolsLogger());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1374,15 +1420,12 @@ use_old_FunctionDeclaration_createDevtoolsLogger(
  * typeValidation.broken:
  * "VariableDeclaration_devtoolsMessageSource": {"forwardCompat": false}
  */
-declare function get_old_VariableDeclaration_devtoolsMessageSource(): TypeOnly<
-	typeof old.devtoolsMessageSource
->;
+declare function get_old_VariableDeclaration_devtoolsMessageSource():
+    TypeOnly<typeof old.devtoolsMessageSource>;
 declare function use_current_VariableDeclaration_devtoolsMessageSource(
-	use: TypeOnly<typeof current.devtoolsMessageSource>,
-): void;
+    use: TypeOnly<typeof current.devtoolsMessageSource>): void;
 use_current_VariableDeclaration_devtoolsMessageSource(
-	get_old_VariableDeclaration_devtoolsMessageSource(),
-);
+    get_old_VariableDeclaration_devtoolsMessageSource());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1391,15 +1434,12 @@ use_current_VariableDeclaration_devtoolsMessageSource(
  * typeValidation.broken:
  * "VariableDeclaration_devtoolsMessageSource": {"backCompat": false}
  */
-declare function get_current_VariableDeclaration_devtoolsMessageSource(): TypeOnly<
-	typeof current.devtoolsMessageSource
->;
+declare function get_current_VariableDeclaration_devtoolsMessageSource():
+    TypeOnly<typeof current.devtoolsMessageSource>;
 declare function use_old_VariableDeclaration_devtoolsMessageSource(
-	use: TypeOnly<typeof old.devtoolsMessageSource>,
-): void;
+    use: TypeOnly<typeof old.devtoolsMessageSource>): void;
 use_old_VariableDeclaration_devtoolsMessageSource(
-	get_current_VariableDeclaration_devtoolsMessageSource(),
-);
+    get_current_VariableDeclaration_devtoolsMessageSource());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1408,15 +1448,12 @@ use_old_VariableDeclaration_devtoolsMessageSource(
  * typeValidation.broken:
  * "FunctionDeclaration_handleIncomingMessage": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_handleIncomingMessage(): TypeOnly<
-	typeof old.handleIncomingMessage
->;
+declare function get_old_FunctionDeclaration_handleIncomingMessage():
+    TypeOnly<typeof old.handleIncomingMessage>;
 declare function use_current_FunctionDeclaration_handleIncomingMessage(
-	use: TypeOnly<typeof current.handleIncomingMessage>,
-): void;
+    use: TypeOnly<typeof current.handleIncomingMessage>): void;
 use_current_FunctionDeclaration_handleIncomingMessage(
-	get_old_FunctionDeclaration_handleIncomingMessage(),
-);
+    get_old_FunctionDeclaration_handleIncomingMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1425,15 +1462,12 @@ use_current_FunctionDeclaration_handleIncomingMessage(
  * typeValidation.broken:
  * "FunctionDeclaration_handleIncomingMessage": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_handleIncomingMessage(): TypeOnly<
-	typeof current.handleIncomingMessage
->;
+declare function get_current_FunctionDeclaration_handleIncomingMessage():
+    TypeOnly<typeof current.handleIncomingMessage>;
 declare function use_old_FunctionDeclaration_handleIncomingMessage(
-	use: TypeOnly<typeof old.handleIncomingMessage>,
-): void;
+    use: TypeOnly<typeof old.handleIncomingMessage>): void;
 use_old_FunctionDeclaration_handleIncomingMessage(
-	get_current_FunctionDeclaration_handleIncomingMessage(),
-);
+    get_current_FunctionDeclaration_handleIncomingMessage());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1442,15 +1476,12 @@ use_old_FunctionDeclaration_handleIncomingMessage(
  * typeValidation.broken:
  * "FunctionDeclaration_handleIncomingWindowMessage": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_handleIncomingWindowMessage(): TypeOnly<
-	typeof old.handleIncomingWindowMessage
->;
+declare function get_old_FunctionDeclaration_handleIncomingWindowMessage():
+    TypeOnly<typeof old.handleIncomingWindowMessage>;
 declare function use_current_FunctionDeclaration_handleIncomingWindowMessage(
-	use: TypeOnly<typeof current.handleIncomingWindowMessage>,
-): void;
+    use: TypeOnly<typeof current.handleIncomingWindowMessage>): void;
 use_current_FunctionDeclaration_handleIncomingWindowMessage(
-	get_old_FunctionDeclaration_handleIncomingWindowMessage(),
-);
+    get_old_FunctionDeclaration_handleIncomingWindowMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1459,15 +1490,12 @@ use_current_FunctionDeclaration_handleIncomingWindowMessage(
  * typeValidation.broken:
  * "FunctionDeclaration_handleIncomingWindowMessage": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_handleIncomingWindowMessage(): TypeOnly<
-	typeof current.handleIncomingWindowMessage
->;
+declare function get_current_FunctionDeclaration_handleIncomingWindowMessage():
+    TypeOnly<typeof current.handleIncomingWindowMessage>;
 declare function use_old_FunctionDeclaration_handleIncomingWindowMessage(
-	use: TypeOnly<typeof old.handleIncomingWindowMessage>,
-): void;
+    use: TypeOnly<typeof old.handleIncomingWindowMessage>): void;
 use_old_FunctionDeclaration_handleIncomingWindowMessage(
-	get_current_FunctionDeclaration_handleIncomingWindowMessage(),
-);
+    get_current_FunctionDeclaration_handleIncomingWindowMessage());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1476,15 +1504,12 @@ use_old_FunctionDeclaration_handleIncomingWindowMessage(
  * typeValidation.broken:
  * "FunctionDeclaration_initializeDevtools": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_initializeDevtools(): TypeOnly<
-	typeof old.initializeDevtools
->;
+declare function get_old_FunctionDeclaration_initializeDevtools():
+    TypeOnly<typeof old.initializeDevtools>;
 declare function use_current_FunctionDeclaration_initializeDevtools(
-	use: TypeOnly<typeof current.initializeDevtools>,
-): void;
+    use: TypeOnly<typeof current.initializeDevtools>): void;
 use_current_FunctionDeclaration_initializeDevtools(
-	get_old_FunctionDeclaration_initializeDevtools(),
-);
+    get_old_FunctionDeclaration_initializeDevtools());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1493,15 +1518,12 @@ use_current_FunctionDeclaration_initializeDevtools(
  * typeValidation.broken:
  * "FunctionDeclaration_initializeDevtools": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_initializeDevtools(): TypeOnly<
-	typeof current.initializeDevtools
->;
+declare function get_current_FunctionDeclaration_initializeDevtools():
+    TypeOnly<typeof current.initializeDevtools>;
 declare function use_old_FunctionDeclaration_initializeDevtools(
-	use: TypeOnly<typeof old.initializeDevtools>,
-): void;
+    use: TypeOnly<typeof old.initializeDevtools>): void;
 use_old_FunctionDeclaration_initializeDevtools(
-	get_current_FunctionDeclaration_initializeDevtools(),
-);
+    get_current_FunctionDeclaration_initializeDevtools());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1510,13 +1532,12 @@ use_old_FunctionDeclaration_initializeDevtools(
  * typeValidation.broken:
  * "FunctionDeclaration_isDevtoolsMessage": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_isDevtoolsMessage(): TypeOnly<
-	typeof old.isDevtoolsMessage
->;
+declare function get_old_FunctionDeclaration_isDevtoolsMessage():
+    TypeOnly<typeof old.isDevtoolsMessage>;
 declare function use_current_FunctionDeclaration_isDevtoolsMessage(
-	use: TypeOnly<typeof current.isDevtoolsMessage>,
-): void;
-use_current_FunctionDeclaration_isDevtoolsMessage(get_old_FunctionDeclaration_isDevtoolsMessage());
+    use: TypeOnly<typeof current.isDevtoolsMessage>): void;
+use_current_FunctionDeclaration_isDevtoolsMessage(
+    get_old_FunctionDeclaration_isDevtoolsMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1525,10 +1546,9 @@ use_current_FunctionDeclaration_isDevtoolsMessage(get_old_FunctionDeclaration_is
  * typeValidation.broken:
  * "FunctionDeclaration_isDevtoolsMessage": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_isDevtoolsMessage(): TypeOnly<
-	typeof current.isDevtoolsMessage
->;
+declare function get_current_FunctionDeclaration_isDevtoolsMessage():
+    TypeOnly<typeof current.isDevtoolsMessage>;
 declare function use_old_FunctionDeclaration_isDevtoolsMessage(
-	use: TypeOnly<typeof old.isDevtoolsMessage>,
-): void;
-use_old_FunctionDeclaration_isDevtoolsMessage(get_current_FunctionDeclaration_isDevtoolsMessage());
+    use: TypeOnly<typeof old.isDevtoolsMessage>): void;
+use_old_FunctionDeclaration_isDevtoolsMessage(
+    get_current_FunctionDeclaration_isDevtoolsMessage());
