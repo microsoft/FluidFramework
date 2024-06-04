@@ -162,6 +162,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged UserData is removed",
+			);
 			assert.strictEqual(
 				events[0].userDataObject,
 				"REDACTED (UserData)",
@@ -179,6 +183,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged CodeArtifact are preserved",
+			);
 			assert.strictEqual(
 				events[0].packageDataObject,
 				"somePackageData",
@@ -196,6 +204,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged [unrecognized tag] are removed",
+			);
 			assert.strictEqual(
 				events[0].unknownTaggedObject,
 				"REDACTED (unknown tag)",
@@ -719,6 +731,11 @@ describe("normalizeError", () => {
 				assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
 				assert.equal(normalizedError.message, "m1", "message should be unchanged");
 				assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
+				assert(
+					annotations !== undefined,
+					`annotations is undefined in Valid legacy error - Patch and return (annotations: ${annotationCase})`,
+				);
+
 				if (annotations.props !== undefined) {
 					assert(
 						legacyError.atpStub.calledWith(annotations.props),
@@ -737,6 +754,10 @@ describe("normalizeError", () => {
 
 				// Assert
 				assert(normalizedError === fluidError);
+				assert(
+					annotations !== undefined,
+					`annotations is undefined in Valid Fluid Error - untouched (annotations: ${annotationCase})`,
+				);
 				if (annotations.props !== undefined) {
 					assert(
 						fluidError.atpStub.calledWith(annotations.props),
@@ -973,6 +994,10 @@ describe("normalizeError", () => {
 			let doneOnceForThisAnnotationCase = false;
 			for (const caseName of Object.keys(testCases)) {
 				const getTestCase = testCases[caseName];
+				assert(
+					getTestCase !== undefined,
+					`getTestCase is undefined in Errors Needing Normalization`,
+				);
 				if (!doneOnceForThisAnnotationCase) {
 					doneOnceForThisAnnotationCase = true;
 					// Each test case only differs by what stack/error are.  Test the rest only once per annotation case.

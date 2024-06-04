@@ -177,9 +177,14 @@ ${JSON.stringify(actualEvents)}`);
 	): number {
 		let iExpectedEvent = 0;
 		for (const event of this.events) {
+			const expectedEvent = expectedEvents[iExpectedEvent];
+			assert(
+				expectedEvent !== undefined,
+				"expectedEvent is undefined in MockLogger.getMatchedEventsCount",
+			);
 			if (
 				iExpectedEvent < expectedEvents.length &&
-				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
+				MockLogger.eventsMatch(event, expectedEvent, inlineDetailsProp)
 			) {
 				// We found the next expected event; increment
 				++iExpectedEvent;

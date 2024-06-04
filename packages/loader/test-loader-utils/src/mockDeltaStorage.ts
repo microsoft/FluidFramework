@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
@@ -31,16 +32,18 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 		let index: number = 0;
 
 		// Find first
-		while (index < this.messages.length && this.messages[index].sequenceNumber < from) {
+		let message = this.messages[index];
+		assert(message !== undefined, "message is undefined in MockDocumentDeltaStorageService.getCore");
+		while (index < this.messages.length && message.sequenceNumber < from) {
 			index++;
 		}
 
 		// start reading
 		while (
 			index < this.messages.length &&
-			(to === undefined || this.messages[index].sequenceNumber < to)
+			(to === undefined || message.sequenceNumber < to)
 		) {
-			messages.push(this.messages[index]);
+			messages.push(message);
 			index++;
 		}
 

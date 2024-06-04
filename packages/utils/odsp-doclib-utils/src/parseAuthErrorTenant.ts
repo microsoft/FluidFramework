@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 const oAuthBearerScheme = "Bearer";
 
 /**
@@ -40,9 +42,18 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
 		.map((section) => {
 			if (!tenantId) {
 				const nameValuePair = section.split("=");
+				assert(
+					nameValuePair[0] !== undefined,
+					"nameValuePair[0] is undefined in parseAuthErrorTenant",
+				);
+
 				// values can be encoded and contain '=' symbol inside so it is possible to have more than one
 				if (nameValuePair.length >= 2) {
 					if (nameValuePair[0].trim().toLowerCase() === "realm") {
+						assert(
+							nameValuePair[1] !== undefined,
+							"nameValuePair[1] is undefined in parseAuthErrorTenant",
+						);
 						tenantId = JSON.parse(nameValuePair[1].trim());
 					}
 				}

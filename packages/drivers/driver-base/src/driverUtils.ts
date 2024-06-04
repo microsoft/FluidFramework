@@ -4,6 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -119,9 +120,13 @@ export function validateMessages(
 	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
-		const start = messages[0].sequenceNumber;
+		const firstMessage = messages[0];
+		assert(firstMessage !== undefined, "firstMessage is undefined in validateMessages");
+		const start = firstMessage.sequenceNumber;
 		const length = messages.length;
-		const last = messages[length - 1].sequenceNumber;
+		const lastMessage = messages[length - 1];
+		assert(lastMessage !== undefined, "lastMessage is undefined in validateMessages");
+		const last = lastMessage.sequenceNumber;
 		if (last + 1 !== from + length) {
 			// If not strict, then return the first consecutive sub-block. If strict or start
 			// seq number is not what we expected, then return no ops.
@@ -129,10 +134,19 @@ export function validateMessages(
 				messages.length = 0;
 			} else {
 				let validOpsCount = 1;
+				const messageOpsCount = messages[validOpsCount];
+				assert(
+					messageOpsCount !== undefined,
+					"messageOpsCount is undefined in validateMessages",
+				);
+				const messageOpsCountMinusOne = messages[validOpsCount - 1];
+				assert(
+					messageOpsCountMinusOne !== undefined,
+					"messageOpsCountMinusOne is undefined in validateMessages",
+				);
 				while (
 					validOpsCount < messages.length &&
-					messages[validOpsCount].sequenceNumber ===
-						messages[validOpsCount - 1].sequenceNumber + 1
+					messageOpsCount.sequenceNumber === messageOpsCountMinusOne.sequenceNumber + 1
 				) {
 					validOpsCount++;
 				}
@@ -148,9 +162,7 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0
-							? messages[messages.length - 1].sequenceNumber
-							: undefined,
+						messages.length > 0 ? lastMessage.sequenceNumber : undefined,
 					strict,
 				}),
 			});

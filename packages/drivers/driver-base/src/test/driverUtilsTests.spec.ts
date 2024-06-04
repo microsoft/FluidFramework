@@ -60,6 +60,10 @@ describe("driver utils tests", () => {
 		it("non contiguous ops: strict = true", () => {
 			const ops = generateOps(1, 5);
 			// Change seq number of last op
+			assert(
+				ops[4] !== undefined,
+				"ops[4] is undefined in non contiguous ops: strict = true",
+			);
 			ops[4].sequenceNumber = 7;
 			validateMessages("test", ops, 1, mockLogger.toTelemetryLogger(), true);
 			assert(ops.length === 0, "no ops should be returned as strict == true");
@@ -86,6 +90,11 @@ describe("driver utils tests", () => {
 		it("non contiguous ops: strict = false", () => {
 			const ops = generateOps(1, 5);
 			// Change seq number of last op
+			assert(
+				ops[4] !== undefined,
+				"ops[4] is undefined in non contiguous ops: strict = false",
+			);
+
 			ops[4].sequenceNumber = 7;
 			validateMessages("test", ops, 1, mockLogger.toTelemetryLogger(), false);
 			assert(ops.length === 4, "some should be returned as strict == false");

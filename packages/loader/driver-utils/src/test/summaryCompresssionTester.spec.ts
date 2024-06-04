@@ -79,6 +79,7 @@ function generateSummaryWithContent(contentSize: number) {
 			contentString += "0123456789";
 		}
 	}
+	assert(header !== undefined, "header is undefined in generateSummaryWithContent");
 	header["content"] = `{"value": ${contentString}}`;
 	return summary;
 }
@@ -99,6 +100,7 @@ function generateSummaryWithBinaryContent(startsWith: number, contentSize: numbe
 			content[i + j] = j;
 		}
 	}
+	assert(header !== undefined, "header is undefined in generateSummaryWithBinaryContent");
 	header["content"] = content;
 	return summary;
 }
@@ -617,7 +619,9 @@ function checkCompressionConfig(
 }
 
 function getHeaderContent(summary: ISummaryTree) {
-	return getHeader(summary)["content"];
+	const header = getHeader(summary);
+	assert(header !== undefined, "header is undefined in getHeaderContent");
+	return header["content"];
 }
 
 function getHeader(summary: ISummaryTree) {

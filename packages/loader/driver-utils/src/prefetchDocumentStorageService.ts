@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoaderCachingPolicy,
 	ISnapshotTree,
@@ -84,19 +85,24 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		for (const blobKey of Object.keys(tree.blobs)) {
 			const blob = tree.blobs[blobKey];
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-				if (blob !== null) {
+				if (blob !== null && blob !== undefined) {
 					// We don't care if the prefetch succeeds
 					void this.cachedRead(blob);
 				}
 			} else if (!blobKey.startsWith("deltas")) {
-				if (blob !== null) {
+				if (blob !== null && blob !== undefined) {
 					secondary.push(blob);
 				}
 			}
 		}
 
 		for (const subTree of Object.keys(tree.trees)) {
-			this.prefetchTreeCore(tree.trees[subTree], secondary);
+			const treeToPrefetch = tree.trees[subTree];
+			assert(
+				treeToPrefetch !== undefined,
+				"treeToPrefetch is undefined in PrefetchDocumentStorageService.prefetchTreeCore",
+			);
+			this.prefetchTreeCore(treeToPrefetch, secondary);
 		}
 	}
 }

@@ -20,7 +20,9 @@ const getMockStore = (settings: Record<string, string>): Storage => {
 	return {
 		getItem: (key: string): string | null => {
 			ops.push(key);
-			return settings[key];
+			const item = settings[key];
+			assert(item !== undefined, "item is undefined in getMockStore.getItem");
+			return item;
 		},
 		getOps: (): Readonly<string[]> => ops,
 		length: Object.keys(settings).length,

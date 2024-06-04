@@ -60,6 +60,10 @@ describe("TelemetryLogger", () => {
 				logger.send({ category: "anything", eventName: "whatever" });
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
+				assert(
+					event !== undefined,
+					"event is undefined in TelemetryLogger Properties send",
+				);
 				assert.strictEqual(event.category, "anything");
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
@@ -81,6 +85,7 @@ describe("TelemetryLogger", () => {
 				logger.sendErrorEvent({ eventName: "whatever" });
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
+				assert(event !== undefined, "event is undefined in sendErrorEvent");
 				assert.strictEqual(event.category, "error");
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
@@ -114,6 +119,10 @@ describe("TelemetryLogger", () => {
 				logger.sendErrorEvent({ eventName: "whatever", error: "bad" });
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
+				assert(
+					event !== undefined,
+					"event is undefined in sendErrorEvent with error field",
+				);
 				assert.strictEqual(event.category, "error");
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
@@ -148,6 +157,10 @@ describe("TelemetryLogger", () => {
 				logger.sendErrorEvent({ eventName: "whatever" }, error);
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
+				assert(
+					event !== undefined,
+					"event is undefined in sendErrorEvent with error object",
+				);
 				assert.strictEqual(event.category, "error");
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
@@ -185,6 +198,7 @@ describe("TelemetryLogger", () => {
 				logger.sendTelemetryEvent({ eventName: "whatever" });
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
+				assert(event !== undefined, "event is undefined in sendTelemetryEvent");
 				assert.strictEqual(event.category, "generic");
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);

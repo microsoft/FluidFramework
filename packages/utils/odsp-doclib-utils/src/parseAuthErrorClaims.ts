@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 /**
  * Checks if response headers contains `www-authenticate` header and extracts claims that should be
@@ -29,7 +29,15 @@ export function parseAuthErrorClaims(responseHeader: Headers): string | undefine
 		const nameValuePair = section.split("=");
 		// Values can be encoded and contain '=' symbol inside so it is possible to have more than one
 		if (nameValuePair.length >= 2) {
+			assert(
+				nameValuePair[0] !== undefined,
+				"nameValuePair[0] is undefined in parseAuthErrorTenant",
+			);
 			if (!detectedErrorIndicator && nameValuePair[0].trim().toLowerCase() === "error") {
+				assert(
+					nameValuePair[1] !== undefined,
+					"nameValuePair[1] is undefined in parseAuthErrorTenant",
+				);
 				detectedErrorIndicator =
 					JSON.parse(nameValuePair[1].trim().toLowerCase()) === "insufficient_claims";
 			} else if (!claims && nameValuePair[0].trim().toLowerCase() === "claims") {

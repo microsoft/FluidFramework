@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { IOdspAuthRequestInfo } from "./odspAuth.js";
 import { getSiteUrl } from "./odspDocLibUtils.js";
 import { throwOdspNetworkError } from "./odspErrorUtils.js";
@@ -211,8 +213,8 @@ export async function getDriveId(
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<string> {
 	if (library === undefined) {
-		const drive = await getDefaultDrive(server, account, authRequestInfo);
-		return drive.id;
+		const { id } = await getDefaultDrive(server, account, authRequestInfo);
+		return id;
 	}
 	const drives = await getDrives(server, account, authRequestInfo);
 	const accountPath = account ? `/${account}` : "";
@@ -221,7 +223,9 @@ export async function getDriveId(
 	if (index === -1) {
 		throw Error(`Drive ${drivePath} not found.`);
 	}
-	return drives[index].id;
+	const drive = drives[index];
+	assert(drive !== undefined, "drive is undefined in getDriveId");
+	return drive.id;
 }
 
 async function getDefaultDrive(
