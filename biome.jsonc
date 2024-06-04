@@ -16,7 +16,6 @@
 			"**/snapshots/*.json",
 			"**/localOdspSnapshots/**",
 			"**/_package.json",
-			"**/biome.jsonc",
 			"**/oclif.manifest.json",
 			"packages/test/snapshots/content/**",
 			"build-tools/**",
