@@ -457,6 +457,7 @@ function makeModularChangeCodec(
 				fieldChanges: new Map(),
 				nodeChanges: new Map(),
 				nodeToParent: new Map(),
+				nodeAliases: new Map(),
 				crossFieldKeys: new BTree(),
 			};
 

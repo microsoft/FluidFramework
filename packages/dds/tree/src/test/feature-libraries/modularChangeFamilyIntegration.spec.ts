@@ -37,13 +37,7 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	IdAllocator,
-	Mutable,
-	brand,
-	idAllocatorFromMaxId,
-	nestedMapFromFlatList,
-} from "../../util/index.js";
+import { IdAllocator, Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -53,14 +47,13 @@ import {
 } from "../utils.js";
 
 import {
-	NodeChangeset,
 	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
-import { Change } from "./modular-schema/modularChangesetUtil.js";
+// eslint-disable-next-line import/no-internal-modules
+import { Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -183,54 +176,50 @@ describe("ModularChangeFamily integration", () => {
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
-			const fieldCExpected = [MarkMaker.remove(1, brand(3))];
-
-			const nodeId2: NodeId = { localId: brand(4) };
-			const node2Expected: NodeChangeset = {
-				fieldChanges: new Map([
-					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
-				]),
-			};
-
-			const fieldBExpected: SF.Changeset = [
-				{ count: 1, changes: nodeId2 },
-				// The two marks below are not essential and only exist because we're using tombstones
-				{ count: 1 },
-				{
-					count: 1,
-					cellId: { revision: tag1, localId: brand(0) },
-				},
-			];
-
-			const nodeId1: NodeId = { localId: brand(5) };
-			const node1Expected: NodeChangeset = {
-				fieldChanges: new Map([
-					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
-				]),
-			};
 
 			const fieldAExpected: SF.Changeset = [
-				{ count: 1, changes: nodeId1 },
-				// The two marks below a not essential and only exist because we're using tombstones
-				{ count: 1 },
+				{ count: 2 },
 				{
 					count: 1,
 					cellId: { revision: tag1, localId: brand(2) },
 				},
 			];
 
-			const expected: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, node1Expected],
-					[nodeId2.revision, nodeId2.localId, node2Expected],
-				]),
-				fieldChanges: new Map([
-					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
-				]),
-				nodeToParent: new Map(), // XXX
-				crossFieldKeys: new BTree(), // XXX
-				maxId: brand(5),
-			};
+			const fieldBExpected: SF.Changeset = [
+				{ count: 2 },
+				{
+					count: 1,
+					cellId: { revision: tag1, localId: brand(0) },
+				},
+			];
+
+			const fieldCExpected = [MarkMaker.remove(1, brand(3))];
+
+			const nodeId1: NodeId = { localId: brand(5) };
+			const nodeId2: NodeId = { localId: brand(4) };
+
+			const expected = Change.build(
+				{ family, maxId: 5 },
+				Change.field(
+					fieldA,
+					sequence.identifier,
+					fieldAExpected,
+					Change.nodeWithId(
+						0,
+						nodeId1,
+						Change.field(
+							fieldB,
+							sequence.identifier,
+							fieldBExpected,
+							Change.nodeWithId(
+								0,
+								nodeId2,
+								Change.field(fieldC, sequence.identifier, fieldCExpected),
+							),
+						),
+					),
+				),
+			);
 
 			assert.deepEqual(rebased, expected);
 		});
@@ -594,13 +583,14 @@ describe("ModularChangeFamily integration", () => {
 
 			editor.exitTransaction();
 			const [move1, move2, modify] = getChanges();
+
 			const moves = family.compose([
 				makeAnonChange(move1),
 				makeAnonChange(move2),
 				makeAnonChange(modify),
 			]);
 
-			const inverse = family.invert(tagChangeInline(moves, tag1), false);
+			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false));
 
 			const fieldAExpected: SF.Changeset = [
 				MarkMaker.moveOut(1, brand(0), {

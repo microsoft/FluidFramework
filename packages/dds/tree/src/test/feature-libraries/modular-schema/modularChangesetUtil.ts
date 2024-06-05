@@ -26,10 +26,16 @@ import {
 	Mutable,
 	brand,
 	idAllocatorFromMaxId,
+	nestedMapFromFlatList,
+	nestedMapToFlatList,
 	setInNestedMap,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	getChangeHandler,
+	getFieldForCrossFieldKey,
+	getParentFieldId,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { fail } from "assert";
 
 export const Change = {
@@ -100,6 +106,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
+		nodeAliases: new Map(),
 		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
 
@@ -210,3 +217,28 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 	tryGetInfo: () => fail("Not supported"),
 	hasRollback: () => fail("Not supported"),
 };
+
+export function removeAliases(changeset: ModularChangeset): ModularChangeset {
+	const updatedNodeToParent = nestedMapFromFlatList(
+		nestedMapToFlatList(changeset.nodeToParent).map(([revision, localId, _field]) => [
+			revision,
+			localId,
+			getParentFieldId(changeset, { revision, localId }),
+		]),
+	);
+
+	const updatedCrossFieldKeys: CrossFieldKeyTable = new BTree();
+	for (const key of changeset.crossFieldKeys.keys()) {
+		updatedCrossFieldKeys.set(
+			key,
+			getFieldForCrossFieldKey(changeset, key) ?? fail("Cross field key should be defined"),
+		);
+	}
+
+	return {
+		...changeset,
+		nodeToParent: updatedNodeToParent,
+		crossFieldKeys: updatedCrossFieldKeys,
+		nodeAliases: new Map(),
+	};
+}

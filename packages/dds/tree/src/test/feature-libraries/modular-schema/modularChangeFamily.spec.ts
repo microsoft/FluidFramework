@@ -90,7 +90,7 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { Change } from "./modularChangesetUtil.js";
+import { Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -198,178 +198,200 @@ const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
 const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
 
 const mainEditor = family.buildEditor(() => undefined);
-const rootChange1a = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA,
-		fieldKind: singleNodeField.identifier,
-		change: brand(undefined),
-	},
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-	{
-		type: "field",
-		field: pathB,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-]);
+const rootChange1a = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA,
+			fieldKind: singleNodeField.identifier,
+			change: brand(undefined),
+		},
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+		{
+			type: "field",
+			field: pathB,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange2),
+		},
+	]),
+);
 
-const rootChange1aGeneric: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-	{
-		type: "field",
-		field: pathB,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-]);
+const rootChange1aGeneric: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+		{
+			type: "field",
+			field: pathB,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange2),
+		},
+	]),
+);
 
-const rootChange1b: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA,
-		fieldKind: singleNodeField.identifier,
-		change: brand(undefined),
-	},
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1b),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rootChange1b: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA,
+			fieldKind: singleNodeField.identifier,
+			change: brand(undefined),
+		},
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1b),
+		},
+		{
+			type: "field",
+			field: pathA0B,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+	]),
+);
 
-const rootChange1bGeneric: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1b),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rootChange1bGeneric: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1b),
+		},
+		{
+			type: "field",
+			field: pathA0B,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+	]),
+);
 
-const rebasedChange: ModularChangeset = Change.build(
-	{ family, maxId: rootChange1b.maxId },
-	Change.field(
-		fieldA,
-		singleNodeField.identifier,
-		singleNodeField.changeHandler.createEmpty(),
-		Change.nodeWithId(
-			0,
-			{ localId: brand(2) },
-			Change.field(fieldA, valueField.identifier, valueChange2),
-			Change.field(fieldB, valueField.identifier, valueChange1a),
+const rebasedChange: ModularChangeset = removeAliases(
+	Change.build(
+		{ family, maxId: rootChange1b.maxId },
+		Change.field(
+			fieldA,
+			singleNodeField.identifier,
+			singleNodeField.changeHandler.createEmpty(),
+			Change.nodeWithId(
+				0,
+				{ localId: brand(2) },
+				Change.field(fieldA, valueField.identifier, valueChange2),
+				Change.field(fieldB, valueField.identifier, valueChange1a),
+			),
 		),
 	),
 );
 
-const rebasedChangeGeneric: ModularChangeset = Change.build(
-	{ family, maxId: rootChange1bGeneric.maxId },
-	Change.field(
-		fieldA,
-		genericFieldKind.identifier,
-		genericFieldKind.changeHandler.createEmpty(),
-		Change.nodeWithId(
-			0,
-			{ localId: brand(4) },
-			Change.field(fieldA, valueField.identifier, valueChange2),
-			Change.field(fieldB, valueField.identifier, valueChange1a),
+const rebasedChangeGeneric: ModularChangeset = removeAliases(
+	Change.build(
+		{ family, maxId: rootChange1bGeneric.maxId },
+		Change.field(
+			fieldA,
+			genericFieldKind.identifier,
+			genericFieldKind.changeHandler.createEmpty(),
+			Change.nodeWithId(
+				0,
+				{ localId: brand(4) },
+				Change.field(fieldA, valueField.identifier, valueChange2),
+				Change.field(fieldB, valueField.identifier, valueChange1a),
+			),
 		),
 	),
 );
 
-const genericChangeRebasedOverSpecific: ModularChangeset = Change.build(
-	{ family, maxId: rootChange1bGeneric.maxId },
-	Change.field(
-		fieldA,
-		singleNodeField.identifier,
-		singleNodeField.changeHandler.createEmpty(),
-		Change.nodeWithId(
-			0,
-			{ localId: brand(4) },
-			Change.field(fieldA, valueField.identifier, valueChange2),
-			Change.field(fieldB, valueField.identifier, valueChange1a),
+const genericChangeRebasedOverSpecific: ModularChangeset = removeAliases(
+	Change.build(
+		{ family, maxId: rootChange1bGeneric.maxId },
+		Change.field(
+			fieldA,
+			singleNodeField.identifier,
+			singleNodeField.changeHandler.createEmpty(),
+			Change.nodeWithId(
+				0,
+				{ localId: brand(4) },
+				Change.field(fieldA, valueField.identifier, valueChange2),
+				Change.field(fieldB, valueField.identifier, valueChange1a),
+			),
 		),
 	),
 );
 
-const rootChange2: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA,
-		fieldKind: singleNodeField.identifier,
-		change: brand(undefined),
-	},
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rootChange2: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA,
+			fieldKind: singleNodeField.identifier,
+			change: brand(undefined),
+		},
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange2),
+		},
+		{
+			type: "field",
+			field: pathA0B,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+	]),
+);
 
-const rootChange2Generic: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange2),
-	},
-	{
-		type: "field",
-		field: pathA0B,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rootChange2Generic: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange2),
+		},
+		{
+			type: "field",
+			field: pathA0B,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+	]),
+);
 
-const rootChange3: ModularChangeset = mainEditor.buildChanges([
-	{
-		type: "field",
-		field: pathA,
-		fieldKind: singleNodeField.identifier,
-		change: brand(undefined),
-	},
-	{
-		type: "field",
-		field: pathA0A,
-		fieldKind: valueField.identifier,
-		change: brand(valueChange1a),
-	},
-]);
+const rootChange3: ModularChangeset = removeAliases(
+	mainEditor.buildChanges([
+		{
+			type: "field",
+			field: pathA,
+			fieldKind: singleNodeField.identifier,
+			change: brand(undefined),
+		},
+		{
+			type: "field",
+			field: pathA0A,
+			fieldKind: valueField.identifier,
+			change: brand(valueChange1a),
+		},
+	]),
+);
 
-const rootChange4: ModularChangeset = family.compose([
-	tagChangeInline(rootChange3, tag1),
-	makeAnonChange(buildExistsConstraint(pathA0)),
-]);
+const rootChange4: ModularChangeset = removeAliases(
+	family.compose([
+		tagChangeInline(rootChange3, tag1),
+		makeAnonChange(buildExistsConstraint(pathA0)),
+	]),
+);
 
 const dummyRevisionTag = mintRevisionTag();
 
@@ -425,6 +447,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				builds: new Map([[undefined, new Map([[brand(0), node1Chunk]])]]),
 			};
 			const change2: ModularChangeset = {
@@ -432,6 +455,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				builds: new Map([
 					[undefined, new Map([[brand(0), treeChunkFromCursor(singleJsonCursor(2))]])],
 				]),
@@ -458,10 +482,9 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			const composed = family.compose([
-				makeAnonChange(rootChange1a),
-				makeAnonChange(rootChange2),
-			]);
+			const composed = removeAliases(
+				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
+			);
 
 			assert.deepEqual(composed, expectedCompose);
 		});
@@ -482,10 +505,9 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			const composed = family.compose([
-				makeAnonChange(rootChange1a),
-				makeAnonChange(rootChange2Generic),
-			]);
+			const composed = removeAliases(
+				family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
+			);
 
 			assert.deepEqual(composed, expectedCompose);
 		});
@@ -507,10 +529,9 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			const composed = family.compose([
-				makeAnonChange(rootChange1aGeneric),
-				makeAnonChange(rootChange2),
-			]);
+			const composed = removeAliases(
+				family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
+			);
 
 			assert.deepEqual(composed, expectedCompose);
 		});
@@ -532,13 +553,14 @@ describe("ModularChangeFamily", () => {
 				Change.field(fieldB, valueField.identifier, valueChange2),
 			);
 
-			assert.deepEqual(
+			const composed = removeAliases(
 				family.compose([
 					makeAnonChange(rootChange1aGeneric),
 					makeAnonChange(rootChange2Generic),
 				]),
-				expectedCompose,
 			);
+
+			assert.deepEqual(composed, expectedCompose);
 		});
 
 		it("compose tagged changes", () => {
@@ -606,6 +628,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
 						[tag2, new Map([[brand(0), node1Chunk]])],
@@ -620,6 +643,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					destroys: new Map([
 						[tag1, new Map([[brand(0), 1]])],
 						[undefined, new Map([[brand(0), 1]])],
@@ -637,6 +661,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -650,6 +675,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					destroys: new Map([
 						[tag1, new Map([[brand(0), 1]])],
 						[undefined, new Map([[brand(0), 1]])],
@@ -664,6 +690,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
 						[tag2, new Map([[brand(0), node1Chunk]])],
@@ -681,6 +708,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
 
@@ -694,6 +722,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
@@ -712,6 +741,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -734,6 +764,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				builds: new Map([
 					[tag1, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					[tag2, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -769,6 +800,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					]),
@@ -782,6 +814,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
@@ -800,6 +833,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				refreshers: new Map([
 					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
 					[
@@ -821,8 +855,9 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map(),
-					nodeToParent: new Map(), // XXX
+					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
 					]),
@@ -836,6 +871,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
 					]),
@@ -853,6 +889,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
@@ -919,6 +956,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(0), node1Chunk]])],
 						[tag2, new Map([[brand(1), node1Chunk]])],
@@ -932,6 +970,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				destroys: new Map([
 					[tag1, new Map([[brand(0), 1]])],
 					[tag2, new Map([[brand(1), 1]])],
@@ -942,6 +981,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 			};
 
 			deepFreeze(change1);
@@ -1031,6 +1071,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[undefined, new Map([[brand(1), node1Chunk]])],
 						[
@@ -1064,6 +1105,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					destroys: new Map([
 						[undefined, new Map([[brand(1), 1]])],
 						[tag2, new Map([[brand(2), 1]])],
@@ -1092,6 +1134,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[undefined, new Map([[brand(1), node1Chunk]])],
 						[
@@ -1180,6 +1223,7 @@ describe("ModularChangeFamily", () => {
 				]),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 			};
 
 			const actual = relevantRemovedRoots(input);
@@ -1213,8 +1257,9 @@ describe("ModularChangeFamily", () => {
 					[nodeId2.revision, nodeId2.localId, nodeChangeFromHasRemovedRootsRefs(changeC)],
 				]),
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-				nodeToParent: new Map(), // XXX
+				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 			};
 
 			const actual = relevantRemovedRoots(input);
@@ -1253,6 +1298,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
 			};
 
@@ -1261,6 +1307,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
 			};
 
@@ -1274,6 +1321,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				refreshers: new Map([
 					[
 						aMajor,
@@ -1291,6 +1339,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 			};
 
 			const filtered = updateRefreshers(input, getDetachedNode, []);
@@ -1304,6 +1353,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
 
@@ -1312,6 +1362,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map(),
 				nodeToParent: new Map(),
 				crossFieldKeys: new BTree(),
+				nodeAliases: new Map(),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
 
@@ -1328,6 +1379,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 				};
 
 				const expected: ModularChangeset = {
@@ -1335,6 +1387,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[
 							aMajor,
@@ -1357,6 +1410,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[
 							aMajor,
@@ -1373,6 +1427,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					refreshers: new Map([
 						[
 							aMajor,
@@ -1394,6 +1449,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[
 							aMajor,
@@ -1411,6 +1467,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 					builds: new Map([
 						[
 							aMajor,
@@ -1433,6 +1490,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map(),
 					nodeToParent: new Map(),
 					crossFieldKeys: new BTree(),
+					nodeAliases: new Map(),
 				};
 				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
 			});

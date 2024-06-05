@@ -192,6 +192,8 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	replaceAtomRevisions,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
 } from "./rebase/index.js";
 
 export {
