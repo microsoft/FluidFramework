@@ -282,11 +282,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
 	boxedAt(index: number): FlexTreeNode | undefined;
-
-	/**
-	 * Gets the FieldUpPath of a field.
-	 */
-	getFieldPath(): FieldUpPath;
 }
 
 // #region Node Kinds
@@ -964,6 +959,11 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	// #endregion
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
+
+	/**
+	 * Gets the FieldUpPath of a field.
+	 */
+	getFieldPath(): FieldUpPath;
 
 	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
 }
