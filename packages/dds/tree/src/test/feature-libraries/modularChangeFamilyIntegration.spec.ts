@@ -607,10 +607,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(2), {
-					changes: nodeId2,
-					idOverride: { revision: tag1, localId: brand(3) },
-				}),
+				MarkMaker.moveOut(1, brand(2), { changes: nodeId2 }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 			];
@@ -623,10 +620,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), {
-					changes: nodeId1,
-					idOverride: { revision: tag1, localId: brand(1) },
-				}),
+				MarkMaker.moveOut(1, brand(0), { changes: nodeId1 }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];
