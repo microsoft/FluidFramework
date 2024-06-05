@@ -42,7 +42,7 @@ export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeNodeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
 export {
-	type HasDefaultUnsafe,
+	HasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
 	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
@@ -78,10 +78,10 @@ export {
 export { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
 export {
-	type HasDefault,
-	type InsertableObjectFromSchemaRecord,
-	type ObjectFromSchemaRecord,
-	type TreeObjectNode,
+	HasDefault,
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	setField,
 } from "./objectNode.js";
 export { TreeMapNode } from "./mapNode.js";
