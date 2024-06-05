@@ -9,6 +9,13 @@ import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	ConnectionMode,
+	IClient,
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
@@ -33,13 +40,6 @@ import {
 	isRuntimeMessage,
 	logNetworkFailure,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
-	IClient,
-	IClientDetails,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,

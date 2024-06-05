@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
-
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";

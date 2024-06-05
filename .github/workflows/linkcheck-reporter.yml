@@ -1,7 +1,7 @@
 name: Update link report
 on:
   workflow_run:
-    workflows: [ "Website validation" ]
+    workflows: ["Website validation"]
     types:
       - completed
 

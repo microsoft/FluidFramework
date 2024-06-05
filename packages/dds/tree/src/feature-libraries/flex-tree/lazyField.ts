@@ -62,32 +62,8 @@ import {
 } from "./lazyEntity.js";
 import { makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import { indexForAt, treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-/**
- * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
- * usage of negative indices, which regular indexing using `[` and `]` does not.
- *
- * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
- * for additional context on the semantics.
- *
- * @returns A positive index that can be used in regular indexing. Returns
- * undefined if that index would be out-of-bounds.
- */
-function indexForAt(index: number, length: number): number | undefined {
-	let finalIndex = Math.trunc(+index);
-	if (isNaN(finalIndex)) {
-		finalIndex = 0;
-	}
-	if (finalIndex < -length || finalIndex >= length) {
-		return undefined;
-	}
-	if (finalIndex < 0) {
-		finalIndex = finalIndex + length;
-	}
-	return finalIndex;
-}
 
 export function makeField(
 	context: Context,

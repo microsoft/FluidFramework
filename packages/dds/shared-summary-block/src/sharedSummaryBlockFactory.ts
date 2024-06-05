@@ -11,9 +11,9 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+import type { ISharedSummaryBlock } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedSummaryBlockClass } from "./sharedSummaryBlock.js";
-import type { ISharedSummaryBlock } from "./interfaces.js";
 
 /**
  * The factory that defines the shared summary block.

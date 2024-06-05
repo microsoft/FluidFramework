@@ -15,6 +15,7 @@ import {
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,
@@ -38,7 +39,6 @@ import type {
 	OdspResourceTokenFetchOptions,
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

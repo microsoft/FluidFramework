@@ -5,6 +5,7 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -17,7 +18,6 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,

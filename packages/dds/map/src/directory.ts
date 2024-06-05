@@ -10,10 +10,10 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

@@ -4,6 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -15,7 +16,6 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	LoggingError,
