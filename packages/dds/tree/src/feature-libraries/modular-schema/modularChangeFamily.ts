@@ -692,7 +692,7 @@ export class ModularChangeFamily
 				context.rebasedChange.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					baseChangeset,
-					(curr, base, existenceState) => curr,
+					(curr, base, existenceState) => curr ?? base,
 					genId,
 					newCrossFieldManager(crossFieldTable, field),
 					rebaseMetadata,
