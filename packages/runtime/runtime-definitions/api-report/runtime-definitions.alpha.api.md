@@ -161,7 +161,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown, addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -176,7 +176,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 // @alpha
 export interface IFluidDataStoreContext extends IFluidParentContext {
-    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
     // @deprecated (undocumented)
@@ -214,12 +213,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 
 // @alpha
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
-    // @deprecated (undocumented)
-    addedGCOutboundReference?(srcHandle: {
-        absolutePath: string;
-    }, outboundHandle: {
-        absolutePath: string;
-    }): void;
+    addedGCOutboundRoute(fromPath: string, toPath: string): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;

@@ -1651,8 +1651,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
 		if (
-			startRebased === DetachedReferencePosition ||
-			endRebased === DetachedReferencePosition
+			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
+			(startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition)
 		) {
 			if (localInterval) {
 				this.localCollection?.removeExistingInterval(localInterval);

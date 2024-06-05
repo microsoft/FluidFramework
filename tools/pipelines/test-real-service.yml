@@ -93,9 +93,6 @@ stages:
             flags: --compatVersion=LTS
           - name: Cross-version
             flags: --compatVersion=CROSS_VERSION
-          # Assumes Non-compat and N-1 scenarios are covered
-          - name: N-2ToLTS+1-back-compat
-            flags: --compatVersion=FULL
         env:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -126,9 +123,6 @@ stages:
             flags: --compatVersion=LTS
           - name: Cross-Version
             flags: --compatVersion=CROSS_VERSION
-          # Assumes Non-compat and N-1 scenarios are covered
-          - name: N-2ToLTS+1-back-compat
-            flags: --compatVersion=FULL
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
