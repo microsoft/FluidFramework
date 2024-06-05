@@ -24,14 +24,14 @@
 			}
 		}
 	},
-	"main": "dist/indexNode.js",
+	"main": "lib/indexBrowser.js",
+	"types": "lib/indexBrowser.d.ts",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
 		"./lib/indexNode.js": "./lib/indexBrowser.js",
 		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
 	},
-	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
