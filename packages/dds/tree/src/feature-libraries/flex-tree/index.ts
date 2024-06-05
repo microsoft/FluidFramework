@@ -63,4 +63,4 @@ export {
 
 export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
 
-export { getSchemaAndPolicy } from "./utilities.js";
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
