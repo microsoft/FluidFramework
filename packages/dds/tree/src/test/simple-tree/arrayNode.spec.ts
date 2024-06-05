@@ -120,6 +120,12 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [2, 1, 2]);
 			});
 
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveToStart(0);
+				assert.deepEqual([...array], []);
+			});
+
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// Index too large
@@ -154,6 +160,12 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [1, 2, 2]);
 			});
 
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveToEnd(0);
+				assert.deepEqual([...array], []);
+			});
+
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// Index too large
@@ -176,6 +188,12 @@ describe("ArrayNode", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToIndex(0, 1);
 				assert.deepEqual([...array], [2, 1, 3]);
+			});
+
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveToIndex(0, 0);
+				assert.deepEqual([...array], []);
 			});
 
 			it("cross-field move", () => {
@@ -229,6 +247,12 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [1, 2, 1, 2]);
 			});
 
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveRangeToStart(0, 0);
+				assert.deepEqual([...array], []);
+			});
+
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// End index too large
@@ -270,6 +294,12 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [1, 2, 1, 2]);
 			});
 
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveRangeToEnd(0, 0);
+				assert.deepEqual([...array], []);
+			});
+
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// End index too large
@@ -309,6 +339,12 @@ describe("ArrayNode", () => {
 				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
 				array1.moveRangeToIndex(0, 0, 2, array2);
 				assert.deepEqual([...array1], [1, 2, 1, 2]);
+			});
+
+			it("move within empty field", () => {
+				const array = hydrate(schemaType, []);
+				array.moveRangeToIndex(0, 0, 0);
+				assert.deepEqual([...array], []);
 			});
 
 			it("invalid index", () => {

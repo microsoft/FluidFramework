@@ -672,38 +672,55 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(sourceIndex, field, "moveToStart");
-		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
+		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
+		if (!isEmptyMove) {
+			const field = getSequenceField(this);
+			validateIndex(sourceIndex, field, "moveToStart");
+			this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
+		}
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(sourceIndex, field, "moveToEnd");
-		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
+		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
+		if (!isEmptyMove) {
+			const field = getSequenceField(this);
+			validateIndex(sourceIndex, field, "moveToEnd");
+			this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
+		}
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(index, field, "moveToIndex", true);
-		validateIndex(sourceIndex, field, "moveToIndex");
-		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
+		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
+		if (!isEmptyMove) {
+			const field = getSequenceField(this);
+			validateIndex(index, field, "moveToIndex", true);
+			validateIndex(sourceIndex, field, "moveToIndex");
+			this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
+		}
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		validateIndexRange(
-			sourceStart,
-			sourceEnd,
-			source ?? getSequenceField(this),
-			"moveRangeToStart",
-		);
-		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
+		const isEmptyMove =
+			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
+		if (!isEmptyMove) {
+			validateIndexRange(
+				sourceStart,
+				sourceEnd,
+				source ?? getSequenceField(this),
+				"moveRangeToStart",
+			);
+			this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
+		}
 	}
 	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		validateIndexRange(
-			sourceStart,
-			sourceEnd,
-			source ?? getSequenceField(this),
-			"moveRangeToEnd",
-		);
-		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
+		const isEmptyMove =
+			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
+		if (!isEmptyMove) {
+			validateIndexRange(
+				sourceStart,
+				sourceEnd,
+				source ?? getSequenceField(this),
+				"moveRangeToEnd",
+			);
+			this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
+		}
 	}
 	public moveRangeToIndex(
 		index: number,
@@ -711,37 +728,41 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		const field = getSequenceField(this);
-		validateIndex(index, field, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
-		const sourceField =
-			source !== undefined
-				? field.isSameAs(getSequenceField(source))
-					? field
-					: getSequenceField(source)
-				: field;
+		const isEmptyMove =
+			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
+		if (!isEmptyMove) {
+			const field = getSequenceField(this);
+			validateIndex(index, field, "moveRangeToIndex", true);
+			validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
+			const sourceField =
+				source !== undefined
+					? field.isSameAs(getSequenceField(source))
+						? field
+						: getSequenceField(source)
+					: field;
 
-		// TODO: determine support for move across different sequence types
-		if (field.schema.types !== undefined && sourceField !== field) {
-			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode =
-					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-				if (!field.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
+			// TODO: determine support for move across different sequence types
+			if (field.schema.types !== undefined && sourceField !== field) {
+				for (let i = sourceStart; i < sourceEnd; i++) {
+					const sourceNode =
+						sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
+					if (!field.schema.types.has(sourceNode.schema.name)) {
+						throw new Error("Type in source sequence is not allowed in destination.");
+					}
 				}
 			}
-		}
-		const movedCount = sourceEnd - sourceStart;
-		const sourceFieldPath = sourceField.getFieldPath();
+			const movedCount = sourceEnd - sourceStart;
+			const sourceFieldPath = sourceField.getFieldPath();
 
-		const destinationFieldPath = field.getFieldPath();
-		field.context.checkout.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			movedCount,
-			destinationFieldPath,
-			index,
-		);
+			const destinationFieldPath = field.getFieldPath();
+			field.context.checkout.editor.move(
+				sourceFieldPath,
+				sourceStart,
+				movedCount,
+				destinationFieldPath,
+				index,
+			);
+		}
 	}
 }
 
@@ -871,6 +892,10 @@ function validateIndex(
 	allowOnePastEnd: boolean = false,
 ): void {
 	validatePositiveIndex(index);
+	// Handles edge case to handle editing operations on empty sequences
+	if (index === 0 && array.length === 0) {
+		return;
+	}
 	if (allowOnePastEnd) {
 		if (index > array.length) {
 			throw new UsageError(
@@ -892,6 +917,10 @@ function validateIndexRange(
 	array: { readonly length: number },
 	methodName: string,
 ): void {
+	// Handles edge case to handle editing operations on empty sequences.
+	if (array.length === 0 && startIndex === 0 && endIndex === 0) {
+		return;
+	}
 	validateIndex(startIndex, array, methodName);
 	validateIndex(endIndex, array, methodName, true);
 	if (startIndex >= endIndex || array.length < endIndex) {
