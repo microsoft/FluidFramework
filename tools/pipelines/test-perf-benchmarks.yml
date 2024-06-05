@@ -37,6 +37,7 @@ parameters:
     - "@fluidframework/tree"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
+    - "@fluidframework/container-runtime"
 
 # Performance e2e tests
 - name: endpoints

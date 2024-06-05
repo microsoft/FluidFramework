@@ -11,16 +11,16 @@ import type {
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import type {
+	IClientDetails,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import type {
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	IClientDetails,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.

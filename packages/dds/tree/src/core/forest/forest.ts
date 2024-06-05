@@ -80,8 +80,9 @@ export interface IForestSubscription extends Listenable<ForestEvents> {
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 */
-	allocateCursor(): ITreeSubscriptionCursor;
+	allocateCursor(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Frees an Anchor, stopping tracking its position across edits.
@@ -178,9 +179,10 @@ export interface FieldAnchor {
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 * @returns an independent copy of this cursor at the same location in the tree.
 	 */
-	fork(): ITreeSubscriptionCursor;
+	fork(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Release any resources this cursor is holding onto.

@@ -4,11 +4,11 @@
  */
 
 import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
 import { FluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
@@ -451,10 +451,7 @@ describe('EditUtilities', () => {
 	}
 
 	describe('comparePayloads', () => {
-		const serializer: FluidSerializer = new FluidSerializer(
-			new MockFluidDataStoreRuntime().IFluidHandleContext,
-			() => {}
-		);
+		const serializer: FluidSerializer = new FluidSerializer(new MockFluidDataStoreRuntime().IFluidHandleContext);
 		const binder: IFluidHandle = {
 			bind: noop,
 			get [fluidHandleSymbol]() {

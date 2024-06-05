@@ -6,12 +6,13 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+
+import type { IDetachedBlobStorage } from "../loader.js";
 import {
 	createMemoryDetachedBlobStorage,
 	serializeMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
 } from "../memoryBlobStorage.js";
-import type { IDetachedBlobStorage } from "../loader.js";
 
 describe("MemoryBlobStorage", () => {
 	it("Can create and read blobs", async () => {

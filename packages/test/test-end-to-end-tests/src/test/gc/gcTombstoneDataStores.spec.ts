@@ -28,9 +28,10 @@ import {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
@@ -47,7 +48,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 import {
 	getGCStateFromSummary,
@@ -775,10 +775,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					unreferencedId,
 				);
 
-				const serializer = new FluidSerializer(
-					dataObject._context.IFluidHandleContext,
-					() => {},
-				);
+				const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext);
 				const handle: IFluidHandle = parseHandles(
 					{ type: "__fluid_handle__", url: unreferencedId },
 					serializer,

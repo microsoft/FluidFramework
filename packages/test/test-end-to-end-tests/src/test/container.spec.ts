@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { useFakeTimers } from "sinon";
+
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
 	ITestDataObject,
@@ -35,7 +35,12 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IAnyDriverError,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	FiveDaysMs,
 	IDocumentServiceFactory,
@@ -47,8 +52,6 @@ import {
 	NonRetryableError,
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
@@ -61,6 +64,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { useFakeTimers } from "sinon";
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";

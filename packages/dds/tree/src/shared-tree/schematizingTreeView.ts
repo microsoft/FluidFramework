@@ -57,7 +57,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly viewSchema: ViewSchema;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
-	private disposed = false;
+	public disposed = false;
 
 	private readonly rootFieldSchema: FieldSchema;
 
@@ -206,7 +206,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		return view instanceof SchematizeError ? view : undefined;
 	}
 
-	public [disposeSymbol](): void {
+	public dispose(): void {
 		this.getViewOrError();
 		this.disposed = true;
 		this.disposeView();

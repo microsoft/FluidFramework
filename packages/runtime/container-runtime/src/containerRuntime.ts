@@ -45,6 +45,14 @@ import {
 	delay,
 } from "@fluidframework/core-utils/internal";
 import {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
@@ -62,14 +70,6 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -2685,12 +2685,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(
-					messageWithContext.message,
-					local,
-					localOpMetadata,
-					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
-				);
+				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
@@ -3252,16 +3247,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
-	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
-	 * but there can be some for which async operation is required (such as detecting new root data stores).
-	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
-	 */
-	public async updateStateBeforeGC() {
-		return this.channelCollection.updateStateBeforeGC();
-	}
-
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		return this.channelCollection.getGCData(fullGC);
 	}
@@ -3318,9 +3303,7 @@ export class ContainerRuntime
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
-		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
+		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.channelCollection.updateTombstonedRoutes(dataStoreRoutes);
 	}
 
@@ -3415,19 +3398,13 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * Called when a new outbound route is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	) {
-		this.garbageCollector.addedOutboundReference(
-			srcHandle.absolutePath,
-			outboundHandle.absolutePath,
-		);
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this.garbageCollector.addedOutboundReference(fromPath, toPath);
 	}
 
 	/**

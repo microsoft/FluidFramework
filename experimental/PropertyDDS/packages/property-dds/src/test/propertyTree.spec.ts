@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import lodash from "lodash";
-const { isEmpty, last } = lodash;
-
 import {
 	ArrayProperty,
 	BaseProperty,
@@ -43,6 +40,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
+import lodash from "lodash";
+const { isEmpty, last } = lodash;
 
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";

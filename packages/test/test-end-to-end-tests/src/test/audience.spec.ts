@@ -14,6 +14,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+
 import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {

@@ -8,6 +8,11 @@ import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
+	IClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
 	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
@@ -16,11 +21,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,

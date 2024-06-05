@@ -269,7 +269,7 @@ describe("library/packageExports", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						commonExportsPackage,
 						query,
-						false,
+						{ node10TypeCompat: false, onlyFirstMatches: true },
 						logger,
 					);
 
@@ -282,7 +282,7 @@ describe("library/packageExports", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						typeOnlyExportPackage,
 						query,
-						false,
+						{ node10TypeCompat: false, onlyFirstMatches: true },
 						logger,
 					);
 
@@ -295,7 +295,7 @@ describe("library/packageExports", () => {
 					const { mapKeyToOutput } = queryTypesResolutionPathsFromPackageExports(
 						doubleReferencingExportsPackage,
 						query,
-						false,
+						{ node10TypeCompat: false, onlyFirstMatches: true },
 						logger,
 					);
 
@@ -315,7 +315,7 @@ describe("library/packageExports", () => {
 						queryTypesResolutionPathsFromPackageExports(
 							commonExportsPackage,
 							query,
-							true,
+							{ node10TypeCompat: true, onlyFirstMatches: true },
 							logger,
 						);
 
