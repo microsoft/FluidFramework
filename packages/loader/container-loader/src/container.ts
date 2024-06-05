@@ -983,7 +983,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.isDirty,
+			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 		);
 
 		const isDomAvailable =

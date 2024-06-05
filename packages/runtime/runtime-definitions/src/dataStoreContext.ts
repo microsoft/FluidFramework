@@ -300,12 +300,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Processes the op.
 	 */
-	process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
-	): void;
+	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
 	/**
 	 * Processes the signal.
@@ -502,26 +497,19 @@ export interface IFluidParentContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	): void;
-
-	/**
 	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
 	 * @param address - The address of the channel that is dirty.
 	 */
 	setChannelDirty(address: string): void;
+
+	/**
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
+	addedGCOutboundRoute(fromPath: string, toPath: string): void;
 }
 
 /**
@@ -558,17 +546,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 *
-	 * @param fromPath - The absolute path of the node that added the reference.
-	 * @param toPath - The absolute path of the outbound node that is referenced.
-	 */
-	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
 /**
