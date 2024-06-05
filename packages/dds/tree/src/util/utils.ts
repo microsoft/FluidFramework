@@ -168,6 +168,20 @@ export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Ite
 }
 
 /**
+ * Finds the first element in the given iterable that satisfies a predicate.
+ * @param iterable - The iterable to search for an eligible element
+ * @param predicate - The predicate to run against each element
+ * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
+ */
+export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T | undefined {
+	for (const t of iterable) {
+		if (predicate(t)) {
+			return t;
+		}
+	}
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,

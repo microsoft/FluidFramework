@@ -146,7 +146,8 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_MockFluidDataStoreContext": {
 				"forwardCompat": false,

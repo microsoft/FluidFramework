@@ -144,4 +144,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		throw new Error("Method not implemented.");
 	}
+
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		throw new Error("Method not implemented.");
+	}
 }
