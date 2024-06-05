@@ -21,3 +21,12 @@ export {
 } from "./location-redirection-utilities/index.js";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";
+export {
+	IBaseProtocolHandler,
+	ProtocolOpHandler,
+	IScribeProtocolState,
+	IQuorumSnapshot,
+	Quorum,
+	QuorumClientsSnapshot,
+	QuorumProposalsSnapshot,
+} from "./protocol/index.js";

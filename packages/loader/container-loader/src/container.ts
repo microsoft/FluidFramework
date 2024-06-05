@@ -75,7 +75,6 @@ import {
 	readAndParse,
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -121,6 +120,7 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
+import { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
