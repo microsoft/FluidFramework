@@ -96,7 +96,7 @@ export interface BranchRebaseResult<TChange> {
 }
 
 interface RebaseChangeResult<TChange> {
-	readonly change: TaggedChange<TChange>;
+	readonly change: TChange;
 	/**
 	 * Telemetry properties for the rebase operation.
 	 */
@@ -353,7 +353,7 @@ export function rebaseChange<TChange>(
 	const telemetryProps = {
 		sourceBranchLength: sourcePath.length,
 		rebaseDistance: targetPath.length,
-		countInCommon: 0, // TODO: Change the value.
+		countInCommon: 0,
 	};
 
 	return {
