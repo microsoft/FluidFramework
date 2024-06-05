@@ -517,8 +517,6 @@ export class GarbageCollector implements IGarbageCollector {
 				/** Pre-GC steps */
 				// Ensure that state has been initialized from the base snapshot data.
 				await this.initializeGCStateFromBaseSnapshotP;
-				// Let the runtime update its pending state before GC runs.
-				await this.runtime.updateStateBeforeGC();
 
 				/** GC step */
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
