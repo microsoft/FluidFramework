@@ -61,7 +61,7 @@ class MockHandleContext implements IFluidHandleContext {
 	}
 }
 
-const serializer = new FluidSerializer(new MockHandleContext(), () => {});
+const serializer = new FluidSerializer(new MockHandleContext());
 
 /**
  * A {@link JsonValidator} implementation which uses Ajv's JSON schema validator.
