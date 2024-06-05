@@ -185,6 +185,10 @@ extends:
       jobs:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
+        # Bumping timeout from default 60 minutes while we figure out why some auto-injected always time out (previously
+        # after 10 minutes, more recently after 15), and cause the job to go past 60 minutes and fail.
+        # AB#8172
+        timeoutInMinutes: 90
         variables:
           releaseBuildVar: $[variables.releaseBuild]
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
