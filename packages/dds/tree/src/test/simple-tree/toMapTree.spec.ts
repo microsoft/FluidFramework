@@ -10,12 +10,15 @@ import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	ValueSchema,
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
 	type MapTree,
 	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
@@ -38,7 +41,24 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createNodeKeyManager, MockNodeKeyManager } from "../../feature-libraries/index.js";
+import {
+	createNodeKeyManager,
+	FieldKinds,
+	MockNodeKeyManager,
+} from "../../feature-libraries/index.js";
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ */
+function getFieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	allowedTypes?: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind: kind.identifier,
+		types: allowedTypes === undefined ? undefined : new Set(allowedTypes),
+	};
+}
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;
@@ -1115,6 +1135,190 @@ describe("toMapTree", () => {
 		};
 
 		const schemaFactory = new SchemaFactory("test");
+
+		describe("nodeDataToMapTree", () => {
+			describe("Leaf node", () => {
+				function createSchemaAndPolicyForLeafNode(invalid: boolean = false) {
+					return createSchemaAndPolicy(
+						new Map([
+							[
+								// An invalid stored schema will associate the string identifier to a number schema
+								brand(schemaFactory.string.identifier),
+								invalid
+									? new LeafNodeStoredSchema(ValueSchema.Number)
+									: new LeafNodeStoredSchema(ValueSchema.String),
+							],
+						]),
+						new Map(),
+					);
+				}
+
+				it("Success", () => {
+					const content = "Hello world";
+					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode();
+					nodeDataToMapTree(content, [schemaFactory.string], schemaValidationPolicy);
+				});
+
+				it("Failure", () => {
+					const content = "Hello world";
+					const schemaValidationPolicy = createSchemaAndPolicyForLeafNode(true);
+					assert.throws(
+						() =>
+							nodeDataToMapTree(
+								content,
+								[schemaFactory.string],
+								schemaValidationPolicy,
+							),
+						outOfSchemaExpectedError,
+					);
+				});
+			});
+
+			describe("Object node", () => {
+				const content = { foo: "Hello world" };
+				const fieldSchema = getFieldSchema(FieldKinds.required, [
+					brand(schemaFactory.string.identifier),
+				]);
+				const myObjectSchema = schemaFactory.object("myObject", {
+					foo: schemaFactory.string,
+				});
+
+				function createSchemaAndPolicyForObjectNode(invalid: boolean = false) {
+					return createSchemaAndPolicy(
+						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+							[
+								// An invalid stored schema will associate the string identifier to a number schema
+								brand(schemaFactory.string.identifier),
+								invalid
+									? new LeafNodeStoredSchema(ValueSchema.Number)
+									: new LeafNodeStoredSchema(ValueSchema.String),
+							],
+							[
+								brand(myObjectSchema.identifier),
+								new ObjectNodeStoredSchema(
+									new Map<FieldKey, TreeFieldStoredSchema>([
+										[brand("foo"), fieldSchema],
+									]),
+								),
+							],
+						]),
+						new Map([[fieldSchema.kind, FieldKinds.required]]),
+					);
+				}
+				it("Success", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
+					nodeDataToMapTree(
+						content,
+						[myObjectSchema, schemaFactory.string],
+						schemaValidationPolicy,
+					);
+				});
+
+				it("Failure", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode(true);
+					assert.throws(
+						() =>
+							nodeDataToMapTree(
+								content,
+								[myObjectSchema, schemaFactory.string],
+								schemaValidationPolicy,
+							),
+						outOfSchemaExpectedError,
+					);
+				});
+			});
+
+			describe("Map node", () => {
+				const content = new Map([["foo", "Hello world"]]);
+				const fieldSchema = getFieldSchema(FieldKinds.required, [
+					brand(schemaFactory.string.identifier),
+				]);
+				const myMapSchema = schemaFactory.map("myMap", [schemaFactory.string]);
+
+				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
+					return createSchemaAndPolicy(
+						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+							[
+								// An invalid stored schema will associate the string identifier to a number schema
+								brand(schemaFactory.string.identifier),
+								invalid
+									? new LeafNodeStoredSchema(ValueSchema.Number)
+									: new LeafNodeStoredSchema(ValueSchema.String),
+							],
+							[brand(myMapSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
+						]),
+						new Map([[fieldSchema.kind, FieldKinds.required]]),
+					);
+				}
+				it("Success", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
+					nodeDataToMapTree(
+						content,
+						[myMapSchema, schemaFactory.string],
+						schemaValidationPolicy,
+					);
+				});
+
+				it("Failure", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
+					assert.throws(
+						() =>
+							nodeDataToMapTree(
+								content,
+								[myMapSchema, schemaFactory.string],
+								schemaValidationPolicy,
+							),
+						outOfSchemaExpectedError,
+					);
+				});
+			});
+
+			describe("Array node", () => {
+				const content = ["foo"];
+				const fieldSchema = getFieldSchema(FieldKinds.required, [
+					brand(schemaFactory.string.identifier),
+				]);
+				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
+
+				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
+					return createSchemaAndPolicy(
+						new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+							[
+								// An invalid stored schema will associate the string identifier to a number schema
+								brand(schemaFactory.string.identifier),
+								invalid
+									? new LeafNodeStoredSchema(ValueSchema.Number)
+									: new LeafNodeStoredSchema(ValueSchema.String),
+							],
+							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
+						]),
+						new Map(),
+					);
+				}
+				it("Success", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForMapNode();
+					nodeDataToMapTree(
+						content,
+						[myArrayNodeSchema, schemaFactory.string],
+						schemaValidationPolicy,
+					);
+				});
+
+				it("Failure", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForMapNode(true);
+					assert.throws(
+						() =>
+							nodeDataToMapTree(
+								content,
+								[myArrayNodeSchema, schemaFactory.string],
+								schemaValidationPolicy,
+							),
+						outOfSchemaExpectedError,
+					);
+				});
+			});
+		});
+
 		const schemaValidationPolicyForSuccess = createSchemaAndPolicy(
 			new Map([
 				[
@@ -1134,30 +1338,6 @@ describe("toMapTree", () => {
 			]),
 			new Map(),
 		);
-
-		describe("nodeDataToMapTree", () => {
-			it("Success", () => {
-				const content = "Hello world";
-				nodeDataToMapTree(
-					content,
-					[schemaFactory.string],
-					schemaValidationPolicyForSuccess,
-				);
-			});
-
-			it("Failure", () => {
-				const content = "Hello world";
-				assert.throws(
-					() =>
-						nodeDataToMapTree(
-							content,
-							[schemaFactory.string],
-							schemaValidationPolicyForFailure,
-						),
-					outOfSchemaExpectedError,
-				);
-			});
-		});
 
 		describe("cursorFromNodeData", () => {
 			it("Success", () => {

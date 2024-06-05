@@ -181,10 +181,10 @@ export function nodeDataToMapTree(
 			result = leafToMapTree(data, schema, allowedTypes);
 			break;
 		case NodeKind.Array:
-			result = arrayToMapTree(data, schema, nodeKeyManager);
+			result = arrayToMapTree(data, schema, nodeKeyManager, schemaValidationPolicy);
 			break;
 		case NodeKind.Map:
-			result = mapToMapTree(data, schema, nodeKeyManager);
+			result = mapToMapTree(data, schema, nodeKeyManager, schemaValidationPolicy);
 			break;
 		case NodeKind.Object:
 			result = objectToMapTree(data, schema, nodeKeyManager);
@@ -324,7 +324,7 @@ function arrayToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): MapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
@@ -364,7 +364,7 @@ function mapToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): MapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
