@@ -103,9 +103,9 @@ export type _InlineTrick = 0;
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FlattenKeys<{
-    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 } & {
-    readonly [Property in keyof T as HasDefault<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
 }>;
 
 // @public

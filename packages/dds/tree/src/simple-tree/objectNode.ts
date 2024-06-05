@@ -105,16 +105,12 @@ export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = FlattenKeys<
 	{
-		// Field might not have a default, so make it required:
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+	} & {
+		// Field does not have a known default, make it required:
 		readonly [Property in keyof T as HasDefault<T[Property]> extends false
 			? Property
 			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
-	} & {
-		// Field might have a default, so allow optional.
-		// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-		readonly [Property in keyof T as HasDefault<T[Property]> extends true
-			? Property
-			: never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 	}
 >;
 
