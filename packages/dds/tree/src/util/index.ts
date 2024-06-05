@@ -73,6 +73,7 @@ export {
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
+	find,
 } from "./utils.js";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
 
