@@ -350,7 +350,7 @@ export function rebaseChange<TChange>(
 	);
 	inverses.reverse();
 
-	const telemetryProps = {
+	const telemetryProperties = {
 		sourceBranchLength: sourcePath.length,
 		rebaseDistance: targetPath.length,
 		countInCommon: 0,
@@ -358,7 +358,7 @@ export function rebaseChange<TChange>(
 
 	return {
 		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]), // TODO: How to apply TaggedChange<TChange>.
-		...telemetryProps,
+		telemetryProperties,
 	};
 }
 
