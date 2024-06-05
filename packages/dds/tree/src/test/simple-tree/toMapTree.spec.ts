@@ -1278,7 +1278,9 @@ describe("toMapTree", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [
 					brand(schemaFactory.string.identifier),
 				]);
-				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
+				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [
+					schemaFactory.string,
+				]);
 
 				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
 					return createSchemaAndPolicy(
@@ -1290,7 +1292,10 @@ describe("toMapTree", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
+							[
+								brand(myArrayNodeSchema.identifier),
+								new MapNodeStoredSchema(fieldSchema),
+							],
 						]),
 						new Map(),
 					);
