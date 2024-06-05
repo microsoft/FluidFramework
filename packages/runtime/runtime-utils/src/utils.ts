@@ -24,7 +24,11 @@ export async function seqFromTree(
 	tree: ISnapshotTree,
 	readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
-	const attributesHash = tree.trees[".protocol"].blobs.attributes;
+	const protocolTree = tree.trees[".protocol"];
+	assert(protocolTree !== undefined, "protocolTree is undefined in seqFromTree");
+
+	const attributesHash = protocolTree.blobs.attributes;
+	assert(attributesHash !== undefined, "attributesHash is undefined in seqFromTree");
 	const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
 	return attrib.sequenceNumber;
 }

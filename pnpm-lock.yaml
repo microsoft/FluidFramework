@@ -14823,9 +14823,6 @@ importers:
 
   packages/test/test-pairwise-generator:
     dependencies:
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
       random-js:
         specifier: ^2.1.0
         version: 2.1.0

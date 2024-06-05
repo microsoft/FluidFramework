@@ -345,17 +345,21 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.emit("prepareSend", batch);
 
 		if (batch.length === 1) {
+			assert(batch[0] !== undefined, "batch[0] is undefined in DeltaManager.flush");
 			assert(
 				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
+			assert(batch[0] !== undefined, "batch[0] is undefined in DeltaManager.flush");
 			assert(
 				(batch[0].metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
+			const lastBatch = batch[batch.length - 1];
+			assert(lastBatch !== undefined, "lastBatch is undefined in DeltaManager.flush");
 			assert(
-				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
+				(lastBatch.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -878,9 +882,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		if (messages.length === 0) {
 			return;
 		}
-
-		const from = messages[0].sequenceNumber;
-		const last = messages[messages.length - 1].sequenceNumber;
+		const firstMessage = messages[0];
+		const lastMessage = messages[messages.length - 1];
+		assert(
+			firstMessage !== undefined,
+			"firstMessage is undefined in DeltaManager.enqueueMessages",
+		);
+		assert(
+			lastMessage !== undefined,
+			"lastMessage is undefined in DeltaManager.enqueueMessages",
+		);
+		const from = firstMessage.sequenceNumber;
+		const last = lastMessage.sequenceNumber;
 
 		// Report stats about missing and duplicate ops
 		// This helps better understand why we fetch ops from storage, and thus may delay
@@ -947,7 +960,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		}
 
-		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
+		this.updateLatestKnownOpSeqNumber(lastMessage.sequenceNumber);
 
 		const n = this.previouslyProcessedMessage?.sequenceNumber;
 		assert(

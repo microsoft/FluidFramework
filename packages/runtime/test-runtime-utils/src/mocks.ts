@@ -1126,7 +1126,9 @@ export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
-		return stringToBuffer(this.contents[path], "utf8");
+		const content = this.contents[path];
+		assert(content !== undefined, `Blob ${path} not found`);
+		return stringToBuffer(content, "utf8");
 	}
 
 	public async contains(path: string): Promise<boolean> {

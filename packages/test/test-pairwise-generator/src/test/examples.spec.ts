@@ -60,12 +60,8 @@ describe("generatePairwiseOptions.examples", () => {
 		// use the array to drive a scenario
 		const runScenario = (numbers: number[]) => {
 			assert.strictEqual(numbers.length, 2);
-			const numbers0 = numbers[0];
-			assert(numbers0 !== undefined, "numbers[0] is undefined in runScenario");
-			const numbers1 = numbers[1];
-			assert(numbers1 !== undefined, "numbers[1] is undefined in runScenario");
-			assert(numbers0 % 3 === 0);
-			assert(numbers1 % 7 === 0);
+			assert(numbers[0] % 3 === 0);
+			assert(numbers[1] % 7 === 0);
 		};
 		for (const arrayLike of myArrayLikes) {
 			runScenario(Array.from(arrayLike));

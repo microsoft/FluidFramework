@@ -29,15 +29,28 @@ describe("Snapshot Normalizer", () => {
 			],
 		};
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot);
+		assert(
+			normalizedSnapshot.entries[0] !== undefined,
+			"normalizedSnapshot.entries[0] is undefined in can normalize tree entries",
+		);
+
 		assert.strictEqual(
 			normalizedSnapshot.entries[0].path,
 			"entry1",
 			"Snapshot tree entries not sorted",
 		);
+		assert(
+			normalizedSnapshot.entries[1] !== undefined,
+			"normalizedSnapshot.entries[1] is undefined in can normalize tree entries",
+		);
 		assert.strictEqual(
 			normalizedSnapshot.entries[1].path,
 			"entry2",
 			"Snapshot tree entries not sorted",
+		);
+		assert(
+			normalizedSnapshot.entries[2] !== undefined,
+			"normalizedSnapshot.entries[2] is undefined in can normalize tree entries",
 		);
 		assert.strictEqual(
 			normalizedSnapshot.entries[2].path,
@@ -76,6 +89,10 @@ describe("Snapshot Normalizer", () => {
 		};
 
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot);
+		assert(
+			normalizedSnapshot.entries[0] !== undefined,
+			"normalizedSnapshot.entries[0] is undefined in can normalize GC blobs",
+		);
 		assert.strictEqual(
 			normalizedSnapshot.entries[0].path,
 			gcBlobName2,
@@ -88,8 +105,18 @@ describe("Snapshot Normalizer", () => {
 			"GC blob not normalized",
 		);
 
-		const innerGCBlob = (normalizedSnapshot.entries[1].value as ITree).entries[0]
-			.value as IBlob;
+		const firstSnapshot = normalizedSnapshot.entries[1];
+		assert(firstSnapshot !== undefined, "firstSnapshot is undefined in can normalize GC blobs");
+		const firstSnapshotValue = firstSnapshot.value as ITree;
+		assert(
+			firstSnapshotValue !== undefined,
+			"firstSnapshotValue is undefined in can normalize GC blobs",
+		);
+		assert(
+			firstSnapshotValue.entries[0] !== undefined,
+			"firstSnapshotValue.entries[0] is undefined in can normalize GC blobs",
+		);
+		const innerGCBlob = firstSnapshotValue.entries[0].value as IBlob;
 		assert.deepStrictEqual(
 			JSON.parse(innerGCBlob.contents),
 			normalizedGCDetails,
@@ -123,6 +150,11 @@ describe("Snapshot Normalizer", () => {
 		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
+		assert(
+			normalizedSnapshot.entries[0] !== undefined,
+			"normalizedSnapshot.entries[0] is undefined in can normalize custom blobs with array of objects",
+		);
+
 		assert.strictEqual(
 			normalizedSnapshot.entries[0].path,
 			"custom",
@@ -135,6 +167,10 @@ describe("Snapshot Normalizer", () => {
 			"Custom blob not normalized",
 		);
 
+		assert(
+			normalizedSnapshot.entries[1] !== undefined,
+			"normalizedSnapshot.entries[1] is undefined in can normalize custom blobs with array of objects",
+		);
 		assert.strictEqual(normalizedSnapshot.entries[1].path, "normalized");
 		const normalizedBlob = normalizedSnapshot.entries[0].value as IBlob;
 		assert.deepStrictEqual(
@@ -168,6 +204,10 @@ describe("Snapshot Normalizer", () => {
 		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
+		assert(
+			normalizedSnapshot.entries[0] !== undefined,
+			"normalizedSnapshot.entries[0] is undefined in can normalize custom blobs with object of arrays",
+		);
 		assert.strictEqual(
 			normalizedSnapshot.entries[0].path,
 			"custom",
@@ -180,6 +220,10 @@ describe("Snapshot Normalizer", () => {
 			"Custom blob not normalized",
 		);
 
+		assert(
+			normalizedSnapshot.entries[1] !== undefined,
+			"normalizedSnapshot.entries[1] is undefined in can normalize custom blobs with object of arrays",
+		);
 		assert.strictEqual(normalizedSnapshot.entries[1].path, "normalized");
 		const normalizedBlob = normalizedSnapshot.entries[0].value as IBlob;
 		assert.deepStrictEqual(
@@ -203,6 +247,15 @@ describe("Snapshot Normalizer", () => {
 		// Config to normalize the above blobs.
 		const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom1", "custom2"] };
 		const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
+		assert(
+			normalizedSnapshot.entries[0] !== undefined,
+			"normalizedSnapshot.entries[0] is undefined in can normalize blob whose contents are not objects",
+		);
+		assert(
+			normalizedSnapshot.entries[1] !== undefined,
+			"normalizedSnapshot.entries[1] is undefined in can normalize blob whose contents are not objects",
+		);
+
 		const customBlob1 = normalizedSnapshot.entries[0].value as IBlob;
 		assert.strictEqual(customBlob1.contents, "contents", "Blob with string not as expected");
 

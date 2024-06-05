@@ -98,12 +98,8 @@ function validatePairsExhaustively<T extends Record<string, any>>(
 			if (i === j) {
 				continue;
 			}
-			const mi = matrix[i];
-			assert(mi !== undefined, "matrix[i] is undefined in validatePairsExhaustively");
-			for (const iv of mi) {
-				const mj = matrix[j];
-				assert(mj !== undefined, "matrix[j] is undefined in validatePairsExhaustively");
-				for (const jv of mj) {
+			for (const iv of matrix[i]) {
+				for (const jv of matrix[j]) {
 					let found = false;
 					for (const val of values) {
 						if (val[i] === iv && val[j] === jv) {
