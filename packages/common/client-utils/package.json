@@ -14,24 +14,30 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/indexNode.d.ts",
-				"default": "./lib/indexNode.js"
+			"node": {
+				"import": {
+					"types": "./lib/indexNode.d.ts",
+					"default": "./lib/indexNode.js"
+				},
+				"require": {
+					"types": "./dist/indexNode.d.ts",
+					"default": "./dist/indexNode.js"
+				}
 			},
-			"require": {
-				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.js"
+			"default": {
+				"import": {
+					"types": "./lib/indexBrowser.d.ts",
+					"default": "./lib/indexBrowser.js"
+				},
+				"require": {
+					"types": "./dist/indexBrowser.d.ts",
+					"default": "./dist/indexBrowser.js"
+				}
 			}
 		}
 	},
-	"main": "dist/indexNode.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.js": "./lib/indexBrowser.js",
-		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
-	},
-	"types": "dist/indexNode.d.ts",
+	"main": "lib/indexBrowser.js",
+	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -64,7 +70,7 @@
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},

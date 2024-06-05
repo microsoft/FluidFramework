@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "./indexNode.js";
+// This file is a Node.js-specific implementation of the base64 encoding functions.
+// Aside from the below import statement, this file should be identical to the
+// base64EncodingNode.ts.
+//
+// (See 'Isomorphic Code' section in the package README.md.)
+import { IsoBuffer } from "./bufferBrowser.js";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
