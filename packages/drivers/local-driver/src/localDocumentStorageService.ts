@@ -77,6 +77,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			requestVersion = versions[0];
 		}
 
+		assert(
+			requestVersion !== undefined,
+			"requestVersion is undefined in LocalDocumentStorageService.getSnapshotTree",
+		);
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
 		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		await this.populateGroupId(tree);
@@ -91,12 +95,25 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				throw new Error("No versions for the document!");
 			}
 
+			assert(
+				versions[0] !== undefined,
+				"versions[0] is undefined in LocalDocumentStorageService.getSnapshot",
+			);
 			versionId = versions[0].treeId;
 		}
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
-		const attributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+		const protocolSnapshot = snapshotTree.trees[".protocol"];
+		assert(
+			protocolSnapshot !== undefined,
+			"protocolSnapshot is undefined in LocalDocumentStorageService.getSnapshot",
+		);
+		const attributesBlobId = protocolSnapshot.blobs.attributes;
+		assert(
+			attributesBlobId !== undefined,
+			"attributesBlobId is undefined in LocalDocumentStorageService.getSnapshot",
+		);
 		// Only populate contents for the blobs which are supposed to be returned.
 		const blobContents = new Map<string, ArrayBuffer>();
 		const attributesBlobData = await this.readBlob(attributesBlobId);
@@ -299,6 +316,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
+			assert(
+				version[0] !== undefined,
+				"version[0] is undefined in LocalDocumentStorageService.uploadSummaryWithContext",
+			);
 			return version[0].id;
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(

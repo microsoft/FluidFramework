@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { NumericUuid } from "./identifiers.js";
 
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
@@ -19,8 +24,10 @@ export function writeNumericUuid(
 	index: number,
 	value: NumericUuid,
 ): number {
+	/* eslint-disable no-bitwise */
 	buffer[index] = value & halfNumeric;
 	buffer[index + 1] = value >> sixtyFour;
+	/* eslint-enable no-bitwise */
 	return index + 2; // UUID values are 16 bytes.
 }
 
@@ -42,13 +49,19 @@ export interface Index {
 export function readNumber(index: Index): number {
 	const value = index.bufferFloat[index.index];
 	index.index += 1;
+	assert(value !== undefined, "value is undefined in readNumber");
+
 	return value;
 }
 
 export function readNumericUuid(index: Index): NumericUuid {
 	const lowerHalf = index.bufferUint[index.index];
 	const upperHalf = index.bufferUint[index.index + 1];
+	assert(lowerHalf !== undefined, "lowerHalf is undefined in readNumericUuid");
+	assert(upperHalf !== undefined, "upperHalf is undefined in readNumericUuid");
+	/* eslint-disable no-bitwise */
 	const value = (upperHalf << sixtyFour) | lowerHalf;
+	/* eslint-enable no-bitwise */
 	index.index += 2;
 	return value as NumericUuid;
 }

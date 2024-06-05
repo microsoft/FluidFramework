@@ -132,6 +132,11 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
+			assert(
+				metadata.sensitivityLabelsInfo !== undefined,
+				"metadata.sensitivityLabelsInfo is undefined in handler",
+			);
+
 			assert.strictEqual(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				JSON.parse(metadata.sensitivityLabelsInfo).labels,

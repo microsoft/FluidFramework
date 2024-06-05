@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
@@ -78,6 +79,11 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
+				assert(
+					messages[0] !== undefined,
+					"messages[0] is undefined in DocumentDeltaStorageService.fetchMessages",
+				);
+
 				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;

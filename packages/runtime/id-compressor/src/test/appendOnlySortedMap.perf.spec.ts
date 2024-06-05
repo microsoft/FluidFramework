@@ -5,6 +5,7 @@
 
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
 import { compareFiniteNumbers } from "../utilities.js";
@@ -25,17 +26,21 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 		}
 		const keys = [...map.keys()];
 		for (let i = 0; i < map.size; i++) {
-			keyChoices.push(keys[rand.integer(0, map.size - 1)]);
+			const randomKey = keys[rand.integer(0, map.size - 1)];
+			assert(randomKey !== undefined, "randomKey is undefined in runAppendOnlyMapPerfTests");
+			keyChoices.push(randomKey);
 		}
 		localChoice = 0;
 	};
+	const key = keyChoices[localChoice++ % keyChoices.length];
+	assert(key !== undefined, "key is undefined in runAppendOnlyMapPerfTests");
 
 	benchmark({
 		type,
 		title: `lookup a key`,
 		before,
 		benchmarkFn: () => {
-			map.get(keyChoices[localChoice++ % keyChoices.length]);
+			map.get(key);
 		},
 	});
 
@@ -44,7 +49,7 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 		title: `lookup a pair or lower`,
 		before,
 		benchmarkFn: () => {
-			map.getPairOrNextLower(keyChoices[localChoice++ % keyChoices.length]);
+			map.getPairOrNextLower(key);
 		},
 	});
 }

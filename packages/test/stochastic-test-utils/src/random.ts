@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+import { assert } from "@fluidframework/core-utils/internal";
 
 import * as distribution from "./distributions/index.js";
 import { IRandom } from "./types.js";
@@ -64,6 +65,7 @@ export function makeRandom(
 	const normal = distribution.normal(engine.float64);
 	/* eslint-enable @typescript-eslint/unbound-method */
 
+	// TODO check if the as T and the let itemJ is correct
 	return {
 		bool: (probability = 0.5) => engine.float64() < probability,
 		integer,
@@ -76,8 +78,10 @@ export function makeRandom(
 			for (let i = items.length - 1; i > 0; i--) {
 				const j = integer(0, i);
 				const tmp = items[i];
-				items[i] = items[j];
-				items[j] = tmp;
+				let itemJ = items[j];
+				assert(itemJ !== undefined, "itemJ is undefined in IsoBuffer.sanitizeBase64");
+				items[i] = itemJ;
+				itemJ = tmp;
 			}
 		},
 		string: (length: number, alphabet = base58) => {

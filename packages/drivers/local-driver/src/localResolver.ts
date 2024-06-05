@@ -48,6 +48,8 @@ export class LocalResolver implements IUrlResolver {
 		const parsedUrl = new URL(request.url);
 		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
 		const documentId = fullPath.split("/")[0];
+		assert(documentId !== undefined, "documentId is undefined in LocalResolver.resolve");
+
 		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 		const resolved: IResolvedUrl = {
 			endpoints: {

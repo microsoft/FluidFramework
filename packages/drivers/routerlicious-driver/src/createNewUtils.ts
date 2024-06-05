@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 
 /**
@@ -15,6 +20,10 @@ export function convertSummaryToCreateNewSummary(summary: ISummaryTree): ISummar
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
 		const summaryObject = summary.tree[key];
+		assert(
+			summaryObject !== undefined,
+			"summaryObject is undefined in convertSummaryToCreateNewSummary",
+		);
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {

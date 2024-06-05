@@ -1030,7 +1030,9 @@ describe("IdCompressor", () => {
 						if (idData.originatingClient === client) {
 							assert(!isFinalId(idData.id));
 							const currentUuid = compressor.decompress(idData.id);
-							assert.equal(currentUuid, preAckLocalIds[i % preAckLocalIds.length][1]);
+							const ack = preAckLocalIds[i % preAckLocalIds.length];
+							assert(ack !== undefined, "ack is undefined in readNumericUuid");
+							assert.equal(currentUuid, ack[1]);
 							i++;
 						}
 					}
@@ -1070,6 +1072,11 @@ describe("IdCompressor", () => {
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.deliverOperations(Client.Client1);
 				const sessionSpaceIds = network.getIdLog(Client.Client1);
+				assert(
+					sessionSpaceIds[0] !== undefined,
+					"sessionSpaceIds[0] is undefined in can normalize local op space IDs from a local session to session space IDs",
+				);
+
 				const opSpaceId = compressor.normalizeToOpSpace(sessionSpaceIds[0].id);
 				const sessionSpaceId = compressor.normalizeToSessionSpace(
 					opSpaceId,
@@ -1088,6 +1095,11 @@ describe("IdCompressor", () => {
 				const opSpaceIds = network.allocateAndSendIds(Client.Client1, 1);
 				// Mimic sending a reference to an ID that hasn't been acked yet, such as in a slow network
 				const id = opSpaceIds[0];
+				assert(
+					id !== undefined,
+					"id is undefined in can normalize local op space IDs from a remote session to session space IDs",
+				);
+
 				const getSessionNormalizedId = () =>
 					compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
 				assert.throws(
@@ -1117,8 +1129,12 @@ describe("IdCompressor", () => {
 			const uuids = new Set<StableId>();
 			for (let i = 0; i < log1.length; i++) {
 				const data1 = log1[i];
+				assert(data1 !== undefined, "data1 is undefined in expectSequencedLogsAlign");
+				const log = log2[i];
+				assert(log !== undefined, "log is undefined in expectSequencedLogsAlign");
+
 				const id1 = compressor1.normalizeToOpSpace(data1.id);
-				const id2 = compressor2.normalizeToOpSpace(log2[i].id);
+				const id2 = compressor2.normalizeToOpSpace(log.id);
 				assert(isFinalId(id1));
 				ids.add(id1);
 				assert.equal(id1, id2);
@@ -1201,9 +1217,14 @@ describe("IdCompressor", () => {
 			// This is a glass box test in that it creates a final ID outside of the ID compressor
 			network.allocateAndSendIds(Client.Client1, 1);
 			network.deliverOperations(DestinationClient.All);
-			const id = network.getSequencedIdLog(Client.Client2)[0].id;
+			const firstClient = network.getSequencedIdLog(Client.Client2)[0];
+			assert(
+				firstClient !== undefined,
+				"firstClient is undefined in does not decompress ids for empty parts of clusters",
+			);
+
+			const id = firstClient.id;
 			assert(isFinalId(id));
-			// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 			const emptyId = (id + 1) as SessionSpaceCompressedId;
 			assert.throws(
 				() => network.getCompressor(Client.Client2).decompress(emptyId),
@@ -1342,9 +1363,19 @@ describe("IdCompressor", () => {
 					// Periodically check that everyone in the network has the same serialized state
 					n.deliverOperations(DestinationClient.All);
 					const compressors = n.getTargetCompressors(DestinationClient.All);
+					assert(
+						compressors[0] !== undefined,
+						"compressors[0] is undefined in can serialize after a large fuzz input",
+					);
+
 					let deserializedPrev = roundtrip(compressors[0][1], false)[1];
 					for (let i = 1; i < compressors.length; i++) {
-						const deserializedCur = roundtrip(compressors[i][1], false)[1];
+						const compressor = compressors[i];
+						assert(
+							compressor !== undefined,
+							"compressor is undefined in can serialize after a large fuzz input",
+						);
+						const deserializedCur = roundtrip(compressor[1], false)[1];
 						assert(deserializedPrev.equals(deserializedCur, false));
 						deserializedPrev = deserializedCur;
 					}

@@ -62,12 +62,19 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 		if (readFrom >= this.messages.length || readTo <= 0 || readFrom >= readTo) {
 			return [];
 		}
-
+		assert(
+			this.lastOps[0] !== undefined,
+			"this.lastOps[0] is undefined in FileDeltaStorageService.getFromWebSocket",
+		);
 		// Optimizations for multiple readers (replay tool)
 		if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
 			return this.lastOps;
 		}
 		this.lastOps = this.messages.slice(readFrom, readTo);
+		assert(
+			this.lastOps[0] !== undefined,
+			"this.lastOps[0] is undefined in FileDeltaStorageService.getFromWebSocket",
+		);
 		assert(
 			this.lastOps[0].sequenceNumber === readFrom + 1,
 			0x091 /* "Retrieved ops' first sequence number has unexpected value!" */,

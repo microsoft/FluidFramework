@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import process from "node:process";
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { Sanitizer } from "./sanitizer.js";
@@ -52,9 +53,11 @@ function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
 
 function main() {
 	if (process.argv.length === 3) {
+		assert(process.argv[2] !== undefined, "process.argv[2] is undefined in debugger main");
 		return Sanitize(process.argv[2], false, false);
 	}
 	if (process.argv.length === 4) {
+		assert(process.argv[3] !== undefined, "process.argv[3] is undefined in debugger main");
 		if (process.argv[2] === "--full") {
 			return Sanitize(process.argv[3], true, false);
 		}

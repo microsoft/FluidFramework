@@ -4,6 +4,7 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -37,6 +38,7 @@ function buildHierarchy(
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
 		const node = lookup[entryPathDir];
+		assert(node !== undefined, "node is undefined in buildHierarchy");
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
@@ -75,8 +77,12 @@ export function convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
 			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
 		});
 	}
-	const flatSnapshotTree = flatSnapshot.trees?.[0];
-	const sequenceNumber = flatSnapshotTree?.sequenceNumber;
+	const flatSnapshotTree = flatSnapshot.trees[0];
+	assert(
+		flatSnapshotTree !== undefined,
+		"flatSnapshotTree is undefined in IsoBuffer.sanitizeBase64",
+	);
+	const sequenceNumber = flatSnapshotTree.sequenceNumber;
 	const snapshotTree = buildHierarchy(flatSnapshotTree, treePrefixToRemove);
 
 	return {

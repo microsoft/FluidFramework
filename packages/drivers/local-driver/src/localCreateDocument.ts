@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
@@ -32,6 +33,11 @@ export async function createDocument(
 	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 	const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 	const sequenceNumber = documentAttributes.sequenceNumber;
+	assert(
+		tenantId !== undefined,
+		"tenantId is undefined in LocalDocumentStorageService.getSnapshot",
+	);
+	assert(id !== undefined, "id is undefined in LocalDocumentStorageService.getSnapshot");
 	await documentStorage.createDocument(
 		tenantId,
 		id,

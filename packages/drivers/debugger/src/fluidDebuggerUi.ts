@@ -221,7 +221,9 @@ export class DebuggerUI {
 		const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
 		buttonVers.onclick = () => {
 			const index = this.selector!.selectedIndex;
-			controller.onVersionSelection(this.versions[index]);
+			const version = this.versions[index];
+			assert(version !== undefined, "version is undefined in DebuggerUI");
+			controller.onVersionSelection(version);
 		};
 
 		const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
@@ -230,6 +232,7 @@ export class DebuggerUI {
 			() => {
 				const files = fileSnapshot.files;
 				if (files) {
+					assert(files[0] !== undefined, "files[0] is undefined in DebbugerUI");
 					controller.onSnapshotFileSelection(files[0]);
 				}
 			},
@@ -327,6 +330,8 @@ export class DebuggerUI {
 			this.text3!.textContent = "";
 		} else {
 			const op = ops[0];
+			assert(op !== undefined, "op is undefined in updateNextOpText");
+
 			const seq = op.sequenceNumber;
 			const date = DebuggerUI.formatDate(op.timestamp);
 			this.text1!.textContent = `Next op seq#: ${seq}`;

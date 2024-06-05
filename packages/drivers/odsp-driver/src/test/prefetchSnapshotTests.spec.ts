@@ -621,11 +621,22 @@ describe("Tests for prefetching snapshot", () => {
 			version: persistedCacheValueVersion,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appSnapShot = snapshotTreeWithGroupId.trees[".app"];
+		assert(
+			appSnapShot !== undefined,
+			"appSnapShot is undefined in Tests for prefetching snapshot: Concurrent snapshot fetch: Using GetSnapshot Api",
+		);
+		const protocolSnapShot = snapshotTreeWithGroupId.trees[".protocol"];
+		assert(
+			protocolSnapShot !== undefined,
+			"protocolSnapShot is undefined in Tests for prefetching snapshot: Concurrent snapshot fetch: Using GetSnapshot Api",
+		);
+
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...appSnapShot.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
+				...appSnapShot.trees,
+				".protocol": protocolSnapShot,
 			},
 			id: "SnapshotId",
 		};
@@ -861,11 +872,22 @@ describe("Tests for prefetching snapshot", () => {
 			snapshotFormatV: 1,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appSnapShot = snapshotTreeWithGroupId.trees[".app"];
+		assert(
+			appSnapShot !== undefined,
+			"appSnapShot is undefined in Tests for prefetching snapshot: Concurrent snapshot fetch: Using GetSnapshot Api",
+		);
+		const protocolSnapShot = snapshotTreeWithGroupId.trees[".protocol"];
+		assert(
+			protocolSnapShot !== undefined,
+			"protocolSnapShot is undefined in Tests for prefetching snapshot: Concurrent snapshot fetch: Using GetSnapshot Api",
+		);
+
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...appSnapShot.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
-				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
+				...appSnapShot.trees,
+				".protocol": protocolSnapShot,
 			},
 			id: "SnapshotId",
 		};

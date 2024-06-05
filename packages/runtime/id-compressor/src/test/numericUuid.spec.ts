@@ -73,11 +73,14 @@ describe("NumericUuid", () => {
 		const offsets = [1, 100, 1000000, 10000000000000000];
 		for (let i = 0; i < uuids.length; i++) {
 			const uuidA = uuids[i];
+			assert(uuidA !== undefined, "uuidA is undefined in can do general uuid math");
+
 			for (const offset of offsets) {
 				assertIsSessionId(stableIdFromNumericUuid(offsetNumericUuid(uuidA, offset)));
 			}
 			for (let j = i; j < uuids.length; j++) {
 				const uuidB = uuids[j];
+				assert(uuidB !== undefined, "uuidB is undefined in can do general uuid math");
 				const uuidDelta = addNumericUuids(uuidB, subtractNumericUuids(uuidA, uuidB));
 				assert.equal(uuidDelta, uuidA);
 			}

@@ -58,7 +58,16 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			return 0;
 		}
 
-		const attributesHash = tree.trees[".protocol"].blobs.attributes;
+		const protocol = tree.trees[".protocol"];
+		assert(
+			protocol !== undefined,
+			"protocol is undefined in DebugReplayController.seqFromTree",
+		);
+		const attributesHash = protocol.blobs.attributes;
+		assert(
+			attributesHash !== undefined,
+			"attributesHash is undefined in DebugReplayController.seqFromTree",
+		);
 		const attrib = await readAndParse<IDocumentAttributes>(
 			documentStorageService,
 			attributesHash,
@@ -242,6 +251,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			let prevRequest = Promise.resolve();
 			for (let index = i; index < this.versions.length; index += buckets) {
 				const version = this.versions[index];
+				assert(
+					version !== undefined,
+					"version is undefined in DebugReplayController.initStorage",
+				);
 				prevRequest = this.downloadVersionInfo(
 					this.documentStorageService,
 					prevRequest,

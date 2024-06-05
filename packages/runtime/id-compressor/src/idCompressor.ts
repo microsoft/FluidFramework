@@ -692,7 +692,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let baseFinalId = 0;
 		for (let i = 0; i < clusterCount; i++) {
 			const sessionIndex = readNumber(index);
-			const session = sessions[sessionIndex + sessionOffset][1];
+			const sessionArr = sessions[sessionIndex + sessionOffset];
+			assert(
+				sessionArr !== undefined,
+				"sessionArr is undefined in IdCompressor.deserialize2_0",
+			);
+			const session = sessionArr[1];
 			const capacity = readNumber(index);
 			const count = readNumber(index);
 			const cluster = session.addNewCluster(

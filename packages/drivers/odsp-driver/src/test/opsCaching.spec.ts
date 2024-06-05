@@ -81,7 +81,9 @@ async function validate(
 	}
 
 	if (expectedArr.length > 0) {
-		const last = expectedArr[expectedArr.length - 1].sequenceNumber + 1;
+		const lastExpectedItem = expectedArr[expectedArr.length - 1];
+		assert(lastExpectedItem !== undefined, "lastExpectedItem is undefined in validate");
+		const last = lastExpectedItem.sequenceNumber + 1;
 
 		result = await cache.get(last, undefined);
 		assert(result.length === 0);
@@ -436,8 +438,11 @@ describe("OdspDeltaStorageWithCache", () => {
 			assert(ops.length === 0);
 		} else {
 			assert(ops.length === to - from);
+			assert(ops[0] !== undefined, "ops[0] is undefined in validateOps");
+			const lastOp = ops[ops.length - 1];
+			assert(lastOp !== undefined, "lastOp is undefined in validateOps");
 			assert(ops.length === 0 || ops[0].sequenceNumber === from);
-			assert(ops.length === 0 || ops[ops.length - 1].sequenceNumber === to - 1);
+			assert(ops.length === 0 || lastOp.sequenceNumber === to - 1);
 		}
 	}
 

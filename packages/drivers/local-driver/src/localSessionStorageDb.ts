@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
@@ -80,6 +81,11 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 			// eslint-disable-next-line no-inner-declarations
 			function compare(a, b) {
 				const sortKey = Object.keys(sort)[0];
+				assert(
+					sortKey !== undefined,
+					"sortKey is undefined in LocalSessionStorageCollection.find",
+				);
+
 				return sort[sortKey] === 1
 					? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)
 					: getValueByKey(b, sortKey) - getValueByKey(a, sortKey);

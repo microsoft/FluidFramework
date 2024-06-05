@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
 
@@ -20,10 +21,18 @@ export const getDiscoveredFluidResolvedUrl = (
 	session: ISession,
 ): IResolvedUrl => {
 	const discoveredOrdererUrl = new URL(session.ordererUrl);
+	assert(
+		resolvedUrl.endpoints.deltaStorageUrl !== undefined,
+		"resolvedUrl.endpoints.deltaStorageUrl is undefined in getDiscoveredFluidResolvedUrl",
+	);
 	const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
 	deltaStorageUrl.host = discoveredOrdererUrl.host;
 
 	const discoveredStorageUrl = new URL(session.historianUrl);
+	assert(
+		resolvedUrl.endpoints.storageUrl !== undefined,
+		"resolvedUrl.endpoints.storageUrl is undefined in getDiscoveredFluidResolvedUrl",
+	);
 	const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
 	storageUrl.host = discoveredStorageUrl.host;
 

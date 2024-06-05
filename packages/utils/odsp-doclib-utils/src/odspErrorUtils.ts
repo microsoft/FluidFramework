@@ -94,7 +94,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 			);
 			if ("Origin" === key.trim()) {
 				let fieldValue: string;
-				switch (value?.trim()) {
+				switch (value.trim()) {
 					case "c":
 						fieldValue = "cache";
 						break;
@@ -102,7 +102,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 						fieldValue = "graph";
 						break;
 					default:
-						fieldValue = value?.trim();
+						fieldValue = value.trim();
 				}
 				const logName = "responseOrigin";
 				additionalProps[logName] = fieldValue;

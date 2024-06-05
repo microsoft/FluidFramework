@@ -4,6 +4,7 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -106,6 +107,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 
 			requestVersion = versions[0];
 		}
+		assert(
+			requestVersion !== undefined,
+			"requestVersion is undefined in ShreddedSummaryDocumentStorageService.getSnapshotTree",
+		);
 
 		const cachedSnapshotTree = await this.snapshotTreeCache?.get(
 			this.getCacheKey(requestVersion.treeId),

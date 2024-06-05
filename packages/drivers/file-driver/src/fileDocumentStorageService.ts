@@ -217,7 +217,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			const tree: ITree = { entries: [] };
 
 			for (const subTreeId of Object.keys(snapshotTree.trees)) {
-				const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
+				const snapshot = snapshotTree.trees[subTreeId];
+				assert(snapshot !== undefined, "snapshot is undefined in Base.buildTree");
+				const subTree = await this.buildTree(snapshot);
 				tree.entries.push({
 					mode: FileMode.Directory,
 					path: subTreeId,
@@ -227,7 +229,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 			}
 
 			for (const blobName of Object.keys(snapshotTree.blobs)) {
-				const buffer = await this.readBlob(snapshotTree.blobs[blobName]);
+				const snapshot = snapshotTree.blobs[blobName];
+				assert(snapshot !== undefined, "snapshot is undefined in Base.buildTree");
+				const buffer = await this.readBlob(snapshot);
 				const contents = bufferToString(buffer, "utf8");
 				const blob: IBlob = {
 					contents,
