@@ -92,7 +92,7 @@ export interface BranchRebaseResult<TChange> {
 	/**
 	 * Telemetry properties for the rebase operation.
 	 */
-	readonly telemetryProperties?: TelemetryProperties;
+	readonly telemetryProperties: TelemetryProperties;
 }
 
 interface RebaseChangeResult<TChange> {
