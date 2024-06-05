@@ -100,7 +100,7 @@ interface RebaseChangeResult<TChange> {
 	/**
 	 * Telemetry properties for the rebase operation.
 	 */
-	readonly telemetryProperties?: TelemetryProperties;
+	readonly telemetryProperties: TelemetryProperties;
 }
 
 /**
