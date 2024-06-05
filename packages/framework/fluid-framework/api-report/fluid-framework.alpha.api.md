@@ -6,7 +6,6 @@
 
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { HasDefaultUnsafe as HasDefaultUnsafe_2 } from './typesUnsafe.js';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
@@ -22,7 +21,6 @@ import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { InsertableTreeFieldFromImplicitFieldUnsafe as InsertableTreeFieldFromImplicitFieldUnsafe_2 } from './typesUnsafe.js';
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
@@ -713,7 +711,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as HasDefaultUnsafe_2<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe_2<T[Property]>; } & { readonly [Property_1 in keyof T as HasDefaultUnsafe_2<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe_2<T[Property_1]> | undefined; }, false, T>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as HasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
