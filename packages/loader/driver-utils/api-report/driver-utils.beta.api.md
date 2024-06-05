@@ -18,6 +18,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions/inte
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
+import { IGitTree } from '@fluidframework/driver-definitions/internal';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
@@ -25,6 +26,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotTreeEx } from '@fluidframework/driver-definitions/internal';
 import { IStream } from '@fluidframework/driver-definitions/internal';
 import { IStreamResult } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
@@ -40,6 +42,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/driver-definitions/internal';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions/internal';
 import { LoggingError } from '@fluidframework/telemetry-utils/internal';
+import { SummaryObject } from '@fluidframework/driver-definitions/internal';
 
 // @public (undocumented)
 export interface ICompressionStorageConfig {
