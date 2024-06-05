@@ -412,6 +412,13 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			"skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/mocha/lib/nodejs/esm-utils.js",
+                "**/node_modules/mocha/lib/cli/lookup-files.js",
+                "**/node_modules/uuid/dist/v35.js",
+                "**/node_modules/semver/classes/semver.js",
+            ],
 			"outFiles": [
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
