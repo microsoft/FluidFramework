@@ -74,7 +74,11 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
- * TODO
+ * Type utility for determining whether or not an implicit field schema has a default value.
+ *
+ * @privateRemarks
+ * TODO: Account for field schemas with default value providers.
+ * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
  *
  * @public
  */

@@ -151,7 +151,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 }
 
 /**
- * TODO
+ * {@link Unenforced} version of {@link HasDefault}.
  * @public
  */
 export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<
