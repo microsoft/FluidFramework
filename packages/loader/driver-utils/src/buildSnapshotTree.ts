@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
-import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
+import { buildGitTreeHierarchy } from "./protocol/index.js";
 
 function flattenCore(
 	path: string,
