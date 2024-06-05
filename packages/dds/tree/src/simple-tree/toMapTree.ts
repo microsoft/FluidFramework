@@ -88,9 +88,12 @@ export function cursorFromNodeData(
 	if (data === undefined) {
 		return undefined;
 	}
-	const normalizedTypes = normalizeAllowedTypes(allowedTypes);
-	const mappedContent = nodeDataToMapTree(data, normalizedTypes, schemaValidationPolicy);
-	addDefaultsToMapTree(mappedContent, normalizedTypes, context);
+	const mappedContent = nodeDataToMapTree(
+		data,
+		normalizeAllowedTypes(allowedTypes),
+		schemaValidationPolicy,
+	);
+	addDefaultsToMapTree(mappedContent, allowedTypes, context);
 	return cursorForMapTreeNode(mappedContent);
 }
 
@@ -133,7 +136,7 @@ export function cursorFromFieldData(
 		: [nodeDataToMapTree(data, schema.allowedTypeSet, schemaValidationPolicy)];
 
 	for (const content of mappedContent) {
-		addDefaultsToMapTree(content, schema.allowedTypeSet, context);
+		addDefaultsToMapTree(content, schema.allowedTypes, context);
 	}
 	return cursorForMapTreeField(mappedContent);
 }
@@ -628,23 +631,20 @@ export interface ContextuallyTypedNodeDataObject {
  */
 export function addDefaultsToMapTree(
 	mapTree: MapTree,
-	allowedTypes: Iterable<TreeNodeSchema>,
-	context?: NodeKeyManager,
+	allowedTypes: ImplicitAllowedTypes,
+	context: NodeKeyManager | undefined,
 ): void {
 	const schema =
-		find(allowedTypes, (s) => s.identifier === mapTree.type) ??
+		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
 		fail("MapTree is incompatible with schema");
 
 	switch (schema.kind) {
 		case NodeKind.Array:
 		case NodeKind.Map:
 			{
-				const allowedChildTypes = normalizeAllowedTypes(
-					schema.info as ImplicitAllowedTypes,
-				);
 				for (const field of mapTree.fields.values()) {
 					for (const child of field) {
-						addDefaultsToMapTree(child, allowedChildTypes, context);
+						addDefaultsToMapTree(child, schema.info as ImplicitAllowedTypes, context);
 					}
 				}
 			}
@@ -659,7 +659,8 @@ export function addDefaultsToMapTree(
 						for (const child of field) {
 							addDefaultsToMapTree(
 								child,
-								getObjectFieldSchema(schema, key).allowedTypeSet,
+								getObjectFieldSchema(schema, key).allowedTypes,
+								context,
 							);
 						}
 					} else if (fieldSchema instanceof FieldSchema) {
@@ -674,11 +675,7 @@ export function addDefaultsToMapTree(
 								setFieldValue(mutableMapTree.fields, data, fieldSchema, key);
 								for (const child of mutableMapTree.fields.get(key) ??
 									fail("Expected field to be populated")) {
-									addDefaultsToMapTree(
-										child,
-										fieldSchema.allowedTypeSet,
-										context,
-									);
+									addDefaultsToMapTree(child, fieldSchema.allowedTypes, context);
 								}
 							}
 						}
