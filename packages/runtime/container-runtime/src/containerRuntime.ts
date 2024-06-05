@@ -3247,16 +3247,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
-	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
-	 * but there can be some for which async operation is required (such as detecting new root data stores).
-	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
-	 */
-	public async updateStateBeforeGC() {
-		return this.channelCollection.updateStateBeforeGC();
-	}
-
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		return this.channelCollection.getGCData(fullGC);
 	}
@@ -3313,9 +3303,7 @@ export class ContainerRuntime
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
-		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
+		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.channelCollection.updateTombstonedRoutes(dataStoreRoutes);
 	}
 

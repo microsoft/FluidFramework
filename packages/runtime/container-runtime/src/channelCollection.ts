@@ -263,12 +263,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		readonly referencedDataStoreCount: number;
 	};
 
-	// Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
-	// root data stores that are added.
-	private dataStoresSinceLastGC: string[] = [];
-	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
-	// the container runtime to other nodes.
-	private readonly containerRuntimeHandle: IFluidHandleInternal;
 	private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<
 		string,
 		Promise<AliasResult>
@@ -288,11 +282,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	) {
 		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.contexts = new DataStoreContexts(baseLogger);
-		this.containerRuntimeHandle = new FluidObjectHandle(
-			this.parentContext,
-			"/",
-			this.parentContext.IFluidHandleContext,
-		);
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
 			new LazyPromise(async () => provideEntryPoint(this)),
 			"",
@@ -395,8 +384,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
-
-		this.dataStoresSinceLastGC.push(attachMessage.id);
 
 		// We need to process the GC Data for both local and remote attach messages
 		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
@@ -523,15 +510,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			return false;
 		}
 
-		const handle = new FluidObjectHandle(
-			context,
-			internalId,
-			this.parentContext.IFluidHandleContext,
-		);
-		this.parentContext.addedGCOutboundRoute(
-			this.containerRuntimeHandle.absolutePath,
-			handle.absolutePath,
-		);
+		this.parentContext.addedGCOutboundRoute("/", `/${internalId}`);
 
 		this.aliasMap.set(alias, context.id);
 		this.aliasedDataStores.add(context.id);
@@ -977,9 +956,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				: dataStoreNodePath;
 
 		// Log the package details asynchronously since getInitialSnapshotDetails is async
-		const recentelyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
-		if (recentelyDeletedContext !== undefined) {
-			recentelyDeletedContext
+		const recentlyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
+		if (recentlyDeletedContext !== undefined) {
+			recentlyDeletedContext
 				.getInitialSnapshotDetails()
 				.then((details) => {
 					return details.pkg.join("/");
@@ -1165,31 +1144,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		} while (notBoundContextsLength !== this.contexts.notBoundLength());
 
 		return builder.getSummaryTree();
-	}
-
-	/**
-	 * Before GC runs, called by the garbage collector to update any pending GC state.
-	 * The garbage collector needs to know all outbound references that are added. Since root data stores are not
-	 * explicitly marked as referenced, notify GC of new root data stores that were added since the last GC run.
-	 */
-	public async updateStateBeforeGC(): Promise<void> {
-		for (const id of this.dataStoresSinceLastGC) {
-			const context = this.contexts.get(id);
-			assert(context !== undefined, 0x2b6 /* Missing data store context */);
-			if (await context.isRoot()) {
-				// A root data store is basically a reference from the container runtime to the data store.
-				const handle = new FluidObjectHandle(
-					context,
-					id,
-					this.parentContext.IFluidHandleContext,
-				);
-				this.parentContext.addedGCOutboundRoute(
-					this.containerRuntimeHandle.absolutePath,
-					handle.absolutePath,
-				);
-			}
-		}
-		this.dataStoresSinceLastGC = [];
 	}
 
 	/**
