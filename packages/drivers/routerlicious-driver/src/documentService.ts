@@ -104,7 +104,7 @@ export class DocumentService
 	private documentStorageService: DocumentStorageService | undefined;
 
 	public get policies(): IDocumentServicePolicies | undefined {
-		return this._policies ?? {};
+		return this._policies;
 	}
 
 	public dispose() {}
@@ -288,14 +288,17 @@ export class DocumentService
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
 			const connection = await connect();
-			if (
-				(connection as R11sDocumentDeltaConnection).details.supportedFeatures
-					?.enable_single_commit_summary
-			) {
-				// Enable single-commit summaries via driver policy if the delta connection service provides enable_single_commit_summary value as true
-				// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
-				this._policies = { ...this._policies, summarizeProtocolTree: true };
-			}
+			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag provided by the service during connection
+			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
+			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
+				?.supportedFeatures?.enable_single_commit_summary
+				? true
+				: false;
+			this._policies = {
+				...this._policies,
+				summarizeProtocolTree: shouldSummarizeProtocolTree,
+			};
+
 			return connection;
 		} catch (error: any) {
 			if (error?.statusCode === 401) {

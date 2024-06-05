@@ -122,8 +122,22 @@ describe("DocumentService", () => {
 		const stubbedDeltaConnectionCreate = stub(R11sDocumentDeltaConnection, "create").callsFake(
 			async () => deltaConnection as R11sDocumentDeltaConnection,
 		);
+
 		await documentService.connectToDeltaStream(client);
-		assert(!documentService.policies?.summarizeProtocolTree);
+		assert.equal(documentService.policies?.summarizeProtocolTree, false);
+
+		// Update the delta connection to emulate service enabling of enable_single_commit_summary flag on reconnection
+		deltaConnection = {
+			...deltaConnection,
+			// getter for conneciton details emulating enable_single_commit_summary feature flag as false
+			get details() {
+				return { supportedFeatures: { enable_single_commit_summary: true } };
+			},
+		};
+
+		// emulate reconneciton to see if the new updated value of enable_single_commit_summary is picked up.
+		await documentService.connectToDeltaStream(client);
+		assert.equal(documentService.policies?.summarizeProtocolTree, true);
 		stubbedDeltaConnectionCreate.restore();
 	});
 });

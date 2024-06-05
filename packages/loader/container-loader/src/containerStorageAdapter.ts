@@ -113,15 +113,13 @@ export class ContainerStorageAdapter
 		// the protocol summary, provided single-commit summary is enabled.
 		this._storageService = new ProtocolTreeStorageService(
 			retriableStorage,
-			this.addProtocolSummaryIfMissing,
-			() => {
-				// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
-				// based on the response received from the service after connection is established.
-				return (
-					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false
-				);
+			(...props) => {
+				this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+				return this.addProtocolSummaryIfMissing(...props);
 			},
-			this.logger,
+			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
+			// based on the response received from the service after connection is established.
+			() => this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false,
 		);
 	}
 
