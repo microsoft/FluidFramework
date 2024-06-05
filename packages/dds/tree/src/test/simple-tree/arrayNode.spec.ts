@@ -164,4 +164,16 @@ describe("ArrayNode", () => {
 		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
 		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
 	});
+
+	describe("shadowing", () => {
+		it("indexes", () => {
+			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+				// @ts-expect-error Cannot shadow property with incompatible type.
+				public readonly 1: string = "foo";
+
+				// TODO: this should not be allowed. Indexes are reserved on array nodes.
+				public readonly 2: number = 37;
+			}
+		});
+	});
 });
