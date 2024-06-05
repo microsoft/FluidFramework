@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 
 import { SharedNumberSequenceFactory } from "./sequenceFactory.js";
 import { SharedSequence } from "./sharedSequence.js";
@@ -18,33 +21,7 @@ import { SharedSequence } from "./sharedSequence.js";
  * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
  * @internal
  */
-export class SharedNumberSequence extends SharedSequence<number> {
-	/**
-	 * Create a new shared number sequence
-	 *
-	 * @param runtime - data store runtime the new shared number sequence belongs to
-	 * @param id - optional name of the shared number sequence
-	 * @returns newly create shared number sequence (but not attached yet)
-	 *
-	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SharedNumberSequenceFactory.Type) as SharedNumberSequence;
-	}
-
-	/**
-	 * Get a factory for SharedNumberSequence to register with the data store.
-	 *
-	 * @returns a factory that creates and load SharedNumberSequence
-	 *
-	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
-	 */
-	public static getFactory() {
-		return new SharedNumberSequenceFactory();
-	}
-
+export class SharedNumberSequenceClass extends SharedSequence<number> {
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.

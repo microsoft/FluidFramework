@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 
 import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
@@ -70,7 +70,19 @@ export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTr
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
 > {
+	/**
+	 * The type of operation that affected segments in the merge-tree.
+	 * The affected segments can be accessed via {@link IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments}.
+	 *
+	 * See {@link MergeTreeDeltaOperationType} and {@link (MergeTreeMaintenanceType:type)} for possible values.
+	 */
 	readonly operation: TOperationType;
+
+	/**
+	 * A list of deltas describing actions taken on segments.
+	 *
+	 * Deltas are not guaranteed to be in any particular order.
+	 */
 	readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
 
@@ -78,7 +90,20 @@ export interface IMergeTreeDeltaCallbackArgs<
  * @alpha
  */
 export interface IMergeTreeSegmentDelta {
+	/**
+	 * The segment this delta affected.
+	 */
 	segment: ISegment;
+
+	/**
+	 * A property set containing changes to properties on this segment.
+	 *
+	 * @remarks - Deleting a property is represented using `null` as the value.
+	 * @example
+	 *
+	 * An annotation change which deleted the property "foo" and set "bar" to 5 would be represented as:
+	 * `{ foo: null, bar: 5 }`.
+	 */
 	propertyDeltas?: PropertySet;
 }
 
@@ -92,13 +117,18 @@ export interface IMergeTreeDeltaOpArgs {
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
+
 	/**
-	 * The merge tree operation
+	 * The {@link IMergeTreeOp} corresponding to the delta.
+	 *
+	 * @remarks - This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
 	 */
 	readonly op: IMergeTreeOp;
+
 	/**
-	 * Get the sequence message, should only be null if the
-	 * Delta op args are for an unacked local change
+	 * The {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage} corresponding to this acknowledged change.
+	 *
+	 * This field is omitted for deltas corresponding to unacknowledged changes.
 	 */
 	readonly sequencedMessage?: ISequencedDocumentMessage;
 }

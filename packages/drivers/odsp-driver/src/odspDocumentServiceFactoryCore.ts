@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -28,7 +29,6 @@ import {
 	TokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -153,7 +153,6 @@ export class OdspDocumentServiceFactoryCore
 			fileEntry,
 			odspLogger,
 			clientIsSummarizer,
-			this.hostPolicy,
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -292,7 +291,6 @@ export class OdspDocumentServiceFactoryCore
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
 				extLogger,
 				clientIsSummarizer,
-				this.hostPolicy,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(

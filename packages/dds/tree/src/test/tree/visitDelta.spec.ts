@@ -22,7 +22,8 @@ import {
 import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze, rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
+import { rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 function visit(
 	delta: DeltaRoot,
@@ -38,6 +39,7 @@ function visit(
 }
 
 type CallSignatures<T> = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[K in keyof T]: T[K] extends (...args: any) => any ? [K, ...Parameters<T[K]>] : never;
 };
 type PropType<T> = T[keyof T];
@@ -71,7 +73,7 @@ function testVisit(
 			// assert.deepStrictEqual([name, ...args], expected[callIndex]);
 			callIndex += 1;
 		};
-	const visitor: DeltaVisitor = {} as any;
+	const visitor: DeltaVisitor = {} as unknown as DeltaVisitor;
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
@@ -130,7 +132,7 @@ describe("visitDelta", () => {
 		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("idempotent insert", () => {
+	it("throws on build of existing tree", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const node = { minor: 42 };
 		index.createEntry(node);
@@ -141,15 +143,8 @@ describe("visitDelta", () => {
 			build: [{ id: node, trees: [content] }],
 			fields: new Map([[rootKey, rootFieldDelta]]),
 		};
-		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
-			["enterField", rootKey],
-			["attach", field0, 1, 0],
-			["exitField", rootKey],
-		];
-		testVisit(delta, expected, index);
-		assert.equal(index.entries().next().done, true);
+		assert.throws(() => testVisit(delta, [], index));
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("insert child", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
@@ -1072,7 +1067,7 @@ describe("visitDelta", () => {
 			assert.equal(index.entries().next().done, true);
 		});
 
-		it("for changes to repair data", () => {
+		it("for changes to detached trees", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 			const refresherId = { minor: 42 };
 			const buildId = { minor: 43 };

@@ -4,25 +4,28 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ThresholdCounter, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	ThresholdCounter,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelServiceEndpoints,
@@ -51,7 +54,6 @@ export class RemoteChannelContext implements IChannelContext {
 		storageService: IDocumentStorageService,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
 		registry: ISharedObjectRegistry,
@@ -70,7 +72,6 @@ export class RemoteChannelContext implements IChannelContext {
 			dataStoreContext.connected,
 			submitFn,
 			() => dirtyFn(this.id),
-			addedGCOutboundReferenceFn,
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,

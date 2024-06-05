@@ -14,10 +14,14 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	ISummaryContext,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -29,12 +33,10 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-// Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
 		summaryConfigOverrides: { state: "disabled" },
 	},
-	gcOptions: { gcAllowed: false },
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 
@@ -262,6 +264,13 @@ describeCompat(
 		});
 
 		it("Second summarizer from latest should not fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7894
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizer1 = await createSummarizer(provider, mainContainer);
 
 			const versionWrap1 = await incrementCellValueAndRunSummary(
@@ -307,6 +316,13 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
+			// TODO: This test is consistently failing when ran against FRS. See ADO:7895
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
 			const versionWrap1 = await incrementCellValueAndRunSummary(
 				summarizerClient,

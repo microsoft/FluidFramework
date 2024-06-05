@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 // import { ConnectionState } from "@fluidframework/container-loader";
 // import { timeoutPromise } from "@fluidframework/test-utils";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -23,7 +23,6 @@ import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
  */
 export interface OdspTestCredentials {
 	clientId: string;
-	clientSecret: string;
 	username: string;
 	password: string;
 }
@@ -33,7 +32,6 @@ export interface OdspTestCredentials {
  */
 const clientCreds: OdspTestCredentials = {
 	clientId: "<client_id>",
-	clientSecret: "<client_secret>",
 	username: "<email_id>",
 	password: "<password>",
 };

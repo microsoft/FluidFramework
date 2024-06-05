@@ -22,6 +22,7 @@ export {
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
+	type CompatType,
 } from "./describeCompat.js";
 export {
 	DescribeE2EDocSuite,

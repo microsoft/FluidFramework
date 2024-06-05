@@ -6,8 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { AllowedUpdateType, Compatibility, FieldKey } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { AllowedUpdateType, Compatibility } from "../core/index.js";
+import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
 	NodeKeyManager,
@@ -16,7 +16,9 @@ import {
 	ContextSlot,
 } from "../feature-libraries/index.js";
 import {
+	FieldSchema,
 	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
 	SchemaIncompatible,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
@@ -24,6 +26,9 @@ import {
 	TreeViewEvents,
 	getProxyForField,
 	toFlexConfig,
+	setField,
+	normalizeFieldSchema,
+	InsertableContent,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -35,7 +40,7 @@ import { CheckoutFlexTreeView } from "./treeView.js";
  * Implementation of TreeView wrapping a FlexTreeView.
  */
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TreeFieldFromImplicitField<TRootSchema>>
+	implements TreeView<TRootSchema>
 {
 	/**
 	 * In one of three states:
@@ -45,33 +50,37 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 */
 	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
 	private readonly flexConfig: TreeContent;
-	public readonly events: ISubscribable<TreeViewEvents> &
+	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
-	private disposed = false;
+	public disposed = false;
+
+	private readonly rootFieldSchema: FieldSchema;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly nodeKeyFieldKey: FieldKey,
 	) {
-		this.flexConfig = toFlexConfig(config);
-		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
+		const policy = {
+			...defaultSchemaPolicy,
+			validateSchema: config.options.enableSchemaValidation,
+		};
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
+		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
+			schema: checkout.storedSchema,
+			policy,
+		});
+		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
 		this.update();
 
 		this.unregisterCallbacks.add(
 			this.checkout.events.on("commitApplied", (data, getRevertible) =>
 				this.events.emit("commitApplied", data, getRevertible),
-			),
-		);
-		this.unregisterCallbacks.add(
-			this.checkout.events.on("revertibleDisposed", (revertible) =>
-				this.events.emit("revertibleDisposed", revertible),
 			),
 		);
 	}
@@ -147,7 +156,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 						}
 					},
 					this.nodeKeyManager,
-					this.nodeKeyFieldKey,
 				);
 
 				// Trigger "rootChanged" if the root changes in the future.
@@ -162,6 +170,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 						lastRoot = this.root;
 						this.events.emit("rootChanged");
 					}
+					this.events.emit("afterBatch");
 				});
 				break;
 			}
@@ -197,7 +206,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		return view instanceof SchematizeError ? view : undefined;
 	}
 
-	public [disposeSymbol](): void {
+	public dispose(): void {
 		this.getViewOrError();
 		this.disposed = true;
 		this.disposeView();
@@ -211,6 +220,22 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+	}
+
+	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+		const view = this.getViewOrError();
+		if (view instanceof SchematizeError) {
+			throw new UsageError(
+				"Document is out of schema. Check TreeView.error before accessing TreeView.root.",
+			);
+		}
+
+		setField(
+			view.context.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent,
+			view.context.nodeKeyManager,
+		);
 	}
 }
 
@@ -239,7 +264,6 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	viewSchema: ViewSchema<TRoot>,
 	onDispose: () => void,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const slots = checkout.forest.anchors.slots;
 	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
@@ -253,14 +277,8 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		nodeKeyFieldKey,
-		onDispose,
-	);
-	assert(slots.has(ContextSlot), "Context should be tracked in slot");
+	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
+	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);

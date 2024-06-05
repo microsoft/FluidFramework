@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import { AppendOnlySortedMap } from "./appendOnlySortedMap.js";
 import { LocalCompressedId } from "./identifiers.js";
 import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
@@ -80,12 +81,12 @@ export class SessionSpaceNormalizer {
 			ranges[0] = [firstGenCount, baseCount - (firstGenCount - baseGenCount)];
 			assert(
 				this.rangeContains(ranges[0], firstGenCount),
-				"Expected the touched up range to contain the queried ID",
+				0x952 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {
 			assert(
 				baseGenCount > firstGenCount,
-				"Expected the first range to start after the queried ID",
+				0x953 /* Expected the first range to start after the queried ID */,
 			);
 		}
 
@@ -95,12 +96,12 @@ export class SessionSpaceNormalizer {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
 			assert(
 				this.rangeContains(ranges[lastRangeIndex], lastGenCount),
-				"Expected the touched up range to contain the queried ID",
+				0x954 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {
 			assert(
 				limitGenCount + limitCount - 1 < lastGenCount,
-				"Expected the last range to end before the queried ID",
+				0x955 /* Expected the last range to end before the queried ID */,
 			);
 		}
 		return ranges;

@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
 import {
 	ITypeValidationConfig,
 	Package,
 	PackageJson,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 
-import { PackageCommand } from "../BasePackageCommand";
+import { PackageCommand } from "../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../flags.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -79,6 +80,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			command: "<%= config.bin %> <%= command.id %> --reset --normalize --disable",
 		},
 	];
+
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const version =

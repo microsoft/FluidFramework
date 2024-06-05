@@ -5,8 +5,8 @@
 
 import { unlinkSync } from "node:fs";
 import path from "node:path";
-import { loadFluidBuildConfig, IFluidBuildConfig } from "@fluidframework/build-tools";
-import { Handler } from "./common";
+import { IFluidBuildConfig, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { Handler } from "./common.js";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;

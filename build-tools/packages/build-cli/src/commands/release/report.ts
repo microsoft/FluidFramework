@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
-import { writeJson } from "fs-extra";
+import { writeJson } from "fs-extra/esm";
 import inquirer from "inquirer";
-import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
 import {
-	VersionDetails,
+	BaseCommand,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
 	ReportKind,
+	VersionDetails,
 	filterVersionsOlderThan,
 	getDisplayDate,
 	getDisplayDateRelative,
@@ -26,7 +27,7 @@ import {
 	getRanges,
 	sortVersions,
 	toReportKind,
-} from "../../library";
+} from "../../library/index.js";
 
 import {
 	ReleaseVersion,
@@ -37,10 +38,9 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { CommandLogger } from "../../logging";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
+import { releaseGroupFlag } from "../../flags.js";
+import { CommandLogger } from "../../logging.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.
@@ -386,6 +386,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			char: "o",
 			description: "Output JSON report files to this directory.",
 		}),
+		baseFileName: Flags.string({
+			description:
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+			required: false,
+		}),
 		...ReleaseReportBaseCommand.flags,
 	};
 
@@ -497,10 +502,42 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		if (shouldOutputFiles) {
 			this.info(`Writing files to path: ${path.resolve(outputPath)}`);
 			const promises = [
-				writeReport(context, report, "simple", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "full", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "caret", outputPath, flags.releaseGroup, this.logger),
-				writeReport(context, report, "tilde", outputPath, flags.releaseGroup, this.logger),
+				writeReport(
+					context,
+					report,
+					"simple",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"full",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"caret",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
+				writeReport(
+					context,
+					report,
+					"tilde",
+					outputPath,
+					flags.releaseGroup,
+					flags.baseFileName,
+					this.logger,
+				),
 			];
 
 			await Promise.all(promises);
@@ -647,9 +684,14 @@ function generateReportFileName(
 	kind: ReportKind,
 	releaseVersion: ReleaseVersion,
 	releaseGroup?: ReleaseGroup,
+	baseFileName?: string,
 ): string {
 	if (releaseGroup === undefined && releaseVersion === undefined) {
 		throw new Error(`Both releaseGroup and releaseVersion were undefined.`);
+	}
+
+	if (baseFileName !== undefined) {
+		return `${baseFileName}.${kind}.json`;
 	}
 
 	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${
@@ -667,6 +709,7 @@ async function writeReport(
 	kind: ReportKind,
 	dir: string,
 	releaseGroup?: ReleaseGroup,
+	baseFileName?: string,
 	log?: CommandLogger,
 ): Promise<void> {
 	const version =
@@ -675,7 +718,7 @@ async function writeReport(
 				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
-	const reportName = generateReportFileName(kind, version, releaseGroup);
+	const reportName = generateReportFileName(kind, version, releaseGroup, baseFileName);
 	const reportPath = path.join(dir, reportName);
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);

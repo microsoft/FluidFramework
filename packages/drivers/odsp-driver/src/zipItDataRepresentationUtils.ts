@@ -12,7 +12,7 @@ import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/cli
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";

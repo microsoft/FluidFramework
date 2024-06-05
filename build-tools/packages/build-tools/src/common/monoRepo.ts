@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import {
-	InterdependencyRange,
 	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
 } from "@fluid-tools/version-tools";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
-import * as path from "path";
 import YAML from "yaml";
 
 import { IFluidBuildConfig, IFluidRepoPackage } from "./fluidRepo";

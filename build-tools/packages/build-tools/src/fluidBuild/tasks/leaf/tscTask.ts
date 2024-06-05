@@ -6,13 +6,13 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
+import * as tsTypes from "typescript";
 
 import { readFileSync } from "fs-extra";
-import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { getTscUtils, TscUtil } from "../../../common/tscUtils";
+import { TscUtil, getTscUtils } from "../../../common/tscUtils";
+import { existsSync, readFileAsync } from "../../../common/utils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -124,13 +124,20 @@ export class TscTask extends LeafTask {
 		}
 
 		const program = tsBuildInfo.program;
+		const noEmit = config.options.noEmit ?? false;
+		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
+		const hasEmitErrorsOrPending =
+			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
+			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
+		const hasSemanticErrors =
+			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
+
+		const previousBuildError = noEmit
+			? hasChangedFiles || hasSemanticErrors
+			: hasChangedFiles || hasSemanticErrors || hasEmitErrorsOrPending;
+
 		// Check previous build errors
-		if (
-			program.changeFileSet?.length ||
-			(!config.options.noEmit
-				? program.affectedFilesPendingEmit?.length || program.emitDiagnosticsPerFile?.length
-				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
-		) {
+		if (previousBuildError) {
 			this.traceTrigger("previous build error");
 			return false;
 		}

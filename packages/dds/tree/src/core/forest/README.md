@@ -4,7 +4,7 @@ An abstraction for representing, editing, and observing collections of trees.
 Forest is focused on allowing the implementation to efficiently be viewed/read and apply deltas,
 while only keeping a subset of the data in memory.
 
-Forest is not supposed to provide a friendly API (See [editable-tree](../../feature-libraries/editable-tree/README.md) for that).
+Forest is not supposed to provide a friendly API (See [flex-tree](../../feature-libraries/flex-tree/README.md) for that).
 Instead, forest provides an abstraction that enables implementing nicer APIs on-top of it as a separate layer while abstracting the actual storage representation.
 This should allow forest implementations to implement compression without having to modify the forest API or its users.
 

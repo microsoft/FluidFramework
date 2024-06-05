@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
@@ -17,10 +16,17 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import {
+	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	DriverErrorTypes,
+	IDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
@@ -28,18 +34,9 @@ import {
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ConnectionMode,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -47,6 +44,7 @@ import {
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
+	EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -149,7 +147,7 @@ function logIfFalse(
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
-	extends TypedEventEmitter<IDeltaManagerInternalEvents>
+	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
 	implements
 		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		IEventProvider<IDeltaManagerInternalEvents>
@@ -411,7 +409,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
-		super();
+		super((name, error) => {
+			this.logger.sendErrorEvent(
+				{
+					eventName: "DeltaManagerEventHandlerException",
+					name: typeof name === "string" ? name : undefined,
+				},
+				error,
+			);
+			this.close(normalizeError(error));
+		});
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
 				try {
@@ -542,18 +549,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
+	 * @param snapshotSequenceNumber - The sequence number of the snapshot at which the document loaded from.
+	 * @param lastProcessedSequenceNumber - The last processed sequence number, for offline, it should be greater than the sequence number.
+	 * Setting lastProcessedSequenceNumber allows the DeltaManager to skip downloading and processing ops that have already been processed.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
-		sequenceNumber: number,
+		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
+		prefetchType: "cached" | "all" | "none" = "none",
+		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
 	) {
-		this.initSequenceNumber = sequenceNumber;
-		this.lastProcessedSequenceNumber = sequenceNumber;
+		this.initSequenceNumber = snapshotSequenceNumber;
+		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
-		this.lastQueuedSequenceNumber = sequenceNumber;
-		this.lastObservedSeqNumber = sequenceNumber;
+		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
+		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(

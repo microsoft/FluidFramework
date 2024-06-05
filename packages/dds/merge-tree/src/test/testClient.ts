@@ -7,13 +7,9 @@ import { strict as assert } from "assert";
 
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	ITree,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { ITree, MessageType } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
@@ -26,7 +22,7 @@ import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { IMergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
 import {
 	IJSONSegment,
@@ -606,7 +602,7 @@ export interface MergeTreeStats {
 }
 
 export function getStats(tree: MergeTree) {
-	const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
+	const nodeGetStats = (block: MergeBlock): MergeTreeStats => {
 		const stats: MergeTreeStats = {
 			maxHeight: 0,
 			nodeCount: 0,

@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ErasedType } from "@fluidframework/core-interfaces";
 import {
 	Brand,
-	Erased,
 	brand,
-	brandErased,
-	fromErased,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/brand.js";
-import {
-	areSafelyAssignable,
-	isAssignableTo,
-	requireFalse,
-	requireTrue,
-} from "../../util/index.js";
+import { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -46,16 +39,10 @@ const _branded3 = brand(0);
 const _branded4: number = brand(0);
 
 // Erased
-interface E4 extends Erased<"4"> {}
-interface E5 extends Erased<"5"> {}
+interface E4 extends ErasedType<"4"> {}
+interface E5 extends ErasedType<"5"> {}
 export type T4 = Brand<{ test: number }, E4>;
 export type T5 = Brand<{ test: number }, E5>;
 
-const erased = brandErased<T4>({ test: 5 });
-const branded = fromErased<T4>(erased);
-type _check1 =
-	| requireTrue<areSafelyAssignable<typeof erased, E4>>
-	| requireTrue<areSafelyAssignable<typeof branded, T4>>
-	// Check strong typing
-	| requireFalse<isAssignableTo<E4, E5>>
-	| requireFalse<isAssignableTo<T4, T5>>;
+// Check strong typing
+type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableTo<T4, T5>>;

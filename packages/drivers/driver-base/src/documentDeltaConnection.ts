@@ -5,26 +5,26 @@
 
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IAnyDriverError,
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
 	IConnect,
 	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	MonitoringContext,
 	createChildMonitoringContext,
@@ -750,6 +750,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				scenarioName: handler,
 			},
 		);
 	}
@@ -766,8 +767,7 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
-				errorFrom: handler,
+				scenarioName: handler,
 			},
 		);
 	}

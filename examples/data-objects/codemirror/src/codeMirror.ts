@@ -10,8 +10,8 @@ import {
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,

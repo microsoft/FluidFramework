@@ -14,7 +14,7 @@ export type {
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	DDSFuzzHarnessEvents,
-	UseHandle,
+	DDSRandom,
 	Synchronize,
 } from "./ddsFuzzHarness.js";
 export { createDDSFuzzSuite, defaultDDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness.js";

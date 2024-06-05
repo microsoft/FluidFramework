@@ -127,7 +127,7 @@ function TopRow(props: { app: App }): JSX.Element {
 }
 
 export function ReactApp(props: {
-	data: TreeView<App>;
+	data: TreeView<typeof App>;
 	container: IFluidContainer;
 	cellSize: { x: number; y: number };
 	canvasSize: { x: number; y: number };

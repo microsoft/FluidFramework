@@ -8,7 +8,6 @@ import classNames from "classnames";
 import React, { useState } from "react";
 import Select, {
 	DropdownIndicatorProps,
-	StylesConfig,
 	GroupBase,
 	Options as OptionsType,
 	OptionProps,
@@ -56,7 +55,7 @@ const useStyles = makeStyles(
 );
 
 // Style api of react-select library
-const reactSelectStyles: StylesConfig<IDecoratedSelectOptionType, false> = {
+const reactSelectStyles = {
 	container: (provided) => ({
 		...provided,
 		backgroundColor: "transparent",

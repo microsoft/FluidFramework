@@ -9,20 +9,20 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
-	IDocumentStorageService,
-	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
-import type {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
-	ISummaryTree,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
@@ -163,7 +163,7 @@ export interface IContainerContext {
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
-	readonly audience: IAudience | undefined;
+	readonly audience: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
@@ -260,4 +260,15 @@ export interface IGetPendingLocalStateProps {
 	 * be preserved and collected.
 	 */
 	readonly stopBlobAttachingSignal?: AbortSignal;
+
+	/**
+	 * Date to be used as the starting time of a session. This date is updated in case we refresh the
+	 * base snapshot since we won't be referencing ops older than the new snapshot.
+	 */
+	readonly sessionExpiryTimerStarted?: number;
+
+	/**
+	 * Snapshot sequence number. It will help the runtime to know which ops should still be stashed.
+	 */
+	readonly snapshotSequenceNumber?: number;
 }

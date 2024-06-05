@@ -43,7 +43,6 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	iterateCursorField,
-	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
@@ -136,13 +135,14 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
 	SchemaAndPolicy,
 	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {
@@ -188,6 +188,11 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
+	offsetChangeAtomId,
+	replaceAtomRevisions,
+	replaceChange,
 } from "./rebase/index.js";
 
 export {

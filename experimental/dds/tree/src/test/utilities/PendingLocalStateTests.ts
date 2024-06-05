@@ -50,7 +50,7 @@ export function runPendingLocalStateTests(
 			const testObjectProvider = await applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2);
 
 			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+			const events = testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
 				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'

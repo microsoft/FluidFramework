@@ -22,25 +22,27 @@ import {
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { type IAudience } from "@fluidframework/container-definitions";
 import {
-	type IChannelServices,
+	type Jsonable,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+	type IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type IClient,
 	type ISequencedDocumentMessage,
 	type ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+	type IQuorumClients,
+	type ISequencedClient,
+} from "@fluidframework/driver-definitions";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
@@ -54,8 +56,8 @@ import { makeLZ4Encoder } from "../../lz4Encoder.js";
 
 import { _dirname } from "./dirname.cjs";
 
-function makeMockAudience(clientIds: string[]): IAudience {
-	const clients = new Map<string, IClient>();
+function makeMockQuorum(clientIds: string[]): IQuorumClients {
+	const clients = new Map<string, ISequencedClient>();
 	for (const [index, clientId] of clientIds.entries()) {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
@@ -68,19 +70,17 @@ function makeMockAudience(clientIds: string[]): IAudience {
 			email,
 		};
 		clients.set(clientId, {
-			mode: "write",
-			details: { capabilities: { interactive: true } },
-			permission: [],
-			user,
-			scopes: [],
+			client: {
+				mode: "write",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user,
+				scopes: [],
+			},
+			sequenceNumber: 0,
 		});
 	}
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return {
-		getMember: (clientId: string): IClient | undefined => {
-			return clients.get(clientId);
-		},
-	} as IAudience;
+	return new MockQuorumClients(...clients.entries());
 }
 
 type PropertySet = Record<string, unknown>;
@@ -244,39 +244,40 @@ function createSharedString(
 ): FuzzTestState {
 	const numClients = 3;
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
-	const audience = makeMockAudience(clientIds);
+	const quorum = makeMockQuorum(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	let attributor: IAttributor | undefined;
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				clientId,
+				registry: [SharedString.getFactory()],
+			});
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			};
-			const { deltaManager } = dataStoreRuntime;
-			const sharedString = new SharedString(
-				dataStoreRuntime,
-				// eslint-disable-next-line unicorn/prefer-code-point
+			const deltaManager = dataStoreRuntime.deltaManagerInternal;
+			const sharedString = SharedString.create(
+				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
-				SharedStringFactory.Attributes,
 			);
 
 			if (index === 0 && makeSerializer !== undefined) {
-				attributor = new OpStreamAttributor(deltaManager, audience);
+				attributor = new OpStreamAttributor(deltaManager, quorum);
 				serializer = makeSerializer(dataStoreRuntime);
 				// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-				// audience / op emission.
+				// quorum / op emission.
 				let opIndex = 0;
 				sharedString.on("op", (message) => {
 					opIndex++;
 					message.timestamp = getTimestamp(opIndex);
 					deltaManager.emit("op", message);
 				});
-				dataStoreRuntime.getAudience = (): IAudience => audience;
+				dataStoreRuntime.getQuorum = (): IQuorumClients => quorum;
 			}
 
 			const containerRuntime =
@@ -632,8 +633,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								noopEncoder,
@@ -651,8 +652,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								noopEncoder,
@@ -670,8 +671,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								deltaEncoder,

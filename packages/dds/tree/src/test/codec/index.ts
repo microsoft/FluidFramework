@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { ajvValidator } from "./ajvValidator.cjs";
+export { ajvValidator } from "./ajvValidator.js";
 export { makeValueCodec } from "./utils.js";

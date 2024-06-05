@@ -5,40 +5,52 @@
 
 /* eslint-disable unicorn/no-array-callback-reference */
 
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
-import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import { Project, type ImportDeclaration, SourceFile, ModuleKind, Node } from "ts-morph";
-import { BaseCommand } from "../../base";
-import type { CommandLogger } from "../../logging";
+import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
+import {
+	ApiLevel,
+	BaseCommand,
+	getApiExports,
+	isKnownApiLevel,
+	knownApiLevels,
+} from "../../library/index.js";
+import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
 
-// These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
-// command is likely to be deprecated soon, so no effort has been made to unify them.
-const publicLevel = "public";
-const betaLevel = "beta";
-const alphaLevel = "alpha";
-const internalLevel = "internal";
-// Note: this is sorted by the preferred order that respective imports would exist.
-// public is effectively "" for sorting purposes and then arranged alphabetically
-// as most formatters would prefer.
-const knownLevels = [publicLevel, alphaLevel, betaLevel, internalLevel] as const;
-type ApiLevel = (typeof knownLevels)[number];
+/**
+ * Known scopes of Fluid Framework packages.
+ *
+ * @remarks
+ *
+ * The allowed scopes are actually configurable in the root fluidBuild config, so this list will need to be updated if
+ * new Fluid Framework scopes are used.
+ */
+const knownFFScopes = [
+	"@fluidframework",
+	"@fluid-example",
+	"@fluid-experimental",
+	"@fluid-internal",
+	"@fluid-private",
+	"@fluid-tools",
+] as const;
 
 /**
  * FF packages that exist outside of a scope that starts with `@fluid`.
  */
-const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
+const unscopedFFPackages: ReadonlySet<string> = new Set(["fluid-framework", "tinylicious"]);
 
 /**
- * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.).
+ * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/beta, /legacy, etc.).
  */
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
 	static readonly description =
-		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/beta, /legacy, etc.)`;
 
 	static readonly flags = {
 		tsconfigs: Flags.file({
@@ -56,7 +68,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			exists: true,
 		}),
 		onlyInternal: Flags.boolean({
-			description: "Use /internal for all non-public APIs instead of /alpha or /beta.",
+			description: "Use /internal for all non-public APIs instead of /beta or /legacy.",
 		}),
 		...BaseCommand.flags,
 	};
@@ -76,9 +88,9 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			this.error(`No config files found.`, { exit: 1 });
 		}
 
-		const apiLevelData = data === undefined ? undefined : await loadData(data);
+		const apiLevelData = data === undefined ? undefined : await loadData(data, onlyInternal);
 		const packagesRegex = new RegExp(packageRegex ?? "");
-		const apiMap = new ApiLevelReader(this.logger, packagesRegex, apiLevelData);
+		const apiMap = new ApiLevelReader(this.logger, packagesRegex, onlyInternal, apiLevelData);
 
 		// Note that while there is a queue here it is only really a queue for file saves
 		// which are the only async aspect currently and aren't expected to take so long.
@@ -91,7 +103,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 				}.`,
 			);
 			if (sources.length > 0) {
-				queue.push(updateImports(sources, apiMap, onlyInternal, this.logger));
+				queue.push(updateImports(sources, apiMap, this.logger));
 				if (queue.length >= maxConcurrency) {
 					// naively wait for the first scheduled to finish
 					// eslint-disable-next-line no-await-in-loop
@@ -150,7 +162,7 @@ class FluidImportManager {
 		this.fluidImports = parseFluidImports(sourceFile, log);
 	}
 
-	public process(onlyInternal: boolean): boolean {
+	public process(): boolean {
 		if (this.fluidImports.length === 0) {
 			return false;
 		}
@@ -190,8 +202,8 @@ class FluidImportManager {
 				const expectedLevel = getApiLevelForImportName(
 					name,
 					data,
-					/* default */ publicLevel,
-					onlyInternal,
+					/* default */ ApiLevel.public,
+					this.log,
 				);
 
 				this.log.verbose(
@@ -326,9 +338,10 @@ class FluidImportManager {
 			return existing;
 		}
 
-		const moduleSpecifier = level === publicLevel ? packageName : `${packageName}/${level}`;
+		const moduleSpecifier =
+			level === ApiLevel.public ? packageName : `${packageName}/${level}`;
 		// Order imports primarily by level then secondarily: type, untyped
-		const order = knownLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
+		const order = knownApiLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
 		const { index, after } = this.findInsertionPoint(packageName, order);
 		const newFluidImport: FluidImportDataPending = {
 			declaration: {
@@ -374,14 +387,15 @@ class FluidImportManager {
  */
 function getApiLevelForImportName(
 	name: string,
-	data: MemberData,
+	data: NamedExportToLevel,
 	defaultValue: ApiLevel,
-	onlyInternal: boolean,
+	log: CommandLogger,
 ): ApiLevel {
-	if (data.alpha?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
-	if (data.beta?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
-	if (data.public?.includes(name) === true) return publicLevel;
-	if (data.internal?.includes(name) === true) return internalLevel;
+	const level = data.get(name);
+	if (level !== undefined) {
+		return level;
+	}
+	log.warning(`\tassuming ${defaultValue} level for "${name}"`);
 	return defaultValue;
 }
 
@@ -421,7 +435,6 @@ function* getSourceFiles(
 async function updateImports(
 	sourceFiles: SourceFile[],
 	apiMap: ApiLevelReader,
-	onlyInternal: boolean,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
@@ -441,7 +454,7 @@ async function updateImports(
 		const headerText = removeFileHeaderComment(sourceFile);
 
 		const importManager = new FluidImportManager(sourceFile, apiMap, log);
-		if (importManager.process(onlyInternal)) {
+		if (importManager.process()) {
 			// Manually re-insert the header at the top of the file
 			sourceFile.insertText(0, headerText);
 
@@ -473,7 +486,7 @@ function parseImport(
 	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
 	const packageName = modulePieces.slice(0, levelIndex).join("/");
 	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
-	if (!isKnownLevel(level)) {
+	if (!isKnownApiLevel(level)) {
 		return undefined;
 	}
 	// Check for complicated path - beyond basic leveled import
@@ -490,7 +503,7 @@ function parseImport(
 		return undefined;
 	}
 
-	const order = knownLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	const order = knownApiLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
 	return {
 		importDeclaration,
 		declaration: {
@@ -526,8 +539,17 @@ function parseFluidImports(
 		) /* no undefined elements remain */ as FluidImportDataPresent[];
 }
 
+/**
+ * Returns true if an import is from a known Fluid Framework package or scope.
+ *
+ * @param packageName - The name of the package to check.
+ * @returns True if the package is a Fluid Framework package; false otherwise.
+ */
 function isFluidImport(packageName: PackageName): boolean {
-	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
+	return (
+		knownFFScopes.some((scope) => packageName.startsWith(`${scope}/`)) ||
+		unscopedFFPackages.has(packageName)
+	);
 }
 
 function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
@@ -544,8 +566,8 @@ interface MemberDataRaw {
 	name: string;
 }
 
-type MemberData = Partial<Record<ApiLevel, string[]>>;
-type MapData = Map<string, MemberData>;
+type NamedExportToLevel = Map<string, ApiLevel>;
+type MapData = Map<PackageName, NamedExportToLevel>;
 
 class ApiLevelReader {
 	private readonly project = new Project({
@@ -556,14 +578,15 @@ class ApiLevelReader {
 	});
 
 	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
-	private readonly map: Map<PackageName, MemberData | undefined>;
+	private readonly map: Map<PackageName, NamedExportToLevel | undefined>;
 
 	constructor(
 		private readonly log: CommandLogger,
 		private readonly packagesRegex: RegExp,
+		private readonly onlyInternal: boolean,
 		initialMap?: MapData,
 	) {
-		this.map = new Map<PackageName, MemberData>(initialMap);
+		this.map = new Map<PackageName, NamedExportToLevel>(initialMap);
 		for (const k of this.map.keys()) {
 			if (!this.packagesRegex.test(k)) {
 				this.map.set(k, undefined);
@@ -571,7 +594,7 @@ class ApiLevelReader {
 		}
 	}
 
-	public get(packageName: PackageName): MemberData | undefined {
+	public get(packageName: PackageName): NamedExportToLevel | undefined {
 		if (this.map.has(packageName)) {
 			return this.map.get(packageName);
 		}
@@ -582,7 +605,7 @@ class ApiLevelReader {
 		return loadResult;
 	}
 
-	private loadPackageData(packageName: PackageName): MemberData | undefined {
+	private loadPackageData(packageName: PackageName): NamedExportToLevel | undefined {
 		const internalImport = this.tempSource.addImportDeclaration({
 			moduleSpecifier: `${packageName}/internal`,
 		});
@@ -593,92 +616,79 @@ class ApiLevelReader {
 		}
 		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
 
-		const exported = internalSource.getExportedDeclarations();
-		const memberData: Required<MemberData> = { public: [], beta: [], alpha: [], internal: [] };
-		for (const [name, exportedDecls] of exported.entries()) {
-			let foundLevel = false;
-			// A single export name may exist as both a type and a value. This is common pattern for enum-like
-			// constructs where an object exists with properties evaluating to values and a type that is union of values.
-			// Assume consistency for these cases.
-			if (exportedDecls.length > 1) {
-				this.log.verbose(
-					`\t\t${packageName} ${name} has ${exportedDecls.length} export declarations. Choosing API level for both from first recognized tag.`,
-				);
-			}
-			for (const exportedDecl of exportedDecls) {
-				const level = getNodeLevel(exportedDecl);
-				if (level !== undefined) {
-					this.log.verbose(`\t\t${packageName} ${name} is ${level}.`);
-					memberData[level].push(name);
-					foundLevel = true;
-					break;
-				}
-			}
-			if (!foundLevel) {
+		const exports = getApiExports(internalSource);
+		for (const name of exports.unknown.keys()) {
+			// Suppress any warning for EventEmitter as this export is currently a special case.
+			// See AB#7377 for replacement status upon which this can be removed.
+			if (name !== "EventEmitter") {
 				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
 			}
 		}
 
+		const memberData = new Map<string, ApiLevel>();
+		addUniqueNamedExportsToMap(exports.public, memberData, ApiLevel.public);
+		if (this.onlyInternal) {
+			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.internal);
+		} else {
+			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.beta);
+			if (exports.alpha.length > 0) {
+				// @alpha APIs have been mapped to both /alpha and /legacy
+				// paths. Check for a /legacy export to map @alpha as legacy.
+				const legacyExport =
+					this.tempSource
+						.addImportDeclaration({
+							moduleSpecifier: `${packageName}/legacy`,
+						})
+						.getModuleSpecifierSourceFile() !== undefined;
+				addUniqueNamedExportsToMap(
+					exports.alpha,
+					memberData,
+					legacyExport ? ApiLevel.legacy : ApiLevel.alpha,
+				);
+			}
+		}
+		addUniqueNamedExportsToMap(exports.internal, memberData, ApiLevel.internal);
 		return memberData;
 	}
 }
 
-function isKnownLevel(level: string): level is ApiLevel {
-	return (knownLevels as readonly string[]).includes(level);
-}
-
-/**
- * Searches given Node's JSDocs for known {@link ApiLevel} tag.
- *
- * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
- */
-function getNodeLevel(node: Node): ApiLevel | undefined {
-	if (Node.isJSDocable(node)) {
-		for (const jsdoc of node.getJsDocs()) {
-			for (const tag of jsdoc.getTags()) {
-				const tagName = tag.getTagName();
-				if (isKnownLevel(tagName)) {
-					return tagName;
-				}
-			}
+function addUniqueNamedExportsToMap(
+	exports: { name: string }[],
+	map: Map<string, ApiLevel>,
+	level: ApiLevel,
+): void {
+	for (const { name } of exports) {
+		const existing = map.get(name);
+		if (existing !== undefined) {
+			throw new Error(`"${name}" already has entry mapped to ${existing}`);
 		}
-	} else {
-		// Some nodes like `VariableDeclaration`s as not JSDocable, but an ancestor
-		// like `VariableStatement` is and may contain tag.
-		const parent = node.getParent();
-		if (parent !== undefined) {
-			return getNodeLevel(parent);
-		}
+		map.set(name, level);
 	}
-	return undefined;
 }
 
-function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
-	const entryData = entry[level];
-	if (entryData !== undefined) {
-		return entryData;
-	}
-	const newData: string[] = [];
-	entry[level] = newData;
-	return newData;
-}
-
-async function loadData(dataFile: string): Promise<MapData> {
+async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapData> {
 	// Load the raw data file
 	// eslint-disable-next-line unicorn/no-await-expression-member
 	const rawData: string = (await readFile(dataFile)).toString();
 	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
 
 	// Transform the raw data into a more useable form
-	const apiLevelData = new Map<string, MemberData>();
+	const apiLevelData = new Map<PackageName, NamedExportToLevel>();
 	for (const [moduleName, members] of Object.entries(apiLevelDataRaw)) {
-		const entry = apiLevelData.get(moduleName) ?? {};
+		const entry = apiLevelData.get(moduleName) ?? new Map<string, ApiLevel>();
 		for (const member of members) {
 			const { level } = member;
-			if (!isKnownLevel(level)) {
+			if (!isKnownApiLevel(level)) {
 				throw new Error(`Unknown API level: ${level}`);
 			}
-			ensureLevel(entry, level).push(member.name);
+			addUniqueNamedExportsToMap(
+				[member],
+				entry,
+				onlyInternal && (level === ApiLevel.beta || level === ApiLevel.alpha)
+					? ApiLevel.internal
+					: level,
+			);
 		}
 		apiLevelData.set(moduleName, entry);
 	}

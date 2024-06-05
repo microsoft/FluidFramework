@@ -12,14 +12,13 @@ import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import {
-	FluidObject,
-	IFluidHandleContext,
-	IFluidLoadable,
-	IRequest,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	IFluidDataStoreRuntime,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -124,7 +123,9 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
-			enableRuntimeIdCompressor,
+			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
+			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
+			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};
@@ -392,5 +393,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
+		// telemetry props
+		{
+			all: {
+				testType: "TestObjectProviderWithVersionedLoad",
+				testCreateVersion: versionForCreating,
+				testLoadVersion: versionForLoading,
+				testRuntimeOptionsVersion: minVersion,
+			},
+		},
 	);
 }

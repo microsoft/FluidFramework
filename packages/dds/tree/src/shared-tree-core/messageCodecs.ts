@@ -62,15 +62,22 @@ export function makeMessageCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<DecodedMessage<TChangeset>, MessageEncodingContext> {
-	const v1Codec = makeV1Codec(changeCodecs.resolve(0).json, revisionTagCodec, options);
+	const v1Codec = makeV1CodecWithVersion(
+		changeCodecs.resolve(1).json,
+		revisionTagCodec,
+		options,
+		1,
+	);
 	return makeCodecFamily([
 		// Back-compat: messages weren't always written with an explicit version field.
 		[undefined, v1Codec],
 		[1, v1Codec],
+		[2, makeV1CodecWithVersion(changeCodecs.resolve(2).json, revisionTagCodec, options, 2)],
+		[3, makeV1CodecWithVersion(changeCodecs.resolve(3).json, revisionTagCodec, options, 3)],
 	]);
 }
 
-function makeV1Codec<TChangeset>(
+function makeV1CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -79,6 +86,7 @@ function makeV1Codec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
+	version: 1 | 2 | 3,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -99,22 +107,36 @@ function makeV1Codec<TChangeset>(
 				context: MessageEncodingContext,
 			) => {
 				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, { originatorId }),
+					revision: revisionTagCodec.encode(commit.revision, {
+						originatorId,
+						revision: undefined,
+					}),
 					originatorId,
 					changeset: changeCodec.encode(commit.change, {
 						originatorId,
 						schema: context.schema,
+						revision: commit.revision,
 					}),
-					version: 1,
+					version,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
 			decode: (encoded: JsonCompatibleReadOnly) => {
-				const { revision, originatorId, changeset } = encoded as unknown as Message;
+				const {
+					revision: encodedRevision,
+					originatorId,
+					changeset,
+				} = encoded as unknown as Message;
+
+				const revision = revisionTagCodec.decode(encodedRevision, {
+					originatorId,
+					revision: undefined,
+				});
+
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision, { originatorId }),
-						change: changeCodec.decode(changeset, { originatorId }),
+						revision,
+						change: changeCodec.decode(changeset, { originatorId, revision }),
 					},
 					sessionId: originatorId,
 				};

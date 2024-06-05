@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -33,8 +33,10 @@ describe("Shared Map with Interception", () => {
 		}
 
 		beforeEach(() => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedMap = SharedMap.getFactory().create(dataStoreRuntime, documentId);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SharedMap.getFactory()],
+			});
+			sharedMap = SharedMap.create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {

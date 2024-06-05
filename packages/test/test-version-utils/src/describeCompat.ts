@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -17,7 +19,13 @@ import {
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
 } from "./compatConfig.js";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import {
+	CompatKind,
+	driver,
+	odspEndpointName,
+	r11sEndpointName,
+	tenantIndex,
+} from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
@@ -70,14 +78,14 @@ function createCompatSuite(
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  })
 								: await getVersionedTestObjectProviderFromApis(apis, {
 										type: driver,
 										config: {
 											r11s: { r11sEndpointName },
-											odsp: { tenantIndex },
+											odsp: { tenantIndex, odspEndpointName },
 										},
 								  });
 					} catch (error) {
@@ -103,11 +111,16 @@ function createCompatSuite(
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
+					if (options?.persistedCache !== undefined && provider.driver.type === "odsp") {
+						(provider.driver as OdspTestDriver).setPersistedCache(
+							options.persistedCache,
+						);
+					}
 					return provider;
 				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
-					const logErrors = getUnexpectedLogErrorException(provider.logger);
+					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
 					// and fail the after each as well
@@ -178,6 +191,8 @@ export interface ITestObjectProviderOptions {
 	resetAfterEach?: boolean;
 	/** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
 	syncSummarizer?: boolean;
+	/** Persisted Cache provided by ODSP */
+	persistedCache?: IPersistedCache;
 }
 
 /**
@@ -185,7 +200,7 @@ export interface ITestObjectProviderOptions {
  */
 export type DescribeCompatSuite = (
 	name: string,
-	compatVersion: string,
+	compatVersion: CompatType,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
@@ -217,10 +232,13 @@ export type DescribeCompat = DescribeCompatSuite & {
 	noCompat: DescribeCompatSuite;
 };
 
+/** @internal */
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
+
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
-		compatVersion: string,
+		compatVersion: CompatType,
 	) => {
 		switch (compatVersion) {
 			case "FullCompat":
@@ -230,19 +248,19 @@ function createCompatDescribe(): DescribeCompat {
 			case "NoCompat":
 				return createCompatSuite(tests, [CompatKind.None]);
 			default:
-				return createCompatSuite(tests, undefined, compatVersion);
+				unreachableCase(compatVersion, "unknown compat version");
 		}
 	};
-	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>
+	const d: DescribeCompat = (name: string, compatVersion: CompatType, tests) =>
 		describe(name, createCompatSuiteWithDefault(tests, compatVersion));
-	d.skip = (name, compatVersion, tests) =>
+	d.skip = (name, compatVersion: CompatType, tests) =>
 		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.only = (name, compatVersion, tests) =>
+	d.only = (name, compatVersion: CompatType, tests) =>
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
 	d.noCompat = (name, _, tests) =>
-		describe(name, createCompatSuiteWithDefault(tests, pkgVersion));
+		describe(name, createCompatSuite(tests, undefined, pkgVersion));
 
 	return d;
 }

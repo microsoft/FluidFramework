@@ -20,20 +20,14 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -43,7 +37,7 @@ class InventorySchema extends builder.object("abcInventory", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
+function getNewTreeView(tree: ITree): TreeView<typeof InventorySchema> {
 	return tree.schematize(
 		new TreeConfiguration(InventorySchema, () => ({
 			quantity: 0,
@@ -158,7 +152,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 						quantity,
 					})),
 				)
-				[disposeSymbol]();
+				.dispose();
 		},
 	);
 

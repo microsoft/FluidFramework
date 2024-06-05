@@ -5,10 +5,10 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatch } from "./definitions.js";
+import { IBatch, type BatchMessage } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -49,8 +49,15 @@ export class OpGroupingManager {
 		this.logger = createChildLogger({ logger, namespace: "OpGroupingManager" });
 	}
 
-	public groupBatch(batch: IBatch): IBatch {
-		assert(this.shouldGroup(batch), "cannot group the provided batch");
+	/**
+	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
+	 * with contents being an array of the original batch's messages.
+	 *
+	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
+	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
+	 */
+	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
+		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -82,7 +89,7 @@ export class OpGroupingManager {
 			})),
 		});
 
-		const groupedBatch: IBatch = {
+		const groupedBatch: IBatch<[BatchMessage]> = {
 			...batch,
 			content: [
 				{
@@ -96,7 +103,7 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
 		let fakeCsn = 1;

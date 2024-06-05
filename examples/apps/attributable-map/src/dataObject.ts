@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { AttributableMap } from "@fluid-experimental/attributable-map";
+import { AttributableMap, ISharedMap } from "@fluid-experimental/attributable-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -27,10 +27,10 @@ export interface IHitCounter extends EventEmitter {
 	/**
 	 * The attributable map to store timestamp key and value
 	 */
-	readonly map: AttributableMap | undefined;
+	readonly map: ISharedMap | undefined;
 
 	/**
-	 * Inrement the hit count. Will cause a "hit" event to be emitted.
+	 * Increment the hit count. Will cause a "hit" event to be emitted.
 	 */
 	hit: (color: string) => void;
 
@@ -42,9 +42,9 @@ export interface IHitCounter extends EventEmitter {
 
 export class HitCounter extends DataObject implements IHitCounter {
 	private readonly mapKey = "mapKey";
-	private _map: AttributableMap | undefined;
+	private _map: ISharedMap | undefined;
 
-	public get map() {
+	public get map(): ISharedMap {
 		if (this._map === undefined) {
 			throw new Error("The AttributableMap was not initialized correctly");
 		}
@@ -60,11 +60,11 @@ export class HitCounter extends DataObject implements IHitCounter {
 		{},
 	);
 
-	public static getFactory() {
+	public static getFactory(): DataObjectFactory<HitCounter> {
 		return this.factory;
 	}
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		// Create the AttributableMap and store the handle in our root SharedDirectory
 		const map = AttributableMap.create(this.runtime);
 		// set the initial value
@@ -73,15 +73,16 @@ export class HitCounter extends DataObject implements IHitCounter {
 		this.root.set(this.mapKey, map.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		// Store the content if we are loading the first time or loading from existing
-		this._map = await this.root.get<IFluidHandle<AttributableMap>>(this.mapKey)?.get();
+		this._map = await this.root.get<IFluidHandle<ISharedMap>>(this.mapKey)?.get();
 		this.map.on("valueChanged", () => {
 			this.emit("hit");
 		});
 	}
 
-	public readonly hit = (color) => {
+	public readonly hit = (color: string): void => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const oldValue = this.map.get(color);
 		const newValue = Number(oldValue) + 1;
 		this.map?.set(color, newValue);

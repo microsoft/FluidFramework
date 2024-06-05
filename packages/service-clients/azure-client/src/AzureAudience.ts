@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
+import { type IClient, type IUser } from "@fluidframework/driver-definitions";
 
 import { type AzureMember, type AzureUser } from "./interfaces.js";
 
@@ -18,8 +18,8 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 	assertIsAzureUser(user);
 
 	return {
-		userId: user.id,
-		userName: user.name,
+		id: user.id,
+		name: user.name,
 		connections: [],
 		additionalDetails: user.additionalDetails,
 	};
@@ -34,8 +34,7 @@ function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
 	if (maybeAzureUser.id === undefined) {
 		throw new TypeError(`${baseMessage} Missing required "id" property.`);
 	}
-	// AB#7448 to reenable this check.  Disabling to mitigate a bug that the name may be missing.
-	// if (maybeAzureUser.name === undefined) {
-	// 	throw new TypeError(`${baseMessage} Missing required "name" property.`);
-	// }
+	if (maybeAzureUser.name === undefined) {
+		throw new TypeError(`${baseMessage} Missing required "name" property.`);
+	}
 }

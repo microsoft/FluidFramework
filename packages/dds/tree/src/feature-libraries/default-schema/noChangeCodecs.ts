@@ -4,9 +4,9 @@
  */
 
 import { ICodecFamily, makeCodecFamily, unitCodec } from "../../codec/index.js";
-import { ChangeEncodingContext } from "../../core/index.js";
+import { FieldChangeEncodingContext } from "../index.js";
 
-export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
+export const noChangeCodecFamily: ICodecFamily<0, FieldChangeEncodingContext> = makeCodecFamily<
 	0,
-	ChangeEncodingContext
->([[0, unitCodec]]);
+	FieldChangeEncodingContext
+>([[1, unitCodec]]);

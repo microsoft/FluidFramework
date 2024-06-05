@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 const stashedOpMetadataMark = Symbol();
@@ -60,11 +59,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		private _connected: boolean,
 		private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
-		/** @deprecated There is no replacement for this, its functionality is no longer needed at this layer. */
-		public readonly addedGCOutboundReference: (
-			srcHandle: IFluidHandle,
-			outboundHandle: IFluidHandle,
-		) => void,
 		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 

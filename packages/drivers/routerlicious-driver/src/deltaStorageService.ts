@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDeltaStorageService,
 	IDeltasFetchResult,
@@ -17,9 +18,7 @@ import {
 	requestOps,
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RestWrapper } from "./restWrapperBase.js";

@@ -8,19 +8,19 @@ import chalk from "chalk";
 import { table } from "table";
 
 import {
-	VersionDetails,
 	ReleaseReport,
+	VersionDetails,
 	getDisplayDate,
 	getDisplayDateRelative,
 	sortVersions,
-} from "../../library";
+} from "../../library/index.js";
 
 import { detectBumpType } from "@fluid-tools/version-tools";
 
-import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
-import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
-import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
-import { findPackageOrReleaseGroup } from "../../args";
+import { findPackageOrReleaseGroup } from "../../args.js";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
+import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 

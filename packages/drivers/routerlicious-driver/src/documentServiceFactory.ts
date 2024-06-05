@@ -6,6 +6,7 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -20,7 +21,6 @@ import {
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
@@ -131,7 +131,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -281,7 +281,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const storageTokenP = storageTokenFetcher();
 
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -330,7 +330,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 
-		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+		const storageRestWrapper = RouterliciousStorageRestWrapper.load(
 			tenantId,
 			storageTokenFetcher,
 			logger2,

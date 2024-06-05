@@ -12,7 +12,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	channelsTreeName,
@@ -103,7 +103,7 @@ function validateDDSStateInSummary(
  */
 describeCompat(
 	"Incremental summaries for data store and DDS",
-	"1.3.7" /** equivalent to FullCompat. Currently used for testing purposes on ADO pipelines */,
+	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		let provider: ITestObjectProvider;

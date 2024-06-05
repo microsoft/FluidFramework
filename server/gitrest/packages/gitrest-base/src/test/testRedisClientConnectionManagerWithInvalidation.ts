@@ -33,4 +33,10 @@ export class TestRedisClientConnectionManagerWithInvalidation
 	public getRedisClient(): Redis.Redis {
 		return this.mockRedisClient;
 	}
+
+	public addErrorHandler(
+		lumberProperties: Record<string, any> = {},
+		errorMessage: string = "Error with Redis",
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void {}
 }

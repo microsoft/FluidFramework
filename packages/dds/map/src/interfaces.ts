@@ -3,31 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
- * @public
+ * @alpha
  */
 export interface IValueChanged {
 	/**
 	 * The key storing the value that changed.
 	 */
-	key: string;
+	readonly key: string;
 
 	/**
 	 * The value that was stored at the key prior to the change.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	previousValue: any;
+	readonly previousValue: any;
 }
 
 /**
@@ -299,7 +302,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
- * @public
+ * @alpha
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -331,15 +334,19 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
  * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
+ *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
- * @public
+ * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

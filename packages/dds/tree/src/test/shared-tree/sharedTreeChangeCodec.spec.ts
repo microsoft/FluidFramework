@@ -57,15 +57,17 @@ describe("sharedTreeChangeCodec", () => {
 		);
 		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
 			jsonValidator: noopValidator,
-		}).resolve(0).json;
+		}).resolve(1).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
 			originatorId: "dummySessionID" as SessionId,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
+			revision: undefined,
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
+			nodeChanges: new Map(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
 			]),

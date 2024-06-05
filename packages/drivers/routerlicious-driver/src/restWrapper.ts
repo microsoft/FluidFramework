@@ -17,8 +17,11 @@ import {
 	RestLessClient,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	numberFromString,
+} from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
@@ -277,7 +280,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
@@ -285,7 +288,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousStorageRestWrapper> {
+	): RouterliciousStorageRestWrapper {
 		const defaultQueryString = {
 			token: `${fromUtf8ToBase64(tenantId)}`,
 		};
@@ -338,14 +341,14 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousOrdererRestWrapper> {
+	): RouterliciousOrdererRestWrapper {
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,
 		): string => {

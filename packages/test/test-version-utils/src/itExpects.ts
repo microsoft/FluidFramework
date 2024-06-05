@@ -4,8 +4,10 @@
  */
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
-import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	TestObjectProvider,
@@ -34,7 +36,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 			: orderedExpectedEvents[provider.driver.type] ?? [];
 
 		try {
-			provider.logger.registerExpectedEvent(...orderedEvents);
+			provider.tracker.registerExpectedEvent(...orderedEvents);
 			await test.bind(this)();
 		} catch (error) {
 			// only use TestException if the event is provided.
@@ -48,7 +50,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 				throw error;
 			}
 		}
-		const err = getUnexpectedLogErrorException(provider.logger);
+		const err = getUnexpectedLogErrorException(provider.tracker);
 		if (err !== undefined) {
 			throw err;
 		}

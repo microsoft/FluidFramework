@@ -77,11 +77,8 @@ export interface VisualNodeBase {
 
 	/**
 	 * Data to be rendered in a tooltip associated with this level in the tree.
-	 * @privateRemarks This is a temporary solution until we have a more robust way to render tooltips.
-	 *
-	 * TODO: Change this to accept VisualTree.
 	 */
-	tooltipContents?: string | Record<string, string>;
+	tooltipContents?: string | Record<string, VisualChildNode>;
 }
 
 /**

@@ -6,11 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
 import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";

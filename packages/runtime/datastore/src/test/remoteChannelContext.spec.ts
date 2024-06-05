@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
@@ -49,7 +49,6 @@ describe("RemoteChannelContext Tests", () => {
 				dataStoreContext.storage,
 				(c, lom) => {},
 				(s: string) => {},
-				(s, o) => {},
 				invalidId,
 				undefined as unknown as ISnapshotTree,
 				sharedObjectRegistry,

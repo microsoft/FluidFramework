@@ -25,13 +25,7 @@ import {
 } from "../util/index.js";
 
 import { SummaryData } from "./editManager.js";
-import {
-	Commit,
-	EncodedCommit,
-	EncodedEditManager,
-	SequencedCommit,
-	version,
-} from "./editManagerFormat.js";
+import { Commit, EncodedCommit, EncodedEditManager, SequencedCommit } from "./editManagerFormat.js";
 
 export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
@@ -67,10 +61,14 @@ export function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([[1, makeV1Codec(changeCodecs.resolve(0), revisionTagCodec, options)]]);
+	return makeCodecFamily([
+		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
+		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
+		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
+	]);
 }
 
-function makeV1Codec<TChangeset>(
+function makeV1CodecWithVersion<TChangeset>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -84,6 +82,7 @@ function makeV1Codec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
+	version: EncodedEditManager<TChangeset>["version"],
 ): IJsonCodec<
 	SummaryData<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -97,20 +96,32 @@ function makeV1Codec<TChangeset>(
 	const encodeCommit = <T extends Commit<TChangeset>>(
 		commit: T,
 		context: ChangeEncodingContext,
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	) => ({
 		...commit,
-		revision: revisionTagCodec.encode(commit.revision, { originatorId: commit.sessionId }),
-		change: changeCodec.json.encode(commit.change, context),
+		revision: revisionTagCodec.encode(commit.revision, {
+			originatorId: commit.sessionId,
+			revision: undefined,
+		}),
+		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
 	});
 
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
 		commit: T,
 		context: ChangeEncodingContext,
-	) => ({
-		...commit,
-		revision: revisionTagCodec.decode(commit.revision, { originatorId: commit.sessionId }),
-		change: changeCodec.json.decode(commit.change, context),
-	});
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	) => {
+		const revision = revisionTagCodec.decode(commit.revision, {
+			originatorId: commit.sessionId,
+			revision: undefined,
+		});
+
+		return {
+			...commit,
+			revision,
+			change: changeCodec.json.decode(commit.change, { ...context, revision }),
+		};
+	};
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
@@ -126,6 +137,7 @@ function makeV1Codec<TChangeset>(
 						encodeCommit(commit, {
 							originatorId: commit.sessionId,
 							schema: context.schema,
+							revision: undefined,
 						}),
 					),
 					branches: Array.from(
@@ -135,11 +147,13 @@ function makeV1Codec<TChangeset>(
 							{
 								base: revisionTagCodec.encode(branch.base, {
 									originatorId: sessionId,
+									revision: undefined,
 								}),
 								commits: branch.commits.map((commit) =>
 									encodeCommit(commit, {
 										originatorId: commit.sessionId,
 										schema: context.schema,
+										revision: undefined,
 									}),
 								),
 							},
@@ -151,6 +165,7 @@ function makeV1Codec<TChangeset>(
 			},
 			decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const trunk: readonly any[] = json.trunk;
 				return {
 					trunk: trunk.map(
@@ -159,6 +174,7 @@ function makeV1Codec<TChangeset>(
 							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 							decodeCommit(commit, {
 								originatorId: commit.sessionId,
+								revision: undefined,
 							}),
 					),
 					peerLocalBranches: new Map(
@@ -167,11 +183,13 @@ function makeV1Codec<TChangeset>(
 							{
 								base: revisionTagCodec.decode(branch.base, {
 									originatorId: sessionId,
+									revision: undefined,
 								}),
 								commits: branch.commits.map((commit) =>
 									// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 									decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
 										originatorId: commit.sessionId,
+										revision: undefined,
 									}),
 								),
 							},

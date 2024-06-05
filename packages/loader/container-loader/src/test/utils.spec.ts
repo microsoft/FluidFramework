@@ -5,10 +5,22 @@
 
 import { strict as assert } from "assert";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	IDocumentStorageService,
+	type ISnapshot,
+	IDocumentAttributes,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
-import { getDocumentAttributes, runSingle } from "../utils.js";
+import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
+import type { ISnapshotInfo } from "../serializedStateManager.js";
+import {
+	convertSnapshotInfoToSnapshot,
+	convertSnapshotToSnapshotInfo,
+	getDocumentAttributes,
+	runSingle,
+} from "../utils.js";
 
 describe("container-loader utils", () => {
 	describe("runSingle", () => {
@@ -121,6 +133,53 @@ describe("container-loader utils", () => {
 
 			assert.strictEqual(attributes.minimumSequenceNumber, 10);
 			assert.strictEqual(attributes.sequenceNumber, 20);
+		});
+	});
+
+	describe("SnapshotInfo and Snapshot", () => {
+		const snapshotTree: ISnapshotTree = {
+			trees: {
+				".protocol": {
+					blobs: {
+						attributes: "someKey",
+					},
+					trees: {},
+				},
+			},
+			blobs: {},
+		};
+
+		const snapshotBlobs: ISerializableBlobContents = {
+			someKey: JSON.stringify({ some: 10, data: 20 }),
+		};
+
+		const blobContents: Map<string, ArrayBufferLike> = new Map([
+			["someKey", stringToBuffer(JSON.stringify({ some: 10, data: 20 }), "utf8")],
+		]);
+
+		const snapshot: ISnapshot = {
+			snapshotTree,
+			blobContents,
+			ops: [],
+			sequenceNumber: 123,
+			latestSequenceNumber: undefined,
+			snapshotFormatV: 1,
+		};
+
+		const snapshotInfo: ISnapshotInfo = {
+			snapshotSequenceNumber: 123,
+			baseSnapshot: snapshotTree,
+			snapshotBlobs,
+		};
+
+		it("Converts SnapshotInfo to Snapshot", async () => {
+			const convertedSnapshot = convertSnapshotInfoToSnapshot(snapshotInfo, 123);
+			assert.deepEqual(convertedSnapshot, snapshot);
+		});
+
+		it("Converts Snapshot to SnapshotInfo", async () => {
+			const convertedSnapshotInfo = convertSnapshotToSnapshotInfo(snapshot);
+			assert.deepEqual(convertedSnapshotInfo, snapshotInfo);
 		});
 	});
 });

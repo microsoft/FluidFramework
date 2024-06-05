@@ -14,10 +14,12 @@ import {
 	FlexFieldSchema,
 	FlexObjectNodeSchema,
 	SchemaBuilderBase,
+	TreeStatus,
 } from "../../feature-libraries/index.js";
-import { RawObjectNode, extractRawNodeContent } from "../../simple-tree/rawNode.js";
+import { extractRawNodeContent } from "../../simple-tree/rawNode.js";
 import { brand } from "../../util/index.js";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
+import { RawObjectNode } from "../../simple-tree/objectNode.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
@@ -57,15 +59,18 @@ describe("raw object nodes", () => {
 		assert.equal(rawObjectNode.value, undefined);
 	});
 
+	it("allow reading tree status", () => {
+		const { rawObjectNode } = getRawObjectNode();
+		assert.equal(rawObjectNode.treeStatus(), TreeStatus.New);
+	});
+
 	it("disallow reading most node properties", () => {
-		const { rawObjectNode, objectSchema } = getRawObjectNode();
+		const { rawObjectNode } = getRawObjectNode();
 		assert.throws(() => rawObjectNode.context);
 		assert.throws(() => rawObjectNode.parentField);
 		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
 		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
-		assert.throws(() => rawObjectNode.treeStatus());
-		assert.throws(() => rawObjectNode.localNodeKey);
 	});
 
 	it("disallow reading fields", () => {

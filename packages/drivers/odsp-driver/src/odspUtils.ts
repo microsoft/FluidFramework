@@ -35,27 +35,21 @@ import {
 	snapshotKey,
 	tokenFromResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type IFluidErrorBase,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
-
-/**
- * Parse the given url and return the origin (host name)
- */
-export const getOrigin = (url: string): string => new URL(url).origin;
 
 /**
  * @alpha
@@ -341,34 +335,6 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLogge
 			},
 		},
 	});
-
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
-	numTrees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-	decodedBlobsSize: number;
-} {
-	let numTrees = 0;
-	let numBlobs = 0;
-	let encodedBlobsSize = 0;
-	let decodedBlobsSize = 0;
-	for (const tree of snapshot.trees) {
-		for (const treeEntry of tree.entries) {
-			if (treeEntry.type === "blob") {
-				numBlobs++;
-			} else if (treeEntry.type === "tree") {
-				numTrees++;
-			}
-		}
-	}
-	if (snapshot.blobs !== undefined) {
-		for (const blob of snapshot.blobs) {
-			decodedBlobsSize += blob.size;
-			encodedBlobsSize += blob.content.length;
-		}
-	}
-	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
-}
 
 /**
  * Returns a function that can be used to fetch storage token.

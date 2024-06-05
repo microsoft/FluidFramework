@@ -5,19 +5,23 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
@@ -30,20 +34,28 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 	SlidingPreference,
-	createAnnotateRangeOp, // eslint-disable-next-line import/no-deprecated
+	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -109,12 +121,220 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 /**
  * @alpha
  */
+export interface ISharedSegmentSequence<T extends ISegment>
+	extends ISharedObject<ISharedSegmentSequenceEvents>,
+		ISharedIntervalCollection<SequenceInterval>,
+		MergeTreeRevertibleDriver {
+	/**
+	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
+	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
+	 * @param segment - Segment to add the local reference on
+	 * @param offset - Offset on the segment at which to place the local reference
+	 * @param refType - ReferenceType for the created local reference
+	 * @param properties - PropertySet to place on the created local reference
+	 */
+	createLocalReferencePosition(
+		segment: T,
+		offset: number,
+		refType: ReferenceType,
+		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
+	): LocalReferencePosition;
+
+	/**
+	 * Removes a `LocalReferencePosition` from this SharedString.
+	 */
+	removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
+
+	/**
+	 * Returns the length of the current sequence for the client
+	 */
+	getLength(): number;
+
+	/**
+	 * Returns the current position of a segment, and -1 if the segment
+	 * does not exist in this sequence
+	 * @param segment - The segment to get the position of
+	 */
+	getPosition(segment: ISegment): number;
+
+	/**
+	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
+	 */
+	localReferencePositionToPosition(lref: ReferencePosition): number;
+
+	/**
+	 * Walk the underlying segments of the sequence.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
+	 *
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
+	 * @param start - Optional. The start of range walk.
+	 * @param end - Optional. The end of range walk
+	 * @param accum - Optional. An object that will be passed to the handler for accumulation
+	 * @param splitRange - Optional. Splits boundary segments on the range boundaries. Defaults to false.
+	 */
+	walkSegments<TClientData>(
+		handler: ISegmentAction<TClientData>,
+		start?: number,
+		end?: number,
+		accum?: TClientData,
+		splitRange?: boolean,
+	): void;
+
+	/**
+	 * Inserts a segment directly before a `ReferencePosition`.
+	 * @param refPos - The reference position to insert the segment at
+	 * @param segment - The segment to insert
+	 */
+	insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+
+	/**
+	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
+	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
+	 * @param pos - Character position (index) into the current local view of the SharedString.
+	 */
+	getContainingSegment(pos: number): {
+		segment: T | undefined;
+		offset: number | undefined;
+	};
+
+	getPropertiesAtPosition(pos: number): PropertySet | undefined;
+
+	/**
+	 * @returns An iterable object that enumerates the IntervalCollection labels.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const iter = this.getIntervalCollectionKeys();
+	 * for (key of iter)
+	 *     const collection = this.getIntervalCollection(key);
+	 *     ...
+	 * ```
+	 */
+	getIntervalCollectionLabels(): IterableIterator<string>;
+
+	/**
+	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
+	 * creates one.
+	 */
+	getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+
+	/**
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 */
+	obliterateRange(start: number, end: number): void;
+
+	/**
+	 * @returns The most recent sequence number which has been acked by the server and processed by this
+	 * SharedSegmentSequence.
+	 */
+	getCurrentSeq(): number;
+
+	/**
+	 * Annotates the range with the provided properties
+	 *
+	 * @param start - The inclusive start position of the range to annotate
+	 * @param end - The exclusive end position of the range to annotate
+	 * @param props - The properties to annotate the range with
+	 *
+	 */
+	annotateRange(start: number, end: number, props: PropertySet): void;
+
+	/**
+	 * @param start - The inclusive start of the range to remove
+	 * @param end - The exclusive end of the range to remove
+	 */
+	removeRange(start: number, end: number): void;
+
+	/**
+	 * Resolves a remote client's position against the local sequence
+	 * and returns the remote client's position relative to the local
+	 * sequence. The client ref seq must be above the minimum sequence number
+	 * or the return value will be undefined.
+	 * Generally this method is used in conjunction with signals which provide
+	 * point in time values for the below parameters, and is useful for things
+	 * like displaying user position. It should not be used with persisted values
+	 * as persisted values will quickly become invalid as the remoteClientRefSeq
+	 * moves below the minimum sequence number
+	 * @param remoteClientPosition - The remote client's position to resolve
+	 * @param remoteClientRefSeq - The reference sequence number of the remote client
+	 * @param remoteClientId - The client id of the remote client
+	 */
+	resolveRemoteClientPosition(
+		remoteClientPosition: number,
+		remoteClientRefSeq: number,
+		remoteClientId: string,
+	): number | undefined;
+
+	// #region APIs we might want to remove
+	/**
+	 * Initializes the object as a local, non-shared object. This object can become shared after
+	 * it is attached to the document.
+	 * @privateRemarks
+	 * TODO: determine if this API (from SharedObject) is needed by users of the encapsulated API, declarative API or both,
+	 * and handle exposing it in a consistent way for all SharedObjects if needed.
+	 */
+	initializeLocal(): void;
+
+	/**
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
+	 */
+	// eslint-disable-next-line import/no-deprecated
+	groupOperation(groupOp: IMergeTreeGroupMsg): void;
+
+	getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	};
+
+	/**
+	 * Inserts a segment
+	 * @param start - The position to insert the segment at
+	 * @param spec - The segment to inserts spec
+	 */
+	insertFromSpec(pos: number, spec: IJSONSegment): void;
+
+	/**
+	 * Given a position specified relative to a marker id, lookup the marker
+	 * and convert the position to a character position.
+	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+	 */
+	posFromRelativePos(relativePos: IRelativePosition): number;
+
+	// #endregion
+}
+
+/**
+ * @alpha
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
-	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
+	implements ISharedSegmentSequence<T>
 {
+	/**
+	 * This promise is always immediately resolved, and awaiting it has no effect.
+	 * @deprecated SharedSegmentSequence no longer supports partial loading.
+	 * References to this promise may safely be deleted without affecting behavior.
+	 */
 	get loaded(): Promise<void> {
-		return this.loadedDeferred.promise;
+		return Promise.resolve();
 	}
 
 	/**
@@ -180,6 +400,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				}
 
 				case MergeTreeDeltaType.OBLITERATE: {
+					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
 						assert(
@@ -235,24 +456,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
 	 */
 	private get currentRefSeq() {
-		return this.ongoingResubmitRefSeq ?? this.runtime.deltaManager.lastSequenceNumber;
+		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
-	/** `Deferred` that triggers once the object is loaded */
-	protected loadedDeferred = new Deferred<void>();
-	// cache out going ops created when partial loading
-	private readonly loadedDeferredOutgoingOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
-		[];
-	// cache incoming ops that arrive when partial loading
-	private deferIncomingOps = true;
-	private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
-
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
-		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
+		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
@@ -272,10 +484,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							);
 						}
 				  });
-
-		this.loadedDeferred.promise.catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
-		});
 
 		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
@@ -316,39 +524,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @param start - The inclusive start of the range to remove
-	 * @param end - The exclusive end of the range to remove
-	 */
 	public removeRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
-	/**
-	 * Obliterate is similar to remove, but differs in that segments concurrently
-	 * inserted into an obliterated range will also be removed
-	 *
-	 * @param start - The inclusive start of the range to obliterate
-	 * @param end - The exclusive end of the range to obliterate
-	 */
 	public obliterateRange(start: number, end: number): void {
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
-	/**
-	 * @deprecated The ability to create group ops will be removed in an upcoming
-	 * release, as group ops are redundant with the native batching capabilities
-	 * of the runtime
-	 */
-	public groupOperation(groupOp: IMergeTreeGroupMsg) {
+	// eslint-disable-next-line import/no-deprecated
+	public groupOperation(groupOp: IMergeTreeGroupMsg): void {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
 
-	/**
-	 * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
-	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
-	 * @param pos - Character position (index) into the current local view of the SharedString.
-	 */
 	public getContainingSegment(pos: number): {
 		segment: T | undefined;
 		offset: number | undefined;
@@ -356,50 +544,29 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.client.getContainingSegment<T>(pos);
 	}
 
-	/**
-	 * Returns the length of the current sequence for the client
-	 */
-	public getLength() {
+	public getLength(): number {
 		return this.client.getLength();
 	}
 
-	/**
-	 * Returns the current position of a segment, and -1 if the segment
-	 * does not exist in this sequence
-	 * @param segment - The segment to get the position of
-	 */
 	public getPosition(segment: ISegment): number {
 		return this.client.getPosition(segment);
 	}
 
-	/**
-	 * Annotates the range with the provided properties
-	 *
-	 * @param start - The inclusive start position of the range to annotate
-	 * @param end - The exclusive end position of the range to annotate
-	 * @param props - The properties to annotate the range with
-	 *
-	 */
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
-	public getPropertiesAtPosition(pos: number) {
+	public getPropertiesAtPosition(pos: number): PropertySet | undefined {
 		return this.client.getPropertiesAtPosition(pos);
 	}
 
-	public getRangeExtentsOfPosition(pos: number) {
+	public getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	} {
 		return this.client.getRangeExtentsOfPosition(pos);
 	}
 
-	/**
-	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
-	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-	 * @param segment - Segment to add the local reference on
-	 * @param offset - Offset on the segment at which to place the local reference
-	 * @param refType - ReferenceType for the created local reference
-	 * @param properties - PropertySet to place on the created local reference
-	 */
 	public createLocalReferencePosition(
 		segment: T,
 		offset: number,
@@ -418,39 +585,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
-	 *
-	 * Reference positions that point to a character that has been removed will
-	 * always return the position of the nearest non-removed character, regardless
-	 * of `ReferenceType`. To handle this case specifically, one may wish
-	 * to look at the segment returned by `ReferencePosition.getSegment`.
-	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);
 	}
 
-	/**
-	 * Removes a `LocalReferencePosition` from this SharedString.
-	 */
-	public removeLocalReferencePosition(lref: LocalReferencePosition) {
+	public removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined {
 		return this.client.removeLocalReferencePosition(lref);
 	}
 
-	/**
-	 * Resolves a remote client's position against the local sequence
-	 * and returns the remote client's position relative to the local
-	 * sequence. The client ref seq must be above the minimum sequence number
-	 * or the return value will be undefined.
-	 * Generally this method is used in conjunction with signals which provide
-	 * point in time values for the below parameters, and is useful for things
-	 * like displaying user position. It should not be used with persisted values
-	 * as persisted values will quickly become invalid as the remoteClientRefSeq
-	 * moves below the minimum sequence number
-	 * @param remoteClientPosition - The remote client's position to resolve
-	 * @param remoteClientRefSeq - The reference sequence number of the remote client
-	 * @param remoteClientId - The client id of the remote client
-	 */
 	public resolveRemoteClientPosition(
 		remoteClientPosition: number,
 		remoteClientRefSeq: number,
@@ -474,39 +618,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 		);
 
-		// if loading isn't complete, we need to cache
-		// local ops until loading is complete, and then
-		// they will be present
-		if (!this.loadedDeferred.isCompleted) {
-			this.loadedDeferredOutgoingOps.push(metadata ? [message, metadata] : (message as any));
-		} else {
-			this.submitLocalMessage(message, metadata);
-		}
+		this.submitLocalMessage(message, metadata);
 	}
 
-	/**
-	 * Given a position specified relative to a marker id, lookup the marker
-	 * and convert the position to a character position.
-	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
-	 */
-	public posFromRelativePos(relativePos: IRelativePosition) {
+	public posFromRelativePos(relativePos: IRelativePosition): number {
 		return this.client.posFromRelativePos(relativePos);
 	}
 
-	/**
-	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range if the segments cross the
-	 * ranges start or end boundaries.
-	 *
-	 * Set split range to true to ensure only segments within the range are walked.
-	 *
-	 * @param handler - The function to handle each segment. Traversal ends if
-	 * this function returns true.
-	 * @param start - Optional. The start of range walk.
-	 * @param end - Optional. The end of range walk
-	 * @param accum - Optional. An object that will be passed to the handler for accumulation
-	 * @param splitRange - Optional. Splits boundary segments on the range boundaries
-	 */
 	public walkSegments<TClientData>(
 		handler: ISegmentAction<TClientData>,
 		start?: number,
@@ -517,52 +635,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
 	}
 
-	/**
-	 * @returns The most recent sequence number which has been acked by the server and processed by this
-	 * SharedSegmentSequence.
-	 */
-	public getCurrentSeq() {
+	public getCurrentSeq(): number {
 		return this.client.getCurrentSeq();
 	}
 
-	/**
-	 * Inserts a segment directly before a `ReferencePosition`.
-	 * @param refPos - The reference position to insert the segment at
-	 * @param segment - The segment to insert
-	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
-	/**
-	 * Inserts a segment
-	 * @param start - The position to insert the segment at
-	 * @param spec - The segment to inserts spec
-	 */
+
 	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
-	/**
-	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
-	 * creates one.
-	 */
 	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}
 
-	/**
-	 * @returns An iterable object that enumerates the IntervalCollection labels.
-	 *
-	 * @example
-	 *
-	 * ```typescript
-	 * const iter = this.getIntervalCollectionKeys();
-	 * for (key of iter)
-	 *     const collection = this.getIntervalCollection(key);
-	 *     ...
-	 * ```
-	 */
 	public getIntervalCollectionLabels(): IterableIterator<string> {
 		return this.intervalCollections.keys();
 	}
@@ -654,6 +743,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.submitSequenceMessage(
 					this.client.regeneratePendingOp(
 						content as IMergeTreeOp,
+						// eslint-disable-next-line import/no-deprecated
 						localOpMetadata as SegmentGroup | SegmentGroup[],
 					),
 				);
@@ -681,47 +771,38 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.serializer,
 			);
 
-			// setup a promise to process the
-			// catch up ops, and finishing the loading process
-			const loadCatchUpOps = catchupOpsP
-				.then((msgs) => {
-					msgs.forEach((m) => {
-						const collabWindow = this.client.getCollabWindow();
-						if (
-							m.minimumSequenceNumber < collabWindow.minSeq ||
-							m.referenceSequenceNumber < collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.minSeq ||
-							// sequenceNumber could be the same if messages are part of a grouped batch
-							m.sequenceNumber < collabWindow.currentSeq
-						) {
-							throw new Error(
-								`Invalid catchup operations in snapshot: ${JSON.stringify({
-									op: {
-										seq: m.sequenceNumber,
-										minSeq: m.minimumSequenceNumber,
-										refSeq: m.referenceSequenceNumber,
-									},
-									collabWindow: {
-										seq: collabWindow.currentSeq,
-										minSeq: collabWindow.minSeq,
-									},
-								})}`,
-							);
-						}
-						this.processMergeTreeMsg(m);
-					});
-					this.loadFinished();
-				})
-				.catch((error) => {
-					this.loadFinished(error);
-				});
-			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
-				// if we not doing partial load, await the catch up ops,
-				// and the finalization of the load
-				await loadCatchUpOps;
-			}
+			// process the catch up ops, and finishing the loading process
+			(await catchupOpsP).forEach((m) => {
+				const collabWindow = this.client.getCollabWindow();
+				if (
+					m.minimumSequenceNumber < collabWindow.minSeq ||
+					m.referenceSequenceNumber < collabWindow.minSeq ||
+					m.sequenceNumber <= collabWindow.minSeq ||
+					// sequenceNumber could be the same if messages are part of a grouped batch
+					m.sequenceNumber < collabWindow.currentSeq
+				) {
+					throw new Error(
+						`Invalid catchup operations in snapshot: ${JSON.stringify({
+							op: {
+								seq: m.sequenceNumber,
+								minSeq: m.minimumSequenceNumber,
+								refSeq: m.referenceSequenceNumber,
+							},
+							collabWindow: {
+								seq: collabWindow.currentSeq,
+								minSeq: collabWindow.minSeq,
+							},
+						})}`,
+					);
+				}
+				this.processMergeTreeMsg(m);
+			});
+
+			// Initialize the interval collections
+			this.initializeIntervalCollections();
 		} catch (error) {
-			this.loadFinished(error);
+			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+			throw error;
 		}
 	}
 
@@ -745,27 +826,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		// if loading isn't complete, we need to cache all
-		// incoming ops to be applied after loading is complete
-		if (this.deferIncomingOps) {
-			assert(!local, 0x072 /* "Unexpected local op when loading not finished" */);
-			this.loadedDeferredIncomingOps.push(message);
-		} else {
-			assert(
-				message.type === MessageType.Operation,
-				0x073 /* "Sequence message not operation" */,
-			);
+		assert(
+			message.type === MessageType.Operation,
+			0x073 /* "Sequence message not operation" */,
+		);
 
-			const handled = this.intervalCollections.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				message,
-				localOpMetadata,
-			);
+		const handled = this.intervalCollections.tryProcessMessage(
+			message.contents as IMapOperation,
+			local,
+			message,
+			localOpMetadata,
+		);
 
-			if (!handled) {
-				this.processMergeTreeMsg(message, local);
-			}
+		if (!handled) {
+			this.processMergeTreeMsg(message, local);
 		}
 	}
 
@@ -785,7 +859,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	protected initializeLocalCore() {
 		super.initializeLocalCore();
-		this.loadFinished();
+		this.initializeIntervalCollections();
 	}
 
 	/**
@@ -798,12 +872,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		// Are we fully loaded? If not, things will go south
-		assert(
-			this.loadedDeferred.isCompleted,
-			0x074 /* "Snapshot called when not fully loaded" */,
-		);
-		const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
+		const minSeq = this.deltaManager.minimumSequenceNumber;
 
 		this.processMinSequenceNumberChanged(minSeq);
 
@@ -872,35 +941,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		if (index !== 0) {
 			this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
-		}
-	}
-
-	private loadFinished(error?: any) {
-		if (!this.loadedDeferred.isCompleted) {
-			// Initialize the interval collections
-			this.initializeIntervalCollections();
-			if (error) {
-				this.loadedDeferred.reject(error);
-				throw error;
-			} else {
-				// it is important this series remains synchronous
-				// first we stop deferring incoming ops, and apply then all
-				this.deferIncomingOps = false;
-				for (const message of this.loadedDeferredIncomingOps) {
-					this.processCore(message, false, undefined);
-				}
-				this.loadedDeferredIncomingOps.length = 0;
-
-				// then resolve the loaded promise
-				// and resubmit all the outstanding ops, as the snapshot
-				// is fully loaded, and all outstanding ops are applied
-				this.loadedDeferred.resolve();
-
-				for (const [messageContent, opMetadata] of this.loadedDeferredOutgoingOps) {
-					this.reSubmitCore(messageContent, opMetadata);
-				}
-				this.loadedDeferredOutgoingOps.length = 0;
-			}
 		}
 	}
 

@@ -33,7 +33,6 @@ import {
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	Any,
-	ArrayToUnion,
 	FieldKinds,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -343,8 +342,6 @@ describe("flexTreeTypes", () => {
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexAllowedTypes>, FlexTreeNode>
 			>;
-
-			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 

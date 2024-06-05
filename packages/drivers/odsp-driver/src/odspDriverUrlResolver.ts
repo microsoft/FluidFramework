@@ -27,9 +27,8 @@ function getUrlBase(
 	itemId: string,
 	fileVersion?: string,
 ): string {
-	const siteOrigin = new URL(siteUrl).origin;
 	const version = fileVersion ? `versions/${fileVersion}/` : "";
-	return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
+	return `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
 function getSnapshotUrl(

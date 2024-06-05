@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -22,9 +23,10 @@ import { flexTreeWithContent } from "../utils.js";
 export function hydrate<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
+	nodeKeyManager?: NodeKeyManager,
 ): TreeFieldFromImplicitField<TSchema> {
 	const config = new TreeConfiguration(schema, () => initialTree);
-	const flexConfig = toFlexConfig(config);
+	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
 	const tree = flexTreeWithContent(flexConfig);
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
 }

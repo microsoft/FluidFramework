@@ -55,7 +55,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 		);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const child of this.subChunks) {
 			child.referenceRemoved();
 		}

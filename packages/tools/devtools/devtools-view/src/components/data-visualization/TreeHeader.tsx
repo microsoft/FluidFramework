@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Tooltip, tokens } from "@fluentui/react-components";
-import { DocumentEdit20Regular } from "@fluentui/react-icons";
+import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
+import { Info20Regular } from "@fluentui/react-icons";
+import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
+import { ToolTipContentsView } from "./ToolTipContentsView.js";
 
 /**
  * Input props to {@link TreeHeader}
@@ -30,8 +32,24 @@ export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: string | Record<string | number, string>;
+	tooltipContents?: string | Record<string, VisualChildNode>;
 }
+
+const getStyles = makeStyles({
+	tooltip: {
+		color: tokens.colorNeutralForeground1Hover,
+		minWidth: "1000px",
+	},
+	iconContainer: {
+		paddingLeft: "3px",
+		paddingRight: "3px",
+		paddingBottom: "2px",
+		verticalAlign: "middle",
+	},
+	inlineValue: {
+		whiteSpace: "pre-wrap",
+	},
+});
 
 /**
  * Renders the header of the item.
@@ -40,8 +58,10 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
+	const styles = getStyles();
+
 	return (
-		<div style={{ width: "auto" }}>
+		<div>
 			{`${label}`}
 			<span
 				style={{
@@ -66,28 +86,20 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			>
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
-
-			{tooltipContents === undefined ? (
-				""
-			) : (
-				<Tooltip content={JSON.stringify(tooltipContents)} relationship="description">
-					<span
-						style={{
-							color:
-								themeInfo.name === ThemeOption.HighContrast
-									? undefined
-									: tokens.colorPalettePlatinumBorderActive,
-							fontStyle: "oblique",
-							fontSize: "10px",
-						}}
-					>
-						<DocumentEdit20Regular />
-					</span>
+			{tooltipContents !== undefined && (
+				<Tooltip
+					content={{
+						children: <ToolTipContentsView contents={tooltipContents} />,
+						className: styles.tooltip,
+					}}
+					relationship="description"
+				>
+					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>
 			)}
-
-			{inlineValue === undefined ? "" : ": "}
-			{inlineValue}
+			{inlineValue !== undefined && (
+				<span className={styles.inlineValue}>: {inlineValue}</span>
+			)}
 		</div>
 	);
 }

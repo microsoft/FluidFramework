@@ -30,10 +30,26 @@ export function makeSharedTreeChangeCodecFamily(
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
 	return makeCodecFamily([
 		[
-			0,
+			1,
 			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(0).json,
-				schemaChangeCodecs.resolve(0).json,
+				modularChangeCodecFamily.resolve(1).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
+		[
+			2,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(2).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
+		[
+			3,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(3).json,
+				schemaChangeCodecs.resolve(1).json,
 				options,
 			),
 		],
@@ -96,6 +112,7 @@ function makeSharedTreeChangeCodec(
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,
 								schema: schemaAndPolicy,
+								revision: context.revision,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

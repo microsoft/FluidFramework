@@ -151,7 +151,7 @@ export async function performFuzzActions(
 	if (synchronizeAtEnd) {
 		if (finalState.testObjectProvider !== undefined) {
 			await finalState.testObjectProvider.ensureSynchronized();
-			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
+			const events = finalState.testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.expectedNotFound.length).to.equal(0);
 			for (const event of events.unexpectedErrors) {
 				switch (event.eventName) {

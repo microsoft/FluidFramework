@@ -32,6 +32,7 @@ import {
 	insert,
 	makeTreeFromJson,
 	remove,
+	validateUsageError,
 } from "../utils.js";
 
 const rootField: FieldUpPath = {
@@ -43,6 +44,12 @@ const rootNode: UpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
+};
+
+const rootNode2: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKey,
+	parentIndex: 1,
 };
 
 describe("Editing", () => {
@@ -79,6 +86,29 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
+			const tree1 = makeTreeFromJson([[], ["X", "Y"]]);
+			const tree2 = tree1.fork();
+
+			tree1.transaction.start();
+			tree1.editor.move(
+				{ parent: rootNode2, field: brand("") },
+				0,
+				1,
+				{ parent: rootNode, field: brand("") },
+				0,
+			);
+			tree1.editor.sequenceField(rootField).move(1, 1, 0);
+			tree1.transaction.commit();
+
+			tree2.editor.sequenceField({ parent: rootNode2, field: brand("") }).move(0, 1, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [["X", "Y"], []]);
 		});
 
 		it("can rebase remove over cross-field move", () => {
@@ -573,7 +603,7 @@ describe("Editing", () => {
 			});
 			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
-			// Move A after B.
+			// Move object from foo list to bar list
 			tree2.editor.move(
 				{ parent: fooList, field: brand("") },
 				0,
@@ -1528,11 +1558,6 @@ describe("Editing", () => {
 		});
 
 		it("can move a node out from a field and into a field under a sibling", () => {
-			const rootNode2: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
 			const tree = makeTreeFromJson(["A", {}]);
 			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];
@@ -1755,13 +1780,17 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			assert.throws(() =>
-				tree.editor.move(
-					{ parent: rootNode, field: brand("foo") },
-					0,
-					1,
-					{ parent: fooPath, field: brand("bar") },
-					0,
+			assert.throws(
+				() =>
+					tree.editor.move(
+						{ parent: rootNode, field: brand("foo") },
+						0,
+						1,
+						{ parent: fooPath, field: brand("bar") },
+						0,
+					),
+				validateUsageError(
+					/Invalid move operation: the destination is located under one of the moved elements/,
 				),
 			);
 		});
@@ -1814,6 +1843,41 @@ describe("Editing", () => {
 
 			const expected = ["x", "y", "a", "b", "c"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("repro scenario that requires correct rebase metadata", () => {
+			const startState = [{ seq: ["A"] }, { seq: [] }, { seq: ["B"] }];
+			const tree = makeTreeFromJson(startState);
+
+			const [root0Array, root1Array, root2Array]: FieldUpPath[] = makeArray(3, (i) => ({
+				parent: {
+					parent: {
+						parent: undefined,
+						parentField: rootFieldKey,
+						parentIndex: i,
+					},
+					parentField: brand("seq"),
+					parentIndex: 0,
+				},
+				field: brand(""),
+			}));
+
+			const treeA = tree.fork();
+			const treeC = tree.fork();
+			const treeD = tree.fork();
+
+			treeD.editor.move(root0Array, 0, 1, root1Array, 0);
+			tree.merge(treeD, false);
+			treeA.editor.sequenceField(root2Array).move(0, 1, 0);
+			tree.merge(treeA, false);
+			treeC.editor.sequenceField(root0Array).move(0, 1, 1);
+			tree.merge(treeC, false);
+			treeC.editor.sequenceField(rootField).move(1, 1, 1);
+			tree.merge(treeC, false);
+
+			treeC.rebaseOnto(treeD);
+			treeC.rebaseOnto(treeA);
+			expectJsonTree([tree, treeC], startState);
 		});
 
 		describe("Exhaustive removal tests", () => {
@@ -2021,7 +2085,7 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
-			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes longer and was
 			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
@@ -2032,7 +2096,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			}).timeout(5000);
+			}).timeout(10000);
 		});
 
 		describe("revert semantics", () => {
@@ -3177,5 +3241,24 @@ describe("Editing", () => {
 			const child = tree.fork();
 			abortTransaction(child);
 		});
+	});
+
+	it("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
+		const tree = makeTreeFromJson([{}]);
+
+		tree.transaction.start();
+		tree.transaction.start();
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("foo") })
+			.set(singleJsonCursor("A"), true);
+		tree.editor.sequenceField(rootField).move(0, 1, 0);
+		tree.editor.sequenceField(rootField).insert(0, singleJsonCursor({}));
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("bar") })
+			.set(singleJsonCursor("B"), true);
+		tree.transaction.commit();
+		tree.transaction.abort();
+
+		expectJsonTree(tree, [{}]);
 	});
 });

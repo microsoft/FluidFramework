@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { IMergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { insertText } from "./testUtils.js";
@@ -45,7 +45,7 @@ describe("MergeTree walks", () => {
 	});
 
 	describe("walkAllChildSegments", () => {
-		function* getAllDescendantBlocks(block: IMergeBlock): Iterable<IMergeBlock> {
+		function* getAllDescendantBlocks(block: MergeBlock): Iterable<MergeBlock> {
 			yield block;
 			for (let i = 0; i < block.childCount; i++) {
 				const child = block.children[i];

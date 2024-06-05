@@ -4,35 +4,40 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
-	IEvent,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	type ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
+	BlobTreeEntry,
+	isInstanceOfISnapshot,
+	readAndParse,
+} from "@fluidframework/driver-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -51,8 +56,12 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	isSnapshotFetchRequiredForLoadingGroupId,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -65,8 +74,9 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
+import { sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -164,7 +174,7 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
  * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly snapshotTree: ISnapshotTree | undefined;
+	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
 }
 
 // back-compat: To be removed in the future.
@@ -199,8 +209,8 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get logger() {
-		return this.parentContext.logger;
+	public get baseLogger() {
+		return this.parentContext.baseLogger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -219,6 +229,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime;
 	}
 
+	// back-compat, to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return this.parentContext.ensureNoDataModelChanges(callback);
 	}
@@ -271,8 +282,20 @@ export abstract class FluidDataStoreContext
 	 * 2. is root as part of the base snapshot that the datastore loaded from
 	 * @returns whether a datastore is root
 	 */
-	public async isRoot(): Promise<boolean> {
-		return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
+	public async isRoot(aliasedDataStores?: Set<string>): Promise<boolean> {
+		if (this.isInMemoryRoot()) {
+			return true;
+		}
+
+		// This if is a performance optimization.
+		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
+		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
+		// and get the information from the alias map directly.
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
+			return aliasedDataStores.has(this.id);
+		}
+
+		return (await this.getInitialSnapshotDetails()).isRootDataStore;
 	}
 
 	/**
@@ -358,7 +381,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "FluidDataStoreContext",
 			properties: {
 				all: tagCodeArtifacts({
@@ -699,27 +722,6 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
-		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
-			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
-		}
-	}
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 *
@@ -727,10 +729,7 @@ export abstract class FluidDataStoreContext
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundReference?.(
-			{ absolutePath: fromPath },
-			{ absolutePath: toPath },
-		);
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath);
 	}
 
 	/**
@@ -1041,7 +1040,7 @@ export abstract class FluidDataStoreContext
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
 }
@@ -1049,23 +1048,28 @@ export abstract class FluidDataStoreContext
 /** @internal */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
-	private snapshotFetchRequired: boolean;
+	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
+	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
-		this._baseSnapshot = props.snapshotTree;
-		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
 		this.runtime = props.parentContext.containerRuntime;
-		if (props.snapshotTree !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+		if (isInstanceOfISnapshot(props.snapshot)) {
+			this.blobContents = props.snapshot.blobContents;
+			this._baseSnapshot = props.snapshot.snapshotTree;
+		} else {
+			this._baseSnapshot = props.snapshot;
+		}
+		if (this._baseSnapshot !== undefined) {
+			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
 		}
 	}
 
-	/* 
+	/*
 	This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
 	The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
 	1. data store is being attached in attached container
@@ -1080,6 +1084,21 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
+		// Check whether we need to fetch the snapshot first to load.
+		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+			assert(
+				this.blobContents !== undefined,
+				0x97a /* Blob contents should be present to evaluate */,
+			);
+			assert(
+				this._baseSnapshot !== undefined,
+				0x97b /* snapshotTree should be present to evaluate */,
+			);
+			this.snapshotFetchRequired = isSnapshotFetchRequiredForLoadingGroupId(
+				this._baseSnapshot,
+				this.blobContents,
+			);
+		}
 		if (this.snapshotFetchRequired) {
 			assert(
 				this.loadingGroupId !== undefined,
@@ -1098,6 +1117,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
+			// eslint-disable-next-line import/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1274,6 +1294,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
+		// eslint-disable-next-line import/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

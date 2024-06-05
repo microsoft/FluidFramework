@@ -7,21 +7,23 @@ import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/driver-definitions";
+import {
+	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
 	INack,
 	ISentSignalMessage,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
@@ -361,8 +363,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+	protected createErrorObject(
+		handler: string,
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		error?: any,
+		canRetry = true,
+	): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it

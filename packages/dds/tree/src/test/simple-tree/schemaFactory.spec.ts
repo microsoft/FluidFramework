@@ -242,7 +242,10 @@ describe("schemaFactory", () => {
 						y: schema.required(schema.number, { key: "foo" }),
 					}),
 				(error: Error) =>
-					validateAssertionError(error, /Duplicate stored key "foo" in schema "Point"/),
+					validateAssertionError(
+						error,
+						/Duplicate stored key "foo" in schema "com.example.Point"/,
+					),
 			);
 		});
 
@@ -257,7 +260,7 @@ describe("schemaFactory", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/Stored key "foo" in schema "Object" conflicts with a property key of the same name/,
+						/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
 					),
 			);
 		});
@@ -361,7 +364,7 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.schematize(config);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -636,6 +639,7 @@ describe("schemaFactory", () => {
 						unreachableCase(layout.parentType);
 				}
 				nodes.push(parent);
+				assert.equal(Tree.status(parent), TreeStatus.New);
 				return parent;
 			}
 
@@ -655,6 +659,7 @@ describe("schemaFactory", () => {
 						unreachableCase(layout.childType);
 				}
 				nodes.push(child);
+				assert.equal(Tree.status(child), TreeStatus.New);
 				return child;
 			}
 
@@ -665,7 +670,7 @@ describe("schemaFactory", () => {
 		function test(
 			parentType: (typeof objectTypes)[number],
 			childType: (typeof objectTypes)[number],
-			validate: (view: TreeView<ComboRoot>, nodes: ComboNode[]) => void,
+			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
 			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
 			const factory = new TreeFactory({});

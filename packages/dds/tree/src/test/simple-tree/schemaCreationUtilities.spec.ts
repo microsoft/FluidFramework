@@ -42,7 +42,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (true) {
 			case mode instanceof Mode.Bonus: {
@@ -116,7 +116,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (mode.value) {
 			case "Fun": {
