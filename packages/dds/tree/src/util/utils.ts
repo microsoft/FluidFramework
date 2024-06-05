@@ -168,7 +168,7 @@ export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Ite
 }
 
 /**
- * Finds the first element in the the given iterable that satisfies a predicate.
+ * Finds the first element in the given iterable that satisfies a predicate.
  * @param iterable - The iterable to search for an eligible element
  * @param predicate - The predicate to run against each element
  * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
