@@ -42,15 +42,7 @@ export type Unhydrated<T> = T;
  *
  * This can be used as a type to indicate/document values which should be tree nodes.
  * Runtime use of this class object (for example when subclassed), is not supported except for use with `instanceof`:
- * it may be replaced with an interface or union in the future (with `instanceof TreeNode` replaced with a free function).
- * @privateRemarks
- * Future changes may replace this with a branded interface if the runtime oddities related to this are not cleaned up.
- *
- * Currently not all node implications include this in their prototype chain (some hide it with a proxy), and thus cause `instanceof` to fail.
- * This results in the runtime and compile time behavior of `instanceof` differing.
- * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
- * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
- * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
+ * it may be replaced with an interface or union in the future (with `instanceof TreeNode` replaced with a method on {@link TreeNodeApi}).
  * @public
  */
 export abstract class TreeNode implements WithType {
@@ -91,7 +83,7 @@ export abstract class TreeNode implements WithType {
 	 * @remarks
 	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
 	 */
-	public static [Symbol.hasInstance](this: typeof TreeNode, value: unknown): value is TreeNode;
+	public static [Symbol.hasInstance](value: unknown): value is TreeNode;
 
 	/**
 	 * Provides `instancof` support for all schema classes with public constructors.
@@ -103,7 +95,7 @@ export abstract class TreeNode implements WithType {
 		value: unknown,
 	): value is InstanceType<TSchema>;
 
-	public static [Symbol.hasInstance](this: typeof TreeNode, value: unknown): boolean {
+	public static [Symbol.hasInstance](value: unknown): boolean {
 		const schema = tryGetSchema(value);
 
 		if (schema === undefined || schema.kind === NodeKind.Leaf) {
