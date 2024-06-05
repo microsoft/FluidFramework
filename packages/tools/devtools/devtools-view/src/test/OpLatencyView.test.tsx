@@ -11,6 +11,7 @@ import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { OpLatencyView } from "../components/index.js";
+
 import { MockMessageRelay } from "./utils/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.

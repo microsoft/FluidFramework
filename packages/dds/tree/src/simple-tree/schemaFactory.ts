@@ -500,8 +500,8 @@ export class SchemaFactory<
 			return undefined;
 		});
 		return createFieldSchema(FieldKind.Optional, t, {
-			...props,
 			defaultProvider: defaultOptionalProvider,
+			...props,
 		});
 	}
 
