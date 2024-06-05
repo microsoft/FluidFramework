@@ -97,7 +97,7 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 			return flexNode; // If it does have a flex node, return it...
 		} // ...otherwise, the flex node must be created
 		const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
-		const cursor = context.checkout.forest.allocateCursor();
+		const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 		context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 		const newFlexNode = makeTree(context, cursor);
 		cursor.free();

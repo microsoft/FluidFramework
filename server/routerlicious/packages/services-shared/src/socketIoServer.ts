@@ -12,7 +12,7 @@ import {
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
 import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
+import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
@@ -20,6 +20,7 @@ import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
+import type { Cluster, Redis } from "ioredis";
 
 class SocketIoSocket implements core.IWebSocket {
 	private readonly eventListeners: { event: string; listener: () => void }[] = [];
@@ -192,7 +193,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					res.status(503).send("Graceful Shutdown");
 				});
 
-				const connections = await this.io.fetchSockets();
+				const connections = await this.io.local.fetchSockets();
 				const connectionCount = connections.length;
 				const telemetryProperties = {
 					drainTime,
@@ -245,7 +246,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
-					const reconnections = await this.io.fetchSockets();
+					const reconnections = await this.io.local.fetchSockets();
 					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
 						connectionsCount: reconnections.length,
 					});
@@ -262,26 +263,32 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 }
 
-export function create(
+type SocketIoAdapter = typeof Adapter | ((nsp: Namespace) => Adapter);
+
+/**
+ * @internal
+ */
+export type SocketIoAdapterCreator = (
+	pub: Redis | Cluster,
+	sub: Redis | Cluster,
+) => SocketIoAdapter;
+
+function getRedisAdapter(
 	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
-	server: http.Server,
 	socketIoAdapterConfig?: any,
-	socketIoConfig?: any,
-	ioSetup?: (io: Server) => void,
-): core.IWebSocketServer {
-	redisClientConnectionManagerForPub.addErrorHandler(
-		undefined, // lumber properties
-		"Error with Redis pub connection", // error message
-	);
+	customCreateAdapter?: SocketIoAdapterCreator,
+): SocketIoAdapter {
+	if (customCreateAdapter !== undefined) {
+		// Use the externally provided Socket.io Adapter
+		return customCreateAdapter(
+			redisClientConnectionManagerForPub.getRedisClient(),
+			redisClientConnectionManagerForSub.getRedisClient(),
+		);
+	}
 
-	redisClientConnectionManagerForSub.addErrorHandler(
-		undefined, // lumber properties
-		"Error with Redis sub connection", // error message
-	);
-
-	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
+		// Use the custom Socket.io Redis Adapter from the services-shared package
 		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
 			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
 			subConnection: new SocketIoRedisSubscriptionConnection(
@@ -294,13 +301,40 @@ export function create(
 			socketIoAdapterConfig?.shouldDisableDefaultNamespace,
 		);
 
-		adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
-	} else {
-		adapter = createAdapter(
-			redisClientConnectionManagerForPub.getRedisClient(),
-			redisClientConnectionManagerForSub.getRedisClient(),
-		);
+		return redisSocketIoAdapter.RedisSocketIoAdapter;
 	}
+
+	// Use the default, official Socket.io Redis Adapter from the @socket.io/redis-adapter package
+	return createRedisAdapter(
+		redisClientConnectionManagerForPub.getRedisClient(),
+		redisClientConnectionManagerForSub.getRedisClient(),
+	);
+}
+
+export function create(
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+	server: http.Server,
+	socketIoAdapterConfig?: any,
+	socketIoConfig?: any,
+	ioSetup?: (io: Server) => void,
+	customCreateAdapter?: SocketIoAdapterCreator,
+): core.IWebSocketServer {
+	redisClientConnectionManagerForPub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis pub connection", // error message
+	);
+
+	redisClientConnectionManagerForSub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis sub connection", // error message
+	);
+	const adapter = getRedisAdapter(
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+		socketIoAdapterConfig,
+		customCreateAdapter,
+	);
 
 	// Create and register a socket.io connection on the server
 	const io = new Server(server, {

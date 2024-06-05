@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -12,14 +11,15 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
-import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { getTestMatrix, mapWait } from "./utils.js";
 
 const testMatrix = getTestMatrix();

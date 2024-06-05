@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";

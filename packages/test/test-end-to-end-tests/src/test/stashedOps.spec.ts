@@ -41,6 +41,7 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	IIntervalCollection,
 	SequenceInterval,
@@ -59,7 +60,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

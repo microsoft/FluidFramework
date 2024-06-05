@@ -4,7 +4,8 @@
  */
 
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
-import type { TestSnapshotCache } from "./testSnapshotCache.js";
+
+import type { TestSnapshotCache } from "../../testSnapshotCache.js";
 
 export function supportsDataVirtualization(provider: ITestObjectProvider) {
 	return provider.driver.type === "local" || provider.driver.endpointName === "odsp-df";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IAttachMessage,
 	IEnvelope,

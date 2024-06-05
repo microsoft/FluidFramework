@@ -15,9 +15,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
+
 import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";

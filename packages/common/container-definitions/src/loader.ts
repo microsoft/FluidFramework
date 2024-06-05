@@ -10,17 +10,17 @@ import type {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import type {
-	IResolvedUrl,
-	IDocumentMessage,
-	ISequencedProposal,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import type {
 	IClient,
 	IClientDetails,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
+import type {
+	IResolvedUrl,
+	IDocumentMessage,
+	ISequencedProposal,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";

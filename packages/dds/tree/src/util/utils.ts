@@ -168,6 +168,20 @@ export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Ite
 }
 
 /**
+ * Finds the first element in the given iterable that satisfies a predicate.
+ * @param iterable - The iterable to search for an eligible element
+ * @param predicate - The predicate to run against each element
+ * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
+ */
+export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T | undefined {
+	for (const t of iterable) {
+		if (predicate(t)) {
+			return t;
+		}
+	}
+}
+
+/**
  * Use for Json compatible data.
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
@@ -197,7 +211,6 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -206,7 +219,15 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]?: JsonCompatibleReadOnly };
+	| JsonCompatibleReadOnlyObject;
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
  * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
@@ -375,15 +396,19 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
- * @public
+ * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
- * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @public
+ * Simpler alternative to core-utils/IDisposable for internal use in this package.
+ * This avoids adding a named "dispose" method, and will eventually be replaced with
+ * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ *
+ * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
+ * @internal
  */
 export interface IDisposable {
 	/**
