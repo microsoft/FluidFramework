@@ -10,6 +10,8 @@ import type {
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+
+import type { IAnyDriverError } from "./driverError.js";
 import type {
 	ConnectionMode,
 	IClient,
@@ -26,8 +28,6 @@ import type {
 	ITokenClaims,
 	IVersion,
 } from "./protocol/index.js";
-
-import type { IAnyDriverError } from "./driverError.js";
 import type { IResolvedUrl } from "./urlResolver.js";
 
 /**

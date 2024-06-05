@@ -22,8 +22,6 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IQuorumClients,
@@ -33,6 +31,8 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -276,8 +276,6 @@ export class FluidDataStoreRuntime
 						(content, localOpMetadata) =>
 							this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
-						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-							this.addedGCOutboundReference(srcHandle, outboundHandle),
 						path,
 						tree.trees[path],
 						this.sharedObjectRegistry,
@@ -486,8 +484,6 @@ export class FluidDataStoreRuntime
 			(content, localOpMetadata) =>
 				this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
-			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(channel.id, context);
 	}
@@ -506,8 +502,6 @@ export class FluidDataStoreRuntime
 			this.logger,
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
-			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-				this.addedGCOutboundReference(srcHandle, outboundHandle),
 			tree,
 			flatBlobs,
 		);
@@ -630,8 +624,6 @@ export class FluidDataStoreRuntime
 			(content, localContentMetadata) =>
 				this.submitChannelOp(attachMessage.id, content, localContentMetadata),
 			(address: string) => this.setChannelDirty(address),
-			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-				this.addedGCOutboundReference(srcHandle, outboundHandle),
 			attachMessage.id,
 			snapshotTree,
 			this.sharedObjectRegistry,
@@ -658,7 +650,7 @@ export class FluidDataStoreRuntime
 					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
 						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-						this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
+						this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath);
 					});
 
 					// If a non-local operation then go and create the object
@@ -806,23 +798,6 @@ export class FluidDataStoreRuntime
 		for (const [contextId, context] of this.contexts) {
 			context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
 		}
-	}
-
-	/**
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		// Note: This is deprecated on IFluidDataStoreContext, and in an n/n-1 scenario where the
-		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
-		// will be the one to call addedGCOutboundReference directly.
-		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
-		this.dataStoreContext.addedGCOutboundReference?.(
-			toFluidHandleInternal(srcHandle),
-			toFluidHandleInternal(outboundHandle),
-		);
 	}
 
 	/**

@@ -663,6 +663,7 @@ describe("schemaFactory", () => {
 						unreachableCase(layout.parentType);
 				}
 				nodes.push(parent);
+				assert.equal(Tree.status(parent), TreeStatus.New);
 				return parent;
 			}
 
@@ -682,6 +683,7 @@ describe("schemaFactory", () => {
 						unreachableCase(layout.childType);
 				}
 				nodes.push(child);
+				assert.equal(Tree.status(child), TreeStatus.New);
 				return child;
 			}
 

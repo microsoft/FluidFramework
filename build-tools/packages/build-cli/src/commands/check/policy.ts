@@ -251,48 +251,58 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
 		const relPath = context.repo.relativeToRepo(file);
 
-		await Promise.all(
+		const handlerResults = await Promise.all(
 			handlers
 				.filter((handler) => handler.match.test(relPath))
-				.map(async (handler): Promise<void> => {
+				.filter((handler) => {
 					// doing exclusion per handler
 					const exclusions = handlerExclusions[handler.name];
 					if (exclusions !== undefined && !exclusions.every((regex) => !regex.test(relPath))) {
 						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
-						return;
+						return false;
 					}
-
+					return true;
+				})
+				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
 					const result = await runWithPerf(handler.name, "handle", async () =>
 						handler.handler(relPath, gitRoot),
 					);
-					if (result !== undefined && result !== "") {
-						let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
-						const { resolver } = handler;
-						if (this.flags.fix && resolver) {
-							output += `${newline}attempting to resolve: ${relPath}`;
-							const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-								resolver(relPath, gitRoot),
-							);
-
-							if (resolveResult?.message !== undefined) {
-								output += newline + resolveResult.message;
-							}
-
-							if (!resolveResult.resolved) {
-								process.exitCode = 1;
-							}
-						} else {
-							process.exitCode = 1;
-						}
-
-						if (process.exitCode === 1) {
-							this.warning(output);
-						} else {
-							this.info(output);
-						}
-					}
+					return { handler, result };
 				}),
 		);
+
+		// Now that all handlers have completed, we can react to results which might include running resolvers
+		// that should only be applied one at a time. (Yes, there is an await in the loop intentionally.)
+		for (const { handler, result } of handlerResults) {
+			if (result !== undefined && result !== "") {
+				let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+				const { resolver } = handler;
+				if (this.flags.fix && resolver) {
+					output += `${newline}attempting to resolve: ${relPath}`;
+					// Resolvers are expected to be run serially to avoid any conflicts.
+					// eslint-disable-next-line no-await-in-loop
+					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
+						resolver(relPath, gitRoot),
+					);
+
+					if (resolveResult?.message !== undefined) {
+						output += newline + resolveResult.message;
+					}
+
+					if (!resolveResult.resolved) {
+						process.exitCode = 1;
+					}
+				} else {
+					process.exitCode = 1;
+				}
+
+				if (process.exitCode === 1) {
+					this.warning(output);
+				} else {
+					this.info(output);
+				}
+			}
+		}
 	}
 
 	private logStats(): void {

@@ -24,7 +24,6 @@ import {
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { disposeSymbol } from "../../util/index.js";
 import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -78,7 +77,7 @@ describe("SchematizingSimpleTreeView", () => {
 		// Should be a no op since not in an error state;
 		view.upgradeSchema();
 
-		view[disposeSymbol]();
+		view.dispose();
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
@@ -138,7 +137,7 @@ describe("SchematizingSimpleTreeView", () => {
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
 		assert.deepEqual(log, [["rootChanged", 5]]);
 		assert.equal(view.root, 5);
-		view[disposeSymbol]();
+		view.dispose();
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {

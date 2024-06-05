@@ -10,8 +10,8 @@ import type {
 	ITree,
 	SummaryTree,
 } from "@fluidframework/driver-definitions/internal";
-
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
+
 import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,

@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { SharedString, Side } from "@fluidframework/sequence/internal";
 import {
 	TestFluidObjectFactory,
@@ -12,8 +15,6 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 
 const configProvider = createTestConfigProvider();
 // configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
