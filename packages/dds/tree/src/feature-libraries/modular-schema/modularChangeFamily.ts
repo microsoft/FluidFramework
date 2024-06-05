@@ -500,7 +500,7 @@ export class ModularChangeFamily
 		}
 
 		for (const [field, fieldChange2] of change2) {
-			if (!composedFields.has(field)) {
+			if (change1 === undefined || !change1.has(field)) {
 				composedFields.set(field, fieldChange2);
 			}
 		}
@@ -545,14 +545,13 @@ export class ModularChangeFamily
 			change: brand(composedChange),
 		};
 
-		const fieldKey = change1 ?? change2 ?? fail("At least one field should have changes");
-
-		crossFieldTable.fieldToContext.set(fieldKey, {
+		crossFieldTable.fieldToContext.set(change1, {
 			change1: change1Normalized,
 			change2: change2Normalized,
 			composedChange: composedField,
 		});
 
+		crossFieldTable.newFieldToBaseField.set(change2, change1);
 		return composedField;
 	}
 
