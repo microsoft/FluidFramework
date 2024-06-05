@@ -76,6 +76,11 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
 }
 
 // @public
+export type FlattenKeys<T> = [{
+    [Property in keyof T]: T[Property];
+}][_InlineTrick];
+
+// @public
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
@@ -94,11 +99,14 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
-export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+export type _InlineTrick = 0;
+
+// @public
+export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FlattenKeys<{
     readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
 } & {
     readonly [Property in keyof T as HasDefault<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+}>;
 
 // @public
 export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {

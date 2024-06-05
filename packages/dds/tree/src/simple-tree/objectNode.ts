@@ -43,7 +43,7 @@ import {
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
-import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
+import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode } from "./rawNode.js";
 
@@ -103,18 +103,20 @@ export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	// Field might not have a default, so make it required:
-	readonly [Property in keyof T as HasDefault<T[Property]> extends false
-		? Property
-		: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
-} & {
-	// Field might have a default, so allow optional.
-	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-	readonly [Property in keyof T as HasDefault<T[Property]> extends true
-		? Property
-		: never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+> = FlattenKeys<
+	{
+		// Field might not have a default, so make it required:
+		readonly [Property in keyof T as HasDefault<T[Property]> extends false
+			? Property
+			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+	} & {
+		// Field might have a default, so allow optional.
+		// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
+		readonly [Property in keyof T as HasDefault<T[Property]> extends true
+			? Property
+			: never]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+	}
+>;
 
 /**
  * Maps from simple field keys ("view" keys) to information about the field.
