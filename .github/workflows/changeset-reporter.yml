@@ -7,7 +7,7 @@ name: changeset-reporter
 
 on:
   workflow_run:
-    workflows: [ "pr-check-changeset" ]
+    workflows: ["pr-check-changeset"]
     types:
       - completed
 

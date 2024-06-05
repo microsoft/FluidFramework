@@ -106,7 +106,7 @@ jobs:
       # Only creates GH releases for client, server, and build-tools releases.
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
-        uses: ncipollo/release-action@1cbdc80532ba923d3d81ebd1cece305c437b8d66 # ratchet:ncipollo/release-action@v1
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # ratchet:ncipollo/release-action@v1
         with:
           # Allow updates to existing releases.
           allowUpdates: true
