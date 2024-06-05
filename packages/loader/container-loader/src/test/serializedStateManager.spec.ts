@@ -220,10 +220,15 @@ describe("serializedStateManager", () => {
 			() => false,
 		);
 		// equivalent to attach
-		serializedStateManager.setInitialSnapshot({
-			baseSnapshot: snapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-		});
+		serializedStateManager.setInitialSnapshot(
+			{
+				baseSnapshot: snapshot,
+				snapshotBlobs: {
+					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+				},
+			},
+			false,
+		);
 		await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",

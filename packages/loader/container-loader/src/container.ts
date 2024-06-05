@@ -1347,7 +1347,14 @@ export class Container
 
 					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
-					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
+					const supportGetSnapshotApi: boolean =
+						this.mc.config.getBoolean(
+							"Fluid.Container.UseLoadingGroupIdForSnapshotFetch",
+						) === true && this.service?.policies?.supportGetSnapshotApi === true;
+					this.serializedStateManager.setInitialSnapshot(
+						snapshotWithBlobs,
+						supportGetSnapshotApi,
+					);
 
 					if (!this.closed) {
 						this.detachedBlobStorage.dispose?.();

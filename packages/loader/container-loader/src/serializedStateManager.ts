@@ -131,6 +131,7 @@ export class SerializedStateManager {
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshotP: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
+	private supportGetSnapshotApi: boolean | undefined;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -153,6 +154,9 @@ export class SerializedStateManager {
 			namespace: "serializedStateManager",
 		});
 
+		// special case handle. Obtaining the last saved op seq num to avoid
+		// refreshing the snapshot before we have processed it. It could cause
+		// a subsequent stashing to have a newer snapshot than allowed.
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			this.lastSavedOpSequenceNumber =
@@ -177,6 +181,10 @@ export class SerializedStateManager {
 	 */
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
+			assert(
+				this.supportGetSnapshotApi !== undefined,
+				"supportGetSnapshotApi should already be declared",
+			);
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
@@ -196,6 +204,7 @@ export class SerializedStateManager {
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean,
 	) {
+		this.supportGetSnapshotApi = supportGetSnapshotApi;
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
@@ -353,7 +362,11 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
+	public setInitialSnapshot(
+		snapshot: SnapshotWithBlobs | undefined,
+		supportGetSnapshotApi: boolean,
+	) {
+		this.supportGetSnapshotApi = supportGetSnapshotApi;
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
