@@ -136,7 +136,11 @@ describe("schema validation", () => {
 		});
 
 		it(`not in schema due to missing node schema entry in schemaCollection`, () => {
-			const { node: stringNode, schema: stringSchema } = createLeafNode("myStringNode", "string", ValueSchema.String);
+			const { node: stringNode, schema: stringSchema } = createLeafNode(
+				"myStringNode",
+				"string",
+				ValueSchema.String,
+			);
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
