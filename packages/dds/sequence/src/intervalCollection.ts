@@ -9,6 +9,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	Client,
 	DetachedReferencePosition,
@@ -26,7 +27,6 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1281,7 +1281,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				start: startPos,
 				end: endPos,
 				intervalType: IntervalType.SlideOnRemove,
-				properties: interval.properties,
+				properties: { ...interval.properties },
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
 				startSide,
@@ -1651,8 +1651,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
 		if (
-			startRebased === DetachedReferencePosition ||
-			endRebased === DetachedReferencePosition
+			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
+			(startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition)
 		) {
 			if (localInterval) {
 				this.localCollection?.removeExistingInterval(localInterval);

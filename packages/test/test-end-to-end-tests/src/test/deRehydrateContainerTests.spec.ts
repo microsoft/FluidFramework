@@ -7,22 +7,19 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
-import {
-	IDocumentAttributes,
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
@@ -34,12 +31,11 @@ import {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
-import { pkgVersion } from "../packageVersion.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
+import { pkgVersion } from "../packageVersion.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -437,7 +433,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
@@ -489,7 +486,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =
@@ -540,7 +538,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
 					await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-				const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+				const sharedCell =
+					await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 				const sharedCounter =
 					await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 				const crc =

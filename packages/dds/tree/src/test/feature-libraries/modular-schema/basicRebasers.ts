@@ -81,13 +81,13 @@ export const valueHandler = {
 		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: ({ change, revision }): DeltaFieldChanges => {
+	intoDelta: (change): DeltaFieldChanges => {
 		const delta: Mutable<DeltaFieldChanges> = {};
 		if (change !== 0) {
 			// We use the new and old numbers as the node ids.
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
-			const detach = makeDetachedNodeId(revision, change.old);
-			const attach = makeDetachedNodeId(revision, change.new);
+			const detach = makeDetachedNodeId(undefined, change.old);
+			const attach = makeDetachedNodeId(undefined, change.new);
 			delta.local = [{ count: 1, attach, detach }];
 		}
 		return delta;

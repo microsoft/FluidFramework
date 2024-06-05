@@ -10,12 +10,11 @@ import { strict as assert } from "node:assert";
 import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { type IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	type ISequencedDocumentMessage,
+	type IDocumentStorageService,
 	type ISnapshotTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
@@ -135,7 +134,6 @@ describe("mixinAttributor", () => {
 		(context.deltaManager as MockDeltaManager).emit("op", op);
 		const { summary } = await containerRuntime.summarize({
 			fullTree: true,
-			trackState: false,
 			runGC: false,
 		});
 
@@ -175,7 +173,7 @@ describe("mixinAttributor", () => {
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience!.getMember(op.clientId!)!.user },
+				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
 			],
 		]);
 
@@ -269,7 +267,6 @@ describe("mixinAttributor", () => {
 
 				const { summary } = await containerRuntime.summarize({
 					fullTree: true,
-					trackState: false,
 					runGC: false,
 				});
 				assert(summary.tree[".attributor"] === undefined);

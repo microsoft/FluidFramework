@@ -6,8 +6,8 @@
 import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
 import { Node, SyntaxKind } from "ts-morph";
 
-import type { ApiTag } from "./apiTag";
-import { isKnownApiTag } from "./apiTag";
+import type { ApiTag } from "./apiTag.js";
+import { isKnownApiTag } from "./apiTag.js";
 
 interface ExportRecord {
 	name: string;

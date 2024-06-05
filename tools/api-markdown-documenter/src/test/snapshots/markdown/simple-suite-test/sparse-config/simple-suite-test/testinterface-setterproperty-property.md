@@ -8,3 +8,5 @@ A test property with a getter and a setter.
 get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
+
+**Type:** boolean

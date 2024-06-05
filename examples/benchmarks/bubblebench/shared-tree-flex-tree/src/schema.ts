@@ -15,7 +15,10 @@ import {
 	leaf,
 } from "@fluidframework/tree/internal";
 
-const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
+const builder = new SchemaBuilderBase(FieldKinds.required, {
+	scope: "bubble-bench",
+	libraries: [leaf.library],
+});
 
 export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
 	x: leaf.number,

@@ -111,7 +111,7 @@ async function getAliasedDataStoreBackCompat(
 	if (response.status !== 200) {
 		throw responseToException(response, request);
 	}
-	return response.value.handle as IFluidHandle;
+	return response.value.handle as IFluidHandle<FluidObject>;
 }
 
 /**

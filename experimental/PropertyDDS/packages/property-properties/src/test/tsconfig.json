@@ -1,5 +1,5 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../../../common/build/build-common/ts-common-config.json",
 	"compilerOptions": {
 		"strict": false,
 		"allowJs": true,

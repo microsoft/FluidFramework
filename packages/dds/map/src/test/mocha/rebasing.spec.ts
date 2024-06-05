@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockContainerRuntime,
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	IDirectory,
+	type IDirectory,
 	type ISharedDirectory,
 	type ISharedMap,
 	SharedDirectory,

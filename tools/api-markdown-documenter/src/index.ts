@@ -13,9 +13,6 @@
  * @packageDocumentation
  */
 
-// TODOs:
-// - bundle helper libraries as module (namespace) exports?
-
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,

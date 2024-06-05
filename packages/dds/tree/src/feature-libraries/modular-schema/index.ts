@@ -31,7 +31,6 @@ export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
-	getIntention,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -67,6 +66,7 @@ export {
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
+	updateRefreshers,
 } from "./modularChangeFamily.js";
 export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";

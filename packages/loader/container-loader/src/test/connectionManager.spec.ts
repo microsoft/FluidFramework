@@ -4,14 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { stub, useFakeTimers } from "sinon";
+
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
-import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IAnyDriverError,
+	IDocumentService,
+	INack,
+	NackErrorType,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
-import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { stub, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
@@ -102,7 +108,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - exceptions invoke closeHandler", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
@@ -126,7 +132,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - error, disconnect, and nack handling", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		let connection = await waitForConnection();
 
 		// Act I - retryableError
@@ -210,7 +216,7 @@ describe("connectionManager", () => {
 
 	it("reconnectOnError - nack retryAfter", async () => {
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		let connection = await waitForConnection();
 
 		const nack: Partial<INack> = {
@@ -267,7 +273,7 @@ describe("connectionManager", () => {
 				}
 			},
 		});
-		connectionManager.connect({ text: "Test reconnect" });
+		connectionManager.connect({ text: "Test reconnect" }, "write");
 
 		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
@@ -297,7 +303,7 @@ describe("connectionManager", () => {
 			}),
 		);
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "Test reconnect" });
+		connectionManager.connect({ text: "Test reconnect" }, "write");
 
 		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
@@ -357,7 +363,7 @@ describe("connectionManager", () => {
 
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
-			connectionManager.connect({ text: "test" });
+			connectionManager.connect({ text: "test" }, "write");
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
 				forced: false,

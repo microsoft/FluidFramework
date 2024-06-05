@@ -4,9 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-
-import { RevisionTag } from "../../core/index.js";
-
 import { MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
@@ -17,7 +14,6 @@ export class MarkQueue {
 
 	public constructor(
 		private readonly list: readonly Mark[],
-		public readonly revision: RevisionTag | undefined,
 		private readonly moveEffects: MoveEffectTable,
 	) {
 		this.list = list;
@@ -39,7 +35,7 @@ export class MarkQueue {
 			return undefined;
 		}
 
-		const splitMarks = splitMarkForMoveEffects(mark, this.revision, this.moveEffects);
+		const splitMarks = splitMarkForMoveEffects(mark, this.moveEffects);
 		for (let i = splitMarks.length - 1; i > 0; i--) {
 			this.stack.push(splitMarks[i]);
 		}

@@ -19,8 +19,8 @@ import {
 	createOverlappingSequenceIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
 
 import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
 
@@ -85,7 +85,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 		dataStoreRuntime.options = { intervalStickinessEnabled: true };
-		testSharedString = new SharedString(
+		testSharedString = new SharedStringClass(
 			dataStoreRuntime,
 			"test-shared-string",
 			SharedStringFactory.Attributes,

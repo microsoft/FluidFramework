@@ -20,11 +20,9 @@ import {
 	CrossFieldTarget,
 	NodeId,
 	addCrossFieldQuery,
-	getIntention,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
 import {
 	CellRename,
 	DetachOfRemovedNodes,
@@ -40,9 +38,7 @@ import {
 	Detach,
 	DetachFields,
 	HasRevisionTag,
-	IdRange,
 	Insert,
-	LineageEvent,
 	Mark,
 	MarkEffect,
 	MoveId,
@@ -104,14 +100,10 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	if (a === undefined || b === undefined) {
 		return a === b;
 	}
-	return areEqualChangeAtomIds(a, b) && areSameLineage(a.lineage, b.lineage);
+	return areEqualChangeAtomIds(a, b);
 }
 
-export function getInputCellId(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getInputCellId(mark: Mark): CellId | undefined {
 	const cellId = mark.cellId;
 	if (cellId === undefined) {
 		return undefined;
@@ -130,35 +122,29 @@ export function getInputCellId(
 
 	return {
 		...cellId,
-		revision: getIntentionIfMetadataProvided(markRevision ?? revision, metadata),
+		revision: markRevision,
 	};
 }
 
-export function getOutputCellId(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getOutputCellId(mark: Mark): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachOutputCellId(mark, revision, metadata);
+		return getDetachOutputCellId(mark);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isAttachAndDetachEffect(mark)) {
-		return getDetachOutputCellId(mark.detach, revision, metadata);
+		return getDetachOutputCellId(mark.detach);
 	}
 
-	return getInputCellId(mark, revision, metadata);
+	return getInputCellId(mark);
 }
 
 export function cellSourcesFromMarks(
 	marks: readonly Mark[],
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
 	contextGetter: typeof getInputCellId | typeof getOutputCellId,
 ): Set<RevisionTag | undefined> {
 	const set = new Set<RevisionTag | undefined>();
 	for (const mark of marks) {
-		const cell = contextGetter(mark, revision, metadata);
+		const cell = contextGetter(mark);
 		if (cell !== undefined) {
 			set.add(cell.revision);
 		}
@@ -234,11 +220,8 @@ export function compareCellPositionsUsingTombstones(
 		// These cells are only ordered through tie-breaking.
 		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
 
-		// In the context of rebase, an undefined revision means that the cell was created on the branch that
-		// is undergoing rebasing.
 		// In the context of compose, an undefined revision means we are composing anonymous changesets into
-		// a transaction.
-		// In both cases, it means the cell from the newer changeset is younger.
+		// a transaction, which means the cell from the newer changeset is younger.
 		if (newMarkCell.revision === undefined) {
 			return CellOrder.NewThenOld;
 		}
@@ -297,44 +280,24 @@ export function compareCellPositionsUsingTombstones(
 /**
  * @returns the ID of the cell in the output context of the given detach `mark`.
  */
-export function getDetachOutputCellId(
-	mark: Detach,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): ChangeAtomId {
-	return (
-		mark.idOverride?.id ?? {
-			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
-			localId: mark.id,
-		}
-	);
+export function getDetachOutputCellId(mark: Detach): ChangeAtomId {
+	return mark.idOverride ?? { revision: mark.revision, localId: mark.id };
 }
 
 /**
  * @returns the ID of the detached node in the output context of the given detach `mark`.
  */
-export function getDetachedNodeId(
-	mark: Detach,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): ChangeAtomId {
+export function getDetachedNodeId(mark: Detach): ChangeAtomId {
 	switch (mark.type) {
 		case "Remove": {
-			return getDetachOutputCellId(mark, revision, metadata);
+			return getDetachOutputCellId(mark);
 		}
 		case "MoveOut": {
-			return makeChangeAtomId(mark.id, mark.revision ?? revision);
+			return makeChangeAtomId(mark.id, mark.revision);
 		}
 		default:
 			unreachableCase(mark);
 	}
-}
-
-function getIntentionIfMetadataProvided(
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): RevisionTag | undefined {
-	return metadata === undefined ? revision : getIntention(revision, metadata);
 }
 
 /**
@@ -410,37 +373,7 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 
 export function cloneCellId(id: CellId): CellId {
 	const cloned = { ...id };
-	if (cloned.lineage !== undefined) {
-		cloned.lineage = [...cloned.lineage];
-	}
 	return cloned;
-}
-
-function areSameLineage(
-	lineage1: LineageEvent[] | undefined,
-	lineage2: LineageEvent[] | undefined,
-): boolean {
-	if (lineage1 === undefined && lineage2 === undefined) {
-		return true;
-	}
-
-	if (lineage1 === undefined || lineage2 === undefined) {
-		return false;
-	}
-
-	if (lineage1.length !== lineage2.length) {
-		return false;
-	}
-
-	for (let i = 0; i < lineage1.length; i++) {
-		const event1 = lineage1[i];
-		const event2 = lineage2[i];
-		if (event1.revision !== event2.revision || event1.offset !== event2.offset) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -481,34 +414,8 @@ export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRem
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function getDetachIdForLineage(
-	mark: MarkEffect,
-	fallbackRevision: RevisionTag | undefined,
-): ChangeAtomId | undefined {
-	if (isDetach(mark)) {
-		if (mark.idOverride?.type === DetachIdOverrideType.Redetach) {
-			return {
-				revision: mark.idOverride.id.revision ?? fallbackRevision,
-				localId: mark.idOverride.id.localId,
-			};
-		}
-		return { revision: mark.revision ?? fallbackRevision, localId: mark.id };
-	}
-	if (isAttachAndDetachEffect(mark)) {
-		return getDetachIdForLineage(mark.detach, fallbackRevision);
-	}
-	return undefined;
-}
-
-export function isImpactfulCellRename(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): mark is CellMark<CellRename> {
-	return (
-		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
-		isImpactful(mark, revision, revisionMetadata)
-	);
+export function isImpactfulCellRename(mark: Mark): mark is CellMark<CellRename> {
+	return (isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) && isImpactful(mark);
 }
 
 export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
@@ -537,16 +444,10 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
  * context of that mark.
  *
  * @param mark - The mark to settle. Never mutated.
- * @param revision - The revision associated with the mark.
- * @param revisionMetadata - Metadata source for the revision associated with the mark.
  * @returns either the original mark or a shallow clone of it with effects stripped out.
  */
-export function settleMark(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): Mark {
-	if (isImpactful(mark, revision, revisionMetadata)) {
+export function settleMark(mark: Mark): Mark {
+	if (isImpactful(mark)) {
 		return mark;
 	}
 	return omitMarkEffect(mark);
@@ -557,21 +458,17 @@ export function settleMark(
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
  */
-export function isImpactful(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): boolean {
+export function isImpactful(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
 			return false;
 		case "Remove": {
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			if (inputId === undefined) {
 				return true;
 			}
-			const outputId = getOutputCellId(mark, revision, revisionMetadata);
+			const outputId = getOutputCellId(mark);
 			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
@@ -598,31 +495,6 @@ export function isNoopMark(mark: Mark): mark is CellMark<NoopMark> {
 	return mark.type === NoopMarkType;
 }
 
-/**
- * @returns The number of cells in the range which come before the position described by `lineage`.
- */
-export function getOffsetInCellRange(
-	lineage: LineageEvent[] | undefined,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
-	count: number,
-): number | undefined {
-	if (lineage === undefined || revision === undefined) {
-		return undefined;
-	}
-
-	for (const event of lineage) {
-		if (
-			event.revision === revision &&
-			areOverlappingIdRanges(id, count, event.id, event.count)
-		) {
-			return (event.id as number) + event.offset - id;
-		}
-	}
-
-	return undefined;
-}
-
 export function areOverlappingIdRanges(
 	id1: ChangesetLocalId,
 	count1: number,
@@ -644,30 +516,7 @@ export function compareCellsFromSameRevision(
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
-
-	// Both cells should have the same `adjacentCells`.
-	const adjacentCells = cell1.adjacentCells;
-	if (adjacentCells !== undefined) {
-		return (
-			getPositionAmongAdjacentCells(adjacentCells, cell1.localId) -
-			getPositionAmongAdjacentCells(adjacentCells, cell2.localId)
-		);
-	}
-
 	return undefined;
-}
-
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
-	}
-
-	fail("Could not find id in adjacentCells");
 }
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
@@ -701,10 +550,7 @@ function areAdjacentIdRanges(
 
 function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
-		return (
-			lhs.idOverride.type === rhs.idOverride.type &&
-			areMergeableCellIds(lhs.idOverride.id, lhsCount, rhs.idOverride.id)
-		);
+		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
 	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
 }
@@ -714,9 +560,7 @@ function areMergeableCellIds(
 	lhsCount: number,
 	rhs: CellId | undefined,
 ): boolean {
-	return (
-		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
-	);
+	return areMergeableChangeAtoms(lhs, lhsCount, rhs);
 }
 
 /**
@@ -851,10 +695,10 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
-	const getQueries = (target: CrossFieldTarget) =>
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
 		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
 
 	const table = {
@@ -964,10 +808,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Remove>;
 			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = {
-					...effect2Remove.idOverride,
-					id: splitDetachEvent(effect2Remove.idOverride.id, length),
-				};
+				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
 			}
 			return [effect1, effect2];
 		}
@@ -980,10 +821,7 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const return2 = effect2 as Mutable<MoveOut>;
 
 			if (return2.idOverride !== undefined) {
-				return2.idOverride = {
-					...return2.idOverride,
-					id: splitDetachEvent(return2.idOverride.id, length),
-				};
+				return2.idOverride = splitDetachEvent(return2.idOverride, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {
@@ -1015,35 +853,6 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 
 function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
-}
-
-/**
- * @returns -1 if the lineage indicates that cell1 is earlier in the field than cell2.
- * Returns 1 if cell2 is earlier in the field.
- * Returns 0 if the order cannot be determined from the lineage.
- */
-export function compareLineages(cell1: CellId, cell2: CellId): number {
-	const cell1Events = new Map<RevisionTag, LineageEvent>();
-	for (const event of cell1.lineage ?? []) {
-		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
-		cell1Events.set(event.revision, event);
-	}
-
-	const lineage2 = cell2.lineage ?? [];
-	for (let i = lineage2.length - 1; i >= 0; i--) {
-		const event = lineage2[i];
-		const offset1 = cell1Events.get(event.revision)?.offset;
-		if (offset1 !== undefined) {
-			const offset2 = event.offset;
-			cell1Events.delete(event.revision);
-			if (offset1 < offset2) {
-				return -1;
-			} else if (offset1 > offset2) {
-				return 1;
-			}
-		}
-	}
-	return 0;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
@@ -1116,15 +925,11 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	effect.revision = revision;
 }
 
-export function getEndpoint(
-	effect: MoveMarkEffect,
-	revision: RevisionTag | undefined,
-): ChangeAtomId {
-	const effectRevision = effect.revision ?? revision;
+export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 	return effect.finalEndpoint !== undefined
 		? {
 				...effect.finalEndpoint,
-				revision: effect.finalEndpoint.revision ?? effectRevision,
+				revision: effect.finalEndpoint.revision ?? effect.revision,
 		  }
-		: { revision: effectRevision, localId: effect.id };
+		: { revision: effect.revision, localId: effect.id };
 }

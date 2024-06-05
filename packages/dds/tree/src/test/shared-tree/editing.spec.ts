@@ -32,6 +32,7 @@ import {
 	insert,
 	makeTreeFromJson,
 	remove,
+	validateUsageError,
 } from "../utils.js";
 
 const rootField: FieldUpPath = {
@@ -43,6 +44,12 @@ const rootNode: UpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
+};
+
+const rootNode2: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKey,
+	parentIndex: 1,
 };
 
 describe("Editing", () => {
@@ -79,6 +86,29 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
+			const tree1 = makeTreeFromJson([[], ["X", "Y"]]);
+			const tree2 = tree1.fork();
+
+			tree1.transaction.start();
+			tree1.editor.move(
+				{ parent: rootNode2, field: brand("") },
+				0,
+				1,
+				{ parent: rootNode, field: brand("") },
+				0,
+			);
+			tree1.editor.sequenceField(rootField).move(1, 1, 0);
+			tree1.transaction.commit();
+
+			tree2.editor.sequenceField({ parent: rootNode2, field: brand("") }).move(0, 1, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [["X", "Y"], []]);
 		});
 
 		it("can rebase remove over cross-field move", () => {
@@ -573,7 +603,7 @@ describe("Editing", () => {
 			});
 			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 
-			// Move A after B.
+			// Move object from foo list to bar list
 			tree2.editor.move(
 				{ parent: fooList, field: brand("") },
 				0,
@@ -1528,11 +1558,6 @@ describe("Editing", () => {
 		});
 
 		it("can move a node out from a field and into a field under a sibling", () => {
-			const rootNode2: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
 			const tree = makeTreeFromJson(["A", {}]);
 			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];
@@ -1755,13 +1780,17 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			assert.throws(() =>
-				tree.editor.move(
-					{ parent: rootNode, field: brand("foo") },
-					0,
-					1,
-					{ parent: fooPath, field: brand("bar") },
-					0,
+			assert.throws(
+				() =>
+					tree.editor.move(
+						{ parent: rootNode, field: brand("foo") },
+						0,
+						1,
+						{ parent: fooPath, field: brand("bar") },
+						0,
+					),
+				validateUsageError(
+					/Invalid move operation: the destination is located under one of the moved elements/,
 				),
 			);
 		});

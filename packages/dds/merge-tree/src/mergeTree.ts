@@ -1828,7 +1828,9 @@ export class MergeTree {
 				this.collabWindow.collaborating,
 				rollback,
 			);
-			deltaSegments.push({ segment, propertyDeltas });
+			if (!isRemovedOrMoved(segment)) {
+				deltaSegments.push({ segment, propertyDeltas });
+			}
 			if (this.collabWindow.collaborating) {
 				if (seq === UnassignedSequenceNumber) {
 					segmentGroup = this.addToPendingList(

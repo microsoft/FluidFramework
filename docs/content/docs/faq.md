@@ -242,3 +242,23 @@ This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 ### What browsers are supported?
 
 {{% include file="_includes/browsers.md" %}}
+
+## Summarization
+
+### Why do we need summaries and snapshots?
+
+Summaries capture the state of a container at a point in time. Snapshots allow new clients to quickly catch up to recent state. Without them, a client would have to apply every operation in the op log, even if those operations no longer affected the current state (e.g. op 1 inserts 'h' and op 2 deletes 'h'). For very large op logs, this would be very expensive both for the clients to process and to download from the service.
+
+Instead, when a client joins a collaborative document, they can download a snapshot of the container state, and simply process new operations from that point forward.
+
+### What's the difference between a summary and a snapshot?
+
+Summary and snapshot both represent the contents for a container in a tree format. They differ in the following ways:
+
+-   Summary is uploaded to storage and snapshot is downloaded from storage. A snapshot is basically the summary that was uploaded but in a different format.
+-   Summary is generated at periodic intervals to summarize the state of the container's content at a point in time (sequenceNumber). Snapshot is typically downloaded when a client loads a Fluid document and is the container's content at a point in time (sequenceNumber).
+-   Summary is incremental, i.e., parts of the container that have not changed will refer to the previous summary's sub-tree for its content. Snapshot is not incremental, i.e., the whole tree for the container is present in a snapshot.
+-   Summary is not compressed by the client before it's uploaded to storage. Snapshot may be compressed by the service before it's returned to the client. If compressed, it includes the compression format that should be used to decompress it.
+-   Hence, the trees for summary and snapshot have different formats to support these requirements:
+    -   Summary is represented by an ISummaryTree interface defined [here](https://github.com/microsoft/FluidFramework/blob/7411ef603dea57f5573b81fee78050e2e6a8a16d/common/lib/protocol-definitions/src/summary.ts#L157).
+    -   Snapshot is represented by an ISnapshotTree interface defined [here](https://github.com/microsoft/FluidFramework/blob/7411ef603dea57f5573b81fee78050e2e6a8a16d/common/lib/protocol-definitions/src/storage.ts#L133).

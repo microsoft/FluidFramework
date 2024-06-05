@@ -74,6 +74,8 @@ export interface GenericFieldsNode<TChild> {
 /**
  * A tree represented using plain JavaScript objects.
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
+ * If the tree may contain an {@link @fluidframework/core-interfaces#IFluidHandle},
+ * {@link @fluidframework/shared-object-base#IFluidSerializer.stringify} must be used instead of `JSON.stringify`.
  *
  * JsonableTrees should not store empty fields.
  * @internal

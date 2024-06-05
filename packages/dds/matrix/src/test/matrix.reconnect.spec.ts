@@ -11,9 +11,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix } from "../matrix.js";
+import { SharedMatrix } from "../runtime.js";
 
-import { extract } from "./utils.js";
+import { extract, matrixFactory } from "./utils.js";
 
 describe("SharedMatrix reconnect", () => {
 	/**
@@ -25,20 +25,19 @@ describe("SharedMatrix reconnect", () => {
 	 * make sure positions are rebased appropriately).
 	 */
 	it("rebase setCell in inserted column with overlapping remove", () => {
-		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 
-		const matrix1 = factory.create(dataRuntime1, "A") as SharedMatrix<number>;
+		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
 			deltaConnection: dataRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
-		const matrix2 = factory.create(dataRuntime2, "B") as SharedMatrix<number>;
+		const matrix2 = matrixFactory.create(dataRuntime2, "B");
 		matrix2.connect({
 			deltaConnection: dataRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -78,20 +77,19 @@ describe("SharedMatrix reconnect", () => {
 	});
 
 	it("discards setCell in removed column", () => {
-		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 
-		const matrix1 = factory.create(dataRuntime1, "A") as SharedMatrix<number>;
+		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
 			deltaConnection: dataRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
-		const matrix2 = factory.create(dataRuntime2, "B") as SharedMatrix<number>;
+		const matrix2 = matrixFactory.create(dataRuntime2, "B");
 		matrix2.connect({
 			deltaConnection: dataRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -140,12 +138,12 @@ describe("SharedMatrix reconnect", () => {
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
-		const matrix1 = factory.create(dataRuntime1, "A") as SharedMatrix<number>;
+		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
 			deltaConnection: dataRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
-		const matrix2 = factory.create(dataRuntime2, "B") as SharedMatrix<number>;
+		const matrix2 = matrixFactory.create(dataRuntime2, "B");
 		matrix2.connect({
 			deltaConnection: dataRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -180,7 +178,6 @@ describe("SharedMatrix reconnect", () => {
 	// account in-flight ops.
 	// See "client.applyMsg updates minSeq" in merge-tree's test suite for a lower-level unit test of some relevant behavior.
 	it("avoids zamboni of information required to resubmit", async () => {
-		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataRuntime1);
@@ -188,7 +185,7 @@ describe("SharedMatrix reconnect", () => {
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 		const dataRuntime3 = new MockFluidDataStoreRuntime();
 		const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataRuntime3);
-		const matrix1 = factory.create(dataRuntime1, "A") as SharedMatrix<number>;
+		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 
 		matrix1.insertCols(0, 2);
 		const { summary } = matrix1.getAttachSummary();
@@ -197,24 +194,24 @@ describe("SharedMatrix reconnect", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const matrix2 = (await factory.load(
+		const matrix2 = await matrixFactory.load(
 			dataRuntime2,
 			"B",
 			{
 				deltaConnection: dataRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(summary),
 			},
-			factory.attributes,
-		)) as SharedMatrix<number>;
-		const matrix3 = (await factory.load(
+			matrixFactory.attributes,
+		);
+		const matrix3 = await matrixFactory.load(
 			dataRuntime3,
 			"C",
 			{
 				deltaConnection: dataRuntime3.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(summary),
 			},
-			factory.attributes,
-		)) as SharedMatrix<number>;
+			matrixFactory.attributes,
+		);
 
 		containerRuntime3.connected = false;
 		containerRuntime1.connected = false;

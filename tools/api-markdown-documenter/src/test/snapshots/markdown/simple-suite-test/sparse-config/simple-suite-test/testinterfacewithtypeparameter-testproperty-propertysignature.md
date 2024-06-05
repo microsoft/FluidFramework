@@ -8,6 +8,8 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
+**Type:** T
+
 ### Remarks {#testproperty-remarks}
 
 Here are some remarks about the property

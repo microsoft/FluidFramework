@@ -28,7 +28,7 @@
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEnabled": false,
-		"expireAfterSeconds": -1,
+		"expireAfterSeconds": 9000,
 		"createCosmosDBIndexes": false,
 		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,
@@ -188,7 +188,9 @@
 			"maxMessages": 500
 		},
 		"restartOnCheckpointFailure": true,
-		"enableEphemeralContainerSummaryCleanup": true
+		"enableEphemeralContainerSummaryCleanup": true,
+		"enableLeaveOpNoClientServerMetadata": false,
+		"noOpConsolidationTimeout": 250
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",

@@ -40,9 +40,9 @@ extends:
         # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
         # Currently we want to use different names for internal and public builds for Arrow Service Connection
         ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-          serviceConnection: Arrow_FluidFramework_internal
+          armServiceConnection: ff-internal-arrow-arm-sc
         ${{ else }}:
-          serviceConnection: Arrow_FluidFramework_public
+          armServiceConnection: ff-public-arrow-arm-sc
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022

@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-
-import { type SessionId, createSessionId } from "@fluidframework/id-compressor/internal";
+import { type SessionId } from "@fluidframework/id-compressor";
+import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { EncodedRevisionTag, GraphCommit } from "../../core/index.js";
@@ -49,7 +49,7 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const dummyContext = { originatorId: testIdCompressor.localSessionId };
+const dummyContext = { originatorId: testIdCompressor.localSessionId, revision: undefined };
 const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		[
@@ -166,7 +166,10 @@ describe("message codec", () => {
 			const actual = codec.decode(JSON.parse(encoded), {});
 			assert.deepEqual(actual, {
 				commit: {
-					revision: testRevisionTagCodec.decode(revision, { originatorId }),
+					revision: testRevisionTagCodec.decode(revision, {
+						originatorId,
+						revision: undefined,
+					}),
 					change: {},
 				},
 				sessionId: originatorId,
@@ -185,7 +188,10 @@ describe("message codec", () => {
 			const actual = codec.decode(JSON.parse(encoded), {});
 			assert.deepEqual(actual, {
 				commit: {
-					revision: testRevisionTagCodec.decode(revision, { originatorId }),
+					revision: testRevisionTagCodec.decode(revision, {
+						originatorId,
+						revision: undefined,
+					}),
 					change: {},
 				},
 				sessionId: originatorId,

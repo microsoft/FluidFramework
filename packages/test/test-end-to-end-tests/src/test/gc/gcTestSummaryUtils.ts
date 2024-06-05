@@ -11,8 +11,11 @@ import {
 	concatGarbageCollectionStates,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
@@ -160,8 +163,11 @@ export const waitForContainerWriteModeConnectionWrite = async (container: IConta
 export function manufactureHandle<T>(
 	handleContext: IFluidHandleContext,
 	url: string,
-): IFluidHandle<T> {
-	const serializer = new FluidSerializer(handleContext, () => {});
-	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
+): IFluidHandleInternal<T> {
+	const serializer = new FluidSerializer(handleContext);
+	const handle: IFluidHandleInternal<T> = parseHandles(
+		{ type: "__fluid_handle__", url },
+		serializer,
+	);
 	return handle;
 }
