@@ -8128,18 +8128,36 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@types/mocha':
+        specifier: ^9.1.1
+        version: 9.1.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
+      mocha-json-output-reporter:
+        specifier: ^2.0.1
+        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.2.0)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3

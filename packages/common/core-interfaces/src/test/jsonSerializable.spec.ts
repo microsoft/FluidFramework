@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { JsonDeserialized } from "../jsonDeserialized.js";
+import type { JsonSerializable } from "../jsonSerializable.js";
 
-import type { ObjectWithNumberOrUndefined, ObjectWithOptionalNumber } from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -41,36 +41,36 @@ import {
 } from "./testValues.js";
 
 /**
- * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
+ * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
  * Internally value given is round-tripped through JSON serialization to ensure it is
  * unchanged or converted to given optional value.
  *
  * @param v - value to pass through JSON serialization
  * @param expected - alternate value to compare against after round-trip
- * @returns the round-tripped value
+ * @returns the round-tripped value cast to the filter result type
  */
-function passThru<T>(v: JsonDeserialized<T>, expected?: JsonDeserialized<T>): JsonDeserialized<T> {
+function passThru<T>(v: JsonSerializable<T>, expected?: JsonDeserialized<T>): JsonSerializable<T> {
 	const stringified = JSON.stringify(v);
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
-	return result;
+	return result as JsonSerializable<T>;
 }
 
 /**
- * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
+ * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
  *
  * @remarks All uses are expect to trigger a compile-time error that must be ts-ignore'd.
  *
  * @param v - value to pass through JSON serialization
  * @param error - error expected during serialization round-trip
  */
-function passThruThrows<T>(v: JsonDeserialized<T>, expectedThrow: Error): void {
+function passThruThrows<T>(v: JsonSerializable<T>, expectedThrow: Error): void {
 	assert.throws(() => passThru(v), expectedThrow);
 }
 
-describe("JsonDeserialized", () => {
+describe("JsonSerializable", () => {
 	describe("positive compilation tests", () => {
-		describe("supported primitive types are preserved", () => {
+		describe("supported primitive types", () => {
 			it("boolean", () => {
 				passThru(boolean) satisfies boolean;
 			});
@@ -136,6 +136,10 @@ describe("JsonDeserialized", () => {
 
 		it("empty object is supported", () => {
 			passThru(emptyObject) satisfies typeof emptyObject;
+		});
+
+		it("object with optional `undefined` property is supported", () => {
+			passThru(objectWithOptionalUndefined, {}) satisfies typeof objectWithOptionalUndefined;
 		});
 	});
 
@@ -209,6 +213,27 @@ describe("JsonDeserialized", () => {
 					voidValue,
 				); // voidValue is actually `null`; so, no runtime error.
 			});
+
+			describe("object with `undefined`", () => {
+				it("as exact property type", () => {
+					passThru(
+						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+						objectWithUndefined,
+						{},
+					);
+				});
+				it("in union property", () => {
+					passThru(
+						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+						objectWithNumberOrUndefinedUndefined,
+						{},
+					);
+					passThru(
+						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+						objectWithNumberOrUndefinedNumbered,
+					);
+				});
+			});
 		});
 
 		it("explicit `any` generic still limits allowed types", () => {
@@ -223,63 +248,27 @@ describe("JsonDeserialized", () => {
 
 	describe("special cases", () => {
 		describe("possibly `undefined` property is only supported as optional", () => {
-			describe("with `undefined` in union property becomes optional", () => {
-				it("with undefined value", () => {
-					const objectWithNumberOrUndefinedUndefinedRead = passThru(
-						objectWithNumberOrUndefinedUndefined,
-						{},
-					);
-					// @ts-expect-error `numOrUndef` property (required) should no longer be required
-					objectWithNumberOrUndefinedUndefinedRead satisfies ObjectWithNumberOrUndefined;
-					objectWithNumberOrUndefinedUndefinedRead satisfies Partial<ObjectWithNumberOrUndefined>;
-				});
-
-				it("with defined value", () => {
-					const objectWithNumberOrUndefinedNumberedRead = passThru(
-						objectWithNumberOrUndefinedNumbered,
-					);
-					// @ts-expect-error `numOrUndef` property (required) should no longer be required
-					objectWithNumberOrUndefinedNumberedRead satisfies ObjectWithNumberOrUndefined;
-					objectWithNumberOrUndefinedNumberedRead satisfies Partial<ObjectWithNumberOrUndefined>;
-				});
-			});
-
 			describe("with optional property remains optional", () => {
 				it("without property", () => {
-					const objectWithOptionalNumberNotPresentRead = passThru(
+					passThru(
 						objectWithOptionalNumberNotPresent,
-					);
-					objectWithOptionalNumberNotPresentRead satisfies ObjectWithOptionalNumber;
+					) satisfies typeof objectWithOptionalNumberNotPresent;
 				});
 				it("with undefined value", () => {
-					const objectWithOptionalNumberUndefinedRead = passThru(
+					passThru(
 						objectWithOptionalNumberUndefined,
 						{},
-					);
-					objectWithOptionalNumberUndefinedRead satisfies ObjectWithOptionalNumber;
+					) satisfies typeof objectWithOptionalNumberUndefined;
 				});
 				it("with defined value", () => {
-					const objectWithOptionalNumberDefinedRead = passThru(
+					passThru(
 						objectWithOptionalNumberDefined,
-					);
-					objectWithOptionalNumberDefinedRead satisfies ObjectWithOptionalNumber;
+					) satisfies typeof objectWithOptionalNumberDefined;
 				});
 			});
 		});
 
-		it("`undefined` property is erased", () => {
-			const objectWithUndefinedRead = passThru(objectWithUndefined, {});
-			// @ts-expect-error `undef` property (required) should no longer exist
-			objectWithUndefinedRead satisfies typeof objectWithUndefined;
-			emptyObject satisfies typeof objectWithUndefinedRead;
-
-			const objectWithOptionalUndefinedRead = passThru(objectWithOptionalUndefined, {});
-			objectWithOptionalUndefinedRead satisfies typeof objectWithOptionalUndefined;
-			emptyObject satisfies typeof objectWithOptionalUndefinedRead;
-		});
-
-		it("never property is filtered away", () => {
-			// @ts-expect-error `never` property (type never) should not be preserved
+		it("never property is accepted", () => {
 			passThru(objectWithNever) satisfies typeof objectWithNever;
 			passThru(objectWithNever) satisfies Omit<typeof objectWithNever, "never">;
 		});
