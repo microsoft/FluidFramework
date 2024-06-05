@@ -63,6 +63,7 @@ import {
 import { makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
 import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
@@ -258,10 +259,11 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		assert(
-			this.treeStatus() === TreeStatus.InDocument,
-			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
-		);
+		if (this.treeStatus() !== TreeStatus.InDocument) {
+			throw new UsageError(
+				"Editing only allowed on fields with TreeStatus.InDocument status",
+			);
+		}
 		return this.getFieldPath();
 	}
 }

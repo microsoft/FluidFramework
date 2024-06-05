@@ -663,6 +663,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
     boxedAt(index: number): FlexTreeNode | undefined;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeNode>;
+    getFieldPath(): FieldUpPath;
     is<TSchema extends FlexFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
     isSameAs(other: FlexTreeField): boolean;
     readonly key: FieldKey;
@@ -806,25 +807,41 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes> e
     boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
+    // @deprecated
     insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
+    // @deprecated
     insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
+    // @deprecated
     insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
     // (undocumented)
     readonly length: number;
     map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[];
     mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U): U[];
+    // @deprecated
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    // @deprecated
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    // @deprecated
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    // @deprecated
     moveRangeToStart(sourceStart: number, sourceEnd: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     moveToEnd(sourceIndex: number): void;
+    // @deprecated
     moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     moveToIndex(index: number, sourceIndex: number): void;
+    // @deprecated
     moveToIndex(index: number, sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     moveToStart(sourceIndex: number): void;
+    // @deprecated
     moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+    // @deprecated
     removeAt(index: number): void;
     sequenceEditor(): SequenceFieldEditBuilder;
 }

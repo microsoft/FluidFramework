@@ -4,6 +4,7 @@
  */
 
 import {
+	CursorLocationType,
 	EmptyKey,
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
@@ -44,6 +45,7 @@ import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 /**
  * A generic array type, used to defined types like {@link (TreeArrayNode:interface)}.
@@ -640,18 +642,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "insertAt", true);
-		field.insertAt(index, this.#cursorFromFieldData(value));
+		const content = prepareFieldCursorForInsert(this.#cursorFromFieldData(value));
+		const fieldEditor = field.sequenceEditor();
+		fieldEditor.insert(index, content);
 	}
 	public insertAtStart(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtStart(this.#cursorFromFieldData(value));
+		this.insertAt(0, ...value);
 	}
 	public insertAtEnd(...value: Insertable<T>): void {
-		getSequenceField(this).insertAtEnd(this.#cursorFromFieldData(value));
+		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "removeAt");
-		field.removeAt(index);
+		field.sequenceEditor().remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
@@ -670,48 +674,36 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		const field = getSequenceField(this);
 		validateIndex(sourceIndex, field, "moveToStart");
-		if (source !== undefined) {
-			field.moveToStart(sourceIndex, getSequenceField(source));
-		} else {
-			field.moveToStart(sourceIndex);
-		}
+		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
 		const field = getSequenceField(this);
 		validateIndex(sourceIndex, field, "moveToEnd");
-		if (source !== undefined) {
-			field.moveToEnd(sourceIndex, getSequenceField(source));
-		} else {
-			field.moveToEnd(sourceIndex);
-		}
+		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "moveToIndex", true);
 		validateIndex(sourceIndex, field, "moveToIndex");
-		if (source !== undefined) {
-			field.moveToIndex(index, sourceIndex, getSequenceField(source));
-		} else {
-			field.moveToIndex(index, sourceIndex);
-		}
+		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToStart");
-		if (source !== undefined) {
-			field.moveRangeToStart(sourceStart, sourceEnd, getSequenceField(source));
-		} else {
-			field.moveRangeToStart(sourceStart, sourceEnd);
-		}
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToStart",
+		);
+		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToEnd");
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
-		} else {
-			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
-		}
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToEnd",
+		);
+		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToIndex(
 		index: number,
@@ -722,16 +714,34 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const field = getSequenceField(this);
 		validateIndex(index, field, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
-		if (source !== undefined) {
-			getSequenceField(this).moveRangeToIndex(
-				index,
-				sourceStart,
-				sourceEnd,
-				getSequenceField(source),
-			);
-		} else {
-			getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
+		const sourceField =
+			source !== undefined
+				? field.isSameAs(getSequenceField(source))
+					? field
+					: getSequenceField(source)
+				: field;
+
+		// TODO: determine support for move across different sequence types
+		if (field.schema.types !== undefined && sourceField !== field) {
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode =
+					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
+				if (!field.schema.types.has(sourceNode.schema.name)) {
+					throw new Error("Type in source sequence is not allowed in destination.");
+				}
+			}
 		}
+		const movedCount = sourceEnd - sourceStart;
+		const sourceFieldPath = sourceField.getFieldPath();
+
+		const destinationFieldPath = field.getFieldPath();
+		field.context.checkout.editor.move(
+			sourceFieldPath,
+			sourceStart,
+			movedCount,
+			destinationFieldPath,
+			index,
+		);
 	}
 }
 
@@ -884,7 +894,17 @@ function validateIndexRange(
 ): void {
 	validateIndex(startIndex, array, methodName);
 	validateIndex(endIndex, array, methodName, true);
-	if (startIndex > endIndex) {
+	if (startIndex >= endIndex || array.length < endIndex) {
 		throw new UsageError(`Index value passed to TreeArrayNode.${methodName} is out of bounds.`);
 	}
+}
+
+/**
+ * Prepare a fields cursor (holding a sequence of nodes) for inserting.
+ */
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
+	// TODO: optionally validate content against schema.
+
+	assert(cursor.mode === CursorLocationType.Fields, 0x8cb /* should be in fields mode */);
+	return cursor;
 }
