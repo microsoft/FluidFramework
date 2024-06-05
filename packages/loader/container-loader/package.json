@@ -159,7 +159,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^4.0.0",
+		"@fluidframework/protocol-base": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@ungap/structured-clone": "^1.2.0",
 		"debug": "^4.3.4",
