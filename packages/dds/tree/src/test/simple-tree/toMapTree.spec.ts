@@ -1297,7 +1297,7 @@ describe("toMapTree", () => {
 								new MapNodeStoredSchema(fieldSchema),
 							],
 						]),
-						new Map(),
+						new Map([[fieldSchema.kind, FieldKinds.required]]),
 					);
 				}
 				it("Success", () => {
