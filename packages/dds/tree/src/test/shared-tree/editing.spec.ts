@@ -1558,11 +1558,6 @@ describe("Editing", () => {
 		});
 
 		it("can move a node out from a field and into a field under a sibling", () => {
-			const rootNode2: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
 			const tree = makeTreeFromJson(["A", {}]);
 			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];
