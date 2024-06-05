@@ -5,13 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
 

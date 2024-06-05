@@ -21,6 +21,7 @@ import type { ConsensusRegisterCollection } from "@fluidframework/register-colle
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -32,7 +33,6 @@ import {
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";

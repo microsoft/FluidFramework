@@ -13,6 +13,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -21,7 +22,6 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

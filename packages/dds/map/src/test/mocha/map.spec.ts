@@ -9,13 +9,13 @@ import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils"
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedMap, type IValueChanged, SharedMap } from "../../index.js";
 import type {
@@ -28,8 +28,8 @@ import type {
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
-import type { IMapOperation } from "../../mapKernel.js";
 import { MapFactory } from "../../mapFactory.js";
+import type { IMapOperation } from "../../mapKernel.js";
 
 /**
  * Creates and connects a new {@link ISharedMap}.

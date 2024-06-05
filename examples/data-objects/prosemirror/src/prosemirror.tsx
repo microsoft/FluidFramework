@@ -24,9 +24,9 @@ import {
 	SharedString,
 	reservedRangeLabelsKey,
 } from "@fluidframework/sequence/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { nodeTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";

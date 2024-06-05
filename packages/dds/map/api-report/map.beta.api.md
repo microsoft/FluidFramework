@@ -8,13 +8,33 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import type { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
+
+// @beta @sealed
+export interface ISharedMap extends IEventProvider<ISharedMapEvents>, Map<string, any>, IFluidLoadable {
+    get<T = any>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
+
+// @beta @sealed
+export interface ISharedMapEvents extends IErrorEvent {
+    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @beta @sealed
+export interface IValueChanged {
+    readonly key: string;
+    readonly previousValue: any;
+}
 
 ```

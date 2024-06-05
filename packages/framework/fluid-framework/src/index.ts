@@ -54,6 +54,8 @@ export * from "@fluidframework/tree";
 // ---------------------------------------------------------------
 // #region Custom re-exports
 
+import { SharedMap as OriginalSharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
@@ -71,9 +73,6 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
 // Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
 // eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
-
-import type { ISharedMap } from "@fluidframework/map/internal";
-import { SharedMap as OriginalSharedMap } from "@fluidframework/map/internal";
 
 /**
  * Entrypoint for {@link @fluidframework/map#ISharedMap} creation.

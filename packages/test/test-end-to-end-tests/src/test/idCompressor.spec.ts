@@ -24,6 +24,7 @@ import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/dr
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -35,7 +36,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;

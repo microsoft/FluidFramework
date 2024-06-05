@@ -23,6 +23,7 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
 	UsageError,
@@ -30,7 +31,6 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 

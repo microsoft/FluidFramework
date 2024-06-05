@@ -26,6 +26,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { SharedMap } from "../../map.js";
 import { MapFactory } from "../../mapFactory.js";
+
 import { _dirname } from "./dirname.cjs";
 
 interface Clear {

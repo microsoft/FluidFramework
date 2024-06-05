@@ -9,6 +9,7 @@
  */
 
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type IDirectory,
@@ -23,7 +24,6 @@ import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { EditType } from "../CommonInterfaces.js";
 

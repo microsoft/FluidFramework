@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -24,7 +25,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

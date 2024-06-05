@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import {
 	type IDirectory,
