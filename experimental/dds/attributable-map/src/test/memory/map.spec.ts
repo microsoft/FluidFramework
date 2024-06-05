@@ -6,8 +6,8 @@
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { AttributableMapClass, MapFactory } from "../../map.js";
 import type { ISharedMap } from "../../interfaces.js";
+import { AttributableMapClass, MapFactory } from "../../map.js";
 
 function createLocalMap(id: string): ISharedMap {
 	const map: ISharedMap = new AttributableMapClass(

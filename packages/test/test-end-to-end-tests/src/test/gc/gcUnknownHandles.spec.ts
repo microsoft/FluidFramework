@@ -15,13 +15,13 @@ import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -78,7 +78,11 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	 */
 	async function getGCNodesFromSummary() {
 		await provider.ensureSynchronized();
-		const { summary } = await summarizerRuntime.summarize({ runGC: true, trackState: false });
+		const { summary } = await summarizerRuntime.summarize({
+			runGC: true,
+			trackState: false,
+			fullTree: true,
+		});
 		const gcState = getGCStateFromSummary(summary);
 		assert(gcState !== undefined, "GC tree is not available in the summary");
 		return new Set(Object.keys(gcState));

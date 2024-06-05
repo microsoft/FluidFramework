@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, Compatibility } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
+import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
 	NodeKeyManager,
@@ -50,14 +50,14 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 */
 	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
 	private readonly flexConfig: TreeContent;
-	public readonly events: ISubscribable<TreeViewEvents> &
+	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
-	private disposed = false;
+	public disposed = false;
 
 	private readonly rootFieldSchema: FieldSchema;
 
@@ -206,7 +206,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		return view instanceof SchematizeError ? view : undefined;
 	}
 
-	public [disposeSymbol](): void {
+	public dispose(): void {
 		this.getViewOrError();
 		this.disposed = true;
 		this.disposeView();

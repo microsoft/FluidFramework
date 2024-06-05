@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
