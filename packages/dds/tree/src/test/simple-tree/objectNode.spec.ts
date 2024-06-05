@@ -21,7 +21,6 @@ describe("ObjectNode", () => {
 				toString: schemaFactory.optional(schemaFactory.number),
 			}) {}
 			{
-				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				const n = hydrate(Schema, { toString: 1 });
 				assert.equal(n.toString, 1);
 				n.toString = undefined;
@@ -29,7 +28,6 @@ describe("ObjectNode", () => {
 			}
 
 			{
-				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				const n = hydrate(Schema, { toString: undefined });
 				const x = n.toString;
 				assert.equal(x, undefined);
@@ -82,7 +80,6 @@ describe("ObjectNode", () => {
 				constructor: schemaFactory.number,
 			}) {}
 
-			// @ts-expect-error TODO
 			const n = hydrate(Schema, { constructor: 5 });
 
 			const x = n.constructor;
