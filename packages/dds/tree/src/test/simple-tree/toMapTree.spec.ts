@@ -32,6 +32,7 @@ import {
 	ContextualFieldProvider,
 	ConstantFieldProvider,
 	FieldProvider,
+	FieldProps,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
@@ -43,7 +44,6 @@ import {
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
-import { FieldProps } from "../../../dist/index.js";
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;
