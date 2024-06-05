@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {

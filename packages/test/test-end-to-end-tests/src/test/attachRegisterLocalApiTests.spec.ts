@@ -15,6 +15,7 @@ import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
@@ -25,7 +26,6 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states

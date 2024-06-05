@@ -79,7 +79,7 @@ export class ForestSummarizer implements Summarizable {
 		// TODO: Encode all detached fields in one operation for better performance and compression
 		forEachField(rootCursor, (cursor) => {
 			const key = cursor.getFieldKey();
-			const innerCursor = this.forest.allocateCursor();
+			const innerCursor = this.forest.allocateCursor("getTreeString");
 			assert(
 				this.forest.tryMoveCursorToField(
 					{ fieldKey: key, parent: undefined },

@@ -5,8 +5,8 @@
 
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable jsdoc/check-indentation */
 

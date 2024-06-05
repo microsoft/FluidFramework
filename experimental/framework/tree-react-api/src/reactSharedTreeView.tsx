@@ -11,8 +11,8 @@ import {
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ITree,
 	type SchemaIncompatible,

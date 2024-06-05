@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceEvents,
 	IDocumentDeltaConnection,
@@ -19,7 +20,6 @@ import {
 	RateLimiter,
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,

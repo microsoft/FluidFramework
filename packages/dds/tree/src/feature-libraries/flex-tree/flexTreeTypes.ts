@@ -131,6 +131,11 @@ export enum TreeStatus {
 	 * Is removed and cannot be added back to the original document tree.
 	 */
 	Deleted = 2,
+
+	/**
+	 * Is created but has not yet been inserted into the tree.
+	 */
+	New = 3,
 }
 
 /**

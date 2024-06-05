@@ -13,6 +13,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -37,7 +38,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 import {
