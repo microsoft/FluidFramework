@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { Quorum } from "../protocol/index.js";
 

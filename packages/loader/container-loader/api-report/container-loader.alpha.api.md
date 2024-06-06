@@ -24,13 +24,12 @@ import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-defi
 import { IQuorum } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISequencedClient } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISequencedProposal } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export enum ConnectionState {

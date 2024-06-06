@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedClient } from "@fluidframework/driver-definitions";
 import {
+	ISequencedDocumentMessage,
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
@@ -50,7 +51,7 @@ export interface IProtocolHandler {
  */
 export class ProtocolOpHandler implements IProtocolHandler {
 	private readonly _quorum: Quorum;
-	public get quorum(): Quorum {
+	public get quorum(): IQuorum {
 		return this._quorum;
 	}
 

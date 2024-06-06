@@ -24,6 +24,7 @@ import {
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
+import type { Quorum } from "../protocol/index.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManager
@@ -119,7 +120,7 @@ describe("Container", () => {
 			);
 
 			const client: Partial<IClient> = { mode: "write" };
-			protocolHandler.quorum.addMember("fakeClient", {
+			(protocolHandler.quorum as Quorum).addMember("fakeClient", {
 				client: client as IClient,
 				sequenceNumber: 10,
 			});

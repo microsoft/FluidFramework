@@ -26,7 +26,6 @@ export {
 	ProtocolOpHandler,
 	IScribeProtocolState,
 	IQuorumSnapshot,
-	Quorum,
 	QuorumClientsSnapshot,
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
