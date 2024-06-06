@@ -13,14 +13,12 @@ import type {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import {
-	type IClientDetails,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+import { type IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
 	IDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type FlushMode,
 	type IContainerRuntimeBase,

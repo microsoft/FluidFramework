@@ -10,7 +10,7 @@ import { IChannelServices } from '@fluidframework/datastore-definitions/internal
 import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';

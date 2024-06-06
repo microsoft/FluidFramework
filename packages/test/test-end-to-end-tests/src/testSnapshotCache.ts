@@ -52,6 +52,9 @@ export class TestSnapshotCache implements IPersistedCache {
 			}
 		}
 	}
+	/**
+	 * Clears the document cache, but locally still keeps the version cache to allow controlling of which cached versions to load from
+	 */
 	public clearCache(): void {
 		this.cache.clear();
 	}

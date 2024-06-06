@@ -42,8 +42,6 @@ import {
 	IClientDetails,
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
@@ -64,6 +62,8 @@ import {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -983,7 +983,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.isDirty,
+			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 		);
 
 		const isDomAvailable =
