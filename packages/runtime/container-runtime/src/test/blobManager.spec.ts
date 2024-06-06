@@ -21,12 +21,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
+	IDocumentStorageService,
 	ISequencedDocumentMessage,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LoggingError,
 	MonitoringContext,

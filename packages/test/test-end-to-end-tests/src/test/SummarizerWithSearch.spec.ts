@@ -21,13 +21,14 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	DriverHeader,
 	type IDocumentServiceFactory,
 	ISummaryContext,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

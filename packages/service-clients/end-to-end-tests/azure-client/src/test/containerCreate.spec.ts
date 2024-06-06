@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
@@ -16,6 +15,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,

@@ -76,7 +76,6 @@ describe("Garbage Collection Stats", () => {
 
 		// The runtime to be passed to the garbage collector.
 		const gcRuntime: IGarbageCollectionRuntime = {
-			updateStateBeforeGC: async () => {},
 			getGCData: async (fullGC?: boolean) => defaultGCData,
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };

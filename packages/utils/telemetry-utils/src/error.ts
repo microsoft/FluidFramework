@@ -9,7 +9,7 @@ import {
 	IGenericError,
 	IUsageError,
 } from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
 	LoggingError,

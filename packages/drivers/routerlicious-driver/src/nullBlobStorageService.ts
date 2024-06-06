@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
@@ -10,7 +11,6 @@ import {
 	ISnapshotTree,
 	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
 
 /**
  * Document access to underlying storage. It is default implementation of a storage service.

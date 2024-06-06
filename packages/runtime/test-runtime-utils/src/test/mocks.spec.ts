@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
+
 import { MockHandle } from "../mockHandle.js";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
 
 describe("MockContainerRuntime", () => {
 	it("inherits its id from the datastore when set", () => {

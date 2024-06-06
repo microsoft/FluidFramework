@@ -263,7 +263,24 @@ export interface FieldProps {
 	readonly defaultProvider?: DefaultProvider;
 }
 
-export type FieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
+/**
+ * A {@link FieldProvider} which requires additional context in order to produce its content
+ */
+export type ContextualFieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
+/**
+ * A {@link FieldProvider} which can produce its content in a vacuum
+ */
+export type ConstantFieldProvider = () => InsertableContent | undefined;
+/**
+ * A function which produces content for a field every time that it is called
+ */
+export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
+/**
+ * Returns true if the given {@link FieldProvider} is a {@link ConstantFieldProvider}
+ */
+export function isConstant(fieldProvider: FieldProvider): fieldProvider is ConstantFieldProvider {
+	return fieldProvider.length === 0;
+}
 
 /**
  * Provides a default value for a field.

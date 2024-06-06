@@ -93,7 +93,7 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- * @public
+ * @alpha
  */
 export interface ITrace {
 	/**
@@ -189,7 +189,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- * @public
+ * @alpha
  */
 export interface IBranchOrigin {
 	/**
@@ -210,7 +210,7 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- * @public
+ * @alpha
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -332,7 +332,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- * @public
+ * @alpha
  */
 export interface ISignalMessageBase {
 	/**
@@ -364,7 +364,7 @@ export interface ISignalMessageBase {
 
 /**
  * Interface for signals sent by the server to clients.
- * @public
+ * @alpha
  */
 export interface ISignalMessage extends ISignalMessageBase {
 	/**

@@ -19,14 +19,15 @@ import {
 	IErrorBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
 	type ISnapshotTree,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,

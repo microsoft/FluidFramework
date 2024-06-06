@@ -257,7 +257,7 @@ export class ModularChangeFamily
 				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
-				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
+				const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 				const composeNodes = (
 					child1: NodeId | undefined,
 					child2: NodeId | undefined,
@@ -692,7 +692,7 @@ export class ModularChangeFamily
 				context.rebasedChange.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					baseChangeset,
-					(curr, base, existenceState) => curr,
+					(curr, base, existenceState) => curr ?? base,
 					genId,
 					newCrossFieldManager(crossFieldTable, field),
 					rebaseMetadata,

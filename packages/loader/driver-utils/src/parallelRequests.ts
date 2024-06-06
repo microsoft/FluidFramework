@@ -10,8 +10,8 @@ import {
 	IDeltasFetchResult,
 	IStream,
 	IStreamResult,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";

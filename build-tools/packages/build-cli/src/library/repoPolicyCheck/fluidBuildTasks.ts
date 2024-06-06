@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import {
 	FluidRepo,
@@ -15,12 +16,15 @@ import {
 	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
 	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
-import * as JSON5 from "json5";
+import JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
 import { Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
+
+const require = createRequire(import.meta.url);
 
 /**
  * Get and cache the tsc check ignore setting
@@ -203,11 +207,11 @@ interface EslintConfig {
  * @param json - content of the package.json
  * @returns list of build script names that the eslint depends on
  */
-function eslintGetScriptDependencies(
+async function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
 	json: Readonly<PackageJson>,
-): (string | string[])[] {
+): Promise<(string | string[])[]> {
 	if (json.scripts?.eslint === undefined) {
 		return [];
 	}
@@ -221,15 +225,16 @@ function eslintGetScriptDependencies(
 	let config: EslintConfig;
 	try {
 		const { ext } = path.parse(eslintConfig);
+		if (ext === ".mjs") {
+			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
+		}
+
 		if (ext !== ".js" && ext !== ".cjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			// TODO: Ideally loading the eslint config should use import() instead of require() but right now policy resolvers
-			// are synchronous. If they are made async in the future, then this code should be updated to use dynamic import.
-
-			// eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
+			// This code assumes that the eslint config will be in CommonJS, because if it's ESM the require call will fail.
 			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
@@ -678,20 +683,23 @@ export const handlers: Handler[] = [
 				return;
 			}
 			try {
-				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (error: unknown) {
 				return (error as Error).message;
 			}
 		},
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
+		resolver: async (
+			file: string,
+			root: string,
+		): Promise<{ resolved: boolean; message?: string }> => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			await updatePackageJsonFileAsync(path.dirname(file), async (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
 				try {
-					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (error: unknown) {
 					result = { resolved: false, message: (error as Error).message };

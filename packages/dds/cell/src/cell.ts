@@ -10,9 +10,11 @@ import {
 	type Serializable,
 	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,
 	type AttributionKey,

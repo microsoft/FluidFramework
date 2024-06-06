@@ -6,11 +6,14 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
 	type IAnyDriverError,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -26,11 +29,6 @@ import {
 	OdspErrorTypes,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	IFluidErrorBase,
 	MonitoringContext,

@@ -8,9 +8,12 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentMessage,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
 	IEventSampler,
 	ITelemetryLoggerExt,

@@ -11,6 +11,7 @@ import {
 	randomColor,
 } from "@fluid-example/bubblebench-common";
 import type { TreeView } from "@fluidframework/tree";
+
 import { type App, Client } from "./schema.js";
 
 export class AppState implements IAppState {

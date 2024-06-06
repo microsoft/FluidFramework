@@ -5,17 +5,19 @@
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
+
 import type { IFluidTelemetry } from "../index.js";
+
+import {
+	type IFluidContainerSystemEventName,
+	IFluidContainerSystemEventNames,
+} from "./containerSystemEvents.js";
 import {
 	ContainerTelemetryEventNames,
 	type ContainerTelemetryEventName,
 	type IContainerTelemetry,
 	type ContainerDisposedTelemetry,
 } from "./containerTelemetry.js";
-import {
-	type IFluidContainerSystemEventName,
-	IFluidContainerSystemEventNames,
-} from "./containerSystemEvents.js";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link @fluidframework/fluid-static#IFluidContainerEvents}.

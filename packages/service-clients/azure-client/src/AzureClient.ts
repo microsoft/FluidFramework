@@ -12,20 +12,23 @@ import {
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { type IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type CompatibilityMode,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 

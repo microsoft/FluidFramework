@@ -304,3 +304,5 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export { MapTreeNode, getOrCreateMapTreeNode, tryGetMapTreeNode } from "./flex-map-tree/index.js";

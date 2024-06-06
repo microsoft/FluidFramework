@@ -10,6 +10,8 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IResolvedUrl,
@@ -19,18 +21,17 @@ import {
 	ISnapshotTree,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
-import { Deferred } from "@fluidframework/core-utils/internal";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type IPendingContainerState,
 	SerializedStateManager,
 	type ISerializedStateManagerDocumentStorageService,
 } from "../serializedStateManager.js";
+
 import { failSometimeProxy } from "./failProxy.js";
 
 const snapshot = {

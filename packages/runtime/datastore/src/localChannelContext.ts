@@ -4,14 +4,13 @@
  */
 
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import {
 	IDocumentStorageService,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
@@ -204,7 +203,6 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
 	) {
@@ -226,7 +224,6 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					dataStoreContext.connected,
 					submitFn,
 					this.dirtyFn,
-					addedGCOutboundReferenceFn,
 					() => this.isGloballyVisible,
 					storageService,
 					logger,
@@ -323,7 +320,6 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
-		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
 		super(
 			channel.id,
@@ -333,7 +329,6 @@ export class LocalChannelContext extends LocalChannelContextBase {
 					dataStoreContext.connected,
 					submitFn,
 					this.dirtyFn,
-					addedGCOutboundReferenceFn,
 					() => this.isGloballyVisible,
 					storageService,
 					logger,
