@@ -77,7 +77,7 @@ export enum FileMode {
 }
 
 // @alpha (undocumented)
-export type FiveDaysMs = 432000000;
+export type FiveDaysMs = 432_000_000;
 
 // @alpha
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
@@ -113,7 +113,7 @@ export interface IBlob {
     encoding: "utf-8" | "base64";
 }
 
-// @public
+// @alpha
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -440,7 +440,7 @@ export interface ISequencedClient {
     sequenceNumber: number;
 }
 
-// @public
+// @alpha
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -474,12 +474,12 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @public
+// @alpha
 export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @public
+// @alpha
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
@@ -636,7 +636,7 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public
+// @alpha
 export interface ITrace {
     action: string;
     service: string;
