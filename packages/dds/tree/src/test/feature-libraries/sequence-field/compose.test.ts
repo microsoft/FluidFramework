@@ -1378,15 +1378,24 @@ export function testCompose() {
 
 		it("remove (rollback) ○ insert", () => {
 			const insertA = tagChangeInline([Mark.insert(1, brand(0))], tag1);
-			const removeB = tagChangeInline([Mark.remove(1, brand(0))], tag3, tag2);
+			const removeB = tagChangeInline(
+				[Mark.remove(1, brand(0), { idOverride: { revision: tag2, localId: brand(0) } })],
+				tag3,
+				tag2,
+			);
 			const composed = shallowCompose([removeB, insertA]);
 
-			// B is the inverse of a new attach. Since that new attach comes after A (temporally),
+			// B is the inverse of a new attach that is sequenced after insertA.
+			// Since that new attach comes after A (temporally),
 			// its tiebreak policy causes the cell to come before A's insert (spatially).
 			// When composing the rollback with A's insert, the remove should come before the insert,
 			// even though A's insert has a tiebreak policy which puts it before other new cells.
 			const expected = [
-				Mark.remove(1, { revision: tag3, localId: brand(0) }),
+				Mark.remove(
+					1,
+					{ revision: tag3, localId: brand(0) },
+					{ idOverride: { revision: tag2, localId: brand(0) } },
+				),
 				Mark.insert(1, { revision: tag1, localId: brand(0) }),
 			];
 

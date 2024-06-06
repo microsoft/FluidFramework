@@ -145,6 +145,9 @@ export class PendingStateManager implements IDisposable {
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
 		);
+		// Using snapshot sequence number to filter ops older than our latest snapshot.
+		// Such ops should not be declared in pending/stashed state. Snapshot seq num will not
+		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,

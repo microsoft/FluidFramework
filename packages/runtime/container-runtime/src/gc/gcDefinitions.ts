@@ -77,8 +77,6 @@ export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombston
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 /** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
-export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 

@@ -2685,12 +2685,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(
-					messageWithContext.message,
-					local,
-					localOpMetadata,
-					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
-				);
+				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
@@ -3415,19 +3410,13 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * Called when a new outbound route is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	) {
-		this.garbageCollector.addedOutboundReference(
-			srcHandle.absolutePath,
-			outboundHandle.absolutePath,
-		);
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this.garbageCollector.addedOutboundReference(fromPath, toPath);
 	}
 
 	/**
