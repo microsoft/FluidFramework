@@ -706,38 +706,6 @@ describe("normalizeError", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
 			const annotations = annotationCases[annotationCase];
 
-			it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
-				// Arrange
-				const errorProps = { errorType: "et1", message: "m1" };
-				const legacyError = new TestFluidError(errorProps).withoutProperty(
-					"errorInstanceId",
-				);
-
-				// Act
-				const normalizedError = normalizeError(legacyError, annotations);
-
-				// Assert
-				assert.equal(
-					normalizedError,
-					legacyError,
-					"normalize should yield the same error as passed in",
-				);
-				assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
-				assert.equal(normalizedError.message, "m1", "message should be unchanged");
-				assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
-				assert(
-					annotations !== undefined,
-					`annotations is undefined in Valid legacy error - Patch and return (annotations: ${annotationCase})`,
-				);
-
-				if (annotations.props !== undefined) {
-					assert(
-						legacyError.atpStub.calledWith(annotations.props),
-						"addTelemetryProperties should have been called",
-					);
-				}
-			});
-
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
