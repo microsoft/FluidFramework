@@ -29,6 +29,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const testConfigs = generatePairwiseOptions({
@@ -41,12 +42,12 @@ const testConfigs = generatePairwiseOptions({
 	waitForRefresh: [true, false],
 	idCompressorEnabled: ["on", undefined, "delayed"],
 	loadOffline: [true, false],
+	useLoadingGroupIdForSnapshotFetch: [true, false],
 });
 
 /**
  * Load a Container using testContainerConfig and the given testObjectProvider,
- * Deferring connection to the service until the returned connect function is called
- * (simulating returning from offline)
+ * Deferring connection to the service indefinetely for this scenario
  *
  * @param testObjectProvider - For accessing Loader/Driver
  * @param request - Request to use when loading
@@ -132,11 +133,32 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 		});
 	};
 
+	const createDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+		const containerRuntime = dataObject.context.containerRuntime;
+		const packagePath = dataObject.context.packagePath;
+		const dataStore = await containerRuntime.createDataStore(packagePath, groupId);
+		dataObject.root.set(groupId, dataStore.entryPoint);
+		return (await dataStore.entryPoint.get()) as ITestFluidObject;
+	};
+
+	const getDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+		const handle = dataObject.root.get<IFluidHandle<ITestFluidObject>>(groupId);
+		assert(handle !== undefined, "groupId handle should exist");
+		const dataStore = await handle.get();
+		return dataStore;
+	};
+
 	for (const testConfig of testConfigs) {
 		it(`Snapshot refresh life cycle: ${JSON.stringify(
 			testConfig ?? "undefined",
 		)}`, async () => {
 			const provider: ITestObjectProvider = getTestObjectProvider();
+			if (
+				testConfig.useLoadingGroupIdForSnapshotFetch === true &&
+				provider.driver.type !== "local"
+			) {
+				return;
+			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
@@ -159,11 +181,14 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 					configProvider: configProvider({
 						"Fluid.Container.enableOfflineLoad": true,
 						"Fluid.Container.enableOfflineSnapshotRefresh": true,
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch":
+							testConfig.useLoadingGroupIdForSnapshotFetch,
 					}),
 				},
 			};
 
 			const loader = provider.makeTestLoader(testContainerConfig);
+			// Original container. It will help us to send remote ops
 			const container = await createAndAttachContainer(
 				provider.defaultCodeDetails,
 				loader,
@@ -174,16 +199,25 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 			assert(url);
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-			map.set("hello", "world");
+			let i = 0;
+			let j = 0;
+			map.set(`${i}`, i++);
+			// first container that will be stashed. It could have saved, pending or remote ops
+			// at the moment of stashing.
 			const container1: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container1);
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
-			let i = 0;
+			const groupId = "groupId";
+			const groupIdDataObject = await createDataStoreWithGroupId(dataStore, groupId);
+			await provider.ensureSynchronized();
+			const groupIdDataObject1 = await getDataStoreWithGroupId(dataStore1, groupId);
+
 			if (testConfig.savedOps) {
 				map1.set(`${i}`, i++);
+				groupIdDataObject1.root.set(`${j}`, j++);
 				await waitForSummary(container1);
 				await provider.ensureSynchronized();
 			}
@@ -192,24 +226,32 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 				await provider.opProcessingController.pauseProcessing(container1);
 				map1.set(`${i}`, i++);
 				map1.set(`${i}`, i++);
+				groupIdDataObject1.root.set(`${j}`, j++);
 			}
 			if (testConfig.remoteOps) {
 				map.set(`${i}`, i++);
 				map.set(`${i}`, i++);
+				groupIdDataObject.root.set(`${j}`, j++);
+				await provider.ensureSynchronized(container);
 			}
 
 			const pendingOps = await container1.closeAndGetPendingLocalState?.();
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
+				map.set(`${i}`, i++);
 				await waitForSummary(container);
 			}
 
+			// container loaded from previous pending state. The snapshot should refresh
+			// in case a summary has already happened. Such snapshot could be the first one to
+			// have a data store with groupId
 			const container2: IContainerExperimental = testConfig.loadOffline
 				? await loadOffline(testContainerConfig, provider, { url }, pendingOps)
 				: await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+			const groupIdDataObject2 = await getDataStoreWithGroupId(dataStore2, groupId);
 			const summaryExists = testConfig.savedOps || testConfig.summaryWhileOffline;
 
 			// We can only wait for snapshot refresh if a summary exists and we're online
@@ -219,9 +261,10 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 				});
 			}
 
-			// we can't produce a summary offline
+			// we can't produce a summary while offline
 			if (testConfig.savedOps2 && !testConfig.loadOffline) {
 				map2.set(`${i}`, i++);
+				groupIdDataObject2.root.set(`${j}`, j++);
 				await waitForSummary(container2);
 				await provider.ensureSynchronized();
 			}
@@ -231,16 +274,44 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 					await provider.opProcessingController.pauseProcessing(container2);
 				map2.set(`${i}`, i++);
 				map2.set(`${i}`, i++);
+				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
 			const pendingOps2 = await container2.closeAndGetPendingLocalState?.();
+			// first container which loads from a snapshot with groupId
 			const container3: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+			const groupIdDataObject3 = await getDataStoreWithGroupId(dataStore3, groupId);
 			await waitForContainerConnection(container3, true);
 			await provider.ensureSynchronized();
+
+			// last case with both saved and pending ops
+			map3.set(`${i}`, i++);
+			groupIdDataObject3.root.set(`${j}`, j++);
+			await waitForSummary(container3);
+			await provider.opProcessingController.pauseProcessing(container3);
+			map3.set(`${i}`, i++);
+			map3.set(`${i}`, i++);
+			groupIdDataObject3.root.set(`${j}`, j++);
+
+			const pendingOps3 = await container3.closeAndGetPendingLocalState?.();
+			// container created just for validation.
+			const container4: IContainerExperimental = await loader.resolve({ url }, pendingOps3);
+			const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
+			const map4 = await dataStore4.getSharedObject<ISharedMap>(mapId);
+			const groupIdDataObject4 = await getDataStoreWithGroupId(dataStore4, groupId);
+			await waitForContainerConnection(container4, true);
+			await provider.ensureSynchronized();
+
+			assert.strictEqual(map4.size, i);
 			for (let k = 0; k < i; k++) {
-				assert.strictEqual(map3.get(`${k}`), k);
+				assert.strictEqual(map4.get(`${k}`), k);
+			}
+			// that +1 is the mapId key.
+			assert.strictEqual(groupIdDataObject4.root.size, j + 1);
+			for (let l = 0; l < j; l++) {
+				assert.strictEqual(groupIdDataObject4.root.get(`${l}`), l);
 			}
 		});
 	}
