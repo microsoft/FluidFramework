@@ -502,7 +502,7 @@ function createArrayNodeProxy(
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
-				throw new Error(
+				throw new UsageError(
 					"Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs to alter the array, and do not shadow index properties.",
 				);
 			}
