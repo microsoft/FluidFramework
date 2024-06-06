@@ -41,7 +41,7 @@ export function createOdspClient(
 		throw new Error("site url is missing");
 	}
 	if (driveId === "" || driveId === undefined) {
-		throw new Error("RaaS drive id is missing");
+		throw new Error("SharePoint Embedded container id is missing");
 	}
 
 	if (clientId === "" || clientId === undefined) {
