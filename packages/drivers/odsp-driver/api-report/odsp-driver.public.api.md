@@ -18,7 +18,7 @@ import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/interna
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions/internal';

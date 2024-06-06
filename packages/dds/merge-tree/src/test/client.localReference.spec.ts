@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { Client } from "../client.js";
 import {

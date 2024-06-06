@@ -141,13 +141,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
-export interface IBranchOrigin {
-    id: string;
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-}
-
-// @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
@@ -233,27 +226,6 @@ export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.Inter
 }
 
 // @public
-export interface ISequencedDocumentMessage {
-    clientId: string | null;
-    clientSequenceNumber: number;
-    // @deprecated
-    compression?: string;
-    contents: unknown;
-    data?: string;
-    // @deprecated
-    expHash1?: string;
-    metadata?: unknown;
-    minimumSequenceNumber: number;
-    origin?: IBranchOrigin;
-    referenceSequenceNumber: number;
-    sequenceNumber: number;
-    serverMetadata?: unknown;
-    timestamp: number;
-    traces?: ITrace[];
-    type: string;
-}
-
-// @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
@@ -275,13 +247,6 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
-}
-
-// @public
-export interface ITrace {
-    action: string;
-    service: string;
-    timestamp: number;
 }
 
 // @public
