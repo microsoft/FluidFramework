@@ -25,7 +25,6 @@ import {
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
 import { IConnectionDetailsInternal } from "../contracts.js";
-import type { Quorum } from "../protocol/index.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
@@ -173,12 +172,10 @@ describe("ConnectionStateHandler Tests", () => {
 		); // readClientsWaitForJoinSignal
 
 		connectionStateHandler_receivedAddMemberEvent = (id: string) => {
-			(protocolHandler.quorum as Quorum).addMember(id, {
-				client: {},
-			} as any as ISequencedClient);
+			protocolHandler.quorum.addMember(id, { client: {} } as any as ISequencedClient);
 		};
 		connectionStateHandler_receivedRemoveMemberEvent = (id: string) => {
-			(protocolHandler.quorum as Quorum).removeMember(id);
+			protocolHandler.quorum.removeMember(id);
 		};
 		connectionStateHandler_receivedJoinSignalEvent = (details: IConnectionDetailsInternal) => {
 			protocolHandler.audience.addMember(details.clientId, {

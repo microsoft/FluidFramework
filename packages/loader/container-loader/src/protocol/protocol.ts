@@ -4,8 +4,8 @@
  */
 
 import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	ISequencedDocumentMessage,
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
@@ -51,7 +51,7 @@ export interface IProtocolHandler {
  */
 export class ProtocolOpHandler implements IProtocolHandler {
 	private readonly _quorum: Quorum;
-	public get quorum(): IQuorum {
+	public get quorum(): Quorum {
 		return this._quorum;
 	}
 
