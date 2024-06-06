@@ -165,9 +165,9 @@
     }
   },
   "root": {
-    "kind": "Value",
+    "kind": "Identifier",
     "types": [
-      "test.numericMap"
+      "com.fluidframework.leaf.string"
     ]
   }
 }
