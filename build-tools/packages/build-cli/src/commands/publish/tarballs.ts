@@ -90,10 +90,10 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 			publishArgs.push("--dry-run");
 		}
 
-		// eslint-disable-next-line unicorn/no-await-expression-member
-		const packageOrder = (await readLines(orderFile)).filter((line) => {
-			return line !== "" && line !== undefined;
-		});
+		const packageOrder = await readLines(orderFile).then((lines) =>
+			// filter out empty lines
+			lines.filter((line) => line !== undefined && line !== ""),
+		);
 
 		const tarballs = await globby(["*.tgz"], { cwd: dir, absolute: true });
 		const tarballMetadata = new Map<string, TarballMetadata>();
