@@ -229,8 +229,8 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 ```
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
-    [--node10TypeCompat]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
+    [--outFileSuffix <value>] [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
@@ -238,6 +238,7 @@ FLAGS
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
+  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
   --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
                             '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                             package.

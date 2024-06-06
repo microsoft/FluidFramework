@@ -29,7 +29,6 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -37,6 +36,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
