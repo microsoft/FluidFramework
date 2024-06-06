@@ -156,21 +156,55 @@ export function cursorFromFieldData(
  * * `-0` =\> `+0`
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
+ * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
+ * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
  */
-export function nodeDataToMapTree(
+export function mapTreeFromNodeData(
+	data: InsertableContent,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree;
+export function mapTreeFromNodeData(
+	data: InsertableContent | undefined,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree | undefined;
+export function mapTreeFromNodeData(
+	data: InsertableContent | undefined,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
+	schemaValidationPolicy?: SchemaAndPolicy,
+): MapTree | undefined {
+	if (data === undefined) {
+		return undefined;
+	}
+
+	const mapTree = nodeDataToMapTree(
+		data,
+		normalizeAllowedTypes(allowedTypes),
+		schemaValidationPolicy,
+	);
+	addDefaultsToMapTree(mapTree, allowedTypes, context);
+	return mapTree;
+}
+
+function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree;
-export function nodeDataToMapTree(
+function nodeDataToMapTree(
 	data: InsertableContent | undefined,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree | undefined;
-export function nodeDataToMapTree(
+function nodeDataToMapTree(
 	data: InsertableContent | undefined,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schemaValidationPolicy?: SchemaAndPolicy,

@@ -26,8 +26,6 @@ import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
 	FieldKind,
 	createFieldSchema,
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
 	type TreeNodeSchema,
 	ContextualFieldProvider,
 	ConstantFieldProvider,
@@ -39,7 +37,7 @@ import {
 	addDefaultsToMapTree,
 	cursorFromFieldData,
 	cursorFromNodeData,
-	nodeDataToMapTree as nodeDataToMapTreeBase,
+	mapTreeFromNodeData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
@@ -51,27 +49,11 @@ describe("toMapTree", () => {
 		nodeKeyManager = new MockNodeKeyManager();
 	});
 
-	/**
-	 * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
-	 * convenience.
-	 */
-	function nodeDataToMapTree(
-		tree: InsertableContent,
-		allowedTypes: ImplicitAllowedTypes,
-		schemaValidationPolicy?: SchemaAndPolicy,
-	): MapTree {
-		return nodeDataToMapTreeBase(
-			tree,
-			normalizeAllowedTypes(allowedTypes),
-			schemaValidationPolicy,
-		);
-	}
-
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
 
-		const actual = nodeDataToMapTree(tree, [schemaFactory.string]);
+		const actual = mapTreeFromNodeData(tree, [schemaFactory.string]);
 
 		const expected: MapTree = {
 			type: leaf.string.name,
@@ -86,7 +68,7 @@ describe("toMapTree", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const schema = schemaFactory.null;
 
-		const actual = nodeDataToMapTree(null, [schema]);
+		const actual = mapTreeFromNodeData(null, [schema]);
 
 		const expected: MapTree = {
 			type: leaf.null.name,
@@ -103,7 +85,7 @@ describe("toMapTree", () => {
 
 		const tree = new MockHandle<string>("mock-fluid-handle");
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+		const actual = mapTreeFromNodeData(tree, [schema]);
 
 		const expected: MapTree = {
 			type: brand(schemaFactory.handle.identifier),
@@ -123,7 +105,7 @@ describe("toMapTree", () => {
 			y: schemaFactory.optionalRecursive(() => Foo),
 		}) {}
 
-		const actual = nodeDataToMapTree(
+		const actual = mapTreeFromNodeData(
 			{
 				x: {
 					y: {
@@ -177,7 +159,7 @@ describe("toMapTree", () => {
 		};
 
 		assert.throws(
-			() => nodeDataToMapTree(tree, Foo),
+			() => mapTreeFromNodeData(tree, Foo),
 			(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
 		);
 	});
@@ -186,7 +168,7 @@ describe("toMapTree", () => {
 		const schemaFactory = new SchemaFactory("test");
 
 		assert.throws(
-			() => nodeDataToMapTree("Hello world", [schemaFactory.number]),
+			() => mapTreeFromNodeData("Hello world", [schemaFactory.number]),
 			(error: Error) =>
 				validateAssertionError(
 					error,
@@ -202,7 +184,7 @@ describe("toMapTree", () => {
 
 			const tree: number[] = [];
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.array"),
@@ -222,7 +204,7 @@ describe("toMapTree", () => {
 			const handle = new MockHandle<boolean>(true);
 			const tree = [42, handle, 37];
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.array"),
@@ -268,7 +250,7 @@ describe("toMapTree", () => {
 			const handle = new MockHandle<boolean>(true);
 			const tree = [42, handle, { age: 37, name: "Jack" }];
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.array"),
@@ -328,7 +310,7 @@ describe("toMapTree", () => {
 
 			const tree = [42, [1, 2], 37];
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.array"),
@@ -378,7 +360,7 @@ describe("toMapTree", () => {
 			const schemaFactory = new SchemaFactory("test");
 			assert.throws(
 				() =>
-					nodeDataToMapTree(
+					mapTreeFromNodeData(
 						[42, undefined] as number[],
 						schemaFactory.array(schemaFactory.number),
 					),
@@ -391,7 +373,7 @@ describe("toMapTree", () => {
 
 			assert.throws(
 				() =>
-					nodeDataToMapTree(
+					mapTreeFromNodeData(
 						["Hello world", true],
 						schemaFactory.array(schemaFactory.string),
 					),
@@ -407,7 +389,7 @@ describe("toMapTree", () => {
 
 			const tree = new Map<string, number>();
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
@@ -428,7 +410,7 @@ describe("toMapTree", () => {
 			];
 			const tree = new Map<string, InsertableContent>(entries);
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
@@ -466,7 +448,7 @@ describe("toMapTree", () => {
 			];
 			const tree = new Map<string, InsertableContent>(entries);
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
@@ -524,7 +506,7 @@ describe("toMapTree", () => {
 			];
 			const tree = new Map<string, InsertableContent>(entries);
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.map"),
@@ -548,7 +530,7 @@ describe("toMapTree", () => {
 			const tree = new Map<string, InsertableContent>(entries);
 
 			assert.throws(
-				() => nodeDataToMapTree(tree, schema),
+				() => mapTreeFromNodeData(tree, schema),
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			);
 		});
@@ -563,7 +545,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -587,7 +569,7 @@ describe("toMapTree", () => {
 				c: false,
 			};
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -623,7 +605,7 @@ describe("toMapTree", () => {
 				c: [true, false],
 			};
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -691,7 +673,7 @@ describe("toMapTree", () => {
 				c: undefined, // Explicitly set to undefined - Should be skipped in output
 			};
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -719,7 +701,7 @@ describe("toMapTree", () => {
 				d: 37,
 			};
 
-			const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = mapTreeFromNodeData(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -745,7 +727,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = nodeDataToMapTree(tree, schema);
+			const actual = mapTreeFromNodeData(tree, schema);
 			addDefaultsToMapTree(actual, schema, nodeKeyManager);
 
 			const expected: MapTree = {
@@ -775,7 +757,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = nodeDataToMapTree(tree, schema);
+			const actual = mapTreeFromNodeData(tree, schema);
 			addDefaultsToMapTree(actual, schema, nodeKeyManager);
 
 			const expected: MapTree = {
@@ -820,7 +802,7 @@ describe("toMapTree", () => {
 				map: schemaFactory.map(LeafObject),
 			}) {}
 
-			const mapTree = nodeDataToMapTree(
+			const mapTree = mapTreeFromNodeData(
 				{
 					object: {},
 					array: [{}, {}],
@@ -920,7 +902,7 @@ describe("toMapTree", () => {
 			c,
 		};
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+		const actual = mapTreeFromNodeData(tree, [schema]);
 
 		const expected: MapTree = {
 			type: brand("test.complex-object"),
@@ -1067,9 +1049,9 @@ describe("toMapTree", () => {
 		const b = schemaFactory.object("b", { x: schemaFactory.string });
 		const allowedTypes = [a, b];
 
-		assert.throws(() => nodeDataToMapTree({}, allowedTypes), /\["test.a","test.b"]/);
+		assert.throws(() => mapTreeFromNodeData({}, allowedTypes), /\["test.a","test.b"]/);
 		assert.throws(
-			() => nodeDataToMapTree({ x: "hello" }, allowedTypes),
+			() => mapTreeFromNodeData({ x: "hello" }, allowedTypes),
 			/\["test.a","test.b"]/,
 		);
 	});
@@ -1080,8 +1062,8 @@ describe("toMapTree", () => {
 		const b = schemaFactory.object("b", { b: schemaFactory.string, c: schemaFactory.string });
 		const allowedTypes = [a, b];
 
-		assert.doesNotThrow(() => nodeDataToMapTree({ a: "hello", c: "world" }, allowedTypes));
-		assert.doesNotThrow(() => nodeDataToMapTree({ b: "hello", c: "world" }, allowedTypes));
+		assert.doesNotThrow(() => mapTreeFromNodeData({ a: "hello", c: "world" }, allowedTypes));
+		assert.doesNotThrow(() => mapTreeFromNodeData({ b: "hello", c: "world" }, allowedTypes));
 	});
 
 	// Our data serialization format does not support certain numeric values.
@@ -1094,7 +1076,7 @@ describe("toMapTree", () => {
 			// This set will need to be expanded if that set changes and we wish to test the associated scenarios.
 			const schema = [schemaFactory.number, schemaFactory.null];
 
-			const result = nodeDataToMapTree(value, schema);
+			const result = mapTreeFromNodeData(value, schema);
 			assert.equal(result.value, expectedFallbackValue);
 		}
 
@@ -1103,7 +1085,7 @@ describe("toMapTree", () => {
 
 			// Schema doesn't support null, so numeric values that fall back to null should throw
 			const schema = schemaFactory.number;
-			assert.throws(() => nodeDataToMapTree(value, [schema]));
+			assert.throws(() => mapTreeFromNodeData(value, [schema]));
 		}
 
 		it("NaN (falls back to null if allowed by the schema)", () => {
@@ -1135,7 +1117,7 @@ describe("toMapTree", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.number;
 
-			const result = nodeDataToMapTree(-0, [schema]);
+			const result = mapTreeFromNodeData(-0, [schema]);
 			assert.equal(result.value, +0);
 		});
 
@@ -1145,7 +1127,7 @@ describe("toMapTree", () => {
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
-			const actual = nodeDataToMapTree(input as InsertableContent, [schema]);
+			const actual = mapTreeFromNodeData(input as InsertableContent, [schema]);
 
 			const expected: MapTree = {
 				type: brand(schema.identifier),
@@ -1185,7 +1167,7 @@ describe("toMapTree", () => {
 			const schemaFactory = new SchemaFactory("test");
 			assert.throws(
 				() =>
-					nodeDataToMapTree([42, undefined, 37, undefined] as InsertableContent, [
+					mapTreeFromNodeData([42, undefined, 37, undefined] as InsertableContent, [
 						schemaFactory.array(schemaFactory.number),
 					]),
 				/Received unsupported array entry value/,
@@ -1237,12 +1219,13 @@ describe("toMapTree", () => {
 			new Map(),
 		);
 
-		describe("nodeDataToMapTree", () => {
+		describe("mapTreeFromNodeData", () => {
 			it("Success", () => {
 				const content = "Hello world";
-				nodeDataToMapTree(
+				mapTreeFromNodeData(
 					content,
 					[schemaFactory.string],
+					undefined,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1251,9 +1234,10 @@ describe("toMapTree", () => {
 				const content = "Hello world";
 				assert.throws(
 					() =>
-						nodeDataToMapTree(
+						mapTreeFromNodeData(
 							content,
 							[schemaFactory.string],
+							undefined,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
