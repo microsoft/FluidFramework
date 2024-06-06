@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	ITestFluidObject,
@@ -29,7 +30,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const testConfigs = generatePairwiseOptions({
