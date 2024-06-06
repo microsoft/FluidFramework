@@ -167,11 +167,8 @@ describe("ArrayNode", () => {
 	});
 
 	describe("shadowing", () => {
-		it("Custom schema properties shadow indices", () => {
+		it("Shadowing index property with incompatible type", () => {
 			class Array extends schemaFactory.array("Array", schemaFactory.number) {
-				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
-				public 2: number = 42;
-
 				// @ts-expect-error Cannot shadow property with incompatible type.
 				public 5: string = "foo";
 			}
@@ -192,6 +189,53 @@ describe("ArrayNode", () => {
 						error,
 						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
 					),
+			);
+		});
+
+		it("Shadowing index property with compatible type", () => {
+			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+				public 5: number = 42;
+			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+					),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+					),
+			);
+		});
+
+		it("Shadowing index property with compatible type (getter)", () => {
+			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+				// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+				public get 5(): number {
+					return 42;
+				}
+			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
 		});
 	});
