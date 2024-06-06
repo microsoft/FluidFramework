@@ -29,16 +29,21 @@ import {
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeSchema,
+	ContextualFieldProvider,
+	ConstantFieldProvider,
+	FieldProvider,
+	FieldProps,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
+	addDefaultsToMapTree,
 	cursorFromFieldData,
 	cursorFromNodeData,
 	nodeDataToMapTree as nodeDataToMapTreeBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { createNodeKeyManager, MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("toMapTree", () => {
 	let nodeKeyManager: MockNodeKeyManager;
@@ -58,7 +63,6 @@ describe("toMapTree", () => {
 		return nodeDataToMapTreeBase(
 			tree,
 			normalizeAllowedTypes(allowedTypes),
-			nodeKeyManager,
 			schemaValidationPolicy,
 		);
 	}
@@ -742,6 +746,7 @@ describe("toMapTree", () => {
 			const tree = {};
 
 			const actual = nodeDataToMapTree(tree, schema);
+			addDefaultsToMapTree(actual, schema, nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -771,6 +776,7 @@ describe("toMapTree", () => {
 			const tree = {};
 
 			const actual = nodeDataToMapTree(tree, schema);
+			addDefaultsToMapTree(actual, schema, nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -778,6 +784,102 @@ describe("toMapTree", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("Populates a tree with defaults", () => {
+			const defaultValue = 3;
+			const constantProvider: ConstantFieldProvider = () => {
+				return defaultValue;
+			};
+			const contextualProvider: ContextualFieldProvider = (context: NodeKeyManager) => {
+				assert.equal(context, nodeKeyManager);
+				return defaultValue;
+			};
+			function createDefaultFieldProps(provider: FieldProvider): FieldProps {
+				return {
+					// By design, the public `DefaultProvider` type cannot be casted to, so we must disable type checking with `any`.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					defaultProvider: provider as any,
+				};
+			}
+
+			const schemaFactory = new SchemaFactory("test");
+			class LeafObject extends schemaFactory.object("Leaf", {
+				constantValue: schemaFactory.optional(
+					schemaFactory.number,
+					createDefaultFieldProps(constantProvider),
+				),
+				contextualValue: schemaFactory.optional(
+					schemaFactory.number,
+					createDefaultFieldProps(contextualProvider),
+				),
+			}) {}
+			class RootObject extends schemaFactory.object("Root", {
+				object: schemaFactory.required(LeafObject),
+				array: schemaFactory.array(LeafObject),
+				map: schemaFactory.map(LeafObject),
+			}) {}
+
+			const mapTree = nodeDataToMapTree(
+				{
+					object: {},
+					array: [{}, {}],
+					map: new Map([
+						["a", {}],
+						["b", {}],
+					]),
+				},
+				RootObject,
+			);
+
+			const getObject = () => mapTree.fields.get(brand("object"))?.[0];
+			const getArray = () => mapTree.fields.get(brand("array"))?.[0].fields.get(EmptyKey);
+			const getMap = () => mapTree.fields.get(brand("map"))?.[0];
+			const getConstantValue = (leafObject: MapTree | undefined) =>
+				leafObject?.fields.get(brand("constantValue"))?.[0].value;
+			const getContextualValue = (leafObject: MapTree | undefined) =>
+				leafObject?.fields.get(brand("contextualValue"))?.[0].value;
+
+			// Assert that there are no defaults populated
+			assert.equal(getConstantValue(getObject()), undefined);
+			assert.equal(getConstantValue(getArray()?.[0]), undefined);
+			assert.equal(getConstantValue(getArray()?.[1]), undefined);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
+			assert.equal(getContextualValue(getObject()), undefined);
+			assert.equal(getContextualValue(getArray()?.[0]), undefined);
+			assert.equal(getContextualValue(getArray()?.[1]), undefined);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
+
+			addDefaultsToMapTree(mapTree, RootObject, undefined);
+
+			// Assert that we've populated the constant defaults...
+			assert.equal(getConstantValue(getObject()), defaultValue);
+			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			// ...but not the contextual ones
+			assert.equal(getContextualValue(getObject()), undefined);
+			assert.equal(getContextualValue(getArray()?.[0]), undefined);
+			assert.equal(getContextualValue(getArray()?.[1]), undefined);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
+
+			addDefaultsToMapTree(mapTree, RootObject, nodeKeyManager);
+
+			// Assert that all defaults are populated
+			assert.equal(getConstantValue(getObject()), defaultValue);
+			assert.equal(getConstantValue(getArray()?.[0]), defaultValue);
+			assert.equal(getConstantValue(getArray()?.[1]), defaultValue);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
+			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
+			assert.equal(getContextualValue(getObject()), defaultValue);
+			assert.equal(getContextualValue(getArray()?.[0]), defaultValue);
+			assert.equal(getContextualValue(getArray()?.[1]), defaultValue);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), defaultValue);
+			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), defaultValue);
 		});
 	});
 
@@ -1165,7 +1267,7 @@ describe("toMapTree", () => {
 				cursorFromNodeData(
 					nodeData,
 					[schemaFactory.string],
-					createNodeKeyManager(),
+					undefined,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1177,7 +1279,7 @@ describe("toMapTree", () => {
 						cursorFromNodeData(
 							content,
 							[schemaFactory.string],
-							createNodeKeyManager(),
+							undefined,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,
@@ -1192,7 +1294,7 @@ describe("toMapTree", () => {
 				cursorFromFieldData(
 					content,
 					fieldSchema,
-					createNodeKeyManager(),
+					undefined,
 					schemaValidationPolicyForSuccess,
 				);
 			});
@@ -1205,7 +1307,7 @@ describe("toMapTree", () => {
 						cursorFromFieldData(
 							content,
 							fieldSchema,
-							createNodeKeyManager(),
+							undefined,
 							schemaValidationPolicyForFailure,
 						),
 					outOfSchemaExpectedError,

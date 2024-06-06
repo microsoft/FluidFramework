@@ -7,7 +7,7 @@
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -103,9 +103,6 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 }
 
 // @public
-export const disposeSymbol: unique symbol;
-
-// @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -144,13 +141,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
-export interface IBranchOrigin {
-    id: string;
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-}
-
-// @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
@@ -158,11 +148,6 @@ export interface IConnection {
 
 // @public
 export type ICriticalContainerError = IErrorBase;
-
-// @public
-export interface IDisposable {
-    [disposeSymbol](): void;
-}
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
@@ -241,27 +226,6 @@ export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.Inter
 }
 
 // @public
-export interface ISequencedDocumentMessage {
-    clientId: string | null;
-    clientSequenceNumber: number;
-    // @deprecated
-    compression?: string;
-    contents: unknown;
-    data?: string;
-    // @deprecated
-    expHash1?: string;
-    metadata?: unknown;
-    minimumSequenceNumber: number;
-    origin?: IBranchOrigin;
-    referenceSequenceNumber: number;
-    sequenceNumber: number;
-    serverMetadata?: unknown;
-    timestamp: number;
-    traces?: ITrace[];
-    type: string;
-}
-
-// @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
@@ -283,13 +247,6 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
-}
-
-// @public
-export interface ITrace {
-    action: string;
-    service: string;
-    timestamp: number;
 }
 
 // @public
@@ -375,7 +332,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
@@ -600,9 +557,9 @@ export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<
 
 // @public
 export enum TreeStatus {
-    Created = 3,
     Deleted = 2,
     InDocument = 0,
+    New = 3,
     Removed = 1
 }
 

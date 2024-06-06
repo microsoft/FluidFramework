@@ -119,7 +119,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^4.0.0",
+		"@fluidframework/protocol-base": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.7.3",

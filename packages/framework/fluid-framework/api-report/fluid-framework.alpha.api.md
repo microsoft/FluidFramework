@@ -7,7 +7,7 @@
 import { Client } from '@fluidframework/merge-tree/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -106,9 +106,6 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public
-export const disposeSymbol: unique symbol;
-
-// @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -146,7 +143,7 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @public
+// @alpha
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -163,7 +160,7 @@ export interface IConnection {
 export type ICriticalContainerError = IErrorBase;
 
 // @alpha
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
@@ -188,11 +185,6 @@ export interface IDirectoryEvents extends IEvent {
 // @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
-}
-
-// @public
-export interface IDisposable {
-    [disposeSymbol](): void;
 }
 
 // @public @sealed
@@ -365,7 +357,7 @@ export enum IntervalType {
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
 }
 
-// @public
+// @alpha
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -556,7 +548,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
-// @public
+// @alpha
 export interface ITrace {
     action: string;
     service: string;
@@ -652,7 +644,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    [disposeSymbol](): void;
+    dispose(): void;
     revert(): void;
     revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
@@ -975,9 +967,9 @@ export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<
 
 // @public
 export enum TreeStatus {
-    Created = 3,
     Deleted = 2,
     InDocument = 0,
+    New = 3,
     Removed = 1
 }
 
