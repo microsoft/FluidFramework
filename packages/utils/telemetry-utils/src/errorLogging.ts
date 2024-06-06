@@ -157,7 +157,11 @@ export function normalizeError(
 
 	const errorTelemetryProps = LoggingError.typeCheck(error)
 		? error.getTelemetryProperties()
-		: { untrustedOrigin: 1, errorRunningExternalCode: 1 }; // This will let us filter errors that did not originate from our own codebase
+		: {
+				untrustedOrigin: 1, // This will let us filter errors that did not originate from our own codebase
+				// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+				// errorRunningExternalCode: 1,
+		  };
 
 	fluidError.addTelemetryProperties({
 		...errorTelemetryProps,
@@ -229,9 +233,13 @@ export function wrapError<T extends LoggingError>(
 		overwriteStack(newError, stack);
 	}
 
-	// Mark external errors with untrustedOrigin flag / errorRunningExternalCode designation
+	// Mark external errors with untrustedOrigin flag
 	if (isExternalError(innerError)) {
-		newError.addTelemetryProperties({ untrustedOrigin: 1, errorRunningExternalCode: 1 });
+		newError.addTelemetryProperties({
+			untrustedOrigin: 1,
+			// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+			// errorRunningExternalCode: 1,
+		});
 	}
 
 	// Reuse errorInstanceId
@@ -243,7 +251,7 @@ export function wrapError<T extends LoggingError>(
 	}
 
 	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
-	// This will include the untrustedOrigin/errorRunningExternalCode properties if the inner error itself was created from an external error
+	// This will include the untrustedOrigin/errorRunningExternalCode flag if the inner error itself was created from an external error
 	if (isILoggingError(innerError)) {
 		newError.addTelemetryProperties(innerError.getTelemetryProperties());
 	}
@@ -308,11 +316,13 @@ export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: str
  */
 export function isExternalError(error: unknown): boolean {
 	// LoggingErrors are an internal FF error type. However, an external error can be converted
-	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin/errorRunningExternalCode info to
-	// determine whether the original error was infact external.
+	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin/errorRunningExternalCode flag to
+	// determine whether the original error was in fact external.
 	if (LoggingError.typeCheck(error)) {
 		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
 			const props = error.getTelemetryProperties();
+			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
+			// we can switch to writing this more explicit property name
 			return props.untrustedOrigin === 1 || props.errorRunningExternalCode === 1;
 		}
 		return false;
