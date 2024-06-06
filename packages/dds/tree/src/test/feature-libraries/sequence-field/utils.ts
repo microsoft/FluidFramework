@@ -298,14 +298,12 @@ export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
 	deepFreeze(change.change);
 	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change.change,
 		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
-		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
@@ -318,7 +316,6 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
-			revisionMetadata,
 		);
 	}
 
