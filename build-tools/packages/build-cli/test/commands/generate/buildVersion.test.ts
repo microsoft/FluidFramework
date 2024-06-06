@@ -496,7 +496,7 @@ describe("generate:buildVersion", () => {
 		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.1.2", "--tags", ...test_tags])
-		.it("2.1.2 version returns isLatest true", (ctx) => {
+		.it("next unpublished patch version on latest minor (2.1.2) returns isLatest true", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.1.2");
 			expect(ctx.stdout).to.contain("isLatest=true");
 		});
