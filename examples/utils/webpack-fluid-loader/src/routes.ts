@@ -20,7 +20,6 @@ import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 
-import { createManifestResponse } from "./bohemiaIntercept.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
@@ -58,8 +57,6 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
  * @internal
  */
 export const before = (app: express.Application) => {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
 	app.get("/", (req, res) => res.redirect("/new"));
 };
 
