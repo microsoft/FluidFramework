@@ -21,7 +21,7 @@ import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';

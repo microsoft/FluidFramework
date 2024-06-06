@@ -5,12 +5,12 @@
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDeltaStorageService,
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
@@ -42,9 +42,11 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
 		private readonly logger: ITelemetryLoggerExt,
-	) {}
+	) {
+		this.logtailSha = documentStorageService.logTailSha;
+	}
 
-	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+	private logtailSha: string | undefined;
 	private snapshotOps: ISequencedDocumentMessage[] | undefined;
 
 	fetchMessages(

@@ -4,12 +4,13 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage, ISignalMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
 	ISignalClient,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {
