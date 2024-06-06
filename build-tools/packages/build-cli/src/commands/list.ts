@@ -5,7 +5,7 @@
 
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { MonoRepo, Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { mkdirpSync } from "fs-extra";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";

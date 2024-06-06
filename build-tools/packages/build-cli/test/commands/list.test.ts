@@ -3,11 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { GitRepo, getResolvedFluidRoot, type Package, type PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import {
+	GitRepo,
+	type Package,
+	type PackageNamePolicyConfig,
+	getResolvedFluidRoot,
+} from "@fluidframework/build-tools";
 import { expect } from "chai";
 
 import { Context } from "../../src/library/index.js";
-import { feeds, packagePublishesToFeed, type Feed } from "../../src/library/repoPolicyCheck/npmPackages.js";
+import {
+	type Feed,
+	feeds,
+	packagePublishesToFeed,
+} from "../../src/library/repoPolicyCheck/npmPackages.js";
 
 /**
  * Calculates the packages that should be published to a feed and returns a map of Feed to the packages that should be
