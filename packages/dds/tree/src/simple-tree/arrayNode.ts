@@ -500,8 +500,7 @@ function createArrayNodeProxy(
 			// Using Infinity here (rather than length) ensures that indexing past the end doesn't create additional session local properties.
 			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 			if (maybeIndex !== undefined) {
-				// For MVP, we otherwise disallow setting properties
-				// (mutation is only available via the array node mutation APIs).
+				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
 				throw new Error(
 					"Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead.",
