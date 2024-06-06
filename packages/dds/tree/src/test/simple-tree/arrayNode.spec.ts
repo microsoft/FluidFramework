@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import { Mutable } from "../../util/index.js";
@@ -166,14 +167,32 @@ describe("ArrayNode", () => {
 	});
 
 	describe("shadowing", () => {
-		it("indexes", () => {
+		it("Custom schema properties shadow indices", () => {
 			class Array extends schemaFactory.array("Array", schemaFactory.number) {
-				// @ts-expect-error Cannot shadow property with incompatible type.
-				public readonly 1: string = "foo";
+				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+				public 2: number = 42;
 
-				// TODO: this should not be allowed. Indexes are reserved on array nodes.
-				public readonly 2: number = 37;
+				// @ts-expect-error Cannot shadow property with incompatible type.
+				public 5: string = "foo";
 			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+					),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+					),
+			);
 		});
 	});
 });
