@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IClient, ISignalMessage } from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
+import { ISignalMessage } from "@fluidframework/driver-definitions/internal";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";

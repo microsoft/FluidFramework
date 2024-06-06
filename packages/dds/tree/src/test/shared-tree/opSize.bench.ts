@@ -7,7 +7,7 @@ import { strict as assert, fail } from "assert";
 
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

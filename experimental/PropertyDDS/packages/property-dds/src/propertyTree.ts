@@ -21,8 +21,10 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";

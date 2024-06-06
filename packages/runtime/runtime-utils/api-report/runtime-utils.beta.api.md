@@ -24,7 +24,7 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
