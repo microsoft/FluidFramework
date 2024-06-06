@@ -30,12 +30,7 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import {
-	IFluidErrorBase,
-	hasErrorInstanceId,
-	isFluidError,
-	isValidLegacyError,
-} from "../fluidErrorBase.js";
+import { IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
@@ -419,7 +414,6 @@ describe("Error Logging", () => {
 			const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
 			loggingError.addTelemetryProperties(propsWillBeIgnored);
 			const props = loggingError.getTelemetryProperties();
-			delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
 			const { message, stack, errorInstanceId } = loggingError;
 			assert.deepStrictEqual(
 				props,
@@ -435,7 +429,6 @@ describe("Error Logging", () => {
 			};
 			loggingError.addTelemetryProperties(propsWillBeIgnored);
 			const props = loggingError.getTelemetryProperties();
-			delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
 			const { message, stack, errorInstanceId } = loggingError;
 			assert.deepStrictEqual(
 				props,
@@ -700,32 +693,6 @@ describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
 			const annotations = annotationCases[annotationCase];
-			it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
-				// Arrange
-				const errorProps = { errorType: "et1", message: "m1" };
-				const legacyError = new TestFluidError(errorProps).withoutProperty(
-					"errorInstanceId",
-				);
-
-				// Act
-				const normalizedError = normalizeError(legacyError, annotations);
-
-				// Assert
-				assert.equal(
-					normalizedError,
-					legacyError,
-					"normalize should yield the same error as passed in",
-				);
-				assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
-				assert.equal(normalizedError.message, "m1", "message should be unchanged");
-				assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
-				if (annotations.props !== undefined) {
-					assert(
-						legacyError.atpStub.calledWith(annotations.props),
-						"addTelemetryProperties should have been called",
-					);
-				}
-			});
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
@@ -751,7 +718,7 @@ describe("normalizeError", () => {
 				errorType: "et1",
 				message: "m1",
 			}).withoutProperty("stack");
-			// We don't expect legacyError to be modified itself at all
+			// We don't expect fluidError to be modified itself at all
 			Object.freeze(fluidError);
 
 			// Act
@@ -760,18 +727,6 @@ describe("normalizeError", () => {
 			// Assert
 			assert(normalizedError === fluidError);
 			assert(normalizedError.stack === undefined);
-		});
-		it("Frozen legacy error - Throws", () => {
-			// Arrange
-			const errorProps = { errorType: "et1", message: "m1" };
-			const legacyError = new TestFluidError(errorProps).withoutProperty("errorInstanceId");
-			Object.freeze(legacyError);
-
-			// Act/Assert
-			assert.throws(
-				() => normalizeError(legacyError, {}),
-				/Cannot assign to read only property/,
-			);
 		});
 	});
 	describe("Errors Needing Normalization", () => {
@@ -924,7 +879,6 @@ describe("normalizeError", () => {
 			expected.withExpectedTelemetryProps({
 				...annotations.props,
 				errorInstanceId: actual.errorInstanceId,
-				fluidErrorCode: "-", // Present for back-compat
 			});
 
 			assertMatchingMessageAndStack(actual, expected, inputStack);
@@ -1128,87 +1082,30 @@ describe("Error Discovery", () => {
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
 		assert(!isExternalError(new LoggingError("testLoggingError")));
 	});
-	it("isValidLegacyError", () => {
-		const validLegacyError = {
-			message: "testMessage",
-			errorType: "someErrorType",
-			getTelemetryProperties: (): void => {},
-			addTelemetryProperties: (): void => {},
-		};
-		assert.strictEqual(isValidLegacyError(validLegacyError), true);
-		assert.strictEqual(isValidLegacyError({ ...validLegacyError, message: undefined }), false);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, errorType: undefined }),
-			false,
+
+	it("isFluidError", () => {
+		assert(!isFluidError(new Error("hello")), "Plain Error object is not a Fluid Error");
+		assert(
+			!isFluidError(new LoggingError("hello")),
+			"LoggingError is not a Fluid Error (no errorType)",
 		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, getTelemetryProperties: undefined }),
-			false,
+		assert(
+			!isFluidError(
+				Object.assign(new Error("hello"), {
+					errorType: "someErrorType",
+					_errorInstanceId: "12345",
+				}),
+			),
+			"Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error",
 		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, addTelemetryProperties: undefined }),
-			false,
+		assert(
+			!isFluidError(createExternalError("hello")),
+			"Error without errorType is not a Fluid Error",
 		);
+		assert(
+			!isFluidError(Object.assign(createTestError("hello"), { _errorInstanceId: undefined })),
+			"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
+		);
+		assert(isFluidError(createTestError("hello")), "Valid Fluid Error is a Fluid Error");
 	});
-
-	// I copied the old version of isFluidError here, it depends on fluidErrorCode.
-	// I want to make sure that an error built on LoggingError that otherwise matches isFluidError
-	// will match isFluidError in old code (e.g. when an error flows across layers)
-	function isFluidError_old(e: any): e is IFluidErrorBase {
-		const hasTelemetryPropFunctions = (x: any): boolean =>
-			typeof x?.getTelemetryProperties === "function" &&
-			typeof x?.addTelemetryProperties === "function";
-		return (
-			typeof e?.errorType === "string" &&
-			typeof e?.fluidErrorCode === "string" &&
-			typeof e?.message === "string" &&
-			hasErrorInstanceId(e) &&
-			hasTelemetryPropFunctions(e)
-		);
-	}
-
-	function testFluidError(isFluidErrorImpl: (e: any) => boolean, isOld: boolean): void {
-		it(`isFluidError${isOld ? "_old" : ""}`, () => {
-			assert(
-				!isFluidErrorImpl(new Error("hello")),
-				"Plain Error object is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(new LoggingError("hello")),
-				"LoggingError is not a Fluid Error (no errorType)",
-			);
-			assert(
-				!isFluidErrorImpl(
-					Object.assign(new Error("hello"), {
-						errorType: "someErrorType",
-						_errorInstanceId: "12345",
-					}),
-				),
-				"Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(createExternalError("hello")),
-				"Error without errorType is not a Fluid Error",
-			);
-			assert(
-				!isFluidErrorImpl(
-					Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
-				),
-				"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
-			);
-			assert(
-				isFluidErrorImpl(createTestError("hello")),
-				"Valid Fluid Error is a Fluid Error",
-			);
-			assert.equal(
-				!isOld,
-				isFluidErrorImpl(
-					Object.assign(createTestError("hello"), { fluidErrorCode: undefined }),
-				),
-				"Old isFluidError impl should require fluidErrorCode but New should not",
-			);
-		});
-	}
-	testFluidError(isFluidError, false /* isOld */);
-	testFluidError(isFluidError_old, true /* isOld */);
 });

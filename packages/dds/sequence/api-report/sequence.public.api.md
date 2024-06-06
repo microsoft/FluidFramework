@@ -22,7 +22,7 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/in
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';

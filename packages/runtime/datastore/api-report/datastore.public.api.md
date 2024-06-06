@@ -27,7 +27,7 @@ import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/inter
 import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';

@@ -11,12 +11,13 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITree,
 	ITreeEntry,
 	MessageType,
 	TreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	FileDeltaStorageService,

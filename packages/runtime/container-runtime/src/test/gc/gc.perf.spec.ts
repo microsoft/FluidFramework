@@ -35,7 +35,6 @@ function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 
 	// The runtime to be passed to the garbage collector.
 	const gcRuntime: IGarbageCollectionRuntime = {
-		updateStateBeforeGC: async () => {},
 		getGCData: async () => {
 			return { gcNodes: {} };
 		},
