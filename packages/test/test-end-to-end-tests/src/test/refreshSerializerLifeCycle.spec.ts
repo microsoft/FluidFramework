@@ -16,9 +16,9 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
+import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestFluidObject,
 	timeoutPromise,
@@ -27,8 +27,8 @@ import {
 	timeoutAwait,
 	waitForContainerConnection,
 	type ChannelFactoryRegistry,
-	type ITestObjectProvider,
 	type ITestContainerConfig,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
