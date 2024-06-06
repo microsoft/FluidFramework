@@ -201,32 +201,7 @@ export class Outbox {
 	public submitIdAllocation(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		if (
-			!this.idAllocationBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
-			// when queue is not empty.
-			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-			this.flushInternal(this.idAllocationBatch);
-
-			this.addMessageToBatchManager(this.idAllocationBatch, message);
-		}
-
-		// If compression is enabled, we will always successfully receive
-		// attach ops and compress then send them at the next JS turn, regardless
-		// of the overall size of the accumulated ops in the batch.
-		// However, it is more efficient to flush these ops faster, preferably
-		// after they reach a size which would benefit from compression.
-		if (
-			this.idAllocationBatch.contentSizeInBytes >=
-			this.params.config.compressionOptions.minimumBatchSizeInBytes
-		) {
-			this.flushInternal(this.idAllocationBatch);
-		}
+		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
 	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
@@ -279,7 +254,7 @@ export class Outbox {
 			return;
 		}
 
-		// Did we disconnect?
+		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
@@ -332,6 +307,15 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
+	/**
+	 * As necessary and enabled, compresses and chunks the given batch.
+	 *
+	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
+	 * @param batch - Raw or Grouped batch to consider for compression/chunking
+	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
+	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
+	 */
 	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
@@ -434,6 +418,7 @@ export class Outbox {
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
 			mainBatch,
+			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}

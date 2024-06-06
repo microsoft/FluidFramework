@@ -11,10 +11,9 @@ import { command as execCommand } from "execa";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
-import { BaseCommand } from "../../base";
-import { checkFlags, releaseGroupFlag } from "../../flags";
-import { Repository } from "../../library";
-import { isReleaseGroup } from "../../releaseGroups";
+import { checkFlags, releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, Repository } from "../../library/index.js";
+import { isReleaseGroup } from "../../releaseGroups.js";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
 	const content = await readFile(path, "utf8");

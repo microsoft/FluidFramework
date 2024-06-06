@@ -2,26 +2,28 @@
 
 ## Table of contents
 
--   [Introduction](#introduction)
-    -   [How batching works](#how-batching-works)
--   [Compression](#compression)
--   [Grouped batching](#grouped-batching)
-    -   [Risks](#risks)
--   [Chunking for compression](#chunking-for-compression)
--   [Disabling in case of emergency](#disabling-in-case-of-emergency)
--   [Example configs](#example-configs)
--   [Note about performance and latency](#note-about-performance-and-latency)
--   [How it works](#how-it-works)
--   [How grouped batching works](#how-grouped-batching-works)
--   [How the overall op flow works](#How-the-overall-op-flow-works)
-    -   [Outbound](#outbound)
-    -   [Inbound](#inbound)
+-   [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
+    -   [Table of contents](#table-of-contents)
+    -   [Introduction](#introduction)
+        -   [How batching works](#how-batching-works)
+    -   [Compression](#compression)
+    -   [Grouped batching](#grouped-batching)
+        -   [Changes in op semantics](#changes-in-op-semantics)
+    -   [Chunking for compression](#chunking-for-compression)
+    -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
+    -   [Configuration](#configuration)
+    -   [Note about performance and latency](#note-about-performance-and-latency)
+    -   [How it works](#how-it-works)
+    -   [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
+    -   [How the overall op flow works](#how-the-overall-op-flow-works)
+        -   [Outbound](#outbound)
+        -   [Inbound](#inbound)
 
 ## Introduction
 
 There is a current limitation regarding the size of the payload a Fluid client can send and receive. [The limit is 1MB per payload](https://github.com/microsoft/FluidFramework/issues/9023) and it is currently enforced explicitly with the `BatchTooLarge` error which closes the container.
 
-There are two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes how to enable/disable them, along with a brief description of how they work. The features are enabled by default.
+There are three features which can be used to work around this size limit: "grouped batching", "batch compression", and "compressed batch chunking". This document describes how to enable/disable them, along with a brief description of how they work. The features are enabled by default.
 
 By default, the runtime is configured with a max batch size of `716800` bytes, which is lower than the 1MB limit. The reason for the lower value is to account for possible overhead from the op envelope and metadata.
 
@@ -29,7 +31,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 Batching in the context of Fluid ops is a way in which the framework accumulates and applies ops. A batch is a group of ops accumulated within a single JS turn, which will be broadcasted in the same order to all the other connected clients and applied synchronously. Additional logic and validation ensure that batches are never interleaved, nested or interrupted and they are processed in isolation without interleaving of ops from other clients.
 
-The way batches are formed is governed by the `FlushMode` setting of the `ContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
+The way batches are formed is governed by the `FlushMode` setting of the `IContainerRuntimeOptions` and it is immutable for the entire lifetime of the runtime and subsequently the container.
 
 ```
 export enum FlushMode {
@@ -66,47 +68,30 @@ As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into 
 
 Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
+Compressing a batch yields a batch with the same number of messages. It compresses all the content, shifting the compressed payload into the first op,
+leaving the rest of the batch's messages as empty placeholders to reserve sequence numbers for the compressed messages.
+
 ## Grouped batching
 
-The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is **off by default**. This option will group all batch messages under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given the sequence number of the parent "grouped" message.
+With Grouped Batching enabled (it's on by default), all batch messages are combined under a single "grouped" message _before compression_. Upon receiving this new "grouped" message, the batch messages will be extracted, and they each will be given the same sequence number - that of the parent "grouped" message.
 
-The purpose for enabling grouped batching on top of compression is that regular compression won't include the empty messages in the chunks. Thus, if we have batches with many messages (i.e. more than 4k), we will go over the batch size limit just on empty op envelopes alone.
+The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. These empty messages are not free to transmit, can trigger service throttling, and in extreme cases can _still_ result in a batch too large (from empty op envelopes alone).
+
+Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+
+Grouped Batching can be disabled by setting `IContainerRuntimeOptions.enableGroupedBatching` to `false`.
 
 See [below](#how-grouped-batching-works) for an example.
 
-### Risks
+### Changes in op semantics
 
-This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.7.0.0" or later). Containers created with this option may not open in future versions of the framework.
+Grouped Batching changed a couple of expectations around message structure and runtime layer expectations. Specifically:
 
-This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
-and verifying that the following expectation changes won't have any effects:
-
--   batch messages observed at the runtime layer will not match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
--   messages within the same batch will have the same sequence number
--   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
--   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
-
-Grouped batching may become problematic for batches which contain reentrant ops. This is the case when changes are made to a DDS inside a DDS 'onChanged' event handler. This means that the reentrant op will have a different reference sequence number than the rest of the ops in the batch, resulting in a different view of the state of the data model.
-
-Therefore, when grouped batching is enabled, all batches with reentrant ops are rebased to the current reference sequence number and resubmitted to the data stores so that all ops are in agreement about the state of the data model and ensure eventual consistency.
-
-### How to enable
-
-**This feature is disabled by default**
-
-If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        (...)
-        enableGroupedBatching: true,
-        (...)
-    }
-```
-
-In case of emergency grouped batching can be disabled at runtime, using feature gates. If `"Fluid.ContainerRuntime.DisableGroupedBatching"` is set to `true`, it will disable grouped batching if enabled from `IContainerRuntimeOptions` in the code.
-
-Grouped batching is only relevant for `FlushMode.TurnBased` as it only targets the number of ops in a batch. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+-   Batch messages observed at the runtime layer no longer match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
+-   Once the ContainerRuntime ungroups the batch, the client sequence numbers on the resulting messages can only be used to order messages with that batch (having the same sequenceNumber)
+-   Messages within the same batch now all share the same sequence number
+-   All ops in a batch must also have the same reference sequence number to ensure eventualy consistency of the model. The runtime will "rebase" ops in a batch with different ref sequence number to satisfy that requirement.
+    -   What causes ops in a single JS turn (and thus in a batch) to have different reference sequence number? "Op reentrancy", where changes are made to a DDS inside a DDS 'onChanged' event handler.
 
 ## Chunking for compression
 
@@ -120,34 +105,15 @@ Chunking is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as
 
 ## Disabling in case of emergency
 
-If the features are enabled using the configs, they can be disabled at runtime via feature gates as following:
+Compression and Chunking configuration can be overridden via feature gates to force-disable them:
 
 -   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
--   `Fluid.ContainerRuntime.DisableGroupedBatching` - if set to true, will disable grouped batching.
 -   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
-## Example configs
+## Configuration
 
-By default, the runtime is configured with the following values related to compression and chunking:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        compressionOptions: {
-            minimumBatchSizeInBytes: 614400,
-            compressionAlgorithm: CompressionAlgorithms.lz4,
-        },
-        chunkSizeInBytes: 204800,
-        maxBatchSizeInBytes: 716800,
-    }
-```
-
-To enable grouped batching, use the following property:
-
-```
-    const runtimeOptions: IContainerRuntimeOptions = {
-        enableGroupedBatching: true,
-    }
-```
+These features are configured via `IContainerRuntimeOptions`, passed to the `ContainerRuntime.loadRuntime` function.
+Default values are specified in code in [containerRuntime.ts](../containerRuntime.ts).
 
 ## Note about performance and latency
 
@@ -157,7 +123,92 @@ In general, compression offers a trade-off between higher compute costs, lower b
 
 ## How it works
 
-Compression currently works as a runtime layer over the regular op sending/receiving pipeline.
+Virtualization works as an intermediate step in the Runtime layer, as the closest step to sending/receiving ops via the Loader layer.
+
+Given the following baseline batch:
+
+```
++---------------+---------------+---------------+---------------+---------------+
+| Op 1          | Op 2          | Op 3          | Op 4          | Op 5          |
+| Contents: "a" | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" |
++---------------+---------------+---------------+---------------+---------------+
+```
+
+Grouped batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
+|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Compressed batch:
+
+```
++-------------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Logical   +------------------------------------------------------------------------------------+ |
+| Compression: 'lz4'     Contents: | Type: "groupedBatch"                                                               | |
+| Compressed buffer: "wxyz"        | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
+|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
+|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
+|                                  +------------------------------------------------------------------------------------+ |
++-------------------------------------------------------------------------------------------------------------------------+
+```
+
+Can produce the following chunks:
+
+```
++------------------------------------------------+
+| Chunk 1/2    Contents: +---------------------+ |
+|                        | +-----------------+ | |
+|                        | | Contents: "wx" | | |
+|                        | +-----------------+ | |
+|                        +---------------------+ |
++------------------------------------------------+
+```
+
+```
++-----------------------------------------------+
+| Chunk 2/2    Contents: +--------------------+ |
+|                        | +----------------+ | |
+|                        | | Contents: "yz" | | |
+|                        | +----------------+ | |
+|                        +--------------------+ |
++-----------------------------------------------+
+```
+
+The chunks are sent to service to be sequenced, and broadcast to all clients.
+
+-   On the receiving end, the client will accumulate chunks 1 through n-1 and keep them in memory (in this example, it's just Chunk 1).
+-   When the final chunk is received, the original large, decompressed op will be rebuilt, and the runtime will then process the batch as if it is a compressed batch.
+
+Decompressed batch:
+
+```
++---------------------------------------------------------------------------------------------------------------------+
+| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
+| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
+| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
+|                                  +----------------+---------------+---------------+---------------+---------------+ |
++---------------------------------------------------------------------------------------------------------------------+
+```
+
+Ungrouped batch:
+
+```
++-----------------+-----------------+-----------------+-----------------+-----------------+
+| Op 1            | Op 2            | Op 3            | Op 4            | Op 5            |
+| Contents: "a"   | Contents: "b"   | Contents: "c"   | Contents: "d"   | Contents: "e"   |
+| SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
+| ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
++-----------------+-----------------+-----------------+-----------------+-----------------+
+```
+
+## How it works (Grouped Batching disabled)
 
 If we have a batch with a size larger than the configured minimum required for compression (in the example let’s say it’s 850 bytes), as following:
 
@@ -229,97 +280,6 @@ This will produce the following batches:
 ```
 
 The first 2 chunks are sent in their own batches, while the last chunk is the first op in the last batch which contains the ops reserving the required sequence numbers.
-
-Notice that the sequence numbers don’t matter here, as all ops will be based off the same reference sequence number, so the sequence number will be recalculated for all, without additional work.
-
-Additionally, as compression preserves the original uncompressed batch layout in terms of the number of ops by using empty ops to reserve the sequence numbers, this ensures that the clients will always receive the exact count of ops to rebuild the uncompressed batch sequentially.
-
-On the receiving end, the client will accumulate chunks 1 and 2 and keep them in memory. When chunk 3 is received, the original large, decompressed op will be rebuilt, and the runtime will then process the batch as if it is a compressed batch.
-
-## How grouped batching works
-
-Given the following baseline batch:
-
-```
-+---------------+---------------+---------------+---------------+---------------+
-| Op 1          | Op 2          | Op 3          | Op 4          | Op 5          |
-| Contents: "a" | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" |
-+---------------+---------------+---------------+---------------+---------------+
-```
-
-Grouped batch:
-
-```
-+---------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
-| Type: "groupedBatch"             | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | |
-|                                  | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
-|                                  +----------------+---------------+---------------+---------------+---------------+ |
-+---------------------------------------------------------------------------------------------------------------------+
-```
-
-Compressed batch:
-
-```
-+-------------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +------------------------------------------------------------------------------------+ |
-| Compression: 'lz4'               | Type: "groupedBatch"                                                               | |
-|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
-|                                  | | Op 1           | Op 2          | Op 3          | Op 4          | Op 5          | | |
-|                                  | | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | | |
-|                                  | +----------------+---------------+---------------+---------------+---------------+ | |
-|                                  +------------------------------------------------------------------------------------+ |
-+-------------------------------------------------------------------------------------------------------------------------+
-```
-
-Can produce the following chunks:
-
-```
-+------------------------------------------------+
-| Chunk 1/2    Contents: +---------------------+ |
-|                        | +-----------------+ | |
-|                        | | Contents: "abc" | | |
-|                        | +-----------------+ | |
-|                        +---------------------+ |
-+------------------------------------------------+
-```
-
-```
-+-----------------------------------------------+
-| Chunk 2/2    Contents: +--------------------+ |
-|                        | +----------------+ | |
-|                        | | Contents: "de" | | |
-|                        | +----------------+ | |
-|                        +--------------------+ |
-+-----------------------------------------------+
-```
-
--   Send to service
--   Service acks ops sent
--   Receive chunks from service
--   Recompile to the compression step
-
-Decompressed batch:
-
-```
-+---------------------------------------------------------------------------------------------------------------------+
-| Op 1                   Contents: +----------------+---------------+---------------+---------------+---------------+ |
-| SeqNum: 2                        | Op 1           | Op 2            | Op 3        | Op 4          | Op 5          | |
-| Type: "groupedBatch"             | Contents: "a"  | Contents: "b" | Contents: "c" | Contents: "d" | Contents: "e" | |
-|                                  +----------------+---------------+---------------+---------------+---------------+ |
-+---------------------------------------------------------------------------------------------------------------------+
-```
-
-Ungrouped batch:
-
-```
-+-----------------+-----------------+-----------------+-----------------+-----------------+
-| Op 1            | Op 2            | Op 3            | Op 4            | Op 5            |
-| Contents: "a"   | Contents: "b"   | Contents: "c"   | Contents: "d"   | Contents: "e"   |
-| SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       | SeqNum: 2       |
-| ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
-+-----------------+-----------------+-----------------+-----------------+-----------------+
-```
 
 ## How the overall op flow works
 

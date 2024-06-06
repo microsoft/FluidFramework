@@ -12,12 +12,21 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
-import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	IClientDetails,
+	IQuorumClients,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ITreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -26,20 +35,9 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	IClientDetails,
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
-import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -58,11 +56,11 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
-	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
@@ -76,7 +74,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
+import { sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -211,8 +209,8 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get logger() {
-		return this.parentContext.logger;
+	public get baseLogger() {
+		return this.parentContext.baseLogger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -293,7 +291,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
 
@@ -383,7 +381,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "FluidDataStoreContext",
 			properties: {
 				all: tagCodeArtifacts({
@@ -724,33 +722,6 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	public addedGCOutboundReference(
-		srcHandle: IFluidHandleInternal,
-		outboundHandle: IFluidHandleInternal,
-	): void {
-		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
-		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
-			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(
-				toFluidHandleInternal(srcHandle),
-				toFluidHandleInternal(outboundHandle),
-			);
-		}
-	}
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 *
@@ -758,10 +729,7 @@ export abstract class FluidDataStoreContext
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundReference?.(
-			{ absolutePath: fromPath },
-			{ absolutePath: toPath },
-		);
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath);
 	}
 
 	/**

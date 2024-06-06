@@ -140,10 +140,7 @@ export function testToDelta() {
 		});
 
 		it("remove with override", () => {
-			const detachIdOverride: SF.DetachIdOverride = {
-				type: SF.DetachIdOverrideType.Redetach,
-				id: { revision: tag2, localId: brand(1) },
-			};
+			const detachIdOverride: SF.CellId = { revision: tag2, localId: brand(1) };
 			const changeset = [Mark.remove(10, brand(42), { idOverride: detachIdOverride })];
 			const expected: DeltaFieldChanges = {
 				local: [
@@ -313,10 +310,11 @@ export function testToDelta() {
 			});
 
 			it("insert & move", () => {
+				const [moveOut, moveIn] = Mark.move(2, brand(2));
 				const changeset = [
-					Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
+					Mark.attachAndDetach(Mark.insert(2, brand(0)), moveOut),
 					{ count: 1 },
-					Mark.moveIn(2, brand(2)),
+					moveIn,
 				];
 				const delta = toDelta(changeset);
 				const buildId = { minor: 0 };
@@ -329,31 +327,33 @@ export function testToDelta() {
 			});
 
 			it("move & remove", () => {
+				const [moveOut, moveIn] = Mark.move(2, brand(0));
 				const changeset = [
-					Mark.moveOut(2, brand(0)),
+					moveOut,
 					{ count: 1 },
-					Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.remove(2, brand(2))),
+					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(4))),
 				];
 				const delta = toDelta(changeset);
 
 				const id = { minor: 0 };
 				const expected: DeltaFieldChanges = {
 					local: [{ count: 2, detach: id }],
-					rename: [{ count: 2, oldId: id, newId: { minor: 2 } }],
+					rename: [{ count: 2, oldId: id, newId: { minor: 4 } }],
 				};
 				assertFieldChangesEqual(delta, expected);
 			});
 
 			it("insert & move & remove", () => {
+				const [moveOut, moveIn] = Mark.move(2, brand(2));
 				const changeset = [
-					Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
+					Mark.attachAndDetach(Mark.insert(2, brand(0)), moveOut),
 					{ count: 1 },
-					Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.remove(2, brand(4))),
+					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(6))),
 				];
 				const delta = toDelta(changeset);
 				const buildId = { minor: 0 };
 				const id1 = { minor: 2 };
-				const id2 = { minor: 4 };
+				const id2 = { minor: 6 };
 				const expected: DeltaFieldChanges = {
 					rename: [
 						{ count: 2, oldId: buildId, newId: id1 },

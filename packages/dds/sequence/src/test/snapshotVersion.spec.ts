@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
-
 import { SharedStringClass } from "../sharedString.js";
+
 import { _dirname } from "./dirname.cjs";
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
@@ -91,7 +91,6 @@ describe("SharedString Snapshot Version", () => {
 			SharedStringFactory.Attributes,
 		);
 		await sharedString.load(services);
-		await sharedString.loaded;
 		return sharedString;
 	}
 

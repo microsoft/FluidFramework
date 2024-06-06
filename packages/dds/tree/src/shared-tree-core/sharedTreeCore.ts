@@ -6,20 +6,19 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -35,13 +34,16 @@ import {
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
-import { CommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
+import { ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import { ResubmitMachine } from "./resubmitMachine.js";
+import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
+import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -98,7 +100,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly commitEnricher?: CommitEnricher<TChange>;
+	private readonly resubmitMachine: ResubmitMachine<TChange>;
+	protected readonly commitEnricher: BranchCommitEnricher<TChange>;
 
 	protected readonly mintRevisionTag: () => RevisionTag;
 
@@ -125,7 +128,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		telemetryContextPrefix: string,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
-		enricher?: CommitEnricher<TChange>,
+		resubmitMachine?: ResubmitMachine<TChange>,
+		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -147,24 +151,52 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
-		this.editManager.localBranch.on("afterChange", (args) => {
+		this.editManager.localBranch.on("beforeChange", (change) => {
+			// Ensure that any previously prepared commits that have not been sent are purged.
+			this.commitEnricher.purgePreparedCommits();
+			if (this.detachedRevision !== undefined) {
+				// Edits submitted before the first attach do not need enrichment because they will not be applied by peers.
+			} else if (change.type === "append") {
+				if (this.getLocalBranch().isTransacting()) {
+					for (const newCommit of change.newCommits) {
+						this.commitEnricher.ingestTransactionCommit(newCommit);
+					}
+				} else {
+					for (const newCommit of change.newCommits) {
+						this.commitEnricher.prepareCommit(newCommit, false);
+					}
+				}
+			} else if (
+				change.type === "replace" &&
+				getChangeReplaceType(change) === "transactionCommit" &&
+				!this.getLocalBranch().isTransacting()
+			) {
+				assert(
+					change.newCommits.length === 1,
+					"Unexpected number of commits when committing transaction",
+				);
+				this.commitEnricher.prepareCommit(change.newCommits[0], true);
+			}
+		});
+		this.editManager.localBranch.on("afterChange", (change) => {
 			if (this.getLocalBranch().isTransacting()) {
-				// Avoid submitting ops for changes that are part of a transaction.
+				// We do not submit ops for changes that are part of a transaction.
 				return;
 			}
-			switch (args.type) {
-				case "append":
-					for (const c of args.newCommits) {
-						this.submitCommit(c, this.schemaAndPolicy);
+			if (
+				change.type === "append" ||
+				(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
+			) {
+				if (this.detachedRevision !== undefined) {
+					for (const newCommit of change.newCommits) {
+						this.submitCommit(newCommit, this.schemaAndPolicy);
 					}
-					break;
-				case "replace":
-					if (getChangeReplaceType(args) === "transactionCommit") {
-						this.submitCommit(args.newCommits[0], this.schemaAndPolicy);
+				} else {
+					for (const newCommit of change.newCommits) {
+						const prepared = this.commitEnricher.getPreparedCommit(newCommit);
+						this.submitCommit(prepared, this.schemaAndPolicy);
 					}
-					break;
-				default:
-					break;
+				}
 			}
 		});
 
@@ -191,7 +223,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			formatOptions.message,
 		);
 
-		this.commitEnricher = enricher;
+		const changeEnricher = enricher ?? new NoOpChangeEnricher();
+		this.resubmitMachine =
+			resubmitMachine ??
+			new DefaultResubmitMachine(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				changeEnricher,
+			);
+		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -238,11 +277,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-	protected submitCommit(
+	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit = false,
-	): GraphCommit<TChange> | undefined {
+	): void {
 		assert(
 			// Edits should not be submitted until all transactions finish
 			!this.getLocalBranch().isTransacting() || isResubmit,
@@ -267,26 +306,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.editManager.advanceMinimumSequenceNumber(newRevision);
 			return undefined;
 		}
-		let enrichedCommit: GraphCommit<TChange>;
-		if (this.commitEnricher !== undefined) {
-			if (isResubmit) {
-				assert(
-					this.commitEnricher.isInResubmitPhase,
-					0x95b /* Invalid resubmit outside of resubmit phase */,
-				);
-			} else {
-				assert(
-					!this.commitEnricher.isInResubmitPhase,
-					0x95c /* Invalid enrichment call during resubmit phase */,
-				);
-			}
-			enrichedCommit = this.commitEnricher.enrichCommit(commit);
-		} else {
-			enrichedCommit = commit;
-		}
 		const message = this.messageCodec.encode(
 			{
-				commit: enrichedCommit,
+				commit,
 				sessionId: this.editManager.localSessionId,
 			},
 			{
@@ -298,14 +320,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
 		});
-		return enrichedCommit;
+		this.resubmitMachine.onCommitSubmitted(commit);
 	}
 
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
 
@@ -314,7 +336,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
-		this.commitEnricher?.onSequencedCommitApplied(local);
+		this.resubmitMachine.onSequencedCommitApplied(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
@@ -326,7 +348,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
@@ -334,26 +356,34 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
 		} = this.messageCodec.decode(this.serializer.decode(content), {});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-		if (this.commitEnricher?.isInResubmitPhase === false) {
+		if (this.resubmitMachine.isInResubmitPhase === false) {
 			const toResubmit = this.editManager.getLocalCommits();
 			assert(
 				commit === toResubmit[0],
 				0x95d /* Resubmit phase should start with the oldest local commit */,
 			);
-			this.commitEnricher.prepareForResubmit(toResubmit);
+			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),
 			0x95e /* Local metadata must contain schema and policy. */,
 		);
-		this.submitCommit(commit, localOpMetadata, true);
+		assert(
+			this.resubmitMachine.isInResubmitPhase !== false,
+			"Invalid resubmit outside of resubmit phase",
+		);
+		const enrichedCommit = this.resubmitMachine.peekNextCommit();
+		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {

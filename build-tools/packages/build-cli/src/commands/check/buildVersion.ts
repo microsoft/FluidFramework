@@ -7,7 +7,7 @@ import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
-import { PackageCommand } from "../../BasePackageCommand";
+import { PackageCommand } from "../../BasePackageCommand.js";
 
 export default class CheckBuildVersionCommand extends PackageCommand<
 	typeof CheckBuildVersionCommand

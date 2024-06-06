@@ -8,8 +8,8 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import type {
 	ISameContainerMigrationTool,

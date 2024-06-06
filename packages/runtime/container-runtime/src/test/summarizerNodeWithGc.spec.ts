@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionDetailsBase,
@@ -33,6 +33,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
+type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {
+	baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
+	loadBaseGCDetails(): Promise<void>;
+	hasUsedStateChanged(): boolean;
+};
+
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
 	const node1Id = "/gcNode1";
@@ -41,7 +47,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 	const subNode2Id = "/gcNode2/subNode";
 
 	let rootSummarizerNode: IRootSummarizerNodeWithGC;
-	let summarizerNode: ISummarizerNodeWithGC;
+	let summarizerNode: SummarizerNodeWithPrivates;
 	// The base GC details of the root summarizer node. The child base GC details from this is passed on to the child
 	// summarizer node during its creation.
 	let rootBaseGCDetails: IGarbageCollectionDetailsBase;
@@ -72,7 +78,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			{ type: CreateSummarizerNodeSource.FromSummary },
 			undefined,
 			getChildInternalGCData,
-		);
+		) as SummarizerNodeWithPrivates;
 
 		// Initialize the values to be returned by the child node's getGCData.
 		childInternalGCData = {
@@ -240,6 +246,90 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await assert.doesNotReject(
 				summarizerNode.summarize(true /* fullTree */),
 				"summarize should not have thrown an error since GC was run",
+			);
+		});
+	});
+
+	describe("Re-summarization due to GC state changes", () => {
+		/**
+		 * Re-summarization is triggered due to GC state change if summarizer node's "hasUsedStateChanged"
+		 * returns true.
+		 */
+		it("should not trigger re-summarization if used routes don't change", async () => {
+			const usedRoutes = ["route"];
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes(usedRoutes);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				false,
+				"Re-summarization should not be triggered",
+			);
+		});
+
+		it("should trigger re-summarization if used routes changes from base snapshot", async () => {
+			const usedRoutes = ["route"];
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes([...usedRoutes, "newRoute"]);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				true,
+				"Re-summarization should be triggered",
+			);
+		});
+
+		it("should trigger re-summarization if base snapshot used routes is empty", async () => {
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes: undefined,
+			};
+			summarizerNode.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNode.loadBaseGCDetails();
+			summarizerNode.updateUsedRoutes(["newRoute"]);
+			assert.strictEqual(
+				summarizerNode.hasUsedStateChanged(),
+				true,
+				"Re-summarization should be triggered",
+			);
+		});
+
+		it("should not trigger re-summarization if base snapshot used routes is empty and GC is disabled", async () => {
+			const summarizerNodeGCDisabled = rootSummarizerNode.createChild(
+				summarizeInternal,
+				"nodeGCDisabled",
+				{ type: CreateSummarizerNodeSource.FromSummary },
+				{ gcDisabled: true },
+				getChildInternalGCData,
+			) as SummarizerNodeWithPrivates;
+
+			const baseGCDetails: IGarbageCollectionDetailsBase = {
+				gcData: {
+					gcNodes: {},
+				},
+				usedRoutes: undefined,
+			};
+			summarizerNodeGCDisabled.baseGCDetailsP = Promise.resolve(baseGCDetails);
+			await summarizerNodeGCDisabled.loadBaseGCDetails();
+			summarizerNodeGCDisabled.updateUsedRoutes(["newRoute"]);
+			assert.strictEqual(
+				summarizerNodeGCDisabled.hasUsedStateChanged(),
+				false,
+				"Re-summarization should not be triggered",
 			);
 		});
 	});

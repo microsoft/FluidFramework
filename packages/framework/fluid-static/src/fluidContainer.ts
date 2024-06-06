@@ -15,13 +15,9 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IRootDataObject,
-	LoadableObjectClass,
-} from "./types.js";
+import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
@@ -33,7 +29,7 @@ export type InitialObjects<T extends ContainerSchema> = {
 	//
 	// The '? TChannel : never' is required because infer can only be used in
 	// a conditional 'extends' expression.
-	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
+	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<
 		infer TChannel
 	>
 		? TChannel
@@ -209,17 +205,28 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	/**
 	 * Create a new data object or Distributed Data Store (DDS) of the specified type.
 	 *
-	 * @remarks
-	 *
-	 * In order to share the data object or DDS with other
-	 * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
-	 * initialObjects.
-	 *
 	 * @param objectClass - The class of the `DataObject` or `SharedObject` to create.
 	 *
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
+	 *
+	 * @remarks
+	 *
+	 * In order to share the data object or DDS with other collaborators and retrieve it later,
+	 * store its handle in a collection like a SharedDirectory from your initialObjects.
+	 * It's typically a good idea to set any initial state on the object before doing so,
+	 * as it is both more efficient and helpful to maintain domain model invariants
+	 * (e.g. this approach easily allows state to only be set once).
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const existingDirectory = container.initialObjects.myDirectory;
+	 * const map = await container.create(SharedMap);
+	 * map.set("initialState", "someValue");
+	 * existingDirectory.set("myMap", map.handle);
+	 * ```
 	 */
-	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+	create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
 
 	/**
 	 * Dispose of the container instance, permanently disabling it.
@@ -347,7 +354,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	/**
 	 * {@inheritDoc IFluidContainer.create}
 	 */
-	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
+	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
 	}
 

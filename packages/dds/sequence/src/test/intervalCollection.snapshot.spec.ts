@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -40,7 +40,6 @@ async function loadSharedString(
 		SharedStringFactory.Attributes,
 	);
 	await sharedString.load(services);
-	await sharedString.loaded;
 	return sharedString;
 }
 

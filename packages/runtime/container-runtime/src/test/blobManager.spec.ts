@@ -18,15 +18,15 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
-	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	LoggingError,
 	MonitoringContext,
@@ -162,7 +162,7 @@ export class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public logger = this.mc.logger;
+	public baseLogger = this.mc.logger;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();

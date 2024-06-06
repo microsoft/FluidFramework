@@ -8,9 +8,8 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
@@ -172,6 +171,51 @@ describe("Tests1 for snapshot fetch", () => {
 			// Drop error
 		}
 		assert(success, "mds limit should not be set!!");
+	});
+
+	it("Check error in empty response", async () => {
+		async function mockDownloadSnapshot<T>(
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
+			callback: () => Promise<T>,
+		): Promise<T> {
+			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			getDownloadSnapshotStub.returns(_response);
+			try {
+				return await callback();
+			} finally {
+				getDownloadSnapshotStub.restore();
+			}
+		}
+		const odspResponse: IOdspResponse<Response> = {
+			content: (await createResponse(
+				{},
+				new Uint8Array().buffer,
+				200,
+			)) as unknown as Response,
+			duration: 10,
+			headers: new Map([
+				["x-fluid-epoch", "epoch1"],
+				["content-type", "application/ms-fluid"],
+			]),
+			propsToLog: {},
+		};
+		const response: ISnapshotRequestAndResponseOptions = {
+			odspResponse,
+			requestHeaders: {},
+			requestUrl: siteUrl,
+		};
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getVersions(null, 1),
+			);
+			assert.fail("should throw incorrectServerResponse error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				OdspErrorTypes.incorrectServerResponse,
+				"incorrectServerResponse should be received",
+			);
+		}
 	});
 
 	it("Check error in snapshot content type", async () => {

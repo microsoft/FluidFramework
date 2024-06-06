@@ -196,13 +196,14 @@ export {
 
 export {
 	compareLocalNodeKeys,
-	LocalNodeKey,
 	createNodeKeyManager,
-	createMockNodeKeyManager,
-	StableNodeKey,
+	isStableNodeKey,
+	LocalNodeKey,
+	MockNodeKeyManager,
 	NodeKeyIndex,
 	NodeKeyManager,
 	nodeKeyTreeIdentifier,
+	StableNodeKey,
 } from "./node-key/index.js";
 
 export {
@@ -224,6 +225,8 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	SchemaValidationErrors,
+	isNodeInSchema,
 } from "./default-schema/index.js";
 
 export {
@@ -275,6 +278,7 @@ export {
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	getSchemaAndPolicy,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -301,3 +305,5 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export { MapTreeNode, getOrCreateMapTreeNode, tryGetMapTreeNode } from "./flex-map-tree/index.js";

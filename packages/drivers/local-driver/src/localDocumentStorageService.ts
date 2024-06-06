@@ -10,6 +10,7 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -17,15 +18,11 @@ import {
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	GitManager,

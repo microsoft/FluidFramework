@@ -7,6 +7,7 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentService,
@@ -15,17 +16,14 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils/internal";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
@@ -79,6 +77,7 @@ export class ContainerStorageAdapter
 	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
 	 */
 	public constructor(
+		// eslint-disable-next-line import/no-deprecated
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 		/**
@@ -233,6 +232,7 @@ export class ContainerStorageAdapter
  */
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
+		// eslint-disable-next-line import/no-deprecated
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -245,6 +245,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.verifyStorage().readBlob(blobId);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private verifyStorage(): IDetachedBlobStorage {
 		if (this.detachedStorage === undefined) {
 			throw new UsageError("Real storage calls not allowed in Unattached container");

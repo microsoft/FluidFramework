@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

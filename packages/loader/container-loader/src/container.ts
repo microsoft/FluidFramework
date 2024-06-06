@@ -38,6 +38,16 @@ import {
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	IClient,
+	IClientDetails,
+	IQuorumClients,
+	ISequencedClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
@@ -45,6 +55,15 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
+	ICommittedProposal,
+	IDocumentAttributes,
+	IDocumentMessage,
+	IQuorumProposals,
+	ISequencedProposal,
+	ISnapshotTree,
+	ISummaryContent,
+	IVersion,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -57,25 +76,6 @@ import {
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
-import {
-	IClient,
-	IClientDetails,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
-	IQuorumClients,
-	IQuorumProposals,
-	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISequencedProposal,
-	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
-	ISummaryTree,
-	IVersion,
-	MessageType,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -92,6 +92,7 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
@@ -111,7 +112,13 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+// eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import {
+	serializeMemoryDetachedBlobStorage,
+	createMemoryDetachedBlobStorage,
+	tryInitializeMemoryDetachedBlobStorage,
+} from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -218,6 +225,7 @@ export interface IContainerCreateProps {
 	/**
 	 * Blobs storage for detached containers.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
 	/**
@@ -465,7 +473,8 @@ export class Container
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
-	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly detachedBlobStorage: IDetachedBlobStorage;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -516,6 +525,15 @@ export class Container
 				this.connectionState !== ConnectionState.Connected,
 				0x969 /* not connected yet */,
 			);
+
+			// Track membership changes and update connection state accordingly
+			// We do this call here, instead of doing it in initializeProtocolState() due to pendingLocalState.
+			// When we load from stashed state, we let connectionStateHandler know about clientId from previous container instance.
+			// But we will play trailing ops from snapshot, including potentially playing join & leave ops for that same clientId!
+			// In other words, if connectionStateHandler has access to Quorum early in load sequence, it will see events (in stashed ops mode)
+			// in the order that is not possible in real life, that it may not expect.
+			// Ideally, we should supply pendingLocalState?.clientId here as well, not in constructor, but it does not matter (at least today)
+			this.connectionStateHandler.initProtocol(this.protocolHandler);
 
 			// Propagate current connection state through the system.
 			const readonly = this.readOnlyInfo.readonly ?? false;
@@ -767,7 +785,7 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.detachedBlobStorage = detachedBlobStorage;
+		this.detachedBlobStorage = detachedBlobStorage ?? createMemoryDetachedBlobStorage();
 		this.protocolHandlerBuilder =
 			protocolHandlerBuilder ??
 			((
@@ -856,6 +874,9 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
+				// WARNING: logger on this context should not including getters like containerConnectionState above (on this.subLogger),
+				// as that will result in attempt to dereference this.connectionStateHandler from this call while it's still undefined.
+				mc: loggerToMonitoringContext(subLogger),
 				connectionStateChanged: (value, oldState, reason) => {
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
@@ -944,7 +965,7 @@ export class Container
 			options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
-			detachedBlobStorage,
+			this.detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
@@ -962,7 +983,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.isDirty,
+			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 		);
 
 		const isDomAvailable =
@@ -1208,7 +1229,8 @@ export class Container
 			baseSnapshot,
 			snapshotBlobs,
 			pendingRuntimeState,
-			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+			hasAttachmentBlobs: this.detachedBlobStorage.size > 0,
+			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
 		};
 		return JSON.stringify(detachedContainerState);
 	}
@@ -1328,6 +1350,7 @@ export class Container
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 
 					if (!this.closed) {
+						this.detachedBlobStorage.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
 							reason: { text: "createDetached" },
@@ -1760,11 +1783,15 @@ export class Container
 		baseSnapshot,
 		snapshotBlobs,
 		hasAttachmentBlobs,
+		attachmentBlobs,
 		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
 		if (hasAttachmentBlobs) {
+			if (attachmentBlobs !== undefined) {
+				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
+			}
 			assert(
-				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
+				this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
@@ -1852,9 +1879,6 @@ export class Container
 		protocol.quorum.on("error", (error) => {
 			protocolLogger.sendErrorEvent(error);
 		});
-
-		// Track membership changes and update connection state accordingly
-		this.connectionStateHandler.initProtocol(protocol);
 
 		protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
 			if (proposal.key === "code" || proposal.key === "code2") {

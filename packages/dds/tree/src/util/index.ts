@@ -52,13 +52,13 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
 	Mutable,
 	Populated,
 	RecursiveReadonly,
-	zipIterables,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
@@ -73,6 +73,7 @@ export {
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
+	find,
 } from "./utils.js";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
 

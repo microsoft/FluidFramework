@@ -4,10 +4,10 @@
  */
 
 import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
+import { Info20Regular } from "@fluentui/react-icons";
+import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
-import { Info20Regular } from "@fluentui/react-icons";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";

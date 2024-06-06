@@ -8,18 +8,20 @@ import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelFactory,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidSerializer,
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
-import { TaskManagerFactory } from "./taskManagerFactory.js";
 
 /**
  * Description of a task manager operation
@@ -62,27 +64,7 @@ const placeholderClientId = "placeholder";
  * @sealed
  * @alpha
  */
-export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
-	/**
-	 * Create a new TaskManager
-	 *
-	 * @param runtime - data store runtime the new task queue belongs to
-	 * @param id - optional name of the task queue
-	 * @returns newly create task queue (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, TaskManagerFactory.Type) as TaskManager;
-	}
-
-	/**
-	 * Get a factory for TaskManager to register with the data store.
-	 *
-	 * @returns a factory that creates and load TaskManager
-	 */
-	public static getFactory(): IChannelFactory {
-		return new TaskManagerFactory();
-	}
-
+export class TaskManagerClass extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**
 	 * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
 	 * queue, even if we know we've submitted an op that should eventually modify the queue.

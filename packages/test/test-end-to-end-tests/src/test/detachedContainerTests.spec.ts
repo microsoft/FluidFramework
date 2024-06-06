@@ -17,7 +17,7 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
@@ -26,6 +26,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -42,7 +43,6 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

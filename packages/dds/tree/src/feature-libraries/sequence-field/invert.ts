@@ -5,16 +5,16 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import { RevisionTag } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
 
-import { DetachIdOverrideType } from "./format.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	CellId,
 	CellMark,
 	Changeset,
+	Detach,
 	Mark,
 	MarkEffect,
 	MarkList,
@@ -33,7 +33,6 @@ import {
 	isAttach,
 	isDetach,
 	isImpactful,
-	isReattach,
 	normalizeCellRename,
 	splitMark,
 	withNodeChange,
@@ -52,20 +51,19 @@ export function invert(
 	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
-	revisionMetadata: RevisionMetadataSource,
 ): Changeset {
-	return invertMarkList(change, crossFieldManager as CrossFieldManager<NodeId>, revisionMetadata);
+	return invertMarkList(change, isRollback, crossFieldManager as CrossFieldManager<NodeId>);
 }
 
 function invertMarkList(
 	markList: MarkList,
+	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
-	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, crossFieldManager, revisionMetadata);
+		const inverseMarks = invertMark(mark, isRollback, crossFieldManager);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -74,11 +72,11 @@ function invertMarkList(
 
 function invertMark(
 	mark: Mark,
+	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
-	revisionMetadata: RevisionMetadataSource,
 ): Mark[] {
-	if (!isImpactful(mark, revisionMetadata)) {
-		const inputId = getInputCellId(mark, revisionMetadata);
+	if (!isImpactful(mark)) {
+		const inputId = getInputCellId(mark);
 		return [invertNodeChangeOrSkip(mark.count, mark.changes, inputId)];
 	}
 	const type = mark.type;
@@ -88,30 +86,31 @@ function invertMark(
 		}
 		case "Remove": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
-			const outputId = getOutputCellId(mark, revisionMetadata);
-			const inputId = getInputCellId(mark, revisionMetadata);
-			const inverse: Mark =
-				inputId === undefined
-					? {
-							type: "Insert",
-							id: mark.id,
-							cellId: outputId,
-							count: mark.count,
-					  }
-					: {
-							type: "Remove",
-							id: mark.id,
-							cellId: outputId,
-							count: mark.count,
-							idOverride: {
-								type: DetachIdOverrideType.Redetach,
-								id: inputId,
-							},
-					  };
+			const outputId = getOutputCellId(mark);
+			const inputId = getInputCellId(mark);
+			let inverse: Mutable<Mark>;
+			if (inputId === undefined) {
+				inverse = {
+					type: "Insert",
+					id: mark.id,
+					cellId: outputId,
+					count: mark.count,
+				};
+			} else {
+				inverse = {
+					type: "Remove",
+					id: mark.id,
+					cellId: outputId,
+					count: mark.count,
+				};
+				if (isRollback) {
+					inverse.idOverride = inputId;
+				}
+			}
 			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Insert": {
-			const inputId = getInputCellId(mark, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
@@ -119,12 +118,9 @@ function invertMark(
 				id: inputId.localId,
 			};
 
-			removeMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
-				id: inputId,
-			};
+			if (isRollback) {
+				removeMark.idOverride = inputId;
+			}
 
 			const inverse = withNodeChange(removeMark, mark.changes);
 			return [inverse];
@@ -147,7 +143,7 @@ function invertMark(
 				);
 			}
 
-			const cellId = getDetachOutputCellId(mark, revisionMetadata) ?? {
+			const cellId = getDetachOutputCellId(mark) ?? {
 				revision: mark.revision ?? fail("Revision must be defined"),
 				localId: mark.id,
 			};
@@ -161,25 +157,25 @@ function invertMark(
 				moveIn.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
 			let effect: MarkEffect = moveIn;
-			const inputId = getInputCellId(mark, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			if (inputId !== undefined) {
+				const detach: Mutable<Detach> = {
+					type: "Remove",
+					id: mark.id,
+				};
+				if (isRollback) {
+					detach.idOverride = inputId;
+				}
 				effect = {
 					type: "AttachAndDetach",
 					attach: moveIn,
-					detach: {
-						type: "Remove",
-						id: mark.id,
-						idOverride: {
-							type: DetachIdOverrideType.Redetach,
-							id: inputId,
-						},
-					},
+					detach,
 				};
 			}
 			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			const inputId = getInputCellId(mark, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut>> = {
 				type: "MoveOut",
@@ -187,17 +183,13 @@ function invertMark(
 				count: mark.count,
 			};
 
+			if (isRollback) {
+				invertedMark.idOverride = inputId;
+			}
+
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
-
-			invertedMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
-				id: inputId,
-			};
-
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {
@@ -207,7 +199,7 @@ function invertMark(
 				cellId: mark.cellId,
 				...mark.attach,
 			};
-			const idAfterAttach = getOutputCellId(attach, undefined);
+			const idAfterAttach = getOutputCellId(attach);
 
 			// We put `mark.changes` on the detach so that if it is a move source
 			// the changes can be sent to the endpoint.
@@ -217,8 +209,8 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(attach, crossFieldManager, revisionMetadata);
-			const detachInverses = invertMark(detach, crossFieldManager, revisionMetadata);
+			const attachInverses = invertMark(attach, isRollback, crossFieldManager);
+			const detachInverses = invertMark(detach, isRollback, crossFieldManager);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;

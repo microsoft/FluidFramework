@@ -7,17 +7,18 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
+	type IChannel,
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from '@fluidframework/runtime-definitions';
+} from '@fluidframework/runtime-definitions/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
@@ -41,7 +42,7 @@ export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
-		public readonly sharedTreeFactory: IChannelFactory
+		public readonly sharedTreeFactory: IChannelFactory<ITree>
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 		this.handle = new ShimHandle<SharedTreeShim>(this);
@@ -49,8 +50,8 @@ export class SharedTreeShim implements IShim {
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
 	private services?: IChannelServices;
-	private _currentTree?: ITree;
-	public get currentTree(): ITree {
+	private _currentTree?: ITree & IChannel;
+	public get currentTree(): ITree & IChannel {
 		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
 		return this._currentTree;
 	}
@@ -94,16 +95,16 @@ export class SharedTreeShim implements IShim {
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
-		this._currentTree = (await this.sharedTreeFactory.load(
+		this._currentTree = await this.sharedTreeFactory.load(
 			this.runtime,
 			this.id,
 			shimServices,
 			this.sharedTreeFactory.attributes
-		)) as ITree;
+		);
 	}
 
 	public create(): void {
-		this._currentTree = this.sharedTreeFactory.create(this.runtime, this.id) as ITree;
+		this._currentTree = this.sharedTreeFactory.create(this.runtime, this.id);
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {

@@ -7,8 +7,9 @@ import { strict as assert } from "assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import { ITree } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -17,7 +18,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { AllowedUpdateType } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
 import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
 import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
@@ -72,11 +72,11 @@ describe("Summary benchmarks", () => {
 	describe("load speed of", () => {
 		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+			const factory = new SharedTreeFactory();
 			benchmark({
 				title,
 				type,
-				before: async () => {
+				before: () => {
 					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 				},
 				benchmarkFnAsync: async () => {
