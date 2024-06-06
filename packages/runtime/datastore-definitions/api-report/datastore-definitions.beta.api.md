@@ -19,7 +19,7 @@ import type { IGarbageCollectionData } from '@fluidframework/runtime-definitions
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import type { IQuorumClients } from '@fluidframework/driver-definitions';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';

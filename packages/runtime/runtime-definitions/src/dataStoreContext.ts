@@ -19,15 +19,12 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
-import type {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 

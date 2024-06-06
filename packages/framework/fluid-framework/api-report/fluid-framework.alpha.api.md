@@ -143,7 +143,7 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @public
+// @alpha
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -357,7 +357,7 @@ export enum IntervalType {
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
 }
 
-// @public
+// @alpha
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -548,7 +548,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
-// @public
+// @alpha
 export interface ITrace {
     action: string;
     service: string;
