@@ -5,16 +5,8 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
@@ -105,6 +97,12 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
@@ -142,6 +140,14 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @public
+export type FluidObject<T = unknown> = {
+    [P in FluidObjectProviderKeys<T>]?: T[P];
+};
+
+// @public
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @alpha
 export interface IBranchOrigin {
@@ -188,6 +194,198 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 // @public @sealed
+export interface IDisposable {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
+
+// @public
+export interface IErrorEvent extends IEvent {
+    // @eventProperty
+    (event: "error", listener: (message: any) => void): any;
+}
+
+// @public
+export interface IEvent {
+    // @eventProperty
+    (event: string, listener: (...args: any[]) => void): any;
+}
+
+// @public
+export interface IEventProvider<TEvent extends IEvent> {
+    readonly off: IEventTransformer<this, TEvent>;
+    readonly on: IEventTransformer<this, TEvent>;
+    readonly once: IEventTransformer<this, TEvent>;
+}
+
+// @public
+export type IEventThisPlaceHolder = {
+    thisPlaceHolder: "thisPlaceHolder";
+};
+
+// @public
+export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: infer E14, listener: (...args: infer A14) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
+
+// @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(props?: ContainerAttachProps): Promise<string>;
     readonly attachState: AttachState;
@@ -208,6 +406,29 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
+
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
+
+// @public
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
+    get(): Promise<T>;
+    readonly isAttached: boolean;
+}
+
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    // (undocumented)
+    readonly handle: IFluidHandle;
 }
 
 // @alpha
@@ -355,6 +576,12 @@ export enum IntervalType {
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
+}
+
+// @public (undocumented)
+export interface IProvideFluidLoadable {
+    // (undocumented)
+    readonly IFluidLoadable: IFluidLoadable;
 }
 
 // @alpha
@@ -544,6 +771,11 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
+}
+
+// @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
@@ -638,6 +870,11 @@ export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonl
 export type Off = () => void;
 
 // @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
+
+// @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
@@ -688,7 +925,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<unknown>, IFluidHandle_2<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -825,7 +1062,21 @@ export enum Side {
 }
 
 // @public
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @public
+export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;

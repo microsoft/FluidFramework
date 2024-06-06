@@ -34,6 +34,27 @@ export type {
 	Myself,
 } from "@fluidframework/fluid-static";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
+export type {
+	IErrorBase,
+	IEventProvider,
+	IDisposable,
+	IEvent,
+	IEventThisPlaceHolder,
+	IErrorEvent,
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseProperties,
+	IEventTransformer,
+	IProvideFluidLoadable,
+	IFluidHandleErased,
+	TransformedEvent,
+	TelemetryBaseEventPropertyType,
+	Tagged,
+	ReplaceIEventThisPlaceHolder,
+	FluidObject, // Linked in doc comment
+	FluidObjectProviderKeys, // Used by FluidObject
+} from "@fluidframework/core-interfaces";
 
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
@@ -62,8 +83,6 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
  * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
  * @public
  */
-// Remove this and above lint disable after using @fluidframework/eslint-config-fluid ^5.3.0
-// eslint-disable-next-line import/export
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
 // #endregion Custom re-exports
