@@ -1474,28 +1474,16 @@ use_old_FunctionDeclaration_isTaggedTelemetryPropertyValue(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_isValidLegacyError": {"forwardCompat": false}
+ * "RemovedFunctionDeclaration_isValidLegacyError": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_isValidLegacyError():
-    TypeOnly<typeof old.isValidLegacyError>;
-declare function use_current_FunctionDeclaration_isValidLegacyError(
-    use: TypeOnly<typeof current.isValidLegacyError>): void;
-use_current_FunctionDeclaration_isValidLegacyError(
-    get_old_FunctionDeclaration_isValidLegacyError());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "FunctionDeclaration_isValidLegacyError": {"backCompat": false}
+ * "RemovedFunctionDeclaration_isValidLegacyError": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_isValidLegacyError():
-    TypeOnly<typeof current.isValidLegacyError>;
-declare function use_old_FunctionDeclaration_isValidLegacyError(
-    use: TypeOnly<typeof old.isValidLegacyError>): void;
-use_old_FunctionDeclaration_isValidLegacyError(
-    get_current_FunctionDeclaration_isValidLegacyError());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

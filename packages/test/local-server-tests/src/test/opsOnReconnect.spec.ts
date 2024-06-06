@@ -18,7 +18,7 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
