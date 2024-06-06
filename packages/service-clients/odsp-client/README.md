@@ -18,7 +18,7 @@ import { OdspClient, OdspConnectionConfig, OdspClientProps } from "@fluid-experi
 const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: "<YOUR_TOKEN_PROVIDER>",
 	siteUrl: "<SITE_URL>",
-	driveId: "<RAAS_DRIVE_ID>",
+	driveId: "<SHAREPOINT_EMBEDDED_CONTAINER_ID>",
 	filePath: "<FLUID_FILE_PATH>",
 };
 
