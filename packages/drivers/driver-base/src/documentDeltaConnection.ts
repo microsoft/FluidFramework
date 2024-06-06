@@ -5,11 +5,7 @@
 
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ConnectionMode,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
@@ -21,6 +17,8 @@ import {
 	ISignalClient,
 	ITokenClaims,
 	ScopeType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {

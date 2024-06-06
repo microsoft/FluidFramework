@@ -6,11 +6,11 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDeltasFetchResult,
 	IStream,
 	IStreamResult,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
