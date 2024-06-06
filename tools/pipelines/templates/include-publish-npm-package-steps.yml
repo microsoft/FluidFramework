@@ -35,7 +35,7 @@ steps:
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
-    workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
+    workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
@@ -53,8 +53,26 @@ steps:
         tag="--tag dev"
       fi
       echo Tag: $tag
+
       cp .npmrc ~/.npmrc
+
       maximumRetryIfNetworkError=3
+      tarballsDir=$(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+      orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
+
+      echo "flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs \"$tag\" --retry $maximumRetryIfNetworkError --tarball --verbose --dryRun"
+
+      flub publish tarballs --dir $tarballsDir --orderFile $orderFile --publishArgs "$tag" --retry $maximumRetryIfNetworkError --tarball --verbose --dryRun
+
+      # flub publish tarballs \
+      # --dir $tarballsDir \
+      # --orderFile $orderFile \
+      # --publishArgs "$tag" \
+      # --retry $maximumRetryIfNetworkError \
+      # --tarball \
+      # --verbose \
+      # --dryRun
+
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
         sorted=true
