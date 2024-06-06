@@ -6,6 +6,7 @@
 		"allowJs": true,
 		"outDir": "./lib",
 		"rootDir": "./src",
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 }
