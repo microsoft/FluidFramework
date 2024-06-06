@@ -94,6 +94,22 @@ export class ClassWithPrivateMethod {
 	}
 }
 export const classInstanceWithPrivateMethod = new ClassWithPrivateMethod();
+export class ClassWithPrivateGetter {
+	public public = "public";
+	// @ts-expect-error secret is never read
+	private get secret(): number {
+		return this.public.length;
+	}
+}
+export const classInstanceWithPrivateGetter = new ClassWithPrivateGetter();
+export class ClassWithPrivateSetter {
+	public public = "public";
+	// @ts-expect-error secret is never read
+	private set secret(v: string) {
+		this.public = v;
+	}
+}
+export const classInstanceWithPrivateSetter = new ClassWithPrivateSetter();
 export class ClassWithPublicData {
 	public public = "public";
 }
@@ -105,3 +121,17 @@ export class ClassWithPublicMethod {
 	}
 }
 export const classInstanceWithPublicMethod = new ClassWithPublicMethod();
+export class ClassWithPublicGetter {
+	public public = "public";
+	public get secret(): number {
+		return this.public.length;
+	}
+}
+export const classInstanceWithPublicGetter = new ClassWithPublicGetter();
+export class ClassWithPublicSetter {
+	public public = "public";
+	public set secret(v: string) {
+		this.public = v;
+	}
+}
+export const classInstanceWithPublicSetter = new ClassWithPublicSetter();

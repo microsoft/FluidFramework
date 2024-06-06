@@ -40,11 +40,19 @@ import {
 	objectWithNever,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
+	classInstanceWithPrivateGetter,
+	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	classInstanceWithPublicGetter,
+	classInstanceWithPublicSetter,
 	ClassWithPrivateData,
 	ClassWithPrivateMethod,
+	ClassWithPrivateGetter,
+	ClassWithPrivateSetter,
 	ClassWithPublicData,
+	ClassWithPublicGetter,
+	ClassWithPublicSetter,
 } from "./testValues.js";
 
 /**
@@ -186,8 +194,39 @@ describe("JsonSerializable", () => {
 						"instanceResult is not an instance of ClassWithPublicData",
 					);
 				});
+				it("with private getter (removes getter)", () => {
+					const instanceResult = passThru(classInstanceWithPrivateGetter, {
+						public: "public",
+						// @ts-expect-error secret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateGetter;
+					assert.ok(
+						classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
+						"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPrivateGetter),
+						"instanceResult is not an instance of ClassWithPrivateGetter",
+					);
+				});
+				it("with private setter (removes setter)", () => {
+					const instanceResult = passThru(classInstanceWithPrivateSetter, {
+						public: "public",
+						// @ts-expect-error secret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateSetter;
+					assert.ok(
+						classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
+						"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPrivateSetter),
+						"instanceResult is not an instance of ClassWithPrivateSetter",
+					);
+				});
 			});
 		});
+
+		// These cases are demonstrating defects within the current implementation.
+		// They show "allowed" incorrect use and the unexpected results.
 		describe("unsupported object types", () => {
 			// Class instances are indistinguishable from general objects by type checking.
 			// Non-public (non-function) members are preserved, but they are filtered away
@@ -198,20 +237,6 @@ describe("JsonSerializable", () => {
 			// Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
 			// enable support.
 			describe("class instance", () => {
-				it("with private method (ignores private method)", () => {
-					const instanceResult = passThru(classInstanceWithPrivateMethod, {
-						public: "public",
-						// @ts-expect-error Property 'getSecret' is missing
-					}) satisfies typeof classInstanceWithPrivateMethod;
-					assert.ok(
-						classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
-						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
-					);
-					assert.ok(
-						!(instanceResult instanceof ClassWithPrivateMethod),
-						"instanceResult is not an instance of ClassWithPrivateMethod",
-					);
-				});
 				it("with private data (ignores private data)", () => {
 					const instanceResult = passThru(classInstanceWithPrivateData, {
 						public: "public",
@@ -226,6 +251,54 @@ describe("JsonSerializable", () => {
 					assert.ok(
 						!(instanceResult instanceof ClassWithPrivateData),
 						"instanceResult is not an instance of ClassWithPrivateData",
+					);
+				});
+				it("with private method (ignores private method)", () => {
+					const instanceResult = passThru(classInstanceWithPrivateMethod, {
+						public: "public",
+						// @ts-expect-error Property 'getSecret' is missing
+					}) satisfies typeof classInstanceWithPrivateMethod;
+					assert.ok(
+						classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPrivateMethod),
+						"instanceResult is not an instance of ClassWithPrivateMethod",
+					);
+				});
+				it("with public getter (preserves getter that doesn't propagate)", () => {
+					const instanceResult = passThru(
+						classInstanceWithPublicGetter,
+						// @ts-expect-error secret is missing, but required
+						{
+							public: "public",
+						},
+					) satisfies typeof classInstanceWithPublicGetter;
+					assert.ok(
+						classInstanceWithPublicGetter instanceof ClassWithPublicGetter,
+						"classInstanceWithPublicGetter is an instance of ClassWithPublicGetter",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPublicGetter),
+						"instanceResult is not an instance of ClassWithPublicGetter",
+					);
+				});
+				it("with public setter (add value that doesn't propagate)", () => {
+					const instanceResult = passThru(
+						classInstanceWithPublicSetter,
+						// @ts-expect-error secret is missing, but required
+						{
+							public: "public",
+						},
+					) satisfies typeof classInstanceWithPublicSetter;
+					assert.ok(
+						classInstanceWithPublicSetter instanceof ClassWithPublicSetter,
+						"classInstanceWithPublicSetter is an instance of ClassWithPublicSetter",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPublicSetter),
+						"instanceResult is not an instance of ClassWithPublicSetter",
 					);
 				});
 			});

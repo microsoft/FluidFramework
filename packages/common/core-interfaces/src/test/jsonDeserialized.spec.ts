@@ -40,12 +40,20 @@ import {
 	objectWithNever,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
+	classInstanceWithPrivateGetter,
+	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	classInstanceWithPublicGetter,
+	classInstanceWithPublicSetter,
 	ClassWithPrivateData,
 	ClassWithPrivateMethod,
+	ClassWithPrivateGetter,
+	ClassWithPrivateSetter,
 	ClassWithPublicData,
 	ClassWithPublicMethod,
+	ClassWithPublicGetter,
+	ClassWithPublicSetter,
 } from "./testValues.js";
 
 /**
@@ -209,14 +217,79 @@ describe("JsonDeserialized", () => {
 						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
 					);
 					assert.ok(
-						!(instanceRead instanceof classInstanceWithPrivateMethod.constructor),
+						!(instanceRead instanceof ClassWithPrivateMethod),
 						"instanceRead is not an instance of ClassWithPrivateMethod",
+					);
+				});
+				it("with private getter (removes getter)", () => {
+					const instanceRead = passThru(classInstanceWithPrivateGetter, {
+						public: "public",
+						// @ts-expect-error secret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateGetter;
+					assert.ok(
+						classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
+						"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPrivateGetter),
+						"instanceRead is not an instance of ClassWithPrivateGetter",
+					);
+				});
+				it("with private setter (removes setter)", () => {
+					const instanceRead = passThru(classInstanceWithPrivateSetter, {
+						public: "public",
+						// @ts-expect-error secret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateSetter;
+					assert.ok(
+						classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
+						"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPrivateSetter),
+						"instanceRead is not an instance of ClassWithPrivateSetter",
 					);
 				});
 			});
 		});
+
+		// These cases are demonstrating defects within the current implementation.
+		// They show "allowed" incorrect use and the unexpected results.
 		describe("unsupported object types", () => {
 			describe("class instance", () => {
+				it("with public getter (preserves getter that doesn't propagate)", () => {
+					const instanceRead = passThru(
+						classInstanceWithPublicGetter,
+						// @ts-expect-error secret is missing, but required
+						{
+							public: "public",
+						},
+					) satisfies typeof classInstanceWithPublicGetter;
+					assert.ok(
+						classInstanceWithPublicGetter instanceof ClassWithPublicGetter,
+						"classInstanceWithPublicGetter is an instance of ClassWithPublicGetter",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPublicGetter),
+						"instanceRead is not an instance of ClassWithPublicGetter",
+					);
+				});
+				it("with public setter (add value that doesn't propagate)", () => {
+					const instanceRead = passThru(
+						classInstanceWithPublicSetter,
+						// @ts-expect-error secret is missing, but required
+						{
+							public: "public",
+						},
+					) satisfies typeof classInstanceWithPublicSetter;
+					assert.ok(
+						classInstanceWithPublicSetter instanceof ClassWithPublicSetter,
+						"classInstanceWithPublicSetter is an instance of ClassWithPublicSetter",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPublicSetter),
+						"instanceRead is not an instance of ClassWithPublicSetter",
+					);
+				});
 				it("with private data (hides private data that propagates)", () => {
 					const instanceRead = passThru(classInstanceWithPrivateData, {
 						public: "public",
