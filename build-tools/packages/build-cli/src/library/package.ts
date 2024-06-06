@@ -239,35 +239,41 @@ export interface PreReleaseDependencies {
  * Checks all the packages in a release group for any that are a pre-release version.
  *
  * @param context - The context.
- * @param releaseGroup - The release group.
+ * @param releaseGroup - The release group or package.
  * @returns A {@link PreReleaseDependencies} object containing the pre-release dependency names and versions.
  */
 export async function getPreReleaseDependencies(
 	context: Context,
-	releaseGroup: ReleaseGroup | ReleasePackage,
-	// depsToUpdate: ReleasePackage[],
+	releaseGroup: ReleaseGroup | ReleasePackage | MonoRepo | Package,
 ): Promise<PreReleaseDependencies> {
 	const prereleasePackages = new Map<ReleasePackage, string>();
 	const prereleaseGroups = new Map<ReleaseGroup, string>();
-	let packagesToCheck: Package[];
-	let depsToUpdate: ReleasePackage[];
+	const packagesToCheck: Package[] = [];
+	const depsToUpdate: ReleasePackage[] = [];
 
-	if (isReleaseGroup(releaseGroup)) {
-		const monorepo = context.repo.releaseGroups.get(releaseGroup);
+	if (releaseGroup instanceof Package) {
+		packagesToCheck.push(releaseGroup);
+		depsToUpdate.push(...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name));
+	} else if (releaseGroup instanceof MonoRepo || isReleaseGroup(releaseGroup)) {
+		const monorepo =
+			releaseGroup instanceof MonoRepo
+				? releaseGroup
+				: context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			throw new Error(`Can't find release group in context: ${releaseGroup}`);
+			throw new Error(`Can't find release group in context: ${releaseGroup as ReleaseGroup}`);
 		}
 
-		packagesToCheck = monorepo.packages;
-		depsToUpdate = context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name);
+		packagesToCheck.push(...monorepo.packages);
+		depsToUpdate.push(...context.packagesNotInReleaseGroup(monorepo.name).map((p) => p.name));
 	} else {
+		assert(typeof releaseGroup === "string");
 		const pkg = context.fullPackageMap.get(releaseGroup);
 		if (pkg === undefined) {
 			throw new Error(`Can't find package in context: ${releaseGroup}`);
 		}
 
-		packagesToCheck = [pkg];
-		depsToUpdate = context.packagesNotInReleaseGroup(pkg).map((p) => p.name);
+		packagesToCheck.push(pkg);
+		depsToUpdate.push(...context.packagesNotInReleaseGroup(pkg).map((p) => p.name));
 	}
 
 	for (const pkg of packagesToCheck) {
