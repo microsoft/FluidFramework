@@ -550,7 +550,7 @@ describe("generate:buildVersion", () => {
 		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.2.0", "--tags", ...test_tags])
-		.it("2.2.0 version returns isLatest true", (ctx) => {
+		.it("next unpublished minor version (2.2.0) returns isLatest true", (ctx) => {
 			stdoutLineEquals(ctx.stdout, 0, "version=2.2.0");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=true");
 		});
