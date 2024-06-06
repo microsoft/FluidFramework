@@ -135,7 +135,7 @@ export const Any: "Any";
 export type Any = typeof Any;
 
 // @public
-export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
     [FieldKind.Required]: T;
     [FieldKind.Optional]: T | undefined;
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
@@ -1027,6 +1027,13 @@ declare namespace InternalFlexListTypes {
     }
 }
 export { InternalFlexListTypes }
+
+declare namespace InternalSimpleTreeTypes {
+    export {
+        ApplyKind
+    }
+}
+export { InternalSimpleTreeTypes }
 
 // @public
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {

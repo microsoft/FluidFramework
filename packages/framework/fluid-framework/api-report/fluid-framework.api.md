@@ -44,7 +44,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
-export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
     [FieldKind.Required]: T;
     [FieldKind.Optional]: T | undefined;
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
@@ -343,6 +343,13 @@ declare namespace InternalFlexListTypes {
     }
 }
 export { InternalFlexListTypes }
+
+declare namespace InternalSimpleTreeTypes {
+    export {
+        ApplyKind
+    }
+}
+export { InternalSimpleTreeTypes }
 
 // @public
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
