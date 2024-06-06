@@ -789,6 +789,30 @@ export function arraySchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+
+			// First run, do extra validation.
+			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+			{
+				let prototype: object = this.prototype;
+				// There isn't a clear cleaner way to author this loop.
+				while (prototype !== schema.prototype) {
+					// TODO: loop through prototype keys and check for positive integers. Throw if any are found.
+					for (const key of Object.getOwnPropertyNames(prototype)) {
+						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						if (maybeIndex !== undefined) {
+							throw new UsageError(
+								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,
+							);
+						}
+					}
+
+					// Since this stops at the array node base schema, it should never see a null prototype, so this case is safe.
+					// Additionally, if the prototype chain is ever messed up such that the array base schema is not in it,
+					// the null that would show up here does at least ensure this code throws instead of hanging.
+					prototype = Reflect.getPrototypeOf(prototype) as object;
+				}
+			}
 		}
 
 		public static readonly identifier = identifier;
