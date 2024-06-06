@@ -16,8 +16,8 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestFluidObject,
