@@ -126,7 +126,11 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 
 			do {
 				this.info(`Publishing ${toPublish.fileName}, attempt ${tryCount + 1}`);
-				// eslint-disable-next-line no-await-in-loop -- This should execute serially
+				// We publish one package at a time, in order, and we don't continue until the current package is successfully
+				// published. This ensures that no packages are published to npm without their dependencies first being
+				// published. Note that despite publishing in order, npm itself may still make packages available in a different
+				// order - but we have no control over that.
+				// eslint-disable-next-line no-await-in-loop
 				status = await publishTarball(toPublish, this.logger, publishArgs);
 				tryCount++;
 			} while (status === "Error" && tryCount <= retry);
@@ -138,12 +142,15 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 				}
 
 				case "SuccessfullyPublished": {
-					this.info(`Published ${toPublish.fileName}`);
+					const countText = tryCount === 0 ? "" : ` (attempt ${tryCount}/${retry})`;
+					this.info(`Published ${toPublish.fileName}${countText}`);
 					break;
 				}
 
 				case "Error": {
-					this.error(`Fatal error publishing ${toPublish.fileName}, attempts: ${tryCount}`);
+					this.error(
+						`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`,
+					);
 				}
 
 				default: {
@@ -167,9 +174,12 @@ async function extractPackageJsonFromTarball(
 
 	// Use streaming API to work around https://github.com/101arrowz/fflate/issues/207
 	let unzipped: Uint8Array;
-	// eslint-disable-next-line no-return-assign
-	new Gunzip((chunk: Uint8Array) => (unzipped = chunk)).push(tarball, /* final */ true);
 
+	{
+		// eslint-disable-next-line no-return-assign -- assigning the chunk to unzipped is intentional
+		const gunzip = new Gunzip((chunk: Uint8Array) => (unzipped = chunk));
+		gunzip.push(tarball, /* final */ true);
+	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const data = untar(unzipped!);
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
