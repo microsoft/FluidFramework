@@ -40,7 +40,7 @@ interface ColumnInfo<TValue> {
  */
 const nameToColumnInfo: Record<string, ColumnInfo<unknown>> = {
 	releaseGroup: {
-		getValue: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a",
+		getValue: (pkg: Package) => pkg.workspace?.name ?? "n/a",
 		style: { alignment: "left" },
 	},
 	name: { getValue: (pkg: Package) => pkg.name, style: { alignment: "left" } },
@@ -50,7 +50,7 @@ const nameToColumnInfo: Record<string, ColumnInfo<unknown>> = {
 		style: { alignment: "center" },
 	},
 	version: {
-		getValue: (pkg: Package) => (pkg.monoRepo ? pkg.monoRepo.version : pkg.version),
+		getValue: (pkg: Package) => (pkg.workspace ? pkg.workspace.version : pkg.version),
 		style: { alignment: "left" },
 	},
 	path: {

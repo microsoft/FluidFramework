@@ -113,7 +113,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		let { branch } = this.flags;
 
 		const monorepo =
-			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+			releaseGroup === undefined ? undefined : context.repo.workspaces.get(releaseGroup);
 		if (monorepo === undefined) {
 			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
 		}
@@ -180,7 +180,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.verbose(`files: ${changedFiles.join(", ")}`);
 
 		const changedPackages = packages.filter((pkg) => {
-			const inReleaseGroup = pkg.monoRepo?.name === releaseGroup;
+			const inReleaseGroup = pkg.workspace?.name === releaseGroup;
 			if (!inReleaseGroup) {
 				this.warning(
 					`${pkg.name}: Ignoring changed package because it is not in the ${releaseGroup} release group.`,
@@ -238,10 +238,10 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		}
 
 		// Finally list the remaining (unchanged) release groups and their packages
-		for (const rg of context.repo.releaseGroups.values()) {
+		for (const rg of context.repo.workspaces.values()) {
 			if (rg.name !== releaseGroup) {
 				choices.push(
-					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
+					{ title: `${chalk.bold(rg.name)}`, heading: true, disabled: true },
 					...rg.packages
 						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
 						.sort((a, b) => packageComparer(a, b, changedPackages))

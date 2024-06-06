@@ -4,7 +4,7 @@
  */
 
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import { Package, Workspace } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
@@ -119,7 +119,9 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	 * @param input - A git tag as a string.
 	 * @returns A 3-tuple of the release group, the semver version, and the original tag.
 	 */
-	private async parseTag(input: string): Promise<[MonoRepo | Package, semver.SemVer, string]> {
+	private async parseTag(
+		input: string,
+	): Promise<[Workspace | Package, semver.SemVer, string]> {
 		const tag = input.startsWith(tagRefPrefix) ? input.slice(tagRefPrefix.length) : input;
 		const [rg, ver] = tag.split("_v");
 
