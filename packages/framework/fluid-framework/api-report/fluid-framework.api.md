@@ -109,7 +109,7 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 export const disposeSymbol: unique symbol;
 
 // @public
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
 export enum FieldKind {
@@ -339,7 +339,8 @@ export interface InteriorSequencePlace {
 
 declare namespace InternalFlexListTypes {
     export {
-        FlexListToUnion
+        FlexListToUnion,
+        ExtractItemType
     }
 }
 export { InternalFlexListTypes }

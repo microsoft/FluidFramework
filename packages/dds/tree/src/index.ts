@@ -225,7 +225,6 @@ export {
 	NormalizeFieldSchema,
 	FlexObjectNodeFields,
 	FlexMapFieldSchema,
-	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
 	ReservedObjectNodeFieldPropertyNames,

@@ -161,7 +161,6 @@ export {
 	FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
-	ExtractItemType,
 	NormalizeLazyItem,
 	FlexList,
 } from "./typed-schema/index.js";

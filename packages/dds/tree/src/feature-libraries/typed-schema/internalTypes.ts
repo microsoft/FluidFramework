@@ -5,4 +5,4 @@
 
 // Used by public types, but not part of the desired API surface
 
-export { FlexListToUnion } from "./flexList.js";
+export { FlexListToUnion, ExtractItemType } from "./flexList.js";

@@ -441,7 +441,7 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> = TOpaq
 export function extractFromOpaque<TOpaque extends BrandedType<any, unknown>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
 // @public
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @internal (undocumented)
 export function fail(message: string): never;
@@ -1023,7 +1023,8 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Un
 
 declare namespace InternalFlexListTypes {
     export {
-        FlexListToUnion
+        FlexListToUnion,
+        ExtractItemType
     }
 }
 export { InternalFlexListTypes }
