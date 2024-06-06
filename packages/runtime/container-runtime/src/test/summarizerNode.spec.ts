@@ -6,8 +6,11 @@
 import { strict as assert } from "assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,

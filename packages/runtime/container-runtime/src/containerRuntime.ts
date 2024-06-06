@@ -47,8 +47,6 @@ import {
 import {
 	IClientDetails,
 	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
@@ -61,6 +59,8 @@ import {
 	ISnapshotTree,
 	ISummaryContent,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";

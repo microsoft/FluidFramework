@@ -15,9 +15,9 @@ import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/int
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISentSignalMessage } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISignalClient } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
 import type { Socket } from 'socket.io-client';
