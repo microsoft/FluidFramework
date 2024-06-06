@@ -103,8 +103,8 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
 		const packageList = await pnpmList(rgOrPackage.repoPath);
-		const filtered = (await filterPackages(packageList, filterOptions))
-			// eslint-disable-next-line unicorn/no-await-expression-member
+		const filteredPackages = await filterPackages(packageList, filterOptions);
+		const filtered = filteredPackages
 			.reverse()
 			.filter((item): item is ListItem => {
 				const config = context.rootFluidBuildConfig?.policy?.packageNames;
