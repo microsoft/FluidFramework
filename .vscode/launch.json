@@ -412,6 +412,8 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			// These skipped files contain exceptions that are consistently thrown during test setup
+			// You can comment out this part if you want to debug these files
 			"skipFiles": [
 				"<node_internals>/**",
 				// @fluid-internal/mocha-test-setup is resolved first using esm resolution algorithm first before cjs resolution algorithm (require)
