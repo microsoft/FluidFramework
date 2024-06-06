@@ -154,7 +154,7 @@ export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<Fi
 // @public
 export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<FieldSchema<FieldKind.Optional | FieldKind.Identifier>> ? true : false;
 
-// @public
+// @alpha
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -375,7 +375,7 @@ export enum IntervalType {
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
 }
 
-// @public
+// @alpha
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -566,7 +566,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
-// @public
+// @alpha
 export interface ITrace {
     action: string;
     service: string;
