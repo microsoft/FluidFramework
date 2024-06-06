@@ -11,7 +11,7 @@ Publishes tarballs to the package registry unless the version is already publish
 
 ```
 USAGE
-  $ flub publish tarballs [-v | --quiet] [--dir <value>] (--tarball --orderFile <value>) [--retry <value>] [--dryRun]
+  $ flub publish tarballs --orderFile <value> [-v | --quiet] [--dir <value>] [--tarball] [--retry <value>] [--dryRun]
     [--access public|restricted] [--publishArgs <value>]
 
 FLAGS

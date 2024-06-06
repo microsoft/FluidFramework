@@ -47,7 +47,9 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 		tarball: Flags.boolean({
 			description:
 				"Use this flag to indicate that the orderFile contains tarball names instead of package names. Such files can be created using `flub list --tarball`. This option is deprecated and for backwards compatibility only.",
-			dependsOn: ["orderFile"],
+			// This flag does depend on orderFile, but orderFile is currently required, so the constraint isn't needed.
+			// In the future if orderFile becomes optional this should be uncommented.
+			// dependsOn: ["orderFile"],
 			deprecated: {
 				message: "This option is deprecated and for backwards compatibility only.",
 			},
