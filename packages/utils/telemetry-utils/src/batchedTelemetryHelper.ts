@@ -34,15 +34,19 @@ export class BatchedTelemetryHelper implements IDisposable {
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
 		private readonly logger: ITelemetryLoggerExt,
-		private readonly sampleThreshold: number,
+		private readonly threshold: number,
 	) {}
 
 	private incrementThresholdCount(): void {
 		this.counter++;
 	}
 
+	private resetThresholdCount(): void {
+		this.counter = 0;
+	}
+
 	private isAboveThreshold(): boolean {
-		return this.counter >= this.sampleThreshold;
+		return this.counter >= this.threshold;
 	}
 
 	/**
@@ -60,15 +64,29 @@ export class BatchedTelemetryHelper implements IDisposable {
 		this.incrementThresholdCount();
 
 		if (this.isAboveThreshold()) {
-			const telemetryEvent: ITelemetryPerformanceEventExt = {
-				...this.eventBase,
-			};
-
-			this.logger.sendPerformanceEvent(telemetryEvent);
+			this.sendData();
 		}
 	}
 
+	public sendData(): void {
+		const customData = Object.fromEntries(
+			[...this.customDataMap.entries()].map(([key, value]) => [key, value / this.counter]),
+		);
+
+		// TODO: Add `average` name to the custom data.
+		const telemetryEvent: ITelemetryPerformanceEventExt = {
+			...this.eventBase,
+			...customData,
+		};
+
+		this.logger.sendPerformanceEvent(telemetryEvent);
+		this.resetThresholdCount();
+	}
+
 	public dispose(error?: Error | undefined): void {
-		throw new Error("Method not implemented.");
+		// TODO: Implement dispose method.
+		// Not sure if calling `sendData()` for each entries (like `SampledTeelmetryHelper` does) is necessary.
+		// We wish to accumulate the data over time and send it every `threshold` times.
+		// Maybe instead `this.customMap.delete()` for each entries?
 	}
 }
