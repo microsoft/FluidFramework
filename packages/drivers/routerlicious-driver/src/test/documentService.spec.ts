@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { stub } from "sinon";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+
 import { IClient } from "@fluidframework/driver-definitions";
-import { DocumentService } from "../documentService.js";
-import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { stub } from "sinon";
+
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { R11sDocumentDeltaConnection } from "../documentDeltaConnection.js";
+import { DocumentService } from "../documentService.js";
+import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 
 describe("DocumentService", () => {
 	let documentService: DocumentService;
