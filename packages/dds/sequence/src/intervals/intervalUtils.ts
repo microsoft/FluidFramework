@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,

@@ -4,11 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ISequencedDocumentMessage,
-	ISummaryHandle,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	FiveDaysMs,
@@ -21,6 +17,7 @@ import {
 	ISnapshotTree,
 	ICreateBlobResponse,
 	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
