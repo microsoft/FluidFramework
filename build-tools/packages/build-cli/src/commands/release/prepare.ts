@@ -2,15 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import async from "async";
 import chalk from "chalk";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
-import { BaseCommand } from "../../base";
-import { type Context, Repository, getPreReleaseDependencies } from "../../library";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
+import {
+	BaseCommand,
+	type Context,
+	Repository,
+	getPreReleaseDependencies,
+} from "../../library/index.js";
 
 type CheckFunction = (
 	context: Context,
