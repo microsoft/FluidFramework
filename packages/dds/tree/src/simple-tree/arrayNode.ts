@@ -934,6 +934,6 @@ function validateIndexRange(
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, 0x8cb /* should be in fields mode */);
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
 	return cursor;
 }
