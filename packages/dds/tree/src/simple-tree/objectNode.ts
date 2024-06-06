@@ -327,7 +327,7 @@ export function objectSchema<
 							Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
 						) {
 							throw new UsageError(
-								`Schema ${identifier} defines an inherited property ${key.toString()} which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
+								`Schema ${identifier} defines an inherited property "${key.toString()}" which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
 							);
 						}
 					}
