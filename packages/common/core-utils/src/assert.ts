@@ -16,11 +16,8 @@
  */
 export function assert(condition: boolean, message: string | number): asserts condition {
 	if (!condition) {
-		const assertionError = new Error(
+		throw new Error(
 			typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
 		);
-		// NOTE: DOESN'T ACTUALLY WORK - But shows how we would use errorOrigin besides "ffDependency"
-		// We need to pull LoggingError into core-utils and use it here and add this prop that way.
-		Object.assign(assertionError, { errorOrigin: "ffAssert" });
 	}
 }
