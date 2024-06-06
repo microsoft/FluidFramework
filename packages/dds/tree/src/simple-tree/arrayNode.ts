@@ -486,7 +486,7 @@ function createArrayNodeProxy(
 				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
 				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
 				// Therefor length has to be handled in this proxy.
-				// Since its not actually mutable, return false so setting it will produce a type error.
+				// Since it's not actually mutable, return false so setting it will produce a type error.
 				return false;
 			}
 
