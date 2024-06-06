@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import {
 	type ApiEntryPoint,
 	type ApiItem,
@@ -86,6 +87,7 @@ export function transformApiModel(
 			// directly into the package-level document.
 
 			const entryPoint = packageEntryPoints[0];
+			assert(entryPoint !== undefined, "entryPoint is undefined in renderNode");
 
 			documents.set(
 				packageItem,

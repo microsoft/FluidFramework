@@ -4,6 +4,7 @@
  */
 
 import * as Path from "node:path";
+import assert from "node:assert/strict";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
@@ -238,6 +239,8 @@ export function getHeadingForApiItem(
 	const id = doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
 		? undefined
 		: getHeadingIdForApiItem(apiItem, config);
+
+	assert(id !== undefined, "id is undefined in getHeadingForApiItem");
 
 	return {
 		title: config.getHeadingTextForItem(apiItem),

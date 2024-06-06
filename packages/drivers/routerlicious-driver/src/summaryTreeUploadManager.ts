@@ -43,6 +43,10 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		const entries = await Promise.all(
 			Object.keys(summaryTree.tree).map(async (key) => {
 				const entry = summaryTree.tree[key];
+				assert(
+					entry !== undefined,
+					"entry is undefined in SummaryTreeUploadManager.writeSummaryTreeCore",
+				);
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
 				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
@@ -125,6 +129,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 	): string {
 		assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
 		const key = path[0];
+		assert(key !== undefined, "key is undefined in SummaryTreeUploadManager.getIdFromPathCore");
 		if (path.length === 1) {
 			switch (handleType) {
 				case SummaryType.Blob: {
@@ -147,6 +152,11 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					throw Error(`Unexpected handle summary object type: "${handleType}".`);
 			}
 		}
-		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
+		const snapshot = previousSnapshot.trees[key];
+		assert(
+			snapshot !== undefined,
+			"snapshot is undefined in SummaryTreeUploadManager.getIdFromPathCore",
+		);
+		return this.getIdFromPathCore(handleType, path.slice(1), snapshot);
 	}
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { table } from "table";
@@ -126,8 +127,12 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 
 		let index = 0;
 		for (const ver of releases) {
-			const displayPreviousVersion =
-				index >= 1 ? releases[index - 1].version : DEFAULT_MIN_VERSION;
+			const release = releases[index - 1];
+			assert(
+				release !== undefined,
+				"release is undefined in ReleaseHistoryCommand.generateAllReleasesTable()",
+			);
+			const displayPreviousVersion = index >= 1 ? release.version : DEFAULT_MIN_VERSION;
 
 			const displayDate = getDisplayDate(ver.date);
 			const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;

@@ -87,7 +87,9 @@ describe("IdCompressor Perf", () => {
 	): SessionSpaceCompressedId {
 		const log = network.getIdLog(client);
 		for (let i = log.length - 1; i > 0; i--) {
-			const { id, originatingClient } = log[i];
+			const logI = log[i];
+			assert(logI !== undefined, "logI is undefined in readNumericUuid");
+			const { id, originatingClient } = logI;
 			if (originatingClient === client) {
 				if ((eagerFinal && isFinalId(id)) || (!eagerFinal && isLocalId(id))) {
 					assert(eagerFinal === isFinalId(id), "Not local/final as requested.");

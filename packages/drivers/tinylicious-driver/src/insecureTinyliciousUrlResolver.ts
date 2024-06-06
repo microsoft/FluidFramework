@@ -56,6 +56,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${finalDocumentId}`;
 		} else {
 			const encodedDocId = encodeURIComponent(finalDocumentId);
+
 			const documentRelativePath = relativeUrl.slice(documentIdFromRequest.length);
 			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;

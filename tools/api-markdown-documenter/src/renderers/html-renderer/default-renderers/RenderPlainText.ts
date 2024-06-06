@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import type { PlainTextNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import type { RenderContext } from "../RenderContext.js";
@@ -72,6 +73,9 @@ function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
 	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
 		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
 
+	assert(leadingWhitespace !== undefined, "leadingWhitespace is undefined in XSadd");
+	assert(body !== undefined, "body is undefined in XSadd");
+	assert(trailingWhitespace !== undefined, "trailingWhitespace is undefined in XSadd");
 	return {
 		leadingWhitespace,
 		body,

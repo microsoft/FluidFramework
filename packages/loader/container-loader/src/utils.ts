@@ -138,6 +138,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
 		const summaryObject = summary.tree[key];
+		assert(
+			summaryObject !== undefined,
+			"summaryObject is undefined in convertSummaryToSnapshotAndBlobs",
+		);
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
@@ -264,8 +268,9 @@ export const combineSnapshotTreeAndSnapshotBlobs = (
 
 	// Process blobs in the current level
 	for (const [, id] of Object.entries(baseSnapshot.blobs)) {
-		if (snapshotBlobs[id]) {
-			blobsContents[id] = stringToBuffer(snapshotBlobs[id], "utf8");
+		const blob = snapshotBlobs[id];
+		if (blob !== undefined) {
+			blobsContents[id] = stringToBuffer(blob, "utf8");
 		}
 	}
 
@@ -396,6 +401,8 @@ export async function getDocumentAttributes(
 		".protocol" in tree.trees
 			? tree.trees[".protocol"].blobs.attributes
 			: tree.blobs[".attributes"];
+
+	assert(attributesHash !== undefined, "attributesHash is undefined in getDocumentAttributes");
 
 	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 

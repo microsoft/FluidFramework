@@ -595,12 +595,16 @@ export function requestOps(
 		},
 		(deltas: ISequencedDocumentMessage[]) => {
 			// Assert continuing and right start.
+			assert(deltas[0] !== undefined, "deltas[0] is undefined in requestOps");
 			if (lastFetch === undefined) {
 				assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
 			} else {
 				assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
 			}
-			lastFetch = deltas[deltas.length - 1].sequenceNumber;
+			const deltasLast = deltas[deltas.length - 1];
+			assert(deltas[0] !== undefined, "deltas[0] is undefined in requestOps");
+			assert(deltasLast !== undefined, "deltasLast is undefined in requestOps");
+			lastFetch = deltasLast.sequenceNumber;
 			assert(
 				lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
 				0x26f /* "continuous and no duplicates" */,

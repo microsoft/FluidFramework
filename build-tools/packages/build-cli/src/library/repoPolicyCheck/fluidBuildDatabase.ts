@@ -7,6 +7,7 @@
  * Provides {@link FluidBuildDatabase} to associate build scripts and their outputs.
  */
 
+import assert from "node:assert/strict";
 import path from "node:path";
 
 import { type Package, TscUtils } from "@fluidframework/build-tools";
@@ -333,6 +334,10 @@ export class FluidBuildDatabase {
 			const scriptCommandLines = commands.split("&&");
 			for (const scriptCommandLine of scriptCommandLines) {
 				const scriptCommand = scriptCommandLine.split(" ")[0];
+				assert(
+					scriptCommand !== undefined,
+					"scriptCommand is undefined in loadPackageAndDependencies",
+				);
 				const outputs = generationCommands[scriptCommand]?.(pkg, scriptCommandLine);
 				if (outputs === undefined) {
 					// command not known or ignored

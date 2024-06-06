@@ -170,6 +170,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			requestVersion = versions[0];
 		}
 
+		assert(
+			requestVersion !== undefined,
+			"requestVersion is undefined in WholeSummaryDocumentStorageService.getSnapshotTree",
+		);
 		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
 			this.getCacheKey(requestVersion.id),
 		);

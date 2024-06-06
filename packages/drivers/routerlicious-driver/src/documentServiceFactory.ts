@@ -124,6 +124,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
 		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
+		assert(
+			tenantId !== undefined,
+			"tenantId is undefined in RouterliciousDocumentServiceFactory.createContainer",
+		);
+
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -323,7 +328,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
 		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
 		const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
+		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? ordererUrl; // backward compatibility
+
 		if (!ordererUrl || !deltaStorageUrl) {
 			throw new Error(
 				`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`,
@@ -346,6 +352,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				: LoaderCachingPolicy.NoCaching,
 			maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
 		};
+		assert(
+			deltaStreamUrl !== undefined,
+			"deltaStreamUrl is undefined in RouterliciousDocumentServiceFactory.createDocumentService",
+		);
+		assert(
+			storageUrl !== undefined,
+			"storageUrl is undefined in RouterliciousDocumentServiceFactory.createDocumentService",
+		);
 
 		return new DocumentService(
 			fluidResolvedUrl,

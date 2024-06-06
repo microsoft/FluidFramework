@@ -51,6 +51,11 @@ describe("getUrlAndHeadersWithAuth", () => {
 			null,
 			"Url must not contain token in query string",
 		);
+		assert(
+			result.headers.Authorization !== undefined,
+			"result.headers.Authorization is undefined in validateTokenEmbeddedIntoHeaders",
+		);
+
 		assert.strictEqual(
 			result.headers.Authorization.endsWith(token),
 			true,

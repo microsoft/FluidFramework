@@ -62,10 +62,22 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 			documentId = this.config.documentId;
 			provider = this.config.provider;
 		} else if (path.length >= 4) {
+			assert(
+				path[2] !== undefined,
+				"path[2] is undefined in RouterliciousUrlResolver.resolve",
+			);
 			tenantId = path[2];
+			assert(
+				path[3] !== undefined,
+				"path[3] is undefined in RouterliciousUrlResolver.resolve",
+			);
 			documentId = path[3];
 		} else {
 			tenantId = "fluid";
+			assert(
+				path[2] !== undefined,
+				"path[2] is undefined in RouterliciousUrlResolver.resolve",
+			);
 			documentId = path[2];
 		}
 

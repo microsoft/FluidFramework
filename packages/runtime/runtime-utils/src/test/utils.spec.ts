@@ -26,7 +26,17 @@ describe("Utils", () => {
 		for (let i = 64; i < 65 * 64 - 1; i++) {
 			const value = encodeCompactIdToString(i);
 			assert(value.length === 2, "length");
-			assert(chars.includes(value[0]), "value");
+			const firstValue = value[0];
+			assert(
+				firstValue !== undefined,
+				"firstValue is undefined in encodeCompactIdToString() has base of 64 (sort of)",
+			);
+			assert(
+				value[1] !== undefined,
+				"value[1] is undefined in encodeCompactIdToString() has base of 64 (sort of)",
+			);
+
+			assert(chars.includes(firstValue), "value");
 			assert(chars.includes(value[1]), "value");
 		}
 

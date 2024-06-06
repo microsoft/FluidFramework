@@ -4,6 +4,7 @@
 		"outDir": "../lib/e2e-tests",
 		"types": ["expect-puppeteer", "jest", "jest-environment-puppeteer", "puppeteer"],
 		"forceConsistentCasingInFileNames": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 }

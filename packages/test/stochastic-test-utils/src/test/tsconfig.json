@@ -6,6 +6,7 @@
 		"types": ["mocha", "node"],
 		// test types are used in downstream projects, so we need to generate them
 		"declaration": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [

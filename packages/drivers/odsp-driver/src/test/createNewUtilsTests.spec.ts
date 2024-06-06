@@ -125,12 +125,17 @@ describe("Create New Utils Tests", () => {
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
 		const appTreeBlobId = appTree.blobs.attributes;
+		assert(appTreeBlobId !== undefined, "appTreeBlobId is undefined in Create New Utils Tests");
 		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
 		const docAttributesBlobId = protocolTree.blobs.attributes;
+		assert(
+			docAttributesBlobId !== undefined,
+			"docAttributesBlobId is undefined in Create New Utils Tests",
+		);
 		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");

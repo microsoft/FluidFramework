@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 interface TaskQueueItem {
 	/** The task to run */
 	task: () => void;
@@ -72,6 +74,10 @@ function runTasks(
 		}
 
 		const taskQueueItem = taskQueue[index];
+		assert(
+			taskQueueItem !== undefined,
+			"taskQueueItem is undefined in generateSummaryWithBinaryContent",
+		);
 
 		if (filter && !filter(taskQueueItem)) {
 			newTaskQueue.push(taskQueueItem);

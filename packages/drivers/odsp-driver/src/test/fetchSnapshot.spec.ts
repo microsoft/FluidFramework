@@ -142,6 +142,11 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				assert(
+					getDownloadSnapshotStub.args[0] !== undefined,
+					"getDownloadSnapshotStub.args[0] is undefined in Mds limit check in fetch snapshot",
+				);
+
+				assert(
 					getDownloadSnapshotStub.args[0][3]?.mds === undefined,
 					"mds should be undefined",
 				);
@@ -278,6 +283,11 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
+					getDownloadSnapshotStub.args[0] !== undefined,
+					"getDownloadSnapshotStub.args[0] is undefined in GetSnapshot() should work in normal flow",
+				);
+
+				assert(
 					getDownloadSnapshotStub.args[0][2]?.length === 0,
 					"should ask for ungroupedData",
 				);
@@ -337,6 +347,10 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				getDownloadSnapshotStub.restore();
+				assert(
+					getDownloadSnapshotStub.args[0] !== undefined,
+					"getDownloadSnapshotStub.args[0] is undefined in GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId",
+				);
 				assert(
 					getDownloadSnapshotStub.args[0][2]?.[0] === "g1",
 					"should ask for g1 groupId",

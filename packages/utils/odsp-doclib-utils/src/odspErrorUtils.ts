@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
@@ -86,9 +87,14 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 			.split(",")
 			.map((keyValuePair) => keyValuePair.split("="));
 		for (const [key, value] of keyValueMap) {
+			assert(key !== undefined, "key is undefined in getSPOAndGraphRequestIdsFromResponse");
+			assert(
+				value !== undefined,
+				"value is undefined in getSPOAndGraphRequestIdsFromResponse",
+			);
 			if ("Origin" === key.trim()) {
 				let fieldValue: string;
-				switch (value?.trim()) {
+				switch (value.trim()) {
 					case "c":
 						fieldValue = "cache";
 						break;
@@ -96,7 +102,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 						fieldValue = "graph";
 						break;
 					default:
-						fieldValue = value?.trim();
+						fieldValue = value.trim();
 				}
 				const logName = "responseOrigin";
 				additionalProps[logName] = fieldValue;

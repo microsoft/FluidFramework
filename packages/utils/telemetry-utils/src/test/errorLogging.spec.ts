@@ -157,6 +157,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged UserData is removed",
+			);
 			assert.strictEqual(
 				events[0].userDataObject,
 				"REDACTED (UserData)",
@@ -174,6 +178,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged CodeArtifact are preserved",
+			);
 			assert.strictEqual(
 				events[0].packageDataObject,
 				"somePackageData",
@@ -191,6 +199,10 @@ describe("Error Logging", () => {
 				},
 			};
 			adaptedLogger.send(event);
+			assert(
+				events[0] !== undefined,
+				"events[0] is undefined in TaggedLoggerAdapter - tagged [unrecognized tag] are removed",
+			);
 			assert.strictEqual(
 				events[0].unknownTaggedObject,
 				"REDACTED (unknown tag)",
@@ -693,6 +705,7 @@ describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
 			const annotations = annotationCases[annotationCase];
+
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
@@ -704,6 +717,10 @@ describe("normalizeError", () => {
 
 				// Assert
 				assert(normalizedError === fluidError);
+				assert(
+					annotations !== undefined,
+					`annotations is undefined in Valid Fluid Error - untouched (annotations: ${annotationCase})`,
+				);
 				if (annotations.props !== undefined) {
 					assert(
 						fluidError.atpStub.calledWith(annotations.props),
@@ -927,6 +944,10 @@ describe("normalizeError", () => {
 			let doneOnceForThisAnnotationCase = false;
 			for (const caseName of Object.keys(testCases)) {
 				const getTestCase = testCases[caseName];
+				assert(
+					getTestCase !== undefined,
+					`getTestCase is undefined in Errors Needing Normalization`,
+				);
 				if (!doneOnceForThisAnnotationCase) {
 					doneOnceForThisAnnotationCase = true;
 					// Each test case only differs by what stack/error are.  Test the rest only once per annotation case.

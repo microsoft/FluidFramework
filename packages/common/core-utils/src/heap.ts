@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "./assert.js";
+
 /**
  * Interface for a comparer.
  * @internal
@@ -52,7 +54,7 @@ export interface IHeapNode<T> {
  * @internal
  */
 export class Heap<T> {
-	private L: IHeapNode<T>[];
+	private readonly L: IHeapNode<T>[];
 
 	/**
 	 * Creates an instance of `Heap` with comparer.
@@ -127,7 +129,9 @@ export class Heap<T> {
 
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {
-			this.update(this.L[position]);
+			const swappedNode = this.L[position];
+			assert(swappedNode !== undefined, "swappedNode is undefined in remove");
+			this.update(swappedNode);
 		}
 	}
 
@@ -152,7 +156,12 @@ export class Heap<T> {
 
 	private isGreaterThanParent(k: number): boolean {
 		// eslint-disable-next-line no-bitwise
-		return k > 1 && this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0;
+		const parent = this.L[k >> 1];
+		assert(parent !== undefined, "parent is undefined in isGreaterThanParent");
+		const child = this.L[k];
+		assert(child !== undefined, "child is undefined in isGreaterThanParent");
+
+		return k > 1 && this.comp.compare(parent.value, child.value) > 0;
 	}
 
 	private fixdown(pos: number): void {
@@ -161,10 +170,16 @@ export class Heap<T> {
 		while (k << 1 <= this.count()) {
 			// eslint-disable-next-line no-bitwise
 			let j = k << 1;
-			if (j < this.count() && this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0) {
+			const heapJ = this.L[j];
+			assert(heapJ !== undefined, "heapJ is undefined in fixdown");
+			const heapJPlusOne = this.L[j + 1];
+			assert(heapJPlusOne !== undefined, "heapJPlusOne is undefined in fixdown");
+			if (j < this.count() && this.comp.compare(heapJ.value, heapJPlusOne.value) > 0) {
 				j++;
 			}
-			if (this.comp.compare(this.L[k].value, this.L[j].value) <= 0) {
+			const heapK = this.L[k];
+			assert(heapK !== undefined, "heapK is undefined in fixdown");
+			if (this.comp.compare(heapK.value, heapJ.value) <= 0) {
 				break;
 			}
 			this.swap(k, j);
@@ -173,10 +188,15 @@ export class Heap<T> {
 	}
 
 	private swap(k: number, j: number): void {
-		const tmp = this.L[k];
-		this.L[k] = this.L[j];
-		this.L[k].position = k;
-		this.L[j] = tmp;
-		this.L[j].position = j;
+		let heapK = this.L[k];
+		assert(heapK !== undefined, "heapK is undefined in swap");
+		let heapJ = this.L[j];
+		assert(heapJ !== undefined, "heapJ is undefined in swap");
+
+		heapK = heapJ;
+		heapK.position = k;
+
+		heapJ = heapK;
+		heapJ.position = j;
 	}
 }

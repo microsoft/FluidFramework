@@ -4,6 +4,7 @@
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["mocha"],
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 }

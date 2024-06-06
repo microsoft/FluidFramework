@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
+
 import { openDB } from "idb";
 
 import {
@@ -86,6 +88,10 @@ describe("getFluidCacheIndexedDbInstance", () => {
 		// Assert
 		// We catch the error and send it to the logger
 		expect(sendSpy.mock.calls).toHaveLength(1);
+		assert(
+			sendSpy.mock.calls[0] !== undefined,
+			"if error thrown in deletion of old database, is swallowed and logged",
+		);
 		expect(sendSpy.mock.calls[0][0].eventName).toEqual(
 			FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
 		);

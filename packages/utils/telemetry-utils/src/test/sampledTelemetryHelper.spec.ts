@@ -75,6 +75,10 @@ describe("SampledTelemetryHelper", () => {
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
+		assert(
+			event !== undefined,
+			"event is undefined in does not include aggregate properties when it shouldn't",
+		);
 		ensurePropertiesExist(event, standardEventProperties, true);
 		assert.strictEqual(event.count, 1);
 	});
@@ -84,6 +88,10 @@ describe("SampledTelemetryHelper", () => {
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
+		assert(
+			event !== undefined,
+			"event is undefined in includes aggregate properties when it should",
+		);
 		ensurePropertiesExist(event, [...standardEventProperties, ...aggregateProperties], true);
 		assert.strictEqual(event.count, 1);
 	});
@@ -98,6 +106,10 @@ describe("SampledTelemetryHelper", () => {
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
+		assert(
+			event !== undefined,
+			"event is undefined in includes properties from base event when no aggregate properties are included",
+		);
 		ensurePropertiesExist(event, [...standardEventProperties, "myProp"], true);
 		assert.strictEqual(event.count, 1);
 		assert.strictEqual(event.myProp, "myValue");
@@ -113,6 +125,10 @@ describe("SampledTelemetryHelper", () => {
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
+		assert(
+			event !== undefined,
+			"event is undefined in includes properties from base event when aggregate properties are included",
+		);
 		ensurePropertiesExist(
 			event,
 			[...standardEventProperties, ...aggregateProperties, "myProp"],
@@ -178,6 +194,10 @@ describe("SampledTelemetryHelper", () => {
 		helper.measure(() => {}, bucket1);
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
+		assert(
+			event !== undefined,
+			"event is undefined in bucket properties do not override measurement properties",
+		);
 		assert.strictEqual(event.count, 1);
 		assert(event.duration !== bucketProperties.get("bucket1")!.duration);
 	});

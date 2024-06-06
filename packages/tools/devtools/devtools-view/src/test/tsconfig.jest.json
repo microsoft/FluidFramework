@@ -4,5 +4,6 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"types": ["jest"],
+		"noUncheckedIndexedAccess": false,
 	},
 }

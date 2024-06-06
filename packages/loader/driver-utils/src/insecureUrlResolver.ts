@@ -54,10 +54,18 @@ export class InsecureUrlResolver implements IUrlResolver {
 		if (this.isForNodeTest) {
 			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
 			const relativePath = tmpRelativePath ?? "";
+			assert(
+				documentId !== undefined,
+				"documentId is undefined in InsecureUrlResolver.resolve",
+			);
 			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
 			const fullPath = parsedUrl.pathname.substr(1);
 			const documentId = fullPath.split("/")[0];
+			assert(
+				documentId !== undefined,
+				"documentId is undefined in InsecureUrlResolver.resolve",
+			);
 			const documentRelativePath = fullPath.slice(documentId.length);
 			return this.resolveHelper(documentId, documentRelativePath);
 		} else {

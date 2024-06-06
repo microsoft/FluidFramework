@@ -12,5 +12,5 @@
  * @returns An array of pairs of elements from each array. That is, `[[a[0], b[0]], [a[1], b[1]...]`
  */
 export function zip<T, U>(a: T[], b: U[]): [T, U][] {
-	return a.map((k, i) => [k, b[i]]);
+	return a.map((k, i) => [k, b[i] as U]);
 }

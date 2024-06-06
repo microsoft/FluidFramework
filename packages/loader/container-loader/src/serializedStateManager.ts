@@ -155,8 +155,10 @@ export class SerializedStateManager {
 
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
-			this.lastSavedOpSequenceNumber =
-				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
+			const lastSavedOp = pendingLocalState.savedOps[savedOpsSize - 1];
+			assert(lastSavedOp !== undefined, "lastSavedOp is undefined in SerializedStateManager");
+
+			this.lastSavedOpSequenceNumber = lastSavedOp.sequenceNumber;
 		}
 		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
@@ -299,11 +301,15 @@ export class SerializedStateManager {
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
+		const lastProcessedOp = this.processedOps[this.processedOps.length - 1];
+		assert(
+			lastProcessedOp !== undefined,
+			"lastProcessedOp is undefined in updateSnapshotAndProcessedOpsMaybe",
+		);
 		if (
 			this.latestSnapshot === undefined ||
 			this.processedOps.length === 0 ||
-			this.processedOps[this.processedOps.length - 1].sequenceNumber <
-				this.lastSavedOpSequenceNumber ||
+			lastProcessedOp.sequenceNumber < this.lastSavedOpSequenceNumber ||
 			this.containerDirty()
 		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
@@ -311,9 +317,13 @@ export class SerializedStateManager {
 			return;
 		}
 		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
-		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
-		const lastProcessedOpSequenceNumber =
-			this.processedOps[this.processedOps.length - 1].sequenceNumber;
+		const firstProcessedOp = this.processedOps[0];
+		assert(
+			firstProcessedOp !== undefined,
+			"firstProcessedOp is undefined in updateSnapshotAndProcessedOpsMaybe",
+		);
+		const firstProcessedOpSequenceNumber = firstProcessedOp.sequenceNumber;
+		const lastProcessedOpSequenceNumber = lastProcessedOp.sequenceNumber;
 
 		if (snapshotSequenceNumber < firstProcessedOpSequenceNumber) {
 			// Snapshot seq number is older than our first processed op, which could mean we're fetching
@@ -340,9 +350,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0
-						? undefined
-						: this.processedOps[0].sequenceNumber,
+					this.processedOps.length === 0 ? undefined : firstProcessedOp.sequenceNumber,
 			});
 		}
 	}
@@ -365,7 +373,14 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
-			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
+
+			assert(
+				attributesHash !== undefined,
+				"attributesHash is undefined in setInitialSnapshot",
+			);
+			const blob = snapshotBlobs[attributesHash];
+			assert(blob !== undefined, "blob is undefined in setInitialSnapshot");
+			const attributes = JSON.parse(blob);
 			assert(
 				attributes.sequenceNumber === 0,
 				0x939 /* trying to set a non attachment snapshot */,

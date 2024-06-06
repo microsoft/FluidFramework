@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import * as fs from "node:fs/promises";
 import path from "node:path";
 import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
@@ -159,15 +160,17 @@ async function updateReportVersions(
 			continue;
 		}
 
+		const packageReport = report[packageName];
+		assert(packageReport !== undefined, "packageReport is undefined in generateEntrypoints");
 		// updates caret ranges
-		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
+		if (isInternalVersionRange(packageReport.ranges.caret, true)) {
 			// If the caret range is a range, reset it to an exact version.
 			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
-			report[packageName].ranges.caret = version;
+			packageReport.ranges.caret = version;
 		}
 
-		if (isInternalVersionScheme(report[packageName].version)) {
-			report[packageName].version = version;
+		if (isInternalVersionScheme(packageReport.version)) {
+			packageReport.version = version;
 		}
 	}
 	log.log(`Release report updated pointing to version: ${version}`);
@@ -187,5 +190,10 @@ async function updateReportVersions(
 function extractBuildNumber(version: string): number {
 	const versionParts: string[] = version.split(".");
 	// Extract the last part of the version, which is the number you're looking for
-	return Number.parseInt(versionParts[versionParts.length - 1], 10);
+	const versionPartsLast = versionParts[versionParts.length - 1];
+	assert(
+		versionPartsLast !== undefined,
+		"versionPartsLast is undefined in extractBuildNumber",
+	);
+	return Number.parseInt(versionPartsLast, 10);
 }

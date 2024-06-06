@@ -311,10 +311,23 @@ export class DocumentService
 	private async refreshDiscoveryCore(): Promise<void> {
 		const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
 		this._resolvedUrl = fluidResolvedUrl;
+		assert(
+			fluidResolvedUrl.endpoints.storageUrl !== undefined,
+			"fluidResolvedUrl.endpoints.storageUrl is undefined in DocumentService.refreshDiscoveryCore",
+		);
+		assert(
+			fluidResolvedUrl.endpoints.ordererUrl !== undefined,
+			"fluidResolvedUrl.endpoints.ordererUrl is undefined in DocumentService.refreshDiscoveryCore",
+		);
+		assert(
+			fluidResolvedUrl.endpoints.deltaStorageUrl !== undefined,
+			"fluidResolvedUrl.endpoints.deltaStorageUrl is undefined in DocumentService.refreshDiscoveryCore",
+		);
+
 		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
 		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
 		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
+		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 	}
 
 	/**

@@ -54,7 +54,8 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
-		"@fluid-experimental/property-properties": "workspace:~"
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

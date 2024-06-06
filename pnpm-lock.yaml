@@ -2092,9 +2092,6 @@ importers:
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -6201,6 +6198,9 @@ importers:
       '@fluid-experimental/property-common':
         specifier: workspace:~
         version: link:../property-common
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/common/core-utils
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -6871,6 +6871,9 @@ importers:
       '@fluid-experimental/property-properties':
         specifier: workspace:~
         version: link:../property-properties
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/common/core-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -14411,6 +14414,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       applicationinsights:
         specifier: ^2.1.9
         version: 2.9.1

@@ -3,9 +3,10 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["mocha", "node"],
+		"types": ["mocha"],
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [

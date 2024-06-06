@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IAnyDriverError,
 	IConnect,
@@ -126,8 +127,20 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 						break;
 					}
 					case "connect_document_success": {
-						const iConnected: IConnected = this.mockSocketConnectResponse
-							.connect_document.connectMessage ?? {
+						if (
+							this.mockSocketConnectResponse.connect_document.connectMessage !==
+							undefined
+						) {
+							this.emit(
+								"connect_document_success",
+								this.mockSocketConnectResponse.connect_document.connectMessage,
+							);
+						}
+						assert(
+							connectMessage.versions[0] !== undefined,
+							"connectMessage.versions[0] is undefined in IsoBuffer.sanitizeBase64",
+						);
+						const iConnected: IConnected = {
 							clientId: uuid(),
 							existing: true,
 							initialClients: [],

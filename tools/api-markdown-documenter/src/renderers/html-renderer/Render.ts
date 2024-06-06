@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
 import { DocumentWriter } from "../DocumentWriter.js";
 import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
@@ -73,10 +74,18 @@ export function renderNode(
 		Object.keys(context.customRenderers).includes(node.type)
 	) {
 		// User-provided renderers take precedence. If we found an appropriate one, use it.
-		context.customRenderers[node.type](node, writer, context);
+		const nodeType = context.customRenderers[node.type];
+		assert(nodeType !== undefined, "nodeType is undefined in renderNode");
+
+		nodeType(node, writer, context);
 	} else if (Object.keys(defaultRenderers).includes(node.type)) {
 		// If no user-provided renderer was given for this node type, but we have a default, use the default.
-		defaultRenderers[node.type](node, writer, context);
+		const defaultRenderersNodeType = defaultRenderers[node.type];
+		assert(
+			defaultRenderersNodeType !== undefined,
+			"defaultRenderersNodeType is undefined in renderNode",
+		);
+		defaultRenderersNodeType(node, writer, context);
 	} else {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,

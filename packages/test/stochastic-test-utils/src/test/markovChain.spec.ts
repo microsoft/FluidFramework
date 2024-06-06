@@ -20,7 +20,7 @@ const testSentences = [
 const wordArrayToWordCount = (words: string[]) => {
 	const result: Record<string, number> = {};
 	words.forEach((word) => {
-		if (result[word]) {
+		if (result[word] !== undefined) {
 			result[word] += 1;
 		} else {
 			result[word] = 1;

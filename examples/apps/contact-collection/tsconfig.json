@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*", "tests/**/*"],
 }

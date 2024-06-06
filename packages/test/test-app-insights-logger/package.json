@@ -46,6 +46,7 @@
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"applicationinsights": "^2.1.9"
 	},
 	"devDependencies": {

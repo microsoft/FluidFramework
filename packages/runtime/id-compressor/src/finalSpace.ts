@@ -59,7 +59,14 @@ export class FinalSpace {
 
 	public equals(other: FinalSpace): boolean {
 		for (let i = 0; i < this.clusterList.length; i++) {
-			if (!clustersEqual(this.clusterList[i], other.clusterList[i])) {
+			const cluster = this.clusterList[i];
+			const otherCluster = other.clusterList[i];
+			assert(cluster !== undefined, "cluster is undefined in initializeFluidOfficeOrOneNote");
+			assert(
+				otherCluster !== undefined,
+				"otherCluster is undefined in initializeFluidOfficeOrOneNote",
+			);
+			if (!clustersEqual(cluster, otherCluster)) {
 				return false;
 			}
 		}

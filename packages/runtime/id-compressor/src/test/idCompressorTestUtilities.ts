@@ -133,6 +133,8 @@ export function buildHugeCompressor(
 			}
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 		}
+		assert(sessionId !== undefined, "sessionId is undefined in buildHugeCompressor");
+
 		compressor.finalizeCreationRange({
 			sessionId,
 			ids: {
@@ -158,7 +160,9 @@ function makeSessionIds(): ClientMap<SessionId> {
 		// Place session uuids roughly in the middle of uuid space to increase odds of encountering interesting
 		// orderings in sorted collections
 		const sessionId = assertIsSessionId(`88888888-8888-4888-b${i}88-888888888888`);
-		stableIds.set(clients[i], sessionId);
+		const client = clients[i];
+		assert(client !== undefined, "client is undefined in buildHugeCompressor");
+		stableIds.set(client, sessionId);
 	}
 	return stableIds as ClientMap<SessionId>;
 }
@@ -356,7 +360,12 @@ export class IdCompressorTestNetwork {
 			const compressor = this.compressors.get(clientFrom);
 			const sessionSpaceIds = generateCompressedIds(compressor, numIds);
 			for (let i = 0; i < numIds; i++) {
-				this.addNewId(clientFrom, sessionSpaceIds[i], clientFrom, sessionIdFrom, false);
+				const sessionSpace = sessionSpaceIds[i];
+				assert(
+					sessionSpace !== undefined,
+					"sessionSpace is undefined in allocateAndSendIdsFromRemoteClient",
+				);
+				this.addNewId(clientFrom, sessionSpace, clientFrom, sessionIdFrom, false);
 			}
 			const opSpaceIds = sessionSpaceIds.map((id) => compressor.normalizeToOpSpace(id));
 			const creationRange = compressor.takeNextCreationRange();
@@ -391,7 +400,12 @@ export class IdCompressorTestNetwork {
 		}
 		for (const [clientTo, compressorTo] of this.getTargetCompressors(clientTakingDelivery)) {
 			for (let i = this.clientProgress.get(clientTo); i < opIndexBound; i++) {
-				const [range, opSpaceIds, clientFrom, sessionIdFrom] = this.serverOperations[i];
+				const serverOperation = this.serverOperations[i];
+				assert(
+					serverOperation !== undefined,
+					"serverOperation is undefined in allocateAndSendIdsFromRemoteClient",
+				);
+				const [range, opSpaceIds, clientFrom, sessionIdFrom] = serverOperation;
 				compressorTo.finalizeCreationRange(range);
 
 				const ids = range.ids;
@@ -530,6 +544,7 @@ export class IdCompressorTestNetwork {
 		function getNextLogWithEntryAt(logsIndex: number, entryIndex: number): number | undefined {
 			for (let i = logsIndex; i < sequencedLogs.length; i++) {
 				const log = sequencedLogs[i];
+				assert(log !== undefined, "log is undefined in allocateAndSendIdsFromRemoteClient");
 				if (log[1].length > entryIndex) {
 					return i;
 				}
@@ -552,14 +567,34 @@ export class IdCompressorTestNetwork {
 			let current = getNextLogWithEntryAt(0, columnIndex);
 			while (current !== undefined) {
 				const next = getNextLogWithEntryAt(current + 1, columnIndex);
-				const [compressor, log] = sequencedLogs[current];
+				const currentLog = sequencedLogs[current];
+				assert(
+					currentLog !== undefined,
+					"currentLog is undefined in allocateAndSendIdsFromRemoteClient",
+				);
+				const [compressor, log] = currentLog;
+				const logColumn = log[columnIndex];
+				assert(
+					logColumn !== undefined,
+					"logColumn is undefined in allocateAndSendIdsFromRemoteClient",
+				);
 				if (next === undefined) {
-					yield [[compressor, log[columnIndex]]];
+					yield [[compressor, logColumn]];
 				} else {
-					const [compressorNext, logNext] = sequencedLogs[next];
+					const nextSequencedLog = sequencedLogs[next];
+					assert(
+						nextSequencedLog !== undefined,
+						"nextSequencedLog is undefined in allocateAndSendIdsFromRemoteClient",
+					);
+					const [compressorNext, logNext] = nextSequencedLog;
+					const nextLog = logNext[columnIndex];
+					assert(
+						nextLog !== undefined,
+						"nextSequencedLog is undefined in allocateAndSendIdsFromRemoteClient",
+					);
 					yield [
-						[compressor, log[columnIndex]],
-						[compressorNext, logNext[columnIndex]],
+						[compressor, logColumn],
+						[compressorNext, nextLog],
 					];
 				}
 				current = next;

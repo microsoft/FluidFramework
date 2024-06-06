@@ -113,6 +113,10 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 		return undefined;
 	}
 
+	assert(
+		siteDriveItemMatch[2] !== undefined,
+		"siteDriveItemMatch[2] is undefined in initializeFluidOfficeOrOneNote",
+	);
 	const site = decodeURIComponent(siteDriveItemMatch[2]);
 
 	// Path value is base64 encoded so need to decode first
@@ -127,6 +131,15 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 
 	// Since we have the drive and item, only take the host ignore the rest
 	const siteUrl = decodedSite.slice(Math.max(0, storageType.length + 1));
+	assert(
+		siteDriveItemMatch[3] !== undefined,
+		"siteDriveItemMatch[3] is undefined in initializeFluidOfficeOrOneNote",
+	);
+	assert(
+		siteDriveItemMatch[4] !== undefined,
+		"siteDriveItemMatch[4] is undefined in initializeFluidOfficeOrOneNote",
+	);
+
 	const driveId = decodeURIComponent(siteDriveItemMatch[3]);
 	const itemId = decodeURIComponent(siteDriveItemMatch[4]);
 	return { siteUrl, driveId, itemId };

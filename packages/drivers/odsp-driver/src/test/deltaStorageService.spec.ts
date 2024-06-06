@@ -118,10 +118,19 @@ describe("DeltaStorageService", () => {
 				2,
 				"Deserialized feed response is not of expected length",
 			);
+			assert(
+				messages[0] !== undefined,
+				"messages[0] is undefined in Should deserialize the delta feed response correctly",
+			);
+
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
+			);
+			assert(
+				messages[1] !== undefined,
+				"messages[1] is undefined in Should deserialize the delta feed response correctly",
 			);
 			assert.equal(
 				messages[1].sequenceNumber,
@@ -191,10 +200,18 @@ describe("DeltaStorageService", () => {
 				2,
 				"Deserialized feed response is not of expected length",
 			);
+			assert(
+				messages[0] !== undefined,
+				"messages[0] is undefined in Should deserialize the delta feed response correctly",
+			);
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,
 				"First element of feed response has invalid sequence number",
+			);
+			assert(
+				messages[1] !== undefined,
+				"messages[1] is undefined in Should deserialize the delta feed response correctly",
 			);
 			assert.equal(
 				messages[1].sequenceNumber,

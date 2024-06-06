@@ -296,15 +296,16 @@ export function convertSnapshotTreeToSummaryTree(
 	const builder = new SummaryTreeBuilder();
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
+		const blob = snapshot.blobs[id];
 		if (snapshot.blobsContents !== undefined) {
-			const content: ArrayBufferLike = snapshot.blobsContents[id];
+			const content = snapshot.blobsContents[id];
 			if (content !== undefined) {
 				decoded = bufferToString(content, "utf-8");
 			}
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
-		} else if (snapshot.blobs[id] !== undefined) {
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+		} else if (blob !== undefined) {
+			decoded = fromBase64ToUtf8(blob);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);

@@ -96,20 +96,45 @@ describe("Summary Utils", () => {
 			const summaryTree = assertSummaryTree(summaryResults.summary);
 
 			// blobs should parse
+			assert(
+				summaryTree.tree.b !== undefined,
+				"summaryTree.tree.b is undefined in Should convert ITree to ISummaryTree correctly",
+			);
+
 			const blob = assertSummaryBlob(summaryTree.tree.b);
 			assert.strictEqual(blob.content, "test-blob");
 
 			// trees with ids should become handles
+			assert(
+				summaryTree.tree.h !== undefined,
+				"summaryTree.tree.h is undefined in Should convert ITree to ISummaryTree correctly",
+			);
 			const handle = assertSummaryHandle(summaryTree.tree.h);
 			assert.strictEqual(handle.handleType, SummaryType.Tree);
 			assert.strictEqual(handle.handle, "test-handle");
 
 			// subtrees should recurse
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in Should convert ITree to ISummaryTree correctly",
+			);
 			const subTree = assertSummaryTree(summaryTree.tree.t);
+			assert(
+				subTree.tree.bu8 !== undefined,
+				"subTree.tree.bu8 is undefined in Should convert ITree to ISummaryTree correctly",
+			);
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
+			assert(
+				subTree.tree.b64 !== undefined,
+				"subTree.tree.b64 is undefined in Should convert ITree to ISummaryTree correctly",
+			);
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
 			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
+			assert(
+				subTree.tree.tu !== undefined,
+				"subTree.tree.tu is undefined in Should convert ITree to ISummaryTree correctly",
+			);
 			const subTreeUnref = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subTreeUnref.tree).length,
@@ -123,20 +148,49 @@ describe("Summary Utils", () => {
 			const summaryTree = assertSummaryTree(summaryResults.summary);
 
 			// blobs should parse
+			assert(
+				summaryTree.tree.b !== undefined,
+				"summaryTree.tree.b is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
+
 			const blob = assertSummaryBlob(summaryTree.tree.b);
 			assert.strictEqual(blob.content, "test-blob");
 
 			// trees with ids should not become handles
+			assert(
+				summaryTree.tree.h !== undefined,
+				"summaryTree.tree.h is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const usuallyIgnoredSubtree = assertSummaryTree(summaryTree.tree.h);
+			assert(
+				usuallyIgnoredSubtree.tree.ignore !== undefined,
+				"usuallyIgnoredSubtree.tree.ignore is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const usuallyIgnoredBlob = assertSummaryBlob(usuallyIgnoredSubtree.tree.ignore);
 			assert.strictEqual(usuallyIgnoredBlob.content, "this-should-be-ignored");
 
 			// subtrees should recurse
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const subTree = assertSummaryTree(summaryTree.tree.t);
+			assert(
+				subTree.tree.bu8 !== undefined,
+				"subTree.tree.bu8 is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
+			assert(
+				subTree.tree.b64 !== undefined,
+				"subTree.tree.b64 is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
 			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
+			assert(
+				subTree.tree.tu !== undefined,
+				"subTree.tree.tu is undefined in Should convert ITree to ISummaryTree correctly with fullTree enabled",
+			);
 			const subUnrefTree = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subUnrefTree.tree).length,
@@ -167,12 +221,19 @@ describe("Summary Utils", () => {
 				undefined,
 				"The root summary tree should be referenced",
 			);
-
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in should convert unreferenced state correctly",
+			);
 			const subTreeT = assertSummaryTree(summaryTree.tree.t);
 			assert.strictEqual(
 				subTreeT.unreferenced,
 				undefined,
 				"The t subtree should be referenced",
+			);
+			assert(
+				subTreeT.tree.tu !== undefined,
+				"subTreeT.tree.tu is undefined in should convert unreferenced state correctly",
 			);
 			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
 			assert.strictEqual(
@@ -181,6 +242,10 @@ describe("Summary Utils", () => {
 				"The tu subtree of t should be referenced",
 			);
 
+			assert(
+				summaryTree.tree.unref !== undefined,
+				"summaryTree.tree.unref is undefined in should convert unreferenced state correctly",
+			);
 			const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
 			assert.strictEqual(
 				subTreeUnref.unreferenced,
@@ -257,15 +322,35 @@ describe("Summary Utils", () => {
 			const summaryTree = assertSummaryTree(summaryResults.summary);
 
 			// blobs should parse
+			assert(
+				summaryTree.tree.b !== undefined,
+				"summaryTree.tree.b is undefined in Should convert correctly",
+			);
 			const blob = assertSummaryBlob(summaryTree.tree.b);
 			assert.strictEqual(blob.content, "test-blob");
 
 			// subtrees should recurse
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in Should convert correctly",
+			);
 			const subTree = assertSummaryTree(summaryTree.tree.t);
+			assert(
+				subTree.tree.bu8 !== undefined,
+				"subTree.tree.bu8 is undefined in Should convert correctly",
+			);
 			const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
 			assert.strictEqual(subBlobUtf8.content, "test-u8");
+			assert(
+				subTree.tree.b64 !== undefined,
+				"subTree.tree.b64 is undefined in Should convert correctly",
+			);
 			const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
 			assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
+			assert(
+				subTree.tree.tu !== undefined,
+				"subTree.tree.tu is undefined in Should convert correctly",
+			);
 			const subTreeUnref = assertSummaryTree(subTree.tree.tu);
 			assert.strictEqual(
 				Object.keys(subTreeUnref.tree).length,
@@ -296,12 +381,20 @@ describe("Summary Utils", () => {
 				undefined,
 				"The root summary tree should be referenced",
 			);
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in should convert unreferenced state correctly",
+			);
 
 			const subTreeT = assertSummaryTree(summaryTree.tree.t);
 			assert.strictEqual(
 				subTreeT.unreferenced,
 				undefined,
 				"The t subtree should be referenced",
+			);
+			assert(
+				subTreeT.tree.tu !== undefined,
+				"subTreeT.tree.tu is undefined in should convert unreferenced state correctly",
 			);
 			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
 			assert.strictEqual(
@@ -310,6 +403,10 @@ describe("Summary Utils", () => {
 				"The tu subtree of t should be referenced",
 			);
 
+			assert(
+				summaryTree.tree.unref !== undefined,
+				"summaryTree.tree.unref is undefined in should convert unreferenced state correctly",
+			);
 			const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
 			assert.strictEqual(
 				subTreeUnref.unreferenced,
@@ -326,9 +423,18 @@ describe("Summary Utils", () => {
 				undefined,
 				"The root summary tree should not have groupId",
 			);
+			assert(
+				summaryTree.tree.t !== undefined,
+				"summaryTree.tree.t is undefined in should convert groupId state correctly",
+			);
 
 			const subTreeT = assertSummaryTree(summaryTree.tree.t);
 			assert.strictEqual(subTreeT.groupId, undefined, "The t subtree not have groupId");
+			assert(
+				subTreeT.tree.tu !== undefined,
+				"subTreeT.tree.tu is undefined in should convert groupId state correctly",
+			);
+
 			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
 			assert.strictEqual(
 				subTreeTUnrefTree.groupId,
@@ -336,9 +442,17 @@ describe("Summary Utils", () => {
 				"The tu subtree of t not have groupId",
 			);
 
+			assert(
+				summaryTree.tree.unref !== undefined,
+				"summaryTree.tree.unref is undefined in should convert groupId state correctly",
+			);
 			const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
 			assert.strictEqual(subTreeUnref.groupId, undefined, "The groupId should not be set");
 
+			assert(
+				summaryTree.tree.groupId !== undefined,
+				"summaryTree.tree.groupId is undefined in should convert groupId state correctly",
+			);
 			const subTreeGroupId = assertSummaryTree(summaryTree.tree.groupId);
 			assert.strictEqual(subTreeGroupId.groupId, "group-id", "The groupId should be set");
 		});

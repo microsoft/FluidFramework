@@ -62,6 +62,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static hasPrefix(blob: ArrayBufferLike): boolean {
 		const firstByte = IsoBuffer.from(blob)[0];
+		assert(
+			firstByte !== undefined,
+			"firstByte is undefined in DocumentStorageServiceCompressionAdapter.hasPrefix",
+		);
 		// eslint-disable-next-line no-bitwise
 		return (firstByte & 0xf0) === 0xb0;
 	}
@@ -71,10 +75,16 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The maybe compressed blob.
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
-		return !this.hasPrefix(blob)
-			? SummaryCompressionAlgorithm.None
-			: // eslint-disable-next-line no-bitwise
-			  IsoBuffer.from(blob)[0] & 0x0f;
+		if (!this.hasPrefix(blob)) {
+			return SummaryCompressionAlgorithm.None;
+		}
+		const isoBlob = IsoBuffer.from(blob)[0];
+		assert(
+			isoBlob !== undefined,
+			"isoBlob is undefined in DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob",
+		);
+		// eslint-disable-next-line no-bitwise
+		return isoBlob & 0x0f;
 	}
 
 	/**
@@ -86,6 +96,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static writeAlgorithmToBlob(blob: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			const firstByte = IsoBuffer.from(blob)[0];
+			assert(
+				firstByte !== undefined,
+				"firstByte is undefined in DocumentStorageServiceCompressionAdapter.writeAlgorithmToBlob",
+			);
 			// eslint-disable-next-line no-bitwise
 			if ((firstByte & 0xf0) !== 0xb0) {
 				return blob;
@@ -289,7 +303,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
 		for (const key of Object.keys(summary.tree)) {
 			const value = summary.tree[key];
-
+			assert(
+				value !== undefined,
+				"value is undefined in DocumentStorageServiceCompressionAdapter.findMetadataHolderSummary",
+			);
 			if (Boolean(value) && value.type === SummaryType.Tree) {
 				const found = this.findMetadataHolderSummary(value);
 				if (found) {
