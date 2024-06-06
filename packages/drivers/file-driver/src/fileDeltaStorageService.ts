@@ -6,8 +6,11 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
 
 /**

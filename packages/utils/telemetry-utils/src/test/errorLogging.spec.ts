@@ -30,7 +30,7 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import { IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase.js";
+import { IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
@@ -705,6 +705,7 @@ describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
 			const annotations = annotationCases[annotationCase];
+
 			it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const errorProps = { errorType: "et1", message: "m1" };
@@ -736,6 +737,7 @@ describe("normalizeError", () => {
 					);
 				}
 			});
+
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
@@ -765,7 +767,7 @@ describe("normalizeError", () => {
 				errorType: "et1",
 				message: "m1",
 			}).withoutProperty("stack");
-			// We don't expect legacyError to be modified itself at all
+			// We don't expect fluidError to be modified itself at all
 			Object.freeze(fluidError);
 
 			// Act
@@ -774,18 +776,6 @@ describe("normalizeError", () => {
 			// Assert
 			assert(normalizedError === fluidError);
 			assert(normalizedError.stack === undefined);
-		});
-		it("Frozen legacy error - Throws", () => {
-			// Arrange
-			const errorProps = { errorType: "et1", message: "m1" };
-			const legacyError = new TestFluidError(errorProps).withoutProperty("errorInstanceId");
-			Object.freeze(legacyError);
-
-			// Act/Assert
-			assert.throws(
-				() => normalizeError(legacyError, {}),
-				/Cannot assign to read only property/,
-			);
 		});
 	});
 	describe("Errors Needing Normalization", () => {
@@ -1144,28 +1134,6 @@ describe("Error Discovery", () => {
 		assert(!isExternalError(wrappedError));
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
 		assert(!isExternalError(new LoggingError("testLoggingError")));
-	});
-	it("isValidLegacyError", () => {
-		const validLegacyError = {
-			message: "testMessage",
-			errorType: "someErrorType",
-			getTelemetryProperties: (): void => {},
-			addTelemetryProperties: (): void => {},
-		};
-		assert.strictEqual(isValidLegacyError(validLegacyError), true);
-		assert.strictEqual(isValidLegacyError({ ...validLegacyError, message: undefined }), false);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, errorType: undefined }),
-			false,
-		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, getTelemetryProperties: undefined }),
-			false,
-		);
-		assert.strictEqual(
-			isValidLegacyError({ ...validLegacyError, addTelemetryProperties: undefined }),
-			false,
-		);
 	});
 
 	it("isFluidError", () => {

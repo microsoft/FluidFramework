@@ -33,13 +33,8 @@ import {
 	ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import {
-	SharedTree,
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeView,
-	type ISharedTree,
-} from "@fluidframework/tree/internal";
+import { SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree, type ISharedTree } from "@fluidframework/tree/internal";
 
 const mapId = "map";
 const stringId = "sharedString";

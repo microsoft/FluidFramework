@@ -22,7 +22,7 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions/internal';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
