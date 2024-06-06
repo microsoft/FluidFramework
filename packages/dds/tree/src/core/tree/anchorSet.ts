@@ -111,6 +111,7 @@ export interface AnchorEvents {
 	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
 	 */
 	childrenChanged(anchor: AnchorNode): void;
+	childrenChangedBatched(anchor: AnchorNode): void;
 
 	/**
 	 * Something in this tree is changing.
@@ -140,6 +141,8 @@ export interface AnchorEvents {
 	 * changes to the tree did happen and are visible to the listener.
 	 */
 	subtreeChanged(anchor: AnchorNode): void;
+
+	subtreeChangedBatched(anchor: AnchorNode): void;
 
 	/**
 	 * Value on this node is changing.
@@ -668,6 +671,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
+			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
@@ -677,6 +681,18 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					node.removeRef();
 				}
 				this.anchorSet.activeVisitor = undefined;
+				const alreadyEmitted = new Map<PathNode, string[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					if (!alreadyEmitted.has(node)) {
+						alreadyEmitted.set(node, []);
+					}
+					const emittedEvents = alreadyEmitted.get(node);
+					if (emittedEvents?.includes(event) ?? false) {
+						continue;
+					}
+					emittedEvents?.push(event);
+					node.events.emit(event, node);
+				}
 			},
 			notifyChildrenChanging(): void {
 				this.maybeWithNode(
@@ -686,7 +702,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			},
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
-					(p) => p.events.emit("childrenChanged", p),
+					(p) => {
+						p.events.emit("childrenChanged", p);
+						this.bufferedEvents.push({ node: p, event: "childrenChangedBatched" });
+					},
 					() => {},
 				);
 			},
@@ -958,6 +977,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
 					p.events.emit("subtreeChanged", p);
+					this.bufferedEvents.push({ node: p, event: "subtreeChangedBatched" });
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});

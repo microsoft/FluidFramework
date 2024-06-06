@@ -153,19 +153,10 @@ export const treeNodeApi: TreeNodeApi = {
 
 		switch (eventName) {
 			case "nodeChanged": {
-				let unsubscribeFromTreeChanged: (() => void) | undefined;
-				return anchor.on("childrenChanged", () => {
-					if (unsubscribeFromTreeChanged === undefined) {
-						unsubscribeFromTreeChanged = anchor.on("subtreeChanged", () => {
-							listener();
-							unsubscribeFromTreeChanged?.();
-							unsubscribeFromTreeChanged = undefined;
-						});
-					}
-				});
+				return anchor.on("childrenChangedBatched", () => listener());
 			}
 			case "treeChanged":
-				return anchor.on("subtreeChanged", () => listener());
+				return anchor.on("subtreeChangedBatched", () => listener());
 			default:
 				return unreachableCase(eventName);
 		}

@@ -318,7 +318,7 @@ describe("treeApi", () => {
 				// One firing of events during the initial change and another during rollback, plus 'treeChanged' fires twice
 				// each time (detach and attach passes).
 				assert.equal(shallowEventCount, 2);
-				assert.equal(deepEventCount, 4);
+				assert.equal(deepEventCount, 2);
 			});
 
 			// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks
