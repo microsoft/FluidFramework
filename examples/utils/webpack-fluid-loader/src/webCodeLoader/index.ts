@@ -4,7 +4,6 @@
  */
 
 export { AllowList } from "./allowList.js";
-export { SemVerCdnCodeResolver } from "./semVerCdnCodeResolver.js";
 export {
 	extractPackageIdentifierDetails,
 	IPackageIdentifierDetails,
