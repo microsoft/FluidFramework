@@ -5,8 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import assert from "node:assert/strict";
-
+import { assert } from "@fluidframework/core-utils/internal";
 import { Random } from "best-random";
 
 // Perf: We avoid the use of an ES6 'class' for a modest performance gain, but allow the use
