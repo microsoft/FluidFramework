@@ -42,11 +42,7 @@ const test_tags = [
  * @param testValue - the value to test against
  * @returns An assertion that will fail if the line doesn't match the value and pass if it does.
  */
-function stdoutLineEquals(
-	stdout: string,
-	lineIndex: number,
-	testValue: string,
-): Chai.Assertion {
+function stdoutLineEquals(stdout: string, lineIndex: number, testValue: string): void {
 	const lines = stdout.split(EOL);
 	if (lineIndex > lines.length) {
 		console.error(lines);
@@ -54,7 +50,7 @@ function stdoutLineEquals(
 			`stdout only split into ${lines.length} lines, but lineIndex is ${lineIndex}.`,
 		);
 	}
-	return expect(lines[lineIndex]).equals(testValue);
+	expect(lines[lineIndex]).equals(testValue);
 }
 
 describe("generate:buildVersion", () => {
