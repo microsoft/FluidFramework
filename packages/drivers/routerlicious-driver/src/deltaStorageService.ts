@@ -42,9 +42,11 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
 		private readonly logger: ITelemetryLoggerExt,
-	) {}
+	) {
+		this.logtailSha = documentStorageService.logTailSha;
+	}
 
-	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+	private logtailSha: string | undefined;
 	private snapshotOps: ISequencedDocumentMessage[] | undefined;
 
 	fetchMessages(
