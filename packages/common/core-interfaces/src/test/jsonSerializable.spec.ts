@@ -38,6 +38,13 @@ import {
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
 	objectWithNever,
+	classInstanceWithPrivateData,
+	classInstanceWithPrivateMethod,
+	classInstanceWithPublicData,
+	classInstanceWithPublicMethod,
+	ClassWithPrivateData,
+	ClassWithPrivateMethod,
+	ClassWithPublicData,
 } from "./testValues.js";
 
 /**
@@ -112,7 +119,17 @@ describe("JsonSerializable", () => {
 				passThru(null) satisfies null;
 			});
 			it("object with literals", () => {
-				passThru(objectWithLiterals) satisfies typeof objectWithLiterals;
+				const objectResult = passThru(
+					objectWithLiterals,
+				) satisfies typeof objectWithLiterals;
+				assert.ok(
+					objectWithLiterals instanceof Object,
+					"objectWithLiterals is at least a plain Object",
+				);
+				assert.ok(
+					objectResult instanceof objectWithLiterals.constructor,
+					"objectRead is same type as objectWithLiterals (plain Object)",
+				);
 			});
 			it("array of literals", () => {
 				passThru(arrayOfLiterals) satisfies typeof arrayOfLiterals;
@@ -134,12 +151,84 @@ describe("JsonSerializable", () => {
 			});
 		});
 
-		it("empty object is supported", () => {
-			passThru(emptyObject) satisfies typeof emptyObject;
-		});
+		describe("supported object types", () => {
+			it("empty object is supported", () => {
+				passThru(emptyObject) satisfies typeof emptyObject;
+			});
 
-		it("object with optional `undefined` property is supported", () => {
-			passThru(objectWithOptionalUndefined, {}) satisfies typeof objectWithOptionalUndefined;
+			it("object with optional `undefined` property is supported", () => {
+				passThru(
+					objectWithOptionalUndefined,
+					{},
+				) satisfies typeof objectWithOptionalUndefined;
+			});
+
+			it("non-const enums are supported as themselves", () => {
+				// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
+				// type. The numeric indices are not checked. So far most robust inspection is manually
+				// after any change.
+				passThru(NumericEnum) satisfies typeof NumericEnum;
+				passThru(StringEnum) satisfies typeof StringEnum;
+				passThru(ComputedEnum) satisfies typeof ComputedEnum;
+			});
+
+			describe("class instance", () => {
+				it("with public data (just cares about data)", () => {
+					const instanceResult = passThru(classInstanceWithPublicData, {
+						public: "public",
+					}) satisfies typeof classInstanceWithPublicData;
+					assert.ok(
+						classInstanceWithPublicData instanceof ClassWithPublicData,
+						"classInstanceWithPublicData is an instance of ClassWithPublicData",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPublicData),
+						"instanceResult is not an instance of ClassWithPublicData",
+					);
+				});
+			});
+		});
+		describe("unsupported object types", () => {
+			// Class instances are indistinguishable from general objects by type checking.
+			// Non-public (non-function) members are preserved, but they are filtered away
+			// by the type filters and thus produce an incorrectly narrowed type. Though
+			// such a result may be customer desired.
+			// Additionally because non-public members are not observed by type mapping,
+			// objects with private functions are not appropriately rejected.
+			// Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
+			// enable support.
+			describe("class instance", () => {
+				it("with private method (ignores private method)", () => {
+					const instanceResult = passThru(classInstanceWithPrivateMethod, {
+						public: "public",
+						// @ts-expect-error Property 'getSecret' is missing
+					}) satisfies typeof classInstanceWithPrivateMethod;
+					assert.ok(
+						classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPrivateMethod),
+						"instanceResult is not an instance of ClassWithPrivateMethod",
+					);
+				});
+				it("with private data (ignores private data)", () => {
+					const instanceResult = passThru(classInstanceWithPrivateData, {
+						public: "public",
+						// @ts-expect-error secret is not allowed but is present
+						secret: 0,
+						// @ts-expect-error Property 'secret' is missing
+					}) satisfies typeof classInstanceWithPrivateData;
+					assert.ok(
+						classInstanceWithPrivateData instanceof ClassWithPrivateData,
+						"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+					);
+					assert.ok(
+						!(instanceResult instanceof ClassWithPrivateData),
+						"instanceResult is not an instance of ClassWithPrivateData",
+					);
+				});
+			});
 		});
 	});
 
@@ -214,24 +303,35 @@ describe("JsonSerializable", () => {
 				); // voidValue is actually `null`; so, no runtime error.
 			});
 
-			describe("object with `undefined`", () => {
-				it("as exact property type", () => {
-					passThru(
-						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
-						objectWithUndefined,
-						{},
-					);
+			describe("object types", () => {
+				describe("with `undefined`", () => {
+					it("as exact property type", () => {
+						passThru(
+							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							objectWithUndefined,
+							{},
+						);
+					});
+					it("in union property", () => {
+						passThru(
+							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							objectWithNumberOrUndefinedUndefined,
+							{},
+						);
+						passThru(
+							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							objectWithNumberOrUndefinedNumbered,
+						);
+					});
 				});
-				it("in union property", () => {
-					passThru(
-						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
-						objectWithNumberOrUndefinedUndefined,
-						{},
-					);
-					passThru(
-						// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
-						objectWithNumberOrUndefinedNumbered,
-					);
+				describe("class instance", () => {
+					it("with public method", () => {
+						passThru(
+							// @ts-expect-error function not assignable to never
+							classInstanceWithPublicMethod,
+							{ public: "public" },
+						);
+					});
 				});
 			});
 		});
@@ -271,15 +371,6 @@ describe("JsonSerializable", () => {
 		it("never property is accepted", () => {
 			passThru(objectWithNever) satisfies typeof objectWithNever;
 			passThru(objectWithNever) satisfies Omit<typeof objectWithNever, "never">;
-		});
-
-		it("non-const enum are supported as themselves", () => {
-			// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
-			// type. The numeric indices are not checked. So far most robust inspection is manually
-			// after any change.
-			passThru(NumericEnum) satisfies typeof NumericEnum;
-			passThru(StringEnum) satisfies typeof StringEnum;
-			passThru(ComputedEnum) satisfies typeof ComputedEnum;
 		});
 	});
 });

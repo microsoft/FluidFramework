@@ -80,3 +80,28 @@ export const arrayOfLiterals: readonly (
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 )[] = [true, 0, 1, "string", "hello", null];
+export class ClassWithPrivateData {
+	public public = "public";
+	// @ts-expect-error secret is never read
+	private readonly secret = 0;
+}
+export const classInstanceWithPrivateData = new ClassWithPrivateData();
+export class ClassWithPrivateMethod {
+	public public = "public";
+	// @ts-expect-error getSecret is never read
+	private getSecret(): number {
+		return 0;
+	}
+}
+export const classInstanceWithPrivateMethod = new ClassWithPrivateMethod();
+export class ClassWithPublicData {
+	public public = "public";
+}
+export const classInstanceWithPublicData = new ClassWithPublicData();
+export class ClassWithPublicMethod {
+	public public = "public";
+	public getSecret(): number {
+		return 0;
+	}
+}
+export const classInstanceWithPublicMethod = new ClassWithPublicMethod();

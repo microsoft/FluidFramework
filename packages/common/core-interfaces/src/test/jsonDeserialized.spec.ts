@@ -38,6 +38,14 @@ import {
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
 	objectWithNever,
+	classInstanceWithPrivateData,
+	classInstanceWithPrivateMethod,
+	classInstanceWithPublicData,
+	classInstanceWithPublicMethod,
+	ClassWithPrivateData,
+	ClassWithPrivateMethod,
+	ClassWithPublicData,
+	ClassWithPublicMethod,
 } from "./testValues.js";
 
 /**
@@ -112,7 +120,15 @@ describe("JsonDeserialized", () => {
 				passThru(null) satisfies null;
 			});
 			it("object with literals", () => {
-				passThru(objectWithLiterals) satisfies typeof objectWithLiterals;
+				const objectRead = passThru(objectWithLiterals) satisfies typeof objectWithLiterals;
+				assert.ok(
+					objectWithLiterals instanceof Object,
+					"objectWithLiterals is at least a plain Object",
+				);
+				assert.ok(
+					objectRead instanceof objectWithLiterals.constructor,
+					"objectRead is same type as objectWithLiterals (plain Object)",
+				);
 			});
 			it("array of literals", () => {
 				passThru(arrayOfLiterals) satisfies typeof arrayOfLiterals;
@@ -134,8 +150,90 @@ describe("JsonDeserialized", () => {
 			});
 		});
 
-		it("empty object is supported", () => {
-			passThru(emptyObject) satisfies typeof emptyObject;
+		describe("supported object types", () => {
+			it("empty object is supported", () => {
+				passThru(emptyObject) satisfies typeof emptyObject;
+			});
+
+			it("non-const enum are supported as themselves", () => {
+				// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
+				// type. The numeric indices are not checked. So far most robust inspection is manually
+				// after any change.
+				passThru(NumericEnum) satisfies typeof NumericEnum;
+				passThru(StringEnum) satisfies typeof StringEnum;
+				passThru(ComputedEnum) satisfies typeof ComputedEnum;
+			});
+			// Class instances are indistinguishable from general objects by type checking.
+			// Non-public (non-function) members are preserved, but they are filtered away
+			// by the type filters and thus produce an incorrectly narrowed type. Though
+			// such a result may be customer desired.
+			// Additionally because non-public members are not observed by type mapping,
+			// objects with private functions are not appropriately rejected.
+			// Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
+			// enable support.
+			describe("class instance", () => {
+				it("with public data (propagated)", () => {
+					const instanceRead = passThru(classInstanceWithPublicData, {
+						public: "public",
+					}) satisfies typeof classInstanceWithPublicData;
+					assert.ok(
+						classInstanceWithPublicData instanceof ClassWithPublicData,
+						"classInstanceWithPublicData is an instance of ClassWithPublicData",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPublicData),
+						"instanceRead is not an instance of ClassWithPublicData",
+					);
+				});
+				it("with public method (removes method)", () => {
+					const instanceRead = passThru(classInstanceWithPublicMethod, {
+						public: "public",
+						// @ts-expect-error getSecret is missing, but required
+					}) satisfies typeof classInstanceWithPublicMethod;
+					assert.ok(
+						classInstanceWithPublicMethod instanceof ClassWithPublicMethod,
+						"classInstanceWithPublicMethod is an instance of ClassWithPublicMethod",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPublicMethod),
+						"instanceRead is not an instance of ClassWithPublicMethod",
+					);
+				});
+				it("with private method (removes method)", () => {
+					const instanceRead = passThru(classInstanceWithPrivateMethod, {
+						public: "public",
+						// @ts-expect-error getSecret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateMethod;
+					assert.ok(
+						classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+					);
+					assert.ok(
+						!(instanceRead instanceof classInstanceWithPrivateMethod.constructor),
+						"instanceRead is not an instance of ClassWithPrivateMethod",
+					);
+				});
+			});
+		});
+		describe("unsupported object types", () => {
+			describe("class instance", () => {
+				it("with private data (hides private data that propagates)", () => {
+					const instanceRead = passThru(classInstanceWithPrivateData, {
+						public: "public",
+						// @ts-expect-error secret is not allowed but is present
+						secret: 0,
+						// @ts-expect-error secret is missing, but required
+					}) satisfies typeof classInstanceWithPrivateData;
+					assert.ok(
+						classInstanceWithPrivateData instanceof ClassWithPrivateData,
+						"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+					);
+					assert.ok(
+						!(instanceRead instanceof ClassWithPrivateData),
+						"instanceRead is not an instance of ClassWithPrivateData",
+					);
+				});
+			});
 		});
 	});
 
@@ -282,15 +380,6 @@ describe("JsonDeserialized", () => {
 			// @ts-expect-error `never` property (type never) should not be preserved
 			passThru(objectWithNever) satisfies typeof objectWithNever;
 			passThru(objectWithNever) satisfies Omit<typeof objectWithNever, "never">;
-		});
-
-		it("non-const enum are supported as themselves", () => {
-			// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
-			// type. The numeric indices are not checked. So far most robust inspection is manually
-			// after any change.
-			passThru(NumericEnum) satisfies typeof NumericEnum;
-			passThru(StringEnum) satisfies typeof StringEnum;
-			passThru(ComputedEnum) satisfies typeof ComputedEnum;
 		});
 	});
 });
