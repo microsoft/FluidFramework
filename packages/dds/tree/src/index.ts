@@ -384,7 +384,7 @@ export {
 	UnbrandedName,
 	EmptyObject,
 	FlexList,
-	FlexListToUnion,
+	InternalFlexListTypes,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.

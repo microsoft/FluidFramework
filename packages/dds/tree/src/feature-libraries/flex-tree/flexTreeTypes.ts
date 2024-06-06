@@ -21,11 +21,11 @@ import {
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexList,
-	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
+	InternalFlexListTypes,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
@@ -1021,7 +1021,7 @@ export type FlexTreeTypedFieldInner<
  */
 export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
 	T extends FlexList<FlexTreeNodeSchema>
-		? FlexTreeTypedNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
+		? FlexTreeTypedNode<Assume<InternalFlexListTypes.FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: FlexTreeNode;
 
 /**

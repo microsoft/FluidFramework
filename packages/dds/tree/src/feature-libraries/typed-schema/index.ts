@@ -44,9 +44,11 @@ export {
 export {
 	FlexList,
 	markEager,
-	FlexListToUnion,
 	LazyItem,
 	isLazy,
 	ExtractItemType,
 	NormalizeLazyItem,
 } from "./flexList.js";
+
+import * as InternalFlexListTypes from "./internalTypes.js";
+export { InternalFlexListTypes };
