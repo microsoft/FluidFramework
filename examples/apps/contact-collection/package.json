@@ -33,6 +33,20 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
+	"browserslist": {
+		"production": [
+			"Edge >= 80",
+			"Chrome >= 80",
+			"Safari >= 13.1",
+			"Firefox >= 78"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version",
+			"last 1 edge version"
+		]
+	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

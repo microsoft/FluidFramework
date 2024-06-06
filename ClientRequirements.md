@@ -11,7 +11,12 @@ When making such a request please include if the configuration already works (an
 ## Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
--   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
+-   Modern browsers supporting the es2022 standard library.
+-   Polyfills to support additional targets:
+
+    -   ES2020 era major browsers, when combined with polyfills, such as via webpack (see bellow).
+
+    In response to asks we can add explicit support for polyfill based support for other standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ## Supported Tools
 
@@ -20,8 +25,20 @@ When making such a request please include if the configuration already works (an
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
     -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
 -   [webpack](https://webpack.js.org/) 5
+
     -   We are not intending to be prescriptive about what bundler to use.
         Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
+
+    -   Webpack targeting the following browserslist (which contains es2020 compatible major browsers) is supported, meaning anything that can not be automatically polyfilled to be compatible with the listed browser versions will not be used:
+
+            "browserslist": {
+                "production": [
+                    "Edge >= 80",
+                    "Chrome >= 80",
+                    "Safari >= 13.1",
+                    "Firefox >= 78"
+                ]
+            }
 
 ## Module Resolution
 

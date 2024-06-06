@@ -28,6 +28,14 @@
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
+	"browserslist": {
+		"production": [
+			"Edge >= 80",
+			"Chrome >= 80",
+			"Safari >= 13.1",
+			"Firefox >= 78"
+		]
+	},
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
