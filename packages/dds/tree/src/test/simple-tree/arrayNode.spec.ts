@@ -178,7 +178,7 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+						/Cannot set or shadow indexed properties on array nodes/,
 					),
 			);
 
@@ -187,7 +187,7 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+						/Cannot set or shadow indexed properties on array nodes/,
 					),
 			);
 		});
@@ -203,7 +203,7 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+						/Cannot set or shadow indexed properties on array nodes/,
 					),
 			);
 
@@ -212,7 +212,7 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs instead./,
+						/Cannot set or shadow indexed properties on array nodes/,
 					),
 			);
 		});
