@@ -19,7 +19,7 @@ import type { IFluidHandleContext } from '@fluidframework/core-interfaces/intern
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import type { IRequest } from '@fluidframework/core-interfaces';
 import type { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 
 // @alpha
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
