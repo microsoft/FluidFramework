@@ -34,7 +34,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
-	addDefaultsToMapTree,
 	cursorFromFieldData,
 	cursorFromNodeData,
 	mapTreeFromNodeData,
@@ -727,8 +726,7 @@ describe("toMapTree", () => {
 
 			const tree = {};
 
-			const actual = mapTreeFromNodeData(tree, schema);
-			addDefaultsToMapTree(actual, schema, nodeKeyManager);
+			const actual = mapTreeFromNodeData(tree, schema, nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -758,7 +756,6 @@ describe("toMapTree", () => {
 			const tree = {};
 
 			const actual = mapTreeFromNodeData(tree, schema);
-			addDefaultsToMapTree(actual, schema, nodeKeyManager);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
@@ -802,17 +799,17 @@ describe("toMapTree", () => {
 				map: schemaFactory.map(LeafObject),
 			}) {}
 
-			const mapTree = mapTreeFromNodeData(
-				{
-					object: {},
-					array: [{}, {}],
-					map: new Map([
-						["a", {}],
-						["b", {}],
-					]),
-				},
-				RootObject,
-			);
+			const nodeData = {
+				object: {},
+				array: [{}, {}],
+				map: new Map([
+					["a", {}],
+					["b", {}],
+				]),
+			};
+
+			// Don't pass in a context
+			let mapTree = mapTreeFromNodeData(nodeData, RootObject);
 
 			const getObject = () => mapTree.fields.get(brand("object"))?.[0];
 			const getArray = () => mapTree.fields.get(brand("array"))?.[0].fields.get(EmptyKey);
@@ -821,20 +818,6 @@ describe("toMapTree", () => {
 				leafObject?.fields.get(brand("constantValue"))?.[0].value;
 			const getContextualValue = (leafObject: MapTree | undefined) =>
 				leafObject?.fields.get(brand("contextualValue"))?.[0].value;
-
-			// Assert that there are no defaults populated
-			assert.equal(getConstantValue(getObject()), undefined);
-			assert.equal(getConstantValue(getArray()?.[0]), undefined);
-			assert.equal(getConstantValue(getArray()?.[1]), undefined);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
-			assert.equal(getConstantValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
-			assert.equal(getContextualValue(getObject()), undefined);
-			assert.equal(getContextualValue(getArray()?.[0]), undefined);
-			assert.equal(getContextualValue(getArray()?.[1]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
-			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
-
-			addDefaultsToMapTree(mapTree, RootObject, undefined);
 
 			// Assert that we've populated the constant defaults...
 			assert.equal(getConstantValue(getObject()), defaultValue);
@@ -849,7 +832,8 @@ describe("toMapTree", () => {
 			assert.equal(getContextualValue(getMap()?.fields.get(brand("a"))?.[0]), undefined);
 			assert.equal(getContextualValue(getMap()?.fields.get(brand("b"))?.[0]), undefined);
 
-			addDefaultsToMapTree(mapTree, RootObject, nodeKeyManager);
+			// This time, pass the context in
+			mapTree = mapTreeFromNodeData(nodeData, RootObject, nodeKeyManager);
 
 			// Assert that all defaults are populated
 			assert.equal(getConstantValue(getObject()), defaultValue);
