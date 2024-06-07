@@ -15,6 +15,7 @@ import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type {
+	InboundSequencedContainerRuntimeMessage,
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
@@ -111,7 +112,7 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Op processing", () => {
-		let pendingStateManager;
+		let pendingStateManager: PendingStateManager;
 		let closeError: ICriticalContainerError | undefined;
 		const clientId = "clientId";
 
@@ -139,16 +140,20 @@ describe("Pending State Manager", () => {
 			messages.forEach((message) => {
 				pendingStateManager.onSubmitMessage(
 					JSON.stringify({ type: message.type, contents: message.contents }),
-					message.referenceSequenceNumber,
+					message.clientSequenceNumber,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					message.referenceSequenceNumber!,
 					undefined,
-					message.metadata,
+					message.metadata as any as Record<string, unknown> | undefined,
 				);
 			});
 		};
 
 		const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
 			messages.forEach((message) => {
-				pendingStateManager.processPendingLocalMessage(message);
+				pendingStateManager.processPendingLocalMessage(
+					message as InboundSequencedContainerRuntimeMessage,
+				);
 			});
 
 		it("proper batch is processed correctly", () => {
@@ -392,6 +397,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onSubmitMessage(
 					JSON.stringify(futureRuntimeMessage),
 					0,
+					0,
 					undefined,
 					undefined,
 				);
@@ -450,6 +456,7 @@ describe("Pending State Manager", () => {
 				pendingStateManager.onSubmitMessage(
 					JSON.stringify(message.content),
 					0,
+					0,
 					undefined /* localOpMetadata */,
 					undefined /* opMetadata */,
 				);
@@ -485,6 +492,7 @@ describe("Pending State Manager", () => {
 			for (const message of messages) {
 				pendingStateManager.onSubmitMessage(
 					JSON.stringify(message.content),
+					0,
 					0,
 					undefined /* localOpMetadata */,
 					undefined /* opMetadata */,
@@ -584,6 +592,7 @@ describe("Pending State Manager", () => {
 			for (const message of messages) {
 				pendingStateManager.onSubmitMessage(
 					message.content,
+					0, // CSN not under test here
 					message.referenceSequenceNumber,
 					message.localOpMetadata,
 					message.opMetadata,

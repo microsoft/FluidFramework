@@ -189,12 +189,16 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
 	 * queue.
-	 * @param type - The container message type.
-	 * @param content - The message content.
+	 * @param content - The container message type.
+	 * //* TODO: update caller to increment csn? I wish PSM just took the batch (ok for now since batchIdContext is only used on first message of batch)
+	 * @param clientSequenceNumber - The clientSequenceNumber assigned to the first message in the batch
+	 * @param referenceSequenceNumber - The referenceSequenceNumber of the batch.
 	 * @param localOpMetadata - The local metadata associated with the message.
+	 * @param opMetadata - The op metadata to be included on payload over the wire.
 	 */
 	public onSubmitMessage(
 		content: string,
+		clientSequenceNumber: number | undefined,
 		referenceSequenceNumber: number,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
@@ -270,6 +274,7 @@ export class PendingStateManager implements IDisposable {
 
 		const messageContent = buildPendingMessageContent(message);
 
+		//* TODO: Can we switch back to comparing CSN...?
 		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(

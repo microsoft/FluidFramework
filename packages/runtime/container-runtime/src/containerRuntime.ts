@@ -643,8 +643,10 @@ export const makeLegacySendBatchFn =
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
+		//* NOTE: csn logic has almost no test coverage (need a test with batch > 1 msg)
+		let csn: number | undefined;
 		for (const message of batch.content) {
-			submitFn(
+			csn = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)
 				message.contents === undefined ? undefined : JSON.parse(message.contents),
@@ -652,8 +654,14 @@ export const makeLegacySendBatchFn =
 				message.metadata,
 			);
 		}
+		assert(
+			csn !== undefined,
+			"This implies an empty batch, which shouldn't come to this codepath",
+		);
 
 		deltaManager.flush();
+
+		return csn;
 	};
 
 /** Helper type for type constraints passed through several functions.
