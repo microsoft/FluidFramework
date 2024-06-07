@@ -112,9 +112,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		}
 
 		const migratable = this._currentModel;
-		const acceptedVersion = migratable.migrationTool.acceptedVersion;
-		if (acceptedVersion === undefined) {
-			throw new Error("Expect an accepted version before migration starts");
+		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		if (acceptedMigration === undefined) {
+			throw new Error("Expect an accepted migration before migration starts");
 		}
 
 		const doTheMigration = async () => {
@@ -124,20 +124,24 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 			// appropriate action (see then() block below).
 
 			const prepareTheMigration = async () => {
-				// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
+				// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
 				// Currently this fails the migration gracefully and emits an event so the app developer can know
 				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
 				// forward, or at least advise the end user to refresh the page or something.
 				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 				// a new ModelLoader?
-				const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+				const migrationSupported = await this.modelLoader.supportsVersion(
+					acceptedMigration.newVersion,
+				);
 				if (!migrationSupported) {
-					this.emit("migrationNotSupported", acceptedVersion);
+					this.emit("migrationNotSupported", acceptedMigration);
 					this._migrationP = undefined;
 					return;
 				}
 
-				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
+				const detachedModel = await this.modelLoader.createDetached(
+					acceptedMigration.newVersion,
+				);
 				const migratedModel = detachedModel.model;
 
 				const exportedData = await migratable.exportData();
@@ -161,13 +165,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					} catch {
 						// TODO: This implies that the contract is to throw if the data can't be transformed, which
 						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this.emit("migrationNotSupported", acceptedVersion);
+						this.emit("migrationNotSupported", acceptedMigration);
 						this._migrationP = undefined;
 						return;
 					}
 				} else {
 					// We can't get the data into a format that we can import, give up.
-					this.emit("migrationNotSupported", acceptedVersion);
+					this.emit("migrationNotSupported", acceptedMigration);
 					this._migrationP = undefined;
 					return;
 				}
@@ -263,8 +267,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		}
 
 		const migratable = this._currentModel;
-		const acceptedVersion = migratable.migrationTool.acceptedVersion;
-		if (acceptedVersion === undefined) {
+		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
@@ -276,9 +280,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		const doTheLoad = async () => {
 			// doTheLoad() should only be called once. It will resolve once we complete loading.
 
-			const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+			const migrationSupported = await this.modelLoader.supportsVersion(
+				acceptedMigration.newVersion,
+			);
 			if (!migrationSupported) {
-				this.emit("migrationNotSupported", acceptedVersion);
+				this.emit("migrationNotSupported", acceptedMigration);
 				this._migratedLoadP = undefined;
 				return;
 			}

@@ -21,6 +21,7 @@ export {
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
+	IAcceptedMigrationDetails,
 	IImportExportModel,
 	IMigratableModel,
 	IMigratableModelEvents,

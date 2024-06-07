@@ -63,9 +63,9 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			: `Proposed version to migrate to: ${model.migrationTool.proposedVersion}`;
 
 	const acceptedVersionStatus =
-		model.migrationTool.acceptedVersion === undefined
+		model.migrationTool.acceptedMigration === undefined
 			? "No accepted version for migration yet"
-			: `Accepted version to migrate to: ${model.migrationTool.acceptedVersion}`;
+			: `Accepted version to migrate to: ${model.migrationTool.acceptedMigration.newVersion} @ sequenceNumber: ${model.migrationTool.acceptedMigration.migrationSequenceNumber}`;
 
 	const migratedContainerStatus = (() => {
 		if (model.migrationTool.newContainerId === undefined) {

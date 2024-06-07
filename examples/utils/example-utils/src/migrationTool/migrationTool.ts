@@ -58,7 +58,7 @@ export class MigrationTool
 	public get migrationState(): MigrationState {
 		if (this.newContainerId !== undefined) {
 			return "migrated";
-		} else if (this.acceptedVersion !== undefined) {
+		} else if (this.acceptedMigration !== undefined) {
 			return "migrating";
 		} else if (this.proposedVersion !== undefined) {
 			return "stopping";
@@ -122,15 +122,27 @@ export class MigrationTool
 		return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
 	}
 
-	public get acceptedVersion() {
-		return this.pactMap.get(newVersionKey);
+	public get acceptedMigration() {
+		const migrationDetails = this.pactMap.getWithDetails(newVersionKey);
+		if (migrationDetails === undefined) {
+			return undefined;
+		}
+		if (migrationDetails.value === undefined) {
+			throw new Error(
+				"Expect migration version to be specified if migration has been accepted",
+			);
+		}
+		return {
+			newVersion: migrationDetails.value,
+			migrationSequenceNumber: migrationDetails.acceptedSequenceNumber,
+		};
 	}
 
 	public readonly proposeVersion = (newVersion: string) => {
 		// Don't permit changes to the version after a new one has already been accepted.
 		// TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
 		// the PactMap will silently drop these on the floor.
-		if (this.acceptedVersion !== undefined) {
+		if (this.acceptedMigration !== undefined) {
 			throw new Error("New version was already accepted");
 		}
 
