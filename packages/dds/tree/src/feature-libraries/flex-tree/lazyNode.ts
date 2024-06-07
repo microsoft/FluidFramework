@@ -283,6 +283,23 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				);
 				return unsubscribeFromSubtreeChange;
 			}
+			case "nodeChanged": {
+				let unsubscribeFromTreeChanged: (() => void) | undefined;
+				return this.anchorNode.on("childrenChanged", () => {
+					if (unsubscribeFromTreeChanged === undefined) {
+						unsubscribeFromTreeChanged = this.anchorNode.on("subtreeChanged", () => {
+							(listener as FlexTreeNodeEvents["nodeChanged"])();
+							unsubscribeFromTreeChanged?.();
+							unsubscribeFromTreeChanged = undefined;
+						});
+					}
+				});
+			}
+			case "treeChanged": {
+				return this.anchorNode.on("subtreeChanged", () =>
+					(listener as FlexTreeNodeEvents["treeChanged"])(),
+				);
+			}
 			default:
 				unreachableCase(eventName);
 		}

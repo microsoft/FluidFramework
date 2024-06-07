@@ -48,4 +48,14 @@ export interface FlexTreeNodeEvents {
 	 * @returns a visitor to traverse the subtree or `void`.
 	 */
 	subtreeChanging(upPath: UpPath): PathVisitor | void;
+
+	/**
+	 * This has the same contract as {@link TreeChangeEvents.nodeChanged}
+	 */
+	nodeChanged(): void;
+
+	/**
+	 * This has the same contract as {@link TreeChangeEvents.treeChanged}
+	 */
+	treeChanged(): void;
 }

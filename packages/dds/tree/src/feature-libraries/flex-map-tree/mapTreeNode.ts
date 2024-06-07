@@ -53,7 +53,7 @@ import {
 import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { createEmitter } from "../../events/index.js";
+import { ComposableEventEmitter } from "../../events/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -65,6 +65,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
+	getEventListeners(): Iterable<
+		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
+	>;
 }
 
 /**
@@ -81,6 +84,26 @@ interface LocationInField {
 }
 
 /**
+ * Exposes the event listeners that are currently registered.
+ * @remarks TODO: After the eventing library is simplified, find a way to support this elegantly in the library.
+ */
+class MapTreeNodeEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents> {
+	public constructor() {
+		super();
+	}
+
+	public *getListeners(): Iterable<
+		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
+	> {
+		for (const [eventName, listeners] of this.listeners) {
+			for (const listener of listeners.values()) {
+				yield [eventName, listener];
+			}
+		}
+	}
+}
+
+/**
  * A readonly implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
  * @remarks Any methods that would mutate the node will fail,
  * as will the querying of data specific to the {@link LazyTreeNode} implementation (e.g. {@link FlexTreeNode.context}).
@@ -89,7 +112,12 @@ interface LocationInField {
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-	private readonly events = createEmitter<FlexTreeNodeEvents>();
+	private readonly events = new MapTreeNodeEventEmitter();
+	public getEventListeners(): Iterable<
+		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
+	> {
+		return this.events.getListeners();
+	}
 
 	/**
 	 * Create a new MapTreeNode.
