@@ -103,6 +103,8 @@ module.exports = {
 
 		/**
 		 * Enforces our naming conventions.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
 		 */
 		"@typescript-eslint/naming-convention": [
 			"error",
