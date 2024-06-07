@@ -3,18 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidMountableView } from "@fluid-example/example-utils";
+import { IFluidMountableView, StaticCodeLoader } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
 	IFluidCodeDetails,
-	IFluidCodeResolver,
 	IFluidModule,
-	IFluidModuleWithDetails,
-	IFluidPackage,
-	IResolvedFluidCodeDetails,
 	LoaderHeader,
-	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -38,11 +33,6 @@ import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentS
 import { getUrlResolver } from "./getUrlResolver.js";
 import { OdspPersistentCache } from "./odspPersistantCache.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";
-import {
-	WebCodeLoader,
-	extractPackageIdentifierDetails,
-	resolveFluidPackageEnvironment,
-} from "./webCodeLoader/index.js";
 
 export interface IDevServerUser extends IUser {
 	name: string;
@@ -98,23 +88,6 @@ export type RouteOptions =
 	| ITinyliciousRouteOptions
 	| IOdspRouteOptions;
 
-const isModuleWithDetails = (
-	fluidModule: IFluidModule | IFluidModuleWithDetails,
-): fluidModule is IFluidModuleWithDetails => (fluidModule as any).details !== undefined;
-
-const addFakeDetailsIfNeeded = (
-	packageJson: IFluidPackage,
-	fluidModule: IFluidModule | IFluidModuleWithDetails,
-): IFluidModuleWithDetails => {
-	if (isModuleWithDetails(fluidModule)) {
-		return fluidModule;
-	}
-	return {
-		module: fluidModule,
-		details: { package: packageJson.name, config: {} },
-	};
-};
-
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
 function makeSideBySideDiv(divId: string) {
 	const div = document.createElement("div");
@@ -127,34 +100,6 @@ function makeSideBySideDiv(divId: string) {
 	return div;
 }
 
-class WebpackCodeResolver implements IFluidCodeResolver {
-	constructor(private readonly options: IBaseRouteOptions) {}
-	async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-		const baseUrl = details.config?.cdn ?? `http://localhost:${this.options.port}`;
-		let pkg = details.package;
-		if (typeof pkg === "string") {
-			const resp = await fetch(`${baseUrl}/package.json`);
-			pkg = (await resp.json()) as IFluidPackage;
-		}
-		if (!isFluidBrowserPackage(pkg)) {
-			throw new Error("Not a Fluid package");
-		}
-		const browser = resolveFluidPackageEnvironment(pkg.fluid.browser, baseUrl);
-		const parse = extractPackageIdentifierDetails(pkg);
-		return {
-			...details,
-			resolvedPackage: {
-				...pkg,
-				fluid: {
-					...pkg.fluid,
-					browser,
-				},
-			},
-			resolvedPackageCacheId: parse.fullId,
-		};
-	}
-}
-
 /**
  * Create a loader with WebCodeLoader and return it.
  */
@@ -163,7 +108,6 @@ async function createWebLoader(
 	fluidModule: IFluidModule,
 	options: RouteOptions,
 	urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
-	codeDetails: IFluidCodeDetails,
 	testOrderer: boolean = false,
 	odspPersistantCache?: IPersistedCache,
 ): Promise<Loader> {
@@ -200,17 +144,15 @@ async function createWebLoader(
 		);
 	}
 
-	const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
-
-	await codeLoader.seedModule(
-		codeDetails,
-		addFakeDetailsIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
-	);
+	const runtimeFactory = fluidModule.fluidExport.IRuntimeFactory;
+	if (runtimeFactory === undefined) {
+		throw new Error("Couldn't find the factory");
+	}
 
 	return new Loader({
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
-		codeLoader,
+		codeLoader: new StaticCodeLoader(runtimeFactory),
 	});
 }
 
@@ -218,7 +160,6 @@ const containers: IContainer[] = [];
 
 export async function start(
 	id: string,
-	packageJson: IFluidPackage,
 	fluidModule: IFluidModule,
 	options: RouteOptions,
 	div: HTMLDivElement,
@@ -240,7 +181,7 @@ export async function start(
 	}
 
 	const codeDetails: IFluidCodeDetails = {
-		package: packageJson,
+		package: "no-dynamic-package",
 		config: {},
 	};
 
@@ -253,7 +194,6 @@ export async function start(
 		fluidModule,
 		options,
 		urlResolver,
-		codeDetails,
 		testOrderer,
 		odspPersistantCache,
 	);
@@ -341,7 +281,6 @@ export async function start(
 			fluidModule,
 			options,
 			urlResolver,
-			codeDetails,
 			testOrderer,
 		);
 

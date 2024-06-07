@@ -347,18 +347,15 @@ const fluid = (
     <title>${documentId}</title>
 </head>
 <body style="margin: 0; height: 100%;">
-    <div id="content" style="min-height: 100%;">
-    </div>
+    <div id="content" style="min-height: 100%;"></div>
 
     <script src="/code/fluid-loader.bundle.js"></script>
     ${umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
-        var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;
         FluidLoader.start(
             "${documentId}",
-            pkgJson,
             window["${umd.library}"],
             options,
             document.getElementById("content"))
