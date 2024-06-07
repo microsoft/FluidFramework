@@ -16,6 +16,7 @@ import {
 	IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/internal";
 import type {
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
@@ -190,7 +191,10 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 
 	// Effectively, this pattern puts the factory in charge of "unpacking" the context, getting everything ready to assemble the MigrationTool
 	// As opposed to the MigrationTool instance having an initialize() method to be called after the fact that does the unpacking.
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			migrationToolSharedObjectRegistry,

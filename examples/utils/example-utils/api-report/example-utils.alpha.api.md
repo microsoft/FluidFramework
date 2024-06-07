@@ -9,7 +9,6 @@ import { DataObject } from '@fluidframework/aqueduct/internal';
 import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
 import { DataObjectTypes } from '@fluidframework/aqueduct/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
-import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
 import { IContainer } from '@fluidframework/container-definitions/internal';
@@ -19,6 +18,7 @@ import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/inte
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
+import type { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions/internal';
