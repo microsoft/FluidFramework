@@ -348,17 +348,7 @@ export class DocumentDeltaConnection
 			}
 			this.emitMessages("submitSignal", [signal]);
 		} else {
-			let signal = content;
-			// Even if server doesn't support v2 signals, we still include targetClientId in the signal envelope
-			if (targetClientId !== undefined) {
-				const signalEnvelope = JSON.parse(content);
-				signalEnvelope.contents.content = {
-					signalContent: signalEnvelope.contents.content,
-					targetClientId,
-				};
-				signal = JSON.stringify(signalEnvelope);
-			}
-			this.emitMessages("submitSignal", [[signal]]);
+			this.emitMessages("submitSignal", [[content]]);
 		}
 	}
 

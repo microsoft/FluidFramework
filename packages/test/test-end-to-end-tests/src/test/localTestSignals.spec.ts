@@ -266,6 +266,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				assert.equal(local, false, "Signal should be remote");
 				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
 				assert.equal(message.content, true, "Signal content should be true");
+				assert.equal(
+					message.targetClientId,
+					client.clientId,
+					"Signal should be targeted to this client",
+				);
 				client.signalReceivedCount += 1;
 			});
 		});
@@ -293,6 +298,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				assert.equal(local, true, "Signal should be local");
 				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
 				assert.equal(message.content, true, "Signal content should be true");
+				assert.equal(
+					message.targetClientId,
+					client.clientId,
+					"Signal should be targeted to this client",
+				);
 				client.signalReceivedCount += 1;
 			});
 		});
@@ -316,11 +326,11 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 
 	[RuntimeLayer.containerRuntime, RuntimeLayer.dataStoreRuntime].forEach((layer) =>
 		describe(`sent from ${layer}`, () => {
-			it("can target a remote client", async () => {
+			it("can target a message to a specific remote client using their client ID", async () => {
 				await sendAndVerifyRemoteSignals(layer);
 			});
 
-			it("can target the local client", async () => {
+			it("can target a message to the local client using client ID", async () => {
 				await sendAndVerifyLocalSignals(layer);
 			});
 		}),

@@ -2790,6 +2790,7 @@ export class ContainerRuntime
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
+			targetClientId: message.targetClientId,
 		};
 
 		// Only collect signal telemetry for messages sent by the current client.

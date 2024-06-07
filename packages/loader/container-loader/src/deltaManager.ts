@@ -476,6 +476,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.handler.processSignal({
 				clientId: message.clientId,
 				content: JSON.parse(message.content as string),
+				targetClientId: message.targetClientId,
 			});
 		});
 
