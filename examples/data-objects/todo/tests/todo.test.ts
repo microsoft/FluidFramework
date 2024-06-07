@@ -46,8 +46,12 @@ describe("ToDo", () => {
 		await expect(page).toClick("button[name=createItem]");
 
 		const result = await page.evaluate(() => {
-			let itemLists = document.body.querySelectorAll(".todo-item-list");
-			let items = itemLists[0].childNodes;
+			const itemLists = document.body.querySelectorAll(".todo-item-list");
+			const firstItem = itemLists[0];
+			if (firstItem === undefined) {
+				return false;
+			}
+			const items = firstItem.childNodes;
 			return items.length === 2;
 		});
 
@@ -88,8 +92,12 @@ describe("ToDo", () => {
 		await page.goto(itemUrl, { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 		const result = await page.evaluate(() => {
-			let itemLists = document.body.querySelectorAll(".todo-item");
-			let items = itemLists[0].childNodes;
+			const itemLists = document.body.querySelectorAll(".todo-item");
+			const firstItem = itemLists[0];
+			if (firstItem === undefined) {
+				return false;
+			}
+			const items = firstItem.childNodes;
 			return items.length === 1;
 		});
 
