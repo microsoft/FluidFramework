@@ -64,7 +64,7 @@ export class BatchedTelemetryHelper implements IDisposable {
 		}
 	}
 
-	public sendData(): void {
+	private sendData(): void {
 		const customData = Object.fromEntries(
 			[...this.customDataMap.entries()].map(([key, value]) => [key, value / this.counter]),
 		);
