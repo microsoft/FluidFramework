@@ -132,12 +132,20 @@ module.exports = {
 			{
 				selector: "interface",
 				format: ["PascalCase"],
-				prefix: [], // No prefix for interfaces. This forbids the "I" prefix, which we do not want.
+				// Forbid "I" prefix for interfaces.
+				custom: {
+					regex: "^I[A-Z]",
+					match: false,
+				},
 			},
 			{
 				selector: "typeParameter",
 				format: ["PascalCase"],
-				prefix: ["T"], // Type parameter names must begin with "T"
+				// Require "T" prefix for type parameters.
+				custom: {
+					regex: "^T[A-Z]",
+					match: true,
+				},
 			},
 		],
 

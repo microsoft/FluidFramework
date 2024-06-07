@@ -220,16 +220,20 @@
                 "format": [
                     "PascalCase"
                 ],
-                "prefix": []
+                "custom": {
+                    "regex": "^I[A-Z]",
+                    "match": false
+                }
             },
             {
                 "selector": "typeParameter",
                 "format": [
                     "PascalCase"
                 ],
-                "prefix": [
-                    "T"
-                ]
+                "custom": {
+                    "regex": "^T[A-Z]",
+                    "match": true
+                }
             }
         ],
         "@typescript-eslint/no-array-constructor": [
