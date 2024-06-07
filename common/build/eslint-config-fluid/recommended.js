@@ -128,6 +128,11 @@ module.exports = {
 				format: ["PascalCase"],
 			},
 			{
+				selector: "typeParameter",
+				format: ["PascalCase"],
+				prefix: ["T"], // Type parameter names must begin with "T"
+			},
+			{
 				selector: "functionLike",
 				format: ["camelCase"],
 			},
