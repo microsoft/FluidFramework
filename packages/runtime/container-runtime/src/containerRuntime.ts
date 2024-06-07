@@ -2634,7 +2634,13 @@ export class ContainerRuntime
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
-		this.scheduleManager.beforeOpProcessing(message);
+		if (!this.scheduleManager.beforeOpProcessing(message)) {
+			//* HACKY: This is awkward. Find a better place/way to detect sequenced duplicates that should be ignored.
+			this.mc.logger.sendTelemetryEvent({ eventName: "duplicateMessageIgnored" });
+
+			this.scheduleManager.afterOpProcessing(undefined, message);
+			return;
+		}
 
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 

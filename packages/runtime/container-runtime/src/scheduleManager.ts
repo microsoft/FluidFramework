@@ -21,6 +21,7 @@ import {
 import { DeltaScheduler } from "./deltaScheduler.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
+import { DUPLICATE_BATCH_MSG } from "./batchTracker.js";
 
 type IRuntimeMessageMetadata =
 	| undefined
@@ -55,15 +56,24 @@ export class ScheduleManager {
 		void new ScheduleManagerCore(deltaManager, getClientId, logger);
 	}
 
-	public beforeOpProcessing(message: ISequencedDocumentMessage) {
+	//* Returns false if the op should not be processed
+	public beforeOpProcessing(message: ISequencedDocumentMessage): boolean {
 		if (this.batchClientId !== message.clientId) {
 			assert(
 				this.batchClientId === undefined,
 				0x2a2 /* "Batch is interrupted by other client op. Should be caught by trackPending()" */,
 			);
 
-			// This could be the beginning of a new batch or an individual message.
-			this.emitter.emit("batchBegin", message);
+			//* TODO: Fix the control flow here 😱
+			try {
+				// This could be the beginning of a new batch or an individual message.
+				this.emitter.emit("batchBegin", message);
+			} catch (error: any) {
+				if (error.message === DUPLICATE_BATCH_MSG) {
+					return false;
+				}
+				throw error;
+			}
 			this.deltaScheduler.batchBegin(message);
 
 			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
@@ -71,6 +81,7 @@ export class ScheduleManager {
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			this.batchClientId = batch ? (message.clientId as string) : undefined;
 		}
+		return true;
 	}
 
 	public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {

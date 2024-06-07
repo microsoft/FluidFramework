@@ -31,7 +31,7 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred, delay } from "@fluidframework/core-utils/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
@@ -62,20 +62,6 @@ import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-
-/** For a negative test, takes in the ideal expectation (which should NOT be met), and the current wrong one, and asserts on them both */
-function assertCurrentAndIdealExpectations(
-	actual: any,
-	expected: { ideal: any; currentButWrong: any },
-	message?: string,
-) {
-	assert.equal(
-		actual,
-		expected.currentButWrong,
-		`Current (wrong) behavior is not as expected. ${message}`,
-	);
-	assert.notEqual(actual, expected.ideal, `Ideal behavior is unexpectedly met. ${message}`);
-}
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -2042,10 +2028,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.strictEqual(counter1.value, incrementValue);
 		});
 
-		//* For some reason the itExpects isn't working, it's failing due to ContainerClose event but I mentioned it here.
 		itExpects(
 			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
+				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 				},
@@ -2065,6 +2051,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				);
 
+				// This will double-check eventual consistency of the system as it observes the ops
+				const observerContainer = await loader.resolve({ url });
+				const dataStoreO = (await observerContainer.getEntryPoint()) as ITestFluidObject;
+				const counterO = await dataStoreO.getSharedObject<SharedCounter>(counterId);
+
 				// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
 				const container2 = await loader.resolve({ url }, pendingLocalState);
 				await container2.deltaManager.inbound.pause();
@@ -2073,58 +2064,61 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				await container3.deltaManager.inbound.pause();
 				container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
 
-				container2.deltaManager.flush();
-				container3.deltaManager.flush();
-				await delay(0); // Yield to allow the ops to be submitted before resuming
-				container2.deltaManager.inbound.resume();
-				container3.deltaManager.inbound.resume();
-
-				// At this point, both rehydrated containers should have submitted the same Counter op.
-				// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,
-				// but that is not yet implemented.
-				await provider.ensureSynchronized();
-
+				// Get these before any containers close
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 				const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-				assertCurrentAndIdealExpectations(
-					counter1.value,
-					{
-						ideal: incrementValue,
-						currentButWrong: 2 * incrementValue,
-					},
-					"counter1 wrong",
-				);
-				assertCurrentAndIdealExpectations(
-					counter2.value,
-					{
-						ideal: incrementValue,
-						currentButWrong: 2 * incrementValue,
-					},
-					"counter2 wrong",
-				);
+				//* NOTE: These flushes are no-ops, I think because the runtime wasn't allowed to submit yet because not connected,
+				//* maybe because inbound queue was paused (so can't see join op).
+				// (Flush the outbound queue for both containers (each should submit the same op), then resume inbound for both.)
+				//* container2.deltaManager.flush();
+				//* container3.deltaManager.flush();
 
-				//* I don't totally get what's going on here...  Just recording what happens.
-				//* This scenario hasn't been addressed yet anyway.
-				assert.strictEqual(counter3.value, incrementValue);
-				assert.strictEqual(
-					container3.closed,
-					true,
-					"container3 should have closed due to ForkedContainerError",
-				);
+				//* TODO: Not sure I am deterministically threading the two containers together to ensure they submit in parallel, but I'm trying...
+				container2.deltaManager.inbound.resume();
+				container3.deltaManager.inbound.resume();
+
+				// At this point, both rehydrated containers should have submitted the same Counter op.
+				// ContainerRuntime will use PSM and BatchTracker and it will play out like this:
+				// - One will win the race and get their op sequenced first.
+				// - Then the other will close with Forked Container Error when it sees that ack - with matching batchId but from a different client
+				// - All other clients (including the winner) will be tracking the batchId, and when it sees the duplicate from the loser, it will ignore it.
+				await provider.ensureSynchronized();
+
+				// Should not duplicate the op in these "observer" containers
+				assert.strictEqual(counter1.value, incrementValue); //* The container's closed but we can still spy on this
+				assert.strictEqual(counterO.value, incrementValue);
+
+				// There's a race condition here; allow either Container2 or Container3 to win
+				let winner: { container: IContainer; counter: SharedCounter };
+				let loser: { container: IContainer; counter: SharedCounter };
+				if (container2.closed) {
+					loser = { container: container2, counter: counter2 };
+					winner = { container: container3, counter: counter3 };
+				} else {
+					loser = { container: container3, counter: counter3 };
+					winner = { container: container2, counter: counter2 };
+				}
+
+				//* TODO: Also look for the "duplicateMessageIgnored" telemetry event
+
+				assert.strictEqual(winner.container.closed, false, "winner should not close");
+				assert.strictEqual(loser.container.closed, true, "loser should be closed");
+				// Both containers should have the correct value, from local state (and from not allowing duplication)
+				assert.strictEqual(winner.counter.value, incrementValue);
+				assert.strictEqual(loser.counter.value, incrementValue);
 			},
 		);
 
-		//* For some reason the itExpects isn't working, it's failing due to ContainerClose event but I mentioned it here.
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		itExpects.only(
+		itExpects(
 			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
+				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 				},
