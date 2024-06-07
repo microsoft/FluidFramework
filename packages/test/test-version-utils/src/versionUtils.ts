@@ -416,24 +416,41 @@ function calculateRequestedRange(
 		throw new Error(err as string);
 	}
 
-	// calculate requested major version number
-	const requestedMajorVersion = version.major + requested;
-	// if the major version number is bigger than 0 then return it as normal
-	if (requestedMajorVersion > 0) {
-		return `^${requestedMajorVersion}.0.0-0`;
-	}
-	// if the major version number is <= 0 then we return the equivalent pre-releases
-	const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+	// If the base version is a public version, then the behavior changes if `adjustPublicMajor` is true.
+	// If true, then N-1 should be the previous public release.
+	// If false, then N-1 should be the previous major release, regardless if it is public or internal.
+	// TODO: We need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198
+	if (adjustPublicMajor === true) {
+		// calculate requested major version number
+		const requestedMajorVersion = version.major + requested;
+		// if the major version number is bigger than 0 then return it as normal
+		if (requestedMajorVersion > 0) {
+			return `^${requestedMajorVersion}.0.0-0`;
+		}
+		// if the major version number is <= 0 then we return the equivalent pre-releases
+		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
 
-	// Minor number in 0.xx release represent a major change hence different rules
-	// are applied for computing the requested version.
-	const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
-	// too old a version / non existing version requested
-	if (requestedMinorVersion <= 0) {
-		// cap at min version
-		return "^0.0.1-0";
+		// Minor number in 0.xx release represent a major change hence different rules
+		// are applied for computing the requested version.
+		const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+		// too old a version / non existing version requested
+		if (requestedMinorVersion <= 0) {
+			// cap at min version
+			return "^0.0.1-0";
+		}
+		return `^0.${requestedMinorVersion}.0-0`;
+	} else {
+		// If we reach this case, then we are trying to calculate N-1 for 2.0 without adjusting for public major.
+		// In this case, we can pretend that 2.0 is RC5 and calculate the range as if it were an internal version.
+		// TODO: This is a temporary workaround, see earlier comment and ADO:8198
+		const internalSchemeRange = internalSchema(
+			"2.0.0",
+			"5.0.0", // if we release RC5 this will need to be updated to "6.0.0"
+			"rc",
+			requested,
+		);
+		return internalSchemeRange;
 	}
-	return `^0.${requestedMinorVersion}.0-0`;
 }
 
 /**
