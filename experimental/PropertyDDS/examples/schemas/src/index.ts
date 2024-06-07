@@ -13,6 +13,8 @@ export { SQUARES_DEMO_SCHEMAS };
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ALL_SCHEMAS = {
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	SQUARES_DEMO_SCHEMAS,
 };

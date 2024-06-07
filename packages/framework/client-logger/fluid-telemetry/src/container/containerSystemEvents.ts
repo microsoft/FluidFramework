@@ -10,9 +10,13 @@
  *
  * @privateremarks This should probably exist within IContainer itself instead of being defined here.
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const IFluidContainerSystemEventNames = {
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	CONNECTED: "connected",
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	DISCONNECTED: "disconnected",
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	DISPOSED: "disposed",
 } as const;
 
