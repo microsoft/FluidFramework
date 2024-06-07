@@ -172,6 +172,16 @@
                 "trailingUnderscore": "forbid"
             },
             {
+                "selector": "accessor",
+                "modifiers": [
+                    "private"
+                ],
+                "format": [
+                    "camelCase"
+                ],
+                "leadingUnderscore": "allow"
+            },
+            {
                 "selector": "variable",
                 "format": [
                     "camelCase",

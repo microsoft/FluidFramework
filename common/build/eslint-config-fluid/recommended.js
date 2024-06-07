@@ -115,6 +115,12 @@ module.exports = {
 				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
 			},
 			{
+				selector: "accessor",
+				modifiers: ["private"],
+				format: ["camelCase"],
+				leadingUnderscore: "allow",
+			},
+			{
 				selector: "variable",
 				format: ["camelCase", "PascalCase"],
 				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
