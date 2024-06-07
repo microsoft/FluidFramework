@@ -35,6 +35,6 @@
 				"Tree": { "Interfaces": ["ITree"] }
 			}
 		},
-		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"]
+		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/odsp-client"]
 	}
 }

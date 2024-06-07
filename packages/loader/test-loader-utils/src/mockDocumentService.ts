@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -12,6 +12,7 @@ import {
 	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";

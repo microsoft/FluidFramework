@@ -4382,7 +4382,7 @@ importers:
       '@azure/msal-browser':
         specifier: ^2.34.0
         version: 2.38.3
-      '@fluid-experimental/odsp-client':
+      '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/odsp-client
       '@fluidframework/odsp-doclib-utils':
@@ -4470,9 +4470,6 @@ importers:
 
   examples/utils/bundle-size-tests:
     dependencies:
-      '@fluid-experimental/odsp-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -4494,6 +4491,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../packages/dds/matrix
+      '@fluidframework/odsp-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/odsp-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-driver
@@ -11710,6 +11710,9 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -13520,9 +13523,6 @@ importers:
 
   packages/service-clients/end-to-end-tests/odsp-client:
     dependencies:
-      '@fluid-experimental/odsp-client':
-        specifier: workspace:~
-        version: link:../../odsp-client
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
@@ -13550,6 +13550,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/odsp-client':
+        specifier: workspace:~
+        version: link:../../odsp-client
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../utils/odsp-doclib-utils
@@ -42535,6 +42538,7 @@ packages:
 
   /prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
+    requiresBuild: true
 
   /ps-node@0.1.6:
     resolution: {integrity: sha512-w7QJhUTbu70hpDso0YXDRNKCPNuchV8UTUZsAv0m7Qj5g85oHOJfr9drA1EjvK4nQK/bG8P97W4L6PJ3IQLoOA==}

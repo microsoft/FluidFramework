@@ -49,7 +49,9 @@ export const mapSchema = schemaBuilder.map(
 export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
-
+export const identifierSchema = schemaBuilder.object("identifier-object", {
+	identifier: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const testTreeSchema = schemaBuilder.intoSchema(
 	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 );
