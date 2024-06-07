@@ -11710,6 +11710,9 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions

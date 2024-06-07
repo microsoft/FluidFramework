@@ -38,6 +38,7 @@ import {
 	announceTestDelta,
 	applyTestDelta,
 	expectEqualPaths,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
 
@@ -252,7 +253,11 @@ describe("AnchorSet", () => {
 			count: 1,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),
@@ -286,7 +291,11 @@ describe("AnchorSet", () => {
 			count: 3,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),

@@ -167,7 +167,7 @@
   "root": {
     "kind": "Value",
     "types": [
-      "test.numericMap"
+      "test.hasIdentifierField"
     ]
   }
 }
