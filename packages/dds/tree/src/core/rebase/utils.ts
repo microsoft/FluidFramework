@@ -61,6 +61,21 @@ export interface RebasedCommits<TChange> {
 	sourceCommits: GraphCommit<TChange>[];
 }
 
+interface TelemetryProperties {
+	/**
+	 * The length of the source branch before the rebase.
+	 */
+	readonly sourceBranchLength: number;
+	/**
+	 * Number of commits rebased over on the target branch.
+	 */
+	readonly rebaseDistance: number;
+	/**
+	 * The number of commits that are dropped from the source branch when rebased to the target branch.
+	 */
+	readonly countDropped: number;
+}
+
 export interface BranchRebaseResult<TChange> {
 	/**
 	 * The head of a rebased source branch.
@@ -74,6 +89,18 @@ export interface BranchRebaseResult<TChange> {
 	 * Details about how the commits on the source branch changed
 	 */
 	readonly commits: RebasedCommits<TChange>;
+	/**
+	 * Telemetry properties for the rebase operation.
+	 */
+	readonly telemetryProperties: TelemetryProperties;
+}
+
+interface RebaseChangeResult<TChange> {
+	readonly change: TChange;
+	/**
+	 * Telemetry properties for the rebase operation.
+	 */
+	readonly telemetryProperties: TelemetryProperties;
 }
 
 /**
@@ -163,6 +190,8 @@ export function rebaseBranch<TChange>(
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
 	assert(ancestor !== undefined, 0x675 /* branches must be related */);
 
+	const sourceBranchLength = sourcePath.length;
+
 	// Find where `targetCommit` is in the target branch
 	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
 	if (targetCommitIndex === -1) {
@@ -177,6 +206,11 @@ export function rebaseBranch<TChange>(
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommitIndex + 1,
+				countDropped: 0,
+			},
 		};
 	}
 
@@ -232,6 +266,11 @@ export function rebaseBranch<TChange>(
 				targetCommits,
 				sourceCommits,
 			},
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommits.length,
+				countDropped: sourceBranchLength - sourceSet.size,
+			},
 		};
 	}
 
@@ -276,6 +315,11 @@ export function rebaseBranch<TChange>(
 			targetCommits,
 			sourceCommits,
 		},
+		telemetryProperties: {
+			sourceBranchLength,
+			rebaseDistance: targetCommits.length,
+			countDropped: sourceBranchLength - sourceSet.size,
+		},
 	};
 }
 
@@ -295,7 +339,7 @@ export function rebaseChange<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
-): TChange {
+): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	assert(
@@ -307,7 +351,17 @@ export function rebaseChange<TChange>(
 		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
 	);
 	inverses.reverse();
-	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
+
+	const telemetryProperties = {
+		sourceBranchLength: 1,
+		rebaseDistance: sourcePath.length + targetPath.length,
+		countDropped: 0,
+	};
+
+	return {
+		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]),
+		telemetryProperties,
+	};
 }
 
 /**
