@@ -11,14 +11,12 @@ import type {
 } from "./telemetryTypes.js";
 
 /**
- * TODO
+ * Expected type of the custom data passed into the logger.
  */
 type ICustomDataMap = Record<string, number>;
-	[key: string]: number;
-}
 
 /**
- * TODO
+ * Helper class that accumulates custom data and sends it to the logger every time a specified number (i.e., `threshold`) of logs is reached.
  */
 export class BatchedTelemetryHelper implements IDisposable {
 	disposed: boolean = false;
@@ -29,7 +27,12 @@ export class BatchedTelemetryHelper implements IDisposable {
 	private counter = 0;
 
 	/**
-	 * TODO
+	 * @param eventBase -
+	 * Custom properties to include in the telemetry performance event when it is written.
+	 * @param logger -
+	 * The logger to use to write the telemetry performance event.
+	 * @param threshold -
+	 * The number of logs to accumulate before sending the data to the logger.
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
@@ -37,29 +40,20 @@ export class BatchedTelemetryHelper implements IDisposable {
 		private readonly threshold: number,
 	) {}
 
-	private incrementThresholdCount(): void {
-		this.counter++;
-	}
-
-	private resetThresholdCount(): void {
-		this.counter = 0;
-	}
-
-	private isAboveThreshold(): boolean {
-		return this.counter >= this.threshold;
-	}
-
 	/**
-	 * TODO
+	 * Accumulates the custom data and sends it to the logger every time the number of logs reaches the threshold by calling `sendData()`.
+	 *
+	 * @param customData -
+	 * A record storing the custom data to be logged.
 	 */
-	public log(data: ICustomDataMap): void {
-		for (const key of Object.keys(data)) {
-			this.customDataMap.set(key, (this.customDataMap.get(key) ?? 0) + data[key]);
+	public log(customData: ICustomDataMap): void {
+		for (const key of Object.keys(customData)) {
+			this.customDataMap.set(key, (this.customDataMap.get(key) ?? 0) + customData[key]);
 		}
 
-		this.incrementThresholdCount();
+		this.counter++;
 
-		if (this.isAboveThreshold()) {
+		if (this.counter >= this.threshold) {
 			this.sendData();
 		}
 	}
@@ -76,7 +70,7 @@ export class BatchedTelemetryHelper implements IDisposable {
 		};
 
 		this.logger.sendPerformanceEvent(telemetryEvent);
-		this.resetThresholdCount();
+		this.counter = 0;
 	}
 
 	public dispose(error?: Error | undefined): void {
