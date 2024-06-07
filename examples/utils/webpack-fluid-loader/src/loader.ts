@@ -156,8 +156,6 @@ async function createWebLoader(
 	});
 }
 
-const containers: IContainer[] = [];
-
 export async function start(
 	id: string,
 	fluidModule: IFluidModule,
@@ -202,7 +200,6 @@ export async function start(
 	if (autoAttach || manualAttach) {
 		// For new documents, create a detached container which will be attached later.
 		container1 = await loader1.createDetachedContainer(codeDetails);
-		containers.push(container1);
 	} else {
 		// For existing documents, we try to load the container with the given documentId.
 		const documentUrl = `${window.location.origin}/${documentId}`;
@@ -235,7 +232,6 @@ export async function start(
 			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 		});
 		container1.connect();
-		containers.push(container1);
 	}
 
 	let leftDiv: HTMLDivElement = div;
@@ -291,7 +287,6 @@ export async function start(
 		);
 		const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
 		const container2 = await loader2.resolve({ url: requestUrl2 });
-		containers.push(container2);
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
 	}
