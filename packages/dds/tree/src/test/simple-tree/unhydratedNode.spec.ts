@@ -143,27 +143,84 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(object), TreeStatus.New);
 	});
 
-	it("preserve change events after hydration", () => {
-		function test<T extends TreeNode>(node: T, change: (node: T) => void) {
+	it("preserve events after hydration", () => {
+		function registerEvents(node: TreeNode): () => void {
 			let deepEvent = false;
 			let shallowEvent = false;
 			Tree.on(node, "nodeChanged", () => (shallowEvent = true));
 			Tree.on(node, "treeChanged", () => (deepEvent = true));
-			change(node);
-			assert.equal(shallowEvent, true);
-			assert.equal(deepEvent, true);
+			return () => {
+				assert.equal(shallowEvent, true);
+				assert.equal(deepEvent, true);
+			};
 		}
-
+		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
 		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
 		const leafObject = new TestLeaf({ value: "value" });
 		const array = new TestArray([leafObject]);
 		const map = new TestMap([]);
+		// Register events on each node
+		const assertLeafObject = registerEvents(leafObject);
+		const assertMap = registerEvents(map);
+		const assertArray = registerEvents(array);
+		// Hydrate the nodes
 		root.array = array;
 		root.map = map;
+		// Change each node to trigger the events
+		leafObject.value = "new value";
+		map.set("new key", new TestLeaf({ value: "new leaf" }));
+		array.insertAtEnd(new TestLeaf({ value: "new leaf" }));
+		// Assert that the events fired
+		assertLeafObject();
+		assertMap();
+		assertArray();
+	});
 
-		test(leafObject, () => (leafObject.value = "new value"));
-		test(map, () => map.set("new key", new TestLeaf({ value: "new leaf" })));
-		test(array, () => array.insertAtEnd(new TestLeaf({ value: "new leaf" })));
+	it("can unsubscribe from events after hydration", () => {
+		function registerEvents(node: TreeNode): {
+			deregister: () => void;
+			assert: () => void;
+		} {
+			let deepEvent = false;
+			let shallowEvent = false;
+			const offNodeChanged = Tree.on(node, "nodeChanged", () => (shallowEvent = true));
+			const offTreeChanged = Tree.on(node, "treeChanged", () => (deepEvent = true));
+			return {
+				deregister: () => {
+					offNodeChanged();
+					offTreeChanged();
+				},
+				assert: () => {
+					assert.equal(shallowEvent, false);
+					assert.equal(deepEvent, false);
+				},
+			};
+		}
+		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
+		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
+		const leafObject = new TestLeaf({ value: "value" });
+		const array = new TestArray([leafObject]);
+		const map = new TestMap([]);
+		// Register events on each node
+		const { deregister: deregisterLeafObject, assert: assertLeafObject } =
+			registerEvents(leafObject);
+		const { deregister: deregisterMap, assert: assertMap } = registerEvents(map);
+		const { deregister: deregisterArray, assert: assertArray } = registerEvents(array);
+		// Hydrate the nodes
+		root.array = array;
+		root.map = map;
+		// Deregister the events
+		deregisterLeafObject();
+		deregisterMap();
+		deregisterArray();
+		// Change each node to trigger the events
+		leafObject.value = "new value";
+		map.set("new key", new TestLeaf({ value: "new leaf" }));
+		array.insertAtEnd(new TestLeaf({ value: "new leaf" }));
+		// Assert that the events fired
+		assertLeafObject();
+		assertMap();
+		assertArray();
 	});
 
 	it("read constant defaulted properties", () => {
