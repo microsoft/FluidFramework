@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { JsonTypeWith } from "../jsonType.js";
+
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
 
@@ -63,6 +65,26 @@ export const objectWithNumberOrUndefinedNumbered: ObjectWithNumberOrUndefined = 
 export const objectWithNever = {
 	never,
 };
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type ObjectWithPossibleRecursion = {
+	[x: string]: ObjectWithPossibleRecursion | string;
+};
+export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
+	recursive: { stop: "here" },
+};
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type ObjectWithOptionalRecursion = {
+	recursive?: ObjectWithOptionalRecursion;
+};
+export const objectWithRecursion: ObjectWithOptionalRecursion = {
+	recursive: {},
+};
+export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
+objectWithSelfReference.recursive = objectWithSelfReference;
+
+export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
+
 export const objectWithLiterals = {
 	true: true,
 	false: false,

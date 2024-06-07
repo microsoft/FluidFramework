@@ -38,6 +38,9 @@ import {
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
 	objectWithNever,
+	objectWithPossibleRecursion,
+	objectWithRecursion,
+	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
 	classInstanceWithPrivateGetter,
@@ -159,8 +162,28 @@ describe("JsonDeserialized", () => {
 		});
 
 		describe("supported object types", () => {
-			it("empty object is supported", () => {
+			it("empty object", () => {
 				passThru(emptyObject) satisfies typeof emptyObject;
+			});
+
+			it("object with possible type recursion through union", () => {
+				passThru(objectWithPossibleRecursion) satisfies typeof objectWithPossibleRecursion;
+			});
+
+			it("object with optional type recursion", () => {
+				// FIX: @ts-expect-error typeof `objectWithRecursion` is recursive
+				passThru(
+					objectWithRecursion,
+					// no error
+				) satisfies typeof objectWithRecursion;
+			});
+
+			it("simple json (JsonTypeWith<never>)", () => {
+				// FIX: @ts-expect-error `JsonTypeWith<never>` is recursive
+				passThru(
+					simpleJson,
+					// no error
+				) satisfies typeof simpleJson;
 			});
 
 			it("non-const enum are supported as themselves", () => {
@@ -171,6 +194,7 @@ describe("JsonDeserialized", () => {
 				passThru(StringEnum) satisfies typeof StringEnum;
 				passThru(ComputedEnum) satisfies typeof ComputedEnum;
 			});
+
 			// Class instances are indistinguishable from general objects by type checking.
 			// Non-public (non-function) members are preserved, but they are filtered away
 			// by the type filters and thus produce an incorrectly narrowed type. Though
@@ -252,59 +276,61 @@ describe("JsonDeserialized", () => {
 			});
 		});
 
-		// These cases are demonstrating defects within the current implementation.
-		// They show "allowed" incorrect use and the unexpected results.
 		describe("unsupported object types", () => {
-			describe("class instance", () => {
-				it("with public getter (preserves getter that doesn't propagate)", () => {
-					const instanceRead = passThru(
-						classInstanceWithPublicGetter,
-						// @ts-expect-error secret is missing, but required
-						{
+			// These cases are demonstrating defects within the current implementation.
+			// They show "allowed" incorrect use and the unexpected results.
+			describe("known defect expectations", () => {
+				describe("class instance", () => {
+					it("with public getter (preserves getter that doesn't propagate)", () => {
+						const instanceRead = passThru(
+							classInstanceWithPublicGetter,
+							// @ts-expect-error secret is missing, but required
+							{
+								public: "public",
+							},
+						) satisfies typeof classInstanceWithPublicGetter;
+						assert.ok(
+							classInstanceWithPublicGetter instanceof ClassWithPublicGetter,
+							"classInstanceWithPublicGetter is an instance of ClassWithPublicGetter",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPublicGetter),
+							"instanceRead is not an instance of ClassWithPublicGetter",
+						);
+					});
+					it("with public setter (add value that doesn't propagate)", () => {
+						const instanceRead = passThru(
+							classInstanceWithPublicSetter,
+							// @ts-expect-error secret is missing, but required
+							{
+								public: "public",
+							},
+						) satisfies typeof classInstanceWithPublicSetter;
+						assert.ok(
+							classInstanceWithPublicSetter instanceof ClassWithPublicSetter,
+							"classInstanceWithPublicSetter is an instance of ClassWithPublicSetter",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPublicSetter),
+							"instanceRead is not an instance of ClassWithPublicSetter",
+						);
+					});
+					it("with private data (hides private data that propagates)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateData, {
 							public: "public",
-						},
-					) satisfies typeof classInstanceWithPublicGetter;
-					assert.ok(
-						classInstanceWithPublicGetter instanceof ClassWithPublicGetter,
-						"classInstanceWithPublicGetter is an instance of ClassWithPublicGetter",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPublicGetter),
-						"instanceRead is not an instance of ClassWithPublicGetter",
-					);
-				});
-				it("with public setter (add value that doesn't propagate)", () => {
-					const instanceRead = passThru(
-						classInstanceWithPublicSetter,
-						// @ts-expect-error secret is missing, but required
-						{
-							public: "public",
-						},
-					) satisfies typeof classInstanceWithPublicSetter;
-					assert.ok(
-						classInstanceWithPublicSetter instanceof ClassWithPublicSetter,
-						"classInstanceWithPublicSetter is an instance of ClassWithPublicSetter",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPublicSetter),
-						"instanceRead is not an instance of ClassWithPublicSetter",
-					);
-				});
-				it("with private data (hides private data that propagates)", () => {
-					const instanceRead = passThru(classInstanceWithPrivateData, {
-						public: "public",
-						// @ts-expect-error secret is not allowed but is present
-						secret: 0,
-						// @ts-expect-error secret is missing, but required
-					}) satisfies typeof classInstanceWithPrivateData;
-					assert.ok(
-						classInstanceWithPrivateData instanceof ClassWithPrivateData,
-						"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPrivateData),
-						"instanceRead is not an instance of ClassWithPrivateData",
-					);
+							// @ts-expect-error secret is not allowed but is present
+							secret: 0,
+							// @ts-expect-error secret is missing, but required
+						}) satisfies typeof classInstanceWithPrivateData;
+						assert.ok(
+							classInstanceWithPrivateData instanceof ClassWithPrivateData,
+							"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateData),
+							"instanceRead is not an instance of ClassWithPrivateData",
+						);
+					});
 				});
 			});
 		});
