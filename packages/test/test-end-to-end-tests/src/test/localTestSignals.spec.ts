@@ -23,6 +23,11 @@ import {
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
 
+enum RuntimeLayer {
+	dataStoreRuntime = "dataStoreRuntime",
+	containerRuntime = "containerRuntime",
+}
+
 interface SignalClient {
 	dataStoreRuntime: IFluidDataStoreRuntime;
 	containerRuntime: IContainerRuntimeBaseWithClientId;
@@ -255,7 +260,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			});
 		}
 	});
-	async function sendAndVerifyRemoteSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
+	async function sendAndVerifyRemoteSignals(runtime: RuntimeLayer) {
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
@@ -282,7 +287,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			);
 		});
 	}
-	async function sendAndVerifyLocalSignals(runtime: "containerRuntime" | "dataStoreRuntime") {
+	async function sendAndVerifyLocalSignals(runtime: RuntimeLayer) {
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, true, "Signal should be local");
@@ -309,19 +314,15 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
-	it("Validates data store runtime remote signals", async () => {
-		await sendAndVerifyRemoteSignals("dataStoreRuntime");
-	});
+	[RuntimeLayer.containerRuntime, RuntimeLayer.dataStoreRuntime].forEach((layer) =>
+		describe(`sent from ${layer}`, () => {
+			it("can target a remote client", async () => {
+				await sendAndVerifyRemoteSignals(layer);
+			});
 
-	it("Validates ContainerRuntime remote signals", async () => {
-		await sendAndVerifyRemoteSignals("containerRuntime");
-	});
-
-	it("Validates data store local signals", async () => {
-		await sendAndVerifyLocalSignals("dataStoreRuntime");
-	});
-
-	it("Validates ContainerRuntime local signals", async () => {
-		await sendAndVerifyLocalSignals("containerRuntime");
-	});
+			it("can target the local client", async () => {
+				await sendAndVerifyLocalSignals(layer);
+			});
+		}),
+	);
 });
