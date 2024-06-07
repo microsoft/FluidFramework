@@ -17,6 +17,7 @@ import {
 	ValidateRecursiveSchema,
 	TreeView,
 	InsertableTypedNode,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
@@ -138,16 +139,23 @@ describe("treeApi", () => {
 				assert.equal(view.root.content, 42);
 			});
 
-			it("respects a violated node existence constraint after sequencing", () => {
+			it("respects a violated node existence constraint after sequencing", async () => {
 				// Create two connected trees with child nodes
-				const config = new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child: {},
-				}));
+				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = treeA.schematize(config);
-				const viewB = treeB.schematize(config);
+				const viewA = await treeA.viewWith(config);
+				const viewB = await treeB.viewWith(config);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
+				// TODO: It seems like this test doesn't care about racing the initialization step. It may be worth processing messages after
+				// one of them initializes and then creating the second view.
+				viewB.initialize({
+					content: 42,
+					child: {},
+				});
 				provider.processMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).

@@ -16,11 +16,11 @@ import {
 	FieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeFromSchema,
-	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
 	SchemaFactory,
 	InternalTreeNode,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import {
 	ValidateRecursiveSchema,
@@ -55,7 +55,7 @@ const sf = new SchemaFactory("recursive");
 
 describe("SchemaFactory Recursive methods", () => {
 	describe("objectRecursive", () => {
-		it("End-to-end with recursive object", () => {
+		it("End-to-end with recursive object", async () => {
 			const factory = new TreeFactory({});
 			const schema = new SchemaFactory("com.example");
 
@@ -77,17 +77,16 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Box>;
 			}
 
-			const config = new TreeConfiguration(
-				Box,
-				() => new Box({ text: "hi", child: undefined }),
-			);
+			const config = new TreeViewConfiguration({ schema: Box });
 
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
 
-			const view: TreeView<typeof Box> = tree.schematize(config);
+			const view: TreeView<typeof Box> = await tree.viewWith(config);
+			view.initialize(new Box({ text: "hi", child: undefined }));
+
 			assert.equal(view.root?.text, "hi");
 
 			const stuff: undefined | Box = view.root.child;

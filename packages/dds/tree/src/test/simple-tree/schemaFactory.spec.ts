@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { treeNodeApi as Tree, TreeView, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -94,7 +94,7 @@ describe("schemaFactory", () => {
 	it("leaf", async () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
+		const config = new TreeViewConfiguration({ schema: schema.number });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
@@ -108,9 +108,6 @@ describe("schemaFactory", () => {
 
 	it("instanceof", () => {
 		const schema = new SchemaFactory("com.example");
-
-		const config = new TreeConfiguration(schema.number, () => 5);
-
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -164,7 +161,7 @@ describe("schemaFactory", () => {
 				y: schema.number,
 			}) {}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
@@ -186,7 +183,7 @@ describe("schemaFactory", () => {
 			assert.deepEqual(values, [5]);
 		});
 
-		it("custom members", () => {
+		it("custom members", async () => {
 			const schema = new SchemaFactory("com.example");
 			class Point extends schema.object("Point", {
 				x: schema.number,
@@ -203,14 +200,16 @@ describe("schemaFactory", () => {
 				}
 			}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const root = tree.schematize(config).root;
+			const view = await tree.viewWith(config);
+			view.initialize(new Point({ x: 1 }));
+			const { root } = view;
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
@@ -336,7 +335,7 @@ describe("schemaFactory", () => {
 		});
 	});
 
-	it("mixed", () => {
+	it("mixed", async () => {
 		const schema = new SchemaFactory("com.example");
 
 		class Point extends schema.object("Point", {
@@ -354,20 +353,19 @@ describe("schemaFactory", () => {
 
 		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-		const config = new TreeConfiguration(
-			Canvas,
-			() =>
-				new Canvas({
-					stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
-				}),
-		);
+		const config = new TreeViewConfiguration({ schema: Canvas });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = await tree.viewWith(config);
+		view.initialize(
+			new Canvas({
+				stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
+			}),
+		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -376,27 +374,26 @@ describe("schemaFactory", () => {
 	});
 
 	describe("Array", () => {
-		it("Nested Array", () => {
+		it("Nested Array", async () => {
 			const builder = new SchemaFactory("test");
 
 			class Inventory extends builder.object("Inventory", {
 				parts: builder.array(builder.number),
 			}) {}
 
-			const treeConfiguration = new TreeConfiguration(
-				Inventory,
-				() =>
-					new Inventory({
-						parts: [1, 2],
-					}),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = await tree.viewWith(treeConfiguration);
+			view.initialize(
+				new Inventory({
+					parts: [1, 2],
+				}),
+			);
 		});
 
 		const treeFactory = new TreeFactory({});
@@ -419,7 +416,7 @@ describe("schemaFactory", () => {
 			assert.equal(MyList.identifier, `test.Array<["${factory.number.identifier}"]>`);
 		});
 
-		it("Named", () => {
+		it("Named", async () => {
 			const factory = new SchemaFactory("test");
 			class NamedList extends factory.array("name", factory.number) {
 				public testProperty = false;
@@ -429,15 +426,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedList }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the list node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: [5] }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = await tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: [5] }));
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
@@ -477,7 +472,7 @@ describe("schemaFactory", () => {
 			}
 		});
 
-		it("Named", () => {
+		it("Named", async () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {
 				public testProperty = false;
@@ -487,15 +482,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedMap }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: new Map([["x", 5]]) }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = await tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: new Map([["x", 5]]) }));
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
@@ -670,18 +663,19 @@ describe("schemaFactory", () => {
 		}
 
 		const objectTypes = ["object", "list", "map"] as const;
-		function test(
+		async function test(
 			parentType: (typeof objectTypes)[number],
 			childType: (typeof objectTypes)[number],
 			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
-			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
+			const config = new TreeViewConfiguration({ schema: ComboRoot });
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(config);
+			const view = await tree.viewWith(config);
+			view.initialize({ root: undefined });
 			const { parent, nodes } = createComboTree({
 				parentType,
 				childType,
@@ -700,8 +694,8 @@ describe("schemaFactory", () => {
 		for (const parentType of objectTypes) {
 			for (const childType of objectTypes) {
 				// Generate a test for all permutations of object, list and map
-				it(`${parentType} → ${childType}`, () => {
-					test(parentType, childType, (view, nodes) => {
+				it(`${parentType} → ${childType}`, async () => {
+					await test(parentType, childType, (view, nodes) => {
 						assert(view.root.root !== undefined);
 						const treeObjects = [...walkComboObjectTree(view.root.root)];
 						assert.equal(treeObjects.length, nodes.length);
@@ -715,8 +709,8 @@ describe("schemaFactory", () => {
 					});
 				});
 
-				it(`${parentType} → ${childType} (bottom up)`, () => {
-					test(parentType, childType, (_, nodes) => {
+				it(`${parentType} → ${childType} (bottom up)`, async () => {
+					await test(parentType, childType, (_, nodes) => {
 						// Sort the nodes bottom up, so that we will observe the children before demanding the parents.
 						nodes.sort(compareComboNodes);
 						for (let i = nodes.length - 1; i >= 0; i--) {

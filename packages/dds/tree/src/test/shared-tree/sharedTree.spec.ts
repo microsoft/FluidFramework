@@ -68,7 +68,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeConfiguration,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	ConnectionSetter,
@@ -191,13 +195,15 @@ describe("SharedTree", () => {
 		});
 
 		// TODO: ensure unhydrated initialTree input is correctly hydrated.
-		it.skip("unhydrated tree input", () => {
+		it.skip("unhydrated tree input", async () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 
+			const view = await tree.viewWith(new TreeViewConfiguration({ schema: Foo }));
 			const unhydratedInitialTree = new Foo({});
-			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			view.initialize(unhydratedInitialTree);
+
 			assert(view.root === unhydratedInitialTree);
 		});
 	});

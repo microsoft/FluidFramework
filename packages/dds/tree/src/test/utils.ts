@@ -1117,7 +1117,7 @@ export function mintRevisionTag(): RevisionTag {
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
 
 /**
- * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
  */
 export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
