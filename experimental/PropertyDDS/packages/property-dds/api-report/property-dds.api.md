@@ -204,7 +204,7 @@ export class SharedPropertyTree extends SharedObject {
     // (undocumented)
     getRebasedChanges(startGuid: string, endGuid?: string): IPropertyTreeMessage[];
     // (undocumented)
-    getUnrebasedChange(guid: string): IRemotePropertyTreeMessage;
+    getUnrebasedChange(guid: string): IRemotePropertyTreeMessage | undefined;
     // (undocumented)
     headCommitGuid: string;
     // (undocumented)

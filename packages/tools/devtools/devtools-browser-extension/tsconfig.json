@@ -8,6 +8,7 @@
 		"target": "es2018",
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 }

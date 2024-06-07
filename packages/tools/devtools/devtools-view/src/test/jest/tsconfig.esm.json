@@ -3,6 +3,7 @@
 	"extends": "./tsconfig.jest.json",
 	"compilerOptions": {
 		"outDir": "../../../lib/test/jest",
+		"noUncheckedIndexedAccess": false,
 	},
 	"references": [
 		{

@@ -5,6 +5,7 @@
 		"rootDir": "./",
 		"outDir": "../../../lib/test/screenshot",
 		"types": ["chai", "mocha"],
+		"noUncheckedIndexedAccess": false,
 	},
 	"references": [
 		{
