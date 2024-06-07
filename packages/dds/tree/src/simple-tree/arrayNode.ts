@@ -480,7 +480,7 @@ function createArrayNodeProxy(
 				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
 				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
 				// Therefor length has to be handled in this proxy.
-				// Since its not actually mutable, return false so setting it will produce a type error.
+				// Since it's not actually mutable, return false so setting it will produce a type error.
 				return false;
 			}
 
@@ -495,7 +495,10 @@ function createArrayNodeProxy(
 			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
-				return false;
+				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
+				throw new UsageError(
+					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
+				);
 			}
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
 		},
@@ -548,6 +551,13 @@ function createArrayNodeProxy(
 				};
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
+		},
+		defineProperty(target, key, attributes) {
+			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			if (maybeIndex !== undefined) {
+				throw new UsageError("Shadowing of array indices is not permitted.");
+			}
+			return Reflect.defineProperty(dispatchTarget, key, attributes);
 		},
 	});
 	return proxy;
@@ -792,6 +802,31 @@ export function arraySchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+
+			// First run, do extra validation.
+			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+			{
+				let prototype: object = this.prototype;
+				// There isn't a clear cleaner way to author this loop.
+				while (prototype !== schema.prototype) {
+					// Search prototype keys and check for positive integers. Throw if any are found.
+					// Shadowing of index properties on array nodes is not supported.
+					for (const key of Object.getOwnPropertyNames(prototype)) {
+						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						if (maybeIndex !== undefined) {
+							throw new UsageError(
+								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,
+							);
+						}
+					}
+
+					// Since this stops at the array node base schema, it should never see a null prototype, so this case is safe.
+					// Additionally, if the prototype chain is ever messed up such that the array base schema is not in it,
+					// the null that would show up here does at least ensure this code throws instead of hanging.
+					prototype = Reflect.getPrototypeOf(prototype) as object;
+				}
+			}
 		}
 
 		public static readonly identifier = identifier;
