@@ -168,7 +168,10 @@ describe("ArrayNode", () => {
 
 	describe("shadowing", () => {
 		it("Shadowing index property with incompatible type", () => {
-			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+			class Array extends schemaFactory.array(
+				"ArrayWithTypeIncompatibleShadow",
+				schemaFactory.number,
+			) {
 				// @ts-expect-error Cannot shadow property with incompatible type.
 				public 5: string = "foo";
 			}
@@ -193,7 +196,10 @@ describe("ArrayNode", () => {
 		});
 
 		it("Shadowing index property with compatible type", () => {
-			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+			class Array extends schemaFactory.array(
+				"ArrayWithTypeCompatibleShadow",
+				schemaFactory.number,
+			) {
 				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
 				public 5: number = 42;
 			}
@@ -218,7 +224,7 @@ describe("ArrayNode", () => {
 		});
 
 		it("Shadowing index property with compatible type (getter)", () => {
-			class Array extends schemaFactory.array("Array", schemaFactory.number) {
+			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
 				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
 				// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 				public get 5(): number {
