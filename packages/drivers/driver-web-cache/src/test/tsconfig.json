@@ -5,6 +5,7 @@
 		"outDir": "../../lib/test",
 		"types": ["jest", "node"],
 		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [

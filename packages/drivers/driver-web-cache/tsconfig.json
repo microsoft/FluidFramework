@@ -7,5 +7,6 @@
 		"outDir": "./lib",
 		"skipLibCheck": true,
 		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
 	},
 }

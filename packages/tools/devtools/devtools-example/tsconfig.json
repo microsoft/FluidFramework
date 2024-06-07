@@ -5,6 +5,7 @@
 		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer"],
 		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 }

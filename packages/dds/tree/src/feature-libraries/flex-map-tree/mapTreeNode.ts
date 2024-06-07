@@ -54,6 +54,7 @@ import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilde
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import { createEmitter } from "../../events/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
 
@@ -64,6 +65,13 @@ import { createEmitter } from "../../events/index.js";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
+}
+
+/**
+ * Checks if the given {@link FlexTreeNode} is a {@link MapTreeNode}.
+ */
+export function isMapTreeNode(flexNode: FlexTreeNode): flexNode is MapTreeNode {
+	return flexNode instanceof EagerMapTreeNode;
 }
 
 /** A node's parent field and its index in that field */
@@ -182,13 +190,13 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 	public get context(): FlexTreeContext {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		throw unsupportedError("Getting context");
+		return fail("MapTreeNode does not implement context");
 	}
 
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		throw unsupportedError("Reading anchor node");
+		return fail("MapTreeNode does not implement anchorNode");
 	}
 
 	private walkTree(): void {
@@ -314,12 +322,12 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 
 	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
 		// `MapTreeNode`s cannot be mutated
-		throw unsupportedError("Setting a map entry");
+		throw unsupportedUsageError("Setting a map entry");
 	}
 
 	public delete(key: string): void {
 		// `MapTreeNode`s cannot be mutated
-		throw unsupportedError("Deleting a map entry");
+		throw unsupportedUsageError("Deleting a map entry");
 	}
 
 	public [Symbol.iterator](): IterableIterator<
@@ -372,7 +380,7 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 	},
 	schema: FlexFieldSchema.empty,
 	get context(): FlexTreeContext {
-		throw new Error("Cannot get context of raw field");
+		return fail("MapTreeField does not implement context");
 	},
 	treeStatus(): TreeStatus {
 		return TreeStatus.New;
@@ -452,7 +460,7 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 	}
 
 	public get context(): FlexTreeContext {
-		throw unsupportedError("Getting context");
+		return fail("MapTreeField does not implement context");
 	}
 
 	public treeStatus(): TreeStatus {
@@ -468,7 +476,7 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 		return unboxedUnion(this.schema, this.mapTrees[0], { parent: this, index: 0 });
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
-		throw unsupportedError("Setting an optional field");
+		throw unsupportedUsageError("Setting an optional field");
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<T> {
@@ -486,7 +494,7 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 			: undefined;
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
-		throw unsupportedError("Setting an optional field");
+		throw unsupportedUsageError("Setting an optional field");
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<T> | undefined {
@@ -519,34 +527,34 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	}
 
 	public sequenceEditor(): SequenceFieldEditBuilder {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAt(index: number, value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAtStart(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAtEnd(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public removeAt(index: number): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToStart(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToEnd(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToIndex(index: unknown, sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToStart(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToEnd(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToIndex(
 		index: unknown,
@@ -554,7 +562,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		sourceEnd: unknown,
 		source?: unknown,
 	): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 }
 
@@ -765,6 +773,10 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 
 // #endregion Caching and unboxing utilities
 
-export function unsupportedError(message?: string): Error {
-	return new Error(`${message ?? "Operation"} is not supported for MapTreeNode trees`);
+export function unsupportedUsageError(message?: string): Error {
+	return new UsageError(
+		`${
+			message ?? "Operation"
+		} is not supported for content that has not yet been inserted into the tree`,
+	);
 }
