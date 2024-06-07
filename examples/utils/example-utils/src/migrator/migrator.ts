@@ -144,6 +144,14 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 				);
 				const migratedModel = detachedModel.model;
 
+				// Here we load the model at the specified sequence number for export.  This way we can ensure we don't include
+				// any local un-ack'd changes or even remote changes that came in too-late.
+				// TODO:  There is risk that a summary comes in after accepting the migration, which will prevent us from loading
+				// the desired sequence number (as the summary will be too-new).  To avoid this, we'd probably need one of the following:
+				// 1. Collaborators would disable summarization upon seeing acceptance
+				// 2. Have the paused loading logic know how to load a different older snapshot version (though old versions may get deleted).
+				// 3. Have a acceptance rollback or acceptance update path, to either retry or update the acceptance sequence number to be reachable
+				// 4. Use a non-paused load, and accept that some late-arriving data might get included.
 				const exportModel = await this.modelLoader.loadExistingPaused(
 					this._currentModelId,
 					acceptedMigration.migrationSequenceNumber,
