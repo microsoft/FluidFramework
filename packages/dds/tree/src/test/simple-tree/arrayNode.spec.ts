@@ -179,19 +179,13 @@ describe("ArrayNode", () => {
 			assert.throws(
 				() => new Array([0, 1, 2]),
 				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Cannot set or shadow indexed properties on array nodes/,
-					),
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
 
 			assert.throws(
 				() => hydrate(Array, [0, 1, 2]),
 				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Cannot set or shadow indexed properties on array nodes/,
-					),
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
 		});
 
@@ -207,19 +201,13 @@ describe("ArrayNode", () => {
 			assert.throws(
 				() => new Array([0, 1, 2]),
 				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Cannot set or shadow indexed properties on array nodes/,
-					),
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
 
 			assert.throws(
 				() => hydrate(Array, [0, 1, 2]),
 				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Cannot set or shadow indexed properties on array nodes/,
-					),
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
 		});
 
@@ -240,6 +228,24 @@ describe("ArrayNode", () => {
 
 			assert.throws(
 				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+		});
+
+		it("Shadowing index property with constructor-initialized property", () => {
+			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
+				public readonly 5: number;
+				public constructor(data: number[], five: number) {
+					super(data);
+					this[5] = five;
+				}
+			}
+
+			assert.throws(
+				// False positive
+				// eslint-disable-next-line @typescript-eslint/no-array-constructor
+				() => new Array([0, 1, 2], 42),
 				(error: Error) =>
 					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
