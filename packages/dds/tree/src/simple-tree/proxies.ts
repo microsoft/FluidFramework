@@ -141,7 +141,7 @@ export function prepareContentForHydration(
 	forest: IForestSubscription,
 ): void {
 	if (isReadonlyArray(content)) {
-		return prepareArrayContentForInsert(content, forest);
+		return prepareArrayContentForHydration(content, forest);
 	}
 
 	if (content !== undefined) {
@@ -158,7 +158,7 @@ export function prepareContentForHydration(
 	}
 }
 
-function prepareArrayContentForInsert(
+function prepareArrayContentForHydration(
 	content: readonly MapTree[],
 	forest: IForestSubscription,
 ): void {

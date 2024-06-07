@@ -677,7 +677,7 @@ function addDefaultsToMapTree(
 	mapTree: MapTree,
 	allowedTypes: ImplicitAllowedTypes,
 	context: NodeKeyManager | undefined,
-): MapTree {
+): void {
 	const schema =
 		find(normalizeAllowedTypes(allowedTypes), (s) => s.identifier === mapTree.type) ??
 		fail("MapTree is incompatible with schema");
@@ -731,8 +731,6 @@ function addDefaultsToMapTree(
 			assert(schema.kind === NodeKind.Leaf, "Unrecognized schema kind");
 			break;
 	}
-
-	return mapTree;
 }
 
 function provideDefault(
