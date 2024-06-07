@@ -33,7 +33,10 @@ export function isNodeInSchema(
 	node: MapTree,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
-	// If the stored schema is completely empty it means the tree is brand new and we shouldn't validate the data.
+	// If the stored schema is completely empty it _probably_ (in almost all cases?) means the tree is brand new and we
+	// shouldn't validate the data.
+	// TODO: AB#8197
+	// See https://github.com/microsoft/FluidFramework/pull/21305#discussion_r1626595991 for further discussion.
 	if (schemaAndPolicy.schema.nodeSchema.size === 0) {
 		return SchemaValidationErrors.NoError;
 	}
