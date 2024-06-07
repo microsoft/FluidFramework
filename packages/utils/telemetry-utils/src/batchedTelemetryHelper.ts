@@ -13,7 +13,7 @@ import type {
 /**
  * TODO
  */
-interface ICustomDataMap {
+type ICustomDataMap = Record<string, number>;
 	[key: string]: number;
 }
 
