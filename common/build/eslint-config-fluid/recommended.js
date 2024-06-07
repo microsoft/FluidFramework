@@ -110,7 +110,7 @@ module.exports = {
 			"error",
 			{
 				selector: "default",
-				format: ["camelCase"],
+				format: ["camelCase", "PascalCase"],
 				leadingUnderscore: "forbid", // We have no global convention for trailing underscores
 				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
 			},
@@ -122,7 +122,7 @@ module.exports = {
 			},
 			{
 				selector: "variable",
-				format: ["camelCase", "PascalCase"],
+				format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like classes.
 				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
 			},
 			{
@@ -130,14 +130,14 @@ module.exports = {
 				format: ["PascalCase"],
 			},
 			{
-				selector: "typeParameter",
-				format: ["PascalCase"],
-				prefix: ["T"], // Type parameter names must begin with "T"
-			},
-			{
 				selector: "interface",
 				format: ["PascalCase"],
 				prefix: [], // No prefix for interfaces. This forbids the "I" prefix, which we do not want.
+			},
+			{
+				selector: "typeParameter",
+				format: ["PascalCase"],
+				prefix: ["T"], // Type parameter names must begin with "T"
 			},
 		],
 

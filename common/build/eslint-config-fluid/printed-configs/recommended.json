@@ -166,7 +166,8 @@
             {
                 "selector": "default",
                 "format": [
-                    "camelCase"
+                    "camelCase",
+                    "PascalCase"
                 ],
                 "leadingUnderscore": "forbid",
                 "trailingUnderscore": "forbid"
@@ -199,6 +200,13 @@
                 ]
             },
             {
+                "selector": "interface",
+                "format": [
+                    "PascalCase"
+                ],
+                "prefix": []
+            },
+            {
                 "selector": "typeParameter",
                 "format": [
                     "PascalCase"
@@ -206,13 +214,6 @@
                 "prefix": [
                     "T"
                 ]
-            },
-            {
-                "selector": "interface",
-                "format": [
-                    "PascalCase"
-                ],
-                "prefix": []
             }
         ],
         "@typescript-eslint/no-array-constructor": [
