@@ -65,10 +65,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
-	getEventListeners(): Iterable<
-		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
-	>;
+	getEventListeners(): Iterable<FlexTreeNodeEventTuple>;
 }
+
+/** A union of all possible FlexTreeNodeEvents, each as a tuple of [eventName, eventListener] */
+type FlexTreeNodeEventTuple = {
+	[P in keyof FlexTreeNodeEvents]: [P, FlexTreeNodeEvents[P]];
+}[keyof FlexTreeNodeEvents];
 
 /**
  * Checks if the given {@link FlexTreeNode} is a {@link MapTreeNode}.
@@ -92,12 +95,10 @@ class MapTreeNodeEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents>
 		super();
 	}
 
-	public *getListeners(): Iterable<
-		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
-	> {
+	public *getListeners(): Iterable<FlexTreeNodeEventTuple> {
 		for (const [eventName, listeners] of this.listeners) {
 			for (const listener of listeners.values()) {
-				yield [eventName, listener];
+				yield [eventName, listener] as FlexTreeNodeEventTuple;
 			}
 		}
 	}
@@ -113,9 +114,7 @@ class MapTreeNodeEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents>
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 	private readonly events = new MapTreeNodeEventEmitter();
-	public getEventListeners(): Iterable<
-		[keyof FlexTreeNodeEvents, FlexTreeNodeEvents[keyof FlexTreeNodeEvents]]
-	> {
+	public getEventListeners(): Iterable<FlexTreeNodeEventTuple> {
 		return this.events.getListeners();
 	}
 

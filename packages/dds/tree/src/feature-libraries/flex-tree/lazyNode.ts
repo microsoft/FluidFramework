@@ -70,7 +70,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents } from "./treeEvents.js";
+import { FlexTreeNodeEvents, onNodeChanged, onTreeChanged } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -284,20 +284,15 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				return unsubscribeFromSubtreeChange;
 			}
 			case "nodeChanged": {
-				let unsubscribeFromTreeChanged: (() => void) | undefined;
-				return this.anchorNode.on("childrenChanged", () => {
-					if (unsubscribeFromTreeChanged === undefined) {
-						unsubscribeFromTreeChanged = this.anchorNode.on("subtreeChanged", () => {
-							(listener as FlexTreeNodeEvents["nodeChanged"])();
-							unsubscribeFromTreeChanged?.();
-							unsubscribeFromTreeChanged = undefined;
-						});
-					}
-				});
+				return onNodeChanged(
+					this.anchorNode,
+					listener as FlexTreeNodeEvents["nodeChanged"],
+				);
 			}
 			case "treeChanged": {
-				return this.anchorNode.on("subtreeChanged", () =>
-					(listener as FlexTreeNodeEvents["treeChanged"])(),
+				return onTreeChanged(
+					this.anchorNode,
+					listener as FlexTreeNodeEvents["treeChanged"],
 				);
 			}
 			default:

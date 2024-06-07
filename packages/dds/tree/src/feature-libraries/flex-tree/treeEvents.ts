@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PathVisitor, UpPath } from "../../core/index.js";
+import { AnchorNode, PathVisitor, UpPath } from "../../core/index.js";
+import { Off } from "../../events/events.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -58,4 +59,27 @@ export interface FlexTreeNodeEvents {
 	 * This has the same contract as {@link TreeChangeEvents.treeChanged}
 	 */
 	treeChanged(): void;
+}
+
+export function onNodeChanged(
+	anchorNode: AnchorNode,
+	listener: FlexTreeNodeEvents["nodeChanged"],
+): Off {
+	let unsubscribeFromTreeChanged: (() => void) | undefined;
+	return anchorNode.on("childrenChanged", () => {
+		if (unsubscribeFromTreeChanged === undefined) {
+			unsubscribeFromTreeChanged = anchorNode.on("subtreeChanged", () => {
+				listener();
+				unsubscribeFromTreeChanged?.();
+				unsubscribeFromTreeChanged = undefined;
+			});
+		}
+	});
+}
+
+export function onTreeChanged(
+	anchorNode: AnchorNode,
+	listener: FlexTreeNodeEvents["treeChanged"],
+): Off {
+	return anchorNode.on("subtreeChanged", listener);
 }
