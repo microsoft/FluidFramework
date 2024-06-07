@@ -20,6 +20,7 @@ import {
 	FlexFieldSchema,
 	FlexTreeField,
 	FlexTreeNode,
+	FlexTreeNodeEvents,
 	FlexTreeTypedField,
 	MapTreeNode,
 	onNodeChanged,
@@ -31,6 +32,7 @@ import { Mutable, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { TreeNode, Unhydrated } from "./types.js";
+import { Off } from "../events/index.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -220,18 +222,27 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
 			for (const { path, mapTreeNode, proxy } of proxies[i].proxyPaths) {
 				const anchorNode = anchorProxy(forest.anchors, path, proxy);
-				for (const [eventName, listener] of mapTreeNode.getEventListeners()) {
-					switch (eventName) {
-						case "nodeChanged":
-							onNodeChanged(anchorNode, listener);
-							break;
-						case "treeChanged":
-							onNodeChanged(anchorNode, listener);
-							break;
-						default:
-							break;
-					}
-				}
+				mapTreeNode.forwardEvents({
+					on<K extends keyof FlexTreeNodeEvents>(
+						eventName: K,
+						listener: FlexTreeNodeEvents[K],
+					): Off {
+						switch (eventName) {
+							case "nodeChanged":
+								return onNodeChanged(
+									anchorNode,
+									listener as FlexTreeNodeEvents["nodeChanged"],
+								);
+							case "treeChanged":
+								return onNodeChanged(
+									anchorNode,
+									listener as FlexTreeNodeEvents["treeChanged"],
+								);
+							default:
+								return () => {};
+						}
+					},
+				});
 			}
 			if (++i === proxies.length) {
 				off();
