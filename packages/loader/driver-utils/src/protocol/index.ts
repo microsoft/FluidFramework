@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { after, before, devServerConfig } from "./routes.js";
+export { buildGitTreeHierarchy, getGitMode, getGitType } from "./gitHelper.js";
