@@ -43,11 +43,13 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
 	IInboundSignalMessage,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,
 	SummaryTreeBuilder,
+	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	create404Response,
@@ -526,8 +528,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	/** Package up the context's attach summary etc into an IAttachMessage */
 	private generateAttachMessage(localContext: IFluidDataStoreContextInternal): IAttachMessage {
-		const { attachSummary } = localContext.getAttachData(/* includeGCData: */ true);
+		// Get the attach summary.
+		const attachSummary = localContext.getAttachSummary();
 		const type = localContext.packagePath[localContext.packagePath.length - 1];
+
+		// Get the GC data and add it to the attach summary.
+		const attachGCData = localContext.getAttachGCData();
+		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(attachGCData));
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
@@ -1126,10 +1133,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						dataStoreSummary = value.getAttachData(
-							/* includeGCCData: */ false,
-							telemetryContext,
-						).attachSummary;
+						dataStoreSummary = value.getAttachSummary(telemetryContext);
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.
@@ -1146,6 +1150,36 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		} while (notBoundContextsLength !== this.contexts.notBoundLength());
 
 		return builder.getSummaryTree();
+	}
+
+	/**
+	 * Gets the GC data. Used when attaching or serializing a detached container.
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		const builder = new GCDataBuilder();
+		// Attaching graph of some stores can cause other stores to get bound too.
+		// So keep taking summary until no new stores get bound.
+		let notBoundContextsLength: number;
+		do {
+			notBoundContextsLength = this.contexts.notBoundLength();
+			// Iterate over each data store and ask for its GC data.
+			Array.from(this.contexts)
+				.filter(
+					([key, _]) =>
+						// Take GC data of bounded data stores only.
+						!this.contexts.isNotBound(key),
+				)
+				.map(([key, value]) => {
+					const contextGCData = value.getAttachGCData(telemetryContext);
+					// Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+					// This also gradually builds the id of each node to be a path from the root.
+					builder.prefixAndAddNodes(key, contextGCData.gcNodes);
+				});
+		} while (notBoundContextsLength !== this.contexts.notBoundLength());
+
+		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
+		builder.addNode("/", Array.from(this.aliasedDataStores));
+		return builder.getGCData();
 	}
 
 	/**
