@@ -380,7 +380,7 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 	},
 	schema: FlexFieldSchema.empty,
 	get context(): FlexTreeContext {
-		throw new Error("Cannot get context of raw field");
+		return fail("MapTreeField does not implement context");
 	},
 	treeStatus(): TreeStatus {
 		return TreeStatus.New;
@@ -774,5 +774,9 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 // #endregion Caching and unboxing utilities
 
 export function unsupportedUsageError(message?: string): Error {
-	return new UsageError(`${message ?? "Operation"} is not supported for MapTreeNode trees`);
+	return new UsageError(
+		`${
+			message ?? "Operation"
+		} is not supported for content that has not yet been inserted into the tree`,
+	);
 }

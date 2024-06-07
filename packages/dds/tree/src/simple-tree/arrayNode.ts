@@ -13,6 +13,7 @@ import {
 	cursorForMapTreeField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -572,6 +573,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+		if (isMapTreeNode(getFlexNode(this))) {
+			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+		}
+
 		const sequenceField = getSequenceField(this);
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
 		// but it works since cursorFromFieldData special cases arrays.

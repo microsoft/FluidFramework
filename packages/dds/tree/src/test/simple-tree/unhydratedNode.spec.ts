@@ -15,6 +15,7 @@ import {
 	FieldProvider,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -110,17 +111,24 @@ describe("Unhydrated nodes", () => {
 	});
 
 	it("disallow mutation", () => {
+		function validateUnhydratedMutationError(error: Error): boolean {
+			return validateAssertionError(
+				error,
+				/cannot be mutated before being inserted into the tree/,
+			);
+		}
+
 		const leaf = new TestLeaf({ value: "value" });
-		assert.throws(() => (leaf.value = "new value"));
+		assert.throws(() => (leaf.value = "new value"), validateUnhydratedMutationError);
 		const map = new TestMap([]);
-		assert.throws(() => map.set("key", leaf));
-		assert.throws(() => map.delete("key"));
+		assert.throws(() => map.set("key", leaf), validateUnhydratedMutationError);
+		assert.throws(() => map.delete("key"), validateUnhydratedMutationError);
 		const array = new TestArray([]);
-		assert.throws(() => array.insertAtStart(leaf));
-		assert.throws(() => array.insertAtEnd(leaf));
-		assert.throws(() => array.insertAt(0, leaf));
+		assert.throws(() => array.insertAtStart(leaf), validateUnhydratedMutationError);
+		assert.throws(() => array.insertAtEnd(leaf), validateUnhydratedMutationError);
+		assert.throws(() => array.insertAt(0, leaf), validateUnhydratedMutationError);
 		const object = new TestObject({ map, array });
-		assert.throws(() => (object.array = array));
+		assert.throws(() => (object.array = array), validateUnhydratedMutationError);
 	});
 
 	it("have the correct tree status", () => {

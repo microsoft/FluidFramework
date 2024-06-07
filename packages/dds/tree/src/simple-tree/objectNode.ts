@@ -17,6 +17,7 @@ import {
 	FlexTreeRequiredField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
+	isMapTreeNode,
 	MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
@@ -152,7 +153,14 @@ function createProxyHandler(
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
 			}
 
-			setField(getFlexNode(proxy).getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
+			const flexNode = getFlexNode(proxy);
+			if (isMapTreeNode(flexNode)) {
+				throw new UsageError(
+					`An object cannot be mutated before being inserted into the tree`,
+				);
+			}
+
+			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
 		},
 		has: (target, viewKey) => {

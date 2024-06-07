@@ -11,6 +11,7 @@ import {
 	cursorForMapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
@@ -33,6 +34,7 @@ import {
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A map of string keys to tree objects.
@@ -134,6 +136,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public delete(key: string): void {
 		const node = getFlexNode(this);
+		if (isMapTreeNode(node)) {
+			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
+		}
+
 		node.delete(key);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
@@ -160,6 +166,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
 		const node = getFlexNode(this);
+		if (isMapTreeNode(node)) {
+			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
+		}
+
 		const classSchema = getSimpleNodeSchema(node.schema);
 		const mapTree = mapTreeFromNodeData(
 			value as InsertableContent,
