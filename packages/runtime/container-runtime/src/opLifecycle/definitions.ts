@@ -20,6 +20,8 @@ export type BatchMessage = IBatchMessage & {
  * Batch interface used internally by the runtime.
  */
 export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
+	/** Unique ID for this batch, stable across resubmit and container rehydrate */
+	readonly batchId: string;
 	/**
 	 * Sum of the in-memory content sizes of all messages in the batch.
 	 * If the batch is compressed, this number reflects the post-compression size.

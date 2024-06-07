@@ -26,6 +26,7 @@ describe("OpGroupingManager", () => {
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
+		batchId: "batchId-1",
 		content: messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)

@@ -239,6 +239,7 @@ describe("OpSplitter", () => {
 		// Empty batch
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 0,
 				referenceSequenceNumber: 0,
@@ -248,6 +249,7 @@ describe("OpSplitter", () => {
 		// Empty batch
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
@@ -257,6 +259,7 @@ describe("OpSplitter", () => {
 		// Batch is too small to be chunked
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: 0,
@@ -266,6 +269,7 @@ describe("OpSplitter", () => {
 		// Batch is not compressed
 		assert.throws(() =>
 			opSplitter.splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [regularMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -281,6 +285,7 @@ describe("OpSplitter", () => {
 				maxBatchSizeInBytes,
 				mockLogger,
 			).splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -296,6 +301,7 @@ describe("OpSplitter", () => {
 				maxBatchSizeInBytes,
 				mockLogger,
 			).splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -305,6 +311,7 @@ describe("OpSplitter", () => {
 		// Misconfigured op splitter
 		assert.throws(() =>
 			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -320,6 +327,7 @@ describe("OpSplitter", () => {
 				maxBatchSizeInBytes,
 				mockLogger,
 			).splitFirstBatchMessage({
+				batchId: "batchId-1",
 				content: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -344,6 +352,7 @@ describe("OpSplitter", () => {
 				const emptyMessage = generateChunkableOp(0);
 
 				const result = opSplitter.splitFirstBatchMessage({
+					batchId: "batchId-1",
 					content: [largeMessage, emptyMessage, emptyMessage, emptyMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,
@@ -407,6 +416,7 @@ describe("OpSplitter", () => {
 				const largeMessage = generateChunkableOp(100);
 
 				const result = opSplitter.splitFirstBatchMessage({
+					batchId: "batchId-1",
 					content: [largeMessage],
 					contentSizeInBytes: largeMessage.contents?.length ?? 0,
 					referenceSequenceNumber: 0,

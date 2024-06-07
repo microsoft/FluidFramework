@@ -15,7 +15,7 @@ import {
 import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { IBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, IBatchMetadata, isBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -106,8 +106,8 @@ export class PendingStateManager implements IDisposable {
 		this.pendingMessages.clear();
 	});
 
-	// Indicates whether we are processing a batch.
-	private isProcessingBatch: boolean = false;
+	// Indicates whether we are processing a batch. -- what's the batchId?
+	private processingBatchId: string | undefined = undefined;
 
 	// This stores the first message in the batch that we are processing. This is used to verify that we get
 	// the correct batch metadata.
@@ -248,6 +248,23 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * See if we're waiting for a batch start, and are about to processes a batch start with matching batch ID
+	 * @returns true if the batch IDs match
+	 */
+	public checkForMatchingBatchId(message: InboundSequencedContainerRuntimeMessage): boolean {
+		const pendingMessage = this.pendingMessages.peekFront();
+		if (
+			isBatchMetadata(pendingMessage?.opMetadata) &&
+			pendingMessage.opMetadata.batchId !== undefined &&
+			isBatchMetadata(message.metadata) &&
+			message.metadata.batchId !== undefined
+		) {
+			return pendingMessage.opMetadata.batchId === message.metadata.batchId;
+		}
+		return false;
+	}
+
+	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
@@ -261,15 +278,26 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
+		assert(
+			pendingMessage.referenceSequenceNumber === message.referenceSequenceNumber,
+			"Local message should have matching refSeq",
+		);
+
 		pendingMessage.sequenceNumber = message.sequenceNumber;
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
 
+		const pendingBatchMetadata = asBatchMetadata(pendingMessage.opMetadata);
+		const pendingBatchId = pendingBatchMetadata?.batchId;
+
 		const messageContent = buildPendingMessageContent(message);
 
 		// Stringified content should match
-		if (pendingMessage.content !== messageContent) {
+		if (
+			(pendingBatchId !== undefined && pendingBatchId !== this.processingBatchId) || //* If we are awaiting the start of a batch, the batchId should match
+			pendingMessage.content !== messageContent
+		) {
 			this.stateHandler.close(
 				DataProcessingError.create(
 					"pending local message content mismatch",
@@ -294,17 +322,23 @@ export class PendingStateManager implements IDisposable {
 	 * @param message - The message that is being processed.
 	 */
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
+		const metadata = message.metadata;
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
+		if (
+			isBatchMetadata(metadata) &&
+			(metadata.batch === true || metadata.batchId !== undefined)
+		) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
-				!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
+				this.processingBatchId === undefined && this.pendingBatchBeginMessage === undefined,
 				0x16b /* "The pending batch state indicates we are already processing a batch" */,
 			);
+			const batchId = metadata.batchId ?? "BACK-COMPAT-BATCH-ID"; //* Trying to get tests to pass
+			(message.metadata as any).batchId = batchId; //* back compat hack for prototype
 
 			// Set the pending batch state indicating we have started processing a batch.
 			this.pendingBatchBeginMessage = message;
-			this.isProcessingBatch = true;
+			this.processingBatchId = batchId;
 		}
 	}
 
@@ -313,7 +347,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param message - The message that is being processed.
 	 */
 	private maybeProcessBatchEnd(message: ISequencedDocumentMessage) {
-		if (!this.isProcessingBatch) {
+		if (this.processingBatchId === undefined) {
 			return;
 		}
 
@@ -323,22 +357,27 @@ export class PendingStateManager implements IDisposable {
 			0x16d /* "There is no pending batch begin message" */,
 		);
 
-		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
-		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
-			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = (
-				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
-			)?.batch;
+		// Get the batch begin metadata from the first message in the batch.
+		const batchBeginMetadata = asBatchMetadata(this.pendingBatchBeginMessage.metadata);
 
+		// Check if this message is the end of a batch (does not apply to size === 1)
+		const batchEndMetadataFlag = (message.metadata as IBatchMetadata | undefined)?.batch;
+
+		if (
+			this.pendingMessages.isEmpty() || //* No more pending messages...? How?
+			batchEndMetadataFlag === false || // end of a batch (size > 1)
+			(batchBeginMetadata?.batchId !== undefined && batchBeginMetadata.batch === undefined) // Single message batch
+		) {
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
 			if (this.pendingBatchBeginMessage === message) {
 				assert(
-					batchBeginMetadata === undefined,
-					0x16e /* "Batch with single message should not have batch metadata" */,
+					batchBeginMetadata?.batchId !== undefined &&
+						batchBeginMetadata.batch === undefined,
+					0x16e /* "Batch with single message should have batchId but no flag" */,
 				);
 			} else {
-				if (batchBeginMetadata !== true || batchEndMetadata !== false) {
+				if (batchBeginMetadata?.batch !== true || batchEndMetadataFlag !== false) {
 					this.stateHandler.close(
 						DataProcessingError.create(
 							"Pending batch inconsistency", // Formerly known as asserts 0x16f and 0x170
@@ -352,8 +391,9 @@ export class PendingStateManager implements IDisposable {
 										? "null"
 										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
-								hasBatchStart: batchBeginMetadata === true,
-								hasBatchEnd: batchEndMetadata === false,
+								hasBatchId: batchBeginMetadata?.batchId !== undefined,
+								hasBatchStart: batchBeginMetadata?.batch === true,
+								hasBatchEnd: batchEndMetadataFlag === false,
 								messageType: message.type,
 								pendingMessagesCount: this.pendingMessagesCount,
 							},
@@ -364,7 +404,7 @@ export class PendingStateManager implements IDisposable {
 
 			// Clear the pending batch state now that we have processed the entire batch.
 			this.pendingBatchBeginMessage = undefined;
-			this.isProcessingBatch = false;
+			this.processingBatchId = undefined;
 		}
 	}
 
@@ -441,6 +481,15 @@ export class PendingStateManager implements IDisposable {
 					);
 				}
 
+				this.stateHandler.reSubmitBatch(batch);
+			} else if (pendingMessage.opMetadata?.batchId !== undefined) {
+				// This is a single message batch
+				const batch: IPendingBatchMessage[] = [];
+				batch.push({
+					content: pendingMessage.content,
+					localOpMetadata: pendingMessage.localOpMetadata,
+					opMetadata: pendingMessage.opMetadata,
+				});
 				this.stateHandler.reSubmitBatch(batch);
 			} else {
 				this.stateHandler.reSubmit({
