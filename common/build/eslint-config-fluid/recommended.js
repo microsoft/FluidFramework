@@ -115,10 +115,6 @@ module.exports = {
 				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
 			},
 			{
-				selector: "import",
-				format: ["camelCase", "PascalCase"],
-			},
-			{
 				selector: "variable",
 				format: ["camelCase"],
 				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
@@ -131,10 +127,6 @@ module.exports = {
 				selector: "typeParameter",
 				format: ["PascalCase"],
 				prefix: ["T"], // Type parameter names must begin with "T"
-			},
-			{
-				selector: "functionLike",
-				format: ["camelCase"],
 			},
 		],
 

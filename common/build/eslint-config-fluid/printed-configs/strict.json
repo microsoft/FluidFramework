@@ -180,14 +180,34 @@
         "@typescript-eslint/naming-convention": [
             "error",
             {
-                "selector": "accessor",
-                "modifiers": [
-                    "private"
+                "selector": "default",
+                "format": [
+                    "camelCase"
                 ],
+                "leadingUnderscore": "forbid",
+                "trailingUnderscore": "forbid"
+            },
+            {
+                "selector": "variable",
                 "format": [
                     "camelCase"
                 ],
                 "leadingUnderscore": "allow"
+            },
+            {
+                "selector": "typeLike",
+                "format": [
+                    "PascalCase"
+                ]
+            },
+            {
+                "selector": "typeParameter",
+                "format": [
+                    "PascalCase"
+                ],
+                "prefix": [
+                    "T"
+                ]
             }
         ],
         "@typescript-eslint/no-array-constructor": [
