@@ -11,7 +11,6 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import {
 	NodeFromSchema,
 	SchemaFactory,
-	TreeConfiguration,
 	TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";

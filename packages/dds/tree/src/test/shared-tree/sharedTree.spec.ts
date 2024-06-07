@@ -68,11 +68,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import { EditManager } from "../../shared-tree-core/index.js";
-import {
-	SchemaFactory,
-	TreeConfiguration,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	ConnectionSetter,

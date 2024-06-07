@@ -16,11 +16,7 @@ import {
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { type ISharedTree, SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
-import {
-	SchemaFactory,
-	TreeConfiguration,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -31,12 +27,6 @@ class SomeType extends builder.object("foo", {
 	nested: builder.optional(Bar),
 	bump: builder.optional(builder.number),
 }) {}
-
-const config = new TreeConfiguration(SomeType, () => ({
-	handles: [],
-	nested: undefined,
-	bump: undefined,
-}));
 
 function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFactory): ISharedTree {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({

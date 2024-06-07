@@ -7,12 +7,12 @@ import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/inde
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-	TreeConfiguration,
 	TreeFieldFromImplicitField,
-	toFlexConfig,
+	cursorFromUnhydratedRoot,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
+import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { flexTreeWithContent } from "../utils.js";
 
 /**
@@ -25,9 +25,15 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => initialTree);
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
-	const tree = flexTreeWithContent(flexConfig);
+	const hydratedInitialTree = cursorFromUnhydratedRoot(
+		schema,
+		initialTree,
+		nodeKeyManager ?? new MockNodeKeyManager(),
+	);
+	const tree = flexTreeWithContent({
+		schema: toFlexSchema(schema),
+		initialTree: hydratedInitialTree,
+	});
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
 }
 

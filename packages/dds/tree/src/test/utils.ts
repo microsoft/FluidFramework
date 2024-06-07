@@ -135,7 +135,7 @@ import { ensureSchema } from "../shared-tree/schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
+import { ImplicitFieldSchema, TreeViewConfiguration, toFlexConfig } from "../simple-tree/index.js";
 import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -1178,17 +1178,21 @@ export function treeTestFactory(
 }
 
 /**
- * Given the TreeConfiguration, returns a view.
+ * Given the TreeViewConfiguration, returns an uninitialized view.
  *
  * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
  * This should allow realistic (app like testing) of all the simple-tree APIs.
+ *
+ * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
-	config: TreeConfiguration<TSchema>,
+	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+		forest: buildForest(),
+		schema: new TreeStoredSchemaRepository(),
+	});
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

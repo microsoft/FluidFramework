@@ -8,12 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	SchemaFactory,
-	TreeConfiguration,
-	TreeView,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { SchemaFactory, TreeView, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
@@ -138,11 +133,10 @@ describe("class-tree tree", () => {
 				identifier: schema.identifier,
 			});
 			const nodeKeyManager = new MockNodeKeyManager();
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: undefined,
-			}));
-			const root = getView(config, nodeKeyManager).root;
-			assert.equal(root.identifier, "a110ca7e-add1-4000-8000-000000000000");
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config, nodeKeyManager);
+			view.initialize({ identifier: undefined });
+			assert.equal(view.root.identifier, "a110ca7e-add1-4000-8000-000000000000");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
@@ -150,11 +144,10 @@ describe("class-tree tree", () => {
 				testOptionalField: schema.optional(schema.string),
 			});
 			const nodeKeyManager = new MockNodeKeyManager();
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				testOptionalField: undefined,
-			}));
-			const root = getView(config, nodeKeyManager).root;
-			assert.equal(root.testOptionalField, undefined);
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config, nodeKeyManager);
+			view.initialize({ testOptionalField: undefined });
+			assert.equal(view.root.testOptionalField, undefined);
 		});
 	});
 });

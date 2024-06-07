@@ -13,7 +13,6 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
 	ValidateRecursiveSchema,
 	TreeView,
 	InsertableTypedNode,
@@ -37,12 +36,12 @@ describe("treeApi", () => {
 		}) {}
 
 		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			return getView(
-				new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child,
-				})),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
 		}
 
 		/**

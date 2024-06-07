@@ -12,7 +12,6 @@ import {
 	ITree,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	TreeConfiguration,
 	TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";

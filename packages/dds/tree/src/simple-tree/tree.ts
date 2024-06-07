@@ -80,7 +80,7 @@ export interface ITree extends IFluidLoadable {
 }
 
 /**
- * Options when schematizing a tree.
+ * Options when constructing a tree view.
  * @public
  */
 export interface ITreeConfigurationOptions {
