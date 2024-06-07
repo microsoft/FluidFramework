@@ -55,17 +55,26 @@ describe("canvas", () => {
 				}
 				return context.getImageData(0, 0, width, height).data;
 			});
-			if (imgs[0].length == 0) {
+			const firstImg = imgs[0];
+			const secondImg = imgs[1];
+			if (firstImg === undefined) {
 				return "Canvas 1 doesn't have any pixels";
 			}
-			if (imgs[1].length == 0) {
+			if (firstImg.length == 0) {
+				return "Canvas 1 doesn't have any pixels";
+			}
+			if (secondImg === undefined) {
+				return "Canvas 2 doesn't have any pixels";
+			}
+			if (secondImg.length == 0) {
 				return "Canvas 2 doesn't have any pixels";
 			}
 
 			const diff: { index: number; value1: number; value2: number }[] = [];
-			imgs[0].forEach((value, index) => {
-				if (imgs[1][index] !== value) {
-					diff.push({ index, value1: value, value2: imgs[1][index] });
+			firstImg.forEach((value, index) => {
+				const value2 = secondImg[index];
+				if (value2 !== undefined && value2 !== value) {
+					diff.push({ index, value1: value, value2 });
 				}
 			});
 			return diff;
