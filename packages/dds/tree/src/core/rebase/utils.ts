@@ -353,8 +353,8 @@ export function rebaseChange<TChange>(
 	inverses.reverse();
 
 	const telemetryProperties = {
-		sourceBranchLength: sourcePath.length,
-		rebaseDistance: targetPath.length,
+		sourceBranchLength: 1,
+		rebaseDistance: sourcePath.length + targetPath.length,
 		countDropped: 0,
 	};
 
