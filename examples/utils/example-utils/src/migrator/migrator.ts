@@ -134,7 +134,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					acceptedMigration.newVersion,
 				);
 				if (!migrationSupported) {
-					this.emit("migrationNotSupported", acceptedMigration);
+					this.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
@@ -178,13 +178,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					} catch {
 						// TODO: This implies that the contract is to throw if the data can't be transformed, which
 						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this.emit("migrationNotSupported", acceptedMigration);
+						this.emit("migrationNotSupported", acceptedMigration.newVersion);
 						this._migrationP = undefined;
 						return;
 					}
 				} else {
 					// We can't get the data into a format that we can import, give up.
-					this.emit("migrationNotSupported", acceptedMigration);
+					this.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
@@ -297,7 +297,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 				acceptedMigration.newVersion,
 			);
 			if (!migrationSupported) {
-				this.emit("migrationNotSupported", acceptedMigration);
+				this.emit("migrationNotSupported", acceptedMigration.newVersion);
 				this._migratedLoadP = undefined;
 				return;
 			}
