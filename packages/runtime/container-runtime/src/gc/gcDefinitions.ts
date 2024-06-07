@@ -374,7 +374,7 @@ export interface IGarbageCollector {
 	/** Called to process a garbage collection message. */
 	processMessage(
 		message: ContainerRuntimeGCMessage,
-		messageTimestamp: number,
+		messageTimestampMs: number,
 		local: boolean,
 	): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
@@ -392,7 +392,10 @@ export interface IGCNodeUpdatedProps {
 	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
 	/** Whether the node (or a subpath) was loaded or changed. */
 	reason: "Loaded" | "Changed";
-	/** The op-based timestamp when the node changed, if applicable */
+	/**
+	 * The op-based timestamp when the node changed. If the update is from receiving an op, this should
+	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
+	 */
 	timestampMs: number | undefined;
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath?: readonly string[];

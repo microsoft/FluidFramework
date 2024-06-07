@@ -505,9 +505,9 @@ export interface IFluidParentContext
 	 *
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
-	 * @param timestampMs - The op-based timestamp when the node changed.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	addedGCOutboundRoute(fromPath: string, toPath: string, timestampMs?: number): void;
+	addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
 }
 
 /**

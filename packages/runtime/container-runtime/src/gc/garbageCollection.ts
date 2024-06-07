@@ -892,11 +892,12 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Process a GC message.
 	 * @param message - The GC message from the container runtime.
+	 * @param messageTimestampMs - The timestamp of the message.
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessage(
 		message: ContainerRuntimeGCMessage,
-		messageTimestamp: number,
+		messageTimestampMs: number,
 		local: boolean,
 	) {
 		const gcMessageType = message.contents.type;
@@ -916,7 +917,7 @@ export class GarbageCollector implements IGarbageCollector {
 				this.addedOutboundReference(
 					"/",
 					tombstonedNodePath,
-					messageTimestamp,
+					messageTimestampMs,
 					true /* autorecovery */,
 				);
 
@@ -1107,7 +1108,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param fromNodePath - The node from which the reference is added.
 	 * @param toNodePath - The node to which the reference is added.
-	 * @param timestampMs - The op-based timestamp when the node changed.
+	 * @param timestampMs - The timestamp of the message that added the reference.
 	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
 	public addedOutboundReference(
