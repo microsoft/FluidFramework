@@ -488,7 +488,7 @@ describe("Garbage Collection Tests", () => {
 			assert.deepEqual(gc.tombstones, [nodes[0]], "node 0 should be in the Tombstones list");
 
 			// Simulate usage to trigger TombstoneLoaded op.
-			nodeUpdated(gc, nodes[0], "Loaded");
+			nodeUpdated(gc, nodes[0], "Loaded", Date.now());
 			const [gcTombstoneLoadedMessage] = spies.gc.submitMessage.args[0];
 			assert.deepEqual(
 				gcTombstoneLoadedMessage,
@@ -503,12 +503,13 @@ describe("Garbage Collection Tests", () => {
 				"submitted message not as expected",
 			);
 
+			const autoRecoveryTimestampMs = Date.now();
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
-			gc.processMessage(gcTombstoneLoadedMessage, Date.now(), true /* local */);
+			gc.processMessage(gcTombstoneLoadedMessage, autoRecoveryTimestampMs, true /* local */);
 			assert.deepEqual(
 				spies.gc.addedOutboundReference.args[0],
-				["/", nodes[0], /* autorecovery: */ true],
+				["/", nodes[0], autoRecoveryTimestampMs, /* autorecovery: */ true],
 				"addedOutboundReference should be called with node 0",
 			);
 			assert.equal(
