@@ -139,6 +139,13 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 };
 
 /**
+ * Identifier used for the FieldKind for fields of type identifier.
+ *
+ * @internal
+ */
+export const identifierFieldKindIdentifier = "Identifier";
+
+/**
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
  * @internal
  */

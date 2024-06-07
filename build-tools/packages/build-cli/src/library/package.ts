@@ -792,7 +792,10 @@ export async function npmCheckUpdatesHomegrown(
 		}
 	}
 
-	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
+	const { filtered: packagesToUpdate } = await selectAndFilterPackages(
+		context,
+		selectionCriteria,
+	);
 	log?.info(
 		`Found ${Object.keys(dependencyVersionMap).length} dependencies to update across ${
 			packagesToUpdate.length

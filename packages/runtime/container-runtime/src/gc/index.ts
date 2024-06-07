@@ -35,7 +35,6 @@ export {
 	stableGCVersion,
 	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
-	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,

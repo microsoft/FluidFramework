@@ -32,7 +32,7 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./common/fluidTaskDefinitions";
-export { getEsLintConfigFilePath } from "./common/taskUtils";
+export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
 export { TypeOnly, MinimalType, FullType } from "./typeValidator/compatibility";

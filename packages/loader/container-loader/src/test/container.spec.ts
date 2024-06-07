@@ -14,8 +14,12 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage, IClient } from "@fluidframework/driver-definitions";
-import { IResolvedUrl, IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	IResolvedUrl,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";

@@ -10,14 +10,15 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
 
 import { NodeKind, TreeNodeSchema, type } from "../../simple-tree/index.js";
-import { FlexTreeNode, FlexTreeNodeSchema } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RawTreeNode } from "../../simple-tree/rawNode.js";
+import { FlexTreeNode, FlexTreeNodeSchema, MapTreeNode } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { validateUsageError } from "../utils.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { EagerMapTreeNode } from "../../feature-libraries/flex-map-tree/mapTreeNode.js";
 
 describe("simple-tree types", () => {
 	describe("TreeNode", () => {
@@ -40,9 +41,13 @@ describe("simple-tree types", () => {
 	});
 
 	describe("TreeNodeValid", () => {
-		class MockFlexNode extends RawTreeNode<FlexTreeNodeSchema, number> {
+		class MockFlexNode extends EagerMapTreeNode<FlexTreeNodeSchema> {
 			public constructor(public readonly simpleSchema: TreeNodeSchema) {
-				super(getFlexSchema(simpleSchema), 0);
+				super(
+					getFlexSchema(simpleSchema),
+					{ fields: new Map(), type: brand(simpleSchema.identifier) },
+					undefined,
+				);
 			}
 		}
 
@@ -73,14 +78,11 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): RawTreeNode<FlexTreeNodeSchema, unknown> {
+				): MapTreeNode {
 					assert.equal(this, Subclass);
 					assert(instance instanceof Subclass);
 					log.push(`buildRawNode ${input}`);
-					return new MockFlexNode(Subclass) as unknown as RawTreeNode<
-						FlexTreeNodeSchema,
-						unknown
-					>;
+					return new MockFlexNode(Subclass);
 				}
 
 				protected static override constructorCached: typeof TreeNodeValid | undefined =
@@ -151,10 +153,8 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+				): MapTreeNode {
+					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
 				public override get [type](): string {
@@ -202,10 +202,8 @@ describe("simple-tree types", () => {
 					this: typeof TreeNodeValid<T2>,
 					instance: TreeNodeValid<T2>,
 					input: T2,
-				): RawTreeNode<FlexTreeNodeSchema, unknown> {
-					return new MockFlexNode(
-						this as unknown as TreeNodeSchema,
-					) as unknown as RawTreeNode<FlexTreeNodeSchema, unknown>;
+				): MapTreeNode {
+					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
 				public override get [type](): string {

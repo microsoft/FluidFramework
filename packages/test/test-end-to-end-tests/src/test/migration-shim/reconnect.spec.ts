@@ -30,7 +30,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { ITree, SchemaFactory, TreeConfiguration, disposeSymbol } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -173,7 +173,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 						quantity,
 					})),
 				)
-				[disposeSymbol]();
+				.dispose();
 		},
 	);
 
