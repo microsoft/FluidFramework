@@ -60,6 +60,7 @@ export enum ContainerMessageType {
 /**
  * How should an older client handle an unrecognized remote op type?
  *
+ * @deprecated //*
  * @internal
  */
 export type CompatModeBehavior =
@@ -71,6 +72,7 @@ export type CompatModeBehavior =
 /**
  * All the info an older client would need to know how to handle an unrecognized remote op type
  *
+ * @deprecated //*
  * @internal
  */
 export interface IContainerRuntimeMessageCompatDetails {
@@ -85,8 +87,7 @@ export interface IContainerRuntimeMessageCompatDetails {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents>
-	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
+interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/** Type of the op, within the ContainerRuntime's domain */
 	type: TType;
 	/** Domain-specific contents, interpreted according to the type */
@@ -95,6 +96,7 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 
 /**
  * Additional details expected for any recently added message.
+ * @deprecated //*
  * @internal
  */
 export interface RecentlyAddedContainerRuntimeMessageDetails {
@@ -232,23 +234,3 @@ export type InboundSequencedContainerRuntimeMessageOrSystemMessage =
  */
 export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDocumentMessage &
 	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
-
-/**
- * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
- *
- * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
- * This way stringified values can be compared.
- *
- * @deprecated this is an internal type which should not be used outside of the package.
- * Internally, it is superseded by `TypedContainerRuntimeMessage`.
- *
- * @internal
- */
-export interface ContainerRuntimeMessage {
-	/** Type of the op, within the ContainerRuntime's domain */
-	type: ContainerMessageType;
-	/** Domain-specific contents, interpreted according to the type */
-	contents: any;
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails?: IContainerRuntimeMessageCompatDetails;
-}

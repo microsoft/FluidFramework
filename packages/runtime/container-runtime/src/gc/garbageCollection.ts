@@ -26,7 +26,11 @@ import {
 import { BlobManager } from "../blobManager.js";
 import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	ContainerRuntimeGCMessage,
+	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
+} from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
@@ -746,7 +750,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" },
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -896,7 +899,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessage(
-		message: ContainerRuntimeGCMessage,
+		message: ContainerRuntimeGCMessage & InboundSequencedRecentlyAddedContainerRuntimeMessage,
 		messageTimestampMs: number,
 		local: boolean,
 	) {
@@ -1096,7 +1099,6 @@ export class GarbageCollector implements IGarbageCollector {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" },
 		};
 		this.submitMessage(containerGCMessage);
 	}
