@@ -1663,7 +1663,11 @@ export class ContainerRuntime
 			snapshot,
 			parentContext,
 			this.mc.logger,
-			(props) => this.garbageCollector.nodeUpdated(props),
+			(props) =>
+				this.garbageCollector.nodeUpdated({
+					...props,
+					timestampMs: props.timestampMs ?? this.getCurrentReferenceTimestampMs(),
+				}),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1689,6 +1693,7 @@ export class ContainerRuntime
 				this.garbageCollector.nodeUpdated({
 					node: { type: "Blob", path: blobPath },
 					reason: "Loaded",
+					timestampMs: this.getCurrentReferenceTimestampMs(),
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
@@ -2715,7 +2720,11 @@ export class ContainerRuntime
 				}
 				break;
 			case ContainerMessageType.GC:
-				this.garbageCollector.processMessage(messageWithContext.message, local);
+				this.garbageCollector.processMessage(
+					messageWithContext.message,
+					messageWithContext.message.timestamp,
+					local,
+				);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
@@ -2949,6 +2958,7 @@ export class ContainerRuntime
 			node: { type: "DataStore", path: `/${internalId}` },
 			reason: "Loaded",
 			packagePath: context.packagePath,
+			timestampMs: this.getCurrentReferenceTimestampMs(),
 		});
 		return channel.entryPoint;
 	}
@@ -3402,9 +3412,14 @@ export class ContainerRuntime
 	 * all references added in the system.
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param timestampMs - The op-based timestamp when the node changed.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.garbageCollector.addedOutboundReference(fromPath, toPath);
+	public addedGCOutboundRoute(fromPath: string, toPath: string, timestampMs?: number) {
+		this.garbageCollector.addedOutboundReference(
+			fromPath,
+			toPath,
+			timestampMs ?? this.getCurrentReferenceTimestampMs(),
+		);
 	}
 
 	/**

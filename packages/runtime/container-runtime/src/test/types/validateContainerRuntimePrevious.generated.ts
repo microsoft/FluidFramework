@@ -1407,6 +1407,7 @@ declare function get_old_InterfaceDeclaration_IGCNodeUpdatedProps():
 declare function use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
     use: TypeOnly<current.IGCNodeUpdatedProps>): void;
 use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCNodeUpdatedProps());
 
 /*

@@ -365,9 +365,18 @@ export interface IGarbageCollector {
 	 */
 	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
+	addedOutboundReference(
+		fromNodePath: string,
+		toNodePath: string,
+		timestampMs: number | undefined,
+		autorecovery?: true,
+	): void;
 	/** Called to process a garbage collection message. */
-	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
+	processMessage(
+		message: ContainerRuntimeGCMessage,
+		messageTimestamp: number,
+		local: boolean,
+	): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
@@ -384,7 +393,7 @@ export interface IGCNodeUpdatedProps {
 	/** Whether the node (or a subpath) was loaded or changed. */
 	reason: "Loaded" | "Changed";
 	/** The op-based timestamp when the node changed, if applicable */
-	timestampMs?: number;
+	timestampMs: number | undefined;
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath?: readonly string[];
 	/** The original request for loads to preserve it in telemetry */
