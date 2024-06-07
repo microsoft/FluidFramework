@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { IDisposable } from "@fluidframework/core-interfaces";
-
 import type {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
@@ -18,7 +16,7 @@ type ICustomDataMap = Record<string, number>;
 /**
  * Helper class that accumulates custom data and sends it to the logger every time a specified number (i.e., `threshold`) of logs is reached.
  */
-export class BatchedTelemetryHelper implements IDisposable {
+export class BatchedTelemetryHelper {
 	disposed: boolean = false;
 
 	// Stores value of the custom data passed into the logger.
@@ -71,12 +69,5 @@ export class BatchedTelemetryHelper implements IDisposable {
 
 		this.logger.sendPerformanceEvent(telemetryEvent);
 		this.counter = 0;
-	}
-
-	public dispose(error?: Error | undefined): void {
-		// TODO: Implement dispose method.
-		// Not sure if calling `sendData()` for each entries (like `SampledTeelmetryHelper` does) is necessary.
-		// We wish to accumulate the data over time and send it every `threshold` times.
-		// Maybe instead `this.customMap.delete()` for each entries?
 	}
 }
