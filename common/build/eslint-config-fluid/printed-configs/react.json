@@ -176,12 +176,16 @@
             {
                 "selector": "variable",
                 "format": [
-                    "camelCase"
+                    "camelCase",
+                    "PascalCase"
                 ],
                 "leadingUnderscore": "allow"
             },
             {
-                "selector": "typeLike",
+                "selector": [
+                    "typeLike",
+                    "class"
+                ],
                 "format": [
                     "PascalCase"
                 ]
@@ -194,6 +198,13 @@
                 "prefix": [
                     "T"
                 ]
+            },
+            {
+                "selector": "interface",
+                "format": [
+                    "PascalCase"
+                ],
+                "prefix": []
             }
         ],
         "@typescript-eslint/no-array-constructor": [

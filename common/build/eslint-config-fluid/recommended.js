@@ -116,17 +116,22 @@ module.exports = {
 			},
 			{
 				selector: "variable",
-				format: ["camelCase"],
+				format: ["camelCase", "PascalCase"],
 				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
 			},
 			{
-				selector: "typeLike",
+				selector: ["typeLike", "class"],
 				format: ["PascalCase"],
 			},
 			{
 				selector: "typeParameter",
 				format: ["PascalCase"],
 				prefix: ["T"], // Type parameter names must begin with "T"
+			},
+			{
+				selector: "interface",
+				format: ["PascalCase"],
+				prefix: [], // No prefix for interfaces. This forbids the "I" prefix, which we do not want.
 			},
 		],
 
