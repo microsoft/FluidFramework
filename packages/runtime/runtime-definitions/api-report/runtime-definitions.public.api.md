@@ -21,8 +21,8 @@ import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces
 import type { IQuorumClients } from '@fluidframework/driver-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces';
 import type { IResponse } from '@fluidframework/core-interfaces';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import type { ISignalMessage } from '@fluidframework/driver-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import type { ISummaryTree } from '@fluidframework/driver-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';

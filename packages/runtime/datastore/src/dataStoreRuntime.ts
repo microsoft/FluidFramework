@@ -25,12 +25,15 @@ import {
 import {
 	IClientDetails,
 	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentMessage,
+	type ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {

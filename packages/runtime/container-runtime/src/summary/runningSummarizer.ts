@@ -6,8 +6,11 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	MonitoringContext,
 	UsageError,

@@ -49,7 +49,11 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const dummyContext = { originatorId: testIdCompressor.localSessionId, revision: undefined };
+const dummyContext = {
+	originatorId: testIdCompressor.localSessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
+};
 const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		[
@@ -145,7 +149,9 @@ describe("message codec", () => {
 				},
 			};
 
-			const actual = codec.decode(codec.encode(message, {}), {});
+			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
+				idCompressor: testIdCompressor,
+			});
 			assert.deepEqual(actual, {
 				sessionId,
 				commit: {
@@ -163,12 +169,13 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), {});
+			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,
 						revision: undefined,
+						idCompressor: testIdCompressor,
 					}),
 					change: {},
 				},
@@ -185,12 +192,13 @@ describe("message codec", () => {
 				changeset: {},
 				version: 1,
 			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), {});
+			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,
 						revision: undefined,
+						idCompressor: testIdCompressor,
 					}),
 					change: {},
 				},
@@ -208,7 +216,7 @@ describe("message codec", () => {
 				version: -1,
 			} satisfies Message);
 			assert.throws(
-				() => codec.decode(JSON.parse(encoded), {}),
+				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
 				"Expected decoding to fail validation",
 			);

@@ -20,7 +20,8 @@ import {
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
