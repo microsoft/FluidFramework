@@ -22,6 +22,7 @@ import {
 	typeNameSymbol,
 	valueSchemaAllows,
 	NodeKeyManager,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
@@ -42,6 +43,7 @@ import {
 	FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
+import { tryGetFlexNode } from "./proxyBinding.js";
 
 /**
  * Module notes:
@@ -211,6 +213,18 @@ function nodeDataToMapTree(
 ): MapTree | undefined {
 	if (data === undefined) {
 		return undefined;
+	}
+
+	// A special cache path for processing unhydrated nodes.
+	// They already have the mapTree, so there is no need to recompute it.
+	const flexNode = tryGetFlexNode(data);
+	if (flexNode !== undefined) {
+		if (isMapTreeNode(flexNode)) {
+			return flexNode.mapTree;
+		} else {
+			// The node is already hydrated, meaning that it already got inserted into the tree previously
+			throw new UsageError("A node may not be inserted into the tree more than once");
+		}
 	}
 
 	const schema = getType(data, allowedTypes);
