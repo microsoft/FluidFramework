@@ -4,6 +4,7 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["jest", "node"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
