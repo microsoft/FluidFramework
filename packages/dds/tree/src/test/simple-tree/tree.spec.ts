@@ -80,15 +80,28 @@ describe("class-tree tree", () => {
 		assert.equal(view.root, "a");
 	});
 
-	it("optional Root - empty", async () => {
+	it("optional Root - initialized to undefined", async () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
 		const view = await tree.viewWith(config);
-		assert.equal(view.root, undefined);
+		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
+		// allows an optional field, explicit initialization must occur.
+		assert.throws(() => view.root, /Document is out of schema./);
 		view.initialize(undefined);
+		assert.equal(view.root, undefined);
+	});
+
+	it("optional Root - initializing only schema", async () => {
+		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = await tree.viewWith(config);
+		view.upgradeSchema();
 		assert.equal(view.root, undefined);
 	});
 
