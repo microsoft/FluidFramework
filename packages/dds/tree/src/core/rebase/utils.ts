@@ -71,9 +71,9 @@ interface TelemetryProperties {
 	 */
 	readonly rebaseDistance: number;
 	/**
-	 * The number of commits that were in common between the source and target branches before the rebase.
+	 * The number of commits that are dropped from the source branch when rebased to the target branch.
 	 */
-	readonly countInCommon: number;
+	readonly countDropped: number;
 }
 
 export interface BranchRebaseResult<TChange> {
@@ -190,6 +190,8 @@ export function rebaseBranch<TChange>(
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
 	assert(ancestor !== undefined, 0x675 /* branches must be related */);
 
+	const sourceBranchLength = sourcePath.length;
+
 	// Find where `targetCommit` is in the target branch
 	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
 	if (targetCommitIndex === -1) {
@@ -205,9 +207,9 @@ export function rebaseBranch<TChange>(
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
 			telemetryProperties: {
-				sourceBranchLength: sourcePath.length,
+				sourceBranchLength,
 				rebaseDistance: targetCommitIndex + 1,
-				countInCommon: 0,
+				countDropped: 0,
 			},
 		};
 	}
@@ -265,9 +267,9 @@ export function rebaseBranch<TChange>(
 				sourceCommits,
 			},
 			telemetryProperties: {
-				sourceBranchLength: sourcePath.length,
-				rebaseDistance: targetCommitIndex + 1,
-				countInCommon: sourcePath.length - sourceSet.size,
+				sourceBranchLength,
+				rebaseDistance: targetCommits.length,
+				countDropped: sourceBranchLength - sourceSet.size,
 			},
 		};
 	}
@@ -314,9 +316,9 @@ export function rebaseBranch<TChange>(
 			sourceCommits,
 		},
 		telemetryProperties: {
-			sourceBranchLength: sourcePath.length,
-			rebaseDistance: targetCommitIndex + 1,
-			countInCommon: sourcePath.length - sourceSet.size,
+			sourceBranchLength,
+			rebaseDistance: targetCommits.length,
+			countDropped: sourceBranchLength - sourceSet.size,
 		},
 	};
 }
@@ -353,11 +355,11 @@ export function rebaseChange<TChange>(
 	const telemetryProperties = {
 		sourceBranchLength: sourcePath.length,
 		rebaseDistance: targetPath.length,
-		countInCommon: 0,
+		countDropped: 0,
 	};
 
 	return {
-		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]), // TODO: How to apply TaggedChange<TChange>.
+		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]),
 		telemetryProperties,
 	};
 }
