@@ -4,7 +4,7 @@
  */
 
 import { AnchorNode, PathVisitor, UpPath } from "../../core/index.js";
-import { Off } from "../../events/events.js";
+import { Off } from "../../events/index.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
