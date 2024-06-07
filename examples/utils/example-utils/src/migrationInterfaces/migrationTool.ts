@@ -20,6 +20,7 @@ export type MigrationState = "collaborating" | "stopping" | "migrating" | "migra
  */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
+	(event: "disposed", listener: () => void);
 }
 
 /**

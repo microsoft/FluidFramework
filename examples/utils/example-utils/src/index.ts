@@ -40,7 +40,7 @@ export type {
 } from "./migrationInterfaces/index.js";
 export {
 	MigrationTool,
-	MigrationToolInstantiationFactory,
+	MigrationToolFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
 } from "./migrationTool/index.js";
