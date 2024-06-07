@@ -211,7 +211,9 @@ export class PendingStateManager implements IDisposable {
 		//* Ops shouldn't be sent when disconnected, apart when disconnecting races flush
 		//* TODO: Deal with ops sent before first connection, if that's possible...?
 		const clientId = this.stateHandler.clientId();
-		assert(clientId !== undefined, "Shouldn't see ops before the first connection");
+
+		//* This was hit by the "applies stashed ops with no saved ops" test in stashedOps.spec.ts
+		//* assert(clientId !== undefined, "Shouldn't see ops before the first connection");
 
 		const pendingMessage: IPendingMessage = {
 			type: "message",
@@ -220,7 +222,7 @@ export class PendingStateManager implements IDisposable {
 			localOpMetadata,
 			opMetadata,
 			batchIdContext:
-				clientSequenceNumber === undefined // Message not submitted, so batchId is meaningless/irrelevant
+				clientId === undefined || clientSequenceNumber === undefined // Message not submitted, so batchId is meaningless/irrelevant
 					? undefined
 					: {
 							originalClientId: clientId,
@@ -336,14 +338,15 @@ export class PendingStateManager implements IDisposable {
 						pendingMessage.batchIdContext?.originalClientId,
 						pendingMessage.batchIdContext?.clientSequenceNumber,
 				  ]);
+		const skipBatchIdCheck =
+			(pendingBatchId ?? "-") === "-" || (this.processingBatchId ?? "-") === "-";
 
 		const messageContent = buildPendingMessageContent(message);
 
 		//* TODO: Can we switch back to comparing CSN...?
 		// Stringified content should match
 		if (
-			(pendingBatchId !== undefined &&
-				pendingEffectiveBatchId !== incomingEffectiveBatchId) || //* If we are awaiting the start of a batch, the batchId should match
+			(!skipBatchIdCheck && pendingEffectiveBatchId !== incomingEffectiveBatchId) || //* If we are awaiting the start of a batch, the batchId should match
 			pendingMessage.content !== messageContent
 		) {
 			this.stateHandler.close(

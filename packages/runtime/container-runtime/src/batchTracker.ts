@@ -99,13 +99,21 @@ export class BatchTracker {
 		this.clearOldBatchIds(message.minimumSequenceNumber);
 
 		const metadata = asBatchMetadata(message.metadata);
-		if (metadata?.batchId !== undefined && this.batchIdsAll.has(metadata.batchId)) {
+		if (
+			metadata?.batchId !== undefined &&
+			metadata?.batchId !== "-" &&
+			this.batchIdsAll.has(metadata.batchId)
+		) {
 			return true;
 		}
 		return false;
 	}
 
 	private addBatchId(batchId: string, sequenceNumber: number) {
+		if (batchId === "-") {
+			return;
+		}
+
 		let batchIds = this.batchIdsBySeqNum.get(sequenceNumber);
 		if (batchIds === undefined) {
 			batchIds = new Set<string>();
