@@ -39,21 +39,34 @@ export type Unhydrated<T> = T;
  * Base type which all nodes implement.
  *
  * This can be used as a type to indicate/document values which should be tree nodes.
- * Runtime use of this class object (for example when used with `instanceof` or subclassed), is not supported:
- * it may be replaced with an interface or union in the future.
- * @privateRemarks
- * Future changes may replace this with a branded interface if the runtime oddities related to this are not cleaned up.
+ * Runtime use of this class object (for example when used with `instanceof` or extending it), is not currently supported.
  *
- * Currently not all node implications include this in their prototype chain (some hide it with a proxy), and thus cause `instanceof` to fail.
+ * Instances of tree nodes must be created by opening an existing document, inserting values into the document,
+ * or by using the constructors and create functions of {@link TreeNodeSchema} produced by {@link SchemaFactory}.
+ * @privateRemarks
+ * This is a class not an interface to enable stricter type checking (see {@link TreeNode.#brand})
+ * and some runtime enforcement of schema class policy (see the the validation in the constructor).
+ * This class is however only `type` exported not value exported, preventing the class object from being used,
+ * similar to how interfaces work.
+ *
+ * Not all node implications include this in their prototype chain (some hide it with a proxy),
+ * and thus cause the default/built in `instanceof` return false despite our type checking and all other APIs treating them as TreeNodes.
  * This results in the runtime and compile time behavior of `instanceof` differing.
  * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
  * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
- * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
+ * One of those approaches could be used to resolve this inconsistency,
+ * but for now the type only export prevents use of `instanceof` avoiding this problem in the public API.
  * @public
  */
 export abstract class TreeNode implements WithType {
 	/**
 	 * This is added to prevent TypeScript from implicitly allowing non-TreeNode types to be used as TreeNodes.
+	 * @remarks
+	 * This field forces TypeScript to use nominal instead of structural typing,
+	 * preventing compiler error messages and tools like "add missing properties"
+	 * from adding the [type] field as a solution when using a non-TreeNode object where a TreeNode is required.
+	 * Instead TreeNodes must be created through the appropriate APIs, see the documentation on {@link TreeNode} for details.
+	 *
 	 * @privateRemarks
 	 * This is a JavaScript private field, so is not accessible from outside this class.
 	 * This prevents it from having name collisions with object fields.
@@ -62,20 +75,17 @@ export abstract class TreeNode implements WithType {
 	 * To avoid this having any runtime impact, the field is uninitialized.
 	 *
 	 * Making this field optional results in different type checking within this project than outside of it, since the d.ts file drops the optional aspect of the field.
-	 * This is extra confusing since sin ce the tests get in-project typing for intellisense and separate project checking at build time.
+	 * This is extra confusing since since the tests get in-project typing for intellisense and separate project checking at build time.
 	 * To avoid all this mess, this field is required, not optional.
 	 *
 	 * Another option would be to use a symbol (possibly as a private field).
 	 * That approach ran into some strange difficulties causing SchemaFactory to fail to compile, and was not investigated further.
 	 *
-	 * TODO: This is disabled due to compilation of this project not targeting es2022,
-	 * which causes this to polyfill to use of a weak map which has some undesired runtime overhead.
-	 * Consider enabling this for stronger typing after targeting es2022.
-	 * The [type] symbol here provides a lot of the value this private brand would, but is not all of it:
-	 * someone could manually make an object literal with it and pass it off as a node: this private brand would prevent that.
-	 * Another option would be to add a protected or private symbol, which would also get the stronger typing.
+	 * The [type] symbol here provides a lot of the value this private brand does, but is not all of it:
+	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
+	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
 	 */
-	// readonly #brand!: unknown;
+	readonly #brand!: unknown;
 
 	/**
 	 * {@inheritdoc "type"}
