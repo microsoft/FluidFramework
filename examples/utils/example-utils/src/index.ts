@@ -40,7 +40,6 @@ export type {
 	SameContainerMigrationState,
 } from "./migrationInterfaces/index.js";
 export {
-	MigrationTool,
 	MigrationToolFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,

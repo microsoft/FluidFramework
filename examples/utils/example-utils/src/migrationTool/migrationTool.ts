@@ -35,13 +35,7 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
-/**
- * @internal
- */
-export class MigrationTool
-	extends TypedEventEmitter<IMigrationToolEvents>
-	implements IMigrationTool
-{
+class MigrationTool extends TypedEventEmitter<IMigrationToolEvents> implements IMigrationTool {
 	private _disposed = false;
 
 	public get disposed() {
