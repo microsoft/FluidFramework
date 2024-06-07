@@ -12241,12 +12241,12 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../driver-utils
-      '@fluidframework/protocol-base':
-        specifier: ^5.0.0-265463
-        version: 5.0.0-265463
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
+      '@types/events_pkg':
+        specifier: npm:@types/events@^3.0.0
+        version: /@types/events@3.0.3
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
@@ -12256,6 +12256,9 @@ importers:
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
+      events_pkg:
+        specifier: npm:events@^3.1.0
+        version: /events@3.3.0
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
