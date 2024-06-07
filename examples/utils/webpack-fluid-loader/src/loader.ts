@@ -215,14 +215,6 @@ async function createWebLoader(
 }
 
 const containers: IContainer[] = [];
-// A function for testing to make sure the containers are not dirty and in sync (at the same seq num)
-export function isSynchronized() {
-	if (containers.length === 0) {
-		return true;
-	}
-	const seqNum = containers[0].deltaManager.lastSequenceNumber;
-	return containers.every((c) => !c.isDirty && c.deltaManager.lastSequenceNumber === seqNum);
-}
 
 export async function start(
 	id: string,
