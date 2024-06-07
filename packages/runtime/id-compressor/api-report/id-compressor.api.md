@@ -35,6 +35,7 @@ export interface IdCreationRange {
         readonly firstGenCount: number;
         readonly count: number;
         readonly requestedClusterSize: number;
+        readonly localIdRanges: [genCount: number, count: number][];
     };
     // (undocumented)
     readonly sessionId: SessionId;
@@ -59,6 +60,7 @@ export interface IIdCompressorCore {
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     takeNextCreationRange(): IdCreationRange;
+    takeUnfinalizedCreationRange(): IdCreationRange;
 }
 
 // @internal

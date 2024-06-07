@@ -151,6 +151,7 @@ describe("IdCompressor Perf", () => {
 						firstGenCount,
 						count: numIds,
 						requestedClusterSize: initialClusterCapacity,
+						localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 					},
 				};
 

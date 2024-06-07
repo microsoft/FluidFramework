@@ -23,7 +23,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager's soft limit: a bunch of small messages", () => {
 		const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
+		const batchManager = new BatchManager({ hardLimit, softLimit, canRebase: true });
 
 		// Can push one large message
 		assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -52,7 +52,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager's soft limit: single large message", () => {
 		const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
+		const batchManager = new BatchManager({ hardLimit, softLimit, canRebase: true });
 
 		// Can push one large message, even above soft limit
 		assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -76,7 +76,7 @@ describe("BatchManager", () => {
 	});
 
 	it("BatchManager: no soft limit", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		const third = Math.floor(hardLimit / 3) + 1;
 		const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
 
@@ -108,7 +108,11 @@ describe("BatchManager", () => {
 	});
 
 	it("BatchManager: soft limit is higher than hard limit", () => {
-		const batchManager = new BatchManager({ hardLimit, softLimit: hardLimit * 2 });
+		const batchManager = new BatchManager({
+			hardLimit,
+			softLimit: hardLimit * 2,
+			canRebase: true,
+		});
 		const twoThird = Math.floor((hardLimit * 2) / 3);
 		const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
 		const largeMessage = {
@@ -134,7 +138,7 @@ describe("BatchManager", () => {
 
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
 		const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit: Infinity });
+		const batchManager = new BatchManager({ hardLimit: Infinity, canRebase: true });
 
 		for (let i = 1; i <= 10; i++) {
 			assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -143,7 +147,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch metadata is set correctly", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },
@@ -183,7 +187,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch content size is tracked correctly", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
 		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
@@ -193,7 +197,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch reference sequence number maps to the last message", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },
@@ -220,7 +224,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch size estimates", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		batchManager.push(smallMessage(), /* reentrant */ false);
 		// 10 bytes of content + 200 bytes overhead
 		assert.equal(estimateSocketSize(batchManager.popBatch()), 210);
@@ -248,7 +252,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager({ hardLimit, canRebase: true });
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },
