@@ -795,7 +795,8 @@ export function arraySchema<
 				let prototype: object = this.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== schema.prototype) {
-					// TODO: loop through prototype keys and check for positive integers. Throw if any are found.
+					// Search prototype keys and check for positive integers. Throw if any are found.
+					// Shadowing of index properties on array nodes is not supported.
 					for (const key of Object.getOwnPropertyNames(prototype)) {
 						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 						if (maybeIndex !== undefined) {
