@@ -16,17 +16,15 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ConnectionMode,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorTypes,
 	IDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,

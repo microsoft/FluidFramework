@@ -7,18 +7,18 @@ The odsp-client package provides a simple and powerful way to consume collaborat
 The odsp-client package has an `OdspClient` class that allows you to interact with Fluid.
 
 ```typescript
-import { OdspClient } from "@fluid-experimental/odsp-client";
+import { OdspClient } from "@fluidframework/odsp-client";
 ```
 
 ### Example usage
 
 ```typescript
-import { OdspClient, OdspConnectionConfig, OdspClientProps } from "@fluid-experimental/odsp-client";
+import { OdspClient, OdspConnectionConfig, OdspClientProps } from "@fluidframework/odsp-client";
 
 const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: "<YOUR_TOKEN_PROVIDER>",
 	siteUrl: "<SITE_URL>",
-	driveId: "<RAAS_DRIVE_ID>",
+	driveId: "<SHAREPOINT_EMBEDDED_CONTAINER_ID>",
 	filePath: "<FLUID_FILE_PATH>",
 };
 
@@ -76,7 +76,7 @@ const itemId = await container.attach();
 Using the `OdspClient` class the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
 
 ```typescript
-import { OdspClient } from "@fluid-experimental/odsp-client";
+import { OdspClient } from "@fluidframework/odsp-client";
 
 const odspClient = new OdspClient(props);
 const { container, services } = await odspClient.getContainer("_unique-itemId_", schema);

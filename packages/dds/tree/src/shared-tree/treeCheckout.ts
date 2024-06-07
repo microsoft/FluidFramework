@@ -254,6 +254,7 @@ export function createTreeCheckout(
 		events,
 		mintRevisionTag,
 		revisionTagCodec,
+		idCompressor,
 		args?.removedRoots,
 	);
 }
@@ -373,9 +374,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			HasListeners<CheckoutEvents>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly idCompressor: IIdCompressor,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
+			idCompressor,
 		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
@@ -457,10 +460,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								}
 								this.revertRevertible(revision, data.kind);
 								if (release) {
-									revertible[disposeSymbol]();
+									revertible.dispose();
 								}
 							},
-							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
 								if (revertible.status === RevertibleStatus.Disposed) {
 									throw new UsageError(
@@ -526,6 +528,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			createEmitter(),
 			this.mintRevisionTag,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.removedRoots.clone(),
 		);
 	}

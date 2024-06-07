@@ -28,9 +28,9 @@ import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
+import { assertInterval } from "./intervalIndexTestUtils.js";
 import { assertConsistent, assertSequenceIntervals, type Client } from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
-import { assertInterval } from "./intervalIndexTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -2155,8 +2155,6 @@ describe("the start and end positions of intervals are updated in response to ed
 			removeRange: [8, 10],
 			expected: ["end", "end"],
 			skip: [
-				// TODO: #8112: re-enable once empty intervals are no longer skipped when using the new slide behavior.
-				"rebase interval over removal",
 				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
 				"slide interval loaded from summary",
 			],
@@ -2185,8 +2183,6 @@ describe("the start and end positions of intervals are updated in response to ed
 			removeRange: [7, 10],
 			expected: ["end", "end"],
 			skip: [
-				// TODO: #8112: re-enable once empty intervals are no longer skipped when using the new slide behavior.
-				"rebase interval over removal",
 				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
 				"slide interval loaded from summary",
 			],

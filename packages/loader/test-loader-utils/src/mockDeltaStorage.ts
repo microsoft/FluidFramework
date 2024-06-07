@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 
 /**

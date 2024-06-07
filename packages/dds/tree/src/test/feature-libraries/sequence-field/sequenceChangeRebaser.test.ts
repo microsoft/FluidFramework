@@ -285,6 +285,16 @@ export function testRebaserAxioms() {
 			}
 		});
 
+		// Hand-crafted version of the above tests to add coverage for returns
+		it("Return ↷ [Return, Return⁻¹] === Return", () => {
+			const move: SF.Changeset = Mark.move(1, { revision: tag0, localId: brand(0) });
+			const r: SF.Changeset = invert(tagChange(move, tag0), false);
+			const base1 = tagChange(r, tag1);
+			const base2 = tagChange(invert(base1, true), tag2);
+			const actual = rebaseOverChanges(tagChange(r, tag3), [base1, base2]);
+			assertChangesetsEqual(withoutTombstones(actual.change), r);
+		});
+
 		/**
 		 * This test simulates rebasing over an do-undo pair.
 		 * It is different from the above in two ways:

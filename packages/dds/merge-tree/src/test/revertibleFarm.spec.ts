@@ -6,7 +6,7 @@
 import assert from "assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";

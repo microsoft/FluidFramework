@@ -5,7 +5,6 @@
 		"outDir": "./lib/tsc",
 		"types": ["chai", "chrome", "mocha", "node"],
 		"jsx": "react-jsx",
-		"target": "es2018",
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": false,
