@@ -132,6 +132,7 @@ describe.skip("Outbox", () => {
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		onSubmitMessage: (
 			content: string,
+			_clientSequenceNumber: number,
 			referenceSequenceNumber: number,
 			_localOpMetadata: unknown,
 			opMetadata: Record<string, unknown> | undefined,

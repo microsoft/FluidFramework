@@ -303,6 +303,7 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
+							//* TODO: Replace with submitBatchFn
 							submitFn: (
 								_type: MessageType,
 								contents: any,
@@ -820,7 +821,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onSubmitMessage("", 0, "", undefined);
+				pendingStateManager.onSubmitMessage("", 0, 0, "", undefined);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -1810,6 +1811,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { originalClientId: "CLIENT_ID", clientSequenceNumber: 0 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1852,6 +1854,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { originalClientId: "CLIENT_ID", clientSequenceNumber: 0 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1920,6 +1923,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { originalClientId: "CLIENT_ID", clientSequenceNumber: 0 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {

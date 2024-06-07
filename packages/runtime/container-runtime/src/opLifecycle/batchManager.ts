@@ -134,11 +134,18 @@ export class BatchManager {
 	}
 }
 
+//* Revert the fallback to uuid
+function newBatchId(useUuid: boolean) {
+	return useUuid ? uuid() : "-";
+}
+
 //* existingBatchId param used to preserve batchId across resubmit
 const addBatchMetadata = (batch: Omit<IBatch, "batchId">, existingBatchId?: string): IBatch => {
 	assert(batch.content.length > 0, "Batch must have at least one op");
 
-	const batchId = existingBatchId ?? uuid();
+	//* Use this placeholder value to make batchId always defined on a batch
+	//* Otherwise it's impossible to distinguish between single op batch and a non-batched message
+	const batchId = existingBatchId ?? newBatchId(false);
 	// Always need batchId even for single op batch
 	if (batch.content.length === 1) {
 		batch.content[0].metadata = {

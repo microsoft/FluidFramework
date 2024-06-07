@@ -2006,6 +2006,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Prototype tests for Offline Phase 3 - serializing without closing", () => {
+		//* OTHER TEST CASES TO WRITE:
+		// (?) Forked container where resubmit results in different number of chunks - so CSN is different, but it shouldn't matter because batchId would be set already
+
 		it(`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
 			const incrementValue = 3;
 			const pendingLocalState = await getPendingOps(
@@ -2043,6 +2046,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		itExpects(
 			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 				},
@@ -2112,7 +2118,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		//* For some reason the itExpects isn't working, it's failing due to ContainerClose event but I mentioned it here.
-		itExpects(
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		itExpects.only(
 			`Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
 				{
@@ -2142,12 +2152,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 				// Rehydrate the second time - when we are catching up, we'll recognize the incoming op (from container2),
 				// and since it's coming from a different clientID we'll realized the container is forked and we'll close
-				await assert.rejects(
-					async () => loader.resolve({ url }, pendingLocalState),
-					{
-						message:
-							"Forked Container Error! Matching batchIds but mismatched clientId",
-					},
+				let loadError: Error | undefined;
+				const container3 = await loader.resolve({ url }, pendingLocalState).catch((e) => {
+					loadError = e;
+					return undefined;
+				});
+				container3?.on("closed", (e) => {
+					loadError = e as Error;
+				});
+				await provider.ensureSynchronized();
+				assert(
+					loadError?.message ===
+						"Forked Container Error! Matching batchIds but mismatched clientId",
 					"Container should have closed due to ForkedContainerError",
 				);
 

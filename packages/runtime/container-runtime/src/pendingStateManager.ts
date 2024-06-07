@@ -29,6 +29,16 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
+	//* Info needed to render the batchId on reconnect
+	//* undefined means it was added to PSM before ever being submitted (disconnect raced flush and won)
+	batchIdContext?: {
+		//* Don't actually need the clientID until this message is part of serialization.
+		//* NOTE if we do that: Suppose a message stays in PSM over several reconnects, and is serialized during
+		//* each interim connection. Any of those serializations _could_ be hydrated from,
+		//* and this should have the same ID in them all.  So don't overwrite it upon later serializations.
+		originalClientId: string;
+		clientSequenceNumber: number;
+	};
 }
 
 export interface IPendingLocalState {
@@ -38,6 +48,7 @@ export interface IPendingLocalState {
 	pendingStates: IPendingMessage[];
 }
 
+//* A pending message that is being resubmitted
 export interface IPendingBatchMessage {
 	content: string;
 	localOpMetadata: unknown;
@@ -50,7 +61,7 @@ export interface IRuntimeStateHandler {
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
-	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	reSubmitBatch(batch: IPendingBatchMessage[], batchId: string): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -102,11 +113,15 @@ export class PendingStateManager implements IDisposable {
 	// Indicates whether we are processing a batch. -- what's the batchId?
 	private processingBatchId: string | undefined = undefined;
 
+	//* Batch IDs are not stamped until reconnect, so if it's missing we need to be ready to compute it
+	private incomingComputedBatchId: string | undefined;
+
 	// This stores the first message in the batch that we are processing. This is used to verify that we get
 	// the correct batch metadata.
 	private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
-	private clientId: string | undefined;
+	//* Used to ensure we don't replay ops on the same connection twice
+	private clientIdFromLastReplay: string | undefined;
 
 	/**
 	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
@@ -133,6 +148,7 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
+	//* Called when serializing the container
 	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
 		assert(
 			this.initialMessages.isEmpty(),
@@ -178,22 +194,38 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
 	 * queue.
-	 * @param type - The container message type.
-	 * @param content - The message content.
+	 * @param content - The container message type.
+	 * //* TODO: update caller to increment csn? I wish PSM just took the batch (ok for now since batchIdContext is only used on first message of batch)
+	 * @param clientSequenceNumber - The clientSequenceNumber assigned to the first message in the batch
+	 * @param referenceSequenceNumber - The referenceSequenceNumber of the batch.
 	 * @param localOpMetadata - The local metadata associated with the message.
+	 * @param opMetadata - The op metadata to be included on payload over the wire.
 	 */
 	public onSubmitMessage(
 		content: string,
+		clientSequenceNumber: number | undefined,
 		referenceSequenceNumber: number,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		//* Ops shouldn't be sent when disconnected, apart when disconnecting races flush
+		//* TODO: Deal with ops sent before first connection, if that's possible...?
+		const clientId = this.stateHandler.clientId();
+		assert(clientId !== undefined, "Shouldn't see ops before the first connection");
+
 		const pendingMessage: IPendingMessage = {
 			type: "message",
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
 			opMetadata,
+			batchIdContext:
+				clientSequenceNumber === undefined // Message not submitted, so batchId is meaningless/irrelevant
+					? undefined
+					: {
+							originalClientId: clientId,
+							clientSequenceNumber,
+					  },
 		};
 
 		this.pendingMessages.push(pendingMessage);
@@ -248,7 +280,21 @@ export class PendingStateManager implements IDisposable {
 			isBatchMetadata(message.metadata) &&
 			message.metadata.batchId !== undefined
 		) {
-			return pendingMessage.opMetadata.batchId === message.metadata.batchId;
+			const pendingEffectiveBatchId =
+				pendingMessage.opMetadata.batchId !== "-"
+					? pendingMessage.opMetadata.batchId
+					: //* NOTE: batchIdContext will be defined if the message was submitted
+					  JSON.stringify([
+							pendingMessage.batchIdContext?.originalClientId,
+							pendingMessage.batchIdContext?.clientSequenceNumber,
+					  ]);
+			const incomingEffectiveBatchId =
+				message.metadata.batchId !== "-"
+					? message.metadata.batchId
+					: //* TODO: Is this the correct way to fallback here?
+					  JSON.stringify([message.clientId, message.clientSequenceNumber]);
+
+			return pendingEffectiveBatchId === incomingEffectiveBatchId;
 		}
 		return false;
 	}
@@ -280,11 +326,24 @@ export class PendingStateManager implements IDisposable {
 		const pendingBatchMetadata = asBatchMetadata(pendingMessage.opMetadata);
 		const pendingBatchId = pendingBatchMetadata?.batchId;
 
+		const incomingEffectiveBatchId =
+			this.processingBatchId !== "-" ? this.processingBatchId : this.incomingComputedBatchId;
+		const pendingEffectiveBatchId =
+			pendingBatchId !== "-"
+				? pendingBatchId
+				: //* NOTE: batchIdContext will be defined if the message was submitted
+				  JSON.stringify([
+						pendingMessage.batchIdContext?.originalClientId,
+						pendingMessage.batchIdContext?.clientSequenceNumber,
+				  ]);
+
 		const messageContent = buildPendingMessageContent(message);
 
+		//* TODO: Can we switch back to comparing CSN...?
 		// Stringified content should match
 		if (
-			(pendingBatchId !== undefined && pendingBatchId !== this.processingBatchId) || //* If we are awaiting the start of a batch, the batchId should match
+			(pendingBatchId !== undefined &&
+				pendingEffectiveBatchId !== incomingEffectiveBatchId) || //* If we are awaiting the start of a batch, the batchId should match
 			pendingMessage.content !== messageContent
 		) {
 			this.stateHandler.close(
@@ -313,6 +372,7 @@ export class PendingStateManager implements IDisposable {
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		const metadata = message.metadata;
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
+		// or if it has batchId (in case of single-message batch)
 		if (
 			isBatchMetadata(metadata) &&
 			(metadata.batch === true || metadata.batchId !== undefined)
@@ -328,6 +388,12 @@ export class PendingStateManager implements IDisposable {
 			// Set the pending batch state indicating we have started processing a batch.
 			this.pendingBatchBeginMessage = message;
 			this.processingBatchId = batchId;
+
+			//* TODO: Is this the correct way to compute this?
+			this.incomingComputedBatchId = JSON.stringify([
+				message.clientId,
+				message.clientSequenceNumber,
+			]);
 		}
 	}
 
@@ -394,6 +460,7 @@ export class PendingStateManager implements IDisposable {
 			// Clear the pending batch state now that we have processed the entire batch.
 			this.pendingBatchBeginMessage = undefined;
 			this.processingBatchId = undefined;
+			this.incomingComputedBatchId = undefined;
 		}
 	}
 
@@ -410,10 +477,10 @@ export class PendingStateManager implements IDisposable {
 
 		// This assert suggests we are about to send same ops twice, which will result in data loss.
 		assert(
-			this.clientId !== this.stateHandler.clientId(),
+			this.clientIdFromLastReplay !== this.stateHandler.clientId(),
 			0x173 /* "replayPendingStates called twice for same clientId!" */,
 		);
-		this.clientId = this.stateHandler.clientId();
+		this.clientIdFromLastReplay = this.stateHandler.clientId();
 
 		assert(
 			this.initialMessages.isEmpty(),
@@ -435,16 +502,30 @@ export class PendingStateManager implements IDisposable {
 				0x41b /* We cannot process batches in chunks */,
 			);
 
+			//* TODO: Figure out format
+			//* If this batch doesn't have a batchId yet, this is it.
+			const computedBatchId =
+				pendingMessage.batchIdContext === undefined
+					? "-" //* Placeholder batchId for initial connection. If batchIdContext is undef, message was never submitted
+					: JSON.stringify([
+							pendingMessage.batchIdContext.originalClientId,
+							pendingMessage.batchIdContext.clientSequenceNumber,
+					  ]);
+			const existingBatchId = asBatchMetadata(pendingMessage.opMetadata)?.batchId ?? "-";
+			//* Note: Doesn't apply to non-batched messages (what's an example of this...??)
+			const batchId = existingBatchId !== "-" ? existingBatchId : computedBatchId;
+
 			/**
 			 * We want to ensure grouped messages get processed in a batch.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
-			 * either receive the whole batch ack or nothing at all.
+			 * either receive the whole batch ack or nothing at all, thanks to the ScheduleManager.
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
 					remainingPendingMessagesCount > 0,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
+				assert(existingBatchId !== undefined, "Expected batchId on start of batch");
 
 				const batch: IPendingBatchMessage[] = [];
 
@@ -470,8 +551,8 @@ export class PendingStateManager implements IDisposable {
 					);
 				}
 
-				this.stateHandler.reSubmitBatch(batch);
-			} else if (pendingMessage.opMetadata?.batchId !== undefined) {
+				this.stateHandler.reSubmitBatch(batch, batchId);
+			} else if (existingBatchId !== undefined) {
 				// This is a single message batch
 				const batch: IPendingBatchMessage[] = [];
 				batch.push({
@@ -479,8 +560,9 @@ export class PendingStateManager implements IDisposable {
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});
-				this.stateHandler.reSubmitBatch(batch);
+				this.stateHandler.reSubmitBatch(batch, batchId);
 			} else {
+				//* TODO: When is this case hit??  It will be vulnerable to op duplication if the container forks
 				this.stateHandler.reSubmit({
 					content: pendingMessage.content,
 					localOpMetadata: pendingMessage.localOpMetadata,
