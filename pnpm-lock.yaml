@@ -10466,9 +10466,6 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../odsp-driver-definitions
-      '@fluidframework/protocol-base':
-        specifier: ^5.0.0-265463
-        version: 5.0.0-265463
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10785,9 +10782,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../loader/driver-utils
-      '@fluidframework/protocol-base':
-        specifier: ^5.0.0-265463
-        version: 5.0.0-265463
       '@fluidframework/server-services-client':
         specifier: ^5.0.0-265463
         version: 5.0.0-265463
@@ -12365,9 +12359,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/protocol-base':
-        specifier: ^5.0.0-265463
-        version: 5.0.0-265463
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
