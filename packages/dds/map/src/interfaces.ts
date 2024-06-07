@@ -5,6 +5,7 @@
 
 import type {
 	IDisposable,
+	IErrorEvent,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
@@ -17,7 +18,7 @@ import type {
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
- * @alpha
+ * @beta
  */
 export interface IValueChanged {
 	/**
@@ -301,10 +302,12 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
+ * @privateRemarks
+ * Does not include ISharedObjectEvents since thats not part of the declarative/public API surface.
  * @sealed
- * @alpha
+ * @beta
  */
-export interface ISharedMapEvents extends ISharedObjectEvents {
+export interface ISharedMapEvents extends IErrorEvent {
 	/**
 	 * Emitted when a key is set or deleted.
 	 *
@@ -348,9 +351,11 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @sealed
  * @alpha
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap
+	extends ISharedObject<ISharedMapEvents & ISharedObjectEvents>,
+		// TODO: Use `unknown` instead (breaking change).
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from

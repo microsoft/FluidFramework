@@ -18,7 +18,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type {
+	IFluidSerializer,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
@@ -34,7 +37,10 @@ const snapshotFileName = "header";
 /**
  * {@inheritDoc ISharedMap}
  */
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+export class SharedMap
+	extends SharedObject<ISharedMapEvents & ISharedObjectEvents>
+	implements ISharedMap
+{
 	/**
 	 * String representation for the class.
 	 */

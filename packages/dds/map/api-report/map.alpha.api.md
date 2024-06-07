@@ -8,6 +8,7 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -97,18 +98,18 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @alpha @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents & ISharedObjectEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed
-export interface ISharedMapEvents extends ISharedObjectEvents {
+// @beta @sealed
+export interface ISharedMapEvents extends IErrorEvent {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
