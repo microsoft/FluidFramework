@@ -54,11 +54,7 @@ export class BatchedTelemetryHelper implements IDisposable {
 	 */
 	public log(data: ICustomDataMap): void {
 		for (const key of Object.keys(data)) {
-			if (Object.prototype.hasOwnProperty.call(this.customDataMap, key)) {
-				this.customDataMap[key] += data[key];
-			} else {
-				this.customDataMap[key] = data[key];
-			}
+			this.customDataMap.set(key, (this.customDataMap.get(key) ?? 0) + data[key]);
 		}
 
 		this.incrementThresholdCount();
