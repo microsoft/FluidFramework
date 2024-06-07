@@ -3063,12 +3063,14 @@ export class ContainerRuntime
 		address: string | undefined,
 		type: string,
 		content: any,
+		targetClientId?: string,
 	): ISignalEnvelope {
 		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
+			targetClientId,
 		};
 
 		// We should not track any signals in case we already have a tracking number.

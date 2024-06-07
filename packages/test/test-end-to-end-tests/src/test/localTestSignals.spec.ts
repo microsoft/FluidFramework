@@ -39,8 +39,8 @@ const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
-const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): void }[]) =>
-	Promise.all(
+async function waitForSignal(...signallers: { once(e: "signal", l: () => void): void }[]) {
+	return Promise.all(
 		signallers.map(async (signaller, index) =>
 			timeoutPromise((resolve) => signaller.once("signal", () => resolve()), {
 				durationMs: 2000,
@@ -48,12 +48,13 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 			}),
 		),
 	);
+}
 
-const waitForTargetedSignal = async (
+async function waitForTargetedSignal(
 	targetedSignaller: { once(e: "signal", l: () => void): void },
 	otherSignallers: { once(e: "signal", l: () => void): void }[],
-) =>
-	Promise.all([
+) {
+	return Promise.all([
 		timeoutPromise((resolve) => targetedSignaller.once("signal", () => resolve()), {
 			durationMs: 2000,
 			errorMsg: `Targeted Signaller Timeout`,
@@ -71,6 +72,7 @@ const waitForTargetedSignal = async (
 			),
 		),
 	]);
+}
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -260,24 +262,22 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			});
 		}
 	});
-	async function sendAndVerifyRemoteSignals(runtime: RuntimeLayer) {
+	async function sendAndVerifySignalToRemoteClient(runtime: RuntimeLayer) {
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
-				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
-				assert.equal(message.content, true, "Signal content should be true");
-				assert.equal(
-					message.targetClientId,
-					client.clientId,
-					"Signal should be targeted to this client",
-				);
+				assertSignalProperties(message, client.clientId);
 				client.signalReceivedCount += 1;
 			});
 		});
 
 		for (let i = 0; i < clients.length; i++) {
 			const targetClient = clients[(i + 1) % clients.length];
-			clients[i][runtime].submitSignal("TestSignal", true, targetClient.clientId);
+			clients[i][runtime].submitSignal(
+				"Test Signal Type",
+				"Test Signal Content",
+				targetClient.clientId,
+			);
 			await waitForTargetedSignal(
 				targetClient[runtime],
 				clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
@@ -292,23 +292,22 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			);
 		});
 	}
-	async function sendAndVerifyLocalSignals(runtime: RuntimeLayer) {
+
+	async function sendAndVerifySignalToSelf(runtime: RuntimeLayer) {
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, true, "Signal should be local");
-				assert.equal(message.type, "TestSignal", "Signal type should be TestSignal");
-				assert.equal(message.content, true, "Signal content should be true");
-				assert.equal(
-					message.targetClientId,
-					client.clientId,
-					"Signal should be targeted to this client",
-				);
+				assertSignalProperties(message, client.clientId);
 				client.signalReceivedCount += 1;
 			});
 		});
 
 		for (const client of clients) {
-			client[runtime].submitSignal("TestSignal", true, client.clientId);
+			client[runtime].submitSignal(
+				"Test Signal Type",
+				"Test Signal Content",
+				client.clientId,
+			);
 			await waitForTargetedSignal(
 				client[runtime],
 				clients.filter((c) => c !== client).map((c) => c[runtime]),
@@ -324,14 +323,26 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
+	function assertSignalProperties(message: IInboundSignalMessage, clientId: string | undefined) {
+		assert.equal(message.type, "Test Signal Type", "signal type mismatch");
+		assert.equal(message.content, "Test Signal Content", "signal content mismatch");
+		assert.equal(message.targetClientId, clientId, "Signal should be targeted to this client");
+	}
+
 	[RuntimeLayer.containerRuntime, RuntimeLayer.dataStoreRuntime].forEach((layer) =>
-		describe(`sent from ${layer}`, () => {
-			it("can target a message to a specific remote client using their client ID", async () => {
-				await sendAndVerifyRemoteSignals(layer);
+		describe(`when sent from ${layer}`, () => {
+			it("should correctly deliver a targeted message to a specific remote client, identified by their client ID", async () => {
+				// This test verifies that when a signal is sent to a specific remote client using their client ID,
+				// only that client receives the signal. This is tested by sending a signal from each client to all other clients,
+				// and then verifying that each client received exactly one signal
+				await sendAndVerifySignalToRemoteClient(layer);
 			});
 
-			it("can target a message to the local client using client ID", async () => {
-				await sendAndVerifyLocalSignals(layer);
+			it("should correctly deliver a targeted message to itself, identified by their own client ID", async () => {
+				// This test verifies that when a client targets a signal to itself using its own client ID
+				// the signal is correctly received only by the local client. This is tested by sending a signal from each client to itself,
+				// and then verifying that each client received exactly one signal with matching type and content.
+				await sendAndVerifySignalToSelf(layer);
 			});
 		}),
 	);

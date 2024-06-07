@@ -473,10 +473,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					"Attempted to process an inbound signal without a handler attached",
 				);
 			}
+
+			const envelope = JSON.parse(message.content as string);
+			const targetClientId = message.targetClientId ?? envelope.targetClientId ?? undefined;
+
+			// Drop signal if target client ID it does not match the receiving client ID
+			if (
+				targetClientId !== undefined &&
+				targetClientId !== this.connectionManager.clientId
+			) {
+				return;
+			}
+
 			this.handler.processSignal({
 				clientId: message.clientId,
-				content: JSON.parse(message.content as string),
-				targetClientId: message.targetClientId,
+				content: envelope,
+				targetClientId,
 			});
 		});
 
