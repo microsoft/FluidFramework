@@ -498,7 +498,7 @@ function createArrayNodeProxy(
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
 				throw new UsageError(
-					"Cannot set or shadow indexed properties on array nodes. Use array node mutation APIs to alter the array, and do not shadow index properties.",
+					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
 				);
 			}
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
@@ -552,6 +552,13 @@ function createArrayNodeProxy(
 				};
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
+		},
+		defineProperty(target, key, attributes) {
+			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			if (maybeIndex !== undefined) {
+				throw new UsageError("Shadowing of array indices is not permitted.");
+			}
+			return Reflect.defineProperty(dispatchTarget, key, attributes);
 		},
 	});
 	return proxy;
