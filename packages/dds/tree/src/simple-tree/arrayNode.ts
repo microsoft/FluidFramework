@@ -7,19 +7,18 @@ import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../c
 import {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
-	FlexTreeFieldNode,
 	FlexTreeNode,
-	FlexTreeNodeSchema,
 	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
+	MapTreeNode,
+	cursorForMapTreeField,
+	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
 	getOrCreateNodeProxy,
 	markContentType,
-	prepareContentForInsert,
+	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
 import {
@@ -33,11 +32,10 @@ import {
 	type,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
-import { cursorFromFieldData } from "./toMapTree.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -575,27 +573,29 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		const sequenceField = getSequenceField(this);
-
-		const content = prepareContentForInsert(
-			(
-				value as readonly (
-					| InsertableContent
-					| IterableTreeArrayContent<InsertableContent>
-				)[]
-			).flatMap((c) => (c instanceof IterableTreeArrayContent ? Array.from(c) : [c])),
-			sequenceField.context.checkout.forest,
-		);
-
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
 		// but it works since cursorFromFieldData special cases arrays.
 		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
+		const content = value as readonly (
+			| InsertableContent
+			| IterableTreeArrayContent<InsertableContent>
+		)[];
 
-		return cursorFromFieldData(
-			content,
-			simpleFieldSchema,
-			getFlexNode(this).context.nodeKeyManager,
-			getSchemaAndPolicy(sequenceField),
-		);
+		const mapTrees = content
+			.flatMap((c): InsertableContent[] =>
+				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			)
+			.map((c) =>
+				mapTreeFromNodeData(
+					c,
+					simpleFieldSchema.allowedTypes,
+					sequenceField.context.nodeKeyManager,
+					getSchemaAndPolicy(sequenceField),
+				),
+			);
+
+		prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		return cursorForMapTreeField(mapTrees);
 	}
 
 	public toJSON(): unknown {
@@ -770,13 +770,16 @@ export function arraySchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): RawTreeNode<FlexTreeNodeSchema, unknown> {
-			return new RawFieldNode(
+		): MapTreeNode {
+			return getOrCreateMapTreeNode(
 				flexSchema,
-				copyContent(
-					flexSchema.name,
-					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				) as object,
+				mapTreeFromNodeData(
+					copyContent(
+						flexSchema.name,
+						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+					) as object,
+					this as unknown as ImplicitAllowedTypes,
+				),
 			);
 		}
 
@@ -801,22 +804,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
 }
 
 function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {

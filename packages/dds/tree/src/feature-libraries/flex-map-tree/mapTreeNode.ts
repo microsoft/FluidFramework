@@ -66,6 +66,13 @@ export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
 }
 
+/**
+ * Checks if the given {@link FlexTreeNode} is a {@link MapTreeNode}.
+ */
+export function isMapTreeNode(flexNode: FlexTreeNode): flexNode is MapTreeNode {
+	return flexNode instanceof EagerMapTreeNode;
+}
+
 /** A node's parent field and its index in that field */
 interface LocationInField {
 	readonly parent: MapTreeField<FlexAllowedTypes>;
