@@ -24,6 +24,7 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISequencedOpMessage } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
@@ -45,9 +46,9 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 // @alpha
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
-    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "pre-op", listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // @eventProperty
-    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "op", listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @alpha

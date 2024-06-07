@@ -9,8 +9,10 @@ import {
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+import {
+	IGarbageCollectionData,
+	ISequencedOpMessage,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.
@@ -27,11 +29,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 	 */
 	(
 		event: "pre-op",
-		listener: (
-			op: ISequencedDocumentMessage,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
 	/**
@@ -44,11 +42,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 	 */
 	(
 		event: "op",
-		listener: (
-			op: ISequencedDocumentMessage,
-			local: boolean,
-			target: IEventThisPlaceHolder,
-		) => void,
+		listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 }
 

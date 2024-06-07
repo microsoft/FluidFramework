@@ -138,10 +138,4 @@ export type {
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
-export type {
-	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
-	IBranchOrigin, // Required for ISequencedDocumentMessage
-	ITrace, // Required for ISequencedDocumentMessage
-} from "@fluidframework/driver-definitions/internal";
-
 // #endregion Legacy exports

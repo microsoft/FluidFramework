@@ -6,13 +6,13 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
@@ -188,7 +188,7 @@ export class Interval implements ISerializableInterval {
 		label: string,
 		start?: SequencePlace,
 		end?: SequencePlace,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 	) {
 		if (typeof start === "string" || typeof end === "string") {
 			throw new UsageError(

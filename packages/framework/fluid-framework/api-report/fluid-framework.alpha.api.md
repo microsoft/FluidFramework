@@ -15,6 +15,7 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/in
 import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
+import { ISequencedOpMessage } from '@fluidframework/runtime-definitions/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
@@ -147,13 +148,6 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
-
-// @alpha
-export interface IBranchOrigin {
-    id: string;
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-}
 
 // @public
 export interface IConnection {
@@ -437,7 +431,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedOpMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
@@ -486,9 +480,9 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
 
 // @alpha
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedOpMessage | undefined, slide: boolean) => void): void;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedOpMessage | undefined) => void): void;
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedOpMessage | undefined) => void): void;
     (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
@@ -584,27 +578,6 @@ export interface IProvideFluidLoadable {
 }
 
 // @alpha
-export interface ISequencedDocumentMessage {
-    clientId: string | null;
-    clientSequenceNumber: number;
-    // @deprecated
-    compression?: string;
-    contents: unknown;
-    data?: string;
-    // @deprecated
-    expHash1?: string;
-    metadata?: unknown;
-    minimumSequenceNumber: number;
-    origin?: IBranchOrigin;
-    referenceSequenceNumber: number;
-    sequenceNumber: number;
-    serverMetadata?: unknown;
-    timestamp: number;
-    traces?: ITrace[];
-    type: string;
-}
-
-// @alpha
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
     position: number;
@@ -697,9 +670,9 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 // @alpha
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
-    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "pre-op", listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // @eventProperty
-    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "op", listener: (op: ISequencedOpMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @alpha (undocumented)
@@ -777,13 +750,6 @@ export interface ITelemetryBaseProperties {
 // @public
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
-}
-
-// @alpha
-export interface ITrace {
-    action: string;
-    service: string;
-    timestamp: number;
 }
 
 // @public
@@ -995,7 +961,7 @@ export class SequenceInterval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedOpMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)

@@ -85,3 +85,41 @@ export interface IAttachMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	snapshot: IAttachMessage["snapshot"] | null;
 };
+
+/**
+ * Sequenced message for the container.
+ * @alpha
+ */
+export interface ISequencedOpMessage {
+	/**
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null;
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	clientId: string | null;
+
+	/**
+	 * The sequenced identifier.
+	 */
+	sequenceNumber: number;
+
+	/**
+	 * The reference sequence number the message was sent relative to.
+	 */
+	referenceSequenceNumber: number;
+
+	/**
+	 * The type of operation.
+	 */
+	type: string;
+
+	/**
+	 * The contents of the message.
+	 */
+	contents: unknown;
+
+	/**
+	 * Timestamp when the server ticketed the message.
+	 */
+	timestamp: number;
+}

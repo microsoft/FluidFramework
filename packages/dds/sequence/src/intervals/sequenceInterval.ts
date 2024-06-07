@@ -7,7 +7,6 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
 	ISegment,
@@ -25,6 +24,7 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -350,7 +350,7 @@ export class SequenceInterval implements ISerializableInterval {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 		localSeq?: number,
 		useNewSlidingBehavior: boolean = false,
 	) {
@@ -430,7 +430,7 @@ export function createPositionReferenceFromSegoff(
 	client: Client,
 	segoff: { segment: ISegment | undefined; offset: number | undefined } | "start" | "end",
 	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
+	op?: ISequencedOpMessage,
 	localSeq?: number,
 	fromSnapshot?: boolean,
 	slidingPreference?: SlidingPreference,
@@ -480,7 +480,7 @@ function createPositionReference(
 	client: Client,
 	pos: number | "start" | "end",
 	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
+	op?: ISequencedOpMessage,
 	fromSnapshot?: boolean,
 	localSeq?: number,
 	slidingPreference?: SlidingPreference,
@@ -532,7 +532,7 @@ export function createSequenceInterval(
 	end: SequencePlace | undefined,
 	client: Client,
 	intervalType: IntervalType,
-	op?: ISequencedDocumentMessage,
+	op?: ISequencedOpMessage,
 	fromSnapshot?: boolean,
 	useNewSlidingBehavior: boolean = false,
 ): SequenceInterval {

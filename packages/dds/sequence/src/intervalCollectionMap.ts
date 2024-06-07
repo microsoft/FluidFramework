@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 import { IntervalCollectionTypeLocalValue, makeSerializable } from "./IntervalCollectionValues.js";
@@ -86,7 +86,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 		process: (
 			op: IMapOperation,
 			local: boolean,
-			message: ISequencedDocumentMessage,
+			message: ISequencedOpMessage,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => {
 			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
@@ -285,7 +285,7 @@ export class IntervalCollectionMap<T extends ISerializableInterval> {
 	public tryProcessMessage(
 		op: unknown,
 		local: boolean,
-		message: ISequencedDocumentMessage,
+		message: ISequencedOpMessage,
 		localOpMetadata: unknown,
 	): boolean {
 		if (isMapOperation(op)) {

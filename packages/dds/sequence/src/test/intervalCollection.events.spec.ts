@@ -6,8 +6,8 @@
 import { strict as assert, fail } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -22,7 +22,7 @@ import { SharedStringClass, ISharedString } from "../sharedString.js";
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
 	local: boolean;
-	op: ISequencedDocumentMessage | undefined;
+	op: ISequencedOpMessage | undefined;
 }
 
 describe("SharedString interval collection event spec", () => {

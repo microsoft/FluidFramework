@@ -9,7 +9,6 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
 	DetachedReferencePosition,
@@ -27,6 +26,7 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -324,7 +324,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		start: SequencePlace,
 		end: SequencePlace,
 		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 	): TInterval {
 		return this.helpers.create(
 			this.label,
@@ -343,7 +343,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		end: SequencePlace,
 		intervalType: IntervalType,
 		props?: PropertySet,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 	) {
 		const interval: TInterval = this.createInterval(start, end, intervalType, op);
 		if (interval) {
@@ -394,7 +394,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		interval: TInterval,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 		localSeq?: number,
 	) {
 		const newInterval = interval.modify(
@@ -685,7 +685,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			interval: TInterval,
 			previousInterval: TInterval,
 			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
+			op: ISequencedOpMessage | undefined,
 			slide: boolean,
 		) => void,
 	): void;
@@ -699,7 +699,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 		listener: (
 			interval: TInterval,
 			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
+			op: ISequencedOpMessage | undefined,
 		) => void,
 	): void;
 	/**
@@ -717,7 +717,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			interval: TInterval,
 			propertyDeltas: PropertySet,
 			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
+			op: ISequencedOpMessage | undefined,
 		) => void,
 	): void;
 	/**
@@ -1192,7 +1192,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		previousInterval: TInterval,
 		local: boolean,
 		slide: boolean,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 	): void {
 		// Temporarily make references transient so that positional queries work (non-transient refs
 		// on resolve to DetachedPosition on any segments that don't contain them). The original refType
@@ -1300,11 +1300,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return interval;
 	}
 
-	private deleteExistingInterval(
-		interval: TInterval,
-		local: boolean,
-		op?: ISequencedDocumentMessage,
-	) {
+	private deleteExistingInterval(interval: TInterval, local: boolean, op?: ISequencedOpMessage) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
@@ -1506,7 +1502,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	public ackChange(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
-		op: ISequencedDocumentMessage,
+		op: ISequencedOpMessage,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
@@ -1702,7 +1698,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return value;
 	}
 
-	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage): void {
+	private ackInterval(interval: TInterval, op: ISequencedOpMessage): void {
 		// Only SequenceIntervals need potential sliding
 		if (!(interval instanceof SequenceInterval)) {
 			return;
@@ -1801,7 +1797,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	public ackAdd(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
-		op: ISequencedDocumentMessage,
+		op: ISequencedOpMessage,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
 		if (local) {
@@ -1846,7 +1842,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	public ackDelete(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
-		op: ISequencedDocumentMessage,
+		op: ISequencedOpMessage,
 	): void {
 		if (local) {
 			// Local ops were applied when the message was created and there's no "pending delete"

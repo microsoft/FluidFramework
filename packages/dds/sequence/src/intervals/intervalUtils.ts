@@ -5,7 +5,6 @@
 
 /* eslint-disable no-bitwise */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -13,6 +12,7 @@ import {
 	PropertySet,
 	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 
 import { SequencePlace, Side } from "../intervalCollection.js";
 
@@ -52,7 +52,7 @@ export interface IInterval {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 		localSeq?: number,
 		useNewSlidingBehavior?: boolean,
 	): IInterval | undefined;
@@ -236,7 +236,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
+		op?: ISequencedOpMessage,
 		fromSnapshot?: boolean,
 		useNewSlidingBehavior?: boolean,
 	): TInterval;

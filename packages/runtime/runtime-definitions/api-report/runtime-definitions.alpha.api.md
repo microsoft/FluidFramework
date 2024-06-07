@@ -295,6 +295,16 @@ export interface IProvideFluidDataStoreRegistry {
 }
 
 // @alpha
+export interface ISequencedOpMessage {
+    clientId: string | null;
+    contents: unknown;
+    referenceSequenceNumber: number;
+    sequenceNumber: number;
+    timestamp: number;
+    type: string;
+}
+
+// @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;

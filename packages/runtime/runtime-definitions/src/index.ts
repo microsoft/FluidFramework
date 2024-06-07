@@ -47,6 +47,7 @@ export type {
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
+	ISequencedOpMessage,
 	ISignalEnvelope,
 } from "./protocol.js";
 export type {

@@ -4,7 +4,7 @@
  */
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedOpMessage } from "@fluidframework/runtime-definitions/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";
@@ -135,7 +135,7 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 		value: IntervalCollection<T>,
 		params: ISerializedInterval,
 		local: boolean,
-		message: ISequencedDocumentMessage | undefined,
+		message: ISequencedOpMessage | undefined,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	): void;
 
