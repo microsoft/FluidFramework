@@ -700,7 +700,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
 
-	getLongClientId(shortClientId: number): string {
+	getLongClientId(shortClientId: number) {
 		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
 	}
 
