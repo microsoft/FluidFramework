@@ -44,24 +44,6 @@ describe("simple-tree types", () => {
 			const _n4: TreeNode = n3;
 		});
 
-		it("Assignability", () => {
-			// @ts-expect-error TreeNode should not allow non-node objects.
-			const n: TreeNode = {};
-			// @ts-expect-error TreeNode should not allow non-node objects.
-			const n2: TreeNode = {
-				[type]: "",
-			};
-
-			// Declared as a separate implicitly typed variable to avoid "Object literal may only specify known properties" error
-			// (which is good, but not what we are testing for here).
-			const n3 = {
-				[type]: "",
-				"#brand": undefined,
-			};
-			// @ts-expect-error TreeNode should not allow non-node objects, even if you use "add missing properties" refactor.
-			const _n4: TreeNode = n3;
-		});
-
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
 				public override get [type](): string {
@@ -75,14 +57,21 @@ describe("simple-tree types", () => {
 			assert.throws(() => new Subclass(), validateUsageError(/SchemaFactory/));
 		});
 
+		// Type only tests which error if run:
+		function typeOnly() {}
+
 		it("subclassing from public API", () => {
-			// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
-			abstract class Subclass extends TreeNodePublic {}
+			assert.throws(() => {
+				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
+				abstract class Subclass extends TreeNodePublic {}
+			});
 		});
 
 		it("instancof public", () => {
-			// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
-			const x = {} instanceof TreeNodePublic;
+			assert.throws(() => {
+				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
+				const x = {} instanceof TreeNodePublic;
+			});
 		});
 	});
 
