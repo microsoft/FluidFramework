@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { SchemaFactory, FieldProps } from "../../simple-tree/index.js";
+import { SchemaFactory, FieldProps, TreeNode } from "../../simple-tree/index.js";
 import {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
@@ -16,6 +16,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { hydrate } from "./utils.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -140,6 +141,29 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(array), TreeStatus.New);
 		const object = new TestObject({ map, array });
 		assert.equal(Tree.status(object), TreeStatus.New);
+	});
+
+	it("preserve change events after hydration", () => {
+		function test<T extends TreeNode>(node: T, change: (node: T) => void) {
+			let deepEvent = false;
+			let shallowEvent = false;
+			Tree.on(node, "nodeChanged", () => (shallowEvent = true));
+			Tree.on(node, "treeChanged", () => (deepEvent = true));
+			change(node);
+			assert.equal(shallowEvent, true);
+			assert.equal(deepEvent, true);
+		}
+
+		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
+		const leafObject = new TestLeaf({ value: "value" });
+		const array = new TestArray([leafObject]);
+		const map = new TestMap([]);
+		root.array = array;
+		root.map = map;
+
+		test(leafObject, () => (leafObject.value = "new value"));
+		test(map, () => map.set("new key", new TestLeaf({ value: "new leaf" })));
+		test(array, () => array.insertAtEnd(new TestLeaf({ value: "new leaf" })));
 	});
 
 	it("read constant defaulted properties", () => {
