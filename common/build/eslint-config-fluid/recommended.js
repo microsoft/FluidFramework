@@ -102,6 +102,36 @@ module.exports = {
 		"unicorn/expiring-todo-comments": "off",
 
 		/**
+		 * Enforces our naming conventions.
+		 */
+		"@typescript-eslint/naming-convention": [
+			"error",
+			{
+				selector: "default",
+				format: ["camelCase"],
+				leadingUnderscore: "forbid", // We have no global convention for trailing underscores
+				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
+			},
+			{
+				selector: "import",
+				format: ["camelCase", "PascalCase"],
+			},
+			{
+				selector: "variable",
+				format: ["camelCase"],
+				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
+			},
+			{
+				selector: "typeLike",
+				format: ["PascalCase"],
+			},
+			{
+				selector: "functionLike",
+				format: ["camelCase"],
+			},
+		],
+
+		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.
