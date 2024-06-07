@@ -13,7 +13,11 @@ describe("collaborativetext", () => {
 			() =>
 				page.evaluate((i: number) => {
 					const divs = document.getElementsByClassName("text-area");
-					const textAreaElements = divs[i].getElementsByTagName("textarea");
+					const divI = divs[i];
+					if (divI === undefined) {
+						return "-----undefined-----";
+					}
+					const textAreaElements = divI.getElementsByTagName("textarea");
 					const textarea = textAreaElements[0] as HTMLTextAreaElement;
 					if (textarea) {
 						return textarea.value;
@@ -29,7 +33,11 @@ describe("collaborativetext", () => {
 		return page.evaluate(
 			(i: number, t: string) => {
 				const divs = document.getElementsByClassName("text-area");
-				const textAreaElements = divs[i].getElementsByTagName("textarea");
+				const divI = divs[i];
+				if (divI === undefined) {
+					return "-----undefined-----";
+				}
+				const textAreaElements = divI.getElementsByTagName("textarea");
 				const textarea = textAreaElements[0] as HTMLTextAreaElement;
 				if (textarea) {
 					textarea.focus();
