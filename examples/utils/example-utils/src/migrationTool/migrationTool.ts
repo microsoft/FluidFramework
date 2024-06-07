@@ -85,25 +85,24 @@ export class MigrationTool
 			this.dispose();
 		} else {
 			this.runtime.once("dispose", this.dispose);
+			this.pactMap.on("pending", (key: string) => {
+				if (key === newVersionKey) {
+					this.emit("stopping");
+				}
+			});
+
+			this.pactMap.on("accepted", (key: string) => {
+				if (key === newVersionKey) {
+					this.emit("migrating");
+				}
+			});
+
+			this.consensusRegisterCollection.on("atomicChanged", (key: string) => {
+				if (key === newContainerIdKey) {
+					this.emit("migrated");
+				}
+			});
 		}
-
-		this.pactMap.on("pending", (key: string) => {
-			if (key === newVersionKey) {
-				this.emit("stopping");
-			}
-		});
-
-		this.pactMap.on("accepted", (key: string) => {
-			if (key === newVersionKey) {
-				this.emit("migrating");
-			}
-		});
-
-		this.consensusRegisterCollection.on("atomicChanged", (key: string) => {
-			if (key === newContainerIdKey) {
-				this.emit("migrated");
-			}
-		});
 	}
 
 	public async finalizeMigration(id: string) {
@@ -168,6 +167,7 @@ export class MigrationTool
 	 */
 	private readonly dispose = (): void => {
 		this._disposed = true;
+		// TODO: Unregister listeners
 		this.emit("disposed");
 	};
 }
