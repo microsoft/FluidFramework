@@ -243,8 +243,7 @@ export function rebaseBranch<TChange>(
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
-		const inverseTag = mintRevisionTag();
-		const inverse = tagRollbackInverse(changeRebaser.invert(c, true), inverseTag, c.revision);
+		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, false);
 		if (sourceSet.has(c.revision)) {
 			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 			editsToCompose = [currentComposedEdit];
@@ -258,8 +257,8 @@ export function rebaseBranch<TChange>(
 			editsToCompose.push(tagChange(change, c.revision));
 		}
 		revInfos.push({ revision: c.revision });
-		editsToCompose.unshift(inverse);
-		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
+		editsToCompose.unshift(rollback);
+		revInfos.unshift({ revision: rollback.revision, rollbackOf: rollback.rollbackOf });
 	}
 
 	let netChange: TChange | undefined;
@@ -304,7 +303,7 @@ export function rebaseChange<TChange>(
 	);
 
 	const inverses = sourcePath.map((commit) =>
-		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+		rollbackFromCommit(changeRebaser, commit, mintRevisionTag, true),
 	);
 	inverses.reverse();
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
@@ -373,18 +372,24 @@ function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): Revi
 	return revInfos;
 }
 
-function inverseFromCommit<TChange>(
+function rollbackFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
-): TaggedChange<TChange> {
-	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
-	if (cache === true && commit.inverse === undefined) {
-		commit.inverse = inverse;
+): TaggedChange<TChange, RevisionTag> {
+	if (commit.rollback !== undefined) {
+		return commit.rollback;
 	}
+	const untagged = changeRebaser.invert(commit, true);
+	const tag = mintRevisionTag();
+	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
+	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
 
-	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
+	if (cache === true) {
+		commit.rollback = fullyTaggedRollback;
+	}
+	return fullyTaggedRollback;
 }
 
 /**
