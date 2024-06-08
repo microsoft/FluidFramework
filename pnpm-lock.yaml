@@ -12,7 +12,6 @@ overrides:
   qs: ^6.11.0
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
-  '@oclif/core': ~2.4.0
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
 
@@ -16903,8 +16902,8 @@ packages:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -16956,8 +16955,8 @@ packages:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.568.0
@@ -17015,13 +17014,13 @@ packages:
       - aws-crt
     dev: true
 
-  /@aws-sdk/client-sso-oidc@3.569.0:
+  /@aws-sdk/client-sso-oidc@3.569.0(@aws-sdk/client-sts@3.569.0):
     resolution: {integrity: sha512-u5DEjNEvRvlKKh1QLCDuQ8GIrx+OFvJFLfhorsp4oCxDylvORs+KfyKKnJAw4wYEEHyxyz9GzHD7p6a8+HLVHw==}
     engines: {node: '>=16.0.0'}
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -17060,6 +17059,7 @@ packages:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.6.2
     transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
       - aws-crt
     dev: true
 
@@ -17109,13 +17109,13 @@ packages:
       - aws-crt
     dev: true
 
-  /@aws-sdk/client-sts@3.569.0(@aws-sdk/client-sso-oidc@3.569.0):
+  /@aws-sdk/client-sts@3.569.0:
     resolution: {integrity: sha512-3AyipQ2zHszkcTr8n1Sp7CiMUi28aMf1vOhEo0KKi0DWGo1Z1qJEpWeRP363KG0n9/8U3p1IkXGz5FRbpXZxIw==}
     engines: {node: '>=16.0.0'}
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0
+      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -17154,7 +17154,6 @@ packages:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.6.2
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
     dev: true
 
@@ -17205,7 +17204,7 @@ packages:
       '@aws-sdk/client-sts':
         optional: true
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/credential-provider-env': 3.568.0
       '@aws-sdk/credential-provider-process': 3.568.0
       '@aws-sdk/credential-provider-sso': 3.568.0(@aws-sdk/client-sso-oidc@3.569.0)
@@ -17279,7 +17278,7 @@ packages:
       '@aws-sdk/client-sts':
         optional: true
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
       '@smithy/types': 2.12.0
@@ -17442,7 +17441,7 @@ packages:
       '@aws-sdk/client-sso-oidc':
         optional: true
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.569.0
+      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
       '@smithy/shared-ini-file-loader': 2.4.0
@@ -21483,7 +21482,7 @@ packages:
       '@fluidframework/build-tools': 0.39.0(@types/node@18.19.1)
       '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
       '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       '@oclif/plugin-autocomplete': 3.0.17
       '@oclif/plugin-commands': 3.3.2
       '@oclif/plugin-help': 6.0.21
@@ -21546,7 +21545,7 @@ packages:
       '@fluidframework/build-tools': 0.39.0(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
       '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       '@oclif/plugin-autocomplete': 3.0.17
       '@oclif/plugin-commands': 3.3.2
       '@oclif/plugin-help': 6.0.21
@@ -21631,7 +21630,7 @@ packages:
     engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       '@oclif/plugin-autocomplete': 3.0.17
       '@oclif/plugin-commands': 3.3.2
       '@oclif/plugin-help': 6.0.21
@@ -24792,9 +24791,9 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/core@2.4.0:
-    resolution: {integrity: sha512-wWUnOOfQQty0k1Cstm/iWW6pbG0mHzU7rcUtab2Sni9kjBPCcy6ENTgpsWbb/WdITopqtXmvpYII2fgcjKdzUA==}
-    engines: {node: '>=14.0.0'}
+  /@oclif/core@3.27.0:
+    resolution: {integrity: sha512-Fg93aNFvXzBq5L7ztVHFP2nYwWU1oTCq48G0TjF/qC1UN36KWa2H5Hsm72kERd5x/sjy2M2Tn4kDEorUlpXOlw==}
+    engines: {node: '>=18.0.0'}
     dependencies:
       '@types/cli-progress': 3.11.5
       ansi-escapes: 4.3.2
@@ -24803,24 +24802,24 @@ packages:
       chalk: 4.1.2
       clean-stack: 3.0.1
       cli-progress: 3.12.0
-      debug: 4.3.4(supports-color@8.1.1)
+      color: 4.2.3
+      debug: 4.3.5(supports-color@8.1.1)
       ejs: 3.1.10
-      fs-extra: 9.1.0
       get-package-type: 0.1.0
       globby: 11.1.0
       hyperlinker: 1.0.0
       indent-string: 4.0.0
       is-wsl: 2.2.0
       js-yaml: 3.14.1
+      minimatch: 9.0.4
       natural-orderby: 2.0.3
       object-treeify: 1.1.33
       password-prompt: 1.1.3
-      semver: 7.6.0
+      slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      tslib: 2.6.2
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -24829,7 +24828,7 @@ packages:
     resolution: {integrity: sha512-3ZEx5gvknsbIXA/x+RqUw2dqKQkuyvC08zl7c6sNy/+feowP6SojYYffhbNsU4g3uhnbavfnnUc475oqlH5hUw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       chalk: 5.3.0
       debug: 4.3.4(supports-color@8.1.1)
       ejs: 3.1.10
@@ -24840,7 +24839,7 @@ packages:
     resolution: {integrity: sha512-zSdAgKzmQve3UzRUh9Tm9ZJ+xSjBwnLLhh/+kpYhmFwjWDVZXuPBJ/0XHtqkPAoPguihuMtbvopoBIGn3p8R0w==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       lodash.pickby: 4.6.0
       lodash.sortby: 4.7.0
       lodash.template: 4.5.0
@@ -24850,14 +24849,14 @@ packages:
     resolution: {integrity: sha512-w860r9d456xhw1GPaos9yQF+BZeFY9UKdrINbL3fZFX5ZHhr/zGT4Fep5wUkHogjjnSB8+ZHi3D6j2jScIizUw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
 
   /@oclif/plugin-not-found@3.1.8:
     resolution: {integrity: sha512-TbpMJ7PODaXuodSivqJo9cFxiVxNUmkCCl1BTdMpLuy82nxMv6aON0W1DVJryJ/OQjM4RKXvH3x3qCB7Xn0U8g==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@inquirer/confirm': 3.1.6
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       chalk: 5.3.0
       fast-levenshtein: 3.0.0
 
@@ -24865,7 +24864,7 @@ packages:
     resolution: {integrity: sha512-JtPTJFjL6izMCe5dDS2ix2PyWAD2DeJ5Atzd2HHRifbPcmOxaUE62FKTnarIwfPHLMF/nN33liwo9InAdirozg==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       chalk: 5.3.0
       debug: 4.3.4(supports-color@8.1.1)
       http-call: 5.3.0
@@ -30077,6 +30076,7 @@ packages:
   /at-least-node@1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
+    dev: true
 
   /atob@2.1.2:
     resolution: {integrity: sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==}
@@ -31680,6 +31680,13 @@ packages:
       color-convert: 1.9.3
       color-string: 1.9.1
 
+  /color@4.2.3:
+    resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
+    engines: {node: '>=12.5.0'}
+    dependencies:
+      color-convert: 2.0.1
+      color-string: 1.9.1
+
   /colorette@1.4.0:
     resolution: {integrity: sha512-Y2oEozpomLn7Q3HFP7dpww7AtMJplbM9lGZP6RDfHqmbeRjiwRg4n6VM6j4KLmRke85uWEI7JqF17f3pqdRA0g==}
     dev: true
@@ -32692,6 +32699,18 @@ packages:
 
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+      supports-color: 8.1.1
+
+  /debug@4.3.5(supports-color@8.1.1):
+    resolution: {integrity: sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -35274,6 +35293,7 @@ packages:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
       universalify: 2.0.1
+    dev: true
 
   /fs-minipass@2.1.0:
     resolution: {integrity: sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==}
@@ -38442,6 +38462,7 @@ packages:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
+    dev: true
 
   /jsonify@0.0.1:
     resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
@@ -39948,6 +39969,12 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
+  /minimatch@9.0.4:
+    resolution: {integrity: sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==}
+    engines: {node: '>=16 || 14 >=14.17'}
+    dependencies:
+      brace-expansion: 2.0.1
+
   /minimist-options@4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
     engines: {node: '>= 6'}
@@ -40946,7 +40973,7 @@ packages:
       '@inquirer/confirm': 3.1.6
       '@inquirer/input': 2.1.2
       '@inquirer/select': 2.3.2
-      '@oclif/core': 2.4.0
+      '@oclif/core': 3.27.0
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.8
       '@oclif/plugin-warn-if-update-available': 3.0.15
@@ -46893,6 +46920,7 @@ packages:
   /universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
+    dev: true
 
   /unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
