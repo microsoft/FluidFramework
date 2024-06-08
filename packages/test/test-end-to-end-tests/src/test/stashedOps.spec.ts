@@ -1992,8 +1992,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Prototype tests for Offline Phase 3 - serializing without closing", () => {
-		//* OTHER TEST CASES TO WRITE:
-		// (?) Forked container where resubmit results in different number of chunks - so CSN is different, but it shouldn't matter because batchId would be set already
+		//* OTHER TEST CASES TO CONSIDER:
+		// - (?) Forked container where resubmit results in different number of chunks - so CSN is different, but it shouldn't matter because batchId would be set already
+		// - Properly write the first one to do resubmit, rather than faking the clientId
+		// - Invert the first one where it's the rehydrated container that reconnects and submits the local state, all the while the original client is offline then comes online and closes.
+		// - Include the currently-tracked batchIds (from BatchTracker) in the summary and load them from the snapshot (NYI)
 
 		it(`Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
 			const incrementValue = 3;
@@ -2029,7 +2032,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		itExpects(
-			`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`,
+			`Ignores duplicate sequenced ops when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				//* TODO: Figure out which containers these are and explain or constrain them more to be more meaningful
 				{
