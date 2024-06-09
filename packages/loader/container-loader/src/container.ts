@@ -1616,7 +1616,7 @@ export class Container
 		timings.phase2 = performance.now();
 
 		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
