@@ -109,7 +109,7 @@ export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
 	: false;
 
 /**
- * Checks for that type is exactly `object`.
+ * Checks that type is exactly `object`.
  *
  * @beta
  */

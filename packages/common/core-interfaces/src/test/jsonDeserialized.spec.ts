@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { JsonDeserialized } from "../jsonDeserialized.js";
+import type { JsonTypeWith, NonNullJsonObject } from "../jsonType.js";
 
 import type { ObjectWithNumberOrUndefined, ObjectWithOptionalNumber } from "./testValues.js";
 import {
@@ -23,20 +24,28 @@ import {
 	objectWithLiterals,
 	arrayOfLiterals,
 	tupleWithLiterals,
-	emptyObject,
-	objectWithOptionalUndefined,
 	symbol,
 	uniqueSymbol,
 	bigint,
 	aFunction,
-	object,
+	unknownValue,
 	voidValue,
+	object,
+	emptyObject,
+	objectWithBoolean,
+	objectWithNumber,
+	objectWithString,
+	objectWithSymbol,
+	objectWithBigint,
+	objectWithFunction,
+	objectWithBigintOrString,
 	objectWithUndefined,
-	objectWithNumberOrUndefinedUndefined,
-	objectWithNumberOrUndefinedNumbered,
+	objectWithOptionalUndefined,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
 	objectWithOptionalNumberDefined,
+	objectWithNumberOrUndefinedUndefined,
+	objectWithNumberOrUndefinedNumbered,
 	objectWithNever,
 	objectWithPossibleRecursion,
 	objectWithRecursion,
@@ -82,21 +91,23 @@ function passThru<T>(v: JsonDeserialized<T>, expected?: JsonDeserialized<T>): Js
  *
  * @param v - value to pass through JSON serialization
  * @param error - error expected during serialization round-trip
+ * @returns dummy result to allow further type checking
  */
-function passThruThrows<T>(v: JsonDeserialized<T>, expectedThrow: Error): void {
+function passThruThrows<T>(v: JsonDeserialized<T>, expectedThrow: Error): JsonDeserialized<T> {
 	assert.throws(() => passThru(v), expectedThrow);
+	return undefined as unknown as JsonDeserialized<T>;
 }
 
 describe("JsonDeserialized", () => {
 	describe("positive compilation tests", () => {
 		describe("supported primitive types are preserved", () => {
-			it("boolean", () => {
+			it("`boolean`", () => {
 				passThru(boolean) satisfies boolean;
 			});
-			it("number", () => {
+			it("`number`", () => {
 				passThru(number) satisfies number;
 			});
-			it("string", () => {
+			it("`string`", () => {
 				passThru(string) satisfies string;
 			});
 			it("numeric enum", () => {
@@ -113,20 +124,20 @@ describe("JsonDeserialized", () => {
 			});
 		});
 
-		describe("supported literal types", () => {
-			it("true", () => {
+		describe("supported literal types are preserved", () => {
+			it("`true`", () => {
 				passThru(true) satisfies true;
 			});
-			it("false", () => {
+			it("`false`", () => {
 				passThru(false) satisfies false;
 			});
-			it("0", () => {
+			it("`0`", () => {
 				passThru(0) satisfies 0;
 			});
 			it('"string"', () => {
 				passThru("string") satisfies "string";
 			});
-			it("null", () => {
+			it("`null`", () => {
 				// eslint-disable-next-line unicorn/no-null
 				passThru(null) satisfies null;
 			});
@@ -166,6 +177,16 @@ describe("JsonDeserialized", () => {
 				passThru(emptyObject) satisfies typeof emptyObject;
 			});
 
+			it("with `boolean`", () => {
+				passThru(objectWithBoolean) satisfies typeof objectWithBoolean;
+			});
+			it("with `number`", () => {
+				passThru(objectWithNumber) satisfies typeof objectWithNumber;
+			});
+			it("with `string`", () => {
+				passThru(objectWithString) satisfies typeof objectWithString;
+			});
+
 			it("object with possible type recursion through union", () => {
 				passThru(objectWithPossibleRecursion) satisfies typeof objectWithPossibleRecursion;
 			});
@@ -178,7 +199,7 @@ describe("JsonDeserialized", () => {
 				) satisfies typeof objectWithRecursion;
 			});
 
-			it("simple json (JsonTypeWith<never>)", () => {
+			it("simple json (`JsonTypeWith<never>`)", () => {
 				// FIX: @ts-expect-error `JsonTypeWith<never>` is recursive
 				passThru(
 					simpleJson,
@@ -352,59 +373,104 @@ describe("JsonDeserialized", () => {
 			});
 		});
 
-		describe("unsupported types cause compiler error", () => {
-			it("undefined", () => {
+		describe("unsupported types", () => {
+			it("`undefined` becomes `never`", () => {
 				passThruThrows(
 					// @ts-expect-error `undefined` is not supported (becomes `never`)
 					undefined,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				);
+				) satisfies never;
 			});
-			it("unknown", () => {
-				passThru(
+			it("`unknown` becomes `JsonTypeWith<never>`", () => {
+				const resultRead = passThru(
 					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
-					{} as unknown,
-				); // {} value is actually supported; so, no runtime error.
+					unknownValue,
+					// value is actually supported; so, no runtime error.
+				);
+				// @ts-expect-error `unknown` does not satisfy `JsonTypeWith<never>`
+				unknownValue satisfies typeof resultRead;
+				resultRead satisfies JsonTypeWith<never>;
 			});
-			it("symbol", () => {
+			it("`symbol` becomes `never`", () => {
 				passThruThrows(
 					// @ts-expect-error `symbol` is not supported (becomes `never`)
 					symbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				);
+				) satisfies never;
 			});
-			it("unique symbol", () => {
+			it("`unique symbol` becomes `never`", () => {
 				passThruThrows(
 					// @ts-expect-error [unique] `symbol` is not supported (becomes `never`)
 					uniqueSymbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				);
+				) satisfies never;
 			});
-			it("bigint", () => {
+			it("`bigint` becomes `never`", () => {
 				passThruThrows(
 					// @ts-expect-error `bigint` is not supported (becomes `never`)
 					bigint,
 					new TypeError("Do not know how to serialize a BigInt"),
-				);
+				) satisfies never;
 			});
-			it("function", () => {
+			it("`function` becomes `never`", () => {
 				passThruThrows(
 					// @ts-expect-error `Function` is not supported (becomes `never`)
 					aFunction,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				);
+				) satisfies never;
 			});
-			it("object", () => {
+			it("`object` (plain object) becomes non-null Json object", () => {
 				passThru(
 					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
 					object,
-				); // object's value is actually supported; so, no runtime error.
+					// object's value is actually supported; so, no runtime error.
+				) satisfies NonNullJsonObject;
 			});
-			it("void", () => {
+			it("`void` becomes `never`", () => {
 				passThru(
 					// @ts-expect-error `void` is not supported (becomes `never`)
 					voidValue,
-				); // voidValue is actually `null`; so, no runtime error.
+					// voidValue is actually `null`; so, no runtime error.
+				) satisfies never;
+			});
+			describe("object", () => {
+				describe("drops properties", () => {
+					it("with exactly `bigint`", () => {
+						const resultRead = passThruThrows(
+							// @ts-expect-error `bigint` is not supported (becomes `never`)
+							objectWithBigint,
+							new TypeError("Do not know how to serialize a BigInt"),
+						);
+						// @ts-expect-error `bigint` missing
+						resultRead satisfies typeof objectWithBigint;
+						objectWithBigint satisfies typeof resultRead;
+					});
+					it("with exactly `symbol`", () => {
+						passThru(
+							// @ts-expect-error `symbol` is not supported (becomes `never`)
+							objectWithSymbol,
+							{},
+							// @ts-expect-error `symbol` missing
+						) satisfies typeof objectWithSymbol;
+					});
+					it("with exactly `function`", () => {
+						passThru(
+							objectWithFunction,
+							{},
+							// @ts-expect-error `function` missing
+						) satisfies typeof objectWithFunction;
+					});
+				});
+				it("will only propagate with `string` for `bigint | string`", () => {
+					const resultRead = passThru(
+						// @ts-expect-error `bigint` | `string` is not assignable to `string`
+						objectWithBigintOrString,
+						// value is a string; so no runtime error.
+					);
+					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString: string }
+					objectWithBigintOrString satisfies typeof resultRead;
+					resultRead satisfies { bigintOrString: string };
+				});
 			});
 		});
 
@@ -475,7 +541,7 @@ describe("JsonDeserialized", () => {
 			emptyObject satisfies typeof objectWithOptionalUndefinedRead;
 		});
 
-		it("never property is filtered away", () => {
+		it("`never` property is filtered away", () => {
 			// @ts-expect-error `never` property (type never) should not be preserved
 			passThru(objectWithNever) satisfies typeof objectWithNever;
 			passThru(objectWithNever) satisfies Omit<typeof objectWithNever, "never">;

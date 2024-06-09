@@ -9,7 +9,6 @@ import type { JsonTypeWith } from "../jsonType.js";
 /* eslint-disable unicorn/no-null */
 
 export const boolean: boolean = true as boolean; // Use `as` to avoid type conversion to `true`
-
 export const number: number = 0;
 export const string: string = "";
 export const symbol = Symbol("symbol");
@@ -17,8 +16,10 @@ export const uniqueSymbol: unique symbol = Symbol("unique symbol");
 export const bigint: bigint = 0n;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const aFunction = (): any => {};
+export const unknownValue = { key: "value" } as unknown;
 export const voidValue = null as unknown as void;
 const never = null as never;
+
 export enum NumericEnum {
 	zero,
 	one,
@@ -41,8 +42,17 @@ export const numericEnumValue = ((): NumericEnum => NumericEnum.one)();
 export const stringEnumValue = ((): StringEnum => StringEnum.a)();
 export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum => ConstHeterogenousEnum.a)();
 export const computedEnumValue = ((): ComputedEnum => ComputedEnum.computed)();
+
 export const object: object = { key: "value" };
 export const emptyObject = {};
+export const objectWithBoolean = { boolean: true };
+export const objectWithNumber = { number: 0 };
+export const objectWithString = { string: "" };
+export const objectWithSymbol = { symbol: Symbol("objectSymbol") };
+export const objectWithBigint = { bigint: 0n };
+export const objectWithFunction = { function: (): void => {} };
+export const objectWithBigintOrString = { bigintOrString: "not bigint" as string | bigint };
+
 export const objectWithUndefined = {
 	undef: undefined,
 };
@@ -102,6 +112,7 @@ export const arrayOfLiterals: readonly (
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 )[] = [true, 0, 1, "string", "hello", null];
+
 export class ClassWithPrivateData {
 	public public = "public";
 	// @ts-expect-error secret is never read
@@ -157,3 +168,6 @@ export class ClassWithPublicSetter {
 	}
 }
 export const classInstanceWithPublicSetter = new ClassWithPublicSetter();
+
+/* eslint-enable unicorn/no-null */
+/* eslint-enable jsdoc/require-jsdoc */

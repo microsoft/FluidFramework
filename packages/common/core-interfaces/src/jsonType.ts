@@ -25,3 +25,10 @@ export type JsonTypeWith<T> =
 	| T
 	| { [key: string | number]: JsonTypeWith<T> }
 	| JsonTypeWith<T>[];
+
+/**
+ * @beta
+ */
+export type NonNullJsonObject =
+	| { [key: string | number]: JsonTypeWith<never> }
+	| JsonTypeWith<never>[];

@@ -13,7 +13,7 @@ import type {
 	NonSymbolWithDefinedNonFunctionPropertyOf,
 	NonSymbolWithPossiblyUndefinedNonFunctionPropertyOf,
 } from "./exposedUtilityTypes.js";
-import type { JsonTypeWith } from "./jsonType.js";
+import type { JsonTypeWith, NonNullJsonObject } from "./jsonType.js";
 
 /**
  * Used to constrain a type `T` to types that are deserializable from JSON.
@@ -56,7 +56,7 @@ export type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolea
 					>;
 			  }
 			: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-			? /* `object` => */ JsonTypeWith<TReplaced>
+			? /* `object` => */ NonNullJsonObject
 			: /* test for enum like types */ IsEnumLike<T> extends true
 			? /* enum or similar simple type (return as-is) => */ T
 			: /* property bag => */ FlattenIntersection<
