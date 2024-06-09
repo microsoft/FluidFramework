@@ -19,9 +19,10 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--all | --dir <value> | --packages
-    | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |  | 
+    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
+    --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -33,6 +34,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
@@ -223,8 +229,8 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 ```
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
-    [--node10TypeCompat]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
+    [--outFileSuffix <value>] [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
@@ -232,6 +238,7 @@ FLAGS
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
+  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
   --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
                             '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                             package.
@@ -256,9 +263,10 @@ Outputs a list of files that will be included in a package based on its 'files' 
 
 ```
 USAGE
-  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--all | --dir <value> | --packages |
-    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed |  |  | 
+    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> |
+    --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -272,6 +280,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
@@ -306,9 +319,9 @@ Generates type tests for a package or group of packages.
 ```
 USAGE
   $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
-    <value>] [--publicFallback] [--concurrency <value>] [--all | --dir <value> | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+    <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all | --dir <value> |
+    --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] | ]] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -327,6 +340,11 @@ PACKAGE SELECTION FLAGS
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select only packages that have changed when compared to a base branch. Use the
+                                      --branch option to specify a different base branch. Cannot be used with other
+                                      options.
       --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,

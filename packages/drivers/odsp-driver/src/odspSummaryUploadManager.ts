@@ -7,9 +7,8 @@ import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import { getGitType, isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { getGitType } from "@fluidframework/protocol-base";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

@@ -42,8 +42,6 @@ import {
 	IClientDetails,
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
@@ -64,6 +62,8 @@ import {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -75,7 +75,6 @@ import {
 	readAndParse,
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -121,6 +120,7 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
+import { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
@@ -958,9 +958,9 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context or supportedFeatures flag by the service.
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-		const forceEnableSummarizeProtocolTree =
+		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
 
@@ -970,7 +970,7 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
-			forceEnableSummarizeProtocolTree,
+			shouldSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
@@ -983,7 +983,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.isDirty,
+			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 		);
 
 		const isDomAvailable =

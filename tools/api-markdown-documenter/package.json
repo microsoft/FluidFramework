@@ -113,7 +113,8 @@
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
-				"^build:esnext"
+				"^build:esnext",
+				"^tsc"
 			]
 		}
 	},

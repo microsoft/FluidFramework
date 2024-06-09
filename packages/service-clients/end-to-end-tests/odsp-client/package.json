@@ -52,7 +52,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -62,6 +61,7 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -96,7 +96,8 @@
 		"tasks": {
 			"build:test": [
 				"^api-extractor:esnext",
-				"^build:esnext"
+				"^build:esnext",
+				"^tsc"
 			]
 		}
 	},

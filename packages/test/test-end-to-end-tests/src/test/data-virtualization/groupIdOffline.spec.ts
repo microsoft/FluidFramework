@@ -21,7 +21,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
+
 import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
