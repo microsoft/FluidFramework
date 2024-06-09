@@ -104,7 +104,14 @@ export function visitDelta(
 	processBuilds(delta.build, detachConfig, visitor);
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
-	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor, latestRevision);
+	transferRoots(
+		rootTransfers,
+		attachPassRoots,
+		detachedFieldIndex,
+		visitor,
+		refreshers,
+		latestRevision,
+	);
 	const attachConfig: PassConfig = {
 		func: attachPass,
 		latestRevision,
@@ -169,6 +176,7 @@ function transferRoots(
 	mapToUpdate: Map<ForestRootId, unknown>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
+	refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous>,
 	revision?: RevisionTag,
 ): void {
 	type AtomizedNodeRename = Omit<Delta.DetachedNodeRename, "count">;
@@ -190,7 +198,14 @@ function transferRoots(
 		const delayed: AtomizedNodeRename[] = [];
 		const priorSize = nextBatch.length;
 		for (const { oldId, newId } of nextBatch) {
-			const oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			let oldRootId = detachedFieldIndex.tryGetEntry(oldId);
+			if (oldRootId === undefined) {
+				const tree = tryGetFromNestedMap(refreshers, oldId.major, oldId.minor);
+				if (tree !== undefined) {
+					buildTrees(oldId, [tree], detachedFieldIndex, revision, visitor);
+					oldRootId = detachedFieldIndex.getEntry(oldId);
+				}
+			}
 			if (oldRootId === undefined) {
 				// The source field is not populated.
 				// This can happen when another rename needs to be performed first.
@@ -400,7 +415,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
 				assert(tree !== undefined, 0x928 /* refresher data not found */);
-				buildTrees(id, [tree], config, visitor);
+				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
 			}
 			// the revision is updated for any refresher data included in the delta that is used
@@ -443,15 +458,16 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 function buildTrees(
 	id: Delta.DetachedNodeId,
 	trees: readonly ITreeCursorSynchronous[],
-	config: PassConfig,
+	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 	visitor: DeltaVisitor,
 ): void {
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
-		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+		let root = detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
-		root = config.detachedFieldIndex.createEntry(offsettedId, config.latestRevision);
-		const field = config.detachedFieldIndex.toFieldKey(root);
+		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
+		const field = detachedFieldIndex.toFieldKey(root);
 		visitor.create([trees[i]], field);
 	}
 }
@@ -463,7 +479,7 @@ function processBuilds(
 ): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			buildTrees(id, trees, config, visitor);
+			buildTrees(id, trees, config.detachedFieldIndex, config.latestRevision, visitor);
 		}
 	}
 }
@@ -499,7 +515,13 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							offsetAttachId.minor,
 						);
 						assert(tree !== undefined, 0x92a /* refresher data not found */);
-						buildTrees(offsetAttachId, [tree], config, visitor);
+						buildTrees(
+							offsetAttachId,
+							[tree],
+							config.detachedFieldIndex,
+							config.latestRevision,
+							visitor,
+						);
 						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
