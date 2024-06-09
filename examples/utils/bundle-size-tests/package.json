@@ -29,7 +29,6 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -37,11 +36,11 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"fluid-framework": "workspace:~",
-		"source-map-loader": "^2.0.0"
+		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
@@ -57,6 +56,7 @@
 		"prettier": "~3.0.3",
 		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
+		"source-map-loader": "^5.0.0",
 		"string-replace-loader": "^3.1.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",

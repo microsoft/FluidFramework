@@ -40,6 +40,7 @@ import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/in
 
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import { Format } from "./format.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 /**
  * The storage key for the blob in the summary containing tree data
  */
@@ -62,6 +63,7 @@ export class ForestSummarizer implements Summarizable {
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: ICodecOptions = { jsonValidator: noopValidator },
+		private readonly idCompressor: IIdCompressor,
 	) {
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 	}
@@ -163,7 +165,7 @@ export class ForestSummarizer implements Summarizable {
 				// todo how to get the latest revision from a summary? do we need to persist it at all?
 				undefined,
 				this.forest,
-				makeDetachedFieldIndex("init", this.revisionTagCodec),
+				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
 			);
 		}
 	}

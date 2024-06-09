@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.39.0",
+	"version": "0.40.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -64,6 +64,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@andrewbranch/untar.js": "^1.0.3",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
@@ -82,6 +83,7 @@
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"execa": "^5.1.1",
+		"fflate": "^0.8.2",
 		"fs-extra": "^11.2.0",
 		"globby": "^11.1.0",
 		"gray-matter": "^4.0.3",
@@ -190,6 +192,9 @@
 			},
 			"release": {
 				"description": "Release commands are used to manage the Fluid release process."
+			},
+			"publish": {
+				"description": "Publish commands are used to publish packages to an npm registry."
 			}
 		}
 	}

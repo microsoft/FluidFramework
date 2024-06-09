@@ -10,6 +10,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"noImplicitAny": false,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [

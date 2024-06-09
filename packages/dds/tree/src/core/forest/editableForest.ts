@@ -20,6 +20,7 @@ import {
 } from "../tree/index.js";
 
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Editing APIs.
@@ -50,6 +51,7 @@ export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
 	revisionTagCodec: RevisionTagCodec,
+	idCompressor: IIdCompressor,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
@@ -59,7 +61,7 @@ export function initializeForest(
 		delta,
 		0 as SessionSpaceCompressedId,
 		forest,
-		makeDetachedFieldIndex("init", revisionTagCodec),
+		makeDetachedFieldIndex("init", revisionTagCodec, idCompressor),
 	);
 }
 
