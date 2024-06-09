@@ -4,4 +4,3 @@
  */
 
 export { supportsDataVirtualization, clearCacheIfOdsp } from "./utils.js";
-export { TestSnapshotCache } from "./testSnapshotCache.js";

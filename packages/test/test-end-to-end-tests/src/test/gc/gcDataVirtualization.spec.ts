@@ -22,11 +22,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import {
-	supportsDataVirtualization,
-	TestSnapshotCache,
-	clearCacheIfOdsp,
-} from "../data-virtualization/index.js";
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { supportsDataVirtualization, clearCacheIfOdsp } from "../data-virtualization/index.js";
 
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
