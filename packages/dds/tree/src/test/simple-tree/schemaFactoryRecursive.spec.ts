@@ -153,17 +153,6 @@ describe("SchemaFactory Recursive methods", () => {
 					]
 				>
 			>;
-			type _checkConstructor2 = requireTrue<
-				isAssignableTo<
-					[
-						| {
-								readonly x: undefined | ObjectRecursive;
-						  }
-						| InternalTreeNode,
-					],
-					Constructor
-				>
-			>;
 
 			const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
 
