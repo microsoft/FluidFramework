@@ -34,7 +34,6 @@ export type Unhydrated<T> = T;
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
- * A non-leaf SharedTree node. Includes objects, lists, and maps.
  *
  * @remarks
  * Base type which all nodes implement.
@@ -79,7 +78,7 @@ export abstract class TreeNode implements WithType {
 	 * Another option would be to use a symbol (possibly as a private field).
 	 * That approach ran into some strange difficulties causing SchemaFactory to fail to compile, and was not investigated further.
 	 *
-	 * The [type] symbol here provides a lot of the value this private brand does, but is not all of it:
+	 * The [type] symbol provides a lot of the value this private brand does, but is not all of it:
 	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
 	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
 	 */
