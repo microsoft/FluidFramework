@@ -173,17 +173,18 @@
                 "trailingUnderscore": "forbid"
             },
             {
-                "selector": "accessor",
-                "modifiers": [
-                    "private"
+                "selector": [
+                    "accessor",
+                    "method",
+                    "memberLike",
+                    "property"
                 ],
                 "format": [
                     "camelCase"
-                ],
-                "leadingUnderscore": "allow"
+                ]
             },
             {
-                "selector": "variable",
+                "selector": "variableLike",
                 "format": [
                     "camelCase",
                     "PascalCase"
@@ -192,9 +193,7 @@
             },
             {
                 "selector": [
-                    "typeLike",
-                    "class",
-                    "enum"
+                    "typeLike"
                 ],
                 "format": [
                     "PascalCase"

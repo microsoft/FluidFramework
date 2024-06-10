@@ -9,22 +9,20 @@ module.exports = {
 		{
 			selector: "default",
 			format: ["camelCase", "PascalCase"], // "camelCase" and "PascalCase" are the only formats we prescribe.
-			leadingUnderscore: "forbid", // We have no global convention for trailing underscores
+			leadingUnderscore: "forbid", // We have no global convention for leading underscores
 			trailingUnderscore: "forbid", // We have no global convention for trailing underscores
 		},
 		{
-			selector: "accessor",
-			modifiers: ["private"],
+			selector: ["accessor", "method", "memberLike", "property"],
 			format: ["camelCase"],
-			leadingUnderscore: "allow",
 		},
 		{
-			selector: "variable",
-			format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like classes.
+			selector: "variableLike",
+			format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like class / enum objects.
 			leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
 		},
 		{
-			selector: ["typeLike", "class", "enum"],
+			selector: ["typeLike"],
 			format: ["PascalCase"],
 		},
 		{
