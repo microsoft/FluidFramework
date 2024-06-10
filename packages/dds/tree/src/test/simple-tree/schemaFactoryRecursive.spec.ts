@@ -236,7 +236,7 @@ describe("SchemaFactory Recursive methods", () => {
 					Constructor,
 					[
 						| {
-								readonly x?: ObjectRecursive;
+								readonly x?: ObjectRecursive | number;
 						  }
 						| InternalTreeNode,
 					]
