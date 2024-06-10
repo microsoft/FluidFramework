@@ -11,12 +11,12 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-type CustomDataType = Record<string, number>;
+type TCustomData = Record<string, number>;
 
 /**
  * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} function is called reaches a number specified by the `threshold` value to this classes' constructor.
  */
-export class TelemetryEventBatcher<TMetrics extends CustomDataType> {
+export class TelemetryEventBatcher<TMetrics extends TCustomData> {
 	// Stores value of the custom data passed into the logger.
 	private readonly customDataMap: Map<string, number> = new Map<string, number>();
 	// Counter to keep track of the number of times the log function is called.
