@@ -147,7 +147,9 @@ function createProxyHandler(
 					return getProxyForField(field);
 				}
 
-				// Check if the user is trying to read an identifier field of an unhydrated node, which is not supported.
+				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
+				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
+				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
 				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
 					throw new UsageError(
 						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
