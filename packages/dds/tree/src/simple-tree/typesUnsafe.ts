@@ -154,11 +154,13 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
  * {@link Unenforced} version of {@link FieldHasDefault}.
  * @public
  */
-export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<
-	FieldSchema<FieldKind.Optional | FieldKind.Identifier>
->
-	? true
-	: false;
+export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
+	T extends FieldSchemaUnsafe<
+		FieldKind.Optional | FieldKind.Identifier,
+		Unenforced<ImplicitAllowedTypes>
+	>
+		? true
+		: false;
 
 /**
  * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
