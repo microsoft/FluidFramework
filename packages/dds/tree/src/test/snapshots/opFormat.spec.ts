@@ -63,16 +63,16 @@ describe("SharedTree op format snapshots", () => {
 				});
 			});
 
-			it("schema change", async () => {
+			it("schema change", () => {
 				const messages = spyOnFutureMessages(containerRuntime);
-				const view = await tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
 				view.initialize(new Point({ x: 0, y: 0 }));
 
 				takeJsonSnapshot(messages);
 			});
 
-			it("field change", async () => {
-				const view = await tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+			it("field change", () => {
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
 				view.initialize(new Point({ x: 0, y: 2 }));
 
 				const messages = spyOnFutureMessages(containerRuntime);

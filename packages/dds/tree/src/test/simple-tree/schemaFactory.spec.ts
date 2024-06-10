@@ -91,7 +91,7 @@ import { hydrate } from "./utils.js";
 }
 
 describe("schemaFactory", () => {
-	it("leaf", async () => {
+	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 
 		const config = new TreeConfiguration(schema.number, () => 5);
@@ -101,7 +101,7 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		view.initialize(5);
 		assert.equal(view.root, 5);
 	});
@@ -157,7 +157,7 @@ describe("schemaFactory", () => {
 	});
 
 	describe("object", () => {
-		it("simple end to end", async () => {
+		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");
 			class Point extends schema.object("Point", {
 				x: schema.number,
@@ -171,7 +171,7 @@ describe("schemaFactory", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = await tree.viewWith(config);
+			const view = tree.viewWith(config);
 			view.initialize(new Point({ x: 1, y: 2 }));
 			const { root } = view;
 			assert.equal(root.x, 1);

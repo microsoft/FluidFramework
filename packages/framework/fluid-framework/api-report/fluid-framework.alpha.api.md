@@ -559,7 +559,7 @@ export interface ITrace {
 export interface ITree extends IFluidLoadable {
     // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): Promise<TreeView<TRoot>>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public

@@ -56,7 +56,7 @@ export interface ITree extends IFluidLoadable {
 	 */
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): Promise<TreeView<TRoot>>;
+	): TreeView<TRoot>;
 
 	/**
 	 * Returns a {@link TreeView} using the provided schema.

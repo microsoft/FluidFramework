@@ -34,7 +34,7 @@ Now, that code would look like this on the create codepath:
 const treeConfig = new TreeViewConfiguration({ schema: Point });
 
 const tree = SharedTree.create(runtime, "foo");
-const view = await tree.viewWith(treeConfig);
+const view = tree.viewWith(treeConfig);
 view.initialize(new Point({ x: 0, y: 0 }));
 ```
 
@@ -43,7 +43,7 @@ and this on the load codepath:
 ```typescript
 // 'tree' would typically be obtained by retrieving it from a well-known location, e.g. within a `DataObject`'s
 // root directory or in `IFluidContainer.initialObjects`
-const view = await tree.viewWith(treeConfig);
+const view = tree.viewWith(treeConfig);
 ```
 
 Besides only making the initial tree required to specify in places that actually perform document initialization, this is beneficial for mutation semantics: `tree.viewWith` never modifies the state of the underlying tree.

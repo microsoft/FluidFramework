@@ -314,9 +314,9 @@ export class SharedTree
 		return view;
 	}
 
-	public async viewWith<TRoot extends ImplicitFieldSchema>(
+	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): Promise<TreeView<TRoot>> {
+	): TreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
