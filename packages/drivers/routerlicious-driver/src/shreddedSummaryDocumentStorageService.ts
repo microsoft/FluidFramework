@@ -13,7 +13,7 @@ import {
 	ISnapshotTreeEx,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

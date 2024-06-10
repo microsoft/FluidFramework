@@ -10,7 +10,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -208,7 +208,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			formatOptions.editManager,
 		);
 		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, editManagerCodec, this.schemaAndPolicy),
+			new EditManagerSummarizer(
+				this.editManager,
+				editManagerCodec,
+				this.idCompressor,
+				this.schemaAndPolicy,
+			),
 			...summarizables,
 		];
 		assert(
@@ -312,6 +317,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				sessionId: this.editManager.localSessionId,
 			},
 			{
+				idCompressor: this.idCompressor,
 				schema: schemaAndPolicy,
 			},
 		);
@@ -329,7 +335,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		localOpMetadata: unknown,
 	): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
+		const { commit, sessionId } = this.messageCodec.decode(message.contents, {
+			idCompressor: this.idCompressor,
+		});
 
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
@@ -363,7 +371,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
-		} = this.messageCodec.decode(this.serializer.decode(content), {});
+		} = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 		if (this.resubmitMachine.isInResubmitPhase === false) {
@@ -394,7 +404,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },
-		} = this.messageCodec.decode(content, {});
+		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
 		this.editManager.localBranch.apply(change, revision);
 	}
 

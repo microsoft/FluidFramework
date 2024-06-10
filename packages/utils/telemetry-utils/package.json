@@ -140,6 +140,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_isValidLegacyError": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
@@ -41,7 +41,7 @@ export function createOdspClient(
 		throw new Error("site url is missing");
 	}
 	if (driveId === "" || driveId === undefined) {
-		throw new Error("RaaS drive id is missing");
+		throw new Error("SharePoint Embedded container id is missing");
 	}
 
 	if (clientId === "" || clientId === undefined) {

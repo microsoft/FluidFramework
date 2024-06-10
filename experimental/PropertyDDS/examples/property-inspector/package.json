@@ -101,7 +101,7 @@
 		"rimraf": "^4.4.0",
 		"sass": "^1.42.1",
 		"sass-loader": "^7.1.0",
-		"source-map-loader": "^2.0.0",
+		"source-map-loader": "^5.0.0",
 		"style-loader": "^1.0.0",
 		"tinylicious": "^5.0.0-265463",
 		"ts-loader": "^9.3.0",

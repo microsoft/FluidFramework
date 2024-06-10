@@ -38,11 +38,14 @@ import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	ITreeEntry,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {

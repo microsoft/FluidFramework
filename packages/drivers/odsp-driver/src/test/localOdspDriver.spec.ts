@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
+import { IClient, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IClient,
+	DriverError,
+	IStream,
 	ISequencedDocumentMessage,
-	SummaryType,
-} from "@fluidframework/driver-definitions";
-import { DriverError, IStream } from "@fluidframework/driver-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
