@@ -55,8 +55,8 @@ export function initializeForest(
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	// any detached trees built here are immediately attached so the revision used here doesn't matter so we use a dummy
-	// revision to make correctness checks in the detached field index easier
+	// any detached trees built here are immediately attached so the revision used here doesn't matter
+	// we use a dummy revision to make correctness checks in the detached field index easier
 	applyDelta(
 		delta,
 		0 as SessionSpaceCompressedId,
