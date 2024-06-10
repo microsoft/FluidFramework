@@ -220,7 +220,13 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		eventName: K,
 		listener: FlexTreeNodeEvents[K],
 	): () => void {
-		return this.events.on(eventName, listener);
+		switch (eventName) {
+			case "nodeChanged":
+			case "treeChanged":
+				return this.events.on(eventName, listener);
+			default:
+				throw unsupportedUsageError(`Subscribing to ${eventName}`);
+		}
 	}
 
 	public get context(): FlexTreeContext {

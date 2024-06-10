@@ -61,13 +61,21 @@ export interface FlexTreeNodeEvents {
 	treeChanged(): void;
 }
 
+/**
+ * Subscribe to changes to the node for the given {@link AnchorNode}.
+ * @remarks This fulfills the contract of {@link TreeChangeEvents.nodeChanged}.
+ * @privateRemarks The logic in this function ensures that the listener is only fired once per change per node.
+ */
 export function onNodeChanged(
 	anchorNode: AnchorNode,
 	listener: FlexTreeNodeEvents["nodeChanged"],
 ): Off {
 	let unsubscribeFromTreeChanged: (() => void) | undefined;
 	return anchorNode.on("childrenChanged", () => {
+		// "childrenChanged" can be fired many times per node for a single change (if multiple fields under the node change).
+		// So, only acknowledge it once...
 		if (unsubscribeFromTreeChanged === undefined) {
+			// ...per invocation of "subtreeChanged", which only fires one time per change per node
 			unsubscribeFromTreeChanged = anchorNode.on("subtreeChanged", () => {
 				listener();
 				unsubscribeFromTreeChanged?.();
@@ -77,6 +85,10 @@ export function onNodeChanged(
 	});
 }
 
+/**
+ * Subscribe to changes to the tree rooted at the given {@link AnchorNode}.
+ * @remarks This fulfills the contract of {@link TreeChangeEvents.treeChanged}.
+ */
 export function onTreeChanged(
 	anchorNode: AnchorNode,
 	listener: FlexTreeNodeEvents["treeChanged"],

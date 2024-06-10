@@ -191,6 +191,7 @@ describe("Unhydrated nodes", () => {
 					offTreeChanged();
 				},
 				assert: () => {
+					// Assert that the events _don't_ fire:
 					assert.equal(shallowEvent, false);
 					assert.equal(deepEvent, false);
 				},

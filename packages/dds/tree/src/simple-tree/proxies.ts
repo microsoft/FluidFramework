@@ -24,6 +24,7 @@ import {
 	FlexTreeTypedField,
 	MapTreeNode,
 	onNodeChanged,
+	onTreeChanged,
 	tryGetMapTreeNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
@@ -234,12 +235,12 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 									listener as FlexTreeNodeEvents["nodeChanged"],
 								);
 							case "treeChanged":
-								return onNodeChanged(
+								return onTreeChanged(
 									anchorNode,
 									listener as FlexTreeNodeEvents["treeChanged"],
 								);
 							default:
-								return () => {};
+								fail("Unexpected event subscription");
 						}
 					},
 				});
