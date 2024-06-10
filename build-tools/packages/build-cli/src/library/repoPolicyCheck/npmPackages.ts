@@ -2083,6 +2083,7 @@ function generateExportsFields(
 			? expectedImportEntrypoint
 			: expectedRequireEntrypoint;
 
+	// eslint-disable-next-line unicorn/prefer-module -- false positive; this is not module.exports.
 	let returnExports: typeof json.exports;
 
 	if (isESMOnly || isCJSOnly) {
