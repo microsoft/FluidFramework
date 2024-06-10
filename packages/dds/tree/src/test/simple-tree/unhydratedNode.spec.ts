@@ -157,6 +157,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
+	// TODO: Fail instead of returning undefined, as is the case for identifiers.
 	it("read undefined for contextual defaulted properties", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
@@ -171,6 +172,22 @@ describe("Unhydrated nodes", () => {
 		}) {}
 		const defaultingLeaf = new HasDefault({ value: undefined });
 		assert.equal(defaultingLeaf.value, undefined);
+	});
+
+	it("fail to read identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasId", {
+			id: schemaFactory.identifier,
+		}) {}
+
+		const object = new TestObjectWithId({ id: undefined });
+		assert.throws(
+			() => object.id,
+			(error: Error) =>
+				validateAssertionError(
+					error,
+					/A node's identifier may not be queried until the node is inserted into the tree/,
+				),
+		);
 	});
 });
 

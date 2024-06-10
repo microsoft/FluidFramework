@@ -41,6 +41,7 @@ import {
 	normalizeFieldSchema,
 	type,
 	ImplicitAllowedTypes,
+	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
@@ -140,7 +141,13 @@ function createProxyHandler(
 			const fieldInfo = flexKeyMap.get(viewKey);
 
 			if (fieldInfo !== undefined) {
-				const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
+				const flexNode = getFlexNode(proxy);
+				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
+					throw new UsageError(
+						"A node's identifier may not be queried until the node is inserted into the tree",
+					);
+				}
+				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				return field === undefined ? undefined : getProxyForField(field);
 			}
 
