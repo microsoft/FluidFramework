@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const { namingConventionRules } = require("./sharedRules");
+
 /**
  * "Strict" eslint configuration.
  *
@@ -58,43 +60,16 @@ module.exports = {
 		 */
 		"@typescript-eslint/naming-convention": [
 			"error",
+			...namingConventionRules,
 			{
-				selector: "default",
-				format: ["camelCase", "PascalCase"],
-				leadingUnderscore: "forbid", // We have no global convention for trailing underscores
-				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
-			},
-			{
-				selector: "accessor",
-				modifiers: ["private"],
-				format: ["camelCase"],
-				leadingUnderscore: "allow",
-			},
-			{
-				selector: "variable",
-				format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like classes.
-				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
-			},
-			{
-				selector: ["typeLike", "class"],
-				format: ["PascalCase"],
-			},
-			{
+				// This rule is applied to the strict config only for now due to the dramatic change in guidance.
+				// Once more code has been migrated, this should be promoted to the `recommended` config.
 				selector: "interface",
 				format: ["PascalCase"],
 				// Forbid "I" prefix for interfaces.
 				custom: {
 					regex: "^I[A-Z]",
 					match: false,
-				},
-			},
-			{
-				selector: "typeParameter",
-				format: ["PascalCase"],
-				// Require "T" prefix for type parameters.
-				custom: {
-					regex: "^T[A-Z]",
-					match: true,
 				},
 			},
 		],

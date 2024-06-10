@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const { namingConventionRules } = require("./sharedRules");
+
 /**
  * "Recommended" eslint configuration.
  *
@@ -106,39 +108,7 @@ module.exports = {
 		 *
 		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
 		 */
-		"@typescript-eslint/naming-convention": [
-			"error",
-			{
-				selector: "default",
-				format: ["camelCase", "PascalCase"],
-				leadingUnderscore: "forbid", // We have no global convention for trailing underscores
-				trailingUnderscore: "forbid", // We have no global convention for trailing underscores
-			},
-			{
-				selector: "accessor",
-				modifiers: ["private"],
-				format: ["camelCase"],
-				leadingUnderscore: "allow",
-			},
-			{
-				selector: "variable",
-				format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like classes.
-				leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
-			},
-			{
-				selector: ["typeLike", "class"],
-				format: ["PascalCase"],
-			},
-			{
-				selector: "typeParameter",
-				format: ["PascalCase"],
-				// Require "T" prefix for type parameters.
-				custom: {
-					regex: "^T[A-Z]",
-					match: true,
-				},
-			},
-		],
+		"@typescript-eslint/naming-convention": ["error", ...namingConventionRules],
 
 		/**
 		 * Disallows the `any` type.
