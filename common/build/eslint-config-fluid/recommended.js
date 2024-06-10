@@ -130,15 +130,6 @@ module.exports = {
 				format: ["PascalCase"],
 			},
 			{
-				selector: "interface",
-				format: ["PascalCase"],
-				// Forbid "I" prefix for interfaces.
-				custom: {
-					regex: "^I[A-Z]",
-					match: false,
-				},
-			},
-			{
 				selector: "typeParameter",
 				format: ["PascalCase"],
 				// Require "T" prefix for type parameters.
