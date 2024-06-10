@@ -311,15 +311,6 @@ describe("serializedStateManager", () => {
 			eventEmitter,
 			() => false,
 		);
-		serializedStateManager.setInitialSnapshot(
-			{
-				baseSnapshot: snapshot,
-				snapshotBlobs: {
-					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-				},
-			},
-			false,
-		);
 		void serializedStateManager.waitForInitialRefresh?.then(() =>
 			getLatestSnapshotInfoP.resolve(),
 		);
@@ -369,15 +360,6 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
-		);
-		serializedStateManager.setInitialSnapshot(
-			{
-				baseSnapshot: snapshot,
-				snapshotBlobs: {
-					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-				},
-			},
-			false,
 		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
@@ -442,15 +424,6 @@ describe("serializedStateManager", () => {
 			eventEmitter,
 			() => false,
 		);
-		serializedStateManager.setInitialSnapshot(
-			{
-				baseSnapshot: snapshot,
-				snapshotBlobs: {
-					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-				},
-			},
-			false,
-		);
 		const lastProcessedOpSequenceNumber = 20;
 		let seq = 1;
 		while (seq <= lastProcessedOpSequenceNumber) {
@@ -489,15 +462,6 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
-			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
 			);
 			savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
 
@@ -556,15 +520,6 @@ describe("serializedStateManager", () => {
 				eventEmitter,
 				isDirtyF,
 			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
-			);
 			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
 			const lastProcessedOpSequenceNumber = 40;
 			let seq = firstProcessedOpSequenceNumber;
@@ -616,15 +571,6 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
-			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
 			);
 
 			const lastProcessedOpSequenceNumber = 20;
@@ -689,15 +635,6 @@ describe("serializedStateManager", () => {
 				eventEmitter,
 				() => isDirty,
 			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
-			);
 			const snapshotSequenceNumber = 11;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
@@ -729,15 +666,6 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
-			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
 			);
 			let seq = 1;
 			let lastProcessedOpSequenceNumber = 20;
@@ -809,15 +737,6 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
-			);
-			serializedStateManager.setInitialSnapshot(
-				{
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				},
-				false,
 			);
 			let seq = 1;
 			while (seq <= 5) {
@@ -901,15 +820,6 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					() => isDirty,
 				);
-				serializedStateManager.setInitialSnapshot(
-					{
-						baseSnapshot: snapshot,
-						snapshotBlobs: {
-							attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-						},
-					},
-					false,
-				);
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -960,15 +870,6 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					isDirtyF,
-				);
-				serializedStateManager.setInitialSnapshot(
-					{
-						baseSnapshot: snapshot,
-						snapshotBlobs: {
-							attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-						},
-					},
-					false,
 				);
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;

@@ -181,10 +181,6 @@ export class SerializedStateManager {
 	 */
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			assert(
-				this.supportGetSnapshotApi !== undefined,
-				"supportGetSnapshotApi should already be declared",
-			);
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
@@ -209,7 +205,7 @@ export class SerializedStateManager {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
-				supportGetSnapshotApi,
+				this.supportGetSnapshotApi,
 				specifiedVersion,
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
@@ -244,7 +240,7 @@ export class SerializedStateManager {
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
 			) {
 				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-				this.refreshSnapshotP = this.refreshLatestSnapshot(supportGetSnapshotApi);
+				this.refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi);
 				this.refreshSnapshotP.catch((e) => {
 					this.mc.logger.sendErrorEvent({
 						eventName: "RefreshLatestSnapshotFailed",
