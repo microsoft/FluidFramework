@@ -109,7 +109,7 @@ export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Re
 export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
 
 // @public
-export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<FieldSchema<FieldKind.Optional | FieldKind.Identifier>> ? true : false;
+export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, Unenforced<ImplicitAllowedTypes>> ? true : false;
 
 // @public
 export enum FieldKind {
