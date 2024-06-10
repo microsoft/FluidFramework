@@ -64,9 +64,9 @@ module.exports = {
 			{
 				// This rule is applied to the strict config only for now due to the dramatic change in guidance.
 				// Once more code has been migrated, this should be promoted to the `recommended` config.
-				selector: "interface",
+				selector: "typeLike",
 				format: ["PascalCase"],
-				// Forbid "I" prefix for interfaces.
+				// Forbid "I" prefix for interfaces (and other types).
 				custom: {
 					regex: "^I[A-Z]",
 					match: false,
