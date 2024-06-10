@@ -555,7 +555,11 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Make a field of type identifier instead of the default which is required.
+	 * Make a field of type identifier instead of the default, which is required.
+	 * @remarks Identifiers may be optionally supplied at node construction time.
+	 * If not supplied, they will be generated automatically when the node is inserted into the tree.
+	 * Attempting to read an automatically generated identifier before the node is inserted into the tree will throw an error.
+	 * An automatically generated identifier will not be present when iterating the nodes's fields until after the node is inserted into the tree.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
