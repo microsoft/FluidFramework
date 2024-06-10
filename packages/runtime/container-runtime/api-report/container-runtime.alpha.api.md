@@ -207,11 +207,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get scope(): FluidObject;
     get sessionSchema(): {
-        explicitSchemaControl?: true;
-        compressionLz4?: true;
+        explicitSchemaControl?: true | undefined;
+        compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
-        opGroupingEnabled?: true;
-        disallowedVersions?: string[];
+        opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
     };
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;

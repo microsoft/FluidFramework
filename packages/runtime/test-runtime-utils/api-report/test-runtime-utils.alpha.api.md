@@ -115,7 +115,7 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 // @alpha
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
-        minimumSequenceNumber?: number;
+        minimumSequenceNumber?: number | undefined;
     } | undefined);
     // (undocumented)
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
@@ -142,7 +142,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected readonly outbox: IInternalMockRuntimeMessage[];
     // (undocumented)
     protected readonly overrides?: {
-        minimumSequenceNumber?: number;
+        minimumSequenceNumber?: number | undefined;
     } | undefined;
     // (undocumented)
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
