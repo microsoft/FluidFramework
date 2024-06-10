@@ -174,7 +174,17 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, undefined);
 	});
 
-	it("fail to read identifiers", () => {
+	it("read manually provided identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasId", {
+			id: schemaFactory.identifier,
+		}) {}
+
+		const id = "my identifier";
+		const object = new TestObjectWithId({ id });
+		assert.equal(object.id, id);
+	});
+
+	it("fail to read automatically generated identifiers", () => {
 		class TestObjectWithId extends schemaFactory.object("HasId", {
 			id: schemaFactory.identifier,
 		}) {}
@@ -188,6 +198,17 @@ describe("Unhydrated nodes", () => {
 					/A node's identifier may not be queried until the node is inserted into the tree/,
 				),
 		);
+	});
+
+	it("Correctly iterate identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasId", {
+			id: schemaFactory.identifier,
+			autoId: schemaFactory.identifier,
+		}) {}
+
+		const id = "my identifier";
+		const object = new TestObjectWithId({ id, autoId: undefined });
+		assert.deepEqual(Object.entries(object), [["id", id]]);
 	});
 });
 

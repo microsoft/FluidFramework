@@ -142,13 +142,19 @@ function createProxyHandler(
 
 			if (fieldInfo !== undefined) {
 				const flexNode = getFlexNode(proxy);
+				const field = flexNode.tryGetField(fieldInfo.storedKey);
+				if (field !== undefined) {
+					return getProxyForField(field);
+				}
+
+				// Check if the user is trying to read an identifier field of an unhydrated node, which is not supported.
 				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
 					throw new UsageError(
 						"A node's identifier may not be queried until the node is inserted into the tree",
 					);
 				}
-				const field = flexNode.tryGetField(fieldInfo.storedKey);
-				return field === undefined ? undefined : getProxyForField(field);
+
+				return undefined;
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
