@@ -72,7 +72,7 @@ import { RevisionTag } from "../index.js";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
- * @param latestRevision - todo
+ * @param latestRevision - The latest revision tag associated with this delta.
  */
 export function visitDelta(
 	delta: Delta.Root,
@@ -332,7 +332,8 @@ interface PassConfig {
 	readonly func: Pass;
 
 	/**
-	 * todo
+	 * The latest revision tag associated with the given delta. This is used to keep track
+	 * of when repair data should be garbage collected.
 	 */
 	readonly latestRevision: RevisionTag | undefined;
 

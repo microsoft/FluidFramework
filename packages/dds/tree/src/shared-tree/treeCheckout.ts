@@ -398,7 +398,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						? event.newCommits[event.newCommits.length - 1].revision
 						: undefined;
 
-				if (this.transaction.inProgress() && this.removedRootsInTransaction === undefined) {
+				if (this.removedRootsInTransaction === undefined && this.transaction.inProgress()) {
 					this.removedRootsInTransaction = this.removedRoots.clone();
 				}
 

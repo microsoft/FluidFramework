@@ -347,7 +347,10 @@ export class DetachedFieldIndex {
 	 * the summary has been loaded.
 	 */
 	public setRevisionsForLoadedData(latestRevision: RevisionTag): void {
-		assert(!this.fullyLoaded, "revisions should only be set once using this function after loading data from a summary");
+		assert(
+			!this.fullyLoaded,
+			"revisions should only be set once using this function after loading data from a summary",
+		);
 
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, (entry, major, minor) => {
