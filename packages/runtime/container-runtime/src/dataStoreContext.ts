@@ -16,17 +16,14 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,

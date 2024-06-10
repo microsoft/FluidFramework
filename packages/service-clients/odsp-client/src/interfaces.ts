@@ -27,7 +27,7 @@ export interface OdspConnectionConfig {
 	siteUrl: string;
 
 	/**
-	 * RaaS Drive Id of the tenant where Fluid containers are created
+	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
 

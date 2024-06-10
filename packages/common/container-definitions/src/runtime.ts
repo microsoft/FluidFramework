@@ -11,7 +11,6 @@ import type {
 import type {
 	IClientDetails,
 	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
@@ -22,6 +21,7 @@ import type {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";

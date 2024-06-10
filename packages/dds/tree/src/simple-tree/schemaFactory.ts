@@ -4,6 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+// Include this unused import to avoid TypeScript generating an inline import for IFluidHandle in the d.ts file
+// which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
+// eslint-disable-next-line unused-imports/no-unused-imports
+import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
 import { TreeValue } from "../core/index.js";
 import {

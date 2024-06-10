@@ -103,9 +103,20 @@ describe("MapTreeNodes", () => {
 	});
 
 	it("can register events", () => {
-		map.on("changing", () => {});
-		fieldNode.on("changing", () => {});
-		object.on("changing", () => {});
+		// These events don't ever fire, but they can be forwarded, so ensure that registering them does not fail
+		map.on("nodeChanged", () => {});
+		map.on("treeChanged", () => {});
+		fieldNode.on("nodeChanged", () => {});
+		fieldNode.on("treeChanged", () => {});
+		object.on("nodeChanged", () => {});
+		object.on("treeChanged", () => {});
+		// The following events are not supported for forwarding
+		assert.throws(() => map.on("changing", () => {}));
+		assert.throws(() => map.on("subtreeChanging", () => {}));
+		assert.throws(() => fieldNode.on("changing", () => {}));
+		assert.throws(() => fieldNode.on("subtreeChanging", () => {}));
+		assert.throws(() => object.on("changing", () => {}));
+		assert.throws(() => object.on("subtreeChanging", () => {}));
 	});
 
 	it("can get the children of maps", () => {

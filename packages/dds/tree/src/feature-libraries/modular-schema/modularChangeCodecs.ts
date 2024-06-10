@@ -323,6 +323,7 @@ function makeModularChangeCodec(
 					trees: fieldsCodec.encode(treesToEncode, {
 						encodeType: chunkCompressionStrategy,
 						schema: context.schema,
+						idCompressor: context.idCompressor,
 					}),
 			  };
 	}
@@ -337,6 +338,7 @@ function makeModularChangeCodec(
 
 		const chunks = fieldsCodec.decode(encoded.trees, {
 			encodeType: chunkCompressionStrategy,
+			idCompressor: context.idCompressor,
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);

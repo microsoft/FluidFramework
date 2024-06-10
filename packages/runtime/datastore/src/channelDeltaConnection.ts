@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 const stashedOpMetadataMark = Symbol();

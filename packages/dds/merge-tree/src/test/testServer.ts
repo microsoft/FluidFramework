@@ -4,7 +4,7 @@
  */
 
 import { Heap, IComparer } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";

@@ -7,12 +7,7 @@ import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-inte
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	IFluidErrorBase,
-	hasErrorInstanceId,
-	isFluidError,
-	isValidLegacyError,
-} from "./fluidErrorBase.js";
+import { IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,
@@ -112,21 +107,6 @@ export interface IFluidErrorAnnotations {
 }
 
 /**
- * For backwards compatibility with pre-errorInstanceId valid errors
- */
-function patchLegacyError(
-	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
-): asserts legacyError is IFluidErrorBase {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } =
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		legacyError as any;
-	if (patchMe.errorInstanceId === undefined) {
-		patchMe.errorInstanceId = uuid();
-	}
-}
-
-/**
  * Normalize the given error yielding a valid Fluid Error
  * @returns A valid Fluid Error with any provided annotations applied
  * @param error - The error to normalize
@@ -138,11 +118,6 @@ export function normalizeError(
 	error: unknown,
 	annotations: IFluidErrorAnnotations = {},
 ): IFluidErrorBase {
-	// Back-compat, while IFluidErrorBase is rolled out
-	if (isValidLegacyError(error)) {
-		patchLegacyError(error);
-	}
-
 	if (isFluidError(error)) {
 		// We can simply add the telemetry props to the error and return it
 		error.addTelemetryProperties(annotations.props ?? {});
@@ -341,7 +316,7 @@ export function isExternalError(error: unknown): boolean {
 		}
 		return false;
 	}
-	return !isValidLegacyError(error);
+	return true;
 }
 
 /**
@@ -401,13 +376,6 @@ export class LoggingError
 	overwriteErrorInstanceId(id: string): void {
 		this._errorInstanceId = id;
 	}
-
-	/**
-	 * Backwards compatibility to appease {@link isFluidError} in old code that may handle this error.
-	 */
-	// @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
-	// eslint-disable-next-line @typescript-eslint/prefer-as-const
-	private readonly fluidErrorCode: "-" = "-";
 
 	/**
 	 * Create a new LoggingError

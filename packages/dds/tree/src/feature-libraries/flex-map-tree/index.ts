@@ -5,6 +5,7 @@
 
 export {
 	MapTreeNode,
+	isMapTreeNode,
 	getOrCreateNode,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,

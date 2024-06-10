@@ -47,8 +47,8 @@ import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
@@ -236,7 +236,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     get summarizerClientId(): string | undefined;
-    updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
