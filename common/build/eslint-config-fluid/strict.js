@@ -80,7 +80,6 @@ module.exports = {
 				format: ["PascalCase"],
 			},
 			{
-				// TODO: move this one to `strict`, given the number of violations.
 				selector: "interface",
 				format: ["PascalCase"],
 				// Forbid "I" prefix for interfaces.
