@@ -1045,16 +1045,11 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
-	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
-		return this._getClientId();
+		return this.context.clientId;
 	}
 
 	public readonly clientDetails: IClientDetails;
-
-	public get storage(): IDocumentStorageService {
-		return this._storage;
-	}
 
 	public get containerRuntime() {
 		return this;
@@ -1080,10 +1075,6 @@ export class ContainerRuntime
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
-	public get flushMode(): FlushMode {
-		return this._flushMode;
-	}
-
 	public get scope(): FluidObject {
 		return this.containerScope;
 	}
@@ -1092,9 +1083,9 @@ export class ContainerRuntime
 		return this.registry;
 	}
 
-	private readonly _getAttachState: () => AttachState;
+	private readonly getAttachState: () => AttachState;
 	public get attachState(): AttachState {
-		return this._getAttachState();
+		return this.getAttachState();
 	}
 
 	/**
@@ -1111,7 +1102,7 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	#idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
 	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
@@ -1136,10 +1127,10 @@ export class ContainerRuntime
 		// to reason over such things as session ID space.
 		if (this.idCompressorMode === "on") {
 			assert(
-				this._idCompressor !== undefined,
+				this.#idCompressor !== undefined,
 				0x8ea /* compressor should have been loaded */,
 			);
-			return this._idCompressor;
+			return this.#idCompressor;
 		}
 	}
 
@@ -1153,7 +1144,7 @@ export class ContainerRuntime
 	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
 	 */
 	public generateDocumentUniqueId() {
-		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+		return this.#idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
@@ -1193,11 +1184,11 @@ export class ContainerRuntime
 	private readonly maxConsecutiveReconnects: number;
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
-	private _orderSequentiallyCalls: number = 0;
-	private readonly _flushMode: FlushMode;
+	#orderSequentiallyCalls: number = 0;
+	public readonly flushMode: FlushMode;
 	private flushTaskExists = false;
 
-	private _connected: boolean;
+	#connected: boolean;
 
 	private consecutiveReconnects = 0;
 
@@ -1227,7 +1218,7 @@ export class ContainerRuntime
 	}
 
 	public get connected(): boolean {
-		return this._connected;
+		return this.#connected;
 	}
 
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
@@ -1235,9 +1226,9 @@ export class ContainerRuntime
 		return this.summarizerClientElection?.electedClientId;
 	}
 
-	private _disposed = false;
+	#disposed = false;
 	public get disposed() {
-		return this._disposed;
+		return this.#disposed;
 	}
 
 	private dirtyContainer: boolean;
@@ -1245,7 +1236,7 @@ export class ContainerRuntime
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private readonly _perfSignalData: IPerfSignalReport = {
+	readonly #perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
@@ -1257,7 +1248,7 @@ export class ContainerRuntime
 	 * It is the main entry point for summary work.
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
-	private readonly _summarizer?: Summarizer;
+	readonly #summarizer?: Summarizer;
 	private readonly scheduleManager: ScheduleManager;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
@@ -1271,8 +1262,8 @@ export class ContainerRuntime
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
 	private get summarizer(): Summarizer {
-		assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
-		return this._summarizer;
+		assert(this.#summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
+		return this.#summarizer;
 	}
 
 	private readonly summariesDisabled: boolean;
@@ -1342,7 +1333,7 @@ export class ContainerRuntime
 
 	/***/
 	protected constructor(
-		context: IContainerContext,
+		private readonly context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
@@ -1354,7 +1345,7 @@ export class ContainerRuntime
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
-		private readonly _storage: IDocumentStorageService,
+		public readonly storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
@@ -1424,8 +1415,7 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		this._getClientId = () => context.clientId;
-		this._getAttachState = () => context.attachState;
+		this.getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			if (context.getAbsoluteUrl === undefined) {
 				throw new Error("Driver does not implement getAbsoluteUrl");
@@ -1469,7 +1459,7 @@ export class ContainerRuntime
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
-		this._connected = connected;
+		this.#connected = connected;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1572,13 +1562,13 @@ export class ContainerRuntime
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
-			this._flushMode = FlushMode.TurnBased;
+			this.flushMode = FlushMode.TurnBased;
 		} else {
-			this._flushMode = runtimeOptions.flushMode;
+			this.flushMode = runtimeOptions.flushMode;
 		}
 
 		if (context.attachState === AttachState.Attached) {
-			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+			const maxSnapshotCacheDurationMs = this.storage?.policies?.maximumCacheDurationMs;
 			if (
 				maxSnapshotCacheDurationMs !== undefined &&
 				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
@@ -1725,24 +1715,24 @@ export class ContainerRuntime
 			groupingManager: opGroupingManager,
 			getCurrentSequenceNumbers: () => ({
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				clientSequenceNumber: this._processedClientSequenceNumber,
+				clientSequenceNumber: this.#processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
 		});
 
-		this._quorum = quorum;
-		this._quorum.on("removeMember", (clientId: string) => {
+		this.quorum = quorum;
+		quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		this._audience = audience;
+		this.audience = audience;
 		if (audience.getSelf === undefined) {
 			// back-compat, added in 2.0 RC3.
 			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
 			audience.getSelf = () => {
-				const clientId = this._getClientId();
+				const clientId = this.clientId;
 				return clientId === undefined
 					? undefined
 					: ({
@@ -1784,7 +1774,7 @@ export class ContainerRuntime
 			const orderedClientCollection = new OrderedClientCollection(
 				orderedClientLogger,
 				this.innerDeltaManager,
-				this._quorum,
+				this.quorum,
 			);
 			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
@@ -1804,7 +1794,7 @@ export class ContainerRuntime
 			);
 
 			if (this.isSummarizerClient) {
-				this._summarizer = new Summarizer(
+				this.#summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
@@ -1901,10 +1891,10 @@ export class ContainerRuntime
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.isSummarizerClient) {
 				assert(
-					this._summarizer !== undefined,
+					this.#summarizer !== undefined,
 					0x5bf /* Summarizer object is undefined in a summarizer client */,
 				);
-				return this._summarizer;
+				return this.#summarizer;
 			}
 			return provideEntryPoint(this);
 		});
@@ -1969,7 +1959,7 @@ export class ContainerRuntime
 			this.idCompressorMode === "on" ||
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = await this.createIdCompressor();
+			this.#idCompressor = await this.createIdCompressor();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -1978,10 +1968,10 @@ export class ContainerRuntime
 	}
 
 	public dispose(error?: Error): void {
-		if (this._disposed) {
+		if (this.#disposed) {
 			return;
 		}
-		this._disposed = true;
+		this.#disposed = true;
 
 		this.mc.logger.sendTelemetryEvent(
 			{
@@ -1997,7 +1987,7 @@ export class ContainerRuntime
 			this.summaryManager.dispose();
 		}
 		this.garbageCollector.dispose();
-		this._summarizer?.dispose();
+		this.#summarizer?.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
@@ -2149,7 +2139,7 @@ export class ContainerRuntime
 			const id = parser.pathParts[0];
 
 			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
-				if (this._summarizer !== undefined) {
+				if (this.#summarizer !== undefined) {
 					return {
 						status: 200,
 						mimeType: "fluid/object",
@@ -2259,8 +2249,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this._idCompressor) {
-			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
+		if (this.#idCompressor) {
+			const idCompressorState = JSON.stringify(this.#idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
@@ -2435,7 +2425,7 @@ export class ContainerRuntime
 
 	private async loadIdCompressor() {
 		if (
-			this._idCompressor === undefined &&
+			this.#idCompressor === undefined &&
 			this.idCompressorMode !== undefined &&
 			this._loadIdCompressor === undefined
 		) {
@@ -2448,7 +2438,7 @@ export class ContainerRuntime
 						compressor.finalizeCreationRange(range);
 					}
 					assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-					this._idCompressor = compressor;
+					this.#idCompressor = compressor;
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
@@ -2460,7 +2450,7 @@ export class ContainerRuntime
 
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
-		const currentClientId = this._audience.getSelf()?.clientId;
+		const currentClientId = this.audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
 		assert(
 			this.clientId === currentClientId,
@@ -2487,7 +2477,7 @@ export class ContainerRuntime
 		// If there are stashed blobs in the pending state, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = connected && !this._connected;
+		const connecting = connected && !this.#connected;
 		if (connecting && this.blobManager.hasPendingStashedUploads()) {
 			assert(
 				!this.delayConnectClientId,
@@ -2509,7 +2499,7 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		// There might be no change of state due to Container calling this API after loading runtime.
-		const changeOfState = this._connected !== connected;
+		const changeOfState = this.#connected !== connected;
 		const reconnection = changeOfState && !connected;
 
 		// We need to flush the ops currently collected by Outbox to preserve original order.
@@ -2519,12 +2509,12 @@ export class ContainerRuntime
 			this.flush();
 		}
 
-		this._connected = connected;
+		this.#connected = connected;
 
 		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
-			this._perfSignalData.signalTimestamp = 0;
-			this._perfSignalData.trackingSignalSequenceNumber = undefined;
+			this.#perfSignalData.signalsLost = 0;
+			this.#perfSignalData.signalTimestamp = 0;
+			this.#perfSignalData.trackingSignalSequenceNumber = undefined;
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
@@ -2605,7 +2595,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private _processedClientSequenceNumber: number | undefined;
+	#processedClientSequenceNumber: number | undefined;
 
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
@@ -2628,7 +2618,7 @@ export class ContainerRuntime
 		// messages once a batch has been fully processed.
 		this.scheduleManager.beforeOpProcessing(message);
 
-		this._processedClientSequenceNumber = message.clientSequenceNumber;
+		this.#processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
 			// See commit that added this assert for more details.
@@ -2699,7 +2689,7 @@ export class ContainerRuntime
 					const range = messageWithContext.message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
-					if (this._idCompressor === undefined) {
+					if (this.#idCompressor === undefined) {
 						assert(
 							this.idCompressorMode !== undefined,
 							0x93c /* id compressor should be enabled */,
@@ -2710,7 +2700,7 @@ export class ContainerRuntime
 							this.pendingIdCompressorOps.length === 0,
 							0x979 /* there should be no pending ops! */,
 						);
-						this._idCompressor.finalizeCreationRange(range);
+						this.#idCompressor.finalizeCreationRange(range);
 					}
 				}
 				break;
@@ -2773,15 +2763,15 @@ export class ContainerRuntime
 	 * @param clientSignalSequenceNumber - is the client signal sequence number to be uploaded.
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
-		const duration = Date.now() - this._perfSignalData.signalTimestamp;
+		const duration = Date.now() - this.#perfSignalData.signalTimestamp;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
-			signalsLost: this._perfSignalData.signalsLost,
+			signalsLost: this.#perfSignalData.signalsLost,
 		});
 
-		this._perfSignalData.signalsLost = 0;
-		this._perfSignalData.signalTimestamp = 0;
+		this.#perfSignalData.signalsLost = 0;
+		this.#perfSignalData.signalTimestamp = 0;
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
@@ -2796,28 +2786,28 @@ export class ContainerRuntime
 		if (message.clientId === this.clientId && this.connected) {
 			// Check to see if the signal was lost.
 			if (
-				this._perfSignalData.trackingSignalSequenceNumber !== undefined &&
+				this.#perfSignalData.trackingSignalSequenceNumber !== undefined &&
 				envelope.clientSignalSequenceNumber >
-					this._perfSignalData.trackingSignalSequenceNumber
+					this.#perfSignalData.trackingSignalSequenceNumber
 			) {
-				this._perfSignalData.signalsLost++;
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
+				this.#perfSignalData.signalsLost++;
+				this.#perfSignalData.trackingSignalSequenceNumber = undefined;
 				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
 					type: envelope.contents.type,
-					signalsLost: this._perfSignalData.signalsLost,
-					trackingSequenceNumber: this._perfSignalData.trackingSignalSequenceNumber,
+					signalsLost: this.#perfSignalData.signalsLost,
+					trackingSequenceNumber: this.#perfSignalData.trackingSignalSequenceNumber,
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
 				envelope.clientSignalSequenceNumber ===
-				this._perfSignalData.trackingSignalSequenceNumber
+				this.#perfSignalData.trackingSignalSequenceNumber
 			) {
 				// only logging for the first connection and the trackingSignalSequenceNUmber.
 				if (this.consecutiveReconnects === 0) {
 					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
 				}
-				this._perfSignalData.trackingSignalSequenceNumber = undefined;
+				this.#perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
 		}
 
@@ -2845,7 +2835,7 @@ export class ContainerRuntime
 	 */
 	private flush(): void {
 		assert(
-			this._orderSequentiallyCalls === 0,
+			this.#orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
@@ -2866,7 +2856,7 @@ export class ContainerRuntime
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
 		try {
-			this._orderSequentiallyCalls++;
+			this.#orderSequentiallyCalls++;
 			result = callback();
 		} catch (error) {
 			if (checkpoint) {
@@ -2895,7 +2885,7 @@ export class ContainerRuntime
 								`orderSequentially callback exception: ${errorMessage}`,
 								error,
 								{
-									orderSequentiallyCalls: this._orderSequentiallyCalls,
+									orderSequentiallyCalls: this.#orderSequentiallyCalls,
 								},
 							),
 					),
@@ -2904,11 +2894,11 @@ export class ContainerRuntime
 
 			throw error; // throw the original error for the consumer of the runtime
 		} finally {
-			this._orderSequentiallyCalls--;
+			this.#orderSequentiallyCalls--;
 		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this.flushMode !== FlushMode.TurnBased && this.#orderSequentiallyCalls === 0) {
 			this.flush();
 		}
 		return result;
@@ -3008,17 +2998,17 @@ export class ContainerRuntime
 	 * Are we in the middle of batching ops together?
 	 */
 	private currentlyBatching() {
-		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
+		return this.flushMode !== FlushMode.Immediate || this.#orderSequentiallyCalls !== 0;
 	}
 
-	private readonly _quorum: IQuorumClients;
+	private readonly quorum: IQuorumClients;
 	public getQuorum(): IQuorumClients {
-		return this._quorum;
+		return this.quorum;
 	}
 
-	private readonly _audience: IAudience;
+	private readonly audience: IAudience;
 	public getAudience(): IAudience {
-		return this._audience;
+		return this.audience;
 	}
 
 	/**
@@ -3063,7 +3053,7 @@ export class ContainerRuntime
 		type: string,
 		content: any,
 	): ISignalEnvelope {
-		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
+		const newSequenceNumber = ++this.#perfSignalData.signalSequenceNumber;
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
@@ -3073,10 +3063,10 @@ export class ContainerRuntime
 		// We should not track any signals in case we already have a tracking number.
 		if (
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined
+			this.#perfSignalData.trackingSignalSequenceNumber === undefined
 		) {
-			this._perfSignalData.signalTimestamp = Date.now();
-			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
+			this.#perfSignalData.signalTimestamp = Date.now();
+			this.#perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
 		}
 
 		return newEnvelope;
@@ -3131,13 +3121,13 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this._idCompressor?.takeNextCreationRange();
+		const idRange = this.#idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
 				0x93e /* No other ranges should be taken while container is detached. */,
 			);
-			this._idCompressor?.finalizeCreationRange(idRange);
+			this.#idCompressor?.finalizeCreationRange(idRange);
 		}
 
 		const summarizeResult = this.channelCollection.getAttachSummary(telemetryContext);
@@ -3764,7 +3754,7 @@ export class ContainerRuntime
 			this.summarizerNode.clearSummary();
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
-			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
+			this.#summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
 
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
@@ -3889,10 +3879,10 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(resubmitOutstandingRanges: boolean): void {
-		if (this._idCompressor) {
+		if (this.#idCompressor) {
 			const idRange = resubmitOutstandingRanges
-				? this._idCompressor.takeUnfinalizedCreationRange()
-				: this._idCompressor.takeNextCreationRange();
+				? this.#idCompressor.takeUnfinalizedCreationRange()
+				: this.#idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4031,7 +4021,7 @@ export class ContainerRuntime
 
 			default:
 				assert(
-					this._orderSequentiallyCalls > 0,
+					this.#orderSequentiallyCalls > 0,
 					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
@@ -4059,7 +4049,7 @@ export class ContainerRuntime
 	 * be called after dispose due to asynchrony should not call this.
 	 */
 	private verifyNotClosed() {
-		if (this._disposed) {
+		if (this.#disposed) {
 			throw new Error("Runtime is closed");
 		}
 	}
@@ -4258,14 +4248,14 @@ export class ContainerRuntime
 		);
 
 		await delay(this.closeSummarizerDelayMs);
-		this._summarizer?.stop("latestSummaryStateStale");
+		this.#summarizer?.stop("latestSummaryStateStale");
 		this.disposeFn();
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
 
-		if (this._orderSequentiallyCalls !== 0) {
+		if (this.#orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
@@ -4277,7 +4267,7 @@ export class ContainerRuntime
 			const sessionExpiryTimerStarted =
 				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
-			const pendingIdCompressorState = this._idCompressor?.serialize(true);
+			const pendingIdCompressorState = this.#idCompressor?.serialize(true);
 
 			return {
 				pending,
