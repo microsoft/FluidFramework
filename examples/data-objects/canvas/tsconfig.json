@@ -10,6 +10,7 @@
 			"react",
 			"react-dom",
 		],
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 }

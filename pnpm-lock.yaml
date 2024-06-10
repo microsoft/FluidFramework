@@ -4591,6 +4591,12 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions

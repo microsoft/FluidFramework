@@ -9,12 +9,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { TreeNodeSchema, WithType, type } from "./schemaTypes.js";
 import {
 	FlexTreeNode,
-	FlexTreeNodeSchema,
+	MapTreeNode,
 	isFlexTreeNode,
 	markEager,
 } from "../feature-libraries/index.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { RawTreeNode } from "./rawNode.js";
 import { isTreeNode } from "./proxies.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { getFlexSchema } from "./toFlexSchema.js";
@@ -133,7 +132,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
 		input: T,
-	): RawTreeNode<FlexTreeNodeSchema, unknown> {
+	): MapTreeNode {
 		return fail("Schema must override buildRawNode");
 	}
 

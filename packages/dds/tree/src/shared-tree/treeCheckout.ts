@@ -627,7 +627,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
-				),
+				).change,
 			);
 		}
 
