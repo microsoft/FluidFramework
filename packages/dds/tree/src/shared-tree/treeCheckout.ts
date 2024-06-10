@@ -411,7 +411,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								delta,
 								visitor,
 								this.removedRootsInTransaction ?? this.removedRoots,
-								revision ?? fail("testing if there are undefined revisions"),
+								revision,
 							);
 						});
 					} else if (change.type === "schema") {
