@@ -25,6 +25,7 @@ import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -51,10 +52,11 @@ export class DetachedFieldIndex {
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly idCompressor: IIdCompressor,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -62,6 +64,7 @@ export class DetachedFieldIndex {
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
@@ -85,11 +88,11 @@ export class DetachedFieldIndex {
 	/**
 	 * Removes all entries from the index.
 	 */
-	public purge() {
+	public purge(): void {
 		this.detachedNodeToField.clear();
 	}
 
-	public updateMajor(current: Major, updated: Major) {
+	public updateMajor(current: Major, updated: Major): void {
 		const innerCurrent = this.detachedNodeToField.get(current);
 		if (innerCurrent !== undefined) {
 			this.detachedNodeToField.delete(current);

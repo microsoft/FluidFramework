@@ -4,23 +4,24 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	type IDeltaManager,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { type IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	type AttributionInfo,
 	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,
@@ -82,6 +83,7 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 
 	/**
 	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
+	 * If enabled, the runtime attributor can be asked for the attribution info for different keys.
 	 * See {@link mixinAttributor} for more details on when this happens.
 	 */
 	readonly isEnabled: boolean;
@@ -152,10 +154,10 @@ export const mixinAttributor = (
 			const baseSnapshot: ISnapshotTree | undefined =
 				pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-			const { audience, deltaManager, taggedLogger } = context;
+			const { quorum, deltaManager, taggedLogger } = context;
 			assert(
-				audience !== undefined,
-				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
+				quorum !== undefined,
+				0x968 /* quorum must exist when instantiating attribution-providing runtime */,
 			);
 
 			const mc = loggerToMonitoringContext(taggedLogger);
@@ -183,7 +185,10 @@ export const mixinAttributor = (
 			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
+			const logger = createChildLogger({
+				logger: runtime.baseLogger,
+				namespace: "Attributor",
+			});
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
@@ -197,7 +202,7 @@ export const mixinAttributor = (
 				async (event) => {
 					await runtime.runtimeAttributor?.initialize(
 						deltaManager,
-						audience,
+						quorum,
 						baseSnapshot,
 						async (id) => runtime.storage.readBlob(id),
 						shouldTrackAttribution,
@@ -279,7 +284,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
 	public async initialize(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
+		quorum: IQuorumClients,
 		baseSnapshot: ISnapshotTree | undefined,
 		readBlob: (id: string) => Promise<ArrayBufferLike>,
 		shouldAddAttributorOnNewFile: boolean,
@@ -299,14 +304,14 @@ class RuntimeAttributor implements IRuntimeAttributor {
 		this.isEnabled = true;
 		this.encoder = chain(
 			new AttributorSerializer(
-				(entries) => new OpStreamAttributor(deltaManager, audience, entries),
+				(entries) => new OpStreamAttributor(deltaManager, quorum, entries),
 				deltaEncoder,
 			),
 			makeLZ4Encoder(),
 		);
 
 		if (attributorTree === undefined) {
-			this.opAttributor = new OpStreamAttributor(deltaManager, audience);
+			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
 			const id = attributorTree.blobs[opBlobName];
 			assert(

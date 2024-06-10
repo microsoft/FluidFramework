@@ -135,6 +135,24 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
+const identifierFieldIdentifier = "Identifier";
+
+/**
+ * Exactly one identifier.
+ */
+export const identifier = new FieldKindWithEditor(
+	identifierFieldIdentifier,
+	Multiplicity.Single,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === identifierFieldIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
 /**
  * Exactly 0 items.
  *
@@ -174,13 +192,36 @@ export const forbidden = new FieldKindWithEditor(
 
 export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
 	[
-		0,
+		1,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
-			[required.identifier, { kind: required, formatVersion: 0 }],
-			[optional.identifier, { kind: optional, formatVersion: 0 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 1 }],
+			[optional.identifier, { kind: optional, formatVersion: 1 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		2,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		3,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
 	],
 ]);
@@ -193,7 +234,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -216,7 +257,7 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
 /**
  * @internal
  */
-export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
+export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
  * @internal
  */
@@ -232,6 +273,6 @@ export const FieldKinds: {
 	readonly required: Required;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
-	readonly nodeKey: NodeKeyFieldKind;
+	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, identifier, forbidden };

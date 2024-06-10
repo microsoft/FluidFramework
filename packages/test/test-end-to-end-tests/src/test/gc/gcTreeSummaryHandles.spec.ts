@@ -15,22 +15,20 @@ import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
 	SummarizerStopReason,
 	SummaryCollection,
 	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverHeader,
 	IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -47,7 +45,6 @@ import { wrapObjectAndOverride } from "../../mocking.js";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -59,10 +56,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -131,7 +124,6 @@ async function submitFailingSummary(
 	// Submit a summary with a fail token on generate
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
 		latestSummaryRefSeqNum,
@@ -167,7 +159,6 @@ async function submitAndAckSummary(
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
@@ -201,15 +192,11 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		// TODO:#4670: Make this compat-version-specific.
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				runtimeOptions,
 			},
 		);
 		const logger = createChildLogger();
@@ -238,12 +225,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**

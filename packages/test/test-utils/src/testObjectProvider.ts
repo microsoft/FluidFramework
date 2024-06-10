@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -22,13 +21,14 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 import {
+	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
@@ -160,6 +160,7 @@ export interface ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer>;
 
 	/**
@@ -185,6 +186,7 @@ export interface ITestObjectProvider {
 	loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer>;
 
 	/**
@@ -195,7 +197,7 @@ export interface ITestObjectProvider {
 	/**
 	 * Make sure all the tracked containers are synchronized.
 	 */
-	ensureSynchronized(timeoutDuration?: number): Promise<void>;
+	ensureSynchronized(...containers: IContainer[]): Promise<void>;
 
 	/**
 	 * Reset the tracker, closing all containers and stop tracking them.
@@ -585,16 +587,24 @@ export class TestObjectProvider implements ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingState?: string,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader);
+		return this.resolveContainer(loader, requestHeader, pendingState);
 	}
 
-	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
-		return loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers,
-		});
+	private async resolveContainer(
+		loader: ILoader,
+		headers?: IRequestHeader,
+		pendingLocalState?: string,
+	) {
+		return loader.resolve(
+			{
+				url: await this.driver.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -637,10 +647,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
 
-		const container = await this.resolveContainer(loader, requestHeader);
+		const container = await this.resolveContainer(loader, requestHeader, pendingLocalState);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
@@ -666,8 +677,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {
@@ -940,22 +951,27 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingState?: string,
 	): Promise<IContainer> {
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader, driver);
+		return this.resolveContainer(loader, requestHeader, driver, pendingState);
 	}
 
 	private async resolveContainer(
 		loader: ILoader,
 		headers?: IRequestHeader,
 		driver?: ITestDriver,
+		pendingLocalState?: string,
 	) {
-		return loader.resolve({
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			url: await driver!.createContainerUrl(this.documentId),
-			headers,
-		});
+		return loader.resolve(
+			{
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				url: await driver!.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -1002,11 +1018,17 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		// Keep track of which Loader we are about to use so we can pass the correct driver through
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await this.resolveContainer(loader, requestHeader, driver);
+		const container = await this.resolveContainer(
+			loader,
+			requestHeader,
+			driver,
+			pendingLocalState,
+		);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
@@ -1033,8 +1055,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
 	 */
-	public async ensureSynchronized(): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
 	private async waitContainerToCatchUp(container: IContainer) {

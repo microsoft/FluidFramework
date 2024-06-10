@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
-import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import { EncodedRevisionTag, RevisionTagCodec, type RevisionTag } from "../rebase/index.js";
 
 import { ForestRootId } from "./detachedFieldIndex.js";
 import {
@@ -16,14 +16,16 @@ import {
 	version,
 } from "./detachedFieldIndexFormat.js";
 import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly options: ICodecOptions,
+		private readonly idCompressor: IIdCompressor,
 	) {}
 
-	public encode(major: Major) {
+	public encode(major: Major): EncodedRevisionTag {
 		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 		/**
@@ -46,13 +48,15 @@ class MajorCodec implements IJsonCodec<Major> {
 		return id;
 	}
 
-	public decode(major: EncodedRevisionTag) {
+	public decode(major: EncodedRevisionTag): RevisionTag {
 		assert(
 			major === "root" || major >= 0,
 			0x890 /* Expected final id on decode of detached field index revision */,
 		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
+			idCompressor: this.idCompressor,
+			revision: undefined,
 		});
 	}
 }
@@ -60,8 +64,9 @@ class MajorCodec implements IJsonCodec<Major> {
 export function makeDetachedNodeToFieldCodec(
 	revisionTagCodec: RevisionTagCodec,
 	options: ICodecOptions,
+	idCompressor: IIdCompressor,
 ): IJsonCodec<DetachedFieldSummaryData, Format> {
-	const majorCodec = new MajorCodec(revisionTagCodec, options);
+	const majorCodec = new MajorCodec(revisionTagCodec, options, idCompressor);
 	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
 		encode: (data: DetachedFieldSummaryData): Format => {
 			const rootsForRevisions: EncodedRootsForRevision[] = [];

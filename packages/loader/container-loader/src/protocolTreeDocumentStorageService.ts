@@ -4,11 +4,11 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
  * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include
@@ -18,7 +18,15 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-	) {}
+	) {
+		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
+		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
+		this.getVersions = internalStorageService.getVersions.bind(internalStorageService);
+		this.createBlob = internalStorageService.createBlob.bind(internalStorageService);
+		this.readBlob = internalStorageService.readBlob.bind(internalStorageService);
+		this.downloadSummary = internalStorageService.downloadSummary.bind(internalStorageService);
+		this.dispose = internalStorageService.dispose.bind(internalStorageService);
+	}
 	public get policies() {
 		return this.internalStorageService.policies;
 	}
@@ -26,13 +34,13 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		return this.internalStorageService.disposed;
 	}
 
-	getSnapshotTree = this.internalStorageService.getSnapshotTree.bind(this.internalStorageService);
-	getSnapshot = this.internalStorageService.getSnapshot?.bind(this.internalStorageService);
-	getVersions = this.internalStorageService.getVersions.bind(this.internalStorageService);
-	createBlob = this.internalStorageService.createBlob.bind(this.internalStorageService);
-	readBlob = this.internalStorageService.readBlob.bind(this.internalStorageService);
-	downloadSummary = this.internalStorageService.downloadSummary.bind(this.internalStorageService);
-	dispose = this.internalStorageService.dispose.bind(this.internalStorageService);
+	getSnapshotTree: IDocumentStorageService["getSnapshotTree"];
+	getSnapshot: IDocumentStorageService["getSnapshot"];
+	getVersions: IDocumentStorageService["getVersions"];
+	createBlob: IDocumentStorageService["createBlob"];
+	readBlob: IDocumentStorageService["readBlob"];
+	downloadSummary: IDocumentStorageService["downloadSummary"];
+	dispose: IDisposable["dispose"];
 
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,

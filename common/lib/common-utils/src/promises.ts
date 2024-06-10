@@ -80,6 +80,7 @@ export class LazyPromise<T> implements Promise<T> {
 
 	constructor(private readonly execute: () => Promise<T>) {}
 
+	// eslint-disable-next-line unicorn/no-thenable
 	public async then<TResult1 = T, TResult2 = never>(
 		// eslint-disable-next-line @rushstack/no-new-null
 		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,

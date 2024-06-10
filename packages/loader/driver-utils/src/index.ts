@@ -54,4 +54,5 @@ export {
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./adapters/index.js";
-export { isInstanceOfISnapshot } from "./storageUtils.js";
+export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
+export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";

@@ -5,12 +5,15 @@
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	createChildLogger,

@@ -62,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
@@ -122,6 +122,7 @@ export {
 	ModularChangeFamily,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	updateRefreshers,
 	NodeId,
 	FieldChangeEncodingContext,
 	FieldKindConfiguration,
@@ -195,14 +196,14 @@ export {
 
 export {
 	compareLocalNodeKeys,
-	LocalNodeKey,
 	createNodeKeyManager,
-	createMockNodeKeyManager,
-	StableNodeKey,
+	isStableNodeKey,
+	LocalNodeKey,
+	MockNodeKeyManager,
 	NodeKeyIndex,
 	NodeKeyManager,
-	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
+	StableNodeKey,
 } from "./node-key/index.js";
 
 export {
@@ -210,7 +211,7 @@ export {
 	Required,
 	Optional,
 	Sequence,
-	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	DefaultChangeset,
 	DefaultChangeFamily,
@@ -224,6 +225,8 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	SchemaValidationErrors,
+	isNodeInSchema,
 } from "./default-schema/index.js";
 
 export {
@@ -267,7 +270,6 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
 	PropertyNameFromFieldKey,
 	ReservedObjectNodeFieldPropertyNames,
 	ReservedObjectNodeFieldPropertyNamePrefixes,
@@ -276,6 +278,9 @@ export {
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	getSchemaAndPolicy,
+	onNodeChanged,
+	onTreeChanged,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -302,3 +307,10 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export {
+	MapTreeNode,
+	isMapTreeNode,
+	getOrCreateMapTreeNode,
+	tryGetMapTreeNode,
+} from "./flex-map-tree/index.js";

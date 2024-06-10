@@ -183,6 +183,8 @@ sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
 
 Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as _maintenance_ events.
 These events don't correspond directly to APIs invoked on a sequence DDS, but may be useful for advanced users.
+Maintenance events are raised whenever the underlying structure of the merge-tree changes (segments are merged, split, unlinked, etc),
+so applications attempting to synchronize a data model dependent on the segment structure of merge-tree should look into the semantics of these events; see `MergeTreeMaintenanceType`.
 
 Both sequenceDelta and maintenance events are commonly used to synchronize or invalidate a view an application might have over a backing sequence DDS.
 
@@ -564,8 +566,10 @@ const options: ILoaderOptions = {
 ```
 
 This ensures that the client is able to load existing documents containing attribution information,
-and specifies which kinds of operations should be attributed at the SharedString level (currently, only insertions).
+and specifies which kinds of operations should be attributed at the SharedString level.
 The stored attribution information can be found on the `attribution` field of the SharedString's segments.
+
+> To attribute property changes as well as insertions, use `createPropertyTrackingAndInsertionAttributionPolicyFactory` in place of the insert-only factory.
 
 Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start tracking attribution information for new files.
 
@@ -576,9 +580,12 @@ const key = segment.attribution.getAtOffset(offset);
 // See the @fluid-experimental/attributor package for more details.
 ```
 
-For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
+Note that because attribution information is only finalized upon receiving acknowledgement from the server,
+any queries for attribution keys on unacked changes will return `LocalAttributionKey`.
+To listen for changes to attribution information (e.g. to synchronize a data model with a `SharedString`),
+use the "maintenance" event for acknowledgement.
 
-There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
+For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
 
 <!-- This line begins the content that is copied to the string.md README -->
 

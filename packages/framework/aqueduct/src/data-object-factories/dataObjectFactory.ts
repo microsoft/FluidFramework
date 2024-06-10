@@ -4,9 +4,14 @@
  */
 
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SharedMap } from "@fluidframework/map";
-import { DirectoryFactory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import {
+	SharedMap,
+	DirectoryFactory,
+	MapFactory,
+	// eslint-disable-next-line import/no-deprecated
+	SharedDirectory,
+} from "@fluidframework/map/internal";
 import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
@@ -43,6 +48,7 @@ export class DataObjectFactory<
 
 		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
+			// eslint-disable-next-line import/no-deprecated
 			mergedObjects.push(SharedDirectory.getFactory());
 		}
 

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeViewEvents, TreeConfiguration, SchemaIncompatible } from "./tree.js";
+export {
+	ITree,
+	TreeView,
+	TreeViewEvents,
+	TreeConfiguration,
+	ITreeConfigurationOptions,
+	SchemaIncompatible,
+} from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -26,12 +33,13 @@ export {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
 	NodeBuilderData,
+	DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
-export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeApi.js";
+export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeNodeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
 export {
 	ObjectFromSchemaRecordUnsafe,
@@ -48,7 +56,7 @@ export {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
-export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export { getProxyForField, InsertableContent } from "./proxies.js";
 
 export {
@@ -66,7 +74,9 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-export { TreeNode, Unhydrated } from "./types.js";
+// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
+// See docs on TreeNode for more details.
+export { type TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
 export {
 	InsertableObjectFromSchemaRecord,

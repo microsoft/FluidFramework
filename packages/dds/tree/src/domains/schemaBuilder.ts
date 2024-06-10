@@ -53,6 +53,7 @@ export class SchemaBuilder<
 		});
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,
@@ -87,7 +88,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
@@ -96,7 +97,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
 	 *
 	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
@@ -106,7 +107,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
@@ -115,7 +116,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
 	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link FlexImplicitFieldSchema}
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
 	 *
@@ -127,7 +128,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
@@ -136,12 +137,31 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
+	 * Shorthand for passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
 	 *
 	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
+
+	/**
+	 * Define a schema for an {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 */
+	public static identifier = fieldHelper(FieldKinds.identifier);
+
+	/**
+	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand for passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefore this method is the same as the static version.
+	 */
+	public readonly identifier = SchemaBuilder.identifier;
 }
 
 /**

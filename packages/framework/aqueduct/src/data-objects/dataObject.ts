@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
 import { type DataObjectTypes } from "./types.js";
@@ -61,6 +63,7 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
+			// eslint-disable-next-line import/no-deprecated
 			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
 		}
@@ -75,4 +78,14 @@ export abstract class DataObject<
 	protected getUninitializedErrorString(item: string): string {
 		return `${item} must be initialized before being accessed.`;
 	}
+}
+
+/**
+ * Utility for creating SharedObjectKind instances for data objects.
+ * @internal
+ */
+export function createDataObjectKind<T extends new (...any) => DataObject>(
+	factory: T,
+): T & SharedObjectKind<InstanceType<T>> {
+	return factory as T & SharedObjectKind<InstanceType<T>>;
 }

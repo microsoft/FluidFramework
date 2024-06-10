@@ -9,4 +9,4 @@ import { FieldChangeEncodingContext } from "../index.js";
 export const noChangeCodecFamily: ICodecFamily<0, FieldChangeEncodingContext> = makeCodecFamily<
 	0,
 	FieldChangeEncodingContext
->([[0, unitCodec]]);
+>([[1, unitCodec]]);

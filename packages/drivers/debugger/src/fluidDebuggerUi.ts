@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
+import { IVersion, ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

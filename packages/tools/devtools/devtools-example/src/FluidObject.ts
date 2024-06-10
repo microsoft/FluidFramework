@@ -9,7 +9,8 @@ import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-int
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */

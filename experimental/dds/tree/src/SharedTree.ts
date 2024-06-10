@@ -10,18 +10,22 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+} from '@fluidframework/datastore-definitions/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+	createSingleBlobSummary,
+} from '@fluidframework/shared-object-base/internal';
 import {
 	IEventSampler,
 	ITelemetryLoggerPropertyBags,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,
@@ -541,7 +545,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
-		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_sharedTree_');
+		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_legacySharedTree_');
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 

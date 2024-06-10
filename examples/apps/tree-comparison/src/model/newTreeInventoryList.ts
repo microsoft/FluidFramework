@@ -9,10 +9,10 @@ import {
 	type ITree,
 	NodeFromSchema,
 	SchemaFactory,
-	SharedTree,
 	Tree,
 	TreeConfiguration,
 } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -55,8 +55,6 @@ export const treeConfiguration = new TreeConfiguration(
 			],
 		}),
 );
-
-const newTreeFactory = SharedTree.getFactory();
 
 const sharedTreeKey = "sharedTree";
 
@@ -132,7 +130,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as ITree;
+		this._sharedTree = SharedTree.create(this.runtime);
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();
@@ -219,6 +217,6 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
 	"new-tree-inventory-list",
 	NewTreeInventoryList,
-	[newTreeFactory],
+	[SharedTree.getFactory()],
 	{},
 );

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,15 +24,14 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./mocharc-common",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp node_modules/.legacy nyc",
@@ -73,7 +72,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/version-tools": "^0.34.0",
+		"@fluid-tools/version-tools": "^0.38.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
@@ -89,8 +88,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -102,12 +101,13 @@
 		"semver": "^7.5.3"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -125,21 +125,10 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
+		"typescript": "~5.4.5",
 		"uuid": "^9.0.0",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true,

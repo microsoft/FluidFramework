@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.3.0",
+	"version": "4.0.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,21 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/protocol-definitions-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/protocol-definitions-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
-		"./alpha": {
+		"./legacy": {
 			"import": {
-				"types": "./lib/protocol-definitions-alpha.d.ts",
+				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/protocol-definitions-alpha.d.ts",
+				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -44,23 +44,23 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -69,18 +69,17 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --level public",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"dependencies": {},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.45.1",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
@@ -89,17 +88,9 @@
 		"rimraf": "^2.6.2",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"tsc": [
 				"typetests:gen"
 			]
@@ -119,6 +110,9 @@
 		},
 		"overrides": {
 			"sharp": "^0.33.2"
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.45.1": "../../../patches/@microsoft__api-extractor@7.45.1.patch"
 		}
 	},
 	"typeValidation": {

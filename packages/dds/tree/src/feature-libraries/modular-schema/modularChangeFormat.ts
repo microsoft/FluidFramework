@@ -25,24 +25,6 @@ export const EncodedChangeAtomId = Type.Union([
 ]);
 export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
-const EncodedValueChange = Type.Object(
-	{
-		revision: Type.Optional(RevisionTagSchema),
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-	},
-	noAdditionalProps,
-);
-type EncodedValueChange = Static<typeof EncodedValueChange>;
-
-const EncodedValueConstraint = Type.Object(
-	{
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-		violated: Type.Boolean(),
-	},
-	noAdditionalProps,
-);
-type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
-
 const EncodedFieldChange = Type.Object(
 	{
 		fieldKey: schemaFormat.FieldKeySchema,
@@ -83,9 +65,7 @@ type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
 	{
-		valueChange: Type.Optional(EncodedValueChange),
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
-		valueConstraint: Type.Optional(EncodedValueConstraint),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,

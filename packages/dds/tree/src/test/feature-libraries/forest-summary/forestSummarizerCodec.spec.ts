@@ -31,11 +31,13 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { emptySchema } from "../../cursorTestSuite.js";
+import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
+	idCompressor: testIdCompressor,
 };
 
 const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
@@ -47,7 +49,7 @@ const testFieldChunks: TreeChunk[] = chunkField(
 assert(testFieldChunks.length === 1);
 const testFieldChunk: TreeChunk = testFieldChunks[0];
 
-const malformedData: [string, any][] = [
+const malformedData: [string, unknown][] = [
 	[
 		"additional piece of data in entry",
 		new Map([[rootFieldKey, [testFieldChunk.cursor(), "additional data"]]]),
@@ -101,10 +103,7 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(
-					() => codec.encode(data as unknown as FieldSet, context),
-					"malformed data",
-				);
+				assert.throws(() => codec.encode(data as FieldSet, context), "malformed data");
 			});
 		}
 	});

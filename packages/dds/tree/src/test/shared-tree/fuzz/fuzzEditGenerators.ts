@@ -25,6 +25,7 @@ import {
 } from "../../../core/index.js";
 import {
 	DownPath,
+	FlexTreeField,
 	FlexTreeNode,
 	toDownPath,
 	treeSchemaFromStoredSchema,
@@ -56,6 +57,8 @@ import {
 	TreeEdit,
 	UndoRedo,
 	FieldEdit,
+	CrossFieldMove,
+	FieldDownPath,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -112,7 +115,7 @@ export function viewFromState(
 	state.view ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+		getOrCreate(state.view, client.channel, (tree) => {
 			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
@@ -139,7 +142,8 @@ export function viewFromState(
 }
 
 function isEmptyStoredSchema(tree: SharedTree): boolean {
-	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const rootFieldSchemaData = (tree.storedSchema as any).rootFieldSchemaData;
 	return rootFieldSchemaData.types.size === 0;
 }
 /**
@@ -196,7 +200,8 @@ export interface EditGeneratorOpWeights {
 	clear: number;
 	insert: number;
 	remove: number;
-	move: number;
+	intraFieldMove: number;
+	crossFieldMove: number;
 	start: number;
 	commit: number;
 	abort: number;
@@ -213,7 +218,8 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	clear: 0,
 	insert: 0,
 	remove: 0,
-	move: 0,
+	intraFieldMove: 0,
+	crossFieldMove: 0,
 	start: 0,
 	commit: 0,
 	abort: 0,
@@ -266,6 +272,11 @@ export const makeTreeEditGenerator = (
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
+			case "com.fluidframework.leaf.handle":
+				return {
+					type: brand("com.fluidframework.leaf.handle"),
+					value: state.random.handle(),
+				};
 			case "treefuzz.node":
 				return {
 					type: brand("treefuzz.node"),
@@ -295,7 +306,7 @@ export const makeTreeEditGenerator = (
 		fieldInfo: TFuzzField;
 	}
 
-	const sequenceFieldEditGenerator = createWeightedGenerator<
+	const sequenceFieldEditGenerator = createWeightedGeneratorWithBailout<
 		SequenceFieldEdit["edit"],
 		FuzzTestStateForFieldEdit<SequenceFuzzField>
 	>([
@@ -333,7 +344,31 @@ export const makeTreeEditGenerator = (
 					dstIndex: random.integer(0, field.length),
 				};
 			},
-			weights.move,
+			weights.intraFieldMove,
+			({ fieldInfo }) => fieldInfo.content.length > 0,
+		],
+		[
+			(state): CrossFieldMove => {
+				const srcField = state.fieldInfo.content;
+				const first = state.random.integer(0, srcField.length - 1);
+				const last = state.random.integer(first, srcField.length - 1);
+				const dstFieldInfo = selectTreeField(
+					viewFromState(state),
+					state.random,
+					weights.fieldSelection,
+					(field: FuzzField) =>
+						field.type === "sequence" && !isField1UnderField2(field.content, srcField),
+				);
+				assert(dstFieldInfo.type === "sequence");
+				const dstField = dstFieldInfo.content;
+				return {
+					type: "crossFieldMove",
+					range: { first, last },
+					dstField: fieldDownPathFromField(dstField),
+					dstIndex: state.random.integer(0, dstField.length),
+				};
+			},
+			weights.crossFieldMove,
 			({ fieldInfo }) => fieldInfo.content.length > 0,
 		],
 	]);
@@ -359,17 +394,20 @@ export const makeTreeEditGenerator = (
 		value: jsonableTree(state),
 	});
 
-	function fieldEditChangeGenerator(state: FuzzTestStateForFieldEdit): FieldEdit["change"] {
+	function fieldEditChangeGenerator(
+		state: FuzzTestStateForFieldEdit,
+	): FieldEdit["change"] | "no-valid-selections" {
 		switch (state.fieldInfo.type) {
-			case "sequence":
-				return {
-					type: "sequence",
-					edit: assertNotDone(
+			case "sequence": {
+				return mapBailout(
+					assertNotDone(
 						sequenceFieldEditGenerator(
 							state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
 						),
 					),
-				};
+					(edit) => ({ type: "sequence", edit }),
+				);
+			}
 			case "optional":
 				return {
 					type: "optional",
@@ -394,20 +432,23 @@ export const makeTreeEditGenerator = (
 	}
 
 	return (state) => {
-		const fieldInfo = selectTreeField(
-			viewFromState(state),
-			state.random,
-			weights.fieldSelection,
-		);
-		const change = fieldEditChangeGenerator({ ...state, fieldInfo });
+		let fieldInfo: FuzzField;
+		let change: ReturnType<typeof fieldEditChangeGenerator>;
+		// This could be surfaced as a config option if desired. In practice, the corresponding assert is most
+		// likely to be hit during when a test is badly configured, in which case the remedy is to fix the config,
+		// as opposed to increasing the number of attempts.
+		let attemptsRemaining = 20;
+		do {
+			fieldInfo = selectTreeField(viewFromState(state), state.random, weights.fieldSelection);
+			change = fieldEditChangeGenerator({ ...state, fieldInfo });
+			attemptsRemaining -= 1;
+		} while (change === "no-valid-selections" && attemptsRemaining > 0);
+		assert(change !== "no-valid-selections", "No valid field edit found");
 		return {
 			type: "treeEdit",
 			edit: {
 				type: "fieldEdit",
-				field: {
-					parent: maybeDownPathFromNode(fieldInfo.content.parent),
-					key: fieldInfo.content.key,
-				},
+				field: fieldDownPathFromField(fieldInfo.content),
 				change,
 			},
 		};
@@ -478,7 +519,8 @@ export function makeOpGenerator(
 	const {
 		insert,
 		remove,
-		move,
+		intraFieldMove,
+		crossFieldMove,
 		set,
 		clear,
 		abort,
@@ -494,7 +536,7 @@ export function makeOpGenerator(
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
 	// updated to take into account the new weights.
 	assert(Object.keys(others).length === 0, "Unexpected weight");
-	const editWeight = sumWeights([insert, remove, move, set, clear]);
+	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
 
@@ -537,6 +579,17 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
+function isField1UnderField2(field1: FlexTreeField, field2: FlexTreeField): boolean {
+	let parentField = field1.parent?.parentField?.parent;
+	while (parentField !== undefined) {
+		if (parentField.isSameAs(field2)) {
+			return true;
+		}
+		parentField = parentField.parent?.parentField?.parent;
+	}
+	return false;
+}
+
 function upPathFromNode(node: FlexTreeNode): UpPath {
 	const parentField = node.parentField.parent;
 
@@ -553,6 +606,13 @@ function downPathFromNode(node: FlexTreeNode): DownPath {
 
 function maybeDownPathFromNode(node: FlexTreeNode | undefined): DownPath | undefined {
 	return node === undefined ? undefined : downPathFromNode(node);
+}
+
+function fieldDownPathFromField(field: FlexTreeField): FieldDownPath {
+	return {
+		parent: maybeDownPathFromNode(field.parent),
+		key: field.key,
+	};
 }
 
 interface OptionalFuzzField {
@@ -748,6 +808,13 @@ function createWeightedGeneratorWithBailout<T, TState extends BaseFuzzTestState>
 		selectedIndices.clear();
 		return result;
 	};
+}
+
+function mapBailout<T, U>(
+	input: T | "no-valid-selections",
+	delegate: (t: T) => U,
+): U | "no-valid-selections" {
+	return input === "no-valid-selections" ? "no-valid-selections" : delegate(input);
 }
 
 function assertNotDone<T>(input: T | typeof done): T {

@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IConnectionDetails,
-	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
+	IFluidCodeDetails,
+	isFluidPackage,
+	IConnectionDetails,
+} from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
+import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import {
-	ConnectionMode,
+	IContainerPackageInfo,
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
+	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 export enum ReconnectMode {
 	Never = "Never",

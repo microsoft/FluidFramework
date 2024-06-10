@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IUser } from "@fluidframework/protocol-definitions";
+import { type IUser } from "@fluidframework/driver-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
 import { type IAttributor } from "./attributor.js";

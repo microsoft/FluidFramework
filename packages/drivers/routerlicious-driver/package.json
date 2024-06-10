@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.5.0.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,31 +15,31 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/routerlicious-driver-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/routerlicious-driver-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/routerlicious-driver-beta.d.ts",
+				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/routerlicious-driver-beta.d.ts",
+				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
-		"./alpha": {
+		"./legacy": {
 			"import": {
-				"types": "./lib/routerlicious-driver-alpha.d.ts",
+				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/routerlicious-driver-alpha.d.ts",
+				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -54,26 +54,26 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -87,7 +87,7 @@
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -117,10 +117,7 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/gitresources": "^4.0.0",
-		"@fluidframework/protocol-base": "^4.0.0",
-		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-services-client": "^4.0.0",
+		"@fluidframework/server-services-client": "^5.0.0-265463",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"cross-fetch": "^3.1.5",
 		"json-stringify-safe": "5.0.1",
@@ -129,14 +126,14 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.39.0-264124",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.0.0-rc.4.0.0",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -155,29 +152,9 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
-		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedEnumDeclaration_RouterliciousErrorType": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IRouterliciousDriverPolicies": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

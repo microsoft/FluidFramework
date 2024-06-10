@@ -9,16 +9,16 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
+	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing

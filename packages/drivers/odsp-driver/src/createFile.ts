@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
@@ -13,9 +14,7 @@ import {
 	OdspErrorTypes,
 	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { ICreateFileResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";

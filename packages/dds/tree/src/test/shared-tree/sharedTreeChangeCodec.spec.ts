@@ -33,7 +33,7 @@ import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeCha
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
@@ -46,7 +46,7 @@ describe("sharedTreeChangeCodec", () => {
 				return uncompressedEncode(data);
 			},
 			decode: (data: EncodedFieldBatch): FieldBatch => {
-				return decode(data).map((chunk) => chunk.cursor());
+				return decode(data, testIdCompressor).map((chunk) => chunk.cursor());
 			},
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
@@ -57,12 +57,14 @@ describe("sharedTreeChangeCodec", () => {
 		);
 		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
 			jsonValidator: noopValidator,
-		}).resolve(0).json;
+		}).resolve(1).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
 			originatorId: "dummySessionID" as SessionId,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
+			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {

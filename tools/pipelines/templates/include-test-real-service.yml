@@ -218,6 +218,7 @@ jobs:
             # logic will be centralized outside of CI in the future.
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+            echo "@fluid-tools:registry=${{ variables.devFeed }}" >> ./.npmrc
 
             # This scope must be loaded from the "build" feed
             echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
@@ -245,6 +246,10 @@ jobs:
       # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
+        # ADO feeds have latency on the order of minutes before packages are available downstream. See:
+        # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
+        # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
+        retryCountOnTaskFailure: 10
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
@@ -278,19 +283,24 @@ jobs:
         - task: Bash@3
           displayName: Unpack test files
           inputs:
-            workingDir: ${{ parameters.testWorkspace }}
+            workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
             targetType: 'inline'
             script: |
-              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
-              tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
+              TAR_PATH=$(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar
+              echo "Unpacking test files for ${{ parameters.testPackage }} from file '$TAR_PATH' in '$(pwd)'"
+              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
+              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
+              # so keeping the paths to extract explicit.
+              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
+              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
+              tar --extract --verbose --file $TAR_PATH ./lib/test
+              tar --extract --verbose --file $TAR_PATH ./dist/test
+              tar --extract --verbose --file $TAR_PATH ./src/test
 
         - task: Bash@3
           displayName: Copy devDependencies
           inputs:
-            workingDir: ${{ parameters.testWorkspace }}
+            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
             script: |
               testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
@@ -304,6 +314,7 @@ jobs:
 
         - task: Npm@1
           displayName: 'npm install - extra dependencies for test files'
+          retryCountOnTaskFailure: 10
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}

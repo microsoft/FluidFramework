@@ -20,6 +20,7 @@ import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
+import { testIdCompressor } from "../../utils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -67,6 +68,8 @@ export function testSnapshots() {
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 
 		for (const version of family.getSupportedFormats()) {

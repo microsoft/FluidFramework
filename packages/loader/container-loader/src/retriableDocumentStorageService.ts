@@ -5,6 +5,7 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -12,17 +13,16 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	ICreateBlobResponse,
-	ISnapshotTree,
-	ISummaryHandle,
-	ISummaryTree,
-	IVersion,
-} from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { GenericError, UsageError } from "@fluidframework/telemetry-utils/internal";
+	ITelemetryLoggerExt,
+	GenericError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;

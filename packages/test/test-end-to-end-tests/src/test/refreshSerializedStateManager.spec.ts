@@ -17,7 +17,7 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
@@ -73,8 +73,12 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 	};
 
-	it("snapshot was refreshed", async () => {
+	it("snapshot was refreshed", async function () {
 		const provider = getTestObjectProvider();
+		// TODO: This test is consistently failing when ran against FRS. See ADO:7893
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const getLatestSnapshotInfoP = new Deferred<void>();
 		const testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
@@ -107,6 +111,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 				}),
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Container.enableOfflineSnapshotRefresh": true,
 				}),
 			},
 		};
@@ -174,6 +179,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 				}),
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Container.enableOfflineSnapshotRefresh": true,
 				}),
 			},
 		};

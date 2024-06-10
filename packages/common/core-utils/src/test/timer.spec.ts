@@ -286,6 +286,44 @@ describe("Timers", () => {
 			testExactTimeout(defaultTimeout, () => specialRunCount);
 			assert.strictEqual(runCount, 0, "Should not run default handler");
 		});
+
+		it("Timer exception handler", () => {
+			let exceptionCounter = 0;
+			const handler = (): never => {
+				throw new Error("err");
+			};
+
+			timer = new Timer(defaultTimeout, handler, (error) => exceptionCounter++);
+
+			timer.start();
+			clock.tick(defaultTimeout + 10);
+			assert(exceptionCounter === 1);
+
+			timer.restart();
+			clock.tick(defaultTimeout + 10);
+			assert((exceptionCounter as unknown) === 2);
+
+			timer.restart(1, handler);
+			clock.tick(2);
+			assert((exceptionCounter as unknown) === 3);
+		});
+
+		it("Timer - no exception handler", () => {
+			const handler = (): never => {
+				throw new Error("Exception in timer callback");
+			};
+
+			timer = new Timer(defaultTimeout, handler);
+
+			timer.start();
+			let failed = false;
+			try {
+				clock.tick(defaultTimeout + 10);
+			} catch {
+				failed = true;
+			}
+			assert(failed);
+		});
 	});
 
 	describe("PromiseTimer", () => {

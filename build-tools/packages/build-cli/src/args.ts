@@ -6,12 +6,12 @@
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 // eslint-disable-next-line import/no-deprecated
-import { Context, isMonoRepoKind } from "./library";
+import { Context, isMonoRepoKind } from "./library/index.js";
 
 /**
  * A re-usable CLI argument for package or release group names.
  */
-export const packageOrReleaseGroupArg = Args.string({
+export const packageOrReleaseGroupArg = Args.custom({
 	name: "package_or_release_group",
 	required: true,
 	description: "The name of a package or a release group.",

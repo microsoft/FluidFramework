@@ -228,7 +228,10 @@ const documentSchemaSupportedConfigs = {
  * If schema is not compatible with current code, it throws an exception.
  * @param documentSchema - current schema
  */
-function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
+function checkRuntimeCompatibility(
+	documentSchema: IDocumentSchema | undefined,
+	schemaName: string,
+) {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -245,6 +248,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 			{
 				runtimeSchemaVersion: documentSchema.version,
 				currentRuntimeSchemaVersion: currentDocumentVersionSchema,
+				schemaName,
 			},
 		);
 	}
@@ -276,6 +280,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
 				value,
+				schemaName,
 			},
 		);
 	}
@@ -432,8 +437,8 @@ export class DocumentsSchemaController {
 	private futureSchema: IDocumentSchemaCurrent | undefined;
 
 	// Current schema this session operates with.
-	// 1) Legacy mode: this is same as desired schema - all options that were requested to be on are on, and all options requested to be off are off.
-	// 2) Non-legacy mode: this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
+	// 1) Legacy mode (explicitSchemaControl === false): this is same as desired schema - all options that were requested to be on are on, and all options requested to be off are off.
+	// 2) Non-legacy mode (explicitSchemaControl === true): this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
 	//    If there are any options that are not enabled in document schema, but are enabled in desired schema, then attempt to change schema
 	//    (and enable such options) will be made through the session.
 	public sessionSchema: IDocumentSchemaCurrent;
@@ -447,40 +452,21 @@ export class DocumentsSchemaController {
 	 */
 	constructor(
 		existing: boolean,
+		snapshotSequenceNumber: number,
 		documentMetadataSchema: IDocumentSchema | undefined,
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
-		checkRuntimeCompatibility(documentMetadataSchema);
-
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
 			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
-			"not supported",
+			0x949 /* not supported */,
 		);
 
-		this.documentSchema =
-			(documentMetadataSchema as IDocumentSchemaCurrent) ??
-			({
-				version: currentDocumentVersionSchema,
-				// see comment in summarizeDocumentSchema() on why it has to stay zero
-				refSeq: 0,
-				// If it's existing document and it has no schema, then it was written by legacy client.
-				// If it's a new document, then we define it's legacy-related behaviors.
-				runtime: {
-					explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
-				},
-			} satisfies IDocumentSchemaCurrent);
-
-		// Use legacy behavior only if both document and options tell us to use legacy.
-		// Otherwise it's no longer legacy time!
-		this.explicitSchemaControl =
-			this.documentSchema.runtime.explicitSchemaControl === true ||
-			features.explicitSchemaControl;
-
+		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
-			refSeq: this.documentSchema.refSeq,
+			refSeq: documentMetadataSchema?.refSeq ?? 0,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -490,27 +476,59 @@ export class DocumentsSchemaController {
 			},
 		};
 
+		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
+		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
+		// Latter is importnat sure that's what will go into summary.
+		this.documentSchema = !existing
+			? this.desiredSchema
+			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
+			  ({
+					version: currentDocumentVersionSchema,
+					// see comment in summarizeDocumentSchema() on why it has to stay zero
+					refSeq: 0,
+					// If it's existing document and it has no schema, then it was written by legacy client.
+					// If it's a new document, then we define it's legacy-related behaviors.
+					runtime: {
+						explicitSchemaControl: boolToProp(
+							!existing && features.explicitSchemaControl,
+						),
+					},
+			  } satisfies IDocumentSchemaCurrent);
+
+		checkRuntimeCompatibility(this.documentSchema, "document");
+		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
+
+		// Use legacy behavior only if both document and options tell us to use legacy.
+		// Otherwise it's no longer legacy time!
+		this.explicitSchemaControl =
+			this.documentSchema.runtime.explicitSchemaControl === true ||
+			features.explicitSchemaControl;
+
+		// Calculate
+		// - current session schema (overlap of document schema and desired schema)
+		// - future schema to propose (concatination of document schema and desired schema)
 		if (!this.explicitSchemaControl || !existing) {
 			this.sessionSchema = this.desiredSchema;
 			assert(
 				boolToProp(this.explicitSchemaControl) ===
 					this.sessionSchema.runtime.explicitSchemaControl,
-				"explicitSchemaControl",
+				0x94a /* explicitSchemaControl */,
 			);
 			this.futureSchema = undefined;
 		} else {
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			this.futureSchema = or(this.documentSchema, this.desiredSchema);
-			assert(this.sessionSchema.runtime.explicitSchemaControl === true, "legacy");
-			assert(this.futureSchema.runtime.explicitSchemaControl === true, "legacy");
+			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
+			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
 			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
 		}
 
 		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
-		checkRuntimeCompatibility(this.sessionSchema);
-		checkRuntimeCompatibility(this.futureSchema);
+		checkRuntimeCompatibility(this.desiredSchema, "desired");
+		checkRuntimeCompatibility(this.sessionSchema, "session");
+		checkRuntimeCompatibility(this.futureSchema, "future");
 	}
 
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
@@ -527,7 +545,10 @@ export class DocumentsSchemaController {
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
 		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema
 		// change ops will be interpretted differently by those two clients.
-		assert(this.explicitSchemaControl || schema.refSeq === 0, "refSeq should be zero");
+		assert(
+			this.explicitSchemaControl || schema.refSeq === 0,
+			0x94d /* refSeq should be zero */,
+		);
 
 		return schema;
 	}
@@ -535,21 +556,37 @@ export class DocumentsSchemaController {
 	/**
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
+	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
+			this.sendOp = false;
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
-				"not legacy",
+				0x94e /* not legacy */,
 			);
 			return {
 				...this.futureSchema,
 				refSeq: this.documentSchema.refSeq,
 			};
 		}
-		this.sendOp = false;
+	}
+
+	private validateSeqNumber(schemaSeqNumber: number, lastKnowSeqNumber, message: string) {
+		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
+			throw DataProcessingError.create(
+				"DocSchema: Incorrect sequence number",
+				"checkRuntimeCompat3",
+				undefined, // message
+				{
+					schemaSeqNumber,
+					sequenceNumber: lastKnowSeqNumber,
+					message,
+				},
+			);
+		}
 	}
 
 	/**
@@ -565,8 +602,14 @@ export class DocumentsSchemaController {
 		local: boolean,
 		sequenceNumber: number,
 	) {
-		assert(content.refSeq <= this.documentSchema.refSeq, "did we lose a message somewhere?");
-		assert(this.documentSchema.refSeq < sequenceNumber, "time should move forward only!");
+		this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
+		this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
+		// validate is strickly less, not equal
+		assert(
+			this.documentSchema.refSeq < sequenceNumber,
+			0x950 /* time should move forward only! */,
+		);
+
 		if (content.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
 			return false;
@@ -576,15 +619,16 @@ export class DocumentsSchemaController {
 		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
 		assert(
 			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
-			"not sending ops",
+			0x951 /* not sending ops */,
 		);
 
 		// Changes are in effect. Immediately check that this client understands these changes
-		checkRuntimeCompatibility(content);
+		checkRuntimeCompatibility(content, "change");
 
 		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
 		this.documentSchema = schema as IDocumentSchemaCurrent;
 		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+		assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
 		// legacy behavior is automatically off for the document once someone sends a schema op -
 		// from now on it's fully controlled by ops.

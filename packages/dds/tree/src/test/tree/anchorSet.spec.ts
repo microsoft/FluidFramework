@@ -38,6 +38,7 @@ import {
 	announceTestDelta,
 	applyTestDelta,
 	expectEqualPaths,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
 
@@ -252,7 +253,11 @@ describe("AnchorSet", () => {
 			count: 1,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),
@@ -286,7 +291,11 @@ describe("AnchorSet", () => {
 			count: 3,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),
@@ -316,6 +325,29 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor2));
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
+	});
+
+	it("visitor can descend in under anchors and detach all their remaining children", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+
+		// This leaves anchor1 with no refs. It is kelp alive by anchor4 which is below it.
+		anchors.forget(anchor4);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.enterNode(5);
+			v.enterField(fieldBar);
+			// This moves anchor4 (the only anchor under anchor1) out from under anchor1.
+			// If the visitor did not increase the ref count of anchor1 on its way down,
+			// anchor1 will be disposed as part of this operation.
+			v.detach({ start: 4, end: 5 }, detachedField);
+			v.exitField(fieldBar);
+			// If anchor1 is be disposed. This will throw.
+			v.exitNode(5);
+			v.exitField(fieldFoo);
+		});
+
+		checkRemoved(anchors.locate(anchor1), detachedField);
 	});
 
 	describe("internalize path", () => {
@@ -640,7 +672,7 @@ class UnorderedTestLogger {
 			this.logEntries.set(name, (this.logEntries.get(name) ?? 0) + 1);
 		};
 	}
-	public expect(expected: [string, number][]) {
+	public expect(expected: [string, number][]): void {
 		const expectedMap = new Map(expected);
 		assert.deepEqual(this.logEntries, expectedMap);
 	}
@@ -649,7 +681,7 @@ class UnorderedTestLogger {
 	}
 }
 
-function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
+function withVisitor(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void): void {
 	const visitor = anchors.acquireVisitor();
 	action(visitor);
 	visitor.free();
@@ -686,11 +718,11 @@ function makeFieldPath(field: FieldKey, ...stepsToFieldParent: PathStep[]): Fiel
 	return { parent: pathToParent, field };
 }
 
-function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
+function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined): void {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
 
-function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")) {
+function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp-0")): void {
 	assert.notEqual(path, undefined);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert.equal(getDetachedFieldContainingPath(path!), expected);

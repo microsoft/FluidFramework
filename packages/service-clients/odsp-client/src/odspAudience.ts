@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/driver-definitions";
 
 import { type OdspMember } from "./interfaces.js";
 
@@ -36,7 +36,7 @@ export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	);
 
 	return {
-		userId: user.oid,
+		id: user.oid,
 		name: user.name,
 		email: user.email,
 		connections: [],

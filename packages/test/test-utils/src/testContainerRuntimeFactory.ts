@@ -10,14 +10,11 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	FluidObject,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	RuntimeRequestHandler,
 	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
@@ -81,6 +78,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
+			// eslint-disable-next-line import/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
 			super();
@@ -92,7 +90,7 @@ export const createTestContainerRuntimeFactory = (
 			const rootContext =
 				"createDetachedRootDataStore" in runtime
 					? (runtime as any).createDetachedRootDataStore([this.type], "default")
-					: runtime.createDetachedDataStore([this.type], "default");
+					: runtime.createDetachedDataStore([this.type]);
 
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,

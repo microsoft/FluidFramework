@@ -8,8 +8,9 @@ import * as path from "path";
 import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
+import { getTypeTestPreviousPackageDetails } from "../../../typeValidator/validatorUtils";
 import { BuildPackage } from "../../buildGraph";
-import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 export class EchoTask extends LeafTask {
 	protected get isIncremental() {
@@ -226,9 +227,43 @@ export class GenVerTask extends LeafTask {
 	}
 }
 
-export class TypeValidationTask extends LeafWithDoneFileTask {
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		return JSON.stringify(this.package.packageJson);
+export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
+	private inputFiles: string[] | undefined;
+	private outputFiles: string[] | undefined;
+
+	/**
+	 * All config for the type tests is contained in package.json.
+	 */
+	protected async getInputFiles(): Promise<string[]> {
+		if (this.inputFiles === undefined) {
+			this.inputFiles = [path.join(this.node.pkg.directory, "package.json")];
+			if (!(this.node.pkg.packageJson.typeValidation?.disabled === true)) {
+				// TODO: depend on all of input to product tsc, which impacts the API.
+				// This task is effectively a TscDependentTask with additional input,
+				// but some packages build tests including type tests as part of
+				// production build, which would create a dependency cycle.
+				// AB#7318 would make sure type tests are separate.
+
+				// The package.json file of prior package is a pretty good representative
+				// for exposed types of prior package. If this is missing, task won't be
+				// incremental. That is okay because task will also fail.
+				this.inputFiles.push(getTypeTestPreviousPackageDetails(this.node.pkg).packageJsonPath);
+			}
+		}
+		return this.inputFiles;
+	}
+
+	/**
+	 * Includes all type test files that are output by the task.
+	 * This implementation assumes all typetest output is in src/test/types.
+	 */
+	protected async getOutputFiles(): Promise<string[]> {
+		if (this.outputFiles === undefined) {
+			// Assumes all typetest output is in src/test/types
+			const typetestGlob = path.join(this.node.pkg.directory, "src/test/types/**");
+			this.outputFiles = await globFn(typetestGlob, { nodir: true });
+		}
+		return this.outputFiles;
 	}
 }
 

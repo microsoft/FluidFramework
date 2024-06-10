@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IValueChanged } from "@fluidframework/map";
+import { IValueChanged } from "@fluidframework/map/internal";
 
 import { IDiceRoller } from "./interface.js";
 

@@ -5,13 +5,17 @@
 
 import { strict as assert } from "assert";
 
-import { ICriticalContainerError, IDeltaManager } from "@fluidframework/container-definitions";
-import { IBatchMessage, IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	IDeltaManager,
+	IBatchMessage,
+	IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -251,16 +255,16 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
-			createMessage(ContainerMessageType.Attach, "3"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "3"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
-		outbox.submitAttach(messages[3]);
+		outbox.submitIdAllocation(messages[2]);
+		outbox.submitIdAllocation(messages[3]);
 
 		outbox.flush();
 
@@ -330,13 +334,13 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
+		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
 
 		outbox.flush();
@@ -368,13 +372,13 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
+		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
 
 		outbox.flush();
@@ -423,13 +427,13 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
+		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
 
 		outbox.flush();
@@ -455,70 +459,6 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				content: message.contents,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				opMetadata: message.metadata,
-			})),
-		);
-	});
-
-	it("Compress and send (only) attachment ops if compression is enabled and their size exceed the compression threshold", () => {
-		const messages = [
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.Attach, "2"),
-			createMessage(ContainerMessageType.Attach, "3"),
-			createMessage(ContainerMessageType.Attach, "4"),
-			createMessage(ContainerMessageType.Attach, "5"),
-			createMessage(ContainerMessageType.Attach, "6"),
-			createMessage(ContainerMessageType.Attach, "7"),
-		];
-
-		const attachMessages = messages.filter(
-			(x) => typeFromBatchedOp(x) === ContainerMessageType.Attach,
-		);
-		assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
-		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
-			compressionOptions: {
-				minimumBatchSizeInBytes: attachMessages[0].contents.length * 3,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		});
-
-		for (const message of messages) {
-			if (typeFromBatchedOp(message) === ContainerMessageType.Attach) {
-				outbox.submitAttach(message);
-			} else {
-				outbox.submit(message);
-			}
-		}
-
-		// Although there was no explicit flush, the attach messages will get flushed
-		// as their size have exceeded the compression threshold.
-		assert.equal(state.opsSubmitted, attachMessages.length);
-		assert.equal(state.batchesSubmitted.length, 2); // 6 messages in 2 batches
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.deltaManagerFlushCalls, 0);
-		assert.deepEqual(state.batchesCompressed, [
-			toBatch(attachMessages.slice(0, 3)),
-			toBatch(attachMessages.slice(3)),
-		]);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				toBatch(attachMessages.slice(0, 3)).content.map((x) => batchedMessage(x)),
-				toBatch(attachMessages.slice(3)).content.map((x) => batchedMessage(x)),
-			],
-		);
-
-		assert.deepEqual(
-			state.pendingOpContents,
-			attachMessages.map((message) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
@@ -568,13 +508,13 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
+		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
 
 		outbox.flush();
@@ -624,13 +564,13 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.Attach, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitAttach(messages[2]);
+		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
 
 		outbox.flush();
@@ -650,25 +590,6 @@ describe("Outbox", () => {
 				],
 			],
 		);
-	});
-
-	it("Throws at submit, when compression is enabled and the attached compressed batch is still larger than the threshold", () => {
-		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
-			maxBatchSize: 1,
-			compressionOptions: {
-				minimumBatchSizeInBytes: 1,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		});
-
-		const messages = [createMessage(ContainerMessageType.Attach, "0")];
-
-		assert.throws(() => outbox.submitAttach(messages[0]));
-		// The batch is compressed
-		assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
-		// The batch is not persisted
-		assert.deepEqual(state.pendingOpContents, []);
 	});
 
 	it("Splits the batch when an out of order message is detected", () => {
@@ -722,11 +643,11 @@ describe("Outbox", () => {
 	[
 		[
 			{
-				...createMessage(ContainerMessageType.Attach, "0"),
+				...createMessage(ContainerMessageType.IdAllocation, "0"),
 				referenceSequenceNumber: 0,
 			},
 			{
-				...createMessage(ContainerMessageType.Attach, "0"),
+				...createMessage(ContainerMessageType.IdAllocation, "0"),
 				referenceSequenceNumber: 0,
 			},
 			{
@@ -744,7 +665,7 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 0,
 			},
 			{
-				...createMessage(ContainerMessageType.Attach, "0"),
+				...createMessage(ContainerMessageType.IdAllocation, "0"),
 				referenceSequenceNumber: 1,
 			},
 		],
@@ -753,8 +674,8 @@ describe("Outbox", () => {
 			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (typeFromBatchedOp(op) === ContainerMessageType.Attach) {
-					outbox.submitAttach(op);
+				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
+					outbox.submitIdAllocation(op);
 				} else {
 					outbox.submit(op);
 				}
@@ -795,19 +716,19 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 2,
 			},
 			{
-				...createMessage(ContainerMessageType.Attach, "1"),
+				...createMessage(ContainerMessageType.IdAllocation, "1"),
 				referenceSequenceNumber: 3,
 			},
 			{
-				...createMessage(ContainerMessageType.Attach, "1"),
+				...createMessage(ContainerMessageType.IdAllocation, "1"),
 				referenceSequenceNumber: 3,
 			},
 		];
 
 		for (const message of messages) {
 			currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-			if (typeFromBatchedOp(message) === ContainerMessageType.Attach) {
-				outbox.submitAttach(message);
+			if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
+				outbox.submitIdAllocation(message);
 			} else {
 				outbox.submit(message);
 			}

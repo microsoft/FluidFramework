@@ -2,6 +2,7 @@
 	"extends": ["./tsconfig.base.json", "./tsconfig.node16.json"],
 	"compilerOptions": {
 		"composite": false,
+		"customConditions": ["allow-ff-test-exports"],
 		"types": ["node"],
 		"declaration": false,
 		"declarationMap": false,

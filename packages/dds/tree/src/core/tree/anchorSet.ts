@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ISubscribable, createEmitter } from "../../events/index.js";
+import { Listenable, createEmitter } from "../../events/index.js";
 import {
 	Brand,
 	BrandedKey,
@@ -175,11 +175,13 @@ export interface AnchorSetRootEvents {
  * Node in a tree of anchors.
  * @internal
  */
-export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
 	 */
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
 	/**
@@ -239,7 +241,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * @sealed
  * @internal
  */
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
@@ -286,6 +288,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	 * @privateRemarks
 	 * This forwards to the slots of the special above root anchor which locate can't access.
 	 */
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
 		return this.root.slots;
 	}
@@ -601,7 +605,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		}
 	}
 
-	private removeChildren(path: UpPath, count: number) {
+	private removeChildren(path: UpPath, count: number): void {
 		const nodes = this.decoupleNodes(path, count);
 		this.deepDelete(nodes);
 	}
@@ -612,7 +616,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	 * @param offset - the offset to apply to the children.
 	 *
 	 */
-	private offsetChildren(firstSiblingToOffset: UpPath, offset: number) {
+	private offsetChildren(firstSiblingToOffset: UpPath, offset: number): void {
 		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
 		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {
@@ -637,6 +641,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			0x767 /* Must release existing visitor before acquiring another */,
 		);
 
+		const referencedPathNodes: PathNode[] = [];
 		const visitor = {
 			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
@@ -651,6 +656,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
 					this.parent = this.anchorSet.internalizePath(this.parent);
 					if (this.parent instanceof PathNode) {
+						this.parent.addRef();
+						referencedPathNodes.push(this.parent);
 						withNode(this.parent);
 					}
 				}
@@ -666,6 +673,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.anchorSet.activeVisitor !== undefined,
 					0x768 /* Multiple free calls for same visitor */,
 				);
+				for (const node of referencedPathNodes) {
+					node.removeRef();
+				}
 				this.anchorSet.activeVisitor = undefined;
 			},
 			notifyChildrenChanging(): void {
@@ -1044,6 +1054,8 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
 
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
 	/**
@@ -1124,7 +1136,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 
 	// Called when refcount is set to 0.
 	// Node may be kept alive by children or events after this point.
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.considerDispose();
 	}
 

@@ -66,8 +66,6 @@ export const generateLoaderOptions = (
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGC: booleanCases,
-	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
 	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
 	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately
@@ -102,7 +100,6 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
-		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
