@@ -48,8 +48,8 @@ import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedClient } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
@@ -341,6 +341,8 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 // @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     constructor(id?: string, existing?: boolean, baseLogger?: ITelemetryLoggerExt, interactive?: boolean);
+    // (undocumented)
+    addedGCOutboundRoute(fromPath: string, toPath: string): void;
     attachState: AttachState;
     // (undocumented)
     readonly baseLogger: ITelemetryLoggerExt;
@@ -429,8 +431,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get absolutePath(): string;
     // (undocumented)
     addChannel(channel: IChannel): void;
-    // @deprecated (undocumented)
-    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // (undocumented)

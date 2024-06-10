@@ -47,8 +47,8 @@ import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
@@ -101,11 +101,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
-    addedGCOutboundReference(srcHandle: {
-        absolutePath: string;
-    }, outboundHandle: {
-        absolutePath: string;
-    }): void;
+    addedGCOutboundRoute(fromPath: string, toPath: string): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -240,7 +236,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     get summarizerClientId(): string | undefined;
-    updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)

@@ -20,7 +20,6 @@ import {
 	CrossFieldTarget,
 	NodeId,
 	addCrossFieldQuery,
-	getIntention,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
@@ -51,7 +50,12 @@ import {
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {
-	return change.length === 0;
+	for (const mark of change) {
+		if (mark.changes !== undefined || mark.type !== undefined) {
+			return false;
+		}
+	}
+	return true;
 }
 
 export function createEmpty(): Changeset {
@@ -104,10 +108,7 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	return areEqualChangeAtomIds(a, b);
 }
 
-export function getInputCellId(
-	mark: Mark,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getInputCellId(mark: Mark): CellId | undefined {
 	const cellId = mark.cellId;
 	if (cellId === undefined) {
 		return undefined;
@@ -126,33 +127,29 @@ export function getInputCellId(
 
 	return {
 		...cellId,
-		revision: getIntentionIfMetadataProvided(markRevision, metadata),
+		revision: markRevision,
 	};
 }
 
-export function getOutputCellId(
-	mark: Mark,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getOutputCellId(mark: Mark): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachOutputCellId(mark, metadata);
+		return getDetachOutputCellId(mark);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isAttachAndDetachEffect(mark)) {
-		return getDetachOutputCellId(mark.detach, metadata);
+		return getDetachOutputCellId(mark.detach);
 	}
 
-	return getInputCellId(mark, metadata);
+	return getInputCellId(mark);
 }
 
 export function cellSourcesFromMarks(
 	marks: readonly Mark[],
-	metadata: RevisionMetadataSource | undefined,
 	contextGetter: typeof getInputCellId | typeof getOutputCellId,
 ): Set<RevisionTag | undefined> {
 	const set = new Set<RevisionTag | undefined>();
 	for (const mark of marks) {
-		const cell = contextGetter(mark, metadata);
+		const cell = contextGetter(mark);
 		if (cell !== undefined) {
 			set.add(cell.revision);
 		}
@@ -288,28 +285,17 @@ export function compareCellPositionsUsingTombstones(
 /**
  * @returns the ID of the cell in the output context of the given detach `mark`.
  */
-export function getDetachOutputCellId(
-	mark: Detach,
-	metadata: RevisionMetadataSource | undefined,
-): ChangeAtomId {
-	return (
-		mark.idOverride ?? {
-			revision: getIntentionIfMetadataProvided(mark.revision, metadata),
-			localId: mark.id,
-		}
-	);
+export function getDetachOutputCellId(mark: Detach): ChangeAtomId {
+	return mark.idOverride ?? { revision: mark.revision, localId: mark.id };
 }
 
 /**
  * @returns the ID of the detached node in the output context of the given detach `mark`.
  */
-export function getDetachedNodeId(
-	mark: Detach,
-	metadata: RevisionMetadataSource | undefined,
-): ChangeAtomId {
+export function getDetachedNodeId(mark: Detach): ChangeAtomId {
 	switch (mark.type) {
 		case "Remove": {
-			return getDetachOutputCellId(mark, metadata);
+			return getDetachOutputCellId(mark);
 		}
 		case "MoveOut": {
 			return makeChangeAtomId(mark.id, mark.revision);
@@ -317,13 +303,6 @@ export function getDetachedNodeId(
 		default:
 			unreachableCase(mark);
 	}
-}
-
-function getIntentionIfMetadataProvided(
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): RevisionTag | undefined {
-	return metadata === undefined ? revision : getIntention(revision, metadata);
 }
 
 /**
@@ -440,14 +419,8 @@ export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRem
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function isImpactfulCellRename(
-	mark: Mark,
-	revisionMetadata: RevisionMetadataSource,
-): mark is CellMark<CellRename> {
-	return (
-		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
-		isImpactful(mark, revisionMetadata)
-	);
+export function isImpactfulCellRename(mark: Mark): mark is CellMark<CellRename> {
+	return (isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) && isImpactful(mark);
 }
 
 export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
@@ -476,12 +449,10 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
  * context of that mark.
  *
  * @param mark - The mark to settle. Never mutated.
- * @param revision - The revision associated with the mark.
- * @param revisionMetadata - Metadata source for the revision associated with the mark.
  * @returns either the original mark or a shallow clone of it with effects stripped out.
  */
-export function settleMark(mark: Mark, revisionMetadata: RevisionMetadataSource): Mark {
-	if (isImpactful(mark, revisionMetadata)) {
+export function settleMark(mark: Mark): Mark {
+	if (isImpactful(mark)) {
 		return mark;
 	}
 	return omitMarkEffect(mark);
@@ -492,17 +463,17 @@ export function settleMark(mark: Mark, revisionMetadata: RevisionMetadataSource)
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
  */
-export function isImpactful(mark: Mark, revisionMetadata: RevisionMetadataSource): boolean {
+export function isImpactful(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
 			return false;
 		case "Remove": {
-			const inputId = getInputCellId(mark, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			if (inputId === undefined) {
 				return true;
 			}
-			const outputId = getOutputCellId(mark, revisionMetadata);
+			const outputId = getOutputCellId(mark);
 			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}

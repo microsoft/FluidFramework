@@ -225,13 +225,3 @@ export interface FieldChangeEncodingContext {
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }
-
-/**
- * @internal
- */
-export function getIntention(
-	rev: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RevisionTag | undefined {
-	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
-}

@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,6 +18,7 @@ import {
 	type IDocumentAttributes,
 	ISnapshotTree,
 	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {

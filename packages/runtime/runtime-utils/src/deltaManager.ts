@@ -5,8 +5,10 @@
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type { IDeltaManagerErased } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import type { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Casts the public API for delta manager into the internal one,

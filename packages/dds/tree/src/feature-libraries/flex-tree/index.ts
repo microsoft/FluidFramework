@@ -47,7 +47,7 @@ export {
 
 export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { FlexTreeNodeEvents } from "./treeEvents.js";
+export { FlexTreeNodeEvents, onNodeChanged, onTreeChanged } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {
@@ -63,4 +63,4 @@ export {
 
 export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
 
-export { getSchemaAndPolicy } from "./utilities.js";
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";

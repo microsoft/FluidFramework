@@ -22,7 +22,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTreeEx } from '@fluidframework/driver-definitions/internal';

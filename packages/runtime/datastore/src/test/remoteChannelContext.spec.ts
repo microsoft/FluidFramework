@@ -49,7 +49,6 @@ describe("RemoteChannelContext Tests", () => {
 				dataStoreContext.storage,
 				(c, lom) => {},
 				(s: string) => {},
-				(s, o) => {},
 				invalidId,
 				undefined as unknown as ISnapshotTree,
 				sharedObjectRegistry,
