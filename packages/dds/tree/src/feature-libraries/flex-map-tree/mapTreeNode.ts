@@ -13,7 +13,7 @@ import {
 	TreeValue,
 	Value,
 } from "../../core/index.js";
-import { brand, fail, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
 	FlexTreeContext,
 	FlexTreeEntityKind,
@@ -53,7 +53,7 @@ import {
 import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { createEmitter } from "../../events/index.js";
+import { ComposableEventEmitter, Listenable, Off } from "../../events/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -65,6 +65,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
+	forwardEvents(to: Listenable<FlexTreeNodeEvents>): void;
 }
 
 /**
@@ -81,6 +82,38 @@ interface LocationInField {
 }
 
 /**
+ * Allows events to be forwarded to another event emitter.
+ * @remarks TODO: After the eventing library is simplified, find a way to support this pattern elegantly in the library.
+ */
+class ForwardingEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents> {
+	// A map from deregistration functions produced by this class to deregistration functions of Listenables that have been forwarded to
+	private readonly forwardedOffs = new Map<Off, Off[]>();
+
+	public override on<K extends keyof FlexTreeNodeEvents>(
+		eventName: K,
+		listener: FlexTreeNodeEvents[K],
+	): Off {
+		const off = super.on(eventName, listener);
+		// Return a deregister function which...
+		return (): void => {
+			off(); // ...deregisters the event in this emitter,
+			// and also deregisters the event in any Listenable that it gets forwarded to
+			(this.forwardedOffs.get(off) ?? []).forEach((f) => f());
+		};
+	}
+
+	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
+		for (const [eventName, listeners] of this.listeners) {
+			for (const [off, listener] of listeners) {
+				// For every one of our listeners, make the same subscription in the Listenable that we're forwarding to,
+				// and then create a mapping from our deregistration function to theirs, so we can call it later if need be.
+				getOrCreate(this.forwardedOffs, off, () => []).push(to.on(eventName, listener));
+			}
+		}
+	}
+}
+
+/**
  * A readonly implementation of {@link FlexTreeNode} which wraps a {@link MapTree}.
  * @remarks Any methods that would mutate the node will fail,
  * as will the querying of data specific to the {@link LazyTreeNode} implementation (e.g. {@link FlexTreeNode.context}).
@@ -89,7 +122,10 @@ interface LocationInField {
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-	private readonly events = createEmitter<FlexTreeNodeEvents>();
+	private readonly events = new ForwardingEventEmitter();
+	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
+		this.events.forwardEvents(to);
+	}
 
 	/**
 	 * Create a new MapTreeNode.
@@ -184,7 +220,13 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		eventName: K,
 		listener: FlexTreeNodeEvents[K],
 	): () => void {
-		return this.events.on(eventName, listener);
+		switch (eventName) {
+			case "nodeChanged":
+			case "treeChanged":
+				return this.events.on(eventName, listener);
+			default:
+				throw unsupportedUsageError(`Subscribing to ${eventName}`);
+		}
 	}
 
 	public get context(): FlexTreeContext {
