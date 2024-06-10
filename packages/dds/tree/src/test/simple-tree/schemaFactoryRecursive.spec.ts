@@ -39,7 +39,6 @@ import {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
-	type isAssignableTo,
 	type requireFalse,
 } from "../../util/index.js";
 
