@@ -151,10 +151,10 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 }
 
 /**
- * {@link Unenforced} version of {@link HasDefault}.
+ * {@link Unenforced} version of {@link FieldHasDefault}.
  * @public
  */
-export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<
+export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<
 	FieldSchema<FieldKind.Optional | FieldKind.Identifier>
 >
 	? true
@@ -168,13 +168,13 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 > = {
 	// Field might not have a default, so make it required:
-	readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false
+	readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false
 		? Property
 		: never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 } & {
 	// Field might have a default, so allow optional.
 	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-	readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends true
+	readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends true
 		? Property
 		: never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };

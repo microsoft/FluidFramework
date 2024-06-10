@@ -83,7 +83,7 @@ export type TreeObjectNode<
  *
  * @public
  */
-export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
 	FieldKind.Optional | FieldKind.Identifier
 >
 	? true
@@ -109,7 +109,7 @@ export type InsertableObjectFromSchemaRecord<
 		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 	} & {
 		// Field does not have a known default, make it required:
-		readonly [Property in keyof T as HasDefault<T[Property]> extends false
+		readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false
 			? Property
 			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
 	}

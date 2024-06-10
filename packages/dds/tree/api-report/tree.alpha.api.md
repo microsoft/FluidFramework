@@ -47,6 +47,12 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+
+// @public
+export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<FieldSchema<FieldKind.Optional | FieldKind.Identifier>> ? true : false;
+
+// @public
 export enum FieldKind {
     Identifier = 2,
     Optional = 0,
@@ -87,12 +93,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
-export type HasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
-
-// @public
-export type HasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends Unenforced<FieldSchema<FieldKind.Optional | FieldKind.Identifier>> ? true : false;
-
-// @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
@@ -105,14 +105,14 @@ export type _InlineTrick = 0;
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 } & {
-    readonly [Property in keyof T as HasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+    readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
 }>;
 
 // @public
 export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
-    readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 } & {
-    readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
 // @public
@@ -285,7 +285,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as HasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as HasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
