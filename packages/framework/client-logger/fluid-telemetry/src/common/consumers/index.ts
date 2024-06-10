@@ -27,6 +27,7 @@ import type { IFluidTelemetry } from "../index.js";
  *
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITelemetryConsumer {
 	/**
 	 * This method is intended to take created {@link IFluidTelemetry} and do something with it.
