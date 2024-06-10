@@ -67,8 +67,7 @@ class MigrationTool extends TypedEventEmitter<IMigrationToolEvents> implements I
 	}
 
 	public constructor(
-		// Here I'm still passing through a full runtime, but really it would probably be better to just pass through
-		// the specific capabilities that the data object requires.
+		// TODO:  Does this need a full runtime?  Can we instead specify exactly what the data object requires?
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly consensusRegisterCollection: IConsensusRegisterCollection<string>,
 		private readonly pactMap: IPactMap<string>,
