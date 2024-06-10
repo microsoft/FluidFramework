@@ -52,11 +52,8 @@ export type Unhydrated<T> = T;
  *
  * Not all node implementations include this in their prototype chain (some hide it with a proxy),
  * and thus cause the default/built in `instanceof` to return false despite our type checking and all other APIs treating them as TreeNodes.
- * This results in the runtime and compile time behavior of `instanceof` differing.
- * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
- * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
- * One of those approaches could be used to resolve this inconsistency,
- * but for now the type-only export prevents use of `instanceof` avoiding this problem in the public API.
+ * This class provides a custom `Symbol.hasInstance` to fix `instanceof` for this class and all classes extending it.
+ * For now the type-only export prevents use of `instanceof` on this class (but allows it in subclasses like schema classes).
  * @public
  */
 export abstract class TreeNode implements WithType {
@@ -99,6 +96,8 @@ export abstract class TreeNode implements WithType {
 	 * Provides `instancof` support for testing if a value is a `TreeNode`.
 	 * @remarks
 	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
+	 * @privateRemarks
+	 * Due to type-only export, this functionality is not available outside the package.
 	 */
 	public static [Symbol.hasInstance](value: unknown): value is TreeNode;
 
@@ -106,6 +105,8 @@ export abstract class TreeNode implements WithType {
 	 * Provides `instancof` support for all schema classes with public constructors.
 	 * @remarks
 	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
+	 * @privateRemarks
+	 * Despite type-only export, this functionality is available outside the package since it is inherited by subclasses.
 	 */
 	public static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(
 		this: TSchema,
