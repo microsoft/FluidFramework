@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // This module contains rule details to be shared between the config variants exposed by this package.
 module.exports = {
 	/**
