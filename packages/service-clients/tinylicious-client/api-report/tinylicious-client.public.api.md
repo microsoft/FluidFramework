@@ -18,7 +18,4 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-export { TinyliciousClient }
-export default TinyliciousClient;
-
 ```
