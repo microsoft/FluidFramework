@@ -14,7 +14,7 @@ import type {
 type ICustomDataMap = Record<string, number>;
 
 /**
- * Helper class that accumulates custom data and sends it to the logger every time a specified number (i.e., `threshold`) of logs is reached.
+ * Helper class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the `{@link BatchedTelemetryHelper.log)` function is called reaches a number specified by the `threshold` value to this classes' constructor.
  */
 export class BatchedTelemetryHelper {
 	disposed: boolean = false;
