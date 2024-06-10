@@ -11,12 +11,14 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-type ICustomDataMap = Record<string, number>;
+type CustomDataType<T> = {
+	[K in keyof T]: number;
+};
 
 /**
  * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} function is called reaches a number specified by the `threshold` value to this classes' constructor.
  */
-export class TelemetryEventBatcher {
+export class TelemetryEventBatcher<TMetrics extends CustomDataType<TMetrics>> {
 	// Stores value of the custom data passed into the logger.
 	private readonly customDataMap: Map<string, number> = new Map<string, number>();
 	// Counter to keep track of the number of times the log function is called.
@@ -45,9 +47,12 @@ export class TelemetryEventBatcher {
 	 * @param customData -
 	 * A record storing the custom data to be logged.
 	 */
-	public log(customData: ICustomDataMap): void {
-		for (const key of Object.keys(customData)) {
-			this.customDataMap.set(key, (this.customDataMap.get(key) ?? 0) + customData[key]);
+	public log(customData: TMetrics): void {
+		for (const key of Object.keys(customData) as (keyof TMetrics)[]) {
+			this.customDataMap.set(
+				key as string,
+				(this.customDataMap.get(key as string) ?? 0) + customData[key],
+			);
 		}
 
 		this.counter++;
@@ -70,5 +75,6 @@ export class TelemetryEventBatcher {
 
 		this.logger.sendPerformanceEvent(telemetryEvent);
 		this.counter = 0;
+		this.customDataMap.clear();
 	}
 }
