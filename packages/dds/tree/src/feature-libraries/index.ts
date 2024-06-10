@@ -306,4 +306,9 @@ export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./sch
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 
-export { MapTreeNode, getOrCreateMapTreeNode, tryGetMapTreeNode } from "./flex-map-tree/index.js";
+export {
+	MapTreeNode,
+	isMapTreeNode,
+	getOrCreateMapTreeNode,
+	tryGetMapTreeNode,
+} from "./flex-map-tree/index.js";

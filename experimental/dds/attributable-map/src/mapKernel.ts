@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base/internal";
 

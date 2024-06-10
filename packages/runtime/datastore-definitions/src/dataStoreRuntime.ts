@@ -14,7 +14,8 @@ import type {
 	ErasedType,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import type { IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 

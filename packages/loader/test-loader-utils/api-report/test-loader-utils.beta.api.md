@@ -18,9 +18,9 @@ import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/inter
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { INack } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISignalClient } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { IStream } from '@fluidframework/driver-definitions/internal';
 import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';

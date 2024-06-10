@@ -17,11 +17,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISnapshot,
@@ -30,6 +26,7 @@ import {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 

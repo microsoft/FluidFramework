@@ -34,7 +34,7 @@ export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta):
 
 	for (const mark of change) {
 		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
-		const inputCellId = getInputCellId(mark, undefined);
+		const inputCellId = getInputCellId(mark);
 		const changes = mark.changes;
 		if (changes !== undefined) {
 			const nestedDelta = deltaFromChild(changes);
@@ -68,7 +68,7 @@ export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta):
 				continue;
 			}
 
-			const outputId = getDetachedNodeId(mark.detach, undefined);
+			const outputId = getDetachedNodeId(mark.detach);
 			assert(
 				outputId !== undefined,
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
@@ -101,7 +101,7 @@ export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta):
 					break;
 				}
 				case "Remove": {
-					const newDetachId = getDetachedNodeId(mark, undefined);
+					const newDetachId = getDetachedNodeId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
@@ -127,7 +127,7 @@ export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta):
 				}
 				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
-					const detachId = nodeIdFromChangeAtom(getDetachedNodeId(mark, undefined));
+					const detachId = nodeIdFromChangeAtom(getDetachedNodeId(mark));
 					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
 						local.push(deltaMark);

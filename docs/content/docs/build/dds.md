@@ -240,7 +240,7 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 [fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
-[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
+[@fluidframework/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
 [AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
 [TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
