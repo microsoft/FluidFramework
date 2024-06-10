@@ -242,6 +242,11 @@ describe("SchemaFactory Recursive methods", () => {
 					]
 				>
 			>;
+
+			const tree = hydrate(
+				ObjectRecursive,
+				new ObjectRecursive({ x: new ObjectRecursive({ x: 42 }) }),
+			);
 		});
 
 		it("other under recursive object", () => {
