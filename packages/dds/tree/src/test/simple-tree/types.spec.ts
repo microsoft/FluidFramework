@@ -58,9 +58,6 @@ describe("simple-tree types", () => {
 			assert.throws(() => new Subclass(), validateUsageError(/SchemaFactory/));
 		});
 
-		// Type only tests which error if run:
-		function typeOnly() {}
-
 		it("subclassing from public API", () => {
 			assert.throws(() => {
 				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
