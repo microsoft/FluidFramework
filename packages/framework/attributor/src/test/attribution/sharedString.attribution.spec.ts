@@ -28,12 +28,12 @@ import {
 	type IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type ISequencedDocumentMessage,
 	type ISummaryTree,
 	SummaryType,
 	type IQuorumClients,
 	type ISequencedClient,
 } from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
