@@ -14,27 +14,28 @@ import type {
 type ICustomDataMap = Record<string, number>;
 
 /**
- * Helper class that accumulates custom data and sends it to the logger every time a specified number (i.e., `threshold`) of logs is reached.
+ * Telemetry class that accumulates custom data and sends it to the logger every time a specified number (i.e., `threshold`) of logs is reached.
  */
-export class BatchedTelemetryHelper {
-	disposed: boolean = false;
-
+export class TelemetryEventBatcher {
 	// Stores value of the custom data passed into the logger.
 	private readonly customDataMap: Map<string, number> = new Map<string, number>();
 	// Counter to keep track of the number of times the log function is called.
 	private counter = 0;
 
-	/**
-	 * @param eventBase -
-	 * Custom properties to include in the telemetry performance event when it is written.
-	 * @param logger -
-	 * The logger to use to write the telemetry performance event.
-	 * @param threshold -
-	 * The number of logs to accumulate before sending the data to the logger.
-	 */
 	public constructor(
+		/**
+		 * Custom properties to include in the telemetry performance event when it is written.
+		 */
 		private readonly eventBase: ITelemetryGenericEventExt,
+
+		/**
+		 * The logger to use to write the telemetry performance event.
+		 */
 		private readonly logger: ITelemetryLoggerExt,
+
+		/**
+		 * The number of logs to accumulate before sending the data to the logger.
+		 */
 		private readonly threshold: number,
 	) {}
 
