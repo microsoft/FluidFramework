@@ -282,8 +282,8 @@ describe("Unhydrated nodes", () => {
 		);
 	});
 
-	it("Correctly iterate identifiers", () => {
-		class TestObjectWithId extends schemaFactory.object("HasId", {
+	it("correctly iterate identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasIds", {
 			id: schemaFactory.identifier,
 			autoId: schemaFactory.identifier,
 		}) {}
