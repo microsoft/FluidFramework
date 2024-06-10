@@ -35,7 +35,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/typesUnsafe.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+	type requireFalse,
+} from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 
@@ -109,7 +114,7 @@ describe("SchemaFactory Recursive methods", () => {
 			assert.equal(stuff2?.text, "hi4");
 		});
 
-		it("objects", () => {
+		it("object with optional recursive field", () => {
 			class ObjectRecursive extends sf.objectRecursive("Object", {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
@@ -176,6 +181,69 @@ describe("SchemaFactory Recursive methods", () => {
 				ObjectRecursive,
 				new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) }),
 			);
+		});
+
+		it("object with required recursive field", () => {
+			class ObjectRecursive extends sf.objectRecursive("Object", {
+				x: sf.requiredRecursive([() => ObjectRecursive]),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
+
+			type XSchema = typeof ObjectRecursive.info.x;
+			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
+				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				: "zzz";
+			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
+			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
+			type Field4 = FlexListToUnion<XTypes>;
+			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
+			type _check2 = requireTrue<areSafelyAssignable<Field4, typeof ObjectRecursive>>;
+
+			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
+			type _checkInsertable = requireTrue<areSafelyAssignable<Insertable, ObjectRecursive>>;
+			type Constructable = NodeFromSchema<typeof ObjectRecursive>;
+			type _checkConstructable = requireTrue<
+				areSafelyAssignable<Constructable, ObjectRecursive>
+			>;
+			type Child = ObjectRecursive["x"];
+			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive>>;
+			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
+			type _checkConstructor = requireFalse<
+				areSafelyAssignable<
+					Constructor,
+					[
+						| {
+								readonly x: undefined | ObjectRecursive;
+						  }
+						| InternalTreeNode,
+					]
+				>
+			>;
+			type _checkConstructor2 = requireFalse<
+				areSafelyAssignable<
+					Constructor,
+					[
+						| {
+								readonly x: undefined | ObjectRecursive;
+						  }
+						| InternalTreeNode,
+					]
+				>
+			>;
+			type _checkConstructor3 = requireFalse<
+				// @ts-expect-error TODO: fix this
+				areSafelyAssignable<
+					Constructor,
+					[
+						| {
+								readonly x?: ObjectRecursive;
+						  }
+						| InternalTreeNode,
+					]
+				>
+			>;
 		});
 
 		it("other under recursive object", () => {
