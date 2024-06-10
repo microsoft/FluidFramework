@@ -39,6 +39,7 @@ import {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
+	type isAssignableTo,
 	type requireFalse,
 } from "../../util/index.js";
 
@@ -142,18 +143,6 @@ describe("SchemaFactory Recursive methods", () => {
 			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive | undefined>>;
 			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
 			type _checkConstructor = requireTrue<
-				// @ts-expect-error Non-optional fields seem to trip up TSC, even if `undefined` is part of the type union. Making the field optional seems to work as expected.
-				areSafelyAssignable<
-					Constructor,
-					[
-						| {
-								readonly x: undefined | ObjectRecursive;
-						  }
-						| InternalTreeNode,
-					]
-				>
-			>;
-			type _checkConstructor_2 = requireTrue<
 				areSafelyAssignable<
 					Constructor,
 					[
@@ -162,6 +151,17 @@ describe("SchemaFactory Recursive methods", () => {
 						  }
 						| InternalTreeNode,
 					]
+				>
+			>;
+			type _checkConstructor2 = requireTrue<
+				isAssignableTo<
+					[
+						| {
+								readonly x: undefined | ObjectRecursive;
+						  }
+						| InternalTreeNode,
+					],
+					Constructor
 				>
 			>;
 
