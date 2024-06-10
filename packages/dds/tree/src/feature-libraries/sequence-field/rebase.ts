@@ -104,7 +104,6 @@ function rebaseMarkList(
 		const rebasedMark = rebaseMark(
 			currMark,
 			baseMark,
-			metadata,
 			rebaseChild,
 			moveEffects,
 			nodeExistenceState,
@@ -121,9 +120,9 @@ function rebaseMarkList(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId(mark: Mark, metadata: RevisionMetadataSource): CellMark<NoopMark> {
+function generateNoOpWithCellId(mark: Mark): CellMark<NoopMark> {
 	const length = mark.count;
-	const cellId = getInputCellId(mark, metadata);
+	const cellId = getInputCellId(mark);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
@@ -141,8 +140,8 @@ class RebaseQueue {
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
 		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, metadata, getInputCellId);
-		this.newMarksCellSources = cellSourcesFromMarks(newMarks, metadata, getInputCellId);
+		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getInputCellId);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -160,14 +159,14 @@ class RebaseQueue {
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();
 			return {
-				baseMark: generateNoOpWithCellId(dequeuedNewMark, this.metadata),
+				baseMark: generateNoOpWithCellId(dequeuedNewMark),
 				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
 			return this.dequeueBase();
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			const baseId = getInputCellId(baseMark, this.metadata);
-			const newId = getInputCellId(newMark, this.metadata);
+			const baseId = getInputCellId(baseMark);
+			const newId = getInputCellId(newMark);
 			assert(
 				baseId !== undefined && newId !== undefined,
 				0x89f /* Both marks should have cell IDs */,
@@ -202,7 +201,7 @@ class RebaseQueue {
 		const baseMark =
 			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
 
-		let newMark: Mark = generateNoOpWithCellId(baseMark, this.metadata);
+		let newMark: Mark = generateNoOpWithCellId(baseMark);
 
 		const movedEffect = getMovedEffectFromBaseMark(this.moveEffects, baseMark);
 
@@ -218,7 +217,7 @@ class RebaseQueue {
 
 	private dequeueNew(): RebaseMarks {
 		const newMark = this.newMarks.dequeue();
-		return { newMark, baseMark: generateNoOpWithCellId(newMark, this.metadata) };
+		return { newMark, baseMark: generateNoOpWithCellId(newMark) };
 	}
 
 	private dequeueBoth(): RebaseMarks {
@@ -271,7 +270,6 @@ interface RebaseMarks {
 function rebaseMark(
 	currMark: Mark,
 	baseMark: Mark,
-	metadata: RevisionMetadataSource,
 	rebaseChild: NodeChangeRebaser,
 	moveEffects: MoveEffectTable,
 	nodeExistenceState: NodeExistenceState,
@@ -286,13 +284,12 @@ function rebaseMark(
 		rebasedMark.changes = movedNodeChanges;
 	}
 
-	return rebaseMarkIgnoreChild(rebasedMark, baseMark, metadata, moveEffects, nodeExistenceState);
+	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects, nodeExistenceState);
 }
 
 function rebaseMarkIgnoreChild(
 	currMark: Mark,
 	baseMark: Mark,
-	metadata: RevisionMetadataSource,
 	moveEffects: MoveEffectTable,
 	nodeExistenceState: NodeExistenceState,
 ): Mark {
@@ -306,7 +303,7 @@ function rebaseMarkIgnoreChild(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachOutputCellId(baseMark, metadata);
+		const baseCellId = getDetachOutputCellId(baseMark);
 
 		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -336,17 +333,19 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
+		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
+			// Orphaned moves are effectively cell renames.
+			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
+		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			metadata,
 			moveEffects,
 			nodeExistenceState,
 		);
 		rebasedMark = rebaseMarkIgnoreChild(
 			halfRebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
-			metadata,
 			moveEffects,
 			nodeExistenceState,
 		);

@@ -365,10 +365,25 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const rebasedChildChanges: ChildChange[] = [];
 		for (const [id, childChange] of childChanges) {
 			const overChildChange = overChildChangesBySrc.get(id);
+			if (overChildChange !== undefined) {
+				overChildChangesBySrc.delete(id);
+			}
 
 			const rebasedId = forwardMap.get(id) ?? id;
 			const rebasedChildChange = rebaseChild(
 				childChange,
+				overChildChange,
+				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+			);
+			if (rebasedChildChange !== undefined) {
+				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
+			}
+		}
+
+		for (const [id, overChildChange] of overChildChangesBySrc.entries()) {
+			const rebasedId = forwardMap.get(id) ?? id;
+			const rebasedChildChange = rebaseChild(
+				undefined,
 				overChildChange,
 				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
 			);

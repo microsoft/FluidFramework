@@ -19,9 +19,9 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions/inte
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
 import { IFileSnapshot } from '@fluidframework/replay-driver/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISignalClient } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';

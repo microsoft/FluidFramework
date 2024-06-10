@@ -5,6 +5,7 @@
 
 import { sha1, sha256 } from "sha.js";
 
+// Note: See 'Isomorphic Code' section in the package README.md
 import type { IsoBuffer } from "./bufferNode.js";
 
 /**

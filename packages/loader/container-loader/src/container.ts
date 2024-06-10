@@ -42,8 +42,6 @@ import {
 	IClientDetails,
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
@@ -64,6 +62,8 @@ import {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -75,7 +75,6 @@ import {
 	readAndParse,
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
@@ -121,6 +120,7 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
+import { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
@@ -990,7 +990,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.isDirty,
+			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 		);
 
 		const isDomAvailable =

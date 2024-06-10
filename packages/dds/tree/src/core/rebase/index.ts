@@ -39,14 +39,6 @@ export {
 	RevisionInfo,
 } from "./changeRebaser.js";
 export {
-	Exception,
-	Failure,
-	noFailure,
-	OutputType,
-	verifyChangeRebaser,
-	Violation,
-} from "./verifyChangeRebaser.js";
-export {
 	findAncestor,
 	findCommonAncestor,
 	rebaseBranch,
