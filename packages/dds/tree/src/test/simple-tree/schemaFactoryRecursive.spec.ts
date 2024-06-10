@@ -219,7 +219,6 @@ describe("SchemaFactory Recursive methods", () => {
 			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive | number>>;
 			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
 			type _checkConstructor = requireTrue<
-				// @ts-expect-error TODO: fix this
 				areSafelyAssignable<
 					Constructor,
 					[
@@ -231,7 +230,6 @@ describe("SchemaFactory Recursive methods", () => {
 				>
 			>;
 			type _checkConstructor2 = requireFalse<
-				// @ts-expect-error TODO: fix this
 				areSafelyAssignable<
 					Constructor,
 					[
