@@ -12,6 +12,7 @@ import type { ContainerTelemetryEventName } from "../../container/index.js";
  *
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidTelemetry {
 	/**
 	 * The unique name of the telemetry event. The event name contains scope concatenated together

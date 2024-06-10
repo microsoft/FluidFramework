@@ -51,6 +51,7 @@ export type ContainerTelemetryEventName =
  * The base interface for all Container telemetry
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerTelemetry extends IFluidTelemetry {
 	/**
 	 * {@inheritdoc IFluidTelemetry.eventName}
