@@ -4,6 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+// Include this unused import to avoid TypeScript generating an inline import for IFluidHandle in the d.ts file
+// which degrades the API-Extractor report quality since API-Extractor can not tell the inline import is the same as the non-inline one.
+// eslint-disable-next-line unused-imports/no-unused-imports
+import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
 import { TreeValue } from "../core/index.js";
 import {
@@ -559,7 +563,11 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Make a field of type identifier instead of the default which is required.
+	 * Make a field of type identifier instead of the default, which is required.
+	 * @remarks Identifiers may be optionally supplied at node construction time.
+	 * If not supplied, they will be generated automatically when the node is inserted into the tree.
+	 * Attempting to read an automatically generated identifier before the node is inserted into the tree will throw an error.
+	 * An automatically generated identifier will not be present when iterating the nodes's fields until after the node is inserted into the tree.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(

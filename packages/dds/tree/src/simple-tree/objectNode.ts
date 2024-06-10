@@ -7,23 +7,24 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
+	cursorForMapTreeNode,
 	FieldKinds,
 	FlexAllowedTypes,
 	FlexObjectNodeSchema,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeNodeSchema,
-	FlexTreeObjectNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
+	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
-	NodeKeyManager,
+	isMapTreeNode,
+	MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	InsertableContent,
 	getProxyForField,
 	markContentType,
-	prepareContentForInsert,
+	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
 import {
@@ -39,13 +40,13 @@ import {
 	FieldSchema,
 	normalizeFieldSchema,
 	type,
-	type FieldKind,
+	type ImplicitAllowedTypes,
+	FieldKind,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -162,8 +163,22 @@ function createProxyHandler(
 			const fieldInfo = flexKeyMap.get(viewKey);
 
 			if (fieldInfo !== undefined) {
-				const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
-				return field === undefined ? undefined : getProxyForField(field);
+				const flexNode = getFlexNode(proxy);
+				const field = flexNode.tryGetField(fieldInfo.storedKey);
+				if (field !== undefined) {
+					return getProxyForField(field);
+				}
+
+				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
+				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
+				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
+				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
+					throw new UsageError(
+						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
+					);
+				}
+
+				return undefined;
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -176,9 +191,13 @@ function createProxyHandler(
 			}
 
 			const flexNode = getFlexNode(proxy);
-			const field = flexNode.getBoxed(fieldInfo.storedKey);
-			setField(field, fieldInfo.schema, value, flexNode.context.nodeKeyManager);
+			if (isMapTreeNode(flexNode)) {
+				throw new UsageError(
+					`An object cannot be mutated before being inserted into the tree`,
+				);
+			}
 
+			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
 		},
 		has: (target, viewKey) => {
@@ -228,7 +247,6 @@ export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
-	nodeKeyManager: NodeKeyManager,
 ): void {
 	switch (field.schema.kind) {
 		case FieldKinds.required:
@@ -237,14 +255,15 @@ export function setField(
 				| FlexTreeRequiredField<FlexAllowedTypes>
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
-			const content = prepareContentForInsert(value, field.context.checkout.forest);
-			const cursor = cursorFromNodeData(
-				content,
+			const mapTree = mapTreeFromNodeData(
+				value,
 				simpleFieldSchema.allowedTypes,
-				nodeKeyManager,
+				field.context.nodeKeyManager,
 				getSchemaAndPolicy(field),
 			);
-			typedField.content = cursor;
+
+			prepareContentForHydration(mapTree, field.context.checkout.forest);
+			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
 			break;
 		}
 
@@ -324,8 +343,14 @@ export function objectSchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): RawTreeNode<FlexTreeNodeSchema, unknown> {
-			return new RawObjectNode(flexSchema, copyContent(flexSchema.name, input as object));
+		): MapTreeNode {
+			return getOrCreateMapTreeNode(
+				flexSchema,
+				mapTreeFromNodeData(
+					copyContent(flexSchema.name, input as object),
+					this as unknown as ImplicitAllowedTypes,
+				),
+			);
 		}
 
 		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
@@ -350,7 +375,7 @@ export function objectSchema<
 							Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
 						) {
 							throw new UsageError(
-								`Schema ${identifier} defines an inherited property ${key.toString()} which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
+								`Schema ${identifier} defines an inherited property "${key.toString()}" which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
 							);
 						}
 					}
@@ -379,13 +404,6 @@ export function objectSchema<
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
-
-/**
- * The implementation of an object node created by {@link createRawNode}.
- */
-export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
-	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode {}
 
 /**
  * Ensures that the set of view keys in the schema is unique.
