@@ -48,13 +48,13 @@ export type Unhydrated<T> = T;
  * This class is however only `type` exported not value exported, preventing the class object from being used,
  * similar to how interfaces work.
  *
- * Not all node implications include this in their prototype chain (some hide it with a proxy),
- * and thus cause the default/built in `instanceof` return false despite our type checking and all other APIs treating them as TreeNodes.
+ * Not all node implementations include this in their prototype chain (some hide it with a proxy),
+ * and thus cause the default/built in `instanceof` to return false despite our type checking and all other APIs treating them as TreeNodes.
  * This results in the runtime and compile time behavior of `instanceof` differing.
  * TypeScript 5.3 allows altering the compile time behavior of `instanceof`.
  * The runtime behavior can be changed by implementing `Symbol.hasInstance`.
  * One of those approaches could be used to resolve this inconsistency,
- * but for now the type only export prevents use of `instanceof` avoiding this problem in the public API.
+ * but for now the type-only export prevents use of `instanceof` avoiding this problem in the public API.
  * @public
  */
 export abstract class TreeNode implements WithType {
