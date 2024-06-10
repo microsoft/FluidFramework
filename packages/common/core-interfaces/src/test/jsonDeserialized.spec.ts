@@ -80,7 +80,7 @@ import {
  * @param expected - alternate value to compare against after round-trip
  * @returns the round-tripped value
  */
-function passThru<T>(v: JsonDeserialized<T>, expected?: JsonDeserialized<T>): JsonDeserialized<T> {
+function passThru<T>(v: T, expected?: JsonDeserialized<T>): JsonDeserialized<T> {
 	const stringified = JSON.stringify(v);
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
@@ -88,10 +88,24 @@ function passThru<T>(v: JsonDeserialized<T>, expected?: JsonDeserialized<T>): Js
 }
 
 /**
+ * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
+ *
+ * @remarks All uses are expect to trigger a compile-time error that must be ts-ignore'd.
+ *
+ * @param v - value to pass through JSON serialization
+ * @param error - error expected during serialization round-trip
+ * @returns dummy result to allow further type checking
+ */
+function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
+	assert.throws(() => passThru(v), expectedThrow);
+	return undefined as unknown as JsonDeserialized<T>;
+}
+
+/**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
 function passThruHandlingBigint<T>(
-	v: JsonDeserialized<T, bigint>,
+	v: T,
 	expected?: JsonDeserialized<T, bigint>,
 ): JsonDeserialized<T, bigint> {
 	const stringified = JSON.stringify(v, (_key, value) => {
@@ -117,17 +131,11 @@ function passThruHandlingBigint<T>(
 }
 
 /**
- * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
- *
- * @remarks All uses are expect to trigger a compile-time error that must be ts-ignore'd.
- *
- * @param v - value to pass through JSON serialization
- * @param error - error expected during serialization round-trip
- * @returns dummy result to allow further type checking
+ * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
-function passThruThrows<T>(v: JsonDeserialized<T>, expectedThrow: Error): JsonDeserialized<T> {
-	assert.throws(() => passThru(v), expectedThrow);
-	return undefined as unknown as JsonDeserialized<T>;
+function passThruHandlingBigintThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T, bigint> {
+	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
+	return undefined as unknown as JsonDeserialized<T, bigint>;
 }
 
 describe("JsonDeserialized", () => {
@@ -200,7 +208,12 @@ describe("JsonDeserialized", () => {
 				passThru(ConstHeterogenousEnum.zero) satisfies ConstHeterogenousEnum.zero;
 			});
 			it("specific computed enum value", () => {
-				passThru(ComputedEnum.computed) satisfies ComputedEnum.computed;
+				passThru(
+					// This assertion is necessary; otherwise, typescript will just use `ComputedEnum`
+					// as type for ComputedEnum.computed.
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+					ComputedEnum.computed as ComputedEnum.computed,
+				) satisfies ComputedEnum.computed;
 			});
 		});
 
@@ -408,14 +421,12 @@ describe("JsonDeserialized", () => {
 		describe("unsupported types", () => {
 			it("`undefined` becomes `never`", () => {
 				passThruThrows(
-					// @ts-expect-error `undefined` is not supported (becomes `never`)
 					undefined,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
 			it("`unknown` becomes `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(
-					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
 					unknownValueOfSimpleRecord,
 					// value is actually supported; so, no runtime error.
 				);
@@ -425,42 +436,36 @@ describe("JsonDeserialized", () => {
 			});
 			it("`symbol` becomes `never`", () => {
 				passThruThrows(
-					// @ts-expect-error `symbol` is not supported (becomes `never`)
 					symbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
 			it("`unique symbol` becomes `never`", () => {
 				passThruThrows(
-					// @ts-expect-error [unique] `symbol` is not supported (becomes `never`)
 					uniqueSymbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
 			it("`bigint` becomes `never`", () => {
 				passThruThrows(
-					// @ts-expect-error `bigint` is not supported (becomes `never`)
 					bigint,
 					new TypeError("Do not know how to serialize a BigInt"),
 				) satisfies never;
 			});
 			it("`function` becomes `never`", () => {
 				passThruThrows(
-					// @ts-expect-error `Function` is not supported (becomes `never`)
 					aFunction,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
 			it("`object` (plain object) becomes non-null Json object", () => {
 				passThru(
-					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
 					object,
 					// object's value is actually supported; so, no runtime error.
 				) satisfies NonNullJsonObject;
 			});
 			it("`void` becomes `never`", () => {
 				passThru(
-					// @ts-expect-error `void` is not supported (becomes `never`)
 					voidValue,
 					// voidValue is actually `null`; so, no runtime error.
 				) satisfies never;
@@ -500,7 +505,6 @@ describe("JsonDeserialized", () => {
 				});
 				it("will only propagate with `string` for `bigint | string`", () => {
 					const resultRead = passThru(
-						// @ts-expect-error `bigint` | `string` is not assignable to `string`
 						objectWithBigintOrString,
 						// value is a string; so no runtime error.
 					);
@@ -514,7 +518,6 @@ describe("JsonDeserialized", () => {
 		it("explicit `any` generic still limits allowed types", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			passThruThrows<any>(
-				// @ts-expect-error `any` is not an open door (expects `JsonTypeWith<never>`)
 				undefined,
 				new SyntaxError("Unexpected token u in JSON at position 0"),
 			);
@@ -602,7 +605,6 @@ describe("JsonDeserialized", () => {
 			describe("continue rejecting unsupported that are not replaced", () => {
 				it("`unknown` (simple object) becomes `JsonTypeWith<bigint>`", () => {
 					const resultRead = passThruHandlingBigint(
-						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint>`)
 						unknownValueOfSimpleRecord,
 						// value is actually supported; so, no runtime error.
 					);
@@ -612,7 +614,6 @@ describe("JsonDeserialized", () => {
 				});
 				it("`unknown` (with bigint) becomes `JsonTypeWith<bigint>`", () => {
 					const resultRead = passThruHandlingBigint(
-						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<bigint>`)
 						unknownValueWithBigint,
 						// value is actually supported; so, no runtime error.
 					);
@@ -621,15 +622,13 @@ describe("JsonDeserialized", () => {
 					resultRead satisfies JsonTypeWith<bigint>;
 				});
 				it("`symbol` still becomes `never`", () => {
-					passThruHandlingBigint(
-						// @ts-expect-error `symbol` is not supported (becomes `never`)
+					passThruHandlingBigintThrows(
 						symbol,
 						new SyntaxError("Unexpected token u in JSON at position 0"),
 					) satisfies never;
 				});
 				it("`object` (plain object) still becomes non-null Json object", () => {
 					passThruHandlingBigint(
-						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
 						object,
 						// object's value is actually supported; so, no runtime error.
 					) satisfies NonNullJsonObject;
