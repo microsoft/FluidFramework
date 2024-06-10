@@ -16,7 +16,8 @@ export const uniqueSymbol: unique symbol = Symbol("unique symbol");
 export const bigint: bigint = 0n;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const aFunction = (): any => {};
-export const unknownValue = { key: "value" } as unknown;
+export const unknownValueOfSimpleRecord = { key: "value" } as unknown;
+export const unknownValueWithBigint = { bigint: 1n } as unknown;
 export const voidValue = null as unknown as void;
 const never = null as never;
 
@@ -52,6 +53,10 @@ export const objectWithSymbol = { symbol: Symbol("objectSymbol") };
 export const objectWithBigint = { bigint: 0n };
 export const objectWithFunction = { function: (): void => {} };
 export const objectWithBigintOrString = { bigintOrString: "not bigint" as string | bigint };
+export const objectWithFunctionOrSymbol = {
+	functionOrSymbol: ((): void => {}) as (() => void) | symbol,
+};
+export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithUndefined = {
 	undef: undefined,

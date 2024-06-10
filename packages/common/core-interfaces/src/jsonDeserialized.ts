@@ -10,8 +10,8 @@ import type {
 	IsEnumLike,
 	IsExactlyObject,
 	JsonForArrayItem,
-	NonSymbolWithDefinedNonFunctionPropertyOf,
-	NonSymbolWithPossiblyUndefinedNonFunctionPropertyOf,
+	NonSymbolWithDefinedNotDeserializablePropertyOf,
+	NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf,
 } from "./exposedUtilityTypes.js";
 import type { JsonTypeWith, NonNullJsonObject } from "./jsonType.js";
 
@@ -60,19 +60,19 @@ export type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolea
 			: /* test for enum like types */ IsEnumLike<T> extends true
 			? /* enum or similar simple type (return as-is) => */ T
 			: /* property bag => */ FlattenIntersection<
-					/* properties with symbol keys or function values are removed */
+					/* properties with symbol keys or unsupported values are removed */
 					{
 						/* properties with defined values are recursed */
-						[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
-							T[K],
+						[K in NonSymbolWithDefinedNotDeserializablePropertyOf<
+							T,
 							TReplaced
-						>;
+						>]: JsonDeserialized<T[K], TReplaced>;
 					} & {
 						/* properties that may have undefined values are optional */
-						[K in NonSymbolWithPossiblyUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
-							T[K],
+						[K in NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+							T,
 							TReplaced
-						>;
+						>]?: JsonDeserialized<T[K], TReplaced>;
 					}
 			  >
 		: /* not an object => */ never

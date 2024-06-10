@@ -29,32 +29,52 @@ export type NonSymbolWithRequiredPropertyOf<T extends object> = Exclude<
 >;
 
 /**
- * Returns non-symbol keys for defined, non-function properties of an object type.
+ * Returns TTrue if T is likely serializable type, otherwise TFalse.
+ * Fully not deserializable (functions, bigints, and symbols) produce TFalse
+ * unless T extends TException.
  *
  * @beta
  */
-export type NonSymbolWithDefinedNonFunctionPropertyOf<T extends object> = Exclude<
+export type IfNotDeserializable<T, TException, TTrue, TFalse> =
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	/* check for only serializable value types */ T extends Function | bigint | symbol
+		? /* not serializable => check for exception */ T extends TException
+			? /* exception => ensure exception is not `never` */ TException extends never
+				? /* `never` exception => no exception */ TFalse
+				: /* proper exception => */ TTrue
+			: /* no exception => */ TFalse
+		: /* at least partially serializable */ TTrue;
+
+/**
+ * Returns non-symbol keys for defined, likely serializable properties of an object type.
+ * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
+ *
+ * @beta
+ */
+export type NonSymbolWithDefinedNotDeserializablePropertyOf<T extends object, TException> = Exclude<
 	{
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		[K in keyof T]: undefined extends T[K] ? never : T[K] extends Function ? never : K;
+		[K in keyof T]: undefined extends T[K]
+			? never
+			: IfNotDeserializable<T[K], TException, K, never>;
 	}[keyof T],
 	undefined | symbol
 >;
 
 /**
- * Returns non-symbol keys for undefined, non-function properties of an object type.
+ * Returns non-symbol keys for undefined, likely supported properties of an object type.
+ * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
  *
  * @beta
  */
-export type NonSymbolWithPossiblyUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
+export type NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+	T extends object,
+	TException,
+> = Exclude<
 	{
 		[K in keyof T]: undefined extends T[K]
-			? // eslint-disable-next-line @typescript-eslint/ban-types
-			  T[K] extends Function
+			? Exclude<T[K], undefined> extends never
 				? never
-				: Exclude<T[K], undefined> extends never
-				? never
-				: K
+				: IfNotDeserializable<T[K], TException, K, never>
 			: never;
 	}[keyof T],
 	undefined | symbol
