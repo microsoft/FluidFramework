@@ -150,7 +150,7 @@ function createProxyHandler(
 				// Check if the user is trying to read an identifier field of an unhydrated node, which is not supported.
 				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
 					throw new UsageError(
-						"A node's identifier may not be queried until the node is inserted into the tree",
+						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
 					);
 				}
 

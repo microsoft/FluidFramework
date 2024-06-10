@@ -195,7 +195,7 @@ describe("Unhydrated nodes", () => {
 			(error: Error) =>
 				validateAssertionError(
 					error,
-					/A node's identifier may not be queried until the node is inserted into the tree/,
+					/An automatically generated node identifier may not be queried until the node is inserted into the tree/,
 				),
 		);
 	});
