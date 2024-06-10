@@ -52,7 +52,7 @@ export class DetachedFieldIndex {
 	private detachedNodeToField: NestedMap<
 		Major,
 		Minor,
-		{ root: ForestRootId; latestRelevantRevision: RevisionTag | undefined }
+		{ readonly root: ForestRootId; latestRelevantRevision: RevisionTag | undefined }
 	> = new Map();
 	/**
 	 * A map between revisions and all roots for which the revision is the latest relevant revision.
@@ -68,6 +68,8 @@ export class DetachedFieldIndex {
 
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
+
+	private fullyLoaded = true;
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -293,7 +295,7 @@ export class DetachedFieldIndex {
 			}
 		}
 
-		// add this root from the set of roots for the new latest revision
+		// add this root to the set of roots for the new latest revision
 		const latestRevisionRoots = getOrAddInMap(
 			this.latestRelevantRevisionToFields,
 			revision,
@@ -326,6 +328,7 @@ export class DetachedFieldIndex {
 
 		this.detachedNodeToField = new Map();
 		this.latestRelevantRevisionToFields = new Map();
+		this.fullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, (root, major, minor) => {
 			setInNestedMap(this.detachedNodeToField, major, minor, {
@@ -344,7 +347,7 @@ export class DetachedFieldIndex {
 	 * the summary has been loaded.
 	 */
 	public setRevisionsForLoadedData(latestRevision: RevisionTag): void {
-		// todo throw if already called
+		assert(!this.fullyLoaded, "revisions should only be set once using this function after loading data from a summary");
 
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, (entry, major, minor) => {
@@ -357,6 +360,7 @@ export class DetachedFieldIndex {
 		// todo do we care enough to validate the entries in here?
 		this.latestRelevantRevisionToFields.delete(undefined);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
+		this.fullyLoaded = true;
 	}
 
 	/**
