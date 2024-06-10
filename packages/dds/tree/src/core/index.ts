@@ -96,6 +96,7 @@ export {
 	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
+	fakeRevisionWhenNotSet,
 } from "./tree/index.js";
 
 export {

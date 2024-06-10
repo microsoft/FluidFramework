@@ -394,9 +394,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
 				const revision =
-					event.type !== "remove"
+					event.type === "replace"
 						? event.newCommits[event.newCommits.length - 1].revision
-						: undefined;
+						: event.change.revision;
 
 				if (this.removedRootsInTransaction === undefined && this.transaction.inProgress()) {
 					this.removedRootsInTransaction = this.removedRoots.clone();
@@ -411,7 +411,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								delta,
 								visitor,
 								this.removedRootsInTransaction ?? this.removedRoots,
-								revision,
+								revision ?? fail("testing if there are undefined revisions"),
 							);
 						});
 					} else if (change.type === "schema") {

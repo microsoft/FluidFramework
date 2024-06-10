@@ -24,6 +24,7 @@ import {
 	RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
+	fakeRevisionWhenNotSet,
 	forEachField,
 	makeDetachedFieldIndex,
 	mapCursorField,
@@ -162,8 +163,7 @@ export class ForestSummarizer implements Summarizable {
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
 			applyDelta(
 				{ build, fields: new Map(fieldChanges) },
-				// todo how to get the latest revision from a summary? do we need to persist it at all?
-				undefined,
+				fakeRevisionWhenNotSet,
 				this.forest,
 				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
 			);

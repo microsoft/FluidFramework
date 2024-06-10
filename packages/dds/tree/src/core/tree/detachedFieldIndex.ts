@@ -28,7 +28,7 @@ import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -39,6 +39,12 @@ import { IIdCompressor } from "@fluidframework/id-compressor";
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
 /**
+ * fake revision used to mark that the revision stored in a {@link DetachedFieldIndex} is not yet
+ * set after loading data from a summary
+ */
+export const fakeRevisionWhenNotSet = 33 as SessionSpaceCompressedId;
+
+/**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
 export class DetachedFieldIndex {
@@ -46,8 +52,7 @@ export class DetachedFieldIndex {
 	 * A mapping from detached node ids to forest root ids and the revision that last created or modified the root.
 	 *
 	 * @remarks
-	 * The latest relevant revision is only undefined in the case where the detached field index is loaded from a summary
-	 * and {@link setRevisionsForLoadedData} has yet to be called
+	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
 	 */
 	private detachedNodeToField: NestedMap<
 		Major,
@@ -58,8 +63,7 @@ export class DetachedFieldIndex {
 	 * A map between revisions and all roots for which the revision is the latest relevant revision.
 	 *
 	 * @remarks
-	 * The revision is only undefined in the case where the detached field index is loaded from a summary
-	 * and {@link setRevisionsForLoadedData} has yet to be called
+	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
 	 */
 	private latestRelevantRevisionToFields: Map<
 		RevisionTag | undefined,
@@ -333,12 +337,12 @@ export class DetachedFieldIndex {
 		forEachInNestedMap(detachedFieldIndex.data, (root, major, minor) => {
 			setInNestedMap(this.detachedNodeToField, major, minor, {
 				root,
-				latestRelevantRevision: undefined,
+				latestRelevantRevision: fakeRevisionWhenNotSet,
 			});
 			rootMap.set(root, { major, minor });
 		});
 
-		this.latestRelevantRevisionToFields.set(undefined, rootMap);
+		this.latestRelevantRevisionToFields.set(fakeRevisionWhenNotSet, rootMap);
 	}
 
 	/**
@@ -354,14 +358,13 @@ export class DetachedFieldIndex {
 
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, (entry, major, minor) => {
-			if (entry.latestRelevantRevision === undefined) {
+			if (entry.latestRelevantRevision === fakeRevisionWhenNotSet) {
 				entry.latestRelevantRevision = latestRevision;
 				rootMap.set(entry.root, { major, minor });
 			}
 		});
 
-		// todo do we care enough to validate the entries in here?
-		this.latestRelevantRevisionToFields.delete(undefined);
+		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
 		this.fullyLoaded = true;
 	}
